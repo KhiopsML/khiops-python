@@ -1,0 +1,523 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0",
+	"dictionaries": [
+		{
+			"name": "SNB_SpliceJunction",
+			"root": true,
+			"key": ["SampleId"],
+			"metaData": {
+				"InitialDictionary": "SpliceJunction",
+				"PredictorLabel": "Selective Naive Bayes",
+				"PredictorType": "Regressor"
+			},
+			"variables": [
+				{
+					"name": "SampleId",
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 0.693147,
+						"Level": 0
+					}
+				},
+				{
+					"name": "Class",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"TargetVariable": true
+					}
+				},
+				{
+					"name": "SpliceJunctionDNA",
+					"used": false,
+					"type": "Table",
+					"objectType": "SNB_SpliceJunctionDNA"
+				},
+				{
+					"name": "Mode(SpliceJunctionDNA.Char)",
+					"used": false,
+					"type": "Categorical",
+					"rule": "TableMode(SpliceJunctionDNA, Char)",
+					"metaData": {
+						"Cost": 3.58352,
+						"Importance": 0.0259592,
+						"Level": 0.00660335,
+						"Weight": 0.102051
+					}
+				},
+				{
+					"name": "Mode(SpliceJunctionDNA.Char) where Pos <= 30.5",
+					"used": false,
+					"type": "Categorical",
+					"rule": "TableMode(`SpliceJunctionDNA where Pos <= 30.5`, Char)",
+					"metaData": {
+						"Cost": 7.07503,
+						"Importance": 0.0518664,
+						"Level": 0.00904657,
+						"Weight": 0.297363
+					}
+				},
+				{
+					"name": "Mode(SpliceJunctionDNA.Char) where Pos > 30.5",
+					"used": false,
+					"type": "Categorical",
+					"rule": "TableMode(`SpliceJunctionDNA where Pos > 30.5`, Char)",
+					"metaData": {
+						"Cost": 7.07503,
+						"Importance": 0.0212029,
+						"Level": 0.00159568,
+						"Weight": 0.281738
+					}
+				},
+				{
+					"name": "Count(SpliceJunctionDNA) where Char = G",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TableCount(`SpliceJunctionDNA where Char = G`)",
+					"metaData": {
+						"Cost": 8.46132,
+						"Importance": 0.00828356,
+						"Level": 0.00425843,
+						"Weight": 0.0161133
+					}
+				},
+				{
+					"name": "Mean(SpliceJunctionDNA.Pos) where Char = C",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TableMean(`SpliceJunctionDNA where Char = C`, Pos)",
+					"metaData": {
+						"Cost": 8.46132,
+						"Importance": 0.000301747,
+						"Level": 0.000186473,
+						"Weight": 0.000488281
+					}
+				},
+				{
+					"name": "Median(SpliceJunctionDNA.Pos) where Char = C",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TableMedian(`SpliceJunctionDNA where Char = C`, Pos)",
+					"metaData": {
+						"Cost": 8.46132,
+						"Importance": 0.0335818,
+						"Level": 0.00240334,
+						"Weight": 0.469238
+					}
+				},
+				{
+					"name": "Median(SpliceJunctionDNA.Pos) where Char = G",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TableMedian(`SpliceJunctionDNA where Char = G`, Pos)",
+					"metaData": {
+						"Cost": 8.46132,
+						"Importance": 0.0536659,
+						"Level": 0.0051156,
+						"Weight": 0.562988
+					}
+				},
+				{
+					"name": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TableSum(`SpliceJunctionDNA where Char = G`, Pos)",
+					"metaData": {
+						"Cost": 8.46132,
+						"Importance": 0.0348365,
+						"Level": 0.00330069,
+						"Weight": 0.367676
+					}
+				},
+				{
+					"name": "Count(SpliceJunctionDNA) where Char = A",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TableCount(`SpliceJunctionDNA where Char = A`)",
+					"metaData": {
+						"Cost": 10.0205,
+						"Importance": 0.0156661,
+						"Level": 0.00130555,
+						"Weight": 0.187988
+					}
+				},
+				{
+					"name": "SpliceJunctionDNA where Pos <= 30.5",
+					"used": false,
+					"type": "Table",
+					"objectType": "SNB_SpliceJunctionDNA",
+					"rule": "TableSelection(SpliceJunctionDNA, LE(Pos, 30.5))"
+				},
+				{
+					"name": "SpliceJunctionDNA where Pos > 30.5",
+					"used": false,
+					"type": "Table",
+					"objectType": "SNB_SpliceJunctionDNA",
+					"rule": "TableSelection(SpliceJunctionDNA, G(Pos, 30.5))"
+				},
+				{
+					"name": "SpliceJunctionDNA where Char = C",
+					"used": false,
+					"type": "Table",
+					"objectType": "SNB_SpliceJunctionDNA",
+					"rule": "TableSelection(SpliceJunctionDNA, EQc(Char, \"C\"))"
+				},
+				{
+					"name": "SpliceJunctionDNA where Char = G",
+					"used": false,
+					"type": "Table",
+					"objectType": "SNB_SpliceJunctionDNA",
+					"rule": "TableSelection(SpliceJunctionDNA, EQc(Char, \"G\"))"
+				},
+				{
+					"name": "SpliceJunctionDNA where Char = A",
+					"used": false,
+					"type": "Table",
+					"objectType": "SNB_SpliceJunctionDNA",
+					"rule": "TableSelection(SpliceJunctionDNA, EQc(Char, \"A\"))"
+				},
+				{
+					"blockName": "Mode(SpliceJunctionDNA.Char) per Pos(4)",
+					"rule": "TablePartitionMode(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Char)",
+					"variables": [
+						{
+							"name": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+							"used": false,
+							"type": "Categorical",
+							"metaData": {
+								"Cost": 8.46132,
+								"Importance": 0.0781879,
+								"Level": 0.0105655,
+								"VarKey": 2,
+								"Weight": 0.578613
+							}
+						},
+						{
+							"name": "Mode(SpliceJunctionDNA.Char) where Pos in ]30.5, 45.5]",
+							"used": false,
+							"type": "Categorical",
+							"metaData": {
+								"Cost": 8.46132,
+								"Importance": 0.0263373,
+								"Level": 0.00233269,
+								"VarKey": 3,
+								"Weight": 0.297363
+							}
+						}
+					]
+				},
+				{
+					"name": "Partition(SpliceJunctionDNA) per Pos(4)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "Partition",
+					"rule": "Partition(IntervalBounds(15.5, 30.5, 45.5))"
+				},
+				{
+					"blockName": "TablePartition(SpliceJunctionDNA) per Pos(4)",
+					"rule": "TablePartition(SpliceJunctionDNA, `Partition(SpliceJunctionDNA) per Pos(4)`, Pos)",
+					"variables": [
+						{
+							"name": "SpliceJunctionDNA where Pos in ]15.5, 30.5]",
+							"used": false,
+							"type": "Table",
+							"objectType": "SNB_SpliceJunctionDNA",
+							"metaData": {
+								"VarKey": 2
+							}
+						},
+						{
+							"name": "SpliceJunctionDNA where Pos in ]30.5, 45.5]",
+							"used": false,
+							"type": "Table",
+							"objectType": "SNB_SpliceJunctionDNA",
+							"metaData": {
+								"VarKey": 3
+							}
+						}
+					]
+				},
+				{
+					"name": "VClass",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueSet(1, 2, 3), Frequencies(528, 517, 1179))",
+					"metaData": {
+						"TargetValues": true
+					}
+				},
+				{
+					"name": "PMode(SpliceJunctionDNA.Char)",
+					"label": "DataGrid(`Mode(SpliceJunctionDNA.Char)`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"\"), ValueGroup(\"C\"), ValueGroup(\"G\", \"N\", \" * \"), ValueGroup(\"T\"), ValueGroup(\"A\")), IntervalBounds(1.5, 2.5), Frequencies(149, 90, 195, 53, 41, 144, 214, 32, 96, 31, 375, 210, 209, 162, 223))",
+					"metaData": {
+						"Level": 0.00660335
+					}
+				},
+				{
+					"name": "PMode(SpliceJunctionDNA.Char) where Pos <= 30.5",
+					"label": "DataGrid(`Mode(SpliceJunctionDNA.Char) where Pos <= 30.5`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"G\", \"A\", \"N\", \" * \"), ValueGroup(\"\"), ValueGroup(\"C\"), ValueGroup(\"T\")), IntervalBounds(1.5, 2.5), Frequencies(243, 149, 108, 28, 26, 144, 215, 132, 428, 375, 226, 150))",
+					"metaData": {
+						"Level": 0.00904657
+					}
+				},
+				{
+					"name": "PMode(SpliceJunctionDNA.Char) where Pos > 30.5",
+					"label": "DataGrid(`Mode(SpliceJunctionDNA.Char) where Pos > 30.5`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"\"), ValueGroup(\"G\", \"N\", \" * \"), ValueGroup(\"C\"), ValueGroup(\"A\"), ValueGroup(\"T\")), IntervalBounds(1.5, 2.5), Frequencies(149, 199, 78, 31, 71, 144, 126, 128, 92, 27, 375, 209, 205, 216, 174))",
+					"metaData": {
+						"Level": 0.00159568
+					}
+				},
+				{
+					"name": "PCount(SpliceJunctionDNA) where Char = G",
+					"label": "DataGrid(`Count(SpliceJunctionDNA) where Char = G`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(1.5, 15.5, 18.5, 23.5), IntervalBounds(1.5, 2.5), Frequencies(149, 101, 83, 104, 91, 144, 258, 81, 32, 2, 376, 447, 133, 160, 63))",
+					"metaData": {
+						"Level": 0.00425843
+					}
+				},
+				{
+					"name": "PMean(SpliceJunctionDNA.Pos) where Char = C",
+					"label": "DataGrid(`Mean(SpliceJunctionDNA.Pos) where Char = C`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(#Missing, 18.975, 27.5325, 30.509), IntervalBounds(1.5, 2.5), Frequencies(149, 16, 109, 52, 202, 144, 2, 125, 144, 102, 377, 7, 183, 222, 390))",
+					"metaData": {
+						"Level": 0.000186473
+					}
+				},
+				{
+					"name": "PMedian(SpliceJunctionDNA.Pos) where Char = C",
+					"label": "DataGrid(`Median(SpliceJunctionDNA.Pos) where Char = C`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(#Missing, 20.75, 27.75, 36.75), IntervalBounds(1.5, 2.5), Frequencies(149, 63, 120, 84, 112, 144, 35, 205, 108, 25, 377, 67, 210, 374, 151))",
+					"metaData": {
+						"Level": 0.00240334
+					}
+				},
+				{
+					"name": "PMedian(SpliceJunctionDNA.Pos) where Char = G",
+					"label": "DataGrid(`Median(SpliceJunctionDNA.Pos) where Char = G`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(#Missing, 22.25, 29.75, 31.25, 31.75, 37.25, 42.25), IntervalBounds(1.5, 2.5), Frequencies(149, 16, 85, 93, 0, 125, 54, 6, 144, 12, 13, 41, 7, 126, 115, 59, 376, 109, 233, 75, 18, 236, 96, 36))",
+					"metaData": {
+						"Level": 0.0051156
+					}
+				},
+				{
+					"name": "PSum(SpliceJunctionDNA.Pos) where Char = G",
+					"label": "DataGrid(`Sum(SpliceJunctionDNA.Pos) where Char = G`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(377.5, 424.5, 670, 764.5), IntervalBounds(1.5, 2.5), Frequencies(221, 10, 156, 50, 91, 237, 43, 215, 21, 1, 652, 88, 325, 67, 47))",
+					"metaData": {
+						"Level": 0.00330069
+					}
+				},
+				{
+					"name": "PCount(SpliceJunctionDNA) where Char = A",
+					"label": "DataGrid(`Count(SpliceJunctionDNA) where Char = A`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(0.5, 15.5), IntervalBounds(2.5), Frequencies(293, 592, 160, 377, 450, 352))",
+					"metaData": {
+						"Level": 0.00130555
+					}
+				},
+				{
+					"name": "PMode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+					"label": "DataGrid(`Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"C\", \"T\"), ValueGroup(\"A\", \"G\", \"N\", \" * \"), ValueGroup(\"\")), IntervalBounds(1.5, 2.5), Frequencies(131, 248, 149, 358, 15, 144, 393, 411, 375))",
+					"metaData": {
+						"Level": 0.0105655
+					}
+				},
+				{
+					"name": "PMode(SpliceJunctionDNA.Char) where Pos in ]30.5, 45.5]",
+					"label": "DataGrid(`Mode(SpliceJunctionDNA.Char) where Pos in ]30.5, 45.5]`, Class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"\", \"T\"), ValueGroup(\"C\", \"A\"), ValueGroup(\"G\", \"N\", \" * \")), IntervalBounds(1.5), Frequencies(202, 105, 221, 722, 664, 310))",
+					"metaData": {
+						"Level": 0.00233269
+					}
+				},
+				{
+					"name": "SNBRClass",
+					"used": false,
+					"type": "Structure",
+					"structureType": "RankRegressor",
+					"rule": "SNBRankRegressor(Vector(0.1020507813, 0.2973632813, 0.2817382813, 0.01611328125, 0.00048828125, 0.4692382813, 0.5629882813, 0.3676757813, 0.1879882813, 0.5786132813, 0.2973632813), DataGridStats(`PMode(SpliceJunctionDNA.Char)`, `Mode(SpliceJunctionDNA.Char)`), DataGridStats(`PMode(SpliceJunctionDNA.Char) where Pos <= 30.5`, `Mode(SpliceJunctionDNA.Char) where Pos <= 30.5`), DataGridStats(`PMode(SpliceJunctionDNA.Char) where Pos > 30.5`, `Mode(SpliceJunctionDNA.Char) where Pos > 30.5`), DataGridStats(`PCount(SpliceJunctionDNA) where Char = G`, `Count(SpliceJunctionDNA) where Char = G`), DataGridStats(`PMean(SpliceJunctionDNA.Pos) where Char = C`, `Mean(SpliceJunctionDNA.Pos) where Char = C`), DataGridStats(`PMedian(SpliceJunctionDNA.Pos) where Char = C`, `Median(SpliceJunctionDNA.Pos) where Char = C`), DataGridStats(`PMedian(SpliceJunctionDNA.Pos) where Char = G`, `Median(SpliceJunctionDNA.Pos) where Char = G`), DataGridStats(`PSum(SpliceJunctionDNA.Pos) where Char = G`, `Sum(SpliceJunctionDNA.Pos) where Char = G`), DataGridStats(`PCount(SpliceJunctionDNA) where Char = A`, `Count(SpliceJunctionDNA) where Char = A`), DataGridStats(`PMode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`, `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), DataGridStats(`PMode(SpliceJunctionDNA.Char) where Pos in ]30.5, 45.5]`, `Mode(SpliceJunctionDNA.Char) where Pos in ]30.5, 45.5]`))"
+				},
+				{
+					"name": "MRClass",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetRankMean(SNBRClass)",
+					"metaData": {
+						"MeanRank": true
+					}
+				},
+				{
+					"name": "SDRClass",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetRankStandardDeviation(SNBRClass)",
+					"metaData": {
+						"StandardDeviationRank": true
+					}
+				},
+				{
+					"name": "CPR1Class",
+					"label": "Partile 1 on 5",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetRankCumulativeProbAt(SNBRClass, 0.2)",
+					"metaData": {
+						"CumulativeProbRank1": true
+					}
+				},
+				{
+					"name": "CPR2Class",
+					"label": "Partile 2 on 5",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetRankCumulativeProbAt(SNBRClass, 0.4)",
+					"metaData": {
+						"CumulativeProbRank2": true
+					}
+				},
+				{
+					"name": "CPR3Class",
+					"label": "Partile 3 on 5",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetRankCumulativeProbAt(SNBRClass, 0.6)",
+					"metaData": {
+						"CumulativeProbRank3": true
+					}
+				},
+				{
+					"name": "CPR4Class",
+					"label": "Partile 4 on 5",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetRankCumulativeProbAt(SNBRClass, 0.8)",
+					"metaData": {
+						"CumulativeProbRank4": true
+					}
+				},
+				{
+					"name": "CPR5Class",
+					"label": "Partile 5 on 5",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetRankCumulativeProbAt(SNBRClass, 1)",
+					"metaData": {
+						"CumulativeProbRank5": true
+					}
+				},
+				{
+					"name": "RankClass",
+					"used": false,
+					"type": "Numerical",
+					"rule": "ValueRank(VClass, Class)",
+					"metaData": {
+						"TargetVariableRank": true
+					}
+				},
+				{
+					"name": "DRClass",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetRankDensityAt(SNBRClass, RankClass)",
+					"metaData": {
+						"DensityRank": true
+					}
+				},
+				{
+					"name": "SNBClass",
+					"used": false,
+					"type": "Structure",
+					"structureType": "Regressor",
+					"rule": "SNBRegressor(SNBRClass, VClass)"
+				},
+				{
+					"name": "MClass",
+					"type": "Numerical",
+					"rule": "TargetMean(SNBClass)",
+					"metaData": {
+						"Mean": true
+					}
+				},
+				{
+					"name": "SDClass",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetStandardDeviation(SNBClass)",
+					"metaData": {
+						"StandardDeviation": true
+					}
+				},
+				{
+					"name": "DClass",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetDensityAt(SNBClass, Class)",
+					"metaData": {
+						"Density": true
+					}
+				}
+			]
+		},
+		{
+			"name": "SNB_SpliceJunctionDNA",
+			"key": ["SampleId"],
+			"metaData": {
+				"InitialDictionary": "SpliceJunctionDNA"
+			},
+			"variables": [
+				{
+					"name": "SampleId",
+					"type": "Categorical"
+				},
+				{
+					"name": "Pos",
+					"type": "Numerical"
+				},
+				{
+					"name": "Char",
+					"type": "Categorical"
+				}
+			]
+		}
+	],
+	"khiops_encoding": "utf8"
+}

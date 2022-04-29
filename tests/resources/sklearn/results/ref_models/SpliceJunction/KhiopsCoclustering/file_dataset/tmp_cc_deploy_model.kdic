@@ -1,0 +1,14 @@
+#Khiops 10.0
+
+Dictionary	CC_Keys_SpliceJunctionDNA	(SampleId)
+{
+	Categorical	SampleId		;	
+	Table(CC_SpliceJunctionDNA)	CC_SpliceJunctionDNA		;	
+};
+
+Dictionary	CC_SpliceJunctionDNA	(SampleId)
+{
+	Categorical	SampleId		;	
+	Numerical	Pos		;	
+	Categorical	Char		;	
+};

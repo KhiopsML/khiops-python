@@ -1,0 +1,4492 @@
+{
+	"tool": "Khiops",
+	"version": "10.0.3",
+	"shortDescription": "",
+	"preparationReport": {
+		"reportType": "Preparation",
+		"summary": {
+			"dictionary": "SpliceJunction",
+			"variables": {
+				"types": [
+					"Categorical",
+					"Numerical",
+					"Table"
+				],
+				"numbers": [
+					12,
+					90,
+					1
+				]
+			},
+			"database": "/path/to/pykhiops/KhiopsEncoder_fit_ag4cupld/sorted_SpliceJunction.txt",
+			"samplePercentage": 100,
+			"samplingMode": "Include sample",
+			"selectionVariable": "",
+			"selectionValue": "",
+			"instances": 2224,
+			"learningTask": "Classification analysis",
+			"targetVariable": "Class",
+			"targetDescriptiveStats": {
+				"values": 3,
+				"mode": "N",
+				"modeFrequency": 1179
+			},
+			"targetValues": {
+				"values": ["EI","IE","N"],
+				"frequencies": [528,517,1179]
+			},
+			"evaluatedVariables": 101,
+			"nativeVariables": 1,
+			"constructedVariables": 100,
+			"informativeVariables": 21,
+			"featureEngineering": {
+				"maxNumberOfConstructedVariables": 100,
+				"maxNumberOfTrees": 10,
+				"maxNumberOfVariablePairs": 0
+			},
+			"discretization": "MODL",
+			"valueGrouping": "MODL",
+			"nullModel": {
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02
+			}
+		},
+		"variablesStatistics": [
+			{
+				"rank": "R001",
+				"name": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+				"type": "Categorical",
+				"level": 0.0763684,
+				"parts": 3,
+				"values": 6,
+				"mode": "",
+				"modeFrequency": 668,
+				"constructionCost": 9.55993,
+				"preparationCost": 45.9658,
+				"dataCost": 2040.6,
+				"derivationRule": "TablePartitionMode(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Char)"
+			},
+			{
+				"rank": "R002",
+				"name": "Mode(SpliceJunctionDNA.Char) where Pos <= 30.5",
+				"type": "Categorical",
+				"level": 0.0663812,
+				"parts": 4,
+				"values": 6,
+				"mode": "",
+				"modeFrequency": 668,
+				"constructionCost": 8.17364,
+				"preparationCost": 57.1694,
+				"dataCost": 2053.45,
+				"derivationRule": "TableMode(`SpliceJunctionDNA where Pos <= 30.5`, Char)"
+			},
+			{
+				"rank": "R003",
+				"name": "Mode(SpliceJunctionDNA.Char)",
+				"type": "Categorical",
+				"level": 0.0503165,
+				"parts": 5,
+				"values": 6,
+				"mode": "",
+				"modeFrequency": 668,
+				"constructionCost": 4.68213,
+				"preparationCost": 67.3971,
+				"dataCost": 2083.17,
+				"derivationRule": "TableMode(SpliceJunctionDNA, Char)"
+			},
+			{
+				"rank": "R004",
+				"name": "Median(SpliceJunctionDNA.Pos) where Char = G",
+				"type": "Numerical",
+				"level": 0.0406186,
+				"parts": 8,
+				"values": 84,
+				"min": 7,
+				"max": 55.5,
+				"mean": 32.35369775,
+				"stdDev": 6.99593204,
+				"missingNumber": 669,
+				"constructionCost": 9.55993,
+				"preparationCost": 107.45,
+				"dataCost": 2060.25,
+				"derivationRule": "TableMedian(`SpliceJunctionDNA where Char = G`, Pos)"
+			},
+			{
+				"rank": "R005",
+				"name": "Count(SpliceJunctionDNA) where Char = G",
+				"type": "Numerical",
+				"level": 0.0349825,
+				"parts": 5,
+				"values": 34,
+				"min": 0,
+				"max": 37,
+				"mean": 11.02877698,
+				"stdDev": 8.572431508,
+				"missingNumber": 0,
+				"constructionCost": 9.55993,
+				"preparationCost": 69.1367,
+				"dataCost": 2111.35,
+				"derivationRule": "TableCount(`SpliceJunctionDNA where Char = G`)"
+			},
+			{
+				"rank": "R006",
+				"name": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+				"type": "Numerical",
+				"level": 0.0286852,
+				"parts": 5,
+				"values": 644,
+				"min": 24,
+				"max": 1244,
+				"mean": 497.5942122,
+				"stdDev": 187.2224066,
+				"missingNumber": 669,
+				"constructionCost": 9.55993,
+				"preparationCost": 66.6327,
+				"dataCost": 2128.15,
+				"derivationRule": "TableSum(`SpliceJunctionDNA where Char = G`, Pos)"
+			},
+			{
+				"rank": "R007",
+				"name": "Median(SpliceJunctionDNA.Pos) where Char = C",
+				"type": "Numerical",
+				"level": 0.0261843,
+				"parts": 5,
+				"values": 82,
+				"min": 3,
+				"max": 56.5,
+				"mean": 29.5498713,
+				"stdDev": 7.54260251,
+				"missingNumber": 670,
+				"constructionCost": 9.55993,
+				"preparationCost": 72.3215,
+				"dataCost": 2128.13,
+				"derivationRule": "TableMedian(`SpliceJunctionDNA where Char = C`, Pos)"
+			},
+			{
+				"rank": "R008",
+				"name": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+				"type": "Numerical",
+				"level": 0.0260931,
+				"parts": 5,
+				"values": 1077,
+				"min": 8,
+				"max": 48.875,
+				"mean": 31.57143091,
+				"stdDev": 4.944791855,
+				"missingNumber": 669,
+				"constructionCost": 9.55993,
+				"preparationCost": 69.3867,
+				"dataCost": 2131.27,
+				"derivationRule": "TableMean(`SpliceJunctionDNA where Char = G`, Pos)"
+			},
+			{
+				"rank": "R009",
+				"name": "Mode(SpliceJunctionDNA.Char) where Pos in ]30.5, 45.5]",
+				"type": "Categorical",
+				"level": 0.0188339,
+				"parts": 3,
+				"values": 6,
+				"mode": "",
+				"modeFrequency": 668,
+				"constructionCost": 9.55993,
+				"preparationCost": 46.3843,
+				"dataCost": 2170.75,
+				"derivationRule": "TablePartitionMode(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Char)"
+			},
+			{
+				"rank": "R010",
+				"name": "Mode(SpliceJunctionDNA.Char) where Pos > 30.5",
+				"type": "Categorical",
+				"level": 0.0173901,
+				"parts": 5,
+				"values": 6,
+				"mode": "",
+				"modeFrequency": 668,
+				"constructionCost": 8.17364,
+				"preparationCost": 67.886,
+				"dataCost": 2153.91,
+				"derivationRule": "TableMode(`SpliceJunctionDNA where Pos > 30.5`, Char)"
+			},
+			{
+				"rank": "R011",
+				"name": "Mode(SpliceJunctionDNA.Char) where Pos <= 15.5",
+				"type": "Categorical",
+				"level": 0.0114797,
+				"parts": 4,
+				"values": 5,
+				"mode": "",
+				"modeFrequency": 668,
+				"constructionCost": 9.55993,
+				"preparationCost": 55.1245,
+				"dataCost": 2178.7,
+				"derivationRule": "TablePartitionMode(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Char)"
+			},
+			{
+				"rank": "R012",
+				"name": "Count(SpliceJunctionDNA) where Char = A",
+				"type": "Numerical",
+				"level": 0.0110111,
+				"parts": 3,
+				"values": 33,
+				"min": 0,
+				"max": 44,
+				"mean": 9.664568345,
+				"stdDev": 7.599098536,
+				"missingNumber": 0,
+				"constructionCost": 11.1191,
+				"preparationCost": 41.4819,
+				"dataCost": 2191.85,
+				"derivationRule": "TableCount(`SpliceJunctionDNA where Char = A`)"
+			},
+			{
+				"rank": "R013",
+				"name": "Sum(SpliceJunctionDNA.Pos) where Char not in {C, G}",
+				"type": "Numerical",
+				"level": 0.00934542,
+				"parts": 4,
+				"values": 744,
+				"min": 107,
+				"max": 1699,
+				"mean": 857.4614396,
+				"stdDev": 237.7534187,
+				"missingNumber": 668,
+				"constructionCost": 9.55993,
+				"preparationCost": 55.1603,
+				"dataCost": 2183.51,
+				"derivationRule": "TableSum(`SpliceJunctionDNA where Char not in {C, G}`, Pos)"
+			},
+			{
+				"rank": "R014",
+				"name": "Count(SpliceJunctionDNA) where Char = C",
+				"type": "Numerical",
+				"level": 0.00869433,
+				"parts": 3,
+				"values": 34,
+				"min": 0,
+				"max": 34,
+				"mean": 11.11285971,
+				"stdDev": 8.701036494,
+				"missingNumber": 0,
+				"constructionCost": 9.55993,
+				"preparationCost": 44.8068,
+				"dataCost": 2195.34,
+				"derivationRule": "TableCount(`SpliceJunctionDNA where Char = C`)"
+			},
+			{
+				"rank": "R015",
+				"name": "Mean(SpliceJunctionDNA.Pos) where Char = C",
+				"type": "Numerical",
+				"level": 0.00858421,
+				"parts": 6,
+				"values": 1085,
+				"min": 10.7,
+				"max": 47.16666667,
+				"mean": 29.95733847,
+				"stdDev": 4.742967593,
+				"missingNumber": 670,
+				"constructionCost": 9.55993,
+				"preparationCost": 87.2318,
+				"dataCost": 2153.16,
+				"derivationRule": "TableMean(`SpliceJunctionDNA where Char = C`, Pos)"
+			},
+			{
+				"rank": "R016",
+				"name": "Mode(SpliceJunctionDNA.Char) where Char not in {C, G}",
+				"type": "Categorical",
+				"level": 0.00486962,
+				"parts": 2,
+				"values": 4,
+				"mode": "T",
+				"modeFrequency": 798,
+				"constructionCost": 9.55993,
+				"preparationCost": 30.5504,
+				"dataCost": 2218.28,
+				"derivationRule": "TableMode(`SpliceJunctionDNA where Char not in {C, G}`, Char)"
+			},
+			{
+				"rank": "R017",
+				"name": "Count(SpliceJunctionDNA) where Char = T",
+				"type": "Numerical",
+				"level": 0.00408875,
+				"parts": 3,
+				"values": 36,
+				"min": 0,
+				"max": 35,
+				"mean": 10.14973022,
+				"stdDev": 7.955788915,
+				"missingNumber": 0,
+				"constructionCost": 11.1191,
+				"preparationCost": 41.3504,
+				"dataCost": 2207.69,
+				"derivationRule": "TableCount(`SpliceJunctionDNA where Char = T`)"
+			},
+			{
+				"rank": "R018",
+				"name": "Count(SpliceJunctionDNA) where Char not in {C, G}",
+				"type": "Numerical",
+				"level": 0.00250182,
+				"parts": 3,
+				"values": 46,
+				"min": 0,
+				"max": 51,
+				"mean": 19.83678058,
+				"stdDev": 14.40401359,
+				"missingNumber": 0,
+				"constructionCost": 9.55993,
+				"preparationCost": 41.5722,
+				"dataCost": 2212.63,
+				"derivationRule": "TableCount(`SpliceJunctionDNA where Char not in {C, G}`)"
+			},
+			{
+				"rank": "R019",
+				"name": "Mode(SpliceJunctionDNA.Char) where Pos > 45.5",
+				"type": "Categorical",
+				"level": 0.00208549,
+				"parts": 3,
+				"values": 6,
+				"mode": "",
+				"modeFrequency": 668,
+				"constructionCost": 9.55993,
+				"preparationCost": 45.5584,
+				"dataCost": 2209.59,
+				"derivationRule": "TablePartitionMode(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Char)"
+			},
+			{
+				"rank": "R020",
+				"name": "StdDev(SpliceJunctionDNA.Pos) where Char = C",
+				"type": "Numerical",
+				"level": 0.000622937,
+				"parts": 2,
+				"values": 1496,
+				"min": 4.714045208,
+				"max": 25.29347742,
+				"mean": 16.67506228,
+				"stdDev": 2.265787716,
+				"missingNumber": 670,
+				"constructionCost": 9.55993,
+				"preparationCost": 29.1593,
+				"dataCost": 2229.3,
+				"derivationRule": "TableStdDev(`SpliceJunctionDNA where Char = C`, Pos)"
+			},
+			{
+				"rank": "R021",
+				"name": "Sum(SpliceJunctionDNA.Pos) where Char = C",
+				"type": "Numerical",
+				"level": 0.000244364,
+				"parts": 2,
+				"values": 633,
+				"min": 41,
+				"max": 1063,
+				"mean": 475.8758044,
+				"stdDev": 180.8593547,
+				"missingNumber": 670,
+				"constructionCost": 9.55993,
+				"preparationCost": 31.4691,
+				"dataCost": 2227.85,
+				"derivationRule": "TableSum(`SpliceJunctionDNA where Char = C`, Pos)"
+			},
+			{
+				"rank": "R022",
+				"name": "Count(SpliceJunctionDNA)",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 60,
+				"mean": 41.97841727,
+				"stdDev": 27.50486357,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCount(SpliceJunctionDNA)"
+			},
+			{
+				"rank": "R023",
+				"name": "Count(SpliceJunctionDNA) where Char not in {C, G, T, A}",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 4,
+				"min": 0,
+				"max": 41,
+				"mean": 0.02248201439,
+				"stdDev": 0.8719437631,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCount(`SpliceJunctionDNA where Char not in {C, G, T, A}`)"
+			},
+			{
+				"rank": "R024",
+				"name": "Count(SpliceJunctionDNA) where Pos <= 15.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 15,
+				"mean": 10.49460432,
+				"stdDev": 6.876215892,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(4)`)"
+			},
+			{
+				"rank": "R025",
+				"name": "Count(SpliceJunctionDNA) where Pos <= 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 30,
+				"mean": 20.98920863,
+				"stdDev": 13.75243178,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCount(`SpliceJunctionDNA where Pos <= 30.5`)"
+			},
+			{
+				"rank": "R026",
+				"name": "Count(SpliceJunctionDNA) where Pos <= 7.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 7,
+				"mean": 4.897482014,
+				"stdDev": 3.208900749,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(8)`)"
+			},
+			{
+				"rank": "R027",
+				"name": "Count(SpliceJunctionDNA) where Pos > 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 30,
+				"mean": 20.98920863,
+				"stdDev": 13.75243178,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCount(`SpliceJunctionDNA where Pos > 30.5`)"
+			},
+			{
+				"rank": "R028",
+				"name": "Count(SpliceJunctionDNA) where Pos > 45.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 15,
+				"mean": 10.49460432,
+				"stdDev": 6.876215892,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(4)`)"
+			},
+			{
+				"rank": "R029",
+				"name": "Count(SpliceJunctionDNA) where Pos > 53.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 7,
+				"mean": 4.897482014,
+				"stdDev": 3.208900749,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(8)`)"
+			},
+			{
+				"rank": "R030",
+				"name": "Count(SpliceJunctionDNA) where Pos in ]15.5, 22.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 7,
+				"mean": 4.897482014,
+				"stdDev": 3.208900749,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(8)`)"
+			},
+			{
+				"rank": "R031",
+				"name": "Count(SpliceJunctionDNA) where Pos in ]15.5, 30.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 15,
+				"mean": 10.49460432,
+				"stdDev": 6.876215892,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(4)`)"
+			},
+			{
+				"rank": "R032",
+				"name": "Count(SpliceJunctionDNA) where Pos in ]30.5, 38.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 8,
+				"mean": 5.597122302,
+				"stdDev": 3.667315142,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(8)`)"
+			},
+			{
+				"rank": "R033",
+				"name": "Count(SpliceJunctionDNA) where Pos in ]30.5, 45.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 15,
+				"mean": 10.49460432,
+				"stdDev": 6.876215892,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(4)`)"
+			},
+			{
+				"rank": "R034",
+				"name": "Count(SpliceJunctionDNA) where Pos in ]38.5, 45.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 7,
+				"mean": 4.897482014,
+				"stdDev": 3.208900749,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(8)`)"
+			},
+			{
+				"rank": "R035",
+				"name": "Count(SpliceJunctionDNA) where Pos in ]45.5, 53.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 8,
+				"mean": 5.597122302,
+				"stdDev": 3.667315142,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(8)`)"
+			},
+			{
+				"rank": "R036",
+				"name": "Count(SpliceJunctionDNA) where Pos in ]7.5, 15.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 8,
+				"mean": 5.597122302,
+				"stdDev": 3.667315142,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCount(`TablePartition(SpliceJunctionDNA) per Pos(8)`)"
+			},
+			{
+				"rank": "R037",
+				"name": "CountDistinct(SpliceJunctionDNA.Char)",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 5,
+				"min": 0,
+				"max": 5,
+				"mean": 2.799460432,
+				"stdDev": 1.836940997,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCountDistinct(SpliceJunctionDNA, Char)"
+			},
+			{
+				"rank": "R038",
+				"name": "CountDistinct(SpliceJunctionDNA.Char) where Char = C",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 1,
+				"mean": 0.6987410072,
+				"stdDev": 0.4588049826,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCountDistinct(`SpliceJunctionDNA where Char = C`, Char)"
+			},
+			{
+				"rank": "R039",
+				"name": "CountDistinct(SpliceJunctionDNA.Char) where Char = G",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 0,
+				"max": 1,
+				"mean": 0.6991906475,
+				"stdDev": 0.4586099497,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCountDistinct(`SpliceJunctionDNA where Char = G`, Char)"
+			},
+			{
+				"rank": "R040",
+				"name": "CountDistinct(SpliceJunctionDNA.Char) where Char not in {C, G}",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 4,
+				"min": 0,
+				"max": 3,
+				"mean": 1.401528777,
+				"stdDev": 0.9214751043,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCountDistinct(`SpliceJunctionDNA where Char not in {C, G}`, Char)"
+			},
+			{
+				"rank": "R041",
+				"name": "CountDistinct(SpliceJunctionDNA.Char) where Pos <= 15.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 5,
+				"min": 0,
+				"max": 5,
+				"mean": 2.704136691,
+				"stdDev": 1.7971953,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCountDistinct(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Char)"
+			},
+			{
+				"rank": "R042",
+				"name": "CountDistinct(SpliceJunctionDNA.Char) where Pos <= 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 5,
+				"min": 0,
+				"max": 5,
+				"mean": 2.790917266,
+				"stdDev": 1.832433679,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCountDistinct(`SpliceJunctionDNA where Pos <= 30.5`, Char)"
+			},
+			{
+				"rank": "R043",
+				"name": "CountDistinct(SpliceJunctionDNA.Char) where Pos > 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 6,
+				"min": 0,
+				"max": 5,
+				"mean": 2.790467626,
+				"stdDev": 1.833486221,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableCountDistinct(`SpliceJunctionDNA where Pos > 30.5`, Char)"
+			},
+			{
+				"rank": "R044",
+				"name": "CountDistinct(SpliceJunctionDNA.Char) where Pos > 45.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 6,
+				"min": 0,
+				"max": 5,
+				"mean": 2.682553957,
+				"stdDev": 1.789995566,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCountDistinct(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Char)"
+			},
+			{
+				"rank": "R045",
+				"name": "CountDistinct(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 4,
+				"min": 0,
+				"max": 4,
+				"mean": 2.726618705,
+				"stdDev": 1.805988262,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCountDistinct(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Char)"
+			},
+			{
+				"rank": "R046",
+				"name": "CountDistinct(SpliceJunctionDNA.Char) where Pos in ]30.5, 45.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 6,
+				"min": 0,
+				"max": 5,
+				"mean": 2.723920863,
+				"stdDev": 1.807071368,
+				"missingNumber": 0,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionCountDistinct(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Char)"
+			},
+			{
+				"rank": "R047",
+				"name": "Max(SpliceJunctionDNA.Pos)",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 60,
+				"max": 60,
+				"mean": 60,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMax(SpliceJunctionDNA, Pos)"
+			},
+			{
+				"rank": "R048",
+				"name": "Max(SpliceJunctionDNA.Pos) where Char = C",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 33,
+				"min": 18,
+				"max": 60,
+				"mean": 56.6016731,
+				"stdDev": 4.586115499,
+				"missingNumber": 670,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMax(`SpliceJunctionDNA where Char = C`, Pos)"
+			},
+			{
+				"rank": "R049",
+				"name": "Max(SpliceJunctionDNA.Pos) where Char = G",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 30,
+				"min": 9,
+				"max": 60,
+				"mean": 56.70353698,
+				"stdDev": 4.444898846,
+				"missingNumber": 669,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMax(`SpliceJunctionDNA where Char = G`, Pos)"
+			},
+			{
+				"rank": "R050",
+				"name": "Max(SpliceJunctionDNA.Pos) where Char not in {C, G}",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 18,
+				"min": 39,
+				"max": 60,
+				"mean": 58.8348329,
+				"stdDev": 1.78009417,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMax(`SpliceJunctionDNA where Char not in {C, G}`, Pos)"
+			},
+			{
+				"rank": "R051",
+				"name": "Max(SpliceJunctionDNA.Pos) where Pos <= 15.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 15,
+				"max": 15,
+				"mean": 15,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMax(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R052",
+				"name": "Max(SpliceJunctionDNA.Pos) where Pos <= 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 30,
+				"max": 30,
+				"mean": 30,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMax(`SpliceJunctionDNA where Pos <= 30.5`, Pos)"
+			},
+			{
+				"rank": "R053",
+				"name": "Max(SpliceJunctionDNA.Pos) where Pos > 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 60,
+				"max": 60,
+				"mean": 60,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMax(`SpliceJunctionDNA where Pos > 30.5`, Pos)"
+			},
+			{
+				"rank": "R054",
+				"name": "Max(SpliceJunctionDNA.Pos) where Pos > 45.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 60,
+				"max": 60,
+				"mean": 60,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMax(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R055",
+				"name": "Max(SpliceJunctionDNA.Pos) where Pos in ]15.5, 30.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 30,
+				"max": 30,
+				"mean": 30,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMax(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R056",
+				"name": "Max(SpliceJunctionDNA.Pos) where Pos in ]30.5, 45.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 45,
+				"max": 45,
+				"mean": 45,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMax(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R057",
+				"name": "Mean(SpliceJunctionDNA.Pos)",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 30.5,
+				"max": 30.5,
+				"mean": 30.5,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMean(SpliceJunctionDNA, Pos)"
+			},
+			{
+				"rank": "R058",
+				"name": "Mean(SpliceJunctionDNA.Pos) where Char not in {C, G}",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 1192,
+				"min": 19.22222222,
+				"max": 40.90909091,
+				"mean": 30.20175571,
+				"stdDev": 2.55408536,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMean(`SpliceJunctionDNA where Char not in {C, G}`, Pos)"
+			},
+			{
+				"rank": "R059",
+				"name": "Mean(SpliceJunctionDNA.Pos) where Pos <= 15.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 8,
+				"max": 8,
+				"mean": 8,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMean(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R060",
+				"name": "Mean(SpliceJunctionDNA.Pos) where Pos <= 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 15.5,
+				"max": 15.5,
+				"mean": 15.5,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMean(`SpliceJunctionDNA where Pos <= 30.5`, Pos)"
+			},
+			{
+				"rank": "R061",
+				"name": "Mean(SpliceJunctionDNA.Pos) where Pos > 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 45.5,
+				"max": 45.5,
+				"mean": 45.5,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMean(`SpliceJunctionDNA where Pos > 30.5`, Pos)"
+			},
+			{
+				"rank": "R062",
+				"name": "Mean(SpliceJunctionDNA.Pos) where Pos > 45.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 53,
+				"max": 53,
+				"mean": 53,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMean(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R063",
+				"name": "Mean(SpliceJunctionDNA.Pos) where Pos in ]15.5, 30.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 23,
+				"max": 23,
+				"mean": 23,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMean(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R064",
+				"name": "Mean(SpliceJunctionDNA.Pos) where Pos in ]30.5, 45.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 38,
+				"max": 38,
+				"mean": 38,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMean(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R065",
+				"name": "Median(SpliceJunctionDNA.Pos)",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 30.5,
+				"max": 30.5,
+				"mean": 30.5,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMedian(SpliceJunctionDNA, Pos)"
+			},
+			{
+				"rank": "R066",
+				"name": "Median(SpliceJunctionDNA.Pos) where Char not in {C, G}",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 52,
+				"min": 16.5,
+				"max": 43,
+				"mean": 30.08611825,
+				"stdDev": 4.041992,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMedian(`SpliceJunctionDNA where Char not in {C, G}`, Pos)"
+			},
+			{
+				"rank": "R067",
+				"name": "Median(SpliceJunctionDNA.Pos) where Pos <= 15.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 8,
+				"max": 8,
+				"mean": 8,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMedian(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R068",
+				"name": "Median(SpliceJunctionDNA.Pos) where Pos <= 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 15.5,
+				"max": 15.5,
+				"mean": 15.5,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMedian(`SpliceJunctionDNA where Pos <= 30.5`, Pos)"
+			},
+			{
+				"rank": "R069",
+				"name": "Median(SpliceJunctionDNA.Pos) where Pos > 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 45.5,
+				"max": 45.5,
+				"mean": 45.5,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMedian(`SpliceJunctionDNA where Pos > 30.5`, Pos)"
+			},
+			{
+				"rank": "R070",
+				"name": "Median(SpliceJunctionDNA.Pos) where Pos > 45.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 53,
+				"max": 53,
+				"mean": 53,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMedian(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R071",
+				"name": "Median(SpliceJunctionDNA.Pos) where Pos in ]15.5, 30.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 23,
+				"max": 23,
+				"mean": 23,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMedian(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R072",
+				"name": "Median(SpliceJunctionDNA.Pos) where Pos in ]30.5, 45.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 38,
+				"max": 38,
+				"mean": 38,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMedian(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R073",
+				"name": "Min(SpliceJunctionDNA.Pos)",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 1,
+				"max": 1,
+				"mean": 1,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMin(SpliceJunctionDNA, Pos)"
+			},
+			{
+				"rank": "R074",
+				"name": "Min(SpliceJunctionDNA.Pos) where Char = C",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 30,
+				"min": 1,
+				"max": 36,
+				"mean": 4.163449163,
+				"stdDev": 4.04912593,
+				"missingNumber": 670,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMin(`SpliceJunctionDNA where Char = C`, Pos)"
+			},
+			{
+				"rank": "R075",
+				"name": "Min(SpliceJunctionDNA.Pos) where Char = G",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 33,
+				"min": 1,
+				"max": 37,
+				"mean": 4.484244373,
+				"stdDev": 4.779805051,
+				"missingNumber": 669,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMin(`SpliceJunctionDNA where Char = G`, Pos)"
+			},
+			{
+				"rank": "R076",
+				"name": "Min(SpliceJunctionDNA.Pos) where Char not in {C, G}",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 15,
+				"min": 1,
+				"max": 27,
+				"mean": 2.099614396,
+				"stdDev": 1.694835602,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMin(`SpliceJunctionDNA where Char not in {C, G}`, Pos)"
+			},
+			{
+				"rank": "R077",
+				"name": "Min(SpliceJunctionDNA.Pos) where Pos <= 15.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 1,
+				"max": 1,
+				"mean": 1,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMin(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R078",
+				"name": "Min(SpliceJunctionDNA.Pos) where Pos <= 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 1,
+				"max": 1,
+				"mean": 1,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMin(`SpliceJunctionDNA where Pos <= 30.5`, Pos)"
+			},
+			{
+				"rank": "R079",
+				"name": "Min(SpliceJunctionDNA.Pos) where Pos > 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 31,
+				"max": 31,
+				"mean": 31,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMin(`SpliceJunctionDNA where Pos > 30.5`, Pos)"
+			},
+			{
+				"rank": "R080",
+				"name": "Min(SpliceJunctionDNA.Pos) where Pos > 45.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 46,
+				"max": 46,
+				"mean": 46,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMin(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R081",
+				"name": "Min(SpliceJunctionDNA.Pos) where Pos in ]15.5, 30.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 16,
+				"max": 16,
+				"mean": 16,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMin(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R082",
+				"name": "Min(SpliceJunctionDNA.Pos) where Pos in ]30.5, 45.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 31,
+				"max": 31,
+				"mean": 31,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionMin(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R083",
+				"name": "Mode(SpliceJunctionDNA.Char) where Char = C",
+				"type": "Categorical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"mode": "C",
+				"modeFrequency": 1554,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMode(`SpliceJunctionDNA where Char = C`, Char)"
+			},
+			{
+				"rank": "R084",
+				"name": "Mode(SpliceJunctionDNA.Char) where Char = G",
+				"type": "Categorical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"mode": "G",
+				"modeFrequency": 1555,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableMode(`SpliceJunctionDNA where Char = G`, Char)"
+			},
+			{
+				"rank": "R085",
+				"name": "SampleId",
+				"type": "Categorical",
+				"level": 0,
+				"parts": 1,
+				"values": 2224,
+				"mode": "AGMKPNRSB-NEG-1",
+				"modeFrequency": 1,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02
+			},
+			{
+				"rank": "R086",
+				"name": "StdDev(SpliceJunctionDNA.Pos)",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 17.31810228,
+				"max": 17.31810228,
+				"mean": 17.31810228,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableStdDev(SpliceJunctionDNA, Pos)"
+			},
+			{
+				"rank": "R087",
+				"name": "StdDev(SpliceJunctionDNA.Pos) where Char = G",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 1486,
+				"min": 0.8164965809,
+				"max": 24.86453092,
+				"mean": 16.30661136,
+				"stdDev": 2.352608192,
+				"missingNumber": 669,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableStdDev(`SpliceJunctionDNA where Char = G`, Pos)"
+			},
+			{
+				"rank": "R088",
+				"name": "StdDev(SpliceJunctionDNA.Pos) where Char not in {C, G}",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 1505,
+				"min": 10.27312952,
+				"max": 20.57649849,
+				"mean": 17.02221169,
+				"stdDev": 1.134216392,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableStdDev(`SpliceJunctionDNA where Char not in {C, G}`, Pos)"
+			},
+			{
+				"rank": "R089",
+				"name": "StdDev(SpliceJunctionDNA.Pos) where Pos <= 15.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 4.320493799,
+				"max": 4.320493799,
+				"mean": 4.320493799,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionStdDev(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R090",
+				"name": "StdDev(SpliceJunctionDNA.Pos) where Pos <= 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 8.655441448,
+				"max": 8.655441448,
+				"mean": 8.655441448,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableStdDev(`SpliceJunctionDNA where Pos <= 30.5`, Pos)"
+			},
+			{
+				"rank": "R091",
+				"name": "StdDev(SpliceJunctionDNA.Pos) where Pos > 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 8.655441448,
+				"max": 8.655441448,
+				"mean": 8.655441448,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableStdDev(`SpliceJunctionDNA where Pos > 30.5`, Pos)"
+			},
+			{
+				"rank": "R092",
+				"name": "StdDev(SpliceJunctionDNA.Pos) where Pos > 45.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 4.320493799,
+				"max": 4.320493799,
+				"mean": 4.320493799,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionStdDev(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R093",
+				"name": "StdDev(SpliceJunctionDNA.Pos) where Pos in ]15.5, 30.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 4.320493799,
+				"max": 4.320493799,
+				"mean": 4.320493799,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionStdDev(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R094",
+				"name": "StdDev(SpliceJunctionDNA.Pos) where Pos in ]30.5, 45.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 4.320493799,
+				"max": 4.320493799,
+				"mean": 4.320493799,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionStdDev(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R095",
+				"name": "Sum(SpliceJunctionDNA.Pos)",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 1830,
+				"max": 1830,
+				"mean": 1830,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableSum(SpliceJunctionDNA, Pos)"
+			},
+			{
+				"rank": "R096",
+				"name": "Sum(SpliceJunctionDNA.Pos) where Pos <= 15.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 120,
+				"max": 120,
+				"mean": 120,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionSum(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R097",
+				"name": "Sum(SpliceJunctionDNA.Pos) where Pos <= 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 465,
+				"max": 465,
+				"mean": 465,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableSum(`SpliceJunctionDNA where Pos <= 30.5`, Pos)"
+			},
+			{
+				"rank": "R098",
+				"name": "Sum(SpliceJunctionDNA.Pos) where Pos > 30.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 1365,
+				"max": 1365,
+				"mean": 1365,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TableSum(`SpliceJunctionDNA where Pos > 30.5`, Pos)"
+			},
+			{
+				"rank": "R099",
+				"name": "Sum(SpliceJunctionDNA.Pos) where Pos > 45.5",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 795,
+				"max": 795,
+				"mean": 795,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionSum(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R100",
+				"name": "Sum(SpliceJunctionDNA.Pos) where Pos in ]15.5, 30.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 345,
+				"max": 345,
+				"mean": 345,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionSum(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			},
+			{
+				"rank": "R101",
+				"name": "Sum(SpliceJunctionDNA.Pos) where Pos in ]30.5, 45.5]",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 2,
+				"min": 570,
+				"max": 570,
+				"mean": 570,
+				"stdDev": 0,
+				"missingNumber": 668,
+				"constructionCost": 0.693147,
+				"preparationCost": 14.7223,
+				"dataCost": 2254.02,
+				"derivationRule": "TablePartitionSum(`TablePartition(SpliceJunctionDNA) per Pos(4)`, Pos)"
+			}
+		],
+		"variablesDetailedStatistics": {
+			"R001": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["C","T"],
+								["A","G","N"],
+								[""]
+							],
+							"defaultGroupIndex": 1
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[131,358,393],
+						[248,15,411],
+						[149,144,375]
+					],
+					"partInterests": [0.345354,0.648116,0.00652991]
+				},
+				"inputValues": {
+					"values": ["","C","A","T","G","N"],
+					"frequencies": [668,551,364,331,309,1]
+				}
+			},
+			"R002": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos <= 30.5",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["G","A","N"],
+								[""],
+								["C"],
+								["T"]
+							],
+							"defaultGroupIndex": 0
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[243,26,428],
+						[149,144,375],
+						[108,215,226],
+						[28,132,150]
+					],
+					"partInterests": [0.591322,0.00718028,0.188595,0.212903]
+				},
+				"inputValues": {
+					"values": ["","C","G","A","T","N"],
+					"frequencies": [668,549,355,341,310,1]
+				}
+			},
+			"R003": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mode(SpliceJunctionDNA.Char)",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								[""],
+								["C"],
+								["G","N"],
+								["T"],
+								["A"]
+							],
+							"defaultGroupIndex": 2
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,375],
+						[90,214,210],
+						[195,32,209],
+						[53,96,162],
+						[41,31,223]
+					],
+					"partInterests": [0.00886675,0.286245,0.440426,0.04573,0.218733]
+				},
+				"inputValues": {
+					"values": ["","C","G","T","A","N"],
+					"frequencies": [668,514,435,311,295,1]
+				}
+			},
+			"R004": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[7,22.25],
+								[22.25,29.75],
+								[29.75,31.25],
+								[31.25,31.75],
+								[31.75,37.25],
+								[37.25,42.25],
+								[42.25,55.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,376],
+						[16,12,109],
+						[85,13,233],
+						[93,41,75],
+						[0,7,18],
+						[125,126,236],
+						[54,115,96],
+						[6,59,36]
+					],
+					"partInterests": [0.00850514,0.130809,0.306329,0.137039,0.0420538,0.0126413,0.166567,0.196057]
+				}
+			},
+			"R005": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Count(SpliceJunctionDNA) where Char = G",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[0,1.5],
+								[1.5,15.5],
+								[15.5,18.5],
+								[18.5,23.5],
+								[23.5,37]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,376],
+						[101,258,447],
+						[83,81,133],
+						[104,32,160],
+						[91,2,63]
+					],
+					"partInterests": [0.0113105,0.313255,0.0330909,0.159096,0.483248]
+				}
+			},
+			"R006": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[24,377.5],
+								[377.5,424.5],
+								[424.5,670],
+								[670,764.5],
+								[764.5,1244]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[221,237,652],
+						[10,43,88],
+						[156,215,325],
+						[50,21,67],
+						[91,1,47]
+					],
+					"partInterests": [0.0733484,0.130726,0.102254,0.0594725,0.634199]
+				}
+			},
+			"R007": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Median(SpliceJunctionDNA.Pos) where Char = C",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[3,18.75],
+								[18.75,28.75],
+								[28.75,35.75],
+								[35.75,56.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,377],
+						[41,12,38],
+						[155,252,274],
+						[54,77,301],
+						[129,32,189]
+					],
+					"partInterests": [0.0137597,0.0995582,0.335616,0.260277,0.290789]
+				}
+			},
+			"R008": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[8,30.232],
+								[30.232,32.222],
+								[32.222,38.12],
+								[38.12,48.875]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,376],
+						[155,54,372],
+						[77,54,148],
+						[134,181,241],
+						[13,84,42]
+					],
+					"partInterests": [0.0136489,0.384372,0.017779,0.143099,0.441101]
+				}
+			},
+			"R009": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]30.5, 45.5]",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["","T"],
+								["C","A"],
+								["G","N"]
+							],
+							"defaultGroupIndex": 2
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[202,192,530],
+						[105,218,446],
+						[221,107,203]
+					],
+					"partInterests": [0.0500464,0.35458,0.595374]
+				},
+				"inputValues": {
+					"values": ["","G","C","A","T","N"],
+					"frequencies": [668,530,388,381,256,1]
+				}
+			},
+			"R010": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos > 30.5",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								[""],
+								["G","N"],
+								["C"],
+								["A"],
+								["T"]
+							],
+							"defaultGroupIndex": 1
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,375],
+						[199,126,209],
+						[78,128,205],
+						[31,92,216],
+						[71,27,174]
+					],
+					"partInterests": [0.0169603,0.362173,0.0960531,0.313426,0.211388]
+				},
+				"inputValues": {
+					"values": ["","G","C","A","T","N"],
+					"frequencies": [668,533,411,339,272,1]
+				}
+			},
+			"R011": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos <= 15.5",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["","A"],
+								["C"],
+								["G"],
+								["T"]
+							],
+							"defaultGroupIndex": 3
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[243,201,614],
+						[131,190,221],
+						[111,36,188],
+						[43,90,156]
+					],
+					"partInterests": [0.1193,0.383869,0.341779,0.155052]
+				},
+				"inputValues": {
+					"values": ["","C","A","G","T"],
+					"frequencies": [668,542,390,335,289]
+				}
+			},
+			"R012": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Count(SpliceJunctionDNA) where Char = A",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[0,0.5],
+								[0.5,15.5],
+								[15.5,44]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,377],
+						[286,306,450],
+						[93,67,352]
+					],
+					"partInterests": [0.0285744,0.412602,0.558824]
+				}
+			},
+			"R013": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Sum(SpliceJunctionDNA.Pos) where Char not in {C, G}",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[107,579.5],
+								[579.5,939.5],
+								[939.5,1699]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,375],
+						[76,21,68],
+						[211,251,372],
+						[92,101,364]
+					],
+					"partInterests": [0.0246275,0.384277,0.261049,0.330047]
+				}
+			},
+			"R014": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Count(SpliceJunctionDNA) where Char = C",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[0,16.5],
+								[16.5,21.5],
+								[21.5,34]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[400,275,869],
+						[92,128,198],
+						[36,114,112]
+					],
+					"partInterests": [0.288902,0.126988,0.584111]
+				}
+			},
+			"R015": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mean(SpliceJunctionDNA.Pos) where Char = C",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[10.7,16.66],
+								[16.66,20.02],
+								[20.02,27.6899],
+								[27.6899,30.394],
+								[30.394,39.437],
+								[39.437,47.16666667]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[152,145,381],
+						[22,1,11],
+						[106,131,180],
+						[42,134,207],
+						[204,104,369],
+						[2,2,31]
+					],
+					"partInterests": [0.0180335,0.186492,0.124279,0.337428,0.202382,0.131386]
+				}
+			},
+			"R016": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mode(SpliceJunctionDNA.Char) where Char not in {C, G}",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["A","","N"],
+								["T"]
+							],
+							"defaultGroupIndex": 0
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[351,258,817],
+						[177,259,362]
+					],
+					"partInterests": [0.388916,0.611084]
+				},
+				"inputValues": {
+					"values": ["T","A","","N"],
+					"frequencies": [798,757,668,1]
+				}
+			},
+			"R017": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Count(SpliceJunctionDNA) where Char = T",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[0,0.5],
+								[0.5,11.5],
+								[11.5,35]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,377],
+						[162,61,231],
+						[217,312,571]
+					],
+					"partInterests": [0.0417692,0.671181,0.28705]
+				}
+			},
+			"R018": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Count(SpliceJunctionDNA) where Char not in {C, G}",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[0,2],
+								[2,30.5],
+								[30.5,51]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[149,144,375],
+						[288,258,445],
+						[91,115,359]
+					],
+					"partInterests": [0.044975,0.463029,0.491996]
+				}
+			},
+			"R019": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos > 45.5",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["","T"],
+								["C","G","N"],
+								["A"]
+							],
+							"defaultGroupIndex": 1
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[224,184,547],
+						[258,224,405],
+						[46,109,227]
+					],
+					"partInterests": [0.155612,0.321539,0.522849]
+				},
+				"inputValues": {
+					"values": ["","C","G","A","T","N"],
+					"frequencies": [668,450,436,382,287,1]
+				}
+			},
+			"R020": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "StdDev(SpliceJunctionDNA.Pos) where Char = C",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[4.714045208,17.5782],
+								[17.5782,25.29347742]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[342,402,925],
+						[186,115,254]
+					],
+					"partInterests": [0.271167,0.728833]
+				}
+			},
+			"R021": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Sum(SpliceJunctionDNA.Pos) where Char = C",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[41,448.5],
+								[448.5,1063]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[351,262,778],
+						[177,255,401]
+					],
+					"partInterests": [0.401241,0.598759]
+				}
+			}
+		}
+	},
+	"treePreparationReport": {
+		"reportType": "Preparation",
+		"summary": {
+			"dictionary": "SpliceJunction",
+			"variables": {
+				"types": [
+					"Categorical",
+					"Numerical",
+					"Table"
+				],
+				"numbers": [
+					12,
+					90,
+					1
+				]
+			},
+			"database": "/path/to/pykhiops/KhiopsEncoder_fit_ag4cupld/sorted_SpliceJunction.txt",
+			"samplePercentage": 100,
+			"samplingMode": "Include sample",
+			"selectionVariable": "",
+			"selectionValue": "",
+			"instances": 2224,
+			"learningTask": "Classification analysis",
+			"targetVariable": "Class",
+			"targetDescriptiveStats": {
+				"values": 3,
+				"mode": "N",
+				"modeFrequency": 1179
+			},
+			"targetValues": {
+				"values": ["EI","IE","N"],
+				"frequencies": [528,517,1179]
+			},
+			"evaluatedVariables": 10,
+			"nativeVariables": 0,
+			"constructedVariables": 10,
+			"informativeVariables": 10
+		},
+		"variablesStatistics": [
+			{
+				"rank": "R01",
+				"name": "Tree_1",
+				"type": "Categorical",
+				"level": 0.105243,
+				"parts": 5,
+				"values": 6,
+				"mode": "L7",
+				"modeFrequency": 822,
+				"constructionCost": 82.6087,
+				"preparationCost": 66.0568,
+				"dataCost": 1881.93,
+				"derivationRule": "SwitchC(IntervalIndex(IntervalBounds(744), `Sum(SpliceJunctionDNA.Pos) where Char = G`), \"L0\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"C\", \"T\"), ValueGroup(\"A\", \"G\", \"N\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L0\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"T\", \" * \"), ValueGroup(\"C\", \"G\", \"A\")), `Mode(SpliceJunctionDNA.Char) where Pos > 30.5`), \"L1\", \"L7\", SwitchC(IntervalIndex(IntervalBounds(31.158), `Mean(SpliceJunctionDNA.Pos) where Char = G`), \"L3\", \"L9\", \"L10\")), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"G\", \"C\", \" * \"), ValueGroup(\"A\")), `Mode(SpliceJunctionDNA.Char)`), \"L1\", \"L5\", \"L6\")), \"L2\")"
+			},
+			{
+				"rank": "R02",
+				"name": "Tree_9",
+				"type": "Categorical",
+				"level": 0.0954882,
+				"parts": 5,
+				"values": 8,
+				"mode": "L5",
+				"modeFrequency": 775,
+				"constructionCost": 89.3624,
+				"preparationCost": 68.0004,
+				"dataCost": 1895.37,
+				"derivationRule": "SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"C\", \"T\"), ValueGroup(\"A\", \"G\", \"N\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L0\", SwitchC(IntervalIndex(IntervalBounds(261.5), `Sum(SpliceJunctionDNA.Pos) where Char = G`), \"L0\", \"L5\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"C\", \"T\", \"A\", \" * \"), ValueGroup(\"G\")), `Mode(SpliceJunctionDNA.Char)`), \"L1\", SwitchC(IntervalIndex(IntervalBounds(27.25), `Median(SpliceJunctionDNA.Pos) where Char = C`), \"L6\", \"L9\", SwitchC(IntervalIndex(IntervalBounds(34.25), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L7\", \"L13\", \"L14\")), SwitchC(IntervalIndex(IntervalBounds(786), `Sum(SpliceJunctionDNA.Pos) where Char = G`), \"L6\", \"L11\", \"L12\"))), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"G\", \"C\", \" * \"), ValueGroup(\"A\")), `Mode(SpliceJunctionDNA.Char)`), \"L0\", \"L3\", \"L4\"))"
+			},
+			{
+				"rank": "R03",
+				"name": "Tree_8",
+				"type": "Categorical",
+				"level": 0.0926116,
+				"parts": 8,
+				"values": 9,
+				"mode": "L13",
+				"modeFrequency": 900,
+				"constructionCost": 123.873,
+				"preparationCost": 96.9561,
+				"dataCost": 1838.43,
+				"derivationRule": "SwitchC(IntervalIndex(IntervalBounds(17.5), `Count(SpliceJunctionDNA) where Char = G`), \"L0\", SwitchC(IntervalIndex(IntervalBounds(36.75), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L0\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"C\", \"T\"), ValueGroup(\"A\", \"G\", \"N\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L1\", SwitchC(IntervalIndex(IntervalBounds(30.207), `Mean(SpliceJunctionDNA.Pos) where Char = G`), \"L5\", \"L13\", \"L14\"), \"L10\"), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"C\", \"T\", \"G\", \" * \"), ValueGroup(\"A\")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L1\", \"L7\", \"L8\")), SwitchC(IntervalIndex(IntervalBounds(28.75), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L0\", \"L3\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"G\", \"A\"), ValueGroup(\"C\", \"T\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L2\", \"L11\", SwitchC(IntervalIndex(IntervalBounds(772.5), `Sum(SpliceJunctionDNA.Pos) where Char = G`), \"L4\", \"L15\", \"L16\"))))"
+			},
+			{
+				"rank": "R04",
+				"name": "Tree_3",
+				"type": "Categorical",
+				"level": 0.0900106,
+				"parts": 5,
+				"values": 8,
+				"mode": "L9",
+				"modeFrequency": 875,
+				"constructionCost": 114.519,
+				"preparationCost": 70.1085,
+				"dataCost": 1880.54,
+				"derivationRule": "SwitchC(IntervalIndex(IntervalBounds(744), `Sum(SpliceJunctionDNA.Pos) where Char = G`), \"L0\", SwitchC(IntervalIndex(IntervalBounds(36.25), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L0\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"C\", \"T\"), ValueGroup(\"G\", \"A\", \"N\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos <= 30.5`), \"L1\", SwitchC(IntervalIndex(IntervalBounds(30.75), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L3\", \"L9\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"C\", \"T\"), ValueGroup(\"G\", \"A\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L7\", \"L13\", \"L14\")), \"L8\"), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"C\", \"T\"), ValueGroup(\"A\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos <= 30.5`), \"L1\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"C\", \"T\", \"G\", \" * \"), ValueGroup(\"A\")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L4\", \"L11\", \"L12\"), \"L6\")), \"L2\")"
+			},
+			{
+				"rank": "R05",
+				"name": "Tree_6",
+				"type": "Categorical",
+				"level": 0.0887342,
+				"parts": 6,
+				"values": 9,
+				"mode": "L3",
+				"modeFrequency": 668,
+				"constructionCost": 117.073,
+				"preparationCost": 81.528,
+				"dataCost": 1869.46,
+				"derivationRule": "SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"C\", \"T\"), ValueGroup(\"G\", \"A\", \"N\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos <= 30.5`), \"L0\", SwitchC(IntervalIndex(IntervalBounds(3.5), `Count(SpliceJunctionDNA) where Pos > 53.5`), \"L0\", \"L3\", SwitchC(IntervalIndex(IntervalBounds(19.5), `Count(SpliceJunctionDNA) where Char = G`), \"L1\", SwitchC(IntervalIndex(IntervalBounds(32.97), `Mean(SpliceJunctionDNA.Pos) where Char = G`), \"L4\", SwitchC(IntervalIndex(IntervalBounds(29.75), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L5\", \"L13\", \"L14\"), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"C\", \"T\"), ValueGroup(\"A\", \"G\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L5\", \"L15\", \"L16\")), SwitchC(IntervalIndex(IntervalBounds(743), `Sum(SpliceJunctionDNA.Pos) where Char = G`), \"L4\", \"L7\", \"L8\"))), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"G\", \"C\", \" * \"), ValueGroup(\"A\")), `Mode(SpliceJunctionDNA.Char)`), \"L0\", \"L11\", \"L12\"))"
+			},
+			{
+				"rank": "R06",
+				"name": "Tree_5",
+				"type": "Categorical",
+				"level": 0.0858425,
+				"parts": 6,
+				"values": 8,
+				"mode": "L7",
+				"modeFrequency": 806,
+				"constructionCost": 108.454,
+				"preparationCost": 78.271,
+				"dataCost": 1887.9,
+				"derivationRule": "SwitchC(IntervalIndex(IntervalBounds(31.488), `Mean(SpliceJunctionDNA.Pos) where Char = C`), \"L0\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"C\", \"T\"), ValueGroup(\"A\", \"G\", \"N\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L0\", SwitchC(IntervalIndex(IntervalBounds(30.207), `Mean(SpliceJunctionDNA.Pos) where Char = G`), \"L1\", \"L7\", SwitchC(IntervalIndex(IntervalBounds(18.5), `Count(SpliceJunctionDNA) where Char = G`), \"L5\", \"L9\", SwitchC(IntervalIndex(IntervalBounds(743), `Sum(SpliceJunctionDNA.Pos) where Char = G`), \"L8\", \"L11\", \"L12\"))), \"L6\"), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"A\", \"G\"), ValueGroup(\"T\", \"C\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L0\", \"L3\", SwitchC(IntervalIndex(IntervalBounds(29.75), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L2\", \"L13\", \"L14\")))"
+			},
+			{
+				"rank": "R07",
+				"name": "Tree_10",
+				"type": "Categorical",
+				"level": 0.084657,
+				"parts": 7,
+				"values": 9,
+				"mode": "L11",
+				"modeFrequency": 918,
+				"constructionCost": 117.382,
+				"preparationCost": 89.3326,
+				"dataCost": 1870.6,
+				"derivationRule": "SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"C\", \"T\"), ValueGroup(\"A\", \"G\", \"N\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L0\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"A\", \"G\", \" * \"), ValueGroup(\"C\", \"T\")), `Mode(SpliceJunctionDNA.Char) where Pos <= 15.5`), \"L0\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"G\", \"C\", \"T\", \" * \"), ValueGroup(\"A\")), `Mode(SpliceJunctionDNA.Char) where Pos > 30.5`), \"L1\", \"L11\", \"L12\"), SwitchC(IntervalIndex(IntervalBounds(26.25), `Median(SpliceJunctionDNA.Pos) where Char = C`), \"L1\", SwitchC(IntervalIndex(IntervalBounds(19.5), `Count(SpliceJunctionDNA) where Char = G`), \"L4\", SwitchC(IntervalIndex(IntervalBounds(30.47), `Mean(SpliceJunctionDNA.Pos) where Char = G`), \"L7\", \"L15\", \"L16\"), \"L14\"), SwitchC(IntervalIndex(IntervalBounds(29.75), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L4\", \"L9\", \"L10\"))), SwitchC(IntervalIndex(IntervalBounds(15.5), `Count(SpliceJunctionDNA) where Char = A`), \"L0\", \"L5\", \"L6\"))"
+			},
+			{
+				"rank": "R08",
+				"name": "Tree_2",
+				"type": "Categorical",
+				"level": 0.0783843,
+				"parts": 7,
+				"values": 9,
+				"mode": "L13",
+				"modeFrequency": 922,
+				"constructionCost": 122.882,
+				"preparationCost": 90.7872,
+				"dataCost": 1877.88,
+				"derivationRule": "SwitchC(IntervalIndex(IntervalBounds(939.5), `Sum(SpliceJunctionDNA.Pos) where Char not in {C, G}`), \"L0\", SwitchC(IntervalIndex(IntervalBounds(746), `Sum(SpliceJunctionDNA.Pos) where Char = G`), \"L0\", SwitchC(IntervalIndex(IntervalBounds(32.295), `Mean(SpliceJunctionDNA.Pos) where Char = G`), \"L1\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"C\", \"T\", \" * \"), ValueGroup(\"G\", \"A\")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L5\", \"L13\", \"L14\"), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"C\", \"T\"), ValueGroup(\"A\", \"G\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos <= 30.5`), \"L5\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"C\", \"T\"), ValueGroup(\"G\", \"A\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L8\", \"L11\", \"L12\"), \"L10\")), \"L6\"), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"T\", \"C\"), ValueGroup(\"A\", \"G\", \"N\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L0\", SwitchC(IntervalIndex(IntervalBounds(30.887), `Mean(SpliceJunctionDNA.Pos) where Char = G`), \"L2\", \"L15\", \"L16\"), \"L4\"))"
+			},
+			{
+				"rank": "R09",
+				"name": "Tree_7",
+				"type": "Categorical",
+				"level": 0.0717424,
+				"parts": 7,
+				"values": 10,
+				"mode": "L5",
+				"modeFrequency": 748,
+				"constructionCost": 119.522,
+				"preparationCost": 92.5181,
+				"dataCost": 1894.58,
+				"derivationRule": "SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"C\", \"T\", \"A\"), ValueGroup(\"G\", \"N\", \" * \")), `Mode(SpliceJunctionDNA.Char)`), \"L0\", SwitchC(IntervalIndex(IntervalBounds(980.5), `Sum(SpliceJunctionDNA.Pos) where Char not in {C, G}`), \"L0\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"A\", \" * \"), ValueGroup(\"C\", \"T\")), `Mode(SpliceJunctionDNA.Char)`), \"L1\", \"L5\", SwitchC(IntervalIndex(IntervalBounds(28.25), `Median(SpliceJunctionDNA.Pos) where Char = C`), \"L3\", \"L7\", SwitchC(IntervalIndex(IntervalBounds(34.75), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L6\", SwitchC(IntervalIndex(IntervalBounds(17.1669), `StdDev(SpliceJunctionDNA.Pos) where Char = C`), \"L8\", \"L13\", \"L14\"), \"L10\"))), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"T\", \"C\"), ValueGroup(\"A\", \"G\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L1\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"A\", \"C\", \"G\", \" * \"), ValueGroup(\"T\")), `Mode(SpliceJunctionDNA.Char) where Pos > 30.5`), \"L4\", \"L15\", \"L16\"), \"L12\")), SwitchC(IntervalIndex(IntervalBounds(792.5), `Sum(SpliceJunctionDNA.Pos) where Char = G`), \"L0\", \"L17\", \"L18\"))"
+			},
+			{
+				"rank": "R10",
+				"name": "Tree_4",
+				"type": "Categorical",
+				"level": 0.0643386,
+				"parts": 6,
+				"values": 9,
+				"mode": "L3",
+				"modeFrequency": 911,
+				"constructionCost": 131.423,
+				"preparationCost": 79.721,
+				"dataCost": 1912.28,
+				"derivationRule": "SwitchC(IntervalIndex(IntervalBounds(17.5), `Count(SpliceJunctionDNA) where Char = G`), \"L0\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"\", \"T\", \"N\", \" * \"), ValueGroup(\"A\", \"C\", \"G\")), `Mode(SpliceJunctionDNA.Char) where Pos > 45.5`), \"L0\", \"L3\", SwitchC(IntervalIndex(IntervalBounds(15.5), `Count(SpliceJunctionDNA) where Char = A`), \"L1\", SwitchC(GroupIndex(ValueGroups(ValueGroup(\"C\", \"T\"), ValueGroup(\"G\", \"A\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L4\", SwitchC(IntervalIndex(IntervalBounds(29.75), `Median(SpliceJunctionDNA.Pos) where Char = G`), \"L5\", \"L13\", \"L14\"), \"L10\"), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"A\", \"G\", \" * \"), ValueGroup(\"T\", \"C\")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L4\", \"L7\", \"L8\"))), SwitchC(GroupIndex(ValueGroups(ValueGroup(\"G\", \"A\"), ValueGroup(\"C\", \"T\", \" * \")), `Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]`), \"L0\", \"L11\", SwitchC(IntervalIndex(IntervalBounds(33.598), `Mean(SpliceJunctionDNA.Pos) where Char = G`), \"L2\", \"L15\", \"L16\")))"
+			}
+		],
+		"variablesDetailedStatistics": {
+			"R01": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_1",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L7","L9"],
+								["L10"],
+								["L5"],
+								["L6"],
+								["L2"]
+							],
+							"defaultGroupIndex": 4
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[208,234,632],
+						[31,266,123],
+						[147,13,208],
+						[39,2,159],
+						[103,2,57]
+					],
+					"partInterests": [0.0238787,0.444786,0.184606,0.14261,0.204119]
+				},
+				"inputValues": {
+					"values": ["L7","L10","L5","L9","L6","L2"],
+					"frequencies": [822,420,368,252,200,162]
+				}
+			},
+			"R02": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_9",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L5","L13","L11"],
+								["L3"],
+								["L9","L14"],
+								["L4"],
+								["L12"]
+							],
+							"defaultGroupIndex": 4
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[213,232,633],
+						[209,13,251],
+						[37,270,128],
+						[39,2,160],
+						[30,0,7]
+					],
+					"partInterests": [0.0225677,0.298854,0.443455,0.148571,0.0865518]
+				},
+				"inputValues": {
+					"values": ["L5","L3","L9","L4","L13","L14","L11","L12"],
+					"frequencies": [775,473,325,201,194,110,109,37]
+				}
+			},
+			"R03": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_8",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L13"],
+								["L10","L3"],
+								["L7"],
+								["L11"],
+								["L14"],
+								["L15"],
+								["L8"],
+								["L16"]
+							],
+							"defaultGroupIndex": 7
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[183,187,530],
+						[125,9,264],
+						[5,175,69],
+						[124,4,104],
+						[18,96,94],
+						[37,44,45],
+						[3,2,64],
+						[33,0,9]
+					],
+					"partInterests": [0.0164358,0.188906,0.352366,0.187876,0.0843386,0.0206437,0.0685269,0.0809076]
+				},
+				"inputValues": {
+					"values": ["L13","L10","L7","L11","L14","L3","L15","L8","L16"],
+					"frequencies": [900,266,249,232,208,132,126,69,42]
+				}
+			},
+			"R04": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_3",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L9"],
+								["L8","L6","L14","L12"],
+								["L11"],
+								["L13"],
+								["L2"]
+							],
+							"defaultGroupIndex": 1
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[181,175,519],
+						[200,28,431],
+						[9,200,73],
+						[35,112,99],
+						[103,2,57]
+					],
+					"partInterests": [0.0198722,0.25995,0.431237,0.084957,0.203984]
+				},
+				"inputValues": {
+					"values": ["L9","L8","L11","L13","L2","L6","L14","L12"],
+					"frequencies": [875,495,282,246,162,89,53,22]
+				}
+			},
+			"R05": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_6",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L3","L7"],
+								["L11"],
+								["L12","L13","L16"],
+								["L15"],
+								["L14"],
+								["L8"]
+							],
+							"defaultGroupIndex": 2
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[160,154,403],
+						[206,18,248],
+						[67,25,329],
+						[18,227,95],
+						[39,92,94],
+						[38,1,10]
+					],
+					"partInterests": [0.00411366,0.251288,0.184994,0.420215,0.0479335,0.0914566]
+				},
+				"inputValues": {
+					"values": ["L3","L11","L15","L12","L14","L13","L7","L8","L16"],
+					"frequencies": [668,472,340,225,225,155,49,49,41]
+				}
+			},
+			"R06": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_5",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L7"],
+								["L6","L3"],
+								["L9"],
+								["L14","L11"],
+								["L13"],
+								["L12"]
+							],
+							"defaultGroupIndex": 5
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[165,170,471],
+						[248,15,411],
+						[19,241,121],
+						[41,80,81],
+						[17,9,84],
+						[38,2,11]
+					],
+					"partInterests": [0.01428,0.381888,0.436067,0.0395926,0.0406969,0.0874754]
+				},
+				"inputValues": {
+					"values": ["L7","L9","L6","L3","L14","L13","L11","L12"],
+					"frequencies": [806,381,379,295,151,110,51,51]
+				}
+			},
+			"R07": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_10",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L11"],
+								["L5","L14","L15"],
+								["L6"],
+								["L16"],
+								["L10"],
+								["L12"],
+								["L9"]
+							],
+							"defaultGroupIndex": 1
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[208,197,513],
+						[204,20,207],
+						[77,2,231],
+						[18,156,41],
+						[13,101,83],
+						[1,35,52],
+						[7,6,52]
+					],
+					"partInterests": [0.00441499,0.24646,0.209741,0.32703,0.123594,0.0598783,0.0288817]
+				},
+				"inputValues": {
+					"values": ["L11","L5","L6","L16","L10","L12","L9","L14","L15"],
+					"frequencies": [918,364,310,215,197,88,65,36,31]
+				}
+			},
+			"R08": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_2",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L13","L12"],
+								["L11"],
+								["L4"],
+								["L14","L10"],
+								["L6"],
+								["L16"],
+								["L15"]
+							],
+							"defaultGroupIndex": 0
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[203,222,538],
+						[23,184,73],
+						[69,3,199],
+						[110,8,150],
+						[100,2,54],
+						[4,74,66],
+						[19,24,99]
+					],
+					"partInterests": [0.00637835,0.329198,0.173298,0.148708,0.201879,0.115991,0.0245472]
+				},
+				"inputValues": {
+					"values": ["L13","L11","L4","L14","L6","L16","L15","L10","L12"],
+					"frequencies": [922,280,271,212,156,144,142,56,41]
+				}
+			},
+			"R09": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_7",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L5"],
+								["L17","L14"],
+								["L7","L10"],
+								["L13","L16"],
+								["L12"],
+								["L15"],
+								["L18"]
+							],
+							"defaultGroupIndex": 2
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[161,151,436],
+						[167,43,226],
+						[44,233,101],
+						[28,28,158],
+						[54,2,155],
+						[1,60,68],
+						[73,0,35]
+					],
+					"partInterests": [0.0128232,0.113704,0.379652,0.0586423,0.144535,0.113325,0.177318]
+				},
+				"inputValues": {
+					"values": ["L5","L17","L7","L12","L15","L13","L14","L18","L16","L10"],
+					"frequencies": [748,328,307,211,129,108,108,108,106,71]
+				}
+			},
+			"R10": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "Tree_4",
+							"type": "Categorical",
+							"partitionType": "Value groups",
+							"partition": [
+								["L3","L15","L13"],
+								["L11","L10"],
+								["L14"],
+								["L7"],
+								["L8"],
+								["L16"]
+							],
+							"defaultGroupIndex": 0
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["EI","IE","N"]
+						}
+					],
+					"partTargetFrequencies": [
+						[245,215,641],
+						[181,13,215],
+						[21,209,95],
+						[31,2,134],
+						[6,58,85],
+						[44,20,9]
+					],
+					"partInterests": [0.0210475,0.26644,0.4035,0.13154,0.0798628,0.0976098]
+				},
+				"inputValues": {
+					"values": ["L3","L11","L14","L7","L8","L15","L10","L16","L13"],
+					"frequencies": [911,336,325,167,149,123,73,73,67]
+				}
+			}
+		},
+		"treeDetails": {
+			"R01": {
+				"name": "Tree_1",
+				"variableNumber": 5,
+				"depth": 5,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+					"type": "Numerical",
+					"partition": [
+						[24,744],
+						[744,1244]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+							"type": "Categorical",
+							"partition": [
+								["","C","T"],
+								["A","G","N"]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"variable": "Mode(SpliceJunctionDNA.Char) where Pos > 30.5",
+									"type": "Categorical",
+									"partition": [
+										["","T"],
+										["C","G","A"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L7",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [174,169,479]
+											}
+										},
+										{
+											"nodeId": "L8",
+											"variable": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[14.77777778,31.158],
+												[31.158,46.16666667]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L9",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [34,65,153]
+													}
+												},
+												{
+													"nodeId": "L10",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [31,266,123]
+													}
+												}
+											]
+										}
+									]
+								},
+								{
+									"nodeId": "L4",
+									"variable": "Mode(SpliceJunctionDNA.Char)",
+									"type": "Categorical",
+									"partition": [
+										["G","C"],
+										["A"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L5",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [147,13,208]
+											}
+										},
+										{
+											"nodeId": "L6",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [39,2,159]
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"targetValues": {
+								"values": ["EI","IE","N"],
+								"frequencies": [103,2,57]
+							}
+						}
+					]
+				}
+			},
+			"R02": {
+				"name": "Tree_9",
+				"variableNumber": 5,
+				"depth": 6,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+					"type": "Categorical",
+					"partition": [
+						["","C","T"],
+						["A","G","N"]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+							"type": "Numerical",
+							"partition": [
+								[40,261.5],
+								[261.5,1181]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L5",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [157,169,449]
+									}
+								},
+								{
+									"nodeId": "L6",
+									"variable": "Mode(SpliceJunctionDNA.Char)",
+									"type": "Categorical",
+									"partition": [
+										["C","T","A"],
+										["G"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L7",
+											"variable": "Median(SpliceJunctionDNA.Pos) where Char = C",
+											"type": "Numerical",
+											"partition": [
+												[11,27.25],
+												[27.25,50]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L9",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [29,208,88]
+													}
+												},
+												{
+													"nodeId": "L10",
+													"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+													"type": "Numerical",
+													"partition": [
+														[14,34.25],
+														[34.25,55.5]
+													],
+													"childNodes": [
+														{
+															"nodeId": "L13",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [28,38,128]
+															}
+														},
+														{
+															"nodeId": "L14",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [8,62,40]
+															}
+														}
+													]
+												}
+											]
+										},
+										{
+											"nodeId": "L8",
+											"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[430,786],
+												[786,1181]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L11",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [28,25,56]
+													}
+												},
+												{
+													"nodeId": "L12",
+													"targetValues": {
+														"values": ["EI","N"],
+														"frequencies": [30,7]
+													}
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"variable": "Mode(SpliceJunctionDNA.Char)",
+							"type": "Categorical",
+							"partition": [
+								["G","C"],
+								["A"]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [209,13,251]
+									}
+								},
+								{
+									"nodeId": "L4",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [39,2,160]
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			"R03": {
+				"name": "Tree_8",
+				"variableNumber": 5,
+				"depth": 5,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Count(SpliceJunctionDNA) where Char = G",
+					"type": "Numerical",
+					"partition": [
+						[0,17.5],
+						[17.5,37]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+							"type": "Numerical",
+							"partition": [
+								[7,36.75],
+								[36.75,55.5]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L5",
+									"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+									"type": "Categorical",
+									"partition": [
+										["","C","T"],
+										["A","G","N"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L9",
+											"variable": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[13.33333333,30.207],
+												[30.207,38.77777778]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L13",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [183,187,530]
+													}
+												},
+												{
+													"nodeId": "L14",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [18,96,94]
+													}
+												}
+											]
+										},
+										{
+											"nodeId": "L10",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [92,3,171]
+											}
+										}
+									]
+								},
+								{
+									"nodeId": "L6",
+									"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+									"type": "Categorical",
+									"partition": [
+										["C","T","G"],
+										["A"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L7",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [5,175,69]
+											}
+										},
+										{
+											"nodeId": "L8",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [3,2,64]
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+							"type": "Numerical",
+							"partition": [
+								[15.5,28.75],
+								[28.75,45]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [33,6,93]
+									}
+								},
+								{
+									"nodeId": "L4",
+									"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+									"type": "Categorical",
+									"partition": [
+										["G","A"],
+										["C","T"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L11",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [124,4,104]
+											}
+										},
+										{
+											"nodeId": "L12",
+											"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[475,772.5],
+												[772.5,1181]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L15",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [37,44,45]
+													}
+												},
+												{
+													"nodeId": "L16",
+													"targetValues": {
+														"values": ["EI","N"],
+														"frequencies": [33,9]
+													}
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			},
+			"R04": {
+				"name": "Tree_3",
+				"variableNumber": 4,
+				"depth": 6,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+					"type": "Numerical",
+					"partition": [
+						[24,744],
+						[744,1244]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+							"type": "Numerical",
+							"partition": [
+								[7,36.25],
+								[36.25,55.5]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"variable": "Mode(SpliceJunctionDNA.Char) where Pos <= 30.5",
+									"type": "Categorical",
+									"partition": [
+										["","C","T"],
+										["G","A","N"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L7",
+											"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[9,30.75],
+												[30.75,36]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L9",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [181,175,519]
+													}
+												},
+												{
+													"nodeId": "L10",
+													"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+													"type": "Categorical",
+													"partition": [
+														["C","T"],
+														["G","A"]
+													],
+													"childNodes": [
+														{
+															"nodeId": "L13",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [35,112,99]
+															}
+														},
+														{
+															"nodeId": "L14",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [17,2,34]
+															}
+														}
+													]
+												}
+											]
+										},
+										{
+											"nodeId": "L8",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [161,22,312]
+											}
+										}
+									]
+								},
+								{
+									"nodeId": "L4",
+									"variable": "Mode(SpliceJunctionDNA.Char) where Pos <= 30.5",
+									"type": "Categorical",
+									"partition": [
+										["C","T"],
+										["A"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L5",
+											"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+											"type": "Categorical",
+											"partition": [
+												["C","T","G"],
+												["A"]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L11",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [9,200,73]
+													}
+												},
+												{
+													"nodeId": "L12",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [5,1,16]
+													}
+												}
+											]
+										},
+										{
+											"nodeId": "L6",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [17,3,69]
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"targetValues": {
+								"values": ["EI","IE","N"],
+								"frequencies": [103,2,57]
+							}
+						}
+					]
+				}
+			},
+			"R05": {
+				"name": "Tree_6",
+				"variableNumber": 8,
+				"depth": 6,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Mode(SpliceJunctionDNA.Char) where Pos <= 30.5",
+					"type": "Categorical",
+					"partition": [
+						["","C","T"],
+						["G","A","N"]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Count(SpliceJunctionDNA) where Pos > 53.5",
+							"type": "Numerical",
+							"partition": [
+								[0,3.5],
+								[3.5,7]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [149,144,375]
+									}
+								},
+								{
+									"nodeId": "L4",
+									"variable": "Count(SpliceJunctionDNA) where Char = G",
+									"type": "Numerical",
+									"partition": [
+										[0,19.5],
+										[19.5,28]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L5",
+											"variable": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[13.33333333,32.97],
+												[32.97,47]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L9",
+													"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+													"type": "Numerical",
+													"partition": [
+														[9,29.75],
+														[29.75,41]
+													],
+													"childNodes": [
+														{
+															"nodeId": "L13",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [21,13,121]
+															}
+														},
+														{
+															"nodeId": "L14",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [39,92,94]
+															}
+														}
+													]
+												},
+												{
+													"nodeId": "L10",
+													"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+													"type": "Categorical",
+													"partition": [
+														["C","T"],
+														["A","G"]
+													],
+													"childNodes": [
+														{
+															"nodeId": "L15",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [18,227,95]
+															}
+														},
+														{
+															"nodeId": "L16",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [9,4,28]
+															}
+														}
+													]
+												}
+											]
+										},
+										{
+											"nodeId": "L6",
+											"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[548,743],
+												[743,1023]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L7",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [11,10,28]
+													}
+												},
+												{
+													"nodeId": "L8",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [38,1,10]
+													}
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"variable": "Mode(SpliceJunctionDNA.Char)",
+							"type": "Categorical",
+							"partition": [
+								["G","C"],
+								["A"]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L11",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [206,18,248]
+									}
+								},
+								{
+									"nodeId": "L12",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [37,8,180]
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			"R06": {
+				"name": "Tree_5",
+				"variableNumber": 6,
+				"depth": 6,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Mean(SpliceJunctionDNA.Pos) where Char = C",
+					"type": "Numerical",
+					"partition": [
+						[10.7,31.488],
+						[31.488,47.16666667]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+							"type": "Categorical",
+							"partition": [
+								["","C","T"],
+								["A","G","N"]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L5",
+									"variable": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+									"type": "Numerical",
+									"partition": [
+										[14.5,30.207],
+										[30.207,47]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L7",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [165,170,471]
+											}
+										},
+										{
+											"nodeId": "L8",
+											"variable": "Count(SpliceJunctionDNA) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[4,18.5],
+												[18.5,37]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L9",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [19,241,121]
+													}
+												},
+												{
+													"nodeId": "L10",
+													"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+													"type": "Numerical",
+													"partition": [
+														[575,743],
+														[743,1181]
+													],
+													"childNodes": [
+														{
+															"nodeId": "L11",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [13,19,19]
+															}
+														},
+														{
+															"nodeId": "L12",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [38,2,11]
+															}
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"nodeId": "L6",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [135,9,235]
+									}
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+							"type": "Categorical",
+							"partition": [
+								["A","G"],
+								["T","C"]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [113,6,176]
+									}
+								},
+								{
+									"nodeId": "L4",
+									"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+									"type": "Numerical",
+									"partition": [
+										[7,29.75],
+										[29.75,55.5]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L13",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [17,9,84]
+											}
+										},
+										{
+											"nodeId": "L14",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [28,61,62]
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			},
+			"R07": {
+				"name": "Tree_10",
+				"variableNumber": 8,
+				"depth": 6,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+					"type": "Categorical",
+					"partition": [
+						["","C","T"],
+						["A","G","N"]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos <= 15.5",
+							"type": "Categorical",
+							"partition": [
+								["","A","G"],
+								["C","T"]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"variable": "Mode(SpliceJunctionDNA.Char) where Pos > 30.5",
+									"type": "Categorical",
+									"partition": [
+										["","G","C","T"],
+										["A"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L11",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [208,197,513]
+											}
+										},
+										{
+											"nodeId": "L12",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [1,35,52]
+											}
+										}
+									]
+								},
+								{
+									"nodeId": "L4",
+									"variable": "Median(SpliceJunctionDNA.Pos) where Char = C",
+									"type": "Numerical",
+									"partition": [
+										[3,26.25],
+										[26.25,56.5]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L7",
+											"variable": "Count(SpliceJunctionDNA) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[5,19.5],
+												[19.5,27]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L13",
+													"variable": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+													"type": "Numerical",
+													"partition": [
+														[20,30.47],
+														[30.47,44.66666667]
+													],
+													"childNodes": [
+														{
+															"nodeId": "L15",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [12,3,16]
+															}
+														},
+														{
+															"nodeId": "L16",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [18,156,41]
+															}
+														}
+													]
+												},
+												{
+													"nodeId": "L14",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [21,4,11]
+													}
+												}
+											]
+										},
+										{
+											"nodeId": "L8",
+											"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+											"type": "Numerical",
+											"partition": [
+												[10,29.75],
+												[29.75,55.5]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L9",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [7,6,52]
+													}
+												},
+												{
+													"nodeId": "L10",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [13,101,83]
+													}
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"variable": "Count(SpliceJunctionDNA) where Char = A",
+							"type": "Numerical",
+							"partition": [
+								[1,15.5],
+								[15.5,44]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L5",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [171,13,180]
+									}
+								},
+								{
+									"nodeId": "L6",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [77,2,231]
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			"R08": {
+				"name": "Tree_2",
+				"variableNumber": 5,
+				"depth": 6,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Sum(SpliceJunctionDNA.Pos) where Char not in {C, G}",
+					"type": "Numerical",
+					"partition": [
+						[107,939.5],
+						[939.5,1699]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+							"type": "Numerical",
+							"partition": [
+								[133,746],
+								[746,1244]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L5",
+									"variable": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+									"type": "Numerical",
+									"partition": [
+										[14.77777778,32.295],
+										[32.295,48.875]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L7",
+											"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+											"type": "Categorical",
+											"partition": [
+												["","C","T"],
+												["G","A"]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L13",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [190,217,515]
+													}
+												},
+												{
+													"nodeId": "L14",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [86,7,119]
+													}
+												}
+											]
+										},
+										{
+											"nodeId": "L8",
+											"variable": "Mode(SpliceJunctionDNA.Char) where Pos <= 30.5",
+											"type": "Categorical",
+											"partition": [
+												["C","T"],
+												["A","G"]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L9",
+													"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+													"type": "Categorical",
+													"partition": [
+														["C","T"],
+														["G","A"]
+													],
+													"childNodes": [
+														{
+															"nodeId": "L11",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [23,184,73]
+															}
+														},
+														{
+															"nodeId": "L12",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [13,5,23]
+															}
+														}
+													]
+												},
+												{
+													"nodeId": "L10",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [24,1,31]
+													}
+												}
+											]
+										}
+									]
+								},
+								{
+									"nodeId": "L6",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [100,2,54]
+									}
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+							"type": "Categorical",
+							"partition": [
+								["T","C"],
+								["A","G","N"]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"variable": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+									"type": "Numerical",
+									"partition": [
+										[13.33333333,30.887],
+										[30.887,47]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L15",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [19,24,99]
+											}
+										},
+										{
+											"nodeId": "L16",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [4,74,66]
+											}
+										}
+									]
+								},
+								{
+									"nodeId": "L4",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [69,3,199]
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			"R09": {
+				"name": "Tree_7",
+				"variableNumber": 8,
+				"depth": 7,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Mode(SpliceJunctionDNA.Char)",
+					"type": "Categorical",
+					"partition": [
+						["","C","T","A"],
+						["G","N"]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Sum(SpliceJunctionDNA.Pos) where Char not in {C, G}",
+							"type": "Numerical",
+							"partition": [
+								[317,980.5],
+								[980.5,1605]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"variable": "Mode(SpliceJunctionDNA.Char)",
+									"type": "Categorical",
+									"partition": [
+										["","A"],
+										["C","T"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L5",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [161,151,436]
+											}
+										},
+										{
+											"nodeId": "L6",
+											"variable": "Median(SpliceJunctionDNA.Pos) where Char = C",
+											"type": "Numerical",
+											"partition": [
+												[16,28.25],
+												[28.25,46.5]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L7",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [37,192,78]
+													}
+												},
+												{
+													"nodeId": "L8",
+													"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+													"type": "Numerical",
+													"partition": [
+														[9,34.75],
+														[34.75,48]
+													],
+													"childNodes": [
+														{
+															"nodeId": "L9",
+															"variable": "StdDev(SpliceJunctionDNA.Pos) where Char = C",
+															"type": "Numerical",
+															"partition": [
+																[12.16780817,17.1669],
+																[17.1669,21.23446478]
+															],
+															"childNodes": [
+																{
+																	"nodeId": "L13",
+																	"targetValues": {
+																		"values": ["EI","IE","N"],
+																		"frequencies": [10,18,80]
+																	}
+																},
+																{
+																	"nodeId": "L14",
+																	"targetValues": {
+																		"values": ["EI","IE","N"],
+																		"frequencies": [45,11,52]
+																	}
+																}
+															]
+														},
+														{
+															"nodeId": "L10",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [7,41,23]
+															}
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"nodeId": "L4",
+									"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+									"type": "Categorical",
+									"partition": [
+										["T","C"],
+										["A","G"]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L11",
+											"variable": "Mode(SpliceJunctionDNA.Char) where Pos > 30.5",
+											"type": "Categorical",
+											"partition": [
+												["A","C","G"],
+												["T"]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L15",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [1,60,68]
+													}
+												},
+												{
+													"nodeId": "L16",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [18,10,78]
+													}
+												}
+											]
+										},
+										{
+											"nodeId": "L12",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [54,2,155]
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"variable": "Sum(SpliceJunctionDNA.Pos) where Char = G",
+							"type": "Numerical",
+							"partition": [
+								[24,792.5],
+								[792.5,1244]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L17",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [122,32,174]
+									}
+								},
+								{
+									"nodeId": "L18",
+									"targetValues": {
+										"values": ["EI","N"],
+										"frequencies": [73,35]
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			"R10": {
+				"name": "Tree_4",
+				"variableNumber": 6,
+				"depth": 6,
+				"treeNodes": {
+					"nodeId": "L0",
+					"variable": "Count(SpliceJunctionDNA) where Char = G",
+					"type": "Numerical",
+					"partition": [
+						[0,17.5],
+						[17.5,37]
+					],
+					"childNodes": [
+						{
+							"nodeId": "L1",
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos > 45.5",
+							"type": "Categorical",
+							"partition": [
+								["","T","N"],
+								["A","C","G"]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L3",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [204,180,527]
+									}
+								},
+								{
+									"nodeId": "L4",
+									"variable": "Count(SpliceJunctionDNA) where Char = A",
+									"type": "Numerical",
+									"partition": [
+										[0,15.5],
+										[15.5,44]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L5",
+											"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+											"type": "Categorical",
+											"partition": [
+												["C","T"],
+												["G","A"]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L9",
+													"variable": "Median(SpliceJunctionDNA.Pos) where Char = G",
+													"type": "Numerical",
+													"partition": [
+														[11.5,29.75],
+														[29.75,55.5]
+													],
+													"childNodes": [
+														{
+															"nodeId": "L13",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [11,9,47]
+															}
+														},
+														{
+															"nodeId": "L14",
+															"targetValues": {
+																"values": ["EI","IE","N"],
+																"frequencies": [21,209,95]
+															}
+														}
+													]
+												},
+												{
+													"nodeId": "L10",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [28,5,40]
+													}
+												}
+											]
+										},
+										{
+											"nodeId": "L6",
+											"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+											"type": "Categorical",
+											"partition": [
+												["A","G"],
+												["T","C"]
+											],
+											"childNodes": [
+												{
+													"nodeId": "L7",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [31,2,134]
+													}
+												},
+												{
+													"nodeId": "L8",
+													"targetValues": {
+														"values": ["EI","IE","N"],
+														"frequencies": [6,58,85]
+													}
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"nodeId": "L2",
+							"variable": "Mode(SpliceJunctionDNA.Char) where Pos in ]15.5, 30.5]",
+							"type": "Categorical",
+							"partition": [
+								["G","A"],
+								["C","T"]
+							],
+							"childNodes": [
+								{
+									"nodeId": "L11",
+									"targetValues": {
+										"values": ["EI","IE","N"],
+										"frequencies": [153,8,175]
+									}
+								},
+								{
+									"nodeId": "L12",
+									"variable": "Mean(SpliceJunctionDNA.Pos) where Char = G",
+									"type": "Numerical",
+									"partition": [
+										[22.625,33.598],
+										[33.598,39.5]
+									],
+									"childNodes": [
+										{
+											"nodeId": "L15",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [30,26,67]
+											}
+										},
+										{
+											"nodeId": "L16",
+											"targetValues": {
+												"values": ["EI","IE","N"],
+												"frequencies": [44,20,9]
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	},
+	"khiops_encoding": "ascii"
+}

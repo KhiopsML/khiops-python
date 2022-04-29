@@ -65,3 +65,4 @@ class PyKhiopsMultitableFitTests(unittest.TestCase, PyKhiopsSklearnTestsHelper):
             if output_dir_res.exists():
                 for file_name in output_dir_res.list_dir():
                     output_dir_res.create_child(file_name).remove()
+                output_dir_res.remove()

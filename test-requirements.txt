@@ -2,3 +2,4 @@ pylint>=2.9.3
 isort>=5.9.2
 black>=21.6b0
 coverage>=5.5[toml]
+wrapt<1.14

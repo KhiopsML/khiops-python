@@ -23,7 +23,6 @@ setup(
         "pandas>=0.25.0",
         "scikit-learn>=0.21",
     ],
-    extras_require={"s3": ["boto3>=1.17.39"], "gcs": ["google-cloud-storage>=1.37.0"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -36,4 +35,8 @@ setup(
         "Programming Language :: Python",
         "Topic :: Scientific/Engineering",
     ],
+    extras_require={
+        "s3": ["boto3>=1.17.39"],
+        "gcs": ["google-cloud-storage>=1.37.0"],
+    },
 )
