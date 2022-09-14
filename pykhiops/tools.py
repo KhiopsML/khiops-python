@@ -7,15 +7,38 @@
 # * Unauthorized copying of this file, via any medium is strictly prohibited.        #
 # * See the "LICENSE.md" file for more details.                                      #
 ######################################################################################
-"""Miscellaneous utility tools"""
+"""Miscellaneous utility tools
+
+.. warning::
+    Entry point functions in this module use `sys.exit`. They are not designed to be
+    called from another program or python shell.
+"""
 import argparse
 import os
 import re
 import sys
 
+import pykhiops.core as pk
 
-def convert_pk10_main():
-    """Main function for the convert-pk10 command"""
+# Note: We dont include these tools in coverage
+
+
+def pk_status_entry_point():  # pragma: no cover
+    """Entry point of the pk-status command"""
+    try:
+        pk.get_runner().print_status()
+        print("\npyKhiops installation OK")
+        sys.exit(0)
+    except pk.PyKhiopsEnvironmentError as error:
+        print(
+            f"pyKhiops backend ERROR: {error}"
+            "\nCheck https://www.khiops.com to install the Khiops app in your computer"
+        )
+        sys.exit(1)
+
+
+def convert_pk10_entry_point():  # pragma: no cover
+    """Entry point of the convert-pk10 script"""
     parser = argparse.ArgumentParser(
         prog="convert-pk10",
         formatter_class=argparse.RawTextHelpFormatter,
@@ -28,16 +51,22 @@ def convert_pk10_main():
         "output_path", metavar="OUTPYFILE", help="output python script path"
     )
     args = parser.parse_args()
-    convert_pk10(args.input_path, args.output_path)
+
+    # Call the main function
+    convert_ok = convert_pk10(args.input_path, args.output_path)
+    if convert_ok:
+        sys.exit(0)
+    else:
+        sys.exit(1)
 
 
-def convert_pk10(input_path, output_path):
-    """Main process"""
+def convert_pk10(input_path, output_path):  # pragma: no cover
+    """Main function for the convert-pk10 script"""
 
     # Sanity check
     if os.path.abspath(output_path) == os.path.abspath(input_path):
         print("error: input and output paths are the same")
-        sys.exit(1)
+        return False
 
     # Setup the translation objects
     import_line = "import pykhiops as "
@@ -92,6 +121,7 @@ def convert_pk10(input_path, output_path):
                 print(" *** check these changes ***")
             else:
                 print("")
+    return True
 
 
 PYKHIOPS9_KEYWORDS = [
@@ -385,13 +415,13 @@ snake_caser_step1 = re.compile("(.)([A-Z][a-z]+)")
 snake_caser_step2 = re.compile("([a-z0-9])([A-Z])")
 
 
-def _camel_to_snake(name):
+def _camel_to_snake(name):  # pragma: no cover
     """Transform camelCase to snake_case"""
     tmp = snake_caser_step1.sub(r"\1\2", name)
     return snake_caser_step2.sub(r"\1_\2", tmp).lower()
 
 
-def _build_translator_dict():
+def _build_translator_dict():  # pragma: no cover
     """Builds the translator dictionary from pyKhiops 9 keywords to pyKhiops 10"""
     # Transform to snake_case the list of keywords
     translator_dict = {
@@ -468,7 +498,7 @@ def _build_translator_dict():
     return translator_dict
 
 
-def _build_keywords_regex():
+def _build_keywords_regex():  # pragma: no cover
     """Builds a regular expression to match the keywords
 
     Takes into account substrings: if word, wordLong and wordLongest are present in

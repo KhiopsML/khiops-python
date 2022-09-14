@@ -323,6 +323,28 @@ class PyKhiopsRunner(ABC):
         )
         return self._khiops_version
 
+    def _build_status_message(self):
+        """Constructs the status message
+
+        Descendant classes can add additional information
+        """
+        status_msg = "pyKhiops info and defaults\n"
+        status_msg += f"pyKhiops runner class    : {self.__class__.__name__}\n"
+        status_msg += f"pyKhiops max cores       : {self.max_cores}"
+        if self.max_cores == 0:
+            status_msg += " (no limit)"
+        status_msg += "\n"
+        status_msg += f"pyKhiops max memory (MB) : {self.max_memory_mb}"
+        if self.max_memory_mb == 0:
+            status_msg += " (no limit)"
+        status_msg += "\n"
+        status_msg += f"pyKhiops temp dir        : {self.root_temp_dir}"
+        return status_msg
+
+    def print_status(self):
+        """Prints the status of the runner to stdout"""
+        print(self._build_status_message())
+
     @abstractmethod
     def _initialize_khiops_version(self):
         """Initialization of `khiops_version` to be implemented in child classes"""
@@ -698,6 +720,18 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
 
         # Check the tool binaries
         self._check_tools()
+
+    def _build_status_message(self):
+        status_msg = super()._build_status_message()
+        status_msg += "\n\n"
+        status_msg += "Khiops local installation\n"
+        status_msg += f"Khiops version           : {self.khiops_version}\n"
+        status_msg += f"Khiops binaries dir      : {self.khiops_bin_dir}\n"
+        status_msg += f"Khiops samples dir       : {self.samples_dir}\n"
+        status_msg += f"Khiops temp dir          : {self.khiops_temp_dir}"
+        if self.khiops_temp_dir == "":
+            status_msg += "<empty> (system's default)"
+        return status_msg
 
     @property
     def khiops_bin_dir(self):
