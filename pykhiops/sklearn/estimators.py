@@ -53,10 +53,6 @@ from pykhiops.core.common import (
 
 from ..sklearn.tables import Dataset, read_internal_data_table
 
-# Disable pylint's too many lines: This module is big and won't be smaller anytime soon
-
-# pylint: disable=too-many-lines
-
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
 #   pylint --disable=all --enable=invalid-names estimators.py

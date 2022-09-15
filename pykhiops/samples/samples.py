@@ -21,8 +21,8 @@ from os import path
 import pykhiops
 from pykhiops import core as pk
 
-# Disable pylint's too many lines: This module is big and won't be smaller anytime soon
-# pylint: disable=too-many-lines
+# Disable open files without encoding because samples are simple code snippets
+# pylint: disable=unspecified-encoding
 
 
 def get_khiops_version():
@@ -1567,10 +1567,10 @@ def execute_samples(args):
         print("*** No samples to run ***")
 
 
-def filter_samples(exported_samples, include, exact_match):
+def filter_samples(sample_list, include, exact_match):
     """Filter the samples according to the command line options"""
     filtered_samples = []
-    for sample in exported_samples:
+    for sample in sample_list:
         for sample_name in include:
             if (exact_match and sample_name == sample.__name__) or (
                 not exact_match and sample_name in sample.__name__

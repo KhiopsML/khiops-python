@@ -1,0 +1,32 @@
+// Scenario for task simplify_coclustering
+// Simplify coclustering settings
+LearningTools.PostProcessCoclustering
+SelectInputCoclustering
+InputCoclusteringFileName Adult._khc
+OK
+PostProcessingSpec.MaxPreservedInformation 0
+PostProcessingSpec.MaxCellNumber 0
+PostProcessingSpec.MaxTotalPartNumber 0
+PostProcessingSpec.PostProcessedAttributes.List.Key age
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 2
+PostProcessingSpec.PostProcessedAttributes.List.Key workclass
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 4
+PostProcessingSpec.PostProcessedAttributes.List.Key race
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 8
+PostProcessingSpec.PostProcessedAttributes.List.Key sex
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 16
+
+// Output settings
+AnalysisResults.ResultFilesDirectory .\AdultResults
+AnalysisResults.ResultFilesPrefix 
+AnalysisResults.PostProcessedCoclusteringFileName SimplifiedAdult._khc
+
+// Simplify Coclustering
+PostProcessCoclustering
+Exit
+
+// End of scenario for task simplify_coclustering
+
+// Exit Khiops
+ClassManagement.Quit
+OK

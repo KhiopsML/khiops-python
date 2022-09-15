@@ -12,7 +12,5 @@ for completeness.
    :toctree:
 
    pykhiops.core.filesystems
-   pykhiops.core.scenario
-   pykhiops.core.runner
-   pykhiops.sklearn.utils
-
+   pykhiops.core.api_internals
+   pykhiops.sklearn.tables

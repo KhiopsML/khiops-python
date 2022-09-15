@@ -21,10 +21,12 @@ from sklearn import metrics
 from sklearn.compose import ColumnTransformer
 
 # isort: off
+# pylint: disable=unused-import
 from sklearn.experimental import enable_hist_gradient_boosting
 from sklearn.ensemble import HistGradientBoostingClassifier
 
 # isort: on
+# pylint: enable=unused-import
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
@@ -642,10 +644,10 @@ def execute_samples(args):
         print("*** No samples to run ***")
 
 
-def filter_samples(exported_samples, include, exact_match):
+def filter_samples(sample_list, include, exact_match):
     """Filter the samples according to the command line options"""
     filtered_samples = []
-    for sample in exported_samples:
+    for sample in sample_list:
         for sample_name in include:
             if (exact_match and sample_name == sample.__name__) or (
                 not exact_match and sample_name in sample.__name__

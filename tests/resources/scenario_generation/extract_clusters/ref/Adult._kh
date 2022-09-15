@@ -1,0 +1,23 @@
+// Scenario for task extract_clusters
+// Extract cluster settings
+LearningTools.ExtractClusters
+SelectInputCoclustering
+InputCoclusteringFileName AdultCoclustering.khc
+OK
+CoclusteringAttributeSpec.CoclusteringAttribute age
+PostProcessingSpec.MaxPreservedInformation 0
+PostProcessingSpec.MaxCellNumber 0
+
+// Output settings
+AnalysisResults.ResultFilesDirectory .
+AnalysisResults.ClusterFileName AdultClusters.txt
+
+// Extract clusters
+ExtractClusters
+Exit
+
+// End of scenario for task extract_clusters
+
+// Exit Khiops
+ClassManagement.Quit
+OK

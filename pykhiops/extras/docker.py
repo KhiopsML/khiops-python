@@ -19,9 +19,10 @@ import warnings
 from urllib.request import Request, urlopen
 
 from pykhiops import core as pk
+from pykhiops import get_compatible_khiops_version
 from pykhiops.core import filesystems as fs
-from pykhiops.core.common import KhiopsVersion
-from pykhiops.core.runner import PyKhiopsRunner
+from pykhiops.core.api_internals.runner import PyKhiopsRunner
+from pykhiops.core.api_internals.task import KhiopsTask
 
 
 class PyKhiopsDockerRunner(PyKhiopsRunner):
@@ -60,7 +61,7 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
             self._ctx = None
 
     def _initialize_khiops_version(self):
-        self._khiops_version = KhiopsVersion("10.1")
+        self._khiops_version = get_compatible_khiops_version()
 
     def _fetch(self, request):
         # HTTPS mode
@@ -72,39 +73,34 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
             response = urlopen(request).read().decode()
         return response
 
-    def _create_scenario_file(self, scenario, force_ansi_scenario=False):
-        # If there are search/replace keywords use them to create the execution scenario
-        scenario_path = self._create_local_temp_file(
-            f"{scenario.template_name}_", scenario.template_ext
-        )
-        scenario.write_file(scenario_path, force_ansi=force_ansi_scenario)
-        return scenario_path
+    def _create_scenario_file(self, task):
+        assert isinstance(task, KhiopsTask)
+        return self._create_local_temp_file(f"{task.name}_", "._kh")
 
     def _run(
         self,
         tool_name,
         scenario_path,
-        batch_mode,
-        log_file_path,
-        output_scenario_path,
-        task_file_path,
+        command_line_options,
         trace,
     ):
         # Check arguments
-        if not batch_mode:
+        if not command_line_options.batch_mode:
             warnings.warn(
                 "Ignoring unsupported PyKhiopsDockerRunner parameter 'batch_mode'",
                 stacklevel=3,
             )
-        if output_scenario_path:
-            output_scenario_file = fs.create_resource(output_scenario_path)
-            output_scenario_dir = output_scenario_file.create_parent()
-            if not output_scenario_dir.exists():
-                output_scenario_dir.make_dir()
-            output_scenario_file.copy_from_local(scenario_path)
-        if task_file_path:
+        if command_line_options.output_scenario_path:
+            output_scenario_res = fs.create_resource(
+                command_line_options.output_scenario_path
+            )
+            output_scenario_dir_res = output_scenario_res.create_parent()
+            if not output_scenario_dir_res.exists():
+                output_scenario_dir_res.make_dir()
+            output_scenario_res.copy_from_local(scenario_path)
+        if command_line_options.task_file_path is not None:
             warnings.warn(
-                "Ignoring unsupported PyKhiopsDockerRunner parameter 'task_file_path'."
+                "Ignoring unsupported PyKhiopsDockerRunner parameter 'task_file_path'"
             )
 
         # Submit the job  for remote execution
@@ -155,7 +151,7 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
         # Then report (warn or exception) any errors
         return_code = response["response"]["status"]
         stderr = response["response"]["error"]
-        log_file_res = fs.create_resource(log_file_path)
+        log_file_res = fs.create_resource(command_line_options.log_file_path)
         with io.StringIO() as log_file_stream:
             log_file_stream.write(response["response"]["output"])
             log_file_res.write(

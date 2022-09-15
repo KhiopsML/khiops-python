@@ -1,3 +1,4 @@
+// Scenario for task detect_data_table_format_with_dictionary
 // Dictionary file and class settings
 ClassManagement.OpenFile
 ClassFileName Adult.kdic
@@ -10,7 +11,8 @@ SourceDataTable.DatabaseName Adult.csv
 SourceDataTable.DatabaseFormatDetector.DetectFileFormat
 Exit
 
+// End of scenario for task detect_data_table_format_with_dictionary
+
 // Exit Khiops
 ClassManagement.Quit
 OK
-

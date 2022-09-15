@@ -1,3 +1,4 @@
+// Scenario for task export_dictionary_as_json
 // Dictionary file settings
 ClassManagement.OpenFile
 ClassFileName Adult.kdic
@@ -8,7 +9,8 @@ ClassManagement.ExportAsJSON
 JSONFileName Adult.kdicj
 OK
 
+// End of scenario for task export_dictionary_as_json
+
 // Exit Khiops
 ClassManagement.Quit
 OK
-

@@ -81,9 +81,6 @@ from pykhiops.core.common import (
     type_error_message,
 )
 
-# Disable pylint's too many lines: This module is big and won't be smaller anytime soon
-# pylint: disable=too-many-lines
-
 
 class AnalysisResults(KhiopsJSONObject):
     """Main class containing the information of a Khiops JSON file
@@ -280,6 +277,31 @@ class AnalysisResults(KhiopsJSONObject):
             writer.writeln("")
             writer.writeln("")
             report.write_report(writer)
+
+
+def read_analysis_results_file(json_file_path):
+    """Reads a Khiops JSON report
+
+    Parameters
+    ----------
+    json_file_path : str
+        Path of the JSON report file.
+
+    Returns
+    -------
+    `.AnalysisResults`
+        An instance of AnalysisResults containing the report's information.
+
+    Examples
+    --------
+    See the following functions of the ``samples.py`` documentation script:
+        - `samples.access_predictor_evaluation_report()`
+        - `samples.train_predictor_with_cross_validation()`
+        - `samples.multiple_train_predictor()`
+    """
+    results = AnalysisResults()
+    results.read_khiops_json_file(json_file_path)
+    return results
 
 
 class PreparationReport:

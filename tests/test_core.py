@@ -9,13 +9,18 @@
 ######################################################################################
 """Tests for the pykhiops.core module"""
 import glob
+import io
 import os
 import shutil
+import textwrap
 import unittest
 from pathlib import Path
 
 from pykhiops import core as pk
-from pykhiops.core.runner import PyKhiopsRunner
+from pykhiops.core.api_internals.runner import PyKhiopsRunner
+from pykhiops.core.api_internals.scenario import ConfigurableKhiopsScenario
+from pykhiops.core.api_internals.task import create_unambiguous_khiops_path
+from pykhiops.core.common import PyKhiopsOutputWriter
 
 
 class PyKhiopsCoreIOTests(unittest.TestCase):
@@ -226,7 +231,7 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
         # Pseudo-mock data to test the creation of scenarios
         datasets = ["Adult", "SpliceJunction", "Customer"]
         additional_data_tables = {
-            "Adult": {},
+            "Adult": None,
             "SpliceJunction": {"SpliceJunction`DNA": "SpliceJunctionDNABidon.csv"},
             "Customer": {
                 "Customer`Services": "ServicesBidon.csv",
@@ -238,7 +243,7 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
             },
         }
         output_additional_data_tables = {
-            "Adult": {},
+            "Adult": None,
             "SpliceJunction": {
                 "SpliceJunction`DNA": "TransferSpliceJunctionDNABidon.csv"
             },
@@ -255,7 +260,7 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
         construction_rules = {
             "Adult": [],
             "SpliceJunction": ["TableMode", "TableSelection"],
-            "Customer": [],
+            "Customer": None,
         }
         coclustering_variables = {
             "Adult": ["age", "workclass", "race", "sex"],
@@ -265,12 +270,12 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
         max_part_numbers = {
             "Adult": {"age": 2, "workclass": 4, "race": 8, "sex": 16},
             "SpliceJunction": {"SampleId": 32, "NonExistentVar": 64},
-            "Customer": {"id_customer": 128, "Name": 256},
+            "Customer": None,
         }
         sort_variables = {
             "Adult": ["Label", "age", "race"],
             "SpliceJunction": ["SampleId"],
-            "Customer": [],
+            "Customer": None,
         }
         specific_pairs = {
             "Adult": [("age", "rage"), ("Label", ""), ("", "capital_gain")],
@@ -354,10 +359,17 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
                         "additional_data_tables": {
                             bytes(key, encoding="ascii"): bytes(value, encoding="ascii")
                             for key, value in additional_data_tables[dataset].items()
-                        },
-                        "output_additional_data_tables": output_additional_data_tables[
-                            dataset
-                        ],
+                        }
+                        if additional_data_tables[dataset] is not None
+                        else None,
+                        "output_additional_data_tables": {
+                            bytes(key, encoding="ascii"): bytes(value, encoding="ascii")
+                            for key, value in output_additional_data_tables[
+                                dataset
+                            ].items()
+                        }
+                        if output_additional_data_tables[dataset] is not None
+                        else None,
                     },
                 }
                 for dataset in datasets
@@ -500,59 +512,41 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
             },
         }
 
-        # Relation method -> scenario file extension
-        method_scenario_extensions = {
-            "build_deployed_dictionary": "_kh",
-            "build_dictionary_from_data_table": "_kh",
-            "build_multi_table_dictionary": "_kh",
-            "check_database": "_kh",
-            "deploy_model": "_kh",
-            "detect_data_table_format": "_kh",
-            "evaluate_predictor": "_kh",
-            "export_dictionary_as_json": "_kh",
-            "extract_clusters": "_khc",
-            "extract_keys_from_data_table": "_kh",
-            "prepare_coclustering_deployment": "_khc",
-            "simplify_coclustering": "_khc",
-            "sort_data_table": "_kh",
-            "train_coclustering": "_khc",
-            "train_predictor": "_kh",
-            "train_recoder": "_kh",
-        }
-
         # Set the root directory of these tests
         test_resources_dir = os.path.join(resources_dir(), "scenario_generation")
 
         # Use the test runner that only compares the scenarios
         default_runner = pk.get_runner()
-        test_runner = CompareScenarioTestRunner(self)
+        test_runner = CompareScenarioTestRunner(self, test_resources_dir)
         pk.set_runner(test_runner)
 
         # Run test for all methods and all mock datasets parameters
         for method_name, method_full_args in method_test_args.items():
+            test_runner.sub_test_name = method_name
             self._test_method_scenario_generation(
                 test_runner,
-                test_resources_dir,
                 method_name,
                 method_full_args,
-                method_scenario_extensions[method_name],
             )
 
         # Restore the default runner
         pk.set_runner(default_runner)
 
     def _test_method_scenario_generation(
-        self, runner, test_resources_dir, method_name, method_full_args, extension
+        self,
+        runner,
+        method_name,
+        method_full_args,
     ):
-        # Set and clean the directory for this method's tests
-        ref_scenarios_dir = os.path.join(test_resources_dir, method_name, "ref")
-        output_scenarios_dir = os.path.join(test_resources_dir, method_name, "output")
-        cleanup_dir(output_scenarios_dir, f"*.{extension}")
+        # Set the runners test name
+        runner.test_name = method_name
+
+        # Clean the directory for this method's tests
+        cleanup_dir(runner.output_scenario_dir, "*/output/*._kh", verbose=True)
 
         # Test for each dataset mock parameters
         for dataset, dataset_method_args in method_full_args.items():
-            scenario_name = f"{dataset}.{extension}"
-            runner.ref_scenario_path = os.path.join(ref_scenarios_dir, scenario_name)
+            runner.subtest_name = dataset
             with self.subTest(dataset=dataset, method=method_name):
                 method = getattr(pk, method_name)
                 dataset_args = dataset_method_args["args"]
@@ -1493,7 +1487,7 @@ class PyKhiopsCoreSimpleUnitTests(unittest.TestCase):
     """Test simple testable functions in the core package"""
 
     def test_create_unambiguous_khiops_path(self):
-        """Test the api._create_unambiguous_khiops_path function"""
+        """Test the create_unambiguous_khiops_path function"""
         expected_outputs = {
             "/normal/path": "/normal/path",
             "./relative/path": "./relative/path",
@@ -1506,71 +1500,118 @@ class PyKhiopsCoreSimpleUnitTests(unittest.TestCase):
             "s3://host/some/path": "s3://host/some/path",
         }
         for path, unambiguous_path in expected_outputs.items():
-            self.assertEqual(
-                pk.api._create_unambiguous_khiops_path(path), unambiguous_path
-            )
+            self.assertEqual(create_unambiguous_khiops_path(path), unambiguous_path)
 
 
 class CompareScenarioTestRunner(PyKhiopsRunner):
     """A Pykhiops runner that only compares the generated scenarios to a reference"""
 
-    def __init__(self, test_case):
+    def __init__(self, test_case, root_dir):
         super().__init__()
         self.test_case = test_case
-        self.ref_scenario_path = ""
+        self.root_dir = root_dir
+        self.test_name = None
+        self.subtest_name = None
         self.create_ref = False
 
     def _initialize_khiops_version(self):
         self._khiops_version = pk.KhiopsVersion("10.1")
 
-    def _create_scenario_file(self, scenario, force_ansi_scenario=False):
+    @property
+    def ref_scenario_dir(self):
+        assert self.test_name is not None
+        return os.path.join(self.root_dir, self.test_name, "ref")
+
+    @property
+    def ref_scenario_path(self):
+        assert self.subtest_name is not None
+        return os.path.join(self.ref_scenario_dir, f"{self.subtest_name}._kh")
+
+    @property
+    def output_scenario_dir(self):
+        assert self.test_name is not None
+        return os.path.join(self.root_dir, self.test_name, "output")
+
+    @property
+    def output_scenario_path(self):
+        assert self.subtest_name is not None
+        return os.path.join(self.output_scenario_dir, f"{self.subtest_name}._kh")
+
+    @property
+    def execution_scenario_path(self):
+        assert self.subtest_name is not None
+        return os.path.join(self.output_scenario_dir, f"{self.subtest_name}_exec_._kh")
+
+    def _create_scenario_file(self, task):
+        return self.execution_scenario_path
+
+    def _write_task_scenario_file(
+        self, task, task_args, general_options, force_ansi_scenario=False
+    ):
         """Create the scenario and compare it to a reference"""
-        # Create the execution scenario file
-        scenario_path = super()._create_scenario_file(
-            scenario, force_ansi_scenario=False
+        # Create the execution scenario files with the parent method
+        scenario_path = super()._write_task_scenario_file(
+            task, task_args, general_options
         )
-        test_dir = os.path.dirname(os.path.dirname(self.ref_scenario_path))
-        output_scenarios_dir = os.path.join(test_dir, "output")
-        output_scenario_path = os.path.join(
-            output_scenarios_dir, os.path.basename(self.ref_scenario_path)
-        )
-        shutil.copy(scenario_path, output_scenario_path)
 
         # Create the reference if does not exists
         if self.create_ref:
-            ref_scenario_dir = os.path.dirname(self.ref_scenario_path)
-            if not os.path.exists(ref_scenario_dir):
-                os.makedirs(ref_scenario_dir)
-            shutil.copy(scenario_path, self.ref_scenario_path)
+            os.makedirs(self.ref_scenario_dir, exist_ok=True)
+            shutil.copy(self.output_scenario_path, self.ref_scenario_path)
 
-        # Signal the test case failure if the files are not equal
+        # Copy the execution scenario (which is erased) to compare afterwards
+        shutil.copy(self.execution_scenario_path, self.output_scenario_path)
+
+        # Compare the reference with the output
         files_equal_or_fail(
             self.ref_scenario_path,
-            output_scenario_path,
+            self.output_scenario_path,
             line_comparator=scenario_line_comparator,
         )
 
         return scenario_path
 
-    def _run(
+    def run(
         self,
-        tool_name,
-        scenario_path,
-        batch_mode,
-        log_file_path,
-        output_scenario_path,
-        task_file_path,
-        trace,
+        task,
+        task_args,
+        command_line_options,
+        trace=False,
+        force_ansi_scenario=False,
+        **kwargs,
     ):
-        """Extra mocking for some methods"""
-        if log_file_path is not None and "_detect_data_table_format" in log_file_path:
-            with open(log_file_path, "w") as log_file:
+        # Call the parent method
+        super().run(
+            task,
+            task_args,
+            command_line_options,
+            trace=trace,
+            force_ansi_scenario=force_ansi_scenario,
+        )
+
+        # Mocking the log file contents for detect_data_table_format function
+        if (
+            task.name
+            in ["detect_data_table_format", "detect_data_table_format_with_dictionary"]
+            and command_line_options.log_file_path is not None
+        ):
+            with open(
+                command_line_options.log_file_path, "w", encoding="ascii"
+            ) as log_file:
                 log_file.write(
                     "warning : detect_data_table_format should ignore this\n"
                 )
                 log_file.write(
                     "File format detected: header line and field separator tabulation\n"
                 )
+
+    def _run(
+        self,
+        tool_name,
+        scenario_path,
+        command_line_options,
+        trace,
+    ):
         return 0, ""
 
 
@@ -1578,12 +1619,14 @@ def resources_dir():
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")
 
 
-def cleanup_dir(dir_path, glob_pattern):
+def cleanup_dir(dir_path, glob_pattern, verbose=False):
     if not os.path.exists(dir_path):
         os.makedirs(dir_path, exist_ok=True)
     else:
         file_paths = glob.glob(os.path.join(dir_path, glob_pattern))
         for file_path in file_paths:
+            if verbose:
+                print(f"Removing {file_path}")
             os.remove(file_path)
 
 
@@ -1623,11 +1666,13 @@ def default_line_comparator(
 PATH_STATEMENTS = [
     "ClassFileName",
     "EvaluationFileName",
-    "JSONFileName",
     "ImportFileName",
     "InputCoclusteringName",
+    "JSONFileName",
     "PostProcessedCoclusteringFileName",
     "ResultFilesDirectory",
+    "TargetDataTable.DatabaseName",
+    "TargetDatabase.DatabaseFiles.DataTableName",
 ]
 
 
@@ -1737,7 +1782,7 @@ def equal_path_statement(ref_line, output_line, line_number):
 class PyKhiopsCoreVariousTests(unittest.TestCase):
     """Test for small units of core"""
 
-    # Disable SonarQube here because it believes that some version are IPs
+    # Disable SonarQube here because it believes that some versions are IPs
     # sonar: disable
     def test_version_comparisons(self):
         """Test version comparisons"""
@@ -1787,6 +1832,259 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
         for version in ["10i.4", "10.4b.3", "10.@", "10.@.2", "10.1.2u"]:
             with self.assertRaises(ValueError):
                 pk.KhiopsVersion(version)
+
+    def test_scenario_generation(self):
+        """Test the scenario generation from template and arguments"""
+        templates = {
+            "raw_lines": """
+            // A scenario comment
+            SomeStatement
+
+            AnotherStatementWithAValue a_value
+            """,
+            "opt_argument": """
+            __OPT__
+            __opt_argument__
+            A.Statement
+            Another.StatementWithValue some_value
+            __END_OPT__
+            """,
+            "single_type_list_argument": """
+            __LIST__
+            __list_argument__
+            Prologue.Statement
+            Another.Prologue.Statement
+            ListArgument.InsertItemAfter
+            ListArgument.SingleTupleValue
+            __END_LIST__
+            """,
+            "tuple_type_list_argument": """
+            __LIST__
+            __list_argument__
+            ListArgument.InsertItemAfter
+            ListArgument.FirstTupleValue
+            ListArgument.SecondTupleValue
+            ListArgument.ThirdTupleValue
+            __END_LIST__
+            """,
+            "dict_argument": """
+            __DICT__
+            __dict_argument__
+            Prologue.Statement
+            DictArgument.Key
+            DictArgument.Value
+            __END_DICT__
+            """,
+        }
+
+        arguments = {
+            ("raw_lines", "default"): {},
+            ("opt_argument", "true"): {"__opt_argument__": "true"},
+            ("opt_argument", "false"): {"__opt_argument__": "false"},
+            ("single_type_list_argument", "default"): {
+                "__list_argument__": ["Val1", "Val2"]
+            },
+            ("tuple_type_list_argument", "default"): {
+                "__list_argument__": [
+                    ("Val11", "Val12", "Val13"),
+                    ("Val21", "Val22", "Val23"),
+                ]
+            },
+            ("dict_argument", "default"): {
+                "__dict_argument__": {"Key1": "Val1", "Key2": "Val2"}
+            },
+            ("dict_argument", "list_input"): {"__dict_argument__": ["Key1", "Key2"]},
+        }
+
+        expected_scenarios = {
+            (
+                "raw_lines",
+                "default",
+            ): """
+            // A scenario comment
+            SomeStatement
+
+            AnotherStatementWithAValue a_value
+            """,
+            (
+                "opt_argument",
+                "true",
+            ): """
+            A.Statement
+            Another.StatementWithValue some_value
+            """,
+            ("opt_argument", "false"): "",
+            (
+                "single_type_list_argument",
+                "default",
+            ): """
+            Prologue.Statement
+            Another.Prologue.Statement
+            ListArgument.InsertItemAfter
+            ListArgument.SingleTupleValue Val1
+            ListArgument.InsertItemAfter
+            ListArgument.SingleTupleValue Val2
+            """,
+            (
+                "tuple_type_list_argument",
+                "default",
+            ): """
+            ListArgument.InsertItemAfter
+            ListArgument.FirstTupleValue Val11
+            ListArgument.SecondTupleValue Val12
+            ListArgument.ThirdTupleValue Val13
+            ListArgument.InsertItemAfter
+            ListArgument.FirstTupleValue Val21
+            ListArgument.SecondTupleValue Val22
+            ListArgument.ThirdTupleValue Val23
+            """,
+            (
+                "dict_argument",
+                "default",
+            ): """
+            Prologue.Statement
+            DictArgument.Key Key1
+            DictArgument.Value Val1
+            DictArgument.Key Key2
+            DictArgument.Value Val2
+            """,
+            (
+                "dict_argument",
+                "list_input",
+            ): """
+            Prologue.Statement
+            DictArgument.Key Key1
+            DictArgument.Value true
+            DictArgument.Key Key2
+            DictArgument.Value true
+            """,
+        }
+
+        for (
+            template_name,
+            argument_set,
+        ), expected_scenario in expected_scenarios.items():
+            with self.subTest(template_name=template_name, argument_set=argument_set):
+                # Dedent the template and the expected scenario
+                template_code = textwrap.dedent(templates[template_name]).lstrip()
+                expected_scenario = textwrap.dedent(expected_scenario).lstrip()
+
+                # Detemplatize the scenario with the fixture arguments
+                stream = io.BytesIO()
+                writer = PyKhiopsOutputWriter(stream)
+                scenario = ConfigurableKhiopsScenario(template_code)
+                scenario.write(writer, arguments[template_name, argument_set])
+                output_scenario = stream.getvalue().decode("ascii").replace("\r", "")
+
+                # Compare the output scenario and the expected fixutre
+                self.assertEqual(output_scenario, expected_scenario)
+
+    def test_invalid_templates(self):
+        # Define the fixtures
+        templates = {
+            "invalid_keyword": """
+            __SECTION__
+            Statement
+            __END__SECTION__
+            """,
+            "invalid_statement": """
+            __OPT__
+            __opt_argument__
+            invalid_statement.NotValid
+            __END_OPT__
+            """,
+            "opt_no_arg": """
+            __OPT__
+            Statement
+            __END_OPT__
+            """,
+            "opt_no_end": """
+            __OPT__
+            Statement
+            """,
+            "list_no_arg": """
+            __LIST__
+            Argument.InsertItemAfter
+            Argument.Value
+            __END_LIST__
+            """,
+            "list_bad_arg": """
+            __LIST__
+            list_argument
+            Argument.InsertItemAfter
+            Argument.Value
+            __END_LIST__
+            """,
+            "list_no_insert": """
+            __LIST__
+            __list_argument__
+            Argument.NoInsert
+            Argument.Value
+            __END_LIST__
+            """,
+            "list_too_few_lines": """
+            __LIST__
+            __list_argument__
+            __END_LIST__
+            """,
+            "list_no_end": """
+            __LIST__
+            __list_argument__
+            """,
+            "list_no_value": """
+            __LIST__
+            __list_argument__
+            Prologue.FirstStatement
+            Argument.InsertItemAfter
+            __END_LIST__
+            """,
+            "dict_no_arg": """
+            __DICT__
+            Argument.Key
+            Argument.Value
+            __END_DICT__
+            """,
+            "dict_no_key": """
+            __DICT__
+            __dict_value__
+            Argument.KeyValue
+            Argument.Value
+            __END_DICT__
+            """,
+            "dict_too_few_lines": """
+            __DICT__
+            __dict_argument__
+            __END_DICT__
+            """,
+            "dict_no_end": """
+            __DICT__
+            __dict_argument__
+            """,
+        }
+        # pylint: disable=line-too-long
+        error_msgs = {
+            "invalid_keyword": "Expected keyword __DICT__, __OPT__ or __LIST__",
+            "invalid_statement": "Statement must contain only alphabetic characters and '.'",
+            "opt_no_arg": "__OPT__ template parameter name does not conform to the __param__ notation",
+            "opt_no_end": "__OPT__ section has no matching __END_OPT__",
+            "list_no_arg": "__LIST__ template parameter name does not conform to the __param__ notation",
+            "list_bad_arg": "__LIST__ template parameter name does not conform to the __param__ notation",
+            "list_no_insert": "__LIST__ section does not contain list statement ending with '.InsertItemAfter'",
+            "list_too_few_lines": "__LIST__ section must have at least 3 statements",
+            "list_no_end": "__LIST__ section has no matching __END_LIST__",
+            "list_no_value": "__LIST__ section does not contain any value statement",
+            "dict_no_arg": "__DICT__ template parameter name does not conform to the __param__ notation",
+            "dict_no_key": "__DICT__ key statement must end with '.Key'",
+            "dict_too_few_lines": "__DICT__ section must have at least 2 statements",
+            "dict_no_end": "__DICT__ section has no matching __END_DICT__",
+        }
+        # pylint: enable=line-too-long
+
+        # Test that the templates fail with the proper message
+        for template_name, template_code in templates.items():
+            with self.subTest(template_name=template_name, template_code=template_code):
+                with self.assertRaisesRegex(ValueError, error_msgs[template_name]):
+                    ConfigurableKhiopsScenario(template_code)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+// Scenario for task extract_keys_from_data_table
 // Dictionary file
 ClassManagement.OpenFile
 ClassFileName SpliceJunction.kdic
@@ -9,12 +10,14 @@ ClassName SpliceJunction
 SourceDataTable.DatabaseName SpliceJunction.csv
 SourceDataTable.HeaderLineUsed true
 SourceDataTable.FieldSeparator 
- SourceDataTable.DatabaseFormatDetector.DetectFileFormat
-TargetDataTable.DatabaseName SpliceJunctionKeys.csv
+SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+TargetDataTable.DatabaseName .\SpliceJunctionKeys.csv
 TargetDataTable.HeaderLineUsed true
 TargetDataTable.FieldSeparator 
 ExtractKeysFromDataTable
 Exit
+
+// End of scenario for task extract_keys_from_data_table
 
 // Exit Khiops
 ClassManagement.Quit

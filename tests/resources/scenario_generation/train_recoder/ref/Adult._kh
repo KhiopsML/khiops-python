@@ -1,3 +1,4 @@
+// Scenario for task train_recoder
 // Dictionary file and class settings
 ClassManagement.OpenFile
 ClassFileName Adult.kdic
@@ -5,14 +6,11 @@ OK
 ClassManagement.ClassName Adult
 
 // Train/test database settings
-// __train_database_files__ below must be replaced for each data table file with:
-//  TrainDatabase.DatabaseFiles.List.Key __data_path__
-//  TrainDatabase.DatabaseFiles.DataTableName __data_file_path__
 TrainDatabase.DatabaseFiles.List.Key Adult
 TrainDatabase.DatabaseFiles.DataTableName Adult.csv
 TrainDatabase.HeaderLineUsed true
 TrainDatabase.FieldSeparator 
- TrainDatabase.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.DatabaseFormatDetector.DetectFileFormat
 TrainDatabase.SampleNumberPercentage 70
 TrainDatabase.SamplingMode Include sample
 TrainDatabase.SelectionAttribute 
@@ -31,10 +29,6 @@ AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber 0
 AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxAttributePairNumber 0
 AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectAttributePairsParameters
 AllAttributePairs true
-// __specific_pairs_spec__ below must be replaced for each variable with:
-//   SpecificAttributePairs.InsertItemAfter
-//   SpecificAttributePairs.FirstName __first_variable_name__
-//   SpecificAttributePairs.SecondName __second_variable_name__
 SpecificAttributePairs.InsertItemAfter
 SpecificAttributePairs.FirstName age
 SpecificAttributePairs.SecondName rage
@@ -47,20 +41,17 @@ SpecificAttributePairs.SecondName capital_gain
 Exit
 AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxConstructedAttributeNumber 100
 AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectConstructionDomain
-//  UnselectAll
-// __construction_rules_spec__ below must be replaced for each variable with:
-//   ConstructionRules.List.Key __part_variable__
-//   ConstructionRules.Used __max_part_number__
+UnselectAll
 Exit
 
 // Data preparation (discretization & grouping) settings
 AnalysisSpec.PreprocessingSpec.TargetGrouped false
 AnalysisSpec.PreprocessingSpec.DiscretizerSpec.SupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.DiscretizerSpec.UnsupervisedMethodName EqualWidth
+AnalysisSpec.PreprocessingSpec.DiscretizerSpec.UnsupervisedMethodName MODL
 AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MinIntervalFrequency 0
 AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MaxIntervalNumber 0
 AnalysisSpec.PreprocessingSpec.GrouperSpec.SupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.GrouperSpec.UnsupervisedMethodName BasicGrouping
+AnalysisSpec.PreprocessingSpec.GrouperSpec.UnsupervisedMethodName MODL
 AnalysisSpec.PreprocessingSpec.GrouperSpec.MinGroupFrequency 0
 AnalysisSpec.PreprocessingSpec.GrouperSpec.MaxGroupNumber 0
 
@@ -80,6 +71,8 @@ AnalysisResults.ResultFilesPrefix
 
 // Train recoder
 ComputeStats
+
+// End of scenario for task train_recoder
 
 // Exit Khiops
 ClassManagement.Quit

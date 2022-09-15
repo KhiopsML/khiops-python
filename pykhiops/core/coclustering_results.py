@@ -52,9 +52,6 @@ from pykhiops.core.common import (
     type_error_message,
 )
 
-# Disable pylint's too many lines: This module is big and won't be smaller anytime soon
-# pylint: disable=too-many-lines
-
 
 class CoclusteringResults(KhiopsJSONObject):
     """Main class containing the information of a Khiops Coclustering JSON file
@@ -67,7 +64,7 @@ class CoclusteringResults(KhiopsJSONObject):
 
         .. note::
             Prefer either the `read_khiops_coclustering_json_file` method or the
-            `~pykhiops.core.api.read_coclustering_results_file` function from the core
+            `read_coclustering_results_file` function from the core
             API to obtain an instance of this class from a Khiops Coclustering JSON
             file.
 
@@ -156,6 +153,24 @@ class CoclusteringResults(KhiopsJSONObject):
         writer.writeln(f"Short description\t{self.short_description}")
         if self.coclustering_report is not None:
             self.coclustering_report.write_report(writer)
+
+
+def read_coclustering_results_file(json_file_path):
+    """Reads a Khiops Coclustering JSON report
+
+    Parameters
+    ----------
+    json_file_path : str
+        Path of the JSON report file.
+
+    Returns
+    -------
+    `.CoclusteringResults`
+        An instance of CoclusteringResults containing the report's information.
+    """
+    coclustering_results = CoclusteringResults()
+    coclustering_results.read_khiops_coclustering_json_file(json_file_path)
+    return coclustering_results
 
 
 class CoclusteringReport:

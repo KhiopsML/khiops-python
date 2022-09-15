@@ -1,0 +1,42 @@
+// Scenario for task train_coclustering
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName SpliceJunction.kdic
+OK
+ClassManagement.ClassName SpliceJunction
+
+// Train database settings
+Database.DatabaseFiles.List.Key SpliceJunction
+Database.DatabaseFiles.DataTableName SpliceJunction.csv
+Database.DatabaseFiles.List.Key SpliceJunction`DNA
+Database.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
+Database.HeaderLineUsed true
+Database.FieldSeparator 
+Database.DatabaseFormatDetector.DetectFileFormat
+Database.SampleNumberPercentage 100
+Database.SamplingMode Include sample
+Database.SelectionAttribute 
+Database.SelectionValue 
+
+// Coclustering variables settings
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name SampleId
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name NonExistentVar
+AnalysisSpec.CoclusteringParameters.FrequencyAttribute 
+
+// Minimum optimization time
+AnalysisSpec.SystemParameters.OptimizationTime 0
+
+// Output settings
+AnalysisResults.ResultFilesDirectory .\SpliceJunctionResults
+AnalysisResults.ResultFilesPrefix 
+
+// Train
+BuildCoclustering
+
+// End of scenario for task train_coclustering
+
+// Exit Khiops
+ClassManagement.Quit
+OK

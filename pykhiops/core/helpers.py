@@ -10,10 +10,10 @@
 """Helper functions for specific and/or advanced treatments"""
 import os
 
-from ..core import api
-from ..core import filesystems as fs
-from ..core.common import is_list_like, type_error_message
-from ..core.dictionary import DictionaryDomain
+from . import api
+from . import filesystems as fs
+from .common import create_unambiguous_khiops_path, is_list_like, type_error_message
+from .dictionary import DictionaryDomain, read_dictionary_file
 
 
 def deploy_coclustering(
@@ -126,14 +126,14 @@ def deploy_coclustering(
         - `samples.deploy_coclustering()`
     """
     # Obtain the dictionary of the table where the coclustering variables are
-    api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
+    api.check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
         domain = dictionary_file_path_or_domain
     else:
-        domain = api.read_dictionary_file(dictionary_file_path_or_domain)
+        domain = read_dictionary_file(dictionary_file_path_or_domain)
 
     # Disambiguate the results directory path if necessary
-    results_dir = api._create_unambiguous_khiops_path(results_dir)
+    results_dir = create_unambiguous_khiops_path(results_dir)
 
     # Check the type of non basic keyword arguments specific to this function
     if not is_list_like(key_variable_names):
@@ -281,8 +281,6 @@ def deploy_predictor_for_metrics(
         Path of the data table file.
     output_data_table_path : str
         Path of the scores output data file.
-    output_data_table_path : str
-        Path of the output data file.
     detect_format : bool, default ``True``
         If True detects automatically whether the data table file has a header and its
         field separator. It's ignored if ``header_line`` or ``field_separator`` are set.
@@ -309,21 +307,22 @@ def deploy_predictor_for_metrics(
         Options of the `.PyKhiopsRunner.run` method from the class `.PyKhiopsRunner`.
     """
     # Check the dictionary domain
-    api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
+    api.check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
 
     # Load the dictionary file into a domain if necessary
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
         predictor_domain = dictionary_file_path_or_domain.copy()
     else:
-        predictor_domain = api.read_dictionary_file(dictionary_file_path_or_domain)
+        predictor_domain = read_dictionary_file(dictionary_file_path_or_domain)
 
     # Check that the specified dictionary is a predictor
     predictor_dictionary = predictor_domain.get_dictionary(dictionary_name)
-    try:
-        predictor_type = predictor_dictionary.meta_data.get_value("PredictorType")
-        is_classifier = predictor_type == "Classifier"
-    except KeyError:
+    if "PredictorType" not in predictor_dictionary.meta_data:
         raise ValueError(f"Dictionary '{predictor_dictionary.name}' is not a predictor")
+
+    # Set the type of classifier
+    predictor_type = predictor_dictionary.meta_data.get_value("PredictorType")
+    is_classifier = predictor_type == "Classifier"
 
     # Use the necessary columns
     predictor_dictionary.use_all_variables(False)

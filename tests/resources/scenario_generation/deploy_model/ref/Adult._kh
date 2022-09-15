@@ -1,3 +1,4 @@
+// Scenario for task deploy_model
 // Dictionary file settings
 ClassManagement.OpenFile
 ClassFileName Adult.kdic
@@ -7,32 +8,28 @@ OK
 LearningTools.TransferDatabase
 ClassName Adult
 
-// Source database settings
-// __source_database_files__ below must be replaced for each data table file with:
-//  SourceDatabase.DatabaseFiles.List.Key __data_path__
-//  SourceDatabase.DatabaseFiles.DataTableName __data_file_path__
+// Input database settings
 SourceDatabase.DatabaseFiles.List.Key Adult
 SourceDatabase.DatabaseFiles.DataTableName Adult.csv
 SourceDatabase.HeaderLineUsed true
 SourceDatabase.FieldSeparator 
- SourceDatabase.DatabaseFormatDetector.DetectFileFormat
+SourceDatabase.DatabaseFormatDetector.DetectFileFormat
 SourceDatabase.SampleNumberPercentage 100
-SourceDatabase.SamplingMode  Include sample
+SourceDatabase.SamplingMode Include sample
 SourceDatabase.SelectionAttribute 
 SourceDatabase.SelectionValue 
 
-// Target database settings
-// __target_database_files__ below must be replaced for each data table file with:
-//  TargetDatabase.DatabaseFiles.List.Key __data_path__
-//  TargetDatabase.DatabaseFiles.DataTableName __data_file_path__
+// Output database settings
 TargetDatabase.DatabaseFiles.List.Key Adult
-TargetDatabase.DatabaseFiles.DataTableName AdultDeployed.csv
+TargetDatabase.DatabaseFiles.DataTableName .\AdultDeployed.csv
 TargetDatabase.HeaderLineUsed true
 TargetDatabase.FieldSeparator 
 
 // Transfer
 TransferDatabase
 Exit
+
+// End of scenario for task deploy_model
 
 // Exit Khiops
 ClassManagement.Quit

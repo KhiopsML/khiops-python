@@ -25,7 +25,9 @@ from pykhiops.sklearn.estimators import (
 )
 from tests.test_helper import CoreApiFunctionMock, PyKhiopsTestHelper
 
-# pylint: disable=too-many-lines
+# Disable PEP8 variable names because of scikit-learn X,y conventions
+# To capture invalid-names other than X,y run:
+#   pylint --disable=all --enable=invalid-names estimators.py
 # pylint: disable=invalid-name
 
 

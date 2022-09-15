@@ -1,6 +1,5 @@
 """Updates the copyright notice of the input files"""
 import argparse
-import sys
 from datetime import datetime
 
 # pylint: disable=line-too-long
@@ -26,10 +25,10 @@ def main(args):
 def update_copyright(file_path):
     """Updates the copyright notice of a file"""
     print(f"Updating {file_path}")
-    with open(file_path) as file:
+    with open(file_path, encoding="utf8") as file:
         lines = file.readlines()
     skipped_copyright = False
-    with open(file_path, "w") as file:
+    with open(file_path, "w", encoding="utf8") as file:
         file.write(copyright_blob)
         for line in lines:
             if line.startswith("#") and not skipped_copyright:

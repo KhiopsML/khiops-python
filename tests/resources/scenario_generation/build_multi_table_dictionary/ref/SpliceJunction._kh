@@ -1,3 +1,4 @@
+// Scenario for task build_multi_table_dictionary
 // Dictionary file and class settings
 ClassManagement.OpenFile
 ClassFileName SpliceJunction.kdic
@@ -12,10 +13,7 @@ TableVariableName SecondarySpliceJunction
 OK
 Exit
 
-// Save dictionary
-ClassManagement.SaveFileUnder
-ClassFileName RootSpliceJunction.kdic
-OK
+// End of scenario for task build_multi_table_dictionary
 
 // Exit Khiops
 ClassManagement.Quit

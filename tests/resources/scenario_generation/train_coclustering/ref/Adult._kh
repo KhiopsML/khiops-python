@@ -1,0 +1,44 @@
+// Scenario for task train_coclustering
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Adult.kdic
+OK
+ClassManagement.ClassName Adult
+
+// Train database settings
+Database.DatabaseFiles.List.Key Adult
+Database.DatabaseFiles.DataTableName Adult.csv
+Database.HeaderLineUsed true
+Database.FieldSeparator 
+Database.DatabaseFormatDetector.DetectFileFormat
+Database.SampleNumberPercentage 100
+Database.SamplingMode Include sample
+Database.SelectionAttribute 
+Database.SelectionValue 
+
+// Coclustering variables settings
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name age
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name workclass
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name race
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name sex
+AnalysisSpec.CoclusteringParameters.FrequencyAttribute 
+
+// Minimum optimization time
+AnalysisSpec.SystemParameters.OptimizationTime 0
+
+// Output settings
+AnalysisResults.ResultFilesDirectory .\AdultResults
+AnalysisResults.ResultFilesPrefix 
+
+// Train
+BuildCoclustering
+
+// End of scenario for task train_coclustering
+
+// Exit Khiops
+ClassManagement.Quit
+OK

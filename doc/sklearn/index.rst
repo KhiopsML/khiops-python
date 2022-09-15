@@ -11,7 +11,6 @@ pykhiops.sklearn
    :toctree:
 
    pykhiops.sklearn.estimators
-   pykhiops.sklearn.tables
 
 
 Related Docs

@@ -1,3 +1,4 @@
+// Scenario for task build_multi_table_dictionary
 // Dictionary file and class settings
 ClassManagement.OpenFile
 ClassFileName Adult.kdic
@@ -12,10 +13,7 @@ TableVariableName SecondaryAdult
 OK
 Exit
 
-// Save dictionary
-ClassManagement.SaveFileUnder
-ClassFileName RootAdult.kdic
-OK
+// End of scenario for task build_multi_table_dictionary
 
 // Exit Khiops
 ClassManagement.Quit

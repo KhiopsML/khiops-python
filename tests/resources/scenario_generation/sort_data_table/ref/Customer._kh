@@ -1,3 +1,4 @@
+// Scenario for task sort_data_table
 // Dictionary file and class settings
 ClassManagement.OpenFile
 ClassFileName Customer.kdic
@@ -6,25 +7,24 @@ ClassManagement.ClassName Customer
 
 // Sort table settings
 LearningTools.SortDataTableByKey
- SortAttributes.SelectDefaultKeyAttributes
-// __sort_variables__ below must be replaced for each sorting variable with:
-//   SortAttributes.InsertItemAfter
-//   SortAttributes.Name __variable_name__
+SortAttributes.SelectDefaultKeyAttributes
 
 // Source table settings
 SourceDataTable.DatabaseName Customer.csv
 SourceDataTable.HeaderLineUsed true
 SourceDataTable.FieldSeparator 
- SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+SourceDataTable.DatabaseFormatDetector.DetectFileFormat
 
 // Target table settings
 TargetDataTable.HeaderLineUsed true
-TargetDataTable.DatabaseName CustomerSorted.csv
+TargetDataTable.DatabaseName .\CustomerSorted.csv
 TargetDataTable.FieldSeparator 
 
 // Sort table
 SortDataTableByKey
 Exit
+
+// End of scenario for task sort_data_table
 
 // Exit Khiops
 ClassManagement.Quit

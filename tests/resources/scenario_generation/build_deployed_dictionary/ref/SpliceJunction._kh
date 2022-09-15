@@ -1,3 +1,4 @@
+// Scenario for task build_deployed_dictionary
 // Dictionary file and class settings
 ClassManagement.OpenFile
 ClassFileName SpliceJunction.kdic
@@ -10,6 +11,8 @@ BuildTransferredClass
 ClassFileName SpliceJunctionDeployed.kdic
 OK
 Exit
+
+// End of scenario for task build_deployed_dictionary
 
 // Exit Khiops
 ClassManagement.Quit

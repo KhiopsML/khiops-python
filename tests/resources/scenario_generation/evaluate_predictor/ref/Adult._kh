@@ -1,3 +1,4 @@
+// Scenario for task evaluate_predictor
 // Dictionary file settings
 ClassManagement.OpenFile
 ClassFileName ModelingAdult.kdic
@@ -6,25 +7,22 @@ OK
 // Evaluate predictor settings
 LearningTools.EvaluatePredictors
 MainTargetModality 
-
-// Evaluation database settings
-// __evaluation_database_files__ below must be replaced for each data table file with:
-//  EvaluationDatabase.DatabaseFiles.List.Key __data_path__
-//  EvaluationDatabase.DatabaseFiles.DataTableName __data_file_path__
 EvaluationDatabase.DatabaseFiles.List.Key Adult
 EvaluationDatabase.DatabaseFiles.DataTableName Adult.csv
 EvaluationDatabase.HeaderLineUsed true
 EvaluationDatabase.FieldSeparator 
- EvaluationDatabase.DatabaseFormatDetector.DetectFileFormat
+EvaluationDatabase.DatabaseFormatDetector.DetectFileFormat
 EvaluationDatabase.SampleNumberPercentage 100
-EvaluationDatabase.SamplingMode  Include sample
+EvaluationDatabase.SamplingMode Include sample
 EvaluationDatabase.SelectionAttribute 
 EvaluationDatabase.SelectionValue 
-EvaluationFileName AdultResults\EvaluationReport.xls
+EvaluationFileName .\AdultResults\EvaluationReport.xls
 
 // Evaluate predictor
 EvaluatePredictors
 Exit
+
+// End of scenario for task evaluate_predictor
 
 // Exit Khiops
 ClassManagement.Quit

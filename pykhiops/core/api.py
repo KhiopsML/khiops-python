@@ -15,36 +15,49 @@ The methods in this module allow to execute all Khiops and Khiops Coclustering t
 import io
 import os
 import warnings
-from urllib.parse import urlparse
 
-from ..core import filesystems as fs
-from ..core.analysis_results import AnalysisResults
-from ..core.coclustering_results import CoclusteringResults
-from ..core.common import (
+from . import filesystems as fs
+from .api_internals.common import CommandLineOptions
+from .api_internals.runner import (
+    _get_tool_info_khiops9,
+    _get_tool_info_khiops10,
+    get_runner,
+)
+from .api_internals.task import create_unambiguous_khiops_path, get_task_registry
+from .common import (
     KhiopsVersion,
-    PyKhiopsEnvironmentError,
     PyKhiopsRuntimeError,
     deprecation_message,
-    is_dict_like,
-    is_list_like,
     is_string_like,
     removal_message,
     renaming_message,
     type_error_message,
 )
-from ..core.dictionary import DictionaryDomain
-from ..core.runner import _get_tool_info_khiops9, _get_tool_info_khiops10, get_runner
-from ..core.scenario import (
-    ConfigurableKhiopsScenario,
-    DatabaseParameter,
-    KeyValueListParameter,
-    PathParameter,
-    RecordListParameter,
-    get_scenario_file_path,
-)
+from .dictionary import DictionaryDomain, read_dictionary_file
 
-# Disable pylint's too many lines: This module is big and won't be smaller anytime soon
-# pylint: disable=too-many-lines
+__all__ = [
+    "all_construction_rules",
+    "get_khiops_version",
+    "get_samples_dir",
+    "export_dictionary_as_json",
+    "build_dictionary_from_data_table",
+    "check_database",
+    "train_predictor",
+    "evaluate_predictor",
+    "train_recoder",
+    "deploy_model",
+    "build_deployed_dictionary",
+    "sort_data_table",
+    "extract_keys_from_data_table",
+    "build_multi_table_dictionary",
+    "train_coclustering",
+    "simplify_coclustering",
+    "prepare_coclustering_deployment",
+    "extract_clusters",
+    "detect_data_table_format",
+    "get_khiops_info",
+    "get_khiops_coclustering_info",
+]
 
 # List of all available construction rules in the Khiops tool
 all_construction_rules = [
@@ -77,7 +90,7 @@ all_construction_rules = [
 ##########################
 
 
-def _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain):
+def check_dictionary_file_path_or_domain(dictionary_file_path_or_domain):
     """Checks if the argument is a string or DictionaryDomain or raise TypeError"""
     if not is_string_like(dictionary_file_path_or_domain) and not isinstance(
         dictionary_file_path_or_domain, DictionaryDomain
@@ -92,43 +105,10 @@ def _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain):
         )
 
 
-def _create_unambiguous_khiops_path(path):
-    """Creates a path that is unambiguous for Khiops
-
-    Khiops needs that a non absolute path starts with "." so not use the path of an
-    internally saved state as reference point.
-
-    For example: if we open the data table "/some/path/to/data.txt" and then set the
-    results directory simply as "results" the effective location of the results
-    directory will be "/some/path/to/results" instead of "$CWD/results". This behavior
-    is a feature in Khiops but it is undesirable when using it as a library.
-
-    This function returns a path so the library behave as expected: a path relative to
-    the $CWD if it is a non absolute path.
-    """
-    # Check for string
-    if not isinstance(path, str):
-        raise TypeError(type_error_message("path", path, str))
-
-    # Empty path returned as-is
-    if not path:
-        return path
-
-    # Add a "." to a local path if necessary. It is *not* necessary when:
-    # - `path` is an URI
-    # - `path` is an absolute path
-    # - `path` is a path starting with "."
-    uri_info = urlparse(path, allow_fragments=False)
-    if os.path.isabs(path) or path.startswith(".") or uri_info.scheme != "":
-        return path
-    else:
-        return os.path.join(".", path)
-
-
-def _get_or_create_execution_dictionary_file(dictionary_file_path_or_domain, trace):
+def get_or_create_execution_dictionary_file(dictionary_file_path_or_domain, trace):
     """Access the dictionary path or creates one from a DictionaryDomain object"""
-    # Allow only 'str' or 'DictionaryDomain' types
-    _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
+    # Check the type of dictionary_file_path_or_domain
+    check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
 
     # If the argument is a DictionaryDomain export it to a temporary file
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
@@ -146,38 +126,241 @@ def _get_or_create_execution_dictionary_file(dictionary_file_path_or_domain, tra
     return execution_dictionary_file_path
 
 
-def _resolve_format_spec(detect_format, header_line, field_separator):
-    """Transforms the format spec into parameters ready to be used in an scenario"""
-    if detect_format and header_line is None and field_separator is None:
-        disable_detect_format = ""
-        header_line = "true"
+def run_task(task_name, task_args):
+    """Generic task run method
+
+    Parameters
+    ----------
+    task_name : str
+        Name of the task.
+    task_args : dict
+        Arguments of the task.
+    """
+    # Save the trace argument
+    trace = task_args["trace"]
+
+    # Execute the preprocess of common task arguments
+    task_called_with_domain = preprocess_task_arguments(task_args)
+
+    # Create a command line options object
+    command_line_options = CommandLineOptions(
+        batch_mode=task_args["batch_mode"] if "batch_mode" in task_args else True,
+        log_file_path=task_args["log_file_path"]
+        if "log_file_path" in task_args
+        else "",
+        output_scenario_path=task_args["output_scenario_path"]
+        if "output_scenario_path" in task_args
+        else "",
+        task_file_path=task_args["task_file_path"]
+        if "task_file_path" in task_args
+        else "",
+    )
+
+    # Clean the task_args to leave only the task arguments
+    clean_task_args(task_args)
+
+    # Obtain the api function from the registry
+    task = get_task_registry().get_task(task_name, get_khiops_version())
+
+    # Execute the Khiops task and cleanup when necessary
+    try:
+        get_runner().run(
+            task, task_args, command_line_options=command_line_options, trace=trace
+        )
+    finally:
+        if task_called_with_domain and not trace:
+            fs.create_resource(task_args["dictionary_file_path"]).remove()
+
+
+def preprocess_task_arguments(task_args):
+    """Preprocessing of task arguments common to various tasks
+
+    Parameters
+    ----------
+    task_args : dict
+        The task arguments.
+
+    Returns
+    -------
+    bool
+        ``True`` if the task was called with an input `.DictionaryDomain`.
+    """
+    # Process the input dictionary domain if any
+    # build_frequency_variables and detect_format are processed differently below
+    task_called_with_domain = False
+    if "dictionary_file_path_or_domain" in task_args:
+        task_called_with_domain = isinstance(
+            task_args["dictionary_file_path_or_domain"], DictionaryDomain
+        )
+        task_args["dictionary_file_path"] = get_or_create_execution_dictionary_file(
+            task_args["dictionary_file_path_or_domain"], task_args["trace"]
+        )
+
+    # Set the discretization/grouping default values
+    if "discretization_method" in task_args:
+        if task_args["discretization_method"] is None:
+            if task_args["target_variable"]:
+                task_args["discretization_method"] = "MODL"
+            else:
+                task_args["discretization_method"] = "EqualWidth"
+    if "grouping_method" in task_args:
+        if task_args["grouping_method"] is None:
+            if task_args["target_variable"]:
+                task_args["grouping_method"] = "MODL"
+            else:
+                task_args["grouping_method"] = "BasicGrouping"
+
+    # Transform the use_complement_as_test bool parameter to its string counterpart
+    if "use_complement_as_test" in task_args:
+        if task_args["use_complement_as_test"]:
+            if get_khiops_version() < KhiopsVersion("10"):
+                task_args["fill_test_database_settings"] = True
+            else:
+                task_args["test_database_mode"] = "Complementary"
+        else:
+            if get_khiops_version() < KhiopsVersion("10"):
+                task_args["fill_test_database_settings"] = False
+            else:
+                task_args["test_database_mode"] = "None"
+        del task_args["use_complement_as_test"]
+
+    # Preprocess the database format parameters
+    if "detect_format" in task_args:
+        assert "header_line" in task_args
+        assert "field_separator" in task_args
+        detect_format, header_line, field_separator = preprocess_format_spec(
+            task_args["detect_format"],
+            task_args["header_line"],
+            task_args["field_separator"],
+        )
+        task_args["detect_format"] = detect_format
+        task_args["header_line"] = header_line
+        task_args["field_separator"] = field_separator
+    if "output_header_line" in task_args:
+        assert "output_field_separator" in task_args
+        _, header_line, field_separator = preprocess_format_spec(
+            False, task_args["output_header_line"], task_args["output_field_separator"]
+        )
+        task_args["output_header_line"] = header_line
+        task_args["output_field_separator"] = field_separator
+
+    # Preprocess the selection_value parameter
+    if "selection_value" in task_args:
+        if isinstance(task_args["selection_value"], (int, float)):
+            task_args["selection_value"] = str(task_args["selection_value"])
+
+    return task_called_with_domain
+
+
+def preprocess_format_spec(detect_format, header_line, field_separator):
+    r"""Preprocess the user format spec to be used in a task
+
+    More precisely:
+        - Disables ``detect_format`` if either ``header_line`` or ```field_separator``
+          are set
+        - If either ``header_line`` or ``field_separator`` is None then they are set to
+          their default values
+        - It transforms the field separator "\t" to the empty string ""
+    """
+    # Ignore detect_format if header_line or field_separator are set
+    if header_line is not None or field_separator is not None:
+        detect_format = False
+
+    # Set the default values of header_line and field_separator
+    if header_line is None:
+        header_line = True
+    if field_separator is None:
         field_separator = ""
-    else:
-        disable_detect_format = "// "
-        if header_line is None:
-            header_line = "true"
-        else:
-            if not isinstance(header_line, bool):
-                raise TypeError(type_error_message("header_line", header_line, bool))
-            header_line = str(header_line).lower()
-        if field_separator is None:
-            field_separator = ""
-        else:
-            if not isinstance(field_separator, str):
-                raise TypeError(
-                    type_error_message("field_separator", field_separator, str)
-                )
-            if len(field_separator) > 1:
-                raise ValueError("field_separator must have length at most 1")
-            if field_separator == "\t":
-                field_separator = ""
 
-    return disable_detect_format, header_line, field_separator
+    # Fail on separators with more than one char
+    if len(field_separator) > 1:
+        raise ValueError("'field_separator' must have length at most 1")
+
+    # Transform tab field_separator to empty string
+    if field_separator == "\t":
+        field_separator = ""
+
+    return detect_format, header_line, field_separator
 
 
-#######
-# API #
-#######
+def clean_task_args(task_args):
+    """Cleans the task arguments
+
+    More precisely:
+        - It removes command line arguments (they already are in another object).
+        - It removes parameters removed from the API and warns about it.
+        - It removes renamed API parameters and warns about it.
+    """
+    # Remove non-task parameters
+    command_line_arg_names = [
+        "batch_mode",
+        "log_file_path",
+        "output_scenario_path",
+        "task_file_path",
+    ]
+    other_arg_names = ["dictionary_file_path_or_domain", "trace", "kwargs"]
+    for arg_name in command_line_arg_names + other_arg_names:
+        if arg_name in task_args:
+            del task_args[arg_name]
+
+    # Remove removed parameters
+    removed_parameters = [
+        ("dictionary_domain", "dictionary_file_path_or_domain", "10"),
+        ("fill_test_database_settings", "use_complement_as_test", "10"),
+        ("map_predictor", None, "10"),
+        ("nb_predictor", None, "10"),
+        ("only_pairs_with", "specific_pairs", "10"),
+    ]
+    for arg_name, replacement_arg_name, removal_version in removed_parameters:
+        if arg_name in task_args and get_runner().khiops_version >= KhiopsVersion(
+            removal_version
+        ):
+            del task_args[arg_name]
+            warnings.warn(
+                removal_message(
+                    arg_name,
+                    removal_version,
+                    replacement=replacement_arg_name,
+                ),
+                stacklevel=4,
+            )
+    # Remove renamed parameters
+    renamed_parameters = [
+        ("max_evaluated_variable_number", "max_evaluated_variables", "10"),
+        ("max_selected_variable_number", "max_selected_variables", "10"),
+        ("constructed_number", "max_constructed_variables", "10"),
+        ("tree_number", "max_trees", "10"),
+        ("pair_number", "max_pairs", "10"),
+        ("max_interval_number", "max_intervals", "10"),
+        ("max_group_number", "max_groups", "10"),
+        ("max_variable_number", "max_variables", "10"),
+        ("recode_categorical_variables", "categorical_recoding_method", "10"),
+        ("recode_numerical_variables", "numerical_recoding_method", "10"),
+        ("recode_bivariate_variables", "pairs_recoding_method", "10"),
+        ("max_cell_number", "max_cells", "10"),
+    ]
+    for arg_name, new_arg_name, rename_version in renamed_parameters:
+        if arg_name in task_args and get_runner().khiops_version >= KhiopsVersion(
+            rename_version
+        ):
+            del task_args[arg_name]
+            warnings.warn(
+                renaming_message(arg_name, new_arg_name, rename_version),
+                stacklevel=4,
+            )
+
+
+#########
+# Tasks #
+#########
+
+# WARNING: All API methods tha use task objects have the following first instruction:
+#
+#     task_args = locals()
+#
+# This line must not be moved from there because the return value of locals() depends on
+# the state of the program. When it is called as the first instruction of a function it
+# contains only the values of its parameters.
 
 
 def get_khiops_version():
@@ -202,8 +385,18 @@ def get_samples_dir():
     return get_runner().samples_dir
 
 
+# Disable the unused arg rule because we use locals() to pass the arguments to run_task
+# pylint: disable=unused-argument
+
+
 def export_dictionary_as_json(
-    dictionary_file_path_or_domain, json_dictionary_file_path
+    dictionary_file_path_or_domain,
+    json_dictionary_file_path,
+    batch_mode=True,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
+    trace=False,
 ):
     """Exports a Khiops dictionary file to JSON format (``.kdicj``)
 
@@ -211,130 +404,20 @@ def export_dictionary_as_json(
     ----------
     dictionary_file_path_or_domain : str or `.DictionaryDomain`
         Path of a Khiops dictionary file or a DictionaryDomain object.
+    ... :
+        Options of the `.PyKhiopsRunner.run` method from the class `.PyKhiopsRunner`.
 
     Examples
     --------
     See the following function of the ``samples.py`` documentation script:
         - `samples.export_dictionary_files()`
     """
-    # Get or create the execution dictionary
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, False
-    )
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Create the scenario parameters
-    scenario_params = {
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__json_dictionary_file__": PathParameter(json_dictionary_file_path),
-    }
-
-    # Create scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path(
-            "export_dictionary_as_json", get_runner().khiops_version
-        ),
-        scenario_params,
-    )
-
-    # Run Khiops
-    get_runner().run("khiops", scenario)
-
-
-def read_dictionary_file(dictionary_file_path):
-    """Reads a Khiops dictionary file
-
-    Parameters
-    ----------
-    dictionary_file : str
-        Path of the file to be imported. The file can be either Khiops Dictionary
-        (extension ``kdic``) or Khiops JSON Dictionary (extension ``.json`` or
-        ``.kdicj``).
-
-    Returns
-    -------
-    `.DictionaryDomain`
-        An dictionary domain representing the information in the dictionary file.
-
-    Raises
-    ------
-    `ValueError`
-        When the file has an extension other than ``.kdic``, ``.kdicj`` or ``.json``.
-
-    Examples
-    --------
-    See the following functions of the ``samples.py`` documentation script:
-        - `samples.export_dictionary_files()`
-        - `samples.train_predictor_with_cross_validation()`
-        - `samples.multiple_train_predictor()`
-        - `samples.deploy_model_expert()`
-    """
-    extension = os.path.splitext(dictionary_file_path)[1].lower()
-    if extension not in [".kdic", ".kdicj", "json"]:
-        raise ValueError(
-            f"Input file must have extension 'kdic', 'kdicj' or 'json'."
-            f"It has extension: '{extension}'."
-        )
-    # Import dictionary file: Translate to JSON first if it is 'kdic'
-    try:
-        if extension == ".kdic":
-            tmp_dictionary_file_path = get_runner().create_temp_file(
-                "_read_dictionary_file_", ".kdicj"
-            )
-            export_dictionary_as_json(dictionary_file_path, tmp_dictionary_file_path)
-            json_dictionary_file_path = tmp_dictionary_file_path
-        else:
-            json_dictionary_file_path = dictionary_file_path
-        domain = DictionaryDomain()
-        domain.read_khiops_dictionary_json_file(json_dictionary_file_path)
-    # Always clean up temporary files
-    finally:
-        if extension == ".kdic":
-            fs.create_resource(tmp_dictionary_file_path).remove()
-
-    return domain
-
-
-def read_analysis_results_file(json_file_path):
-    """Reads a Khiops JSON report
-
-    Parameters
-    ----------
-    json_file_path : str
-        Path of the JSON report file.
-
-    Returns
-    -------
-    `.AnalysisResults`
-        An instance of AnalysisResults containing the report's information.
-
-    Examples
-    --------
-    See the following functions of the ``samples.py`` documentation script:
-        - `samples.access_predictor_evaluation_report()`
-        - `samples.train_predictor_with_cross_validation()`
-        - `samples.multiple_train_predictor()`
-    """
-    results = AnalysisResults()
-    results.read_khiops_json_file(json_file_path)
-    return results
-
-
-def read_coclustering_results_file(json_file_path):
-    """Reads a Khiops Coclustering JSON report
-
-    Parameters
-    ----------
-    json_file_path : str
-        Path of the JSON report file.
-
-    Returns
-    -------
-    `.CoclusteringResults`
-        An instance of CoclusteringResults containing the report's information.
-    """
-    coclustering_results = CoclusteringResults()
-    coclustering_results.read_khiops_coclustering_json_file(json_file_path)
-    return coclustering_results
+    # Run the task
+    run_task("export_dictionary_as_json", task_args)
 
 
 def build_dictionary_from_data_table(
@@ -374,40 +457,12 @@ def build_dictionary_from_data_table(
     ... :
         Options of the `.PyKhiopsRunner.run` method from the class `.PyKhiopsRunner`.
     """
-    # Resolve the database format parameters
-    disable_detect_format, header_line, field_separator = _resolve_format_spec(
-        detect_format, header_line, field_separator
-    )
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Create the scenario parameters
-    scenario_params = {
-        "__data_table__": PathParameter(data_table_path),
-        "__output_dictionary_file__": PathParameter(output_dictionary_file_path),
-        "__output_dictionary__": output_dictionary_name,
-        "__header_line__": header_line,
-        "__field_separator__": field_separator,
-        "__disable_detect_format__": disable_detect_format,
-    }
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path(
-            "build_dictionary_from_data_table", get_runner().khiops_version
-        ),
-        scenario_params,
-    )
-
-    # Execute Khiops
-    get_runner().run(
-        "khiops",
-        scenario,
-        batch_mode=batch_mode,
-        log_file_path=log_file_path,
-        output_scenario_path=output_scenario_path,
-        task_file_path=task_file_path,
-        trace=trace,
-        **kwargs,
-    )
+    # Run the ttask
+    run_task("build_dictionary_from_data_table", task_args)
 
 
 def check_database(
@@ -458,7 +513,7 @@ def check_database(
     selection_variable : str, default ""
         It checks only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
-    selection_value : str, default ""
+    selection_value: str or int or float, default ""
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
@@ -473,81 +528,12 @@ def check_database(
     See the following function of the ``samples.py`` documentation script:
         - `samples.check_database()`
     """
-    # Handle renamed/removed parameters
-    if "max_message_number" in kwargs:
-        warnings.warn(
-            renaming_message("max_message_number", "max_messages", "10.0"), stacklevel=2
-        )
-        del kwargs["max_message_number"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
-
-    # Check the type of non basic keyword arguments specific to this function
-    if additional_data_tables and not is_dict_like(additional_data_tables):
-        raise TypeError(
-            type_error_message(
-                "additional_data_tables", additional_data_tables, "dict-like"
-            )
-        )
-
-    # Get or create the execution dictionary
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Resolve the database format parameters
-    disable_detect_format, header_line, field_separator = _resolve_format_spec(
-        detect_format, header_line, field_separator
-    )
-
-    # Create the scenario parameters
-    data_tables = {dictionary_name: data_table_path}
-    if additional_data_tables:
-        data_tables.update(additional_data_tables)
-
-    scenario_params = {
-        "__train_database_files__": DatabaseParameter("TrainDatabase", data_tables),
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__dictionary__": dictionary_name,
-        "__header_line__": header_line,
-        "__field_separator__": field_separator,
-        "__disable_detect_format__": disable_detect_format,
-        "__sample_percentage__": str(sample_percentage),
-        "__sampling_mode__": sampling_mode,
-        "__selection_variable__": selection_variable,
-        "__selection_value__": str(selection_value),
-        "__max_messages__": str(max_messages),
-    }
-
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path("check_database", get_runner().khiops_version),
-        scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("check_database", task_args)
 
 
 def train_predictor(
@@ -631,7 +617,7 @@ def train_predictor(
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
-    selection_value : str, default ""
+    selection_value: str or int or float, default ""
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
@@ -728,254 +714,12 @@ def train_predictor(
         - `samples.train_predictor_with_cross_validation()`
         - `samples.multiple_train_predictor()`
     """
-    # Handle removed parameters kept in legacy mode
-    if get_runner().khiops_version < KhiopsVersion("10"):
-        if "fill_test_database_settings" in kwargs:
-            warnings.warn(
-                removal_message(
-                    "fill_test_database_settings",
-                    "10.0",
-                    replacement="use_complement_as_test",
-                ),
-                stacklevel=2,
-            )
-            del kwargs["fill_test_database_settings"]
-        if "map_predictor" in kwargs:
-            warnings.warn(removal_message("map_predictor", "10.0"), stacklevel=2)
-            del kwargs["map_predictor"]
-        if "only_pairs_with" in kwargs:
-            warnings.warn(
-                removal_message(
-                    "only_pairs_with", "10.0", replacement="specific_pairs"
-                ),
-                stacklevel=2,
-            )
-            del kwargs["only_pairs_with"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Handle removed parameters
-    if "nb_predictor" in kwargs:
-        warnings.warn(removal_message("nb_predictor", "10.0"), stacklevel=2)
-        del kwargs["nb_predictor"]
-
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
-
-    # Handle renamed parameters
-    if "max_evaluated_variable_number" in kwargs:
-        warnings.warn(
-            renaming_message(
-                "max_evaluated_variable_number", "max_evaluated_variables", "10.0"
-            ),
-            stacklevel=2,
-        )
-        del kwargs["max_evaluated_variable_number"]
-
-    if "max_selected_variable_number" in kwargs:
-        warnings.warn(
-            renaming_message(
-                "max_selected_variable_number", "max_selected_variables", "10.0"
-            ),
-            stacklevel=2,
-        )
-        del kwargs["max_selected_variable_number"]
-
-    if "constructed_number" in kwargs:
-        warnings.warn(
-            renaming_message("constructed_number", "max_constructed_variables", "10.0"),
-            stacklevel=2,
-        )
-        del kwargs["constructed_number"]
-
-    if "tree_number" in kwargs:
-        warnings.warn(
-            renaming_message("tree_number", "max_trees", "10.0"), stacklevel=2
-        )
-        del kwargs["tree_number"]
-
-    if "pair_number" in kwargs:
-        warnings.warn(
-            renaming_message("pair_number", "max_pairs", "10.0"), stacklevel=2
-        )
-        del kwargs["pair_number"]
-
-    if "max_interval_number" in kwargs:
-        warnings.warn(
-            renaming_message("max_interval_number", "max_intervals", "10.0"),
-            stacklevel=2,
-        )
-        del kwargs["max_interval_number"]
-
-    if "max_group_number" in kwargs:
-        warnings.warn(
-            renaming_message("max_group_number", "max_groups", "10.0"), stacklevel=2
-        )
-        del kwargs["max_group_number"]
-
-    # Get or create the execution dictionary
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Disambiguate the results directory path if necessary
-    results_dir = _create_unambiguous_khiops_path(results_dir)
-
-    # Check the type of non basic keyword arguments specific to this function
-    if additional_data_tables and not is_dict_like(additional_data_tables):
-        raise TypeError(
-            type_error_message(
-                "additional_data_tables", additional_data_tables, "dict-like"
-            )
-        )
-    if construction_rules and not is_list_like(construction_rules):
-        raise TypeError(
-            type_error_message("construction_rules", construction_rules, "list-like")
-        )
-    if specific_pairs:
-        if not is_list_like(specific_pairs):
-            raise TypeError(
-                type_error_message("specific_pairs", specific_pairs, "list-like")
-            )
-        for pair_index, pair in enumerate(specific_pairs):
-            if not isinstance(pair, tuple):
-                raise TypeError(
-                    "specific_pairs list elements must be 'tuple'. "
-                    f"Found '{type(pair).__name__}' at position {pair_index}"
-                )
-            if len(pair) != 2:
-                raise ValueError("specific_pairs elements must have length 2")
-
-    # Resolve the database format parameters
-    disable_detect_format, header_line, field_separator = _resolve_format_spec(
-        detect_format, header_line, field_separator
-    )
-
-    # Handle discretization/grouping default values
-    if discretization_method is None:
-        if target_variable:
-            discretization_method = "MODL"
-        else:
-            discretization_method = "EqualWidth"
-    if grouping_method is None:
-        if target_variable:
-            grouping_method = "MODL"
-        else:
-            grouping_method = "BasicGrouping"
-
-    # Create an empty specific pairs list if not specified
-    if specific_pairs is None:
-        specific_pairs = []
-
-    # Create the scenario parameters
-    data_tables = {dictionary_name: data_table_path}
-    if additional_data_tables:
-        data_tables.update(additional_data_tables)
-
-    used_rules = {}
-    if construction_rules:
-        used_rules = {rule: "true" for rule in construction_rules}
-
-    scenario_params = {
-        "__train_database_files__": DatabaseParameter(
-            name="TrainDatabase", data_tables=data_tables
-        ),
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__results_dir__": PathParameter(results_dir),
-        "__construction_rules_spec__": KeyValueListParameter(
-            name="ConstructionRules", value_field_name="Used", keyvalues=used_rules
-        ),
-        "__specific_pairs_spec__": RecordListParameter(
-            name="SpecificAttributePairs",
-            records_header=("FirstName", "SecondName"),
-            records=specific_pairs,
-        ),
-        "__dictionary__": dictionary_name,
-        "__header_line__": header_line,
-        "__field_separator__": field_separator,
-        "__disable_detect_format__": disable_detect_format,
-        "__sample_percentage__": str(sample_percentage),
-        "__sampling_mode__": sampling_mode,
-        "__selection_variable__": selection_variable,
-        "__selection_value__": str(selection_value),
-        "__test_database_mode__": "Complementary" if use_complement_as_test else "None",
-        "__disable_construction_unselect_all__": "" if construction_rules else "// ",
-        "__target_variable__": target_variable,
-        "__main_target_value__": main_target_value,
-        "__max_constructed_variables__": str(max_constructed_variables),
-        "__max_trees__": str(max_trees),
-        "__max_pairs__": str(max_pairs),
-        "__all_possible_pairs__": str(all_possible_pairs).lower(),
-        "__results_prefix__": results_prefix,
-        "__snb_predictor__": str(snb_predictor).lower(),
-        "__univariate_predictor_number__": str(univariate_predictor_number),
-        "__max_evaluated_variables__": str(max_evaluated_variables),
-        "__max_selected_variables__": str(max_selected_variables),
-        "__group_target_value__": str(group_target_value).lower(),
-        "__supervised_discretization_method__": (
-            discretization_method if target_variable else "MODL"
-        ),
-        "__unsupervised_discretization_method__": (
-            "EqualWidth" if target_variable else discretization_method
-        ),
-        "__min_interval_frequency__": str(min_interval_frequency),
-        "__max_intervals__": str(max_intervals),
-        "__supervised_grouping_method__": (
-            grouping_method if target_variable else "MODL"
-        ),
-        "__unsupervised_grouping_method__": (
-            "BasicGrouping" if target_variable else grouping_method
-        ),
-        "__min_group_frequency__": str(min_group_frequency),
-        "__max_groups__": str(max_groups),
-    }
-
-    # Set parameters available only in v9 legacy mode
-    if get_runner().khiops_version < KhiopsVersion("10"):
-        scenario_params["__fill_test_database_settings__"] = "//"
-        if "fill_test_database_settings" in kwargs:
-            if kwargs["fill_test_database_settings"]:
-                scenario_params["__fill_test_database_settings__"] = ""
-            del kwargs["fill_test_database_settings"]
-
-        scenario_params["__map_predictor__"] = "false"
-        if "map_predictor" in kwargs:
-            if kwargs["map_predictor"]:
-                scenario_params["__map_predictor__"] = "true"
-            del kwargs["map_predictor"]
-
-        scenario_params["__only_pairs_with__"] = ""
-        if "only_pairs_with" in kwargs:
-            scenario_params["__only_pairs_with__"] = kwargs["only_pairs_with"]
-            del kwargs["only_pairs_with"]
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path("train_predictor", get_runner().khiops_version),
-        scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("train_predictor", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
     reports_file_name = results_prefix
@@ -1050,7 +794,7 @@ def evaluate_predictor(
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal "".
-    selection_value : str, default ""
+    selection_value: str or int or float, default ""
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
@@ -1083,84 +827,20 @@ def evaluate_predictor(
         - `samples.access_predictor_evaluation_report()`
         - `samples.train_predictor_with_cross_validation()`
     """
-    # Handle renamed/removed parameters
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Check the type of non basic keyword arguments specific to this function
-    if additional_data_tables and not is_dict_like(additional_data_tables):
-        raise TypeError(
-            type_error_message(
-                "additional_data_tables", additional_data_tables, "dict-like"
-            )
-        )
-
-    # Resolve the database format parameters
-    disable_detect_format, header_line, field_separator = _resolve_format_spec(
-        detect_format, header_line, field_separator
+    # Create the evaluation file path and remove the directory and prefix arguments
+    evaluation_report_res = fs.create_resource(task_args["results_dir"]).create_child(
+        f"{task_args['results_prefix']}EvaluationReport.xls"
     )
+    task_args["evaluation_report_path"] = evaluation_report_res.uri
+    del task_args["results_dir"]
+    del task_args["results_prefix"]
 
-    # Generate output file path
-    evaluation_report_res = fs.create_resource(results_dir).create_child(
-        f"{results_prefix}EvaluationReport.xls"
-    )
-
-    # Get or create the execution dictionary file
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Disambiguate the results directory path if necessary
-    results_dir = _create_unambiguous_khiops_path(results_dir)
-
-    # Create the scenario parameters
-    data_tables = {train_dictionary_name: data_table_path}
-    if additional_data_tables:
-        data_tables.update(additional_data_tables)
-    scenario_params = {
-        "__evaluation_database_files__": DatabaseParameter(
-            name="EvaluationDatabase", data_tables=data_tables
-        ),
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__evaluation_file__": PathParameter(evaluation_report_res.uri),
-        "__header_line__": header_line,
-        "__field_separator__": field_separator,
-        "__disable_detect_format__": disable_detect_format,
-        "__sample_percentage__": str(sample_percentage),
-        "__sampling_mode__": sampling_mode,
-        "__selection_variable__": selection_variable,
-        "__selection_value__": str(selection_value),
-        "__main_target_value__": main_target_value,
-    }
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path("evaluate_predictor", get_runner().khiops_version),
-        scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("evaluate_predictor", task_args)
 
     # Return the path of the JSON report
     report_file_name = results_prefix
@@ -1260,7 +940,7 @@ def train_recoder(
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
-    selection_value : str, default ""
+    selection_value: str or int or float, default ""
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
@@ -1358,263 +1038,25 @@ def train_recoder(
         - `samples.train_recoder_with_multiple_parameters()`
         - `samples.train_recoder_mt_flatten()`
     """
-    # Handle renamed/removed parameters
-    if (
-        get_runner().khiops_version < KhiopsVersion("10")
-        and "only_pairs_with" in kwargs
-    ):
-        warnings.warn(
-            removal_message("only_pairs_with", "10.0", replacement="specific_pairs"),
-            stacklevel=2,
-        )
-        del kwargs["only_pairs_with"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
-
-    # Renamed parameters warnings
-    if "constructed_number" in kwargs:
-        warnings.warn(
-            renaming_message("constructed_number", "max_constructed_variables", "10.0"),
-            stacklevel=2,
-        )
-        del kwargs["constructed_number"]
-
-    if "tree_number" in kwargs:
-        warnings.warn(
-            renaming_message("tree_number", "max_trees", "10.0"), stacklevel=2
-        )
-        del kwargs["tree_number"]
-
-    if "pair_number" in kwargs:
-        warnings.warn(
-            renaming_message("pair_number", "max_pairs", "10.0"), stacklevel=2
-        )
-        del kwargs["pair_number"]
-
-    if "max_variable_number" in kwargs:
-        warnings.warn(
-            renaming_message("max_variable_number", "max_variables", "10.0"),
-            stacklevel=2,
-        )
-        del kwargs["max_variable_number"]
-
-    if "max_interval_number" in kwargs:
-        warnings.warn(
-            renaming_message("max_interval_number", "max_intervals", "10.0"),
-            stacklevel=2,
-        )
-        del kwargs["max_interval_number"]
-
-    if "max_group_number" in kwargs:
-        warnings.warn(
-            renaming_message("max_group_number", "max_groups", "10.0"), stacklevel=2
-        )
-        del kwargs["max_group_number"]
-
-    if "recode_categorical_variables" in kwargs:
-        warnings.warn(
-            renaming_message(
-                "recode_categorical_variables", "categorical_recoding_method", "10.0"
-            ),
-            stacklevel=2,
-        )
-        del kwargs["recode_categorical_variables"]
-
-    if "recode_numerical_variables" in kwargs:
-        warnings.warn(
-            renaming_message(
-                "recode_numerical_variables", "numerical_recoding_method", "10.0"
-            ),
-            stacklevel=2,
-        )
-        del kwargs["recode_numerical_variables"]
-
-    if "recode_bivariate_variables" in kwargs:
-        warnings.warn(
-            renaming_message(
-                "recode_bivariate_variables", "pairs_recoding_method", "10.0"
-            ),
-            stacklevel=2,
-        )
-        del kwargs["recode_bivariate_variables"]
-
-    # Check the type of non basic keyword arguments specific to this function
-    if additional_data_tables and not is_dict_like(additional_data_tables):
-        raise TypeError(
-            type_error_message(
-                "additional_data_tables", additional_data_tables, "dict-like"
-            )
-        )
-    if construction_rules and not is_list_like(construction_rules):
-        raise TypeError(
-            type_error_message("construction_rules", construction_rules, "list-like")
-        )
-    if specific_pairs:
-        if not is_list_like(specific_pairs):
-            raise TypeError(
-                type_error_message("specific_pairs", specific_pairs, "list-like")
-            )
-        for pair_index, pair in enumerate(specific_pairs):
-            if not isinstance(pair, tuple):
-                raise TypeError(
-                    "specific_pairs list elements must be 'tuple'. "
-                    f"Found '{type(pair).__name__}' at position {pair_index}"
-                )
-            if len(pair) != 2:
-                raise ValueError("specific_pairs elements must have length 2")
-
-    # Resolve the database format parameters
-    disable_detect_format, header_line, field_separator = _resolve_format_spec(
-        detect_format, header_line, field_separator
-    )
-
-    # Handle discretization/grouping default values
-    if not discretization_method:
-        if target_variable:
-            discretization_method = "MODL"
-        else:
-            discretization_method = "EqualWidth"
-    if not grouping_method:
-        if target_variable:
-            grouping_method = "MODL"
-        else:
-            grouping_method = "BasicGrouping"
-
-    # Get or create the execution dictionary file
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Disambiguate the results directory path if necessary
-    results_dir = _create_unambiguous_khiops_path(results_dir)
-
-    # Create the specific pairs file if they are available
-    if specific_pairs is None:
-        specific_pairs = []
-
-    # Create the scenario parameters
-    data_tables = {dictionary_name: data_table_path}
-    if additional_data_tables:
-        data_tables.update(additional_data_tables)
-
-    used_rules = {}
-    if construction_rules:
-        used_rules = {rule: "true" for rule in construction_rules}
-
-    scenario_params = {
-        "__train_database_files__": DatabaseParameter(
-            name="TrainDatabase", data_tables=data_tables
-        ),
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__results_dir__": PathParameter(results_dir),
-        "__construction_rules_spec__": KeyValueListParameter(
-            name="ConstructionRules", value_field_name="Used", keyvalues=used_rules
-        ),
-        "__specific_pairs_spec__": RecordListParameter(
-            name="SpecificAttributePairs",
-            records_header=("FirstName", "SecondName"),
-            records=specific_pairs,
-        ),
-        "__dictionary__": dictionary_name,
-        "__header_line__": header_line,
-        "__field_separator__": field_separator,
-        "__disable_detect_format__": disable_detect_format,
-        "__sample_percentage__": str(sample_percentage),
-        "__sampling_mode__": sampling_mode,
-        "__selection_variable__": selection_variable,
-        "__selection_value__": str(selection_value),
-        "__variable_construction_unselect_all__": "" if construction_rules else "// ",
-        "__target_variable__": target_variable,
-        "__max_constructed_variables__": str(max_constructed_variables),
-        "__max_trees__": str(max_trees),
-        "__max_pairs__": str(max_pairs),
-        "__all_possible_pairs__": str(all_possible_pairs).lower(),
-        "__results_prefix__": results_prefix,
-        "__informative_variables_only__": str(informative_variables_only).lower(),
-        "__max_variables__": str(max_variables),
-        "__keep_categorical_variables__": str(
-            keep_initial_categorical_variables
-        ).lower(),
-        "__keep_numerical_variables__": str(keep_initial_numerical_variables).lower(),
-        "__categorical_recoding_method__": categorical_recoding_method,
-        "__numerical_recoding_method__": numerical_recoding_method,
-        "__pairs_recoding_method__": pairs_recoding_method,
-        "__group_target_value__": str(group_target_value).lower(),
-        "__supervised_discretization_method__": (
-            discretization_method if target_variable else "MODL"
-        ),
-        "__unsupervised_discretization_method__": (
-            "EqualWidth" if target_variable else discretization_method
-        ),
-        "__min_interval_frequency__": str(min_interval_frequency),
-        "__max_intervals__": str(max_intervals),
-        "__supervised_grouping_method__": (
-            grouping_method if target_variable else "MODL"
-        ),
-        "__unsupervised_grouping_method__": (
-            "BasicGrouping" if target_variable else grouping_method
-        ),
-        "__min_group_frequency__": str(min_group_frequency),
-        "__max_groups__": str(max_groups),
-    }
-
-    # Set scenario parameter available only in legacy mode
-    if get_runner().khiops_version < KhiopsVersion("10"):
-        scenario_params["__only_pairs_with__"] = ""
-        if "only_pairs_with" in kwargs:
-            scenario_params["__only_pairs_with__"] = kwargs["only_pairs_with"]
-            del kwargs["only_pairs_with"]
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path("train_recoder", get_runner().khiops_version),
-        scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("train_recoder", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
-    reports_file_name = results_prefix
+    reports_file_name = f"{results_prefix}AllReports"
     if get_runner().khiops_version < KhiopsVersion("10"):
-        reports_file_name += "AllReports.json"
+        reports_file_name += ".json"
     else:
-        reports_file_name += "AllReports.khj"
+        reports_file_name += ".khj"
     reports_file_res = fs.create_resource(results_dir).create_child(reports_file_name)
-
-    if target_variable != "":
-        modeling_dictionary_file_res = fs.create_resource(results_dir).create_child(
-            f"{results_prefix}Modeling.kdic"
-        )
-    else:
-        modeling_dictionary_file_res = None
-
-    return (
-        reports_file_res.uri,
-        modeling_dictionary_file_res.uri if modeling_dictionary_file_res else None,
+    modeling_dictionary_file_res = fs.create_resource(results_dir).create_child(
+        f"{results_prefix}Modeling.kdic"
     )
+
+    return (reports_file_res.uri, modeling_dictionary_file_res.uri)
 
 
 def deploy_model(
@@ -1673,7 +1115,7 @@ def deploy_model(
     selection_variable : str, default ""
         It deploys only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
-    selection_value : str, default ""
+    selection_value: str or int or float, default ""
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
@@ -1704,98 +1146,12 @@ def deploy_model(
         - `samples.deploy_model_expert()`
 
     """
-    # Handle renamed/removed parameters
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Check the type of non basic keyword arguments specific to this function
-    if additional_data_tables and not is_dict_like(additional_data_tables):
-        raise TypeError(
-            type_error_message(
-                "additional_data_tables", additional_data_tables, "dict-like"
-            )
-        )
-    if output_additional_data_tables and not is_dict_like(
-        output_additional_data_tables
-    ):
-        raise TypeError(
-            type_error_message(
-                "output_additional_data_tables",
-                output_additional_data_tables,
-                "dict-like",
-            )
-        )
-
-    # Resolve the database format parameters
-    disable_detect_format, header_line, field_separator = _resolve_format_spec(
-        detect_format, header_line, field_separator
-    )
-    _, output_header_line, output_field_separator = _resolve_format_spec(
-        False, output_header_line, output_field_separator
-    )
-
-    # Get or create the execution dictionary file
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Create the scenario
-    data_tables = {dictionary_name: data_table_path}
-    if additional_data_tables:
-        data_tables.update(additional_data_tables)
-    output_data_tables = {dictionary_name: output_data_table_path}
-    if output_additional_data_tables:
-        output_data_tables.update(output_additional_data_tables)
-
-    scenario_params = {
-        "__source_database_files__": DatabaseParameter(
-            name="SourceDatabase", data_tables=data_tables
-        ),
-        "__target_database_files__": DatabaseParameter(
-            name="TargetDatabase", data_tables=output_data_tables
-        ),
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__dictionary__": dictionary_name,
-        "__header_line__": header_line,
-        "__field_separator__": field_separator,
-        "__disable_detect_format__": disable_detect_format,
-        "__sample_percentage__": str(sample_percentage),
-        "__sampling_mode__": sampling_mode,
-        "__selection_variable__": selection_variable,
-        "__selection_value__": str(selection_value),
-        "__output_header_line__": output_header_line,
-        "__output_field_separator__": output_field_separator,
-    }
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path("deploy_model", get_runner().khiops_version),
-        params=scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("deploy_model", task_args)
 
 
 def build_deployed_dictionary(
@@ -1832,53 +1188,12 @@ def build_deployed_dictionary(
     See the following functions of the ``samples.py`` documentation script:
         - `samples.build_deployed_dictionary()`
     """
-    # Handle renamed/removed parameters
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Get or create the execution dictionary file
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Create the scenario parameters
-    scenario_params = {
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__output_dictionary_file__": PathParameter(output_dictionary_file_path),
-        "__dictionary__": dictionary_name,
-    }
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path(
-            "build_deployed_dictionary", get_runner().khiops_version
-        ),
-        scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # run the task
+    run_task("build_deployed_dictionary", task_args)
 
 
 def sort_data_table(
@@ -1941,77 +1256,12 @@ def sort_data_table(
         - `samples.sort_data_table()`
         - `samples.sort_data_table_expert()`
     """
-    # Handle renamed/removed parameters
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Check the type of non basic keyword arguments specific to this function
-    if sort_variables and not is_list_like(sort_variables):
-        raise TypeError(
-            type_error_message("sort_variables", sort_variables, "list-like")
-        )
-
-    # Resolve the database format parameters
-    disable_detect_format, header_line, field_separator = _resolve_format_spec(
-        detect_format, header_line, field_separator
-    )
-    _, output_header_line, output_field_separator = _resolve_format_spec(
-        False, output_header_line, output_field_separator
-    )
-
-    # Get or create the execution dictionary file
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Create the scenario parameters
-    scenario_params = {
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__data_file__": PathParameter(data_table_path),
-        "__output_data_file__": PathParameter(output_data_table_path),
-        "__sort_variables__": RecordListParameter(
-            name="SortAttributes",
-            records_header="Name",
-            records=sort_variables if sort_variables is not None else [],
-        ),
-        "__dictionary__": dictionary_name,
-        "__disable_sort_by_key_variables__": "// " if sort_variables else "",
-        "__header_line__": header_line,
-        "__field_separator__": field_separator,
-        "__disable_detect_format__": disable_detect_format,
-        "__output_header_line__": output_header_line,
-        "__output_field_separator__": output_field_separator,
-    }
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path("sort_data_table", get_runner().khiops_version),
-        scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("sort_data_table", task_args)
 
 
 def extract_keys_from_data_table(
@@ -2069,67 +1319,12 @@ def extract_keys_from_data_table(
     See the following function of the ``samples.py`` documentation script:
         - `samples.extract_keys_from_data_table()`
     """
-    # Handle renamed/removed parameters
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Resolve the database format parameters
-    disable_detect_format, header_line, field_separator = _resolve_format_spec(
-        detect_format, header_line, field_separator
-    )
-    _, output_header_line, output_field_separator = _resolve_format_spec(
-        False, output_header_line, output_field_separator
-    )
-
-    # Get or create the execution dictionary file
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Create the scenario parameters
-    scenario_params = {
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__data_file__": PathParameter(data_table_path),
-        "__output_data_file__": PathParameter(output_data_table_path),
-        "__dictionary__": dictionary_name,
-        "__header_line__": header_line,
-        "__field_separator__": field_separator,
-        "__disable_detect_format__": disable_detect_format,
-        "__output_header_line__": output_header_line,
-        "__output_field_separator__": output_field_separator,
-    }
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path(
-            "extract_keys_from_data_table", get_runner().khiops_version
-        ),
-        scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("extract_keys_from_data_table", task_args)
 
 
 def build_multi_table_dictionary(
@@ -2157,7 +1352,7 @@ def build_multi_table_dictionary(
     output_dictionary_file_path : str
         Path of the output dictionary path.
     overwrite_dictionary_file : bool, default ``False``
-        If ``True`` it will overwrite input dictionary if it is a file.
+        If ``True`` it will overwrite an input dictionary file.
     ... :
         Options of the `.PyKhiopsRunner.run` method from the class `.PyKhiopsRunner`.
 
@@ -2166,53 +1361,32 @@ def build_multi_table_dictionary(
     `ValueError`
         Invalid values of an argument
     """
-    _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
     # Create the execution dictionary file if it is domain or a file with no overwrite
-    domain = None
+    check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
-        domain = dictionary_file_path_or_domain
+        dictionary_file_path = output_dictionary_file_path
+        dictionary_file_path_or_domain.export_khiops_dictionary_file(
+            dictionary_file_path
+        )
+        task_args["dictionary_file_path"] = output_dictionary_file_path
     elif overwrite_dictionary_file:
-        execution_dictionary_file_path = dictionary_file_path_or_domain
+        task_args["dictionary_file_path"] = dictionary_file_path_or_domain
     else:
         domain = read_dictionary_file(dictionary_file_path_or_domain)
+        domain.export_khiops_dictionary_file(output_dictionary_file_path)
+        task_args["dictionary_file_path"] = output_dictionary_file_path
 
-    if domain is not None:
-        execution_dictionary_file_path = get_runner().create_temp_file(
-            "_build_multi_table_dictionary_", ".kdic"
-        )
-        domain.export_khiops_dictionary_file(execution_dictionary_file_path)
+    # Delete unused task parameters
+    del task_args["dictionary_file_path_or_domain"]
+    del task_args["overwrite_dictionary_file"]
+    del task_args["output_dictionary_file_path"]
 
-    # Create the scenario parameters
-    scenario_params = {
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__output_dictionary_file_path__": PathParameter(output_dictionary_file_path),
-        "__root_dictionary_name__": root_dictionary_name,
-        "__secondary_table_variable_name__": secondary_table_variable_name,
-    }
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path(
-            "build_multi_table_dictionary", get_runner().khiops_version
-        ),
-        scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-        )
-    finally:
-        if not trace and not overwrite_dictionary_file:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("build_multi_table_dictionary", task_args)
 
 
 def train_coclustering(
@@ -2272,7 +1446,7 @@ def train_coclustering(
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
-    selection_value : str, default ""
+    selection_value: str or int or float, default ""
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
@@ -2294,114 +1468,27 @@ def train_coclustering(
     Raises
     ------
     `ValueError`
-        Number of coclustering variables out of the range 2-10
+        Number of coclustering variables out of the range 2-10.
     `TypeError`
-        Invalid type of an argument
+        Invalid type of an argument.
 
     Examples
     --------
     See the following function of the ``samples.py`` documentation script:
         - `samples.train_coclustering()`
     """
-    # Handle renamed/removed parameters
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Check the type of non basic keyword arguments specific to this function
-    if coclustering_variables and not is_list_like(coclustering_variables):
-        raise TypeError(
-            type_error_message(
-                "coclustering_variables", coclustering_variables, "list-like"
-            )
-        )
-    if additional_data_tables and not is_dict_like(additional_data_tables):
-        raise TypeError(
-            type_error_message(
-                "additional_data_tables", additional_data_tables, "dict-like"
-            )
-        )
-
-    # Raise an error if the number of coclustering variables is out of range
-    if len(coclustering_variables) < 2:
+    # Check the size of coclustering_variables
+    if len(task_args["coclustering_variables"]) < 2:
         raise ValueError("coclustering_variables must have at least 2 elements")
-    elif len(coclustering_variables) > 10:
+    elif len(task_args["coclustering_variables"]) > 10:
         raise ValueError("coclustering_variables must have at most 10 elements")
 
-    # Resolve the database format parameters
-    disable_detect_format, header_line, field_separator = _resolve_format_spec(
-        detect_format, header_line, field_separator
-    )
-
-    # Get or create the execution dictionary file
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Disambiguate the results directory path if necessary
-    results_dir = _create_unambiguous_khiops_path(results_dir)
-
-    # Create a dictionary for table key-value section (main table plus additional ones)
-
-    # Create the scenario parameters
-    data_tables = {dictionary_name: data_table_path}
-    if additional_data_tables:
-        data_tables.update(additional_data_tables)
-
-    scenario_params = {
-        "__database_files__": DatabaseParameter(
-            name="Database", data_tables=data_tables
-        ),
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__results_dir__": PathParameter(results_dir),
-        "__coclustering_variables__": RecordListParameter(
-            name="AnalysisSpec.CoclusteringParameters.Attributes",
-            records_header="Name",
-            records=coclustering_variables,
-        ),
-        "__dictionary__": dictionary_name,
-        "__header_line__": header_line,
-        "__field_separator__": field_separator,
-        "__disable_detect_format__": disable_detect_format,
-        "__sample_percentage__": str(sample_percentage),
-        "__sampling_mode__": sampling_mode,
-        "__selection_variable__": selection_variable,
-        "__selection_value__": str(selection_value),
-        "__frequency_variable__": frequency_variable,
-        "__min_optimization_time__": str(min_optimization_time),
-        "__results_prefix__": results_prefix,
-    }
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path(
-            "train_coclustering", get_runner().khiops_version, coclustering=True
-        ),
-        params=scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops_coclustering",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("train_coclustering", task_args)
 
     # Return the path of the coclustering file
     coclustering_file_name = results_prefix + "Coclustering.khcj"
@@ -2464,64 +1551,12 @@ def simplify_coclustering(
     See the following function of the ``samples.py`` documentation script:
         - `samples.simplify_coclustering()`
     """
-    # Renamed parameters warnings
-    if "max_cell_number" in kwargs:
-        warnings.warn(
-            renaming_message("max_cell_number", "max_cells", "10.0"), stacklevel=2
-        )
-        del kwargs["max_cell_number"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    # Check the type of non basic keyword arguments specific to this function
-    if max_part_numbers and not is_dict_like(max_part_numbers):
-        raise TypeError(
-            type_error_message("max_part_numbers", max_part_numbers, "dict-like")
-        )
-
-    # Disambiguate the results directory path if necessary
-    results_dir = _create_unambiguous_khiops_path(results_dir)
-
-    # Create the scenario parameters
-    max_part_numbers_string = {}
-    if max_part_numbers is not None:
-        for variable_name, max_parts in max_part_numbers.items():
-            max_part_numbers_string[variable_name] = str(max_parts)
-
-    scenario_params = {
-        "__coclustering_file__": PathParameter(coclustering_file_path),
-        "__simplified_coclustering_file__": PathParameter(
-            simplified_coclustering_file_path
-        ),
-        "__results_dir__": PathParameter(results_dir),
-        "__max_part_number_spec__": KeyValueListParameter(
-            name="PostProcessingSpec.PostProcessedAttributes",
-            value_field_name="MaxPartNumber",
-            keyvalues=max_part_numbers_string,
-        ),
-        "__max_preserved_information__": str(max_preserved_information),
-        "__max_cells__": str(max_cells),
-        "__max_total_parts__": str(max_total_parts),
-        "__results_prefix__": results_prefix,
-    }
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path(
-            "simplify_coclustering", get_runner().khiops_version, coclustering=True
-        ),
-        params=scenario_params,
-    )
-
-    # Execute Khiops Coclustering
-    get_runner().run(
-        "khiops_coclustering",
-        scenario,
-        batch_mode=batch_mode,
-        log_file_path=log_file_path,
-        output_scenario_path=output_scenario_path,
-        task_file_path=task_file_path,
-        trace=trace,
-        **kwargs,
-    )
+    # Run the task
+    run_task("simplify_coclustering", task_args)
 
 
 def prepare_coclustering_deployment(
@@ -2554,8 +1589,6 @@ def prepare_coclustering_deployment(
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be analyzed.
-    data_table_path : str
-        Path of the data table file.
     coclustering_file_path : str
         Path of the coclustering model file (extension ``.khc`` or ``.khcj``).
     table_variable : str
@@ -2597,90 +1630,12 @@ def prepare_coclustering_deployment(
     See the following function of the ``samples.py`` documentation script:
         - `samples.deploy_model_expert()`
     """
-    # Handle renamed/removed parameters
-    if "max_cell_number" in kwargs:
-        warnings.warn(
-            renaming_message("max_cell_number", "max_cells", "10.0"), stacklevel=2
-        )
-        del kwargs["max_cell_number"]
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
-    if "dictionary_domain" in kwargs:
-        warnings.warn(
-            removal_message(
-                "dictionary_domain",
-                "10.0",
-                replacement="dictionary_file_path_or_domain",
-            ),
-            stacklevel=2,
-        )
-        del kwargs["dictionary_domain"]
-
-    # Check the type of non basic keyword arguments specific to this function
-    if max_part_numbers and not is_dict_like(max_part_numbers):
-        raise TypeError(
-            type_error_message("max_part_numbers", max_part_numbers, "dict-like")
-        )
-
-    # Get or create the execution dictionary file
-    execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-        dictionary_file_path_or_domain, trace
-    )
-
-    # Disambiguate the results directory path if necessary
-    results_dir = _create_unambiguous_khiops_path(results_dir)
-
-    # Create the scenario parameters
-    max_part_numbers_string = {}
-    if max_part_numbers is not None:
-        for variable_name, max_parts in max_part_numbers.items():
-            max_part_numbers_string[variable_name] = str(max_parts)
-
-    scenario_params = {
-        "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-        "__coclustering_file__": PathParameter(coclustering_file_path),
-        "__results_dir__": PathParameter(results_dir),
-        "__max_part_number_spec__": KeyValueListParameter(
-            name="PostProcessingSpec.PostProcessedAttributes",
-            value_field_name="MaxPartNumber",
-            keyvalues=max_part_numbers_string,
-        ),
-        "__dictionary__": dictionary_name,
-        "__max_preserved_information__": str(max_preserved_information),
-        "__max_cells__": str(max_cells),
-        "__table_variable__": table_variable,
-        "__deployed_variable__": deployed_variable_name,
-        "__build_cluster_variable__": str(build_cluster_variable).lower(),
-        "__build_distance_variables__": str(build_distance_variables).lower(),
-        "__build_frequency_variables__": str(build_frequency_variables).lower(),
-        "__variables_prefix__": variables_prefix,
-        "__results_prefix__": results_prefix,
-    }
-
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path(
-            "prepare_coclustering_deployment",
-            get_runner().khiops_version,
-            coclustering=True,
-        ),
-        scenario_params,
-    )
-
-    # Execute Khiops and cleanup when necessary
-    try:
-        get_runner().run(
-            "khiops_coclustering",
-            scenario,
-            batch_mode=batch_mode,
-            log_file_path=log_file_path,
-            output_scenario_path=output_scenario_path,
-            task_file_path=task_file_path,
-            trace=trace,
-            **kwargs,
-        )
-    finally:
-        if isinstance(dictionary_file_path_or_domain, DictionaryDomain) and not trace:
-            fs.create_resource(execution_dictionary_file_path).remove()
+    # Run the task
+    run_task("prepare_coclustering_deployment", task_args)
 
 
 def extract_clusters(
@@ -2720,44 +1675,24 @@ def extract_clusters(
     See the following function of the ``samples.py`` documentation script:
         - `samples.extract_clusters()`
     """
-    # Obtain the directory and the file name of the clusters file path
-    execution_clusters_file_path = _create_unambiguous_khiops_path(clusters_file_path)
-    clusters_file_name = os.path.basename(execution_clusters_file_path)
-    clusters_file_res = fs.create_resource(execution_clusters_file_path)
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
+
+    # Obtain the directory and name of the clusters file
+    clusters_file_path = create_unambiguous_khiops_path(task_args["clusters_file_path"])
+    clusters_file_name = os.path.basename(clusters_file_path)
+    clusters_file_res = fs.create_resource(clusters_file_path)
     clusters_file_dir_res = clusters_file_res.create_parent()
-    execution_cluster_file_dir = _create_unambiguous_khiops_path(
-        clusters_file_dir_res.uri
-    )
+    clusters_file_dir = create_unambiguous_khiops_path(clusters_file_dir_res.uri)
+    task_args["clusters_file_name"] = clusters_file_name
+    task_args["results_dir"] = clusters_file_dir
 
-    # Create the scenario parameters
-    scenario_params = {
-        "__coclustering_file__": PathParameter(coclustering_file_path),
-        "__clusters_file_name__": PathParameter(clusters_file_name),
-        "__results_dir__": PathParameter(execution_cluster_file_dir),
-        "__cluster_variable__": cluster_variable,
-        "__max_preserved_information__": str(max_preserved_information),
-        "__max_cells__": str(max_cells),
-    }
+    # Delete the clusters_file_path argument
+    del task_args["clusters_file_path"]
 
-    # Create the scenario
-    scenario = ConfigurableKhiopsScenario(
-        get_scenario_file_path(
-            "extract_clusters", get_runner().khiops_version, coclustering=True
-        ),
-        scenario_params,
-    )
-
-    # Execute Khiops
-    get_runner().run(
-        "khiops_coclustering",
-        scenario,
-        batch_mode=batch_mode,
-        log_file_path=log_file_path,
-        output_scenario_path=output_scenario_path,
-        task_file_path=task_file_path,
-        trace=trace,
-        **kwargs,
-    )
+    # Run the task
+    run_task("extract_clusters", task_args)
 
 
 def detect_data_table_format(
@@ -2794,64 +1729,28 @@ def detect_data_table_format(
     See the following function of the ``samples.py`` documentation script:
         - `samples.detect_data_table_format()`
     """
-    # Raise an exception if the Khiops backend is older than 10.0.1
-    if get_runner().khiops_version < KhiopsVersion("10.0.1"):
-        raise PyKhiopsEnvironmentError(
-            "detect_format is not available for Khiops version "
-            f"{get_runner().khiops_version}. Upgrade to Khiops 10.0.1 or newer."
-        )
-
-    # Without dictionary
-    if dictionary_file_path_or_domain is None:
-        # Create the scenario parameters
-        scenario_params = {"__data_file__": PathParameter(data_table_path)}
-
-        # Create the scenario
-        scenario = ConfigurableKhiopsScenario(
-            get_scenario_file_path(
-                "detect_data_table_format", get_runner().khiops_version
-            ),
-            scenario_params,
-        )
-    # With dictionary
-    else:
-        if dictionary_name is None:
-            raise ValueError(
-                "dictionary_name must be specified with "
-                "dictionary_file_path_or_domain"
-            )
-
-        # Get or create the execution dictionary file
-        execution_dictionary_file_path = _get_or_create_execution_dictionary_file(
-            dictionary_file_path_or_domain, trace
-        )
-
-        # Create the scenario parameters
-        scenario_params = {
-            "__data_file__": PathParameter(data_table_path),
-            "__dictionary_file__": PathParameter(execution_dictionary_file_path),
-            "__dictionary__": dictionary_name,
-        }
-
-        # Create the scenario
-        scenario = ConfigurableKhiopsScenario(
-            get_scenario_file_path(
-                "detect_data_table_format_with_dictionary", get_runner().khiops_version
-            ),
-            scenario_params,
-        )
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
 
     # Create log file to save the detect format output
     log_file_path = get_runner().create_temp_file("_detect_data_table_format_", ".log")
+    task_args["log_file_path"] = log_file_path
 
-    # Execute Khiops
-    get_runner().run(
-        "khiops",
-        scenario,
-        batch_mode=True,
-        log_file_path=log_file_path,
-        trace=trace,
-    )
+    # Run the task without dictionary
+    if dictionary_file_path_or_domain is None:
+        if "dictionary_name" in task_args:
+            del task_args["dictionary_name"]
+            del task_args["dictionary_file_path_or_domain"]
+        run_task("detect_data_table_format", task_args)
+    # Run the task with dictionary
+    else:
+        if task_args["dictionary_name"] is None:
+            raise ValueError(
+                "'dictionary_name' must be specified with "
+                "'dictionary_file_path_or_domain'"
+            )
+        run_task("detect_data_table_format_with_dictionary", task_args)
 
     # Parse the log file to obtain the header_line and field_separator parameters
     # Note: If there is an error the run method will raise an exception so at this
@@ -2867,7 +1766,7 @@ def detect_data_table_format(
     format_line_pattern = "File format detected: "
     for line in log_file_lines:
         if line.startswith(format_line_pattern):
-            raw_format_spec = line.rstrip().replace("File format detected: ", "")
+            raw_format_spec = line.rstrip().replace(format_line_pattern, "")
             header_line_str, field_separator_str = raw_format_spec.split(
                 " and field separator "
             )
@@ -2893,6 +1792,8 @@ def detect_data_table_format(
     return header_line, field_separator
 
 
+# pylint: enable=unused-argument
+
 ########################
 # Deprecated functions #
 ########################
@@ -2900,6 +1801,10 @@ def detect_data_table_format(
 
 def get_khiops_info():
     """Returns the Khiops license information
+
+    .. warning::
+        This method is *deprecated* since Khiops 10.1 and will be removed in pyKhiops
+        11. Use `get_khiops_version` to obtain the Khiops version of your system.
 
     Returns
     -------
@@ -2922,6 +1827,10 @@ def get_khiops_info():
 
 def get_khiops_coclustering_info():
     """Returns the Khiops Coclustering license information
+
+    .. warning::
+        This method is *deprecated* since Khiops 10.1 and will be removed in pyKhiops
+        11. Use `get_khiops_version` to obtain the Khiops version of your system.
 
     Returns
     -------

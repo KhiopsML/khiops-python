@@ -1,9 +1,10 @@
+// Scenario for task build_dictionary_from_data_table
 // Dictionary building settings
 ClassManagement.BuildClassDefButton
 SourceDataTable.DatabaseName SpliceJunction.csv
 SourceDataTable.HeaderLineUsed true
 SourceDataTable.FieldSeparator 
- SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+SourceDataTable.DatabaseFormatDetector.DetectFileFormat
 BuildClassDef
 ClassName SpliceJunction
 OK
@@ -12,6 +13,8 @@ Exit
 // Save dictionary
 ClassFileName SpliceJunction.kdic
 OK
+
+// End of scenario for task build_dictionary_from_data_table
 
 // Exit Khiops
 ClassManagement.Quit

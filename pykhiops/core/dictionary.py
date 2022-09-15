@@ -16,17 +16,17 @@
 
 """
 import io
+import os
 
-from ..core import filesystems as fs
-from ..core.common import (
+from . import api
+from . import filesystems as fs
+from .api_internals.runner import get_runner
+from .common import (
     KhiopsJSONObject,
     PyKhiopsJSONError,
     PyKhiopsOutputWriter,
     type_error_message,
 )
-
-# Disable pylint's too many lines: This module is big and won't be smaller anytime soon
-# pylint: disable=too-many-lines
 
 
 def _format_name(name):
@@ -394,6 +394,65 @@ class DictionaryDomain(KhiopsJSONObject):
         writer.writeln(f"#Khiops {self.version}")
         for dictionary in self.dictionaries:
             dictionary.write(writer)
+
+
+def read_dictionary_file(dictionary_file_path):
+    """Reads a Khiops dictionary file
+
+    Parameters
+    ----------
+    dictionary_file : str
+        Path of the file to be imported. The file can be either Khiops Dictionary
+        (extension ``kdic``) or Khiops JSON Dictionary (extension ``.json`` or
+        ``.kdicj``).
+
+    Returns
+    -------
+    `.DictionaryDomain`
+        An dictionary domain representing the information in the dictionary file.
+
+    Raises
+    ------
+    `ValueError`
+        When the file has an extension other than ``.kdic``, ``.kdicj`` or ``.json``.
+
+    Examples
+    --------
+    See the following functions of the ``samples.py`` documentation script:
+        - `samples.export_dictionary_files()`
+        - `samples.train_predictor_with_cross_validation()`
+        - `samples.multiple_train_predictor()`
+        - `samples.deploy_model_expert()`
+    """
+    # Check the extension of the input dictionary file
+    extension = os.path.splitext(dictionary_file_path)[1].lower()
+    if extension not in [".kdic", ".kdicj", "json"]:
+        raise ValueError(
+            f"Input file must have extension 'kdic', 'kdicj' or 'json'."
+            f"It has extension: '{extension}'."
+        )
+
+    # Import dictionary file: Translate to JSON first if it is 'kdic'
+    if extension == ".kdic":
+        # Create a temporary file
+        tmp_dictionary_file_path = get_runner().create_temp_file(
+            "_read_dictionary_file_", ".kdicj"
+        )
+        # Transform the .kdic file to .kdicj (JSON)
+        api.export_dictionary_as_json(dictionary_file_path, tmp_dictionary_file_path)
+        json_dictionary_file_path = tmp_dictionary_file_path
+    else:
+        json_dictionary_file_path = dictionary_file_path
+
+    # Read the JSON dictionary file into a dictionary domain object
+    domain = DictionaryDomain()
+    domain.read_khiops_dictionary_json_file(json_dictionary_file_path)
+
+    # Clean the temporary file if the input file was .kdic
+    if extension == ".kdic":
+        fs.create_resource(tmp_dictionary_file_path).remove()
+
+    return domain
 
 
 class Dictionary:

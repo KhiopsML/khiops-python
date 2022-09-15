@@ -16,6 +16,7 @@ fail-under = 9.9
 disable = [
   # Our exceptions
   "too-many-lines",
+  "unnecessary-dunder-call",
 
   # Black exceptions
   "bad-continuation",

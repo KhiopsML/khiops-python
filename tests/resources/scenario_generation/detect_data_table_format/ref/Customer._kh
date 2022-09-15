@@ -1,8 +1,11 @@
+// Scenario for task detect_data_table_format
 // Detect format on the "Build Dictionary" window
 ClassManagement.BuildClassDefButton
 SourceDataTable.DatabaseName Customer.csv
 SourceDataTable.DatabaseFormatDetector.DetectFileFormat
 Exit
+
+// End of scenario for task detect_data_table_format
 
 // Exit Khiops
 ClassManagement.Quit

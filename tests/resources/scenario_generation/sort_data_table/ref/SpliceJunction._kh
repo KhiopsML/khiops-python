@@ -1,3 +1,4 @@
+// Scenario for task sort_data_table
 // Dictionary file and class settings
 ClassManagement.OpenFile
 ClassFileName SpliceJunction.kdic
@@ -6,10 +7,17 @@ ClassManagement.ClassName SpliceJunction
 
 // Sort table settings
 LearningTools.SortDataTableByKey
-//  SortAttributes.SelectDefaultKeyAttributes
-// __sort_variables__ below must be replaced for each sorting variable with:
-//   SortAttributes.InsertItemAfter
-//   SortAttributes.Name __variable_name__
+SortAttributes.SelectDefaultKeyAttributes
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
 SortAttributes.InsertItemAfter
 SortAttributes.Name SampleId
 
@@ -17,16 +25,18 @@ SortAttributes.Name SampleId
 SourceDataTable.DatabaseName SpliceJunction.csv
 SourceDataTable.HeaderLineUsed true
 SourceDataTable.FieldSeparator 
- SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+SourceDataTable.DatabaseFormatDetector.DetectFileFormat
 
 // Target table settings
 TargetDataTable.HeaderLineUsed true
-TargetDataTable.DatabaseName SpliceJunctionSorted.csv
+TargetDataTable.DatabaseName .\SpliceJunctionSorted.csv
 TargetDataTable.FieldSeparator 
 
 // Sort table
 SortDataTableByKey
 Exit
+
+// End of scenario for task sort_data_table
 
 // Exit Khiops
 ClassManagement.Quit

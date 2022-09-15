@@ -1,0 +1,24 @@
+// Scenario for task simplify_coclustering
+// Simplify coclustering settings
+LearningTools.PostProcessCoclustering
+SelectInputCoclustering
+InputCoclusteringFileName Customer._khc
+OK
+PostProcessingSpec.MaxPreservedInformation 0
+PostProcessingSpec.MaxCellNumber 0
+PostProcessingSpec.MaxTotalPartNumber 0
+
+// Output settings
+AnalysisResults.ResultFilesDirectory .\CustomerResults
+AnalysisResults.ResultFilesPrefix 
+AnalysisResults.PostProcessedCoclusteringFileName SimplifiedCustomer._khc
+
+// Simplify Coclustering
+PostProcessCoclustering
+Exit
+
+// End of scenario for task simplify_coclustering
+
+// Exit Khiops
+ClassManagement.Quit
+OK
