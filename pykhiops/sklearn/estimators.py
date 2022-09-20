@@ -2211,8 +2211,9 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         finally:
             self._cleanup_computation_dir(computation_dir_res)
             pk.get_runner().root_temp_dir = initial_runner_temp_dir
-
-        return X_transformed.to_numpy(copy=False)
+        if dataset.is_dataframe_based():
+            return X_transformed.to_numpy(copy=False)
+        return X_transformed
 
     def fit_transform(self, X, y=None, **kwargs):
         """Fit and transforms its inputs
