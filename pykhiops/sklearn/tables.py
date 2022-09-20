@@ -348,7 +348,6 @@ class Dataset:
             else:
                 self.sep = "\t"
                 self.header = True
-
             self.main_table = FileTable(
                 main_table_name,
                 main_table_source,
@@ -647,7 +646,12 @@ class Dataset:
               secondary tables. The dictionary is empty for monotable datasets.
         """
 
-        sort_main_table = sort and self.is_multitable()
+        # Sort the main table unless:
+        # - The caller specifies not to do it (sort = False)
+        # - The dataset is mono-table and the main table has no key
+        sort_main_table = sort and (
+            self.is_multitable() or self.main_table.key is not None
+        )
         main_table_path = self.main_table.create_table_file_for_khiops(
             directory_res.uri, sort=sort_main_table
         )
