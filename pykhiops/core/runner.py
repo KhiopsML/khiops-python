@@ -641,7 +641,7 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
     - The value of the ``KHIOPS_SAMPLES_DIR`` environment variable
     - Otherwise:
         - Windows: ``%KHIOPS_HOME%\samples`` or ``%KhiopsHome%\samples``
-        - Linux: ``$HOME/samples``
+        - Linux: ``/opt/khiops/samples``
     """
 
     def __init__(self):
@@ -836,11 +836,9 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
                     "No environment variable named 'KHIOPS_HOME' or 'KhiopsHome' found,"
                     " verify your Khiops installation"
                 )
-        # The default samples location in Linux is $HOME/pykhiops/samples
+        # The default samples location in Linux is /opt/khiops/samples
         else:
-            self._set_samples_dir(
-                os.path.join(os.environ["HOME"], "pykhiops", "samples")
-            )
+            self._set_samples_dir("/opt/khiops/samples")
 
     def _set_samples_dir(self, samples_dir):
         # Check existence samples directory if it is a local path
