@@ -1,20 +1,9 @@
 """Test run all samples"""
 import os.path
-import sys
 import unittest
 
 import pykhiops.core as pk
-
-# pylint: disable=wrong-import-position
-
-# Import samples scripts as a modules
-root_pykhiops_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-samples_script_path = os.path.join(root_pykhiops_dir, "doc", "samples")
-sys.path.append(samples_script_path)
-import samples
-import samples_sklearn
-
-# pylint: enable=wrong-import-position
+from pykhiops.samples import samples, samples_sklearn
 
 
 class PyKhiopsSamplesTests(unittest.TestCase):

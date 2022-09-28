@@ -118,8 +118,8 @@ def create_rest_page_header(script_name):
         "---------------------------\n"
         "The samples in this page are also available as:\n"
         "\n"
-        f"- :download:`Python script <{script_name}.py>`\n"
-        f"- :download:`Jupyter notebook <{script_name}.ipynb>`\n"
+        f"- :download:`Python script <../../pykhiops/samples/{script_name}.py>`\n"
+        f"- :download:`Jupyter notebook <../../pykhiops/samples/{script_name}.ipynb>`\n"
         "\n"
         "Code Preamble\n"
         "-------------\n"
@@ -180,9 +180,9 @@ def main(args):
     # Import samples as a module
     try:
         if args.sklearn:
-            import samples_sklearn as samples
+            from pykhiops.samples import samples_sklearn as samples
         else:
-            import samples
+            from pykhiops.samples import samples as samples
     except ImportError as error:
         print(f"Could not import samples script {script_name}.py:")
         print(error)

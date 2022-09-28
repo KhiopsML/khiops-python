@@ -11,8 +11,8 @@ Script and Jupyter notebook
 ---------------------------
 The samples in this page are also available as:
 
-- :download:`Python script <samples.py>`
-- :download:`Jupyter notebook <samples.ipynb>`
+- :download:`Python script <../../pykhiops/samples/samples.py>`
+- :download:`Jupyter notebook <../../pykhiops/samples/samples.ipynb>`
 
 Code Preamble
 -------------

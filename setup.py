@@ -18,13 +18,7 @@ setup(
         ]
     },
     packages=find_packages(exclude=["tests"]),
-    package_data={
-        "pykhiops.core": [
-            "scenarios/**/*._kh*",
-            "doc/samples/samples*.py",
-            "doc/samples/samples*.ipynb",
-        ]
-    },
+    include_package_data=True,
     install_requires=[
         "pandas>=0.25.0",
         "scikit-learn>=0.21",

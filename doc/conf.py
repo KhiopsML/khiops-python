@@ -6,7 +6,7 @@ from datetime import datetime
 # Add the root of the repository and the samples directory to sys.path
 # so Sphinx can find both pykhiops and the samples scripts
 sys.path.append("..")
-sys.path.append("./samples")
+sys.path.append("../pykhiops/samples")
 
 import pykhiops
 

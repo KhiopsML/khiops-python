@@ -11,8 +11,8 @@ Script and Jupyter notebook
 ---------------------------
 The samples in this page are also available as:
 
-- :download:`Python script <samples_sklearn.py>`
-- :download:`Jupyter notebook <samples_sklearn.ipynb>`
+- :download:`Python script <../../pykhiops/samples/samples_sklearn.py>`
+- :download:`Jupyter notebook <../../pykhiops/samples/samples_sklearn.ipynb>`
 
 Code Preamble
 -------------

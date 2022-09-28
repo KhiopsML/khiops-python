@@ -5,6 +5,11 @@
   pyKhiops correlative (third digit). So 10.0.4 = 4th version developed that supports Khiops 10.0.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## Unreleased
+
+### Fixed
+- Samples scripts not being installed: They are located in `<pykhiops_install_dir>/samples`.
+
 ## 10.1.0 - 2022-09-20
 ### Added
 - `sklearn`:

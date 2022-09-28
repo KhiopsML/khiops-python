@@ -7,9 +7,7 @@ exclude MANIFEST.in
 exclude pyproject.toml
 exclude sonar-project.properties
 exclude test-requirements.txt
-include doc/samples/samples.ipynb
-include doc/samples/samples.py
-include doc/samples/samples_sklearn.ipynb
-include doc/samples/samples_sklearn.py
+include pykhiops/samples/*.ipynb
 include pykhiops/_version.py
+include pykhiops/core/scenarios/**/*._kh*
 include versioneer.py
