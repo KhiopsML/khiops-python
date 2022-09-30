@@ -1732,6 +1732,10 @@ def equal_path_statement(ref_line, output_line, line_number):
 
 
 class PyKhiopsCoreVariousTests(unittest.TestCase):
+    """Test for small units of core"""
+
+    # Disable SonarQube here because it believes that some version are IPs
+    # sonar: disable
     def test_version_comparisons(self):
         """Test version comparisons"""
         versions = [
@@ -1763,6 +1767,8 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
                 else:
                     self.assertGreaterEqual(version1, version2)
                     self.assertGreater(version1, version2)
+
+    # sonar: enable
 
     def test_zero_padded_version_equality(self):
         """Test zero padded version equalities"""
