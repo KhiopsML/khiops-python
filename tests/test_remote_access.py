@@ -144,6 +144,10 @@ class PyKhiopsRemoteAccessTestsContainer:
 
         def test_khiops_coclustering_with_remote_access(self):
             """Test the training of a khiops_coclustering with remote resources"""
+            # Skip if only short tests are run
+            if os.environ.get("UNITTEST_ONLY_SHORT_TESTS") == "true":
+                self.skipTest("Skipping long test")
+
             # Setup paths
             output_dir_uri = (
                 pk.get_runner().khiops_tmp_dir
