@@ -1566,6 +1566,9 @@ class CompareScenarioTestRunner(PyKhiopsRunner):
         if log_file_path is not None and "_detect_data_table_format" in log_file_path:
             with open(log_file_path, "w") as log_file:
                 log_file.write(
+                    "warning : detect_data_table_format should ignore this\n"
+                )
+                log_file.write(
                     "File format detected: header line and field separator tabulation\n"
                 )
         return 0, ""

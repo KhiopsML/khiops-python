@@ -23,6 +23,7 @@ from ..core.coclustering_results import CoclusteringResults
 from ..core.common import (
     KhiopsVersion,
     PyKhiopsEnvironmentError,
+    PyKhiopsRuntimeError,
     deprecation_message,
     is_dict_like,
     is_list_like,
@@ -2784,7 +2785,7 @@ def detect_data_table_format(
     tuple
         A 2-tuple containing:
             - the ``header_line`` boolean
-            - the ``field_separator`` character ("" represents "\t").
+            - the ``field_separator`` character
 
         These are exactly the parameters expected in many pyKhiops API functions.
 
@@ -2860,29 +2861,28 @@ def detect_data_table_format(
     with io.TextIOWrapper(log_file_contents, encoding="ascii") as log_file:
         log_file_lines = log_file.readlines()
 
-    # The first line contains the format spec
-    raw_format_spec = log_file_lines[0].rstrip().replace("File format detected: ", "")
-    header_line_str, field_separator_str = raw_format_spec.split(
-        " and field separator "
-    )
+    # Obtain the first line that contains the format spec
+    header_line = None
+    field_separator = None
+    format_line_pattern = "File format detected: "
+    for line in log_file_lines:
+        if line.startswith(format_line_pattern):
+            raw_format_spec = line.rstrip().replace("File format detected: ", "")
+            header_line_str, field_separator_str = raw_format_spec.split(
+                " and field separator "
+            )
+            header_line = header_line_str == "header line"
+            if field_separator_str == "tabulation":
+                field_separator = "\t"
+            else:
+                field_separator = field_separator_str[1]
+            break
 
-    # Any remaining lines are reported with warning
-    if len(log_file_lines) > 1:
-        warning_message = ""
-        first_warning_line = log_file_lines[1].replace("warning : ", "")
-        warning_message += first_warning_line
-        for line in log_file_lines[2:]:
-            line = line.rstrip()
-            if not line:
-                continue
-            warning_message += line + "\n"
-        warnings.warn(warning_message, stacklevel=2)
-
-    header_line = header_line_str == "header line"
-    if field_separator_str == "tabulation":
-        field_separator = "\t"
-    else:
-        field_separator = field_separator_str[1]
+    # Fail if there was no file format in the log
+    if header_line is None or field_separator is None:
+        raise PyKhiopsRuntimeError(
+            "Khiops did not write the log line with the data table file format."
+        )
 
     # Clean up the log file if necessary
     if trace:
