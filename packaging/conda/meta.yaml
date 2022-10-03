@@ -1,0 +1,53 @@
+{% set metadata = load_setup_py_data(setup_file='../../setup.py', from_recipe_dir=True) %}
+package:
+  name: {{ metadata.get('name') }}
+  version: {{ metadata.get('version') }}
+
+source:
+  path: ../../
+
+build:
+  script_env:
+    - CWD
+  number: 0
+
+requirements:
+  build:
+    - mpich # [not win]
+    - msmpi # [win]
+    - cmake
+    - ninja # [win]
+    - {{ compiler('cxx') }}
+    - python
+    - setuptools
+  host:
+    - mpich # [not win]
+    - msmpi # [win]
+    - python
+  run:
+    - mpich # [not win]
+    - msmpi # [win]
+    - python
+    - pandas >=0.25.3
+    - scikit-learn >=0.22.2
+  run_constrained:
+    - boto3 >=1.17.39
+    - google-cloud-storage >=1.37.0
+
+outputs:
+  - name: {{ metadata.get('name') }}
+    test:
+      commands:
+        - MODL -v
+        - MODL_Coclustering -v
+      imports:
+        - pykhiops.core.api
+        - pykhiops.sklearn.estimators
+
+about:
+  home: https://www.khiops.org
+  license: BSD+3-clause
+  license_file: LICENSE
+  summary: "Khiops is a data preparation and scoring tool for supervised learning and unsupervised learning"
+  doc_url: https://khiops.com/html/pykhiops-doc/index.html
+  dev_url: "https://github.com/khiopsml/khiops-python"
