@@ -645,7 +645,6 @@ class Dataset:
             - A dictionary containing the relation [table-name -> file-path] for the
               secondary tables. The dictionary is empty for monotable datasets.
         """
-
         # Sort the main table unless:
         # - The caller specifies not to do it (sort = False)
         # - The dataset is mono-table and the main table has no key
@@ -1020,6 +1019,7 @@ class FileTable(DatasetTable):
 
     def create_table_file_for_khiops(self, output_dir, sort=True):
         assert not sort or self.key is not None, "key is 'None'"
+
         # Create the input and output file resources
         output_dir_res = fs.create_resource(output_dir)
         table_file_res = fs.create_resource(self.path)

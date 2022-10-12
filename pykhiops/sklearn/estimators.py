@@ -745,7 +745,9 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         assert not dataset.is_multitable(), "Coclustering not available in multitable"
 
         # Prepare the table files and dictionary for Khiops
-        main_table_path, _ = dataset.create_table_files_for_khiops(computation_dir_res)
+        main_table_path, _ = dataset.create_table_files_for_khiops(
+            computation_dir_res, sort=self.internal_sort
+        )
 
         # Set the output paths
         output_dir_res = self._get_output_dir_resource(computation_dir_res)
