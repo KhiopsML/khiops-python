@@ -12,6 +12,7 @@
 import importlib
 import os
 import pickle
+import shutil
 from collections import defaultdict
 
 import pandas as pd
@@ -19,116 +20,251 @@ import wrapt
 from sklearn.model_selection import train_test_split
 
 import pykhiops.core as pk
-import pykhiops.core.filesystems as fs
 from pykhiops.core.common import is_iterable
 from pykhiops.sklearn.estimators import KhiopsEncoder, KhiopsEstimator
 
 
-class Mock:
+class CoreApiFunctionMock:
     """Function mock context manager
 
     Replaces a specified function with a fixture copying-based mock.
     In the end, the mock is again replaced with the original function.
+
+    Parameters
+    ----------
+    module : str
+        Name of the module that contains the mocked function.
+    function : str
+        Name of the mocked function.
+    fixture : dict
+        Fixture with the output files and return values to mock. See above for more
+        details.
     """
+
+    api_function_specs = {
+        ("pykhiops.core.api", "export_dictionary_as_json"): {
+            "output_path_arg_index": 1,
+            "output_path_is_dir": False,
+            "output_file_keys": ["kdicj_path"],
+            "return_value_number": 1,
+        },
+        ("pykhiops.core", "train_predictor"): {
+            "output_path_arg_index": 4,
+            "output_path_is_dir": True,
+            "output_file_keys": ["report_path", "predictor_kdic_path"],
+            "return_value_number": 2,
+        },
+        ("pykhiops.core", "train_recoder"): {
+            "output_path_arg_index": 4,
+            "output_path_is_dir": True,
+            "output_file_keys": ["report_path", "predictor_kdic_path"],
+            "return_value_number": 2,
+        },
+        ("pykhiops.core", "deploy_model"): {
+            "output_path_arg_index": 3,
+            "output_path_is_dir": False,
+            "output_file_keys": ["output_data_table"],
+            "return_value_number": 0,
+        },
+        ("pykhiops.core", "train_coclustering"): {
+            "output_path_arg_index": 4,
+            "output_path_is_dir": True,
+            "output_file_keys": ["report_path"],
+            "return_value_number": 1,
+        },
+        ("pykhiops.core", "prepare_coclustering_deployment"): {
+            "output_path_arg_index": 5,
+            "output_path_is_dir": True,
+            "output_file_keys": ["deploy_kdic_path"],
+            "return_value_number": 0,
+        },
+        ("pykhiops.core", "build_multi_table_dictionary"): {
+            "output_path_arg_index": 3,
+            "output_path_is_dir": False,
+            "output_file_keys": ["kdic_path"],
+            "return_value_number": 0,
+        },
+        ("pykhiops.core", "extract_keys_from_data_table"): {
+            "output_path_arg_index": 3,
+            "output_path_is_dir": False,
+            "output_file_keys": ["keys_table_path"],
+            "return_value_number": 0,
+        },
+    }
 
     def __init__(
         self,
-        module,
-        function,
-        resources,
-        output_dir_grabber,
-        output_file_names_map=None,
+        module_name,
+        function_name,
+        fixture,
     ):
-        self.module = module
-        self.function = function
-        self.resources = resources
-        self.output_dir_grabber = output_dir_grabber
-        self.output_file_names_map = output_file_names_map
-        self.original_function = None
+        if (module_name, function_name) not in self.api_function_specs:
+            raise ValueError(
+                f"Unsupported API function '{function_name}' on module '{module_name}'"
+            )
+        self.module_name = module_name
+        self.function_name = function_name
+        self.fixture = fixture
+        self._original_function = None
+
+        self._check_fixture()
+
+    def _check_fixture(self):
+        # Check container types
+        if not isinstance(self.fixture, dict):
+            raise TypeError(f"fixture must be dict not {type(self.fixture).__name__}.")
+        if not isinstance(self.fixture["output_file_paths"], dict):
+            raise TypeError(
+                "fixture['output_file_paths'] must be dict "
+                f"not {type(self.fixture['output_file_paths']).__name__}."
+            )
+        if not isinstance(self.fixture["return_values"], list):
+            raise TypeError(
+                "fixture['return_values'] must be list not "
+                f"{type(self.fixture['return_values']).__name__}."
+            )
+        if not "output_file_paths" in self.fixture:
+            raise ValueError("Missing 'output_file_paths' key in fixture")
+
+        # Check contents of containers
+        for output_file_key in self.output_file_keys:
+            if output_file_key not in self.fixture["output_file_paths"]:
+                raise ValueError(
+                    f"Missing output file key '{output_file_key}' "
+                    f"for function '{self.function_name}' "
+                    f"of module '{self.module_name}'."
+                )
+        if len(self.fixture["return_values"]) != self.return_value_number:
+            raise ValueError(
+                f"Found {len(self.fixture['return_values'])} "
+                f"return values in fixture but expected {self.return_value_number}."
+            )
+        for index, return_value_tuple in enumerate(self.fixture["return_values"]):
+            if not isinstance(return_value_tuple, tuple):
+                raise TypeError(
+                    f"Return value specification at index {index} "
+                    f"must be tuple not {type(return_value_tuple).__name__}."
+                )
+
+    @property
+    def output_path_is_dir(self):
+        return self.api_function_specs[(self.module_name, self.function_name)][
+            "output_path_is_dir"
+        ]
+
+    @property
+    def output_path_arg_index(self):
+        return self.api_function_specs[(self.module_name, self.function_name)][
+            "output_path_arg_index"
+        ]
+
+    @property
+    def output_file_keys(self):
+        return self.api_function_specs[(self.module_name, self.function_name)][
+            "output_file_keys"
+        ]
+
+    @property
+    def return_value_number(self):
+        return self.api_function_specs[(self.module_name, self.function_name)][
+            "return_value_number"
+        ]
 
     def __enter__(self):
-        """Mock `self.function` with fixture copying
+        """Mock the function with fixture resources copying"""
+        # Save the original function
+        module = importlib.import_module(self.module_name)
+        assert hasattr(
+            module, self.function_name
+        ), f"Core API function '{self.function_name}' not found"
+        self._original_function = getattr(module, self.function_name)
 
-        The fixtures are copied from `self.resources` to output directory
-        given by `self.output_dir_grabber`
-        """
-        # `resources` is a list of file paths that should be output by
-        # `function`
-        # the treatment of this list is done according to the args and kwargs
-        # passed to the wrapper
-        # `output_dir_grabber` callback which detects the output directory from
-        # the wrapped `function` 's `args`
-        # `output_file_names_map` is a dictionary mapping resource file names to
-        # output file names which are obtained via callbacks which detect the
-        # target file names from the wrapped `function` 's `args`
+        # Replace the function with the mock
+        @wrapt.patch_function_wrapper(self.module_name, self.function_name)
+        def function_mock(_mocked, _instance, args, kwargs):
+            # Function with output dir: Copy the output_files to the specified directory
+            copied_output_file_paths = {}
+            if self.output_path_is_dir:
+                # Create the directory if non-existent
+                output_dir = args[self.output_path_arg_index]
+                os.makedirs(output_dir, exist_ok=True)
 
-        module = importlib.import_module(self.module)
-        self.original_function = getattr(module, self.function)
+                # Copy the output files from the fixture
+                for output_file_key in self.output_file_keys:
+                    resource_file_path = self.fixture["output_file_paths"][
+                        output_file_key
+                    ]
+                    output_file_name = os.path.basename(resource_file_path)
+                    output_file_path = os.path.join(output_dir, output_file_name)
+                    shutil.copyfile(resource_file_path, output_file_path)
+                    copied_output_file_paths[output_file_key] = output_file_path
+            # Function with output file: Copy the only resource to the specified path
+            else:
+                output_file_key = self.output_file_keys[0]
+                output_file_path = args[self.output_path_arg_index]
+                resource_file_path = self.fixture["output_file_paths"][output_file_key]
+                shutil.copyfile(resource_file_path, output_file_path)
+                copied_output_file_paths[output_file_key] = output_file_path
 
-        @wrapt.patch_function_wrapper(self.module, self.function)
-        def mock(_mocked, _instance, args, _kwargs):
-            assert self.output_file_names_map is None or len(
-                self.output_file_names_map.keys()
-            ) == len(self.resources)
-            # copy resources from resource to target according to the args and
-            # kwargs
-            output_dir = self.output_dir_grabber(*args)
-            output_dir_res = fs.create_resource(output_dir)
-            if not output_dir_res.exists():
-                output_dir_res.make_dir()
+            # Copy the log file if specified in the fixture
+            if "log_file_path" in self.fixture["extra_file_paths"]:
+                assert "log_file_path" in kwargs and kwargs["log_file_path"] is not None
+                log_file_path = self.fixture["extra_file_paths"]["log_file_path"]
+                shutil.copyfile(log_file_path, kwargs["log_file_path"])
 
-            file_paths_to_return = []
-
-            for resource_file_path in self.resources:
-                resource = fs.create_resource(resource_file_path)
-                resource_file_name = os.path.basename(resource_file_path)
-                if self.output_file_names_map is not None:
-                    output_file_name = self.output_file_names_map.get(
-                        os.path.basename(resource_file_path)
-                    )(*args)
-                    if output_file_name is not None:
-                        output_file_path = os.path.join(output_dir, output_file_name)
+            # No output: return None
+            if self.return_value_number == 0:
+                mocked_return_value = None
+            # Build mocked output
+            elif self.return_value_number >= 1:
+                # Build the return values list
+                mocked_return_values = []
+                for return_value, is_mocked_file in self.fixture["return_values"]:
+                    # If the return value is mocked file look for it in the copied files
+                    if is_mocked_file:
+                        mocked_return_values.append(
+                            copied_output_file_paths[return_value]
+                        )
+                    # Otherwise just add it
                     else:
-                        output_file_path = os.path.join(output_dir, resource_file_name)
+                        mocked_return_values.append(return_value)
+
+                # If there is a single value: Return the first element of the list
+                if self.return_value_number == 1:
+                    mocked_return_value = mocked_return_values[0]
+                # Otherwise return a tuple with the list contents
                 else:
-                    output_file_path = os.path.join(output_dir, resource_file_name)
+                    mocked_return_value = tuple(mocked_return_values)
 
-                resource.copy_to_local(output_file_path)
-                file_paths_to_return.append(output_file_path)
-            # now return what has been copied
-
-            return (
-                tuple(file_paths_to_return)
-                if len(file_paths_to_return) > 1 or len(file_paths_to_return) == 0
-                else file_paths_to_return[0]
-            )
+            return mocked_return_value
 
         return self
 
     def __exit__(self, *exc):
-        """Mock `self.function` to `self.original_function`"""
+        """Restores the original function"""
 
-        @wrapt.patch_function_wrapper(self.module, self.function)
+        @wrapt.patch_function_wrapper(self.module_name, self.function_name)
         def original(_mocked, _instance, args, kwargs):
-            if self.original_function is not None:
-                return self.original_function(*args, **kwargs)
+            if self._original_function is not None:
+                return self._original_function(*args, **kwargs)
 
-        # return False, so that any exceptions *exc are propagated to the caller
+        # Return False, so that any exceptions *exc are propagated to the caller
         return False
 
 
-class PyKhiopsSklearnTestsHelper:
+class PyKhiopsTestHelper:
     """Helper functions for the actual tests
 
-    Some of them need to be static so that they can be serialized for
-    multiprocessing.
+    Some of them need to be static so that they can be serialized for multiprocessing.
     """
 
-    def create_parameter_trace(self):
+    @staticmethod
+    def create_parameter_trace():
         """Create empty, updatable, three-level look-up dictionary"""
         return defaultdict(lambda: defaultdict(list))
 
-    def wrap_with_parameter_trace(self, module, function, function_parameters):
+    @staticmethod
+    def wrap_with_parameter_trace(module, function, function_parameters):
         """Wrap function with parameter trace"""
 
         @wrapt.patch_function_wrapper(module, function)
@@ -147,12 +283,13 @@ class PyKhiopsSklearnTestsHelper:
 
         return wrapper
 
-    def get_resources_dir(self):
+    @staticmethod
+    def get_resources_dir():
         """Helper to get the directory containing the fixtures"""
         return os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")
 
-    @classmethod
-    def get_two_table_data(cls, dataset_path, root_table_name, secondary_table_name):
+    @staticmethod
+    def get_two_table_data(dataset_path, root_table_name, secondary_table_name):
         """Read two-table data from two CSV files from sample dataset"""
 
         samples_dir = pk.get_runner().samples_dir
@@ -165,16 +302,16 @@ class PyKhiopsSklearnTestsHelper:
         )
         return (root_table, secondary_table)
 
-    @classmethod
-    def get_monotable_data(cls, dataset_name):
+    @staticmethod
+    def get_monotable_data(dataset_name):
         """Read monotable data from CSV sample dataset"""
         samples_dir = pk.get_runner().samples_dir
         return pd.read_csv(
             os.path.join(samples_dir, dataset_name, f"{dataset_name}.txt"), sep="\t"
         )
 
-    @classmethod
-    def prepare_data(cls, data, target_variable, primary_table=None):
+    @staticmethod
+    def prepare_data(data, target_variable, primary_table=None):
         """Prepare training and testing data for automated tests"""
         if primary_table is None:
             data_train, data_test = train_test_split(
@@ -227,7 +364,7 @@ class PyKhiopsSklearnTestsHelper:
         ), "'training_data' should be an iterable with 2 elements"
 
         # Build a fitted estimator
-        fitted_estimator = PyKhiopsSklearnTestsHelper._create_and_fit_estimator_to_data(
+        fitted_estimator = PyKhiopsTestHelper._create_and_fit_estimator_to_data(
             estimator_class,
             training_data[0],  # observations
             training_data[1],  # labels
@@ -260,21 +397,17 @@ class PyKhiopsSklearnTestsHelper:
             and len(data) == 2
         ):
             if isinstance(estimator, KhiopsEncoder):
-                predictions = PyKhiopsSklearnTestsHelper._transform_data_with_encoder(
+                predictions = PyKhiopsTestHelper._transform_data_with_encoder(
                     estimator, data[0]
                 )
             else:
                 if kind == "simple":
-                    predictions = (
-                        PyKhiopsSklearnTestsHelper._predict_data_with_estimator(
-                            estimator, data[0]
-                        )
+                    predictions = PyKhiopsTestHelper._predict_data_with_estimator(
+                        estimator, data[0]
                     )
                 elif kind == "proba":
-                    predictions = (
-                        PyKhiopsSklearnTestsHelper._predict_proba_with_estimator(
-                            estimator, data[0]
-                        )
+                    predictions = PyKhiopsTestHelper._predict_proba_with_estimator(
+                        estimator, data[0]
                     )
                 else:
                     raise ValueError(f"Kind of prediction unknown: '{kind}'")

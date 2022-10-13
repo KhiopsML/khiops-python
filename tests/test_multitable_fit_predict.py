@@ -15,10 +15,10 @@ import unittest
 import pykhiops.core as pk
 import pykhiops.core.filesystems as fs
 from pykhiops.sklearn.estimators import KhiopsClassifier
-from tests.test_helper import PyKhiopsSklearnTestsHelper
+from tests.test_helper import PyKhiopsTestHelper
 
 
-class PyKhiopsMultitableFitTests(unittest.TestCase, PyKhiopsSklearnTestsHelper):
+class PyKhiopsMultitableFitTests(unittest.TestCase, PyKhiopsTestHelper):
     """Test if Khiops estimator can be fitted on multi-table data"""
 
     def setUp(self):
@@ -52,7 +52,7 @@ class PyKhiopsMultitableFitTests(unittest.TestCase, PyKhiopsSklearnTestsHelper):
         )
         try:
             for _ in range(2):
-                PyKhiopsSklearnTestsHelper.fit_helper(
+                PyKhiopsTestHelper.fit_helper(
                     KhiopsClassifier,
                     data=(dataset, "Class"),
                     pickled=False,

@@ -21,30 +21,36 @@ from pykhiops.sklearn.estimators import (
     KhiopsEncoder,
     KhiopsPredictor,
     KhiopsRegressor,
+    KhiopsSupervisedEstimator,
 )
-from tests.test_helper import Mock, PyKhiopsSklearnTestsHelper
+from tests.test_helper import CoreApiFunctionMock, PyKhiopsTestHelper
 
 # pylint: disable=too-many-lines
 # pylint: disable=invalid-name
 
 
-class PyKhiopsSklearnParameterPassingTests(
-    unittest.TestCase, PyKhiopsSklearnTestsHelper
-):
+class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
     """Test that parameters are properly passed from sklearn to core API"""
 
     @staticmethod
-    def assertEqualPath(test_case, path1, path2, msg=""):
-        test_case.assertEqual(os.path.abspath(path1), os.path.abspath(path2), msg=msg)
+    def assertEqualPath(test_case, path1, path2):
+        test_case.assertEqual(
+            os.path.abspath(path1),
+            os.path.abspath(path2),
+            msg=f"Path '{path1}' is not equal to path '{path2}'",
+        )
 
     @staticmethod
-    def assertPathHasSuffix(test_case, path, suffix, msg=""):
-        test_case.assertTrue(path.endswith(suffix), msg=msg)
-
-    @staticmethod
-    def assertPathHasPrefix(test_case, path, prefix, msg=""):
+    def assertPathHasSuffix(test_case, path, suffix):
         test_case.assertTrue(
-            os.path.abspath(path).startswith(os.path.abspath(prefix)), msg=msg
+            path.endswith(suffix), msg=f"Suffix '{suffix}' not found in path '{path}'"
+        )
+
+    @staticmethod
+    def assertPathHasPrefix(test_case, path, prefix):
+        test_case.assertTrue(
+            os.path.abspath(path).startswith(os.path.abspath(prefix)),
+            msg=f"Prefix '{prefix}' not found in path '{path}'",
         )
 
     @staticmethod
@@ -200,103 +206,166 @@ class PyKhiopsSklearnParameterPassingTests(
         # from; these resources are then dispatched to each mock as needed
         cls.mocks_table = {
             KhiopsPredictor: {
-                "fit": lambda resources: (
-                    Mock(
-                        module="pykhiops.core.api",
-                        function="export_dictionary_as_json",
-                        resources=[resources[2]],
-                        output_dir_grabber=lambda *x: os.path.dirname(x[1]),
-                        output_file_names_map={
-                            "Modeling.kdicj": lambda *x: os.path.basename(x[1])
+                "fit": lambda resources: [
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
+                        function_name="train_predictor",
+                        fixture={
+                            "output_file_paths": {
+                                "report_path": resources["report_path"],
+                                "predictor_kdic_path": resources["model_kdic_path"],
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [
+                                ("report_path", True),
+                                ("predictor_kdic_path", True),
+                            ],
                         },
                     ),
-                    Mock(
-                        module="pykhiops.core",
-                        function="train_predictor",
-                        resources=resources[:-1],
-                        output_dir_grabber=cls._output_dir_grabber_train,
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core.api",
+                        function_name="export_dictionary_as_json",
+                        fixture={
+                            "output_file_paths": {
+                                "kdicj_path": resources["model_kdicj_path"],
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [("kdicj_path", True)],
+                        },
                     ),
-                ),
+                ],
                 "predict": lambda resources: (
-                    Mock(
-                        module="pykhiops.core",
-                        function="deploy_model",
-                        resources=resources,
-                        output_dir_grabber=cls._output_dir_grabber_deploy,
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
+                        function_name="deploy_model",
+                        fixture={
+                            "output_file_paths": {
+                                "output_data_table": resources["prediction_table_path"]
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [],
+                        },
                     ),
                 ),
             },
             KhiopsEncoder: {
-                "fit": lambda resources: (
-                    Mock(
-                        module="pykhiops.core.api",
-                        function="export_dictionary_as_json",
-                        resources=[resources[2]],
-                        output_dir_grabber=lambda *x: os.path.dirname(x[1]),
-                        output_file_names_map={
-                            "Modeling.kdicj": lambda *x: os.path.basename(x[1])
+                "fit": lambda resources: [
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
+                        function_name="train_recoder",
+                        fixture={
+                            "output_file_paths": {
+                                "report_path": resources["report_path"],
+                                "predictor_kdic_path": resources["model_kdic_path"],
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [
+                                ("report_path", True),
+                                ("predictor_kdic_path", True),
+                            ],
                         },
                     ),
-                    Mock(
-                        module="pykhiops.core",
-                        function="train_recoder",
-                        resources=resources[:-1],
-                        output_dir_grabber=cls._output_dir_grabber_train,
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core.api",
+                        function_name="export_dictionary_as_json",
+                        fixture={
+                            "output_file_paths": {
+                                "kdicj_path": resources["model_kdicj_path"],
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [("kdicj_path", True)],
+                        },
                     ),
-                ),
-                "predict": lambda resources: (
-                    Mock(
-                        module="pykhiops.core",
-                        function="deploy_model",
-                        resources=resources,
-                        output_dir_grabber=cls._output_dir_grabber_deploy,
+                ],
+                "predict": lambda resources: [
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
+                        function_name="deploy_model",
+                        fixture={
+                            "output_file_paths": {
+                                "output_data_table": resources["prediction_table_path"]
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [],
+                        },
                     ),
-                ),
+                ],
             },
             KhiopsCoclustering: {
-                "fit": lambda resources: (
-                    Mock(
-                        module="pykhiops.core.api",
-                        function="export_dictionary_as_json",
-                        resources=[resources[-1]],
-                        output_dir_grabber=lambda *x: os.path.dirname(x[1]),
-                        output_file_names_map={
-                            "Coclustering.kdicj": lambda *x: os.path.basename(x[1])
+                "fit": lambda resources: [
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
+                        function_name="train_coclustering",
+                        fixture={
+                            "output_file_paths": {
+                                "report_path": resources["report_path"]
+                            },
+                            "extra_file_paths": {
+                                "log_file_path": resources["log_file_path"]
+                            },
+                            "return_values": [("report_path", True)],
                         },
                     ),
-                    Mock(
-                        module="pykhiops.core",
-                        function="train_coclustering",
-                        resources=[resources[0]],
-                        output_dir_grabber=cls._output_dir_grabber_train,
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
+                        function_name="build_multi_table_dictionary",
+                        fixture={
+                            "output_file_paths": {
+                                "kdic_path": resources["tmp_model_kdic_path"]
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [],
+                        },
                     ),
-                    Mock(
-                        module="pykhiops.core",
-                        function="build_multi_table_dictionary",
-                        resources=[resources[1]],
-                        output_dir_grabber=cls._output_dir_grabber_deploy,
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
+                        function_name="prepare_coclustering_deployment",
+                        fixture={
+                            "output_file_paths": {
+                                "deploy_kdic_path": resources["model_kdic_path"]
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [],
+                        },
                     ),
-                    Mock(
-                        module="pykhiops.core",
-                        function="prepare_coclustering_deployment",
-                        resources=[resources[2]],
-                        output_dir_grabber=lambda *x: x[5],
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core.api",
+                        function_name="export_dictionary_as_json",
+                        fixture={
+                            "output_file_paths": {
+                                "kdicj_path": resources["model_kdicj_path"],
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [
+                                ("kdicj_path", True),
+                            ],
+                        },
                     ),
-                ),
-                "predict": lambda resources: (
-                    Mock(
-                        module="pykhiops.core",
-                        function="deploy_model",
-                        resources=[resources[0]],
-                        output_dir_grabber=cls._output_dir_grabber_deploy,
+                ],
+                "predict": lambda resources: [
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
+                        function_name="extract_keys_from_data_table",
+                        fixture={
+                            "output_file_paths": {
+                                "keys_table_path": resources["raw_keys_table_path"],
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [],
+                        },
                     ),
-                    Mock(
-                        module="pykhiops.core",
-                        function="extract_keys_from_data_table",
-                        resources=resources[1:],
-                        output_dir_grabber=cls._output_dir_grabber_deploy,
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
+                        function_name="deploy_model",
+                        fixture={
+                            "output_file_paths": {
+                                "output_data_table": resources["prediction_table_path"]
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [],
+                        },
                     ),
-                ),
+                ],
             },
         }
         cls.dictionary_domain_kwargs = {
@@ -555,7 +624,7 @@ class PyKhiopsSklearnParameterPassingTests(
                             },
                             ("pykhiops.core", "extract_keys_from_data_table"): {
                                 1: "main_table",
-                                2: "sorted_main_table.txt",
+                                2: "copy_main_table.txt",
                                 3: "keys_main_table.txt",
                             },
                         },
@@ -589,7 +658,7 @@ class PyKhiopsSklearnParameterPassingTests(
                             },
                             ("pykhiops.core", "extract_keys_from_data_table"): {
                                 1: "SpliceJunctionDNA",
-                                2: "sorted_SpliceJunctionDNA.txt",
+                                2: "copy_SpliceJunctionDNA.txt",
                                 3: "keys_SpliceJunctionDNA.txt",
                             },
                         },
@@ -658,7 +727,7 @@ class PyKhiopsSklearnParameterPassingTests(
                         "predict": {
                             ("pykhiops.core", "deploy_model"): {
                                 1: "SNB_Adult",
-                                2: "sorted_Adult.txt",
+                                2: "copy_Adult.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -675,7 +744,7 @@ class PyKhiopsSklearnParameterPassingTests(
                         "predict": {
                             ("pykhiops.core", "deploy_model"): {
                                 1: "SNB_Adult",
-                                2: "sorted_Adult.txt",
+                                2: "copy_Adult.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -687,7 +756,7 @@ class PyKhiopsSklearnParameterPassingTests(
                         "predict": {
                             ("pykhiops.core", "deploy_model"): {
                                 1: "R_Adult",
-                                2: "sorted_Adult.txt",
+                                2: "copy_Adult.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -755,7 +824,7 @@ class PyKhiopsSklearnParameterPassingTests(
                         "predict": {
                             ("pykhiops.core", "deploy_model"): {
                                 1: "SNB_SpliceJunction",
-                                2: "sorted_SpliceJunction.txt",
+                                2: "copy_SpliceJunction.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -771,7 +840,7 @@ class PyKhiopsSklearnParameterPassingTests(
                         "predict": {
                             ("pykhiops.core", "deploy_model"): {
                                 1: "SNB_SpliceJunction",
-                                2: "sorted_SpliceJunction.txt",
+                                2: "copy_SpliceJunction.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -786,7 +855,7 @@ class PyKhiopsSklearnParameterPassingTests(
                         "predict": {
                             ("pykhiops.core", "deploy_model"): {
                                 1: "R_SpliceJunction",
-                                2: "sorted_SpliceJunction.txt",
+                                2: "copy_SpliceJunction.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -1196,19 +1265,8 @@ class PyKhiopsSklearnParameterPassingTests(
     @classmethod
     def tearDownClass(cls):
         """Clean up temporary resources for this test case: output directory"""
-
         if os.path.isdir(cls.output_dir):
             shutil.rmtree(cls.output_dir)
-
-    @classmethod
-    def _output_dir_grabber_train(cls, *args):
-        # grab output directory from train predictor / coclustering args
-        return args[4]  # results_dir
-
-    @classmethod
-    def _output_dir_grabber_deploy(cls, *args):
-        # grab output directory from deploy model args
-        return os.path.dirname(args[3])  # output_data_table_path
 
     def _check_dictionary_domain(
         self,
@@ -1285,7 +1343,6 @@ class PyKhiopsSklearnParameterPassingTests(
         special_checkers=None,
     ):
         """Check assertions on keyword arguments"""
-
         # Check that expected keys are keyword arguments
         for key in expected_kwargs.keys():
             self.assertIn(
@@ -1316,16 +1373,20 @@ class PyKhiopsSklearnParameterPassingTests(
 
     @classmethod
     def _create_train_test_multitable_file_dataset(cls, transform_for_regression=False):
-        (root_table_data, secondary_table_data) = cls.get_two_table_data(
+        (
+            root_table_data,
+            secondary_table_data,
+        ) = PyKhiopsTestHelper.get_two_table_data(
             "SpliceJunction", "SpliceJunction", "SpliceJunctionDNA"
         )
         root_table_file_name_suffix = ""
         if transform_for_regression:
             root_table_data.replace({"Class": {"EI": 1, "IE": 2, "N": 3}}, inplace=True)
             root_table_file_name_suffix = "_R"
-        (root_train_data, root_labels), (root_test_data, _) = cls.prepare_data(
-            root_table_data, "Class"
-        )
+        (root_train_data, root_labels), (
+            root_test_data,
+            _,
+        ) = PyKhiopsTestHelper.prepare_data(root_table_data, "Class")
         root_train_data["Class"] = root_labels
         secondary_train_data = (
             root_train_data["SampleId"]
@@ -1391,16 +1452,21 @@ class PyKhiopsSklearnParameterPassingTests(
     @classmethod
     def _create_train_test_multitable_dataframe(cls, transform_for_regression=False):
         dataset_name = "SpliceJunction"
-        root_table_data, secondary_table_data = cls.get_two_table_data(
+        (
+            root_table_data,
+            secondary_table_data,
+        ) = PyKhiopsTestHelper.get_two_table_data(
             dataset_name, "SpliceJunction", "SpliceJunctionDNA"
         )
         if transform_for_regression:
             root_table_data.replace({"Class": {"EI": 1, "IE": 2, "N": 3}}, inplace=True)
-        root_train_data, root_test_data = cls.prepare_data(root_table_data, "Class")
-        secondary_train_data = cls.prepare_data(
+        root_train_data, root_test_data = PyKhiopsTestHelper.prepare_data(
+            root_table_data, "Class"
+        )
+        secondary_train_data = PyKhiopsTestHelper.prepare_data(
             secondary_table_data, "SampleId", primary_table=root_train_data[0]
         )[0]
-        secondary_test_data = cls.prepare_data(
+        secondary_test_data = PyKhiopsTestHelper.prepare_data(
             secondary_table_data, "SampleId", primary_table=root_test_data[0]
         )
         X_train_data = {
@@ -1422,8 +1488,11 @@ class PyKhiopsSklearnParameterPassingTests(
 
     @classmethod
     def _create_train_test_monotable_file_dataset(cls, label):
-        data = cls.get_monotable_data("Adult")
-        (train_data, train_labels), (test_data, _) = cls.prepare_data(data, label)
+        data = PyKhiopsTestHelper.get_monotable_data("Adult")
+        (train_data, train_labels), (
+            test_data,
+            _,
+        ) = PyKhiopsTestHelper.prepare_data(data, label)
 
         train_data_path = os.path.join(cls.output_dir, f"Adult_train_for_{label}.txt")
         test_data_path = os.path.join(cls.output_dir, f"Adult_test_for_{label}.txt")
@@ -1444,8 +1513,11 @@ class PyKhiopsSklearnParameterPassingTests(
 
     @classmethod
     def _create_train_test_monotable_dataframe(cls, label):
-        data = cls.get_monotable_data("Adult")
-        (train_data, train_labels), (test_data, _) = cls.prepare_data(data, label)
+        data = PyKhiopsTestHelper.get_monotable_data("Adult")
+        (train_data, train_labels), (
+            test_data,
+            _,
+        ) = PyKhiopsTestHelper.prepare_data(data, label)
         return (train_data, train_labels, test_data)
 
     def _retrieve_data(
@@ -1457,119 +1529,53 @@ class PyKhiopsSklearnParameterPassingTests(
         return self.datasets[schema_type][source_type][estimation_process]
 
     def _define_resources(self, dataset, estimator_type, source_type, schema_type):
-        resources = {}
-        report_name = (
-            "Coclustering.khcj"
-            if estimator_type == KhiopsCoclustering
-            else "AllReports.khj"
+        # Set the resources directory for the arguments
+        head_dir = os.path.join(
+            PyKhiopsTestHelper.get_resources_dir(), "sklearn", "results"
         )
-        model_name = (
-            "Coclustering" if estimator_type == KhiopsCoclustering else "Modeling"
-        )
+        tail_dir = os.path.join(dataset, estimator_type.__name__, source_type)
+        ref_reports_dir = os.path.join(head_dir, "ref_json_reports", tail_dir)
+        ref_models_dir = os.path.join(head_dir, "ref_models", tail_dir)
+        ref_predictions_dir = os.path.join(head_dir, "ref_predictions", tail_dir)
 
-        report = os.path.join(
-            self.get_resources_dir(),
-            "sklearn",
-            "results",
-            "ref_json_reports",
-            dataset,
-            estimator_type.__name__,
-            source_type,
-            report_name,
-        )
+        # Set the keys file name depending on source type
+        if source_type == "dataframe":
+            keys_main_table_file = "main_table"
+        else:
+            keys_main_table_file = f"{self.dataset_of_schema_type[schema_type]}DNA"
 
-        model_kdic = os.path.join(
-            self.get_resources_dir(),
-            "sklearn",
-            "results",
-            "ref_models",
-            dataset,
-            estimator_type.__name__,
-            source_type,
-            f"{model_name}.kdic",
-        )
-
-        tmp_model_kdic = (
-            os.path.join(
-                self.get_resources_dir(),
-                "sklearn",
-                "results",
-                "ref_models",
-                dataset,
-                estimator_type.__name__,
-                source_type,
-                "tmp_cc_deploy_model.kdic",
+        # Set resources that vary over estimator types
+        if estimator_type == KhiopsCoclustering:
+            kdic_name = "Coclustering"
+            report_name = "Coclustering.khcj"
+            tmp_model_kdic_path = os.path.join(
+                ref_models_dir, "tmp_cc_deploy_model.kdic"
             )
-            if estimator_type == KhiopsCoclustering
-            else None
-        )
-
-        model_json = os.path.join(  # XXX refactor with previous
-            self.get_resources_dir(),
-            "sklearn",
-            "results",
-            "ref_models",
-            dataset,
-            estimator_type.__name__,
-            source_type,
-            f"{model_name}.kdicj",
-        )
-
-        predictions = os.path.join(
-            self.get_resources_dir(),
-            "sklearn",
-            "results",
-            "ref_predictions",
-            dataset,
-            estimator_type.__name__,
-            source_type,
-            "transformed.txt",
-        )
-        keys_main_table_file = (
-            "main_table"
-            if source_type == "dataframe"
-            else f"{self.dataset_of_schema_type[schema_type]}DNA"
-        )
-        keys_main_table = (
-            os.path.join(
-                self.get_resources_dir(),
-                "sklearn",
-                "results",
-                "ref_predictions",
-                dataset,
-                estimator_type.__name__,
-                source_type,
-                f"keys_{keys_main_table_file}.txt",
+            raw_keys_table_path = os.path.join(
+                ref_predictions_dir, f"raw_keys_{keys_main_table_file}.txt"
             )
-            if estimator_type == KhiopsCoclustering
-            else None
-        )
-        raw_keys_main_table = (
-            os.path.join(
-                self.get_resources_dir(),
-                "sklearn",
-                "results",
-                "ref_predictions",
-                dataset,
-                estimator_type.__name__,
-                source_type,
-                f"raw_keys_{keys_main_table_file}.txt",
-            )
-            if estimator_type == KhiopsCoclustering
-            else None
-        )
+            log_file_path = os.path.join(head_dir, "khiops_train_cc.log")
+        else:
+            kdic_name = "Modeling"
+            report_name = "AllReports.khj"
+            tmp_model_kdic_path = None
+            raw_keys_table_path = None
+            log_file_path = os.path.join(head_dir, "khiops.log")
+        report_path = os.path.join(ref_reports_dir, report_name)
+        model_kdic_path = os.path.join(ref_models_dir, f"{kdic_name}.kdic")
+        model_kdicj_path = os.path.join(ref_models_dir, f"{kdic_name}.kdicj")
+        prediction_table_path = os.path.join(ref_predictions_dir, "transformed.txt")
 
-        resources["fit"] = [
-            res
-            for res in (report, model_kdic, tmp_model_kdic, model_json)
-            if res is not None
-        ]
-
-        resources["predict"] = [
-            res
-            for res in (predictions, keys_main_table, raw_keys_main_table)
-            if res is not None
-        ]
+        # Buld the resources
+        resources = {
+            "report_path": report_path,
+            "model_kdic_path": model_kdic_path,
+            "tmp_model_kdic_path": tmp_model_kdic_path,
+            "model_kdicj_path": model_kdicj_path,
+            "prediction_table_path": prediction_table_path,
+            "raw_keys_table_path": raw_keys_table_path,
+            "log_file_path": log_file_path,
+        }
 
         return resources
 
@@ -1606,23 +1612,6 @@ class PyKhiopsSklearnParameterPassingTests(
         - check these parameters (args and kwargs) with respect to expected
           values
         """
-        # * retrieve data:
-        #   - training data
-        #   - testing data (if needed)
-        # * define resources for mocks
-        # * define mocks
-        # * enter mock context manager
-        # * wrap relevant methods with parameter trace
-        # * run methods
-        # * retrieve parameters
-        # * check dictionary domain
-        # * check args:
-        #   - define special checkers
-        #   - perform check
-        # * check kwargs:
-        #   - define special checkers
-        #   - perform check
-        #
         if estimator_type == KhiopsCoclustering:
             # reuse classifier multitable dataset for coclustering
             data = self._retrieve_data(
@@ -1640,7 +1629,7 @@ class PyKhiopsSklearnParameterPassingTests(
                     0
                 ]  # XXX leaky
             else:
-                # file_dataset
+                assert source_type == "file_dataset"
                 dataset = copy.deepcopy(data)
                 X_train_data = dataset["train"]
                 del X_train_data["tables"]["SpliceJunction"]  # XXX leaky
@@ -1648,6 +1637,7 @@ class PyKhiopsSklearnParameterPassingTests(
                 X_test_data = dataset["test"]
                 del X_test_data["tables"]["SpliceJunction"]  # XXX leaky
         else:
+            assert issubclass(estimator_type, KhiopsSupervisedEstimator)
             data = self._retrieve_data(
                 schema_type=schema_type,
                 source_type=source_type,
@@ -1658,12 +1648,12 @@ class PyKhiopsSklearnParameterPassingTests(
                 y_train_data = data["y_train"]
                 X_test_data = data["X_test"]
             else:
-                # file_dataset
+                assert source_type == "file_dataset"
                 X_train_data = data["train"]
                 if schema_type == "multitable":
                     y_train_data = "Class"
                 else:
-                    # monotable
+                    assert schema_type == "monotable"
                     if estimator_type == KhiopsRegressor:
                         y_train_data = "age"
                     else:
@@ -1681,79 +1671,90 @@ class PyKhiopsSklearnParameterPassingTests(
             else estimator_type
         )
 
-        mocks = self.mocks_table[estimator_type_key]["fit"](resources["fit"])
-
-        # if in a predict test, then add relevant predict mocks
+        # Build the mock table
+        function_mocks = self.mocks_table[estimator_type_key]["fit"](resources)
         if estimator_method == "predict":
-            mocks += self.mocks_table[estimator_type_key][estimator_method](
-                resources[estimator_method]
-            )
-        # enter the mocks as context managers, to contain them:
+            function_mocks += self.mocks_table[estimator_type_key]["predict"](resources)
+
+        # Enter the context of each function mock
         with contextlib.ExitStack() as stack:
-            for mock in mocks:
-                stack.enter_context(mock)
-            # trace parameters for wrapped functions
-            parameter_trace = self.create_parameter_trace()
+            for function_mock in function_mocks:
+                stack.enter_context(function_mock)
+
+            # Set the parameter trace for wrapped functions
+            parameter_trace = PyKhiopsTestHelper.create_parameter_trace()
             for (module, function) in self.wrapped_functions[estimator_type_key][
                 estimator_method
             ]:
-                self.wrap_with_parameter_trace(module, function, parameter_trace)
-            # train estimator
-            estimator = PyKhiopsSklearnTestsHelper.fit_helper(
-                estimator_type,
-                data=(X_train_data, y_train_data),
-                pickled=False,
-                fit_kwargs=custom_kwargs["fit"] if custom_kwargs is not None else None,
-                output_dir=self.output_dir,
-            )
-
-            # if in a predict test, then call the predict method on the estimator
-            if estimator_method == "predict":
-                PyKhiopsSklearnTestsHelper.predict_helper(
-                    data=(estimator, (X_test_data, None)),
-                    kind="simple",
-                    pickled=False,
+                PyKhiopsTestHelper.wrap_with_parameter_trace(
+                    module, function, parameter_trace
                 )
-            # loop over parameter trace, to get the relevant module
-            # and functions associated to each module
-            for module, functions in parameter_trace.items():
-                # for each function and its parameters, test their conformance
-                # to the expectected parameter values
-                for function, parameters in functions.items():
-                    # get the actual args and kwargs of `function`
-                    args_kwargs = parameters[0]
-                    args = args_kwargs["args"]
-                    kwargs = args_kwargs["kwargs"]
-                    # get dictionary domain-specific kwargs and check them
-                    dictionary_domain_kwargs = self.dictionary_domain_kwargs[
-                        schema_type
-                    ][source_type][estimator_type_key].get(function)
+
+            # Train the estimator
+            estimator = estimator_type(output_dir=self.output_dir, internal_sort=False)
+            fit_kwargs = custom_kwargs["fit"] if custom_kwargs is not None else {}
+            estimator.fit(X_train_data, y_train_data, **fit_kwargs)
+
+            # On a "predict" test : Execute predict/transform on the fitted estimator
+            if estimator_method == "predict":
+                if estimator_type == KhiopsEncoder:
+                    estimator.transform(X_test_data)
+                else:
+                    estimator.predict(X_test_data)
+
+            # Check the parameters of the traced functions
+            for module_name, function_parameters in parameter_trace.items():
+                for function_name, parameters in function_parameters.items():
+                    # Access the actual args and kwargs of the function
+                    first_call_parameters = parameters[0]
+                    args = first_call_parameters["args"]
+                    kwargs = first_call_parameters["kwargs"]
+
+                    # Check the dictionary domain-specific kwargs
+                    dictionary_domain_kwargs = (
+                        self.dictionary_domain_kwargs.get(schema_type)
+                        .get(source_type)
+                        .get(estimator_type_key)
+                        .get(function_name)
+                    )
                     if dictionary_domain_kwargs is not None:
                         self._check_dictionary_domain(
                             dictionary_domain=args[0],
                             **dictionary_domain_kwargs,
                         )
-                    # check the args of `function`, some of which have special
-                    # checkers
-                    expected_args = self.expected_args[schema_type][source_type][
-                        estimator_type
-                    ][estimator_method][(module, function)]
-                    special_arg_checkers = self.special_arg_checkers[
-                        estimator_type_key
-                    ][estimator_method].get((module, function))
+
+                    # Check the function args
+                    expected_args = (
+                        self.expected_args.get(schema_type)
+                        .get(source_type)
+                        .get(estimator_type)
+                        .get(estimator_method)
+                        .get((module_name, function_name))
+                    )
+                    special_arg_checkers = (
+                        self.special_arg_checkers.get(estimator_type_key)
+                        .get(estimator_method)
+                        .get((module_name, function_name))
+                    )
                     self._check_args(
                         args,
                         expected_args_with_pos=expected_args,
                         special_checkers=special_arg_checkers,
                     )
-                    # check the kwargs of `function`, some of which have
-                    # special checkers
-                    expected_kwargs = self.expected_kwargs[schema_type][source_type][
-                        estimator_type_key
-                    ][estimator_method][(module, function)]
-                    special_kwarg_checkers = self.special_kwarg_checkers[
-                        estimator_type_key
-                    ][estimator_method].get((module, function))
+
+                    # Check the function kwargs
+                    expected_kwargs = (
+                        self.expected_kwargs.get(schema_type)
+                        .get(source_type)
+                        .get(estimator_type_key)
+                        .get(estimator_method)
+                        .get((module_name, function_name))
+                    )
+                    special_kwarg_checkers = (
+                        self.special_kwarg_checkers.get(estimator_type_key)
+                        .get(estimator_method)
+                        .get((module_name, function_name))
+                    )
                     self._check_kwargs(
                         kwargs,
                         expected_kwargs=expected_kwargs,
