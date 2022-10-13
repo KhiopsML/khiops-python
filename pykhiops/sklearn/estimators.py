@@ -285,7 +285,16 @@ class KhiopsEstimator(ABC, BaseEstimator):
             self._cleanup_computation_dir(computation_dir_res)
             pk.get_runner().root_temp_dir = initial_runner_temp_dir
 
-        assert self.is_fitted_ and isinstance(self.model_, pk.DictionaryDomain)
+        # If on "fitted" state then:
+        # - self.model_ must be a DictionaryDomain
+        # - self.model_report_ must be a KhiopsJSONObject
+        # - self.model_report_raw_ must be a dict
+        assert not self.is_fitted_ or isinstance(self.model_, pk.DictionaryDomain)
+        assert not self.is_fitted_ or isinstance(
+            self.model_report_, pk.KhiopsJSONObject
+        )
+        assert not self.is_fitted_ or isinstance(self.model_report_raw_, dict)
+
         return self
 
     def _fit(self, dataset, computation_dir_res, **kwargs):
@@ -308,14 +317,17 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         # Build the model
         self._fit_train_model(dataset, computation_dir_res, **kwargs)
-        assert isinstance(self.model_, pk.DictionaryDomain), "Model not loaded."
-        assert isinstance(self.model_report_, pk.KhiopsJSONObject), "Report not loaded."
-        assert isinstance(self.model_report_raw_, dict), "Raw Report not loaded."
 
-        # Adjust the model, mark it as fitted and whether it is a multi-table model
-        self._fit_training_post_process(dataset)
-        self.is_fitted_ = True
-        self.is_multitable_model_ = dataset.is_multitable()
+        # If the main attributes are of the proper type finish the fitting
+        # Otherwise it means there was an abort (early return) of the previous steps
+        if (
+            isinstance(self.model_, pk.DictionaryDomain)
+            and isinstance(self.model_report_, pk.KhiopsJSONObject)
+            and isinstance(self.model_report_raw_, dict)
+        ):
+            self._fit_training_post_process(dataset)
+            self.is_fitted_ = True
+            self.is_multitable_model_ = dataset.is_multitable()
 
     def _fit_check_params(self, dataset, **_):
         """Check the model parameters including those data dependent (in kwargs)"""
@@ -774,6 +786,18 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             log_file_path=train_log_file_res.uri,
         )
 
+        # Search "No coclustering found" message in the log, warn the user and return
+        no_cc_message = "No informative coclustering found in data"
+        with io.TextIOWrapper(
+            io.BytesIO(train_log_file_res.read()), encoding="utf8", errors="replace"
+        ) as train_log_file:
+            for line in train_log_file:
+                if line.startswith(no_cc_message):
+                    warnings.warn(
+                        f"{no_cc_message}. Estimator not fitted.", stacklevel=5
+                    )
+                    return
+
         # Save the report file
         self.model_report_raw_ = json.loads(
             fs.create_resource(coclustering_file_path)
@@ -794,7 +818,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         except KeyError:
             warnings.warn(
                 f"Coclustering did not cluster the id column '{self.model_id_column}'. "
-                "Estimator is not fitted"
+                "The report is available but the estimator is not fitted"
             )
             return
 
@@ -1120,6 +1144,15 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         report_file_path, model_kdic_file_path = self._fit_core_training_function(
             *train_args, **train_kwargs
         )
+
+        # Abort if the model dictionary file does not exist
+        model_kdic_file_res = fs.create_resource(model_kdic_file_path)
+        if not model_kdic_file_res.exists():
+            warnings.warn(
+                "Khiops dictionary model not found. Model not fitted", stacklevel=6
+            )
+            return
+
         # Save the model domain object and report
         self.model_ = pk.read_dictionary_file(model_kdic_file_path)
         self.model_report_ = pk.read_analysis_results_file(report_file_path)
