@@ -509,24 +509,39 @@ class PyKhiopsRunner(ABC):
         - If there were only errors it warns them
         - If the process ended ok but there was stderr output it warns as well
         """
-        # If there were no errors warn only if stderr was not empty
+        # If there were no errors warn if:
+        # - stderr was not empty
+        # - There were warnings in the log
         if return_code == 0:
+            # Add Khiops log warnings to the warning message if any
+            warning_msg = ""
+            _, _, warning_messages = self._collect_errors(log_file_path)
+            if warning_messages:
+                warning_msg += "\nWarnings in log:\n" + "".join(warning_messages)
+
+            # Add stderr to the warning message if non empty
             if stderr:
-                warnings.warn(
-                    f"Khiops ended correctly but stderr was not empty:\n{stderr}",
-                    stacklevel=4,
+                warning_msg += f"\nContents of stderr:\n{stderr}"
+
+            # Report the message if there were any
+            if warning_msg:
+                warning_msg = (
+                    "Khiops ended correctly but there were minor issues" + warning_msg
                 )
+                warnings.warn(warning_msg.rstrip(), stacklevel=4)
         # If there were errors or fatal errors collect them and report
         else:
-            # Collect errors
-            errors, fatal_errors = self._collect_errors(log_file_path)
+            # Collect errors and warnings
+            errors, fatal_errors, warning_messages = self._collect_errors(log_file_path)
 
             # Create the message reporting the errors
             error_msg = f"{tool_name} ended with return code {return_code}"
+            if warning_messages:
+                error_msg += "\nWarnings in log:\n" + "".join(warning_messages)
             if errors:
-                error_msg += f"\nErrors in log:\n{''.join(errors)}"
+                error_msg += "\nErrors in log:\n" + "".join(errors)
             if fatal_errors:
-                error_msg += f"\nFatal errors in log:\n{''.join(fatal_errors)}"
+                error_msg += "\nFatal errors in log:\n" + "".join(fatal_errors)
             if stderr:
                 error_msg += f"\nContents of stderr:\n{stderr}"
 
@@ -537,6 +552,7 @@ class PyKhiopsRunner(ABC):
         # Collect errors any errors found in the log
         errors = []
         fatal_errors = []
+        warning_messages = []
 
         # Look in the log for error lines
         log_file_lines = None
@@ -547,10 +563,13 @@ class PyKhiopsRunner(ABC):
                 io.BytesIO(log_file_contents), encoding="utf8", errors="replace"
             )
             for line_number, line in enumerate(log_file_lines, start=1):
-                if line.startswith("error : "):
-                    errors.append(f"(Line {line_number}) {line}")
+                if line.startswith("warning : "):
+                    warning_messages.append(f"Line {line_number}: {line}")
+                elif line.startswith("error : "):
+                    errors.append(f"Line {line_number}: {line}")
                 elif line.startswith("fatal error : "):
-                    fatal_errors.append(f"(Line {line_number}) {line}")
+                    fatal_errors.append(f"Line {line_number}: {line}")
+
         # Warn on error for remote file handling. Replace with empty log file.
         except ImportError:
             warnings.warn(
@@ -560,7 +579,7 @@ class PyKhiopsRunner(ABC):
                 stacklevel=3,
             )
 
-        return errors, fatal_errors
+        return errors, fatal_errors, warning_messages
 
     def _check_run_arguments(
         self,

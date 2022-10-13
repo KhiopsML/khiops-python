@@ -510,9 +510,12 @@ class PreparationReport:
             json_variables_detailed_statistics = json_data.get(
                 "variablesDetailedStatistics"
             )
-            for stats in self.variables_statistics:
-                json_detailed_data = json_variables_detailed_statistics.get(stats.rank)
-                stats.init_details(json_detailed_data)
+            if json_variables_detailed_statistics is not None:
+                for stats in self.variables_statistics:
+                    json_detailed_data = json_variables_detailed_statistics.get(
+                        stats.rank
+                    )
+                    stats.init_details(json_detailed_data)
 
     def get_variable_names(self):
         """Returns the names of the variables analyzed during the preparation

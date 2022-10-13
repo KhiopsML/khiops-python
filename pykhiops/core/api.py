@@ -2912,7 +2912,7 @@ def get_khiops_info():
         - The number of remaining days for the license
     """
     warnings.warn(deprecation_message("get_khiops_info", "11.0.0"))
-    if get_runner().khiops_version >= KhiopsVersion("10.0.0.8"):
+    if get_runner().khiops_version >= KhiopsVersion("10.1"):
         return get_khiops_version(), None, None, None
     elif get_runner().khiops_version >= KhiopsVersion("10.0"):
         return _get_tool_info_khiops10(get_runner(), "khiops")
