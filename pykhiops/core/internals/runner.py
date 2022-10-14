@@ -6,11 +6,14 @@
 ######################################################################################
 """Classes implementing pyKhiops' backend runners"""
 
+import getpass
 import io
 import os
 import platform
 import shlex
+import shutil
 import subprocess
+import sys
 import tempfile
 import uuid
 import warnings
@@ -688,7 +691,161 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
         self.mpi_command_args = None
         self._khiops_bin_dir = None
 
-    def _initialize_execution_configuration(self):
+        if self._check_vendored_khiops():
+            self._initialize_vendored_execution_configuration()
+
+    def _cpu_system_info_command_args(self):
+        if platform.system() == "Linux":
+            command_args = ["lscpu", "-b", "-p=Core,Socket"]
+        elif platform.system() == "Windows":
+            command_args = [
+                "powershell.exe",
+                "-Command",
+                "$OutputEncoding = [System.Text.Encoding]::UTF8;",
+                "Get-CimInstance -ClassName 'Win32_Processor' "
+                "| Select-Object -Property 'NumberOfCores'",
+                "| Format-Table -HideTableHeaders ",
+                "| Write-Output",
+            ]
+        elif platform.system() == "Darwin":
+            command_args = ["sysctl", "-n", "hw.physicalcpu"]
+        else:
+            raise PyKhiopsRuntimeError(f"The '{platform.system()}' is not supported.")
+
+        return command_args
+
+    def _get_system_cpu_cores(self):
+        """Portably obtains the number of cpu cores (no hyperthreading)"""
+        # Execute the cpu info process
+        with subprocess.Popen(
+            self._cpu_system_info_command_args(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        ) as cpu_system_info_process:
+            cpu_system_info_output, _ = cpu_system_info_process.communicate()
+
+        # Count the cpus for each system
+        if platform.system() == "Linux":
+            cpu_entries = {
+                entry
+                for entry in cpu_system_info_output.splitlines()
+                if not entry.startswith("#")
+            }
+            cpu_core_count = len(cpu_entries)
+        elif platform.system() == "Windows":
+            cpu_core_count = int(cpu_system_info_output.strip())
+
+        elif platform.system() == "Darwin":
+            cpu_core_count = int(cpu_system_info_output.strip())
+        else:
+            raise PyKhiopsRuntimeError(f"The '{platform.system()}' is not supported.")
+
+        return cpu_core_count
+
+    def _mpiexec_command_args(self):
+        """Creates the mpiexec call arguments for each platform"""
+        assert hasattr(self, "max_cores") and self.max_cores is not None
+
+        # Note: The conda environment mpiexec takes precedence over any other mpiexec
+        # install. So the correct mpiexec is found.
+        mpiexec_path = shutil.which("mpiexec")
+        if mpiexec_path is None:
+            command_args = []
+        else:
+            if platform.system() == "Linux":
+                command_args = [
+                    mpiexec_path,
+                    "-bind-to",
+                    "hwthread",
+                    "-map-by",
+                    "core",
+                    "-n",
+                    str(self.max_cores + 1),
+                ]
+            elif platform.system() == "Darwin":
+                # Note: The -host localhost may be removed when mpich >= 4.2 is released
+                if platform.processor() == "arm64":
+                    command_args = [
+                        mpiexec_path,
+                        "-host",
+                        "localhost",
+                        "-n",
+                        str(self.max_cores + 1),
+                    ]
+                else:
+                    command_args = [mpiexec_path, "-n", str(self.max_cores + 1)]
+            elif platform.system() == "Windows":
+                command_args = [
+                    mpiexec_path,
+                    "-al",
+                    "spr:P",
+                    "-n",
+                    str(self.max_cores + 1),
+                    "/priority",
+                    "1",
+                ]
+            else:
+                raise PyKhiopsRuntimeError(
+                    f"The '{platform.system()}' is not supported."
+                )
+        return command_args
+
+    def _initialize_vendored_execution_configuration(self):
+        # Execute with MODL* binaries in vendored contexts
+        self.execute_with_modl = True
+
+        # Set Khiops binary directory with respect to the vendored environment
+        self._khiops_bin_dir = os.path.join(sys.exec_prefix, "bin")
+
+        # Set Khiops the Khiops process number
+        self.max_cores = self._get_system_cpu_cores()
+        os.environ["KHIOPS_PROC_NUMBER"] = str(self.max_cores + 1)
+
+        # Set MPI command
+        self.mpi_command_args = self._mpiexec_command_args()
+        os.environ["KHIOPS_MPI_COMMAND"] = " ".join(self.mpi_command_args)
+
+        # Set the Khiops temporary directory
+        self.khiops_temp_dir = os.path.join(
+            tempfile.gettempdir(), "khiops", getpass.getuser()
+        )
+        os.environ["KHIOPS_TMP_DIR"] = self.khiops_temp_dir
+
+    def _check_vendored_khiops(self):
+        # Check that the execution takes place inside a Conda environment:
+        # - both `CONDA_PREFIX` and `CONDA_DEFAULT_ENV` environment variables
+        #   exist
+        # - the value of `CONDA_DEFAULT_ENV` is equal to the basename of the
+        #   value of `CONDA_PREFIX` or is equal to 'base'
+        # - sys.exec_prefix is set to the value of `CONDA_PREFIX`, as Python is
+        #   installed in the current Conda environment
+        if (
+            all(
+                os.environ.get(conda_env_var) is not None
+                for conda_env_var in ("CONDA_PREFIX", "CONDA_DEFAULT_ENV")
+            )
+            and os.environ["CONDA_DEFAULT_ENV"]
+            in ["base", os.path.basename(os.environ["CONDA_PREFIX"])]
+            and sys.exec_prefix == os.environ.get("CONDA_PREFIX")
+        ):
+            vendored_bin_path = os.path.join(
+                sys.exec_prefix,
+                "bin",
+            )
+            for dirname, _, filenames in os.walk(vendored_bin_path):
+                # recursively look for MODL and MODL_Coclustering and set khiops
+                # path to the directory where they are found
+                for filename in filenames:
+                    # MODL* executable file found
+                    if filename.startswith("MODL") and os.access(
+                        os.path.join(dirname, filename), os.X_OK
+                    ):
+                        return True
+        # Khiops vendoring not supported for other OSes
+        return False
+
+    def _initialize_system_execution_configuration(self):
         # Set the environment script name
         if platform.system() == "Windows":
             khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops_env.cmd")
@@ -706,7 +863,8 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
             ) as khiops_process:
                 stdout, _ = khiops_process.communicate()
 
-            # Parse the output of the khiops environment script and save the settings
+            # Parse the output of the khiops environment script and save the
+            # settings
             path_additions = ["KHIOPS_PATH", "KHIOPS_JAVA_PATH"]
             for line in stdout.split("\n"):
                 tokens = line.rstrip().split(maxsplit=1)
@@ -923,6 +1081,7 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
 
     def _initialize_khiops_version(self):
         # Run khiops with the -v flag
+        # Determine which Khiops to run
         stdout, _, return_code = self.raw_run("khiops", ["-v"])
 
         # On success parse and save the version
@@ -966,11 +1125,10 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
             raise TypeError(
                 type_error_message("command_line_args", command_line_args, list)
             )
-
-        # Lazy initialization of the execution configuration
+        # Lazy initialization of the system-wide execution configuration,
+        # if previous initialization attempt failed
         if self.execute_with_modl is None:
-            self._initialize_execution_configuration()
-
+            self._initialize_system_execution_configuration()
         # Build command line arguments
         # Nota: Khiops Coclustering is executed without MPI
         khiops_process_args = []
@@ -1139,32 +1297,38 @@ def _get_tool_info_khiops9(runner, tool_name):
         tmp_scenario.write("OK\n")
 
     # Run Khiops tool
-    runner.raw_run(tool_name, ["-i", tmp_scenario_path, "-e", tmp_log_file_path, "-b"])
+    _, stderr, return_code = runner.raw_run(
+        tool_name, ["-i", tmp_scenario_path, "-e", tmp_log_file_path, "-b"]
+    )
 
-    # Parse the contents
-    tmp_log_file_contents = io.BytesIO(fs.read(tmp_log_file_path))
-    with io.TextIOWrapper(tmp_log_file_contents, encoding="ascii") as tmp_log_file:
-        for line in tmp_log_file:
-            if line.startswith("Khiops"):
-                fields = line.strip().split(" ")
-                if fields[1] == "Coclustering":
-                    version = fields[2]
+    # If tool executed successfully:
+    if return_code == 0:
+        # Parse the contents of the log file
+        tmp_log_file_contents = io.BytesIO(fs.read(tmp_log_file_path))
+        with io.TextIOWrapper(tmp_log_file_contents, encoding="ascii") as tmp_log_file:
+            for line in tmp_log_file:
+                if line.startswith("Khiops"):
+                    fields = line.strip().split(" ")
+                    if fields[1] == "Coclustering":
+                        version = fields[2]
+                    else:
+                        version = fields[1]
                 else:
-                    version = fields[1]
-            else:
-                fields = line.strip().split("\t")
-                if len(fields) == 2:
-                    if fields[0] == "Computer name":
-                        computer_name = fields[1]
-                    if fields[0] == "Machine ID":
-                        machine_id = fields[1]
-                else:
-                    if "Perpetual license" in line:
-                        remaining_days = float("inf")
-                    elif "License expire at " in line:
-                        fields = line.split(" ")
-                        remaining_days = int(fields[-2])
-    # Clean temporary file
-    fs.remove(tmp_log_file_path)
+                    fields = line.strip().split("\t")
+                    if len(fields) == 2:
+                        if fields[0] == "Computer name":
+                            computer_name = fields[1]
+                        if fields[0] == "Machine ID":
+                            machine_id = fields[1]
+                    else:
+                        if "Perpetual license" in line:
+                            remaining_days = float("inf")
+                        elif "License expire at " in line:
+                            fields = line.split(" ")
+                            remaining_days = int(fields[-2])
+        # Clean temporary file
+        fs.remove(tmp_log_file_path)
 
-    return version, computer_name, machine_id, remaining_days
+        return version, computer_name, machine_id, remaining_days
+    # else, raise PyKhiopsRuntimeError, as Khiops failed for another reason
+    raise PyKhiopsRuntimeError(stderr)
