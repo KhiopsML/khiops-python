@@ -6,11 +6,14 @@
 ######################################################################################
 """Classes implementing pyKhiops' backend runners"""
 
+import getpass
 import io
 import os
 import platform
 import shlex
+import shutil
 import subprocess
+import sys
 import tempfile
 import uuid
 import warnings
@@ -687,73 +690,224 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
         self.execute_with_modl = None
         self.mpi_command_args = None
         self._khiops_bin_dir = None
+        self._run_with_vendored_khiops = None
+
+    def _cpu_count_command(self):
+        if platform.system() == "Linux":
+            return ["lscpu", "-b", "-p=Core,Socket"]
+        elif platform.system() == "Windows":
+            return [
+                "powershell.exe",
+                "-Command",
+                "$OutputEncoding = [System.Text.Encoding]::UTF8;",
+                "Get-CimInstance -ClassName 'Win32_Processor' "
+                "| Select-Object -Property 'NumberOfCores' | Write-Output",
+            ]
+        elif platform.system() == "Darwin":
+            return ["sysctl", "-a"]
+        else:
+            raise RuntimeError(f"The '{platform.system()}' is not supported.")
+
+    def _cpu_count(self, command_output):
+        if platform.system() == "Linux":
+            return (
+                len(
+                    {
+                        cpu_entry
+                        for cpu_entry in command_output.splitlines()
+                        if not cpu_entry.startswith("#")
+                    }
+                )
+                + 1
+            )
+        elif platform.system() == "Windows":
+            n_cores = 1  # number of cores + 1
+            for out in command_output.splitlines():
+                try:
+                    n_cores += int(out)
+                except ValueError:
+                    continue
+            return n_cores
+
+        elif platform.system() == "Darwin":
+            for out in command_output.splitlines():
+                if out.startswith("hw.physicalcpu:"):
+                    return int(out.split(" ")[-1]) + 1
+        else:
+            raise RuntimeError(f"The '{platform.system()}' is not supported.")
+
+    def _mpi_exec_command(self):
+        assert hasattr(self, "max_cores") and self.max_cores is not None
+        if platform.system() == "Linux":
+            # Get path to `mpiexec`
+            mpiexec_path = shutil.which("mpiexec")
+            return (
+                f"{mpiexec_path} -bind-to hwthread -map-by core -n {self.max_cores + 1}"
+                if mpiexec_path is not None
+                else ""
+            )
+        elif platform.system() == "Darwin":
+            # Get path to `mpiexec`
+            mpiexec_path = shutil.which("mpiexec")
+            return (
+                f"{mpiexec_path} -n {self.max_cores + 1}"
+                if mpiexec_path is not None
+                else ""
+            )
+
+        elif platform.system() == "Windows":
+            # Get path to `mpiexec`
+            mpiexec_path = os.path.join(
+                sys.exec_prefix, os.environ["MSMPI_BIN"].strip(os.path.sep), "mpiexec"
+            )
+            return (
+                f"{mpiexec_path} -al spr:P -n {self.max_cores + 1} /priority 1"
+                if mpiexec_path is not None
+                else ""
+            )
+        else:
+            raise RuntimeError(f"The '{platform.system()}' is not supported.")
+
+    def _initialize_environment_from_vendored_khiops(self):
+        # Set the environment variables, for Linux for now
+        # set Khiops proc number
+        with subprocess.Popen(
+            self._cpu_count_command(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        ) as cpu_informer:
+            cpu_count_command_output, _ = cpu_informer.communicate()
+        cpu_count = self._cpu_count(cpu_count_command_output)
+        self.max_cores = cpu_count - 1
+        os.environ["KHIOPS_PROC_NUMBER"] = str(cpu_count)
+        # set MPI command
+        mpi_command = self._mpi_exec_command()
+        if platform.system() == "Windows":
+            is_posix = False
+        else:
+            # Linux and Mac OS
+            is_posix = True
+        self.mpi_command_args = shlex.split(mpi_command, posix=is_posix)
+        os.environ["KHIOPS_MPI_COMMAND"] = mpi_command
+        # set Khiops temporary directory
+        self.khiops_temp_dir = os.path.join(
+            tempfile.gettempdir(), "khiops", getpass.getuser()
+        )
+        os.environ["KHIOPS_TMP_DIR"] = self.khiops_temp_dir
+
+    def _check_vendored_khiops(self):
+        if platform.system() in ("Linux", "Windows", "Darwin") and (
+            # inside Pip virtualenv
+            sys.exec_prefix != sys.base_exec_prefix
+            or
+            # inside Conda environment
+            (
+                any(
+                    os.environ.get(conda_env_var) is not None
+                    for conda_env_var in ("CONDA_PREFIX", "CONDA_DEFAULT_ENV")
+                )
+                and sys.exec_prefix
+                == sys.base_exec_prefix
+                == os.environ.get("CONDA_PREFIX")
+                and os.environ.get("CONDA_PREFIX").endswith(
+                    os.environ["CONDA_DEFAULT_ENV"]
+                )
+            )
+        ):
+            vendored_path = os.path.join(
+                sys.exec_prefix,
+                "bin",
+            )
+            for dirname, _, filenames in os.walk(vendored_path):
+                # recursively look for MODL and MODL_Coclustering and set khiops
+                # path to the directory where they are found
+                for filename in filenames:
+                    if filename.startswith("MODL") and os.access(
+                        os.path.join(dirname, filename), os.X_OK
+                    ):
+                        # MODL executable file found
+                        self._khiops_bin_dir = dirname
+                        self._run_with_vendored_khiops = True
+                if self._run_with_vendored_khiops:
+                    break
+        else:
+            # Khiops vendoring not supported for other OSes
+            self._run_with_vendored_khiops = False
 
     def _initialize_execution_configuration(self):
-        # Set the environment script name
-        if platform.system() == "Windows":
-            khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops_env.cmd")
-        else:
-            khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops-env")
-
-        # If the environment script exists then obtain the execution environment
-        if os.path.exists(khiops_env_script_path):
-            # Execute khiops environment script
-            with subprocess.Popen(
-                [khiops_env_script_path, "--env"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-            ) as khiops_process:
-                stdout, _ = khiops_process.communicate()
-
-            # Parse the output of the khiops environment script and save the settings
-            path_additions = ["KHIOPS_PATH", "KHIOPS_JAVA_PATH"]
-            for line in stdout.split("\n"):
-                tokens = line.rstrip().split(maxsplit=1)
-                if len(tokens) == 2:
-                    var_name, var_value = tokens
-                elif len(tokens) == 1:
-                    var_name = tokens[0]
-                    var_value = ""
-                else:
-                    continue
-
-                if var_name in path_additions:
-                    os.environ["PATH"] = var_value + os.pathsep + os.environ["PATH"]
-                elif var_name == "KHIOPS_CLASSPATH":
-                    if "CLASSPATH" in os.environ:
-                        os.environ["CLASSPATH"] = (
-                            var_value + os.pathsep + os.environ["CLASSPATH"]
-                        )
-                    else:
-                        os.environ["CLASSPATH"] = var_value
-                elif var_name == "KHIOPS_MPI_LIB":
-                    if "LD_LIBRARY_PATH" in os.environ:
-                        os.environ["LD_LIBRARY_PATH"] = (
-                            var_value + os.pathsep + os.environ["LD_LIBRARY_PATH"]
-                        )
-                    else:
-                        os.environ["LD_LIBRARY_PATH"] = var_value
-                elif var_name == "KHIOPS_MPI_COMMAND":
-                    self.mpi_command_args = shlex.split(var_value)
-                elif var_name == "KHIOPS_PROC_NUMBER" and var_value:
-                    self.max_cores = int(var_value) - 1
-                    os.environ["KHIOPS_PROC_NUMBER"] = var_value
-                elif var_name == "KHIOPS_MEMORY_LIMIT" and var_value:
-                    self.max_memory_mb = int(var_value)
-                    os.environ["KHIOPS_MEMORY_LIMIT"] = var_value
-                elif var_name == "KHIOPS_TMP_DIR" and var_value:
-                    self.khiops_temp_dir = var_value
-                    os.environ["KHIOPS_TMP_DIR"] = var_value
-                else:
-                    os.environ[var_name] = var_value
+        if self._run_with_vendored_khiops:
+            self._initialize_environment_from_vendored_khiops()
             self.execute_with_modl = True
-        # If there is no environment script then just the `khiops` script
         else:
-            self.execute_with_modl = False
+            # Set the environment script name
+            if platform.system() == "Windows":
+                khiops_env_script_path = os.path.join(
+                    self.khiops_bin_dir, "khiops_env.cmd"
+                )
+            else:
+                khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops-env")
 
-        # Check the tool binaries
-        self._check_tools()
+            # If the environment script exists then obtain the execution environment
+            if os.path.exists(khiops_env_script_path):
+                # Execute khiops environment script
+                with subprocess.Popen(
+                    [khiops_env_script_path, "--env"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True,
+                ) as khiops_process:
+                    stdout, _ = khiops_process.communicate()
+
+                # Parse the output of the khiops environment script and save the
+                # settings
+                path_additions = ["KHIOPS_PATH", "KHIOPS_JAVA_PATH"]
+                for line in stdout.split("\n"):
+                    tokens = line.rstrip().split(maxsplit=1)
+                    if len(tokens) == 2:
+                        var_name, var_value = tokens
+                    elif len(tokens) == 1:
+                        var_name = tokens[0]
+                        var_value = ""
+                    else:
+                        continue
+
+                    if var_name in path_additions:
+                        os.environ["PATH"] = var_value + os.pathsep + os.environ["PATH"]
+                    elif var_name == "KHIOPS_CLASSPATH":
+                        if "CLASSPATH" in os.environ:
+                            os.environ["CLASSPATH"] = (
+                                var_value + os.pathsep + os.environ["CLASSPATH"]
+                            )
+                        else:
+                            os.environ["CLASSPATH"] = var_value
+                    elif var_name == "KHIOPS_MPI_LIB":
+                        if "LD_LIBRARY_PATH" in os.environ:
+                            os.environ["LD_LIBRARY_PATH"] = (
+                                var_value + os.pathsep + os.environ["LD_LIBRARY_PATH"]
+                            )
+                        else:
+                            os.environ["LD_LIBRARY_PATH"] = var_value
+                    elif var_name == "KHIOPS_MPI_COMMAND":
+                        self.mpi_command_args = shlex.split(var_value)
+                    elif var_name == "KHIOPS_PROC_NUMBER" and var_value:
+                        self.max_cores = int(var_value) - 1
+                        os.environ["KHIOPS_PROC_NUMBER"] = var_value
+                    elif var_name == "KHIOPS_MEMORY_LIMIT" and var_value:
+                        self.max_memory_mb = int(var_value)
+                        os.environ["KHIOPS_MEMORY_LIMIT"] = var_value
+                    elif var_name == "KHIOPS_TMP_DIR" and var_value:
+                        self.khiops_temp_dir = var_value
+                        os.environ["KHIOPS_TMP_DIR"] = var_value
+                    else:
+                        os.environ[var_name] = var_value
+                self.execute_with_modl = True
+            # If there is no environment script then just the `khiops` script
+            else:
+                self.execute_with_modl = False
+
+            # Check the tool binaries
+            self._check_tools()
 
     def _build_status_message(self):
         status_msg = super()._build_status_message()
@@ -923,6 +1077,8 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
 
     def _initialize_khiops_version(self):
         # Run khiops with the -v flag
+        # Determine which Khiops to run, according to whether one has a
+        # vendored Khiops or not
         stdout, _, return_code = self.raw_run("khiops", ["-v"])
 
         # On success parse and save the version
@@ -966,11 +1122,13 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
             raise TypeError(
                 type_error_message("command_line_args", command_line_args, list)
             )
+        if self._run_with_vendored_khiops is None:
+            # Lazy check if installing with vendored Khiops
+            self._check_vendored_khiops()
 
         # Lazy initialization of the execution configuration
         if self.execute_with_modl is None:
             self._initialize_execution_configuration()
-
         # Build command line arguments
         # Nota: Khiops Coclustering is executed without MPI
         khiops_process_args = []
