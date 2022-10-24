@@ -7,18 +7,29 @@ Below you'll find the tools and practices related to the pyKhiops documentation.
 ```bash
 # Working dir = pykhiops/doc
 
-# You'll need the following python packages
-# pip install -U numpydoc furo sphinx-copybutton
+# You'll need the python packages in the requirements.txt file in this directory
+# pip install -U -r requirements.txt
 
-# Execute this if there were updates to samples.py or samples_sklearn.py:
+# You'll also need a system-wide installation of pandoc (https://pandoc.org)
+
+# Execute this if there were non commited updates to samples.py or samples_sklearn.py:
 # ./convert-samples-hook
 
-# Execute this if you are not sure your changes are being reflected
+# To clean the html documentation
 # ./clean.sh
-# make clean
 
-# Build the HTML documentation (will be saved under ./_build/html)
-make html
+
+# Create the HTML documentation (
+# - Downloads the pykhiops-tutorial resources
+# - Generates the reST version of the tutorials
+# - Executes Sphinx (output: ./_build/html)
+./create.sh
+
+# Linux: To avoid coclustering bug set KHIOPS_PROC_NUMBER=1
+# KHIOPS_PROC_NUMBER=1 ./create.sh
+
+# To only execute Sphinx on updated reST resources
+# make html
 ```
 
 ## Sphinx
@@ -35,14 +46,14 @@ Within Sphinx we use the following extensions:
 - `sphinx_copybutton`: Puts a copy button in all code snippets within the documentation.
 
 Any of these extensions can be the culprit of bogus or invalid output. Note that the Sphinx
-documentation for some of these extensions is not complete and even answers in StackOverflow are not
-up to date.
+documentation for some of these extensions is not complete and even answers in StackOverflow are
+not up to date.
 
 Warnings emitted by Sphinx **should not be ignored** as there are most likely rendering errors.
 
-[reStructuredText](https://docutils.sourceforge.io/rst.html) or reST is the input format of Sphinx.
-One important thing that while very similar **it is not Markdown**, reST is not identical to it.
-See below [reSTructuredText Common Problems](#restructuredtext-common-problems).
+[reStructuredText](https://docutils.sourceforge.io/rst.html) or *reST* is the input format of
+Sphinx. One important thing that while very similar **it is not Markdown**, reST is not identical
+to it. See below [reSTructuredText Common Problems](#restructuredtext-common-problems).
 
 ## pyKhiops Docstring Patterns
 

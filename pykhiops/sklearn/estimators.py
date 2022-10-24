@@ -54,6 +54,7 @@ from pykhiops.core.common import (
 from ..sklearn.tables import Dataset, read_internal_data_table
 
 # Disable pylint's too many lines: This module is big and won't be smaller anytime soon
+
 # pylint: disable=too-many-lines
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
@@ -178,9 +179,9 @@ class KhiopsEstimator(ABC, BaseEstimator):
         If ``True`` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
     output_dir : str, optional
-        Path of the output directory for the resulting artefacts of Khiops learning
+        Path of the output directory for the resulting artifacts of Khiops learning
         tasks. See concrete estimator classes for more information about this parameter.
-    internal_sort : boolean, default ``True``
+    internal_sort : bool, default ``True``
         *Advanced.*: See concrete estimator classes for information about this
         parameter.
     key : str, optional

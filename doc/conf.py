@@ -63,6 +63,18 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # HTML Theme
 html_theme = "furo"
+html_theme_options = {
+    "light_css_variables": {
+        "color-brand-primary": "#FF7900",
+        "color-brand-content": "#F16E00",
+        "color-highlighted-background": "#FFD200",
+        "color-admonition-title--note": "#FF7900",
+        "color-admonition-title-background--note": "#FFF0E2",
+        "font-stack": "Helvetica Neue, sans-serif",
+    },
+}
+html_title = f"<h6>{project} {release}</h6>"
+html_logo = "./khiops_logo.png"
 
 # HTML static pages
 html_static_path = []

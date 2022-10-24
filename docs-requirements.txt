@@ -1,4 +1,0 @@
-numpydoc>=1.1.0
-pandas>=0.25.0
-scikit-learn>=0.21
-furo>=2021.08.31
