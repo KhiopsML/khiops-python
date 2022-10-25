@@ -5,10 +5,21 @@
   pyKhiops correlative (third digit). So 10.0.4 = 4th version developed that supports Khiops 10.0.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
+## 10.1.1 - 2022-11-10
+### Added
+- General:
+  - Jupyter notebooks tutorials to the documentation site.
+  - `pk-status` script to check the pyKhiops installation.
 
 ### Fixed
-- Samples scripts not being installed: They are located in `<pykhiops_install_dir>/samples`.
+- `sklearn`
+  - `KhiopsCoclustering` raising an exception instead of a warning when no informative coclustering
+    was found.
+  - `internal_sort` parameter being ignored in `KhiopsCoclustering`.
+- `core`
+  - `detect_format` failing when the Khiops log had extra output.
+- General:
+  - Code samples scripts not being installed: They are located in `<pykhiops_install_dir>/samples`.
 
 ## 10.1.0 - 2022-09-20
 ### Added
@@ -28,8 +39,6 @@
   - `get_khiops_version` API function.
   - New rule `LocalTimestamp` rule for AutoML feature generation (requires Khiops 10.1).
   - `max_total_parts` parameter to `simplify_coclustering` core API function (requires Khiops 10.1).
-- Other:
-  - `pk-status` script to check the pyKhiops installation.
 - *Internals*:
   - Khiops samples directory in Linux now defaults to `/opt/khiops/samples` which is where it is
     installed by default.
@@ -43,7 +52,7 @@
   - When pyKhiops reads a legacy Khiops JSON report/dictionary with Unicode decoding errors it now
     only warns and loads it anyway with the `errors="replace"` setting. Before it raised an
     exception.
-- Other:
+- General:
   - Simpler multi-table samples in the documentation.
 
 ### Deprecated
