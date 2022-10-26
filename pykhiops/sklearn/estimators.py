@@ -690,7 +690,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
     def _fit_check_params(self, dataset, **kwargs):
         # Check that at least one of the build methods parameters is set
         if not (
-            self.build_name_var or self.build_distance_vars or self.build_distance_vars
+            self.build_name_var or self.build_distance_vars or self.build_frequency_vars
         ):
             raise ValueError(
                 "One of the parameters 'build_name_var', "

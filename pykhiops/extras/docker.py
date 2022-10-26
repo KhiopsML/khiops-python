@@ -166,7 +166,6 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
         url = f"{self._url}v1/operation/{job_id}:delete"
         request = Request(url, method="DELETE")
         json_response = self._fetch(request)
-        response = json.loads(json_response)
         if trace:
             print(f"Docker runner delete job: {json_response}")
 

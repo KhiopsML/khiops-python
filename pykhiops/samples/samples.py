@@ -1533,7 +1533,6 @@ exported_samples = [
 
 def execute_samples(args):
     """Executes all non-interactive samples"""
-
     # Create the results directory if it does not exist
     if not path.isdir("./pk_samples"):
         os.mkdir("./pk_samples")
@@ -1543,14 +1542,10 @@ def execute_samples(args):
         pk.get_runner().samples_dir = args.samples_dir
 
     # Filter the samples according to the options
-    execution_samples = []
     if args.include is not None:
-        for sample in exported_samples:
-            for sample_name in args.include:
-                if args.exact_match and sample_name == sample.__name__:
-                    execution_samples.append(sample)
-                elif not args.exact_match and sample_name in sample.__name__:
-                    execution_samples.append(sample)
+        execution_samples = filter_samples(
+            exported_samples, args.include, args.exact_match
+        )
     else:
         execution_samples = exported_samples
 
@@ -1571,12 +1566,18 @@ def execute_samples(args):
     else:
         print("*** No samples to run ***")
 
-    # Note: The following non-interactive samples are not run
-    # Register then  replay a script: starts Khiops and wait for user
-    # interactions until the tool is closed
-    # script_file_path = path.join(tempfile.gettempdir(), "Sample._kh")
-    # register_script_file(script_file_path)
-    # replay_script_file(script_file_path)
+
+def filter_samples(exported_samples, include, exact_match):
+    """Filter the samples according to the command line options"""
+    filtered_samples = []
+    for sample in exported_samples:
+        for sample_name in include:
+            if (exact_match and sample_name == sample.__name__) or (
+                not exact_match and sample_name in sample.__name__
+            ):
+                filtered_samples.append(sample)
+
+    return filtered_samples
 
 
 # Run the samples if executed as a script

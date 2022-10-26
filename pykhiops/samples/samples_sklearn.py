@@ -28,6 +28,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
+import pykhiops
 from pykhiops import core as pk
 from pykhiops.sklearn import (
     KhiopsClassifier,
@@ -615,20 +616,17 @@ def execute_samples(args):
     if args.samples_dir is not None:
         pk.get_runner().samples_dir = args.samples_dir
 
-    # Filter the samples according to the options
-    execution_samples = []
     if args.include is not None:
-        for sample in exported_samples:
-            for sample_name in args.include:
-                if args.exact_match and sample_name == sample.__name__:
-                    execution_samples.append(sample)
-                elif not args.exact_match and sample_name in sample.__name__:
-                    execution_samples.append(sample)
+        execution_samples = filter_samples(
+            exported_samples, args.include, args.exact_match
+        )
     else:
         execution_samples = exported_samples
 
     # Print the execution title
     if execution_samples:
+        print(f"pyKhiops {pykhiops.__version__} running on Khiops ", end="")
+        print(f"{pk.get_khiops_version()}\n")
         print(f"Sample datasets location: {pk.get_samples_dir()}")
         print(f"{len(execution_samples)} sample(s) to execute\n")
 
@@ -641,6 +639,19 @@ def execute_samples(args):
 
     else:
         print("*** No samples to run ***")
+
+
+def filter_samples(exported_samples, include, exact_match):
+    """Filter the samples according to the command line options"""
+    filtered_samples = []
+    for sample in exported_samples:
+        for sample_name in include:
+            if (exact_match and sample_name == sample.__name__) or (
+                not exact_match and sample_name in sample.__name__
+            ):
+                filtered_samples.append(sample)
+
+    return filtered_samples
 
 
 # Run the samples if executed as a script
