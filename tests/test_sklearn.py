@@ -13,6 +13,7 @@ import copy
 import os
 import shutil
 import unittest
+import warnings
 
 import pykhiops.core as pk
 from pykhiops.sklearn.estimators import (
@@ -67,6 +68,12 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Prepare datasets for tests"""
+        # Disable file-path warnings
+        warnings.filterwarnings(
+            "ignore",
+            message="File-path dataset input is deprecated and will be removed",
+        )
+
         # Grab output_dir for subsequent deletion
         cls.output_dir = os.path.join(
             os.curdir, "resources", "tmp", "test_sklearn_parameter_transfer"
@@ -1269,6 +1276,12 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
         """Clean up temporary resources for this test case: output directory"""
         if os.path.isdir(cls.output_dir):
             shutil.rmtree(cls.output_dir)
+
+        # Enable file-path warnings
+        warnings.filterwarnings(
+            "always",
+            message="File-path dataset input is deprecated and will be removed",
+        )
 
     def _check_dictionary_domain(
         self,
