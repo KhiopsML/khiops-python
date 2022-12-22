@@ -3,11 +3,12 @@ import os
 import sys
 from datetime import datetime
 
+import numpydoc
+
 # Add the root of the repository and the samples directory to sys.path
 # so Sphinx can find both pykhiops and the samples scripts
 sys.path.append("..")
 sys.path.append("../pykhiops/samples")
-
 import pykhiops
 
 project = "pyKhiops"
@@ -59,7 +60,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and directories to
 # ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_templates", "_build", "Thumbs.db", ".DS_Store"]
 
 # HTML Theme
 html_theme = "furo"
@@ -79,11 +80,23 @@ html_logo = "./khiops_logo.png"
 # HTML static pages
 html_static_path = []
 
-# Suppress warning about sklearn code (`X` or `y`) included via intersphinx
+# Suppress warnings:
+# - about sklearn code (`X` or `y`) included via intersphinx
+# - about some literals included via the tutorials transformation
 def suppress_sklearn_warnings(app, env, node, contnode):
-    if (node.rawsource == "`X`" or node.rawsource == "`y`") and node.source.endswith(
-        "Mixin.score"
-    ):
+    def sklearn_not_found_variable(node):
+        return (
+            node.rawsource == "`X`" or node.rawsource == "`y`"
+        ) and node.source.endswith("Mixin.score")
+
+    def tutorial_literal(node):
+        return (
+            node.rawsource == "`ProbClassIris-setosa`"
+            or node.rawsource == "`ProbClassIris-versicolor`"
+            or node.rawsource == "`ProbClassIris-virginica`"
+        )
+
+    if sklearn_not_found_variable(node) or tutorial_literal(node):
         return contnode
     return None
 

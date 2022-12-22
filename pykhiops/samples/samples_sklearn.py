@@ -324,8 +324,10 @@ def khiops_encoder_multitable():
     print(pke.transform(X_dataset)[:10])
 
 
+# Disable line too long just to have a title linking the sklearn documentation
+# pylint: disable=line-too-long
 def khiops_encoder_pipeline_with_hgbc():
-    """Chains a `.KhiopsEncoder` in a pipeline with a HistGradientBoostingClassifier"""
+    """Chains a `.KhiopsEncoder` with a `~sklearn.ensemble.HistGradientBoostingClassifier`"""
     # Load the dataset into a pandas dataframe
     adult_path = path.join(pk.get_samples_dir(), "Adult", "Adult.txt")
     adult_df = pd.read_csv(adult_path, sep="\t")
@@ -372,6 +374,9 @@ def khiops_encoder_pipeline_with_hgbc():
     test_auc = metrics.roc_auc_score(y_test, y_test_probas[:, 1])
     print(f"Test accuracy = {test_accuracy}")
     print(f"Test auc      = {test_auc}")
+
+
+# pylint: enable=line-too-long
 
 
 def khiops_coclustering():

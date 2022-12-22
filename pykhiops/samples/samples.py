@@ -1341,7 +1341,7 @@ def deploy_coclustering():
 def deploy_coclustering_expert():
     """Deploys an "individual-variable" coclustering step-by-step
 
-    The `.prepare_coclustering_deployment` method is called twice to prepare the
+    The `.api.prepare_coclustering_deployment` method is called twice to prepare the
     deployment at two granularity levels. Then, the model is deployed and the respective
     deployment dictionary is built.
 
@@ -1475,17 +1475,6 @@ def build_deployed_dictionary():
     with open(deployed_dictionary_file_path) as deployed_dictionary_file:
         for line in deployed_dictionary_file:
             print(line, end="")
-
-
-def register_script_file(output_scenario_path):
-    """Runs Khiops in GUI mode while registering a Khiops scenario file"""
-    print("Use Khiops and then close it:")
-    pk.get_runner().raw_run("khiops", command_line_args=["-o", output_scenario_path])
-
-
-def replay_script_file(input_scenario_path):
-    """Replays a Khiops scenario"""
-    pk.get_runner().run(input_scenario_path)
 
 
 exported_samples = [

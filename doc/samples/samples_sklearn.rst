@@ -44,8 +44,6 @@ The following preamble makes sure all samples in this page run correctly
 Samples
 -------
 
-khiops_classifier
-"""""""""""""""""
 .. autofunction:: khiops_classifier
 .. code-block:: python
 
@@ -92,8 +90,6 @@ khiops_classifier
         print(f"Test accuracy = {test_accuracy}")
         print(f"Test auc      = {test_auc}")
 
-khiops_classifier_multiclass
-""""""""""""""""""""""""""""
 .. autofunction:: khiops_classifier_multiclass
 .. code-block:: python
 
@@ -140,8 +136,6 @@ khiops_classifier_multiclass
         print(f"Test accuracy = {test_accuracy}")
         print(f"Test auc      = {test_auc}")
 
-khiops_regressor
-""""""""""""""""
 .. autofunction:: khiops_regressor
 .. code-block:: python
 
@@ -181,8 +175,6 @@ khiops_regressor
         print(f"Test R2  = {test_r2}")
         print(f"Test MAE = {test_mae}")
 
-khiops_classifier_multitable
-""""""""""""""""""""""""""""
 .. autofunction:: khiops_classifier_multitable
 .. code-block:: python
 
@@ -257,8 +249,6 @@ khiops_classifier_multitable
         print(f"Test accuracy = {test_accuracy}")
         print(f"Test auc      = {test_auc}")
 
-khiops_encoder
-""""""""""""""
 .. autofunction:: khiops_encoder
 .. code-block:: python
 
@@ -288,8 +278,6 @@ khiops_encoder
         print(X_transformed[:10])
         print("---")
 
-khiops_encoder_multitable
-"""""""""""""""""""""""""
 .. autofunction:: khiops_encoder_multitable
 .. code-block:: python
 
@@ -331,8 +319,6 @@ khiops_encoder_multitable
         print("Encoded data:")
         print(pke.transform(X_dataset)[:10])
 
-khiops_encoder_pipeline_with_hgbc
-"""""""""""""""""""""""""""""""""
 .. autofunction:: khiops_encoder_pipeline_with_hgbc
 .. code-block:: python
 
@@ -384,8 +370,6 @@ khiops_encoder_pipeline_with_hgbc
         print(f"Test accuracy = {test_accuracy}")
         print(f"Test auc      = {test_auc}")
 
-khiops_coclustering
-"""""""""""""""""""
 .. autofunction:: khiops_coclustering
 .. code-block:: python
 
@@ -411,8 +395,6 @@ khiops_coclustering
         print(X_clusters[:10])
         print("---")
 
-khiops_classifier_pickle
-""""""""""""""""""""""""
 .. autofunction:: khiops_classifier_pickle
 .. code-block:: python
 
@@ -450,8 +432,6 @@ khiops_classifier_pickle
         print(y_predicted[:10])
         print("---")
 
-khiops_classifier_multitable_file
-"""""""""""""""""""""""""""""""""
 .. autofunction:: khiops_classifier_multitable_file
 .. code-block:: python
 
@@ -545,8 +525,6 @@ khiops_classifier_multitable_file
         print(f"Test accuracy = {test_accuracy}")
         print(f"Test auc      = {test_auc}")
 
-khiops_classifier_multitable_dataframe_list
-"""""""""""""""""""""""""""""""""""""""""""
 .. autofunction:: khiops_classifier_multitable_dataframe_list
 .. code-block:: python
 

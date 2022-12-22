@@ -149,13 +149,11 @@ def create_rest_page_section(sample_function):
         inspect.getsource(sample_function)
     )
     indented_code = textwrap.indent(code, "    ")
-    title = sample_function.__name__ + "\n" + '"' * len(sample_function.__name__) + "\n"
     return (
-        title
-        + f".. autofunction:: {sample_function.__name__}\n"
-        + ".. code-block:: python\n"
-        + "\n"
-        + indented_code
+        f".. autofunction:: {sample_function.__name__}\n"
+        ".. code-block:: python\n"
+        "\n"
+        f"{indented_code}"
     )
 
 

@@ -86,7 +86,8 @@ def main(args):
     # Write the tutorial page
     sklearn_tutorials = [name for name in notebook_names if name.startswith("Sklearn")]
     core_tutorials = [name for name in notebook_names if name.startswith("Core")]
-    with open(os.path.join(rest_tutorial_dir, "index.rst"), "w") as tutorials_file:
+    tutorials_file_path = os.path.join(rest_tutorial_dir, "index.rst")
+    with open(tutorials_file_path, "w", encoding="utf8") as tutorials_file:
         tutorials_file.write("Tutorials\n")
         tutorials_file.write("=========\n")
         tutorials_file.write("\n")
@@ -94,7 +95,7 @@ def main(args):
         tutorials_file.write("-------\n")
         tutorials_file.write(_tutorials_message("sklearn"))
         for name in sklearn_tutorials:
-            tutorials_file.write(f"    - :doc:`{name}`\n")
+            tutorials_file.write(f"- :doc:`{name}`\n")
         tutorials_file.write("\n")
         tutorials_file.write("Core\n")
         tutorials_file.write("----\n")

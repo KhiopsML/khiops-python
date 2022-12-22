@@ -30,16 +30,12 @@ The following preamble makes sure all samples in this page run correctly
 Samples
 -------
 
-get_khiops_version
-""""""""""""""""""
 .. autofunction:: get_khiops_version
 .. code-block:: python
 
     def get_khiops_version():
         print(f"Khiops version: {pk.get_khiops_version()}")
 
-build_dictionary_from_data_table
-""""""""""""""""""""""""""""""""
 .. autofunction:: build_dictionary_from_data_table
 .. code-block:: python
 
@@ -56,8 +52,6 @@ build_dictionary_from_data_table
             data_table_path, dictionary_name, dictionary_file_path
         )
 
-detect_data_table_format
-""""""""""""""""""""""""
 .. autofunction:: detect_data_table_format
 .. code-block:: python
 
@@ -99,8 +93,6 @@ detect_data_table_format
         )
         print("Format detected (with dictionary file) on reformatted table:", format_spec)
 
-check_database
-""""""""""""""
 .. autofunction:: check_database
 .. code-block:: python
 
@@ -119,8 +111,6 @@ check_database
             max_messages=50,
         )
 
-export_dictionary_files
-"""""""""""""""""""""""
 .. autofunction:: export_dictionary_files
 .. code-block:: python
 
@@ -161,8 +151,6 @@ export_dictionary_files
             output_dictionary_file_path, alt_output_dictionary_json_path
         )
 
-train_predictor
-"""""""""""""""
 .. autofunction:: train_predictor
 .. code-block:: python
 
@@ -182,8 +170,6 @@ train_predictor
             max_trees=0,
         )
 
-train_predictor_file_paths
-""""""""""""""""""""""""""
 .. autofunction:: train_predictor_file_paths
 .. code-block:: python
 
@@ -205,8 +191,6 @@ train_predictor_file_paths
         print("Reports file available at " + report_file_path)
         print("Modeling dictionary file available at " + modeling_dictionary_file_path)
 
-train_predictor_error_handling
-""""""""""""""""""""""""""""""
 .. autofunction:: train_predictor_error_handling
 .. code-block:: python
 
@@ -246,8 +230,6 @@ train_predictor_error_handling
             for line in scenario_file:
                 print(line, end="")
 
-train_predictor_mt
-""""""""""""""""""
 .. autofunction:: train_predictor_mt
 .. code-block:: python
 
@@ -273,8 +255,6 @@ train_predictor_mt
             max_trees=0,
         )
 
-train_predictor_mt_with_specific_rules
-""""""""""""""""""""""""""""""""""""""
 .. autofunction:: train_predictor_mt_with_specific_rules
 .. code-block:: python
 
@@ -303,8 +283,6 @@ train_predictor_mt_with_specific_rules
             max_trees=0,
         )
 
-train_predictor_mt_snowflake
-""""""""""""""""""""""""""""
 .. autofunction:: train_predictor_mt_snowflake
 .. code-block:: python
 
@@ -337,8 +315,6 @@ train_predictor_mt_snowflake
             max_trees=0,
         )
 
-train_predictor_with_train_percentage
-"""""""""""""""""""""""""""""""""""""
 .. autofunction:: train_predictor_with_train_percentage
 .. code-block:: python
 
@@ -364,8 +340,6 @@ train_predictor_with_train_percentage
             results_prefix="P90_",
         )
 
-train_predictor_with_trees
-""""""""""""""""""""""""""
 .. autofunction:: train_predictor_with_trees
 .. code-block:: python
 
@@ -388,8 +362,6 @@ train_predictor_with_trees
             max_trees=15,
         )
 
-train_predictor_with_pairs
-""""""""""""""""""""""""""
 .. autofunction:: train_predictor_with_pairs
 .. code-block:: python
 
@@ -418,8 +390,6 @@ train_predictor_with_pairs
             ],
         )
 
-train_predictor_with_multiple_parameters
-""""""""""""""""""""""""""""""""""""""""
 .. autofunction:: train_predictor_with_multiple_parameters
 .. code-block:: python
 
@@ -454,8 +424,6 @@ train_predictor_with_multiple_parameters
         # Reset memory limit to default Khiops tool value
         pk.get_runner().max_memory_mb = 0
 
-train_predictor_detect_format
-"""""""""""""""""""""""""""""
 .. autofunction:: train_predictor_detect_format
 .. code-block:: python
 
@@ -505,8 +473,6 @@ train_predictor_detect_format
             results_dir,
         )
 
-train_predictor_with_cross_validation
-"""""""""""""""""""""""""""""""""""""
 .. autofunction:: train_predictor_with_cross_validation
 .. code-block:: python
 
@@ -609,8 +575,6 @@ train_predictor_with_cross_validation
         print("train auc: " + str(mean_train_auc) + " +- " + str(sd_train_auc))
         print("test  auc: " + str(mean_test_auc) + " +- " + str(sd_test_auc))
 
-multiple_train_predictor
-""""""""""""""""""""""""
 .. autofunction:: multiple_train_predictor
 .. code-block:: python
 
@@ -684,8 +648,6 @@ multiple_train_predictor
             # Show a preview of the results
             display_test_results(json_result_file_path)
 
-evaluate_predictor
-""""""""""""""""""
 .. autofunction:: evaluate_predictor
 .. code-block:: python
 
@@ -712,8 +674,6 @@ evaluate_predictor
         )
         print("Evaluation report available at " + report_file_path)
 
-access_predictor_evaluation_report
-""""""""""""""""""""""""""""""""""
 .. autofunction:: access_predictor_evaluation_report
 .. code-block:: python
 
@@ -785,8 +745,6 @@ access_predictor_evaluation_report
         for metric_name in predictor_performance.get_metric_names():
             print(metric_name + ": " + str(predictor_performance.get_metric(metric_name)))
 
-train_recoder
-"""""""""""""
 .. autofunction:: train_recoder
 .. code-block:: python
 
@@ -801,8 +759,6 @@ train_recoder
             dictionary_file_path, "Adult", data_table_path, "class", results_dir
         )
 
-train_recoder_with_multiple_parameters
-""""""""""""""""""""""""""""""""""""""
 .. autofunction:: train_recoder_with_multiple_parameters
 .. code-block:: python
 
@@ -824,8 +780,6 @@ train_recoder_with_multiple_parameters
             numerical_recoding_method="part label",
         )
 
-train_recoder_mt_flatten
-""""""""""""""""""""""""
 .. autofunction:: train_recoder_mt_flatten
 .. code-block:: python
 
@@ -857,8 +811,6 @@ train_recoder_mt_flatten
             keep_initial_numerical_variables=True,
         )
 
-deploy_model
-""""""""""""
 .. autofunction:: deploy_model
 .. code-block:: python
 
@@ -886,8 +838,6 @@ deploy_model
             model_dictionary_file_path, "SNB_Adult", data_table_path, output_data_table_path
         )
 
-deploy_model_mt
-"""""""""""""""
 .. autofunction:: deploy_model_mt
 .. code-block:: python
 
@@ -923,8 +873,6 @@ deploy_model_mt
             additional_data_tables={"SNB_Accident`Vehicles": vehicles_table_path},
         )
 
-deploy_model_mt_snowflake
-"""""""""""""""""""""""""
 .. autofunction:: deploy_model_mt_snowflake
 .. code-block:: python
 
@@ -973,8 +921,6 @@ deploy_model_mt_snowflake
             },
         )
 
-deploy_model_expert
-"""""""""""""""""""
 .. autofunction:: deploy_model_expert
 .. code-block:: python
 
@@ -1014,8 +960,6 @@ deploy_model_expert
         # - A DictionaryDomain object to use instead of the mandatory dictionary file
         pk.deploy_model(model_domain, "SNB_Adult", data_table_path, output_data_table_path)
 
-deploy_classifier_for_metrics
-"""""""""""""""""""""""""""""
 .. autofunction:: deploy_classifier_for_metrics
 .. code-block:: python
 
@@ -1081,8 +1025,6 @@ deploy_classifier_for_metrics
         for thres in thresholds:
             print(str(thres) + "\t" + str(recall[thres]) + "\t" + str(precision[thres]))
 
-deploy_regressor_for_metrics
-""""""""""""""""""""""""""""
 .. autofunction:: deploy_regressor_for_metrics
 .. code-block:: python
 
@@ -1143,8 +1085,6 @@ deploy_regressor_for_metrics
         print("Adult 'age' regression (30% train)")
         print(f"R2 (explained variance) = {r2_score}")
 
-sort_data_table
-"""""""""""""""
 .. autofunction:: sort_data_table
 .. code-block:: python
 
@@ -1164,8 +1104,6 @@ sort_data_table
             dictionary_file_path, "Accident", accidents_table_path, output_data_table_path
         )
 
-sort_data_table_expert
-""""""""""""""""""""""
 .. autofunction:: sort_data_table_expert
 .. code-block:: python
 
@@ -1188,8 +1126,6 @@ sort_data_table_expert
             sort_variables=["AccidentId", "VehicleId"],
         )
 
-extract_keys_from_data_table
-""""""""""""""""""""""""""""
 .. autofunction:: extract_keys_from_data_table
 .. code-block:: python
 
@@ -1212,8 +1148,6 @@ extract_keys_from_data_table
             output_data_table_path,
         )
 
-train_coclustering
-""""""""""""""""""
 .. autofunction:: train_coclustering
 .. code-block:: python
 
@@ -1234,8 +1168,6 @@ train_coclustering
         )
         print("Coclustering file available at " + coclustering_file_path)
 
-simplify_coclustering
-"""""""""""""""""""""
 .. autofunction:: simplify_coclustering
 .. code-block:: python
 
@@ -1268,8 +1200,6 @@ simplify_coclustering
             max_total_parts=4,
         )
 
-extract_clusters
-""""""""""""""""
 .. autofunction:: extract_clusters
 .. code-block:: python
 
@@ -1294,8 +1224,6 @@ extract_clusters
         # Extract clusters
         pk.extract_clusters(coclustering_file_path, "Char", clusters_file_path)
 
-deploy_coclustering
-"""""""""""""""""""
 .. autofunction:: deploy_coclustering
 .. code-block:: python
 
@@ -1328,8 +1256,6 @@ deploy_coclustering
             header_line=True,
         )
 
-deploy_coclustering_expert
-""""""""""""""""""""""""""
 .. autofunction:: deploy_coclustering_expert
 .. code-block:: python
 
@@ -1403,8 +1329,6 @@ deploy_coclustering_expert
             deployed_dictionary_file_path,
         )
 
-scenario_prologue
-"""""""""""""""""
 .. autofunction:: scenario_prologue
 .. code-block:: python
 
@@ -1430,8 +1354,6 @@ scenario_prologue
             max_trees=0,
         )
 
-build_deployed_dictionary
-"""""""""""""""""""""""""
 .. autofunction:: build_deployed_dictionary
 .. code-block:: python
 
