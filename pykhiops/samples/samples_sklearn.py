@@ -47,7 +47,7 @@ from pykhiops.sklearn import (
 
 
 def khiops_classifier():
-    """Trains a `.KhiopsClassifier`"""
+    """Trains a `.KhiopsClassifier` on a monotable dataframe"""
     # Load the dataset into a pandas dataframe
     adult_path = path.join(pk.get_samples_dir(), "Adult", "Adult.txt")
     adult_df = pd.read_csv(adult_path, sep="\t")
@@ -92,7 +92,7 @@ def khiops_classifier():
 
 
 def khiops_classifier_multiclass():
-    """Trains a multiclass `.KhiopsClassifier`"""
+    """Trains a multiclass `.KhiopsClassifier` on a monotable dataframe"""
     # Load the dataset into a pandas dataframe
     iris_path = path.join(pk.get_samples_dir(), "Iris", "Iris.txt")
     iris_df = pd.read_csv(iris_path, sep="\t")
@@ -136,46 +136,8 @@ def khiops_classifier_multiclass():
     print(f"Test auc      = {test_auc}")
 
 
-def khiops_regressor():
-    """Trains a `.KhiopsRegressor`"""
-    # Load the dataset into a pandas dataframe
-    adult_path = path.join(pk.get_samples_dir(), "Adult", "Adult.txt")
-    adult_df = pd.read_csv(adult_path, sep="\t")
-
-    # Split the whole dataframe into train and test (40%-60% for speed)
-    adult_train_df, adult_test_df = train_test_split(
-        adult_df, test_size=0.6, random_state=1
-    )
-
-    # Split the dataset into:
-    # - the X feature table
-    # - the y target vector ("age" column)
-    X_train = adult_train_df.drop("age", axis=1)
-    X_test = adult_test_df.drop("age", axis=1)
-    y_train = adult_train_df["age"]
-    y_test = adult_test_df["age"]
-
-    # Create the regressor object
-    pkr = KhiopsRegressor()
-
-    # Train the regressor
-    pkr.fit(X_train, y_train)
-
-    # Predict the values on the test dataset
-    y_test_pred = pkr.predict(X_test)
-    print("Predicted values for 'age' (first 10):")
-    print(y_test_pred[:10])
-    print("---")
-
-    # Evaluate R2 and MAE metrics on the test dataset
-    test_r2 = metrics.r2_score(y_test, y_test_pred)
-    test_mae = metrics.mean_absolute_error(y_test, y_test_pred)
-    print(f"Test R2  = {test_r2}")
-    print(f"Test MAE = {test_mae}")
-
-
-def khiops_classifier_multitable():
-    """Trains a `.KhiopsClassifier` on a multi-table dataset"""
+def khiops_classifier_multitable_star():
+    """Trains a `.KhiopsClassifier` on a star multi-table dataset"""
     # Load the root table of the dataset into a pandas dataframe
     accidents_dataset_path = path.join(pk.get_samples_dir(), "AccidentsSummary")
     accidents_df = pd.read_csv(
@@ -247,199 +209,64 @@ def khiops_classifier_multitable():
     print(f"Test auc      = {test_auc}")
 
 
-def khiops_encoder():
-    """Trains a `.KhiopsEncoder`
-
-    The Khiops encoder is a supervised feature encoder. It discretizes numerical
-    features and groups categorical features in a way that the resulting interval/groups
-    have the highest class-purity.
-
-    .. note::
-        For simplicity we train from the whole dataset. To assess the performance one
-        usually splits the dataset into train and test subsets.
-    """
-    # Load the dataset into a pandas dataframe
-    iris_path = path.join(pk.get_samples_dir(), "Iris", "Iris.txt")
-    iris_df = pd.read_csv(iris_path, sep="\t")
-
-    # Train the model with the whole dataset
-    X = iris_df.drop(["Class"], axis=1)
-    y = iris_df["Class"]
-
-    # Create the encoder object
-    pke = KhiopsEncoder()
-    pke.fit(X, y)
-
-    # Transform the training dataset
-    X_transformed = pke.transform(X)
-
-    # Print both the original and transformed features
-    print("Original:")
-    print(X.head(10))
-    print("---")
-    print("Encoded feature names:")
-    print(pke.feature_names_out_)
-    print("Encoded data:")
-    print(X_transformed[:10])
-    print("---")
-
-
-def khiops_encoder_multitable():
-    """Trains a `.KhiopsEncoder` on a multi-table dataset"""
-    # Load the root table of the dataset into a pandas dataframe
-    accidents_dataset_path = path.join(pk.get_samples_dir(), "AccidentsSummary")
+def khiops_classifier_multitable_snowflake():
+    """Trains a `.KhiopsClassifier` on a snowflake multi-table dataset"""
+    accidents_dataset_path = path.join(pk.get_samples_dir(), "Accidents")
     accidents_df = pd.read_csv(
-        path.join(accidents_dataset_path, "Accidents.txt"),
-        sep="\t",
-        encoding="latin1",
+        path.join(accidents_dataset_path, "Accidents.txt"), sep="\t", encoding="latin1"
     )
-
-    # Obtain the root X feature table and the y target vector ("Class" column)
-    y = accidents_df["Gravity"]
-    X_main = accidents_df.drop("Gravity", axis=1)
-
-    # Load the secondary table of the dataset into a pandas dataframe
-    X_secondary = pd.read_csv(
-        path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
+    places_df = pd.read_csv(
+        path.join(accidents_dataset_path, "Places.txt"), sep="\t", encoding="latin1"
     )
+    users_df = pd.read_csv(
+        path.join(accidents_dataset_path, "Users.txt"), sep="\t", encoding="latin1"
+    )
+    vehicles_df = pd.read_csv(
+        path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t", encoding="latin1"
+    )
+    label_main_table = accidents_df["Gravity"]
+    X_accidents = accidents_df.drop("Gravity", axis=1)
 
-    # Create the dataset multitable specification for the train/test split
-    # We specify each table with a name and a tuple (dataframe, key_columns)
-    X_dataset = {
+    dataset_spec = {
         "main_table": "Accidents",
         "tables": {
-            "Accidents": (X_main, "AccidentId"),
-            "Vehicles": (X_secondary, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, ["AccidentId"]),
+            "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
+            "Accidents": (X_accidents, "AccidentId"),
+            "Users": (users_df, ["AccidentId", "VehicleId"]),
         },
+        "relations": [
+            ("Accidents", "Places"),
+            ("Vehicles", "Users"),
+            ("Accidents", "Vehicles"),
+        ],
     }
 
-    # Create the KhiopsEncoder with 10 additional multitable features and fit it
-    pke = KhiopsEncoder(n_features=10)
-    pke.fit(X_dataset, y)
+    # Train the classifier (by default it analyzes 100 multi-table features)
+    pkc = KhiopsClassifier()
+    pkc.fit(dataset_spec, label_main_table)
 
-    # Transform the train dataset
-    print("Encoded feature names:")
-    print(pke.feature_names_out_)
-    print("Encoded data:")
-    print(pke.transform(X_dataset)[:10])
-
-
-# Disable line too long just to have a title linking the sklearn documentation
-# pylint: disable=line-too-long
-def khiops_encoder_pipeline_with_hgbc():
-    """Chains a `.KhiopsEncoder` with a `~sklearn.ensemble.HistGradientBoostingClassifier`"""
-    # Load the dataset into a pandas dataframe
-    adult_path = path.join(pk.get_samples_dir(), "Adult", "Adult.txt")
-    adult_df = pd.read_csv(adult_path, sep="\t")
-
-    # Split the whole dataframe into train and test (70%-30%)
-    adult_train_df, adult_test_df = train_test_split(
-        adult_df, test_size=0.3, random_state=1
-    )
-
-    # Split the dataset into:
-    # - the X feature table
-    # - the y target vector ("class" column)
-    X_train = adult_train_df.drop("class", axis=1)
-    X_test = adult_test_df.drop("class", axis=1)
-    y_train = adult_train_df["class"]
-    y_test = adult_test_df["class"]
-
-    # Create the pipeline and fit it. Steps:
-    # - The khiops supervised column encoder, generates a full-categorical table
-    # - One hot encoder in all columns
-    # - Train the HGB classifier
-    pipe_steps = [
-        ("khiops_enc", KhiopsEncoder()),
-        ("onehot_enc", ColumnTransformer([], remainder=OneHotEncoder(sparse=False))),
-        ("hgb_clf", HistGradientBoostingClassifier()),
-    ]
-    pipe = Pipeline(pipe_steps)
-    pipe.fit(X_train, y_train)
-
-    # Predict the classes on the test dataset
-    y_test_pred = pipe.predict(X_test)
+    # Predict the class on the test dataset
+    y_test_pred = pkc.predict(dataset_spec)
     print("Predicted classes (first 10):")
     print(y_test_pred[:10])
     print("---")
 
-    # Predict the class probabilities on the test dataset
-    y_test_probas = pipe.predict_proba(X_test)
+    # Predict the class probability on the test dataset
+    y_test_probas = pkc.predict_proba(dataset_spec)
+    print(f"Class order: {pkc.classes_}")
     print("Predicted class probabilities (first 10):")
     print(y_test_probas[:10])
     print("---")
 
     # Evaluate accuracy and auc metrics on the test dataset
-    test_accuracy = metrics.accuracy_score(y_test, y_test_pred)
-    test_auc = metrics.roc_auc_score(y_test, y_test_probas[:, 1])
+    test_accuracy = metrics.accuracy_score(label_main_table, y_test_pred)
+    test_auc = metrics.roc_auc_score(label_main_table, y_test_probas[:, 1])
     print(f"Test accuracy = {test_accuracy}")
     print(f"Test auc      = {test_auc}")
 
 
-# pylint: enable=line-too-long
-
-
-def khiops_coclustering():
-    """Trains a `.KhiopsCoclustering` estimator"""
-    # Load the secondary table of the dataset into a pandas dataframe
-    splice_dataset_path = path.join(pk.get_samples_dir(), "SpliceJunction")
-    splice_dna_X = pd.read_csv(
-        path.join(splice_dataset_path, "SpliceJunctionDNA.txt"), sep="\t"
-    )
-
-    # Train with only 70% of data (for speed in this example)
-    X, _ = train_test_split(splice_dna_X, test_size=0.3, random_state=1)
-
-    # Create the KhiopsCoclustering instance
-    pkcc = KhiopsCoclustering()
-
-    # Train the model with the whole dataset
-    pkcc.fit(X, id_column="SampleId")
-
-    # Predict the clusters in some instances
-    X_clusters = pkcc.predict(X)
-    print("Predicted clusters (first 10)")
-    print(X_clusters[:10])
-    print("---")
-
-
-def khiops_classifier_pickle():
-    """Shows the serialization and deserialization of a `.KhiopsClassifier`"""
-    # Load the dataset into a pandas dataframe
-    iris_path = path.join(pk.get_samples_dir(), "Iris", "Iris.txt")
-    iris_df = pd.read_csv(iris_path, sep="\t")
-
-    # Train the model with the whole dataset
-    X = iris_df.drop(["Class"], axis=1)
-    y = iris_df["Class"]
-    pkc = KhiopsClassifier()
-    pkc.fit(X, y)
-
-    # Create/clean the output directory
-    results_dir = path.join("pk_samples", "khiops_classifier_pickle")
-    pkc_pickle_path = path.join(results_dir, "khiops_classifier.pkl")
-    if path.exists(pkc_pickle_path):
-        os.remove(pkc_pickle_path)
-    else:
-        os.makedirs(results_dir, exist_ok=True)
-
-    # Pickle its content to a file
-    with open(pkc_pickle_path, "wb") as pkc_pickle_write_file:
-        pickle.dump(pkc, pkc_pickle_write_file)
-
-    # Unpickle it
-    with open(pkc_pickle_path, "rb") as pkc_pickle_file:
-        new_pkc = pickle.load(pkc_pickle_file)
-
-    # Make some predictions on the training dataset with the unpickled classifier
-    new_pkc.predict(X)
-    y_predicted = new_pkc.predict(X)
-    print("Predicted classes (first 10):")
-    print(y_predicted[:10])
-    print("---")
-
-
-def khiops_classifier_multitable_file():
+def khiops_classifier_multitable_star_file():
     """Trains a `.KhiopsClassifier` with a file path based dataset
 
     .. warning::
@@ -538,7 +365,7 @@ def khiops_classifier_multitable_file():
     print(f"Test auc      = {test_auc}")
 
 
-def khiops_classifier_multitable_dataframe_list():
+def khiops_classifier_multitable_list():
     """Trains a KhiopsClassifier using a list dataset specification
 
     .. warning::
@@ -599,18 +426,297 @@ def khiops_classifier_multitable_dataframe_list():
     print(f"Test auc      = {test_auc}")
 
 
+def khiops_classifier_pickle():
+    """Shows the serialization and deserialization of a `.KhiopsClassifier`"""
+    # Load the dataset into a pandas dataframe
+    iris_path = path.join(pk.get_samples_dir(), "Iris", "Iris.txt")
+    iris_df = pd.read_csv(iris_path, sep="\t")
+
+    # Train the model with the whole dataset
+    X = iris_df.drop(["Class"], axis=1)
+    y = iris_df["Class"]
+    pkc = KhiopsClassifier()
+    pkc.fit(X, y)
+
+    # Create/clean the output directory
+    results_dir = path.join("pk_samples", "khiops_classifier_pickle")
+    pkc_pickle_path = path.join(results_dir, "khiops_classifier.pkl")
+    if path.exists(pkc_pickle_path):
+        os.remove(pkc_pickle_path)
+    else:
+        os.makedirs(results_dir, exist_ok=True)
+
+    # Pickle its content to a file
+    with open(pkc_pickle_path, "wb") as pkc_pickle_write_file:
+        pickle.dump(pkc, pkc_pickle_write_file)
+
+    # Unpickle it
+    with open(pkc_pickle_path, "rb") as pkc_pickle_file:
+        new_pkc = pickle.load(pkc_pickle_file)
+
+    # Make some predictions on the training dataset with the unpickled classifier
+    new_pkc.predict(X)
+    y_predicted = new_pkc.predict(X)
+    print("Predicted classes (first 10):")
+    print(y_predicted[:10])
+    print("---")
+
+
+def khiops_regressor():
+    """Trains a `.KhiopsRegressor` on a monotable dataframe"""
+    # Load the dataset into a pandas dataframe
+    adult_path = path.join(pk.get_samples_dir(), "Adult", "Adult.txt")
+    adult_df = pd.read_csv(adult_path, sep="\t")
+
+    # Split the whole dataframe into train and test (40%-60% for speed)
+    adult_train_df, adult_test_df = train_test_split(
+        adult_df, test_size=0.6, random_state=1
+    )
+
+    # Split the dataset into:
+    # - the X feature table
+    # - the y target vector ("age" column)
+    X_train = adult_train_df.drop("age", axis=1)
+    X_test = adult_test_df.drop("age", axis=1)
+    y_train = adult_train_df["age"]
+    y_test = adult_test_df["age"]
+
+    # Create the regressor object
+    pkr = KhiopsRegressor()
+
+    # Train the regressor
+    pkr.fit(X_train, y_train)
+
+    # Predict the values on the test dataset
+    y_test_pred = pkr.predict(X_test)
+    print("Predicted values for 'age' (first 10):")
+    print(y_test_pred[:10])
+    print("---")
+
+    # Evaluate R2 and MAE metrics on the test dataset
+    test_r2 = metrics.r2_score(y_test, y_test_pred)
+    test_mae = metrics.mean_absolute_error(y_test, y_test_pred)
+    print(f"Test R2  = {test_r2}")
+    print(f"Test MAE = {test_mae}")
+
+
+def khiops_encoder_multitable_snowflake():
+    """Trains a `.KhiopsEncoder` on a snowflake multi-table dataset"""
+
+    accidents_dataset_path = path.join(pk.get_samples_dir(), "Accidents")
+
+    accidents_df = pd.read_csv(
+        path.join(accidents_dataset_path, "Accidents.txt"), sep="\t", encoding="latin1"
+    )
+    places_df = pd.read_csv(
+        path.join(accidents_dataset_path, "Places.txt"), sep="\t", encoding="latin1"
+    )
+    users_df = pd.read_csv(
+        path.join(accidents_dataset_path, "Users.txt"), sep="\t", encoding="latin1"
+    )
+    vehicles_df = pd.read_csv(
+        path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t", encoding="latin1"
+    )
+
+    label_main_table = accidents_df["Gravity"]
+    X_accidents = accidents_df.drop("Gravity", axis=1)
+
+    dataset_spec = {
+        "main_table": "Accidents",
+        "tables": {
+            "Places": (places_df, ["AccidentId"]),
+            "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
+            "Accidents": (X_accidents, "AccidentId"),
+            "Users": (users_df, ["AccidentId", "VehicleId"]),
+        },
+        "relations": [
+            ("Accidents", "Places"),
+            ("Vehicles", "Users"),
+            ("Accidents", "Vehicles"),
+        ],
+    }
+
+    # Create the KhiopsEncoder with 10 additional multitable features and fit it
+    pke = KhiopsEncoder(n_features=10)
+    pke.fit(dataset_spec, label_main_table)
+
+    # Transform the train dataset
+    print("Encoded feature names:")
+    print(pke.feature_names_out_)
+    print("Encoded data:")
+    print(pke.transform(dataset_spec)[:10])
+
+
+def khiops_encoder():
+    """Trains a `.KhiopsEncoder` on a monotable dataframe
+
+    The Khiops encoder is a supervised feature encoder. It discretizes numerical
+    features and groups categorical features in a way that the resulting interval/groups
+    have the highest class-purity.
+
+    .. note::
+        For simplicity we train from the whole dataset. To assess the performance one
+        usually splits the dataset into train and test subsets.
+    """
+    # Load the dataset into a pandas dataframe
+    iris_path = path.join(pk.get_samples_dir(), "Iris", "Iris.txt")
+    iris_df = pd.read_csv(iris_path, sep="\t")
+
+    # Train the model with the whole dataset
+    X = iris_df.drop(["Class"], axis=1)
+    y = iris_df["Class"]
+
+    # Create the encoder object
+    pke = KhiopsEncoder()
+    pke.fit(X, y)
+
+    # Transform the training dataset
+    X_transformed = pke.transform(X)
+
+    # Print both the original and transformed features
+    print("Original:")
+    print(X.head(10))
+    print("---")
+    print("Encoded feature names:")
+    print(pke.feature_names_out_)
+    print("Encoded data:")
+    print(X_transformed[:10])
+    print("---")
+
+
+def khiops_encoder_multitable_star():
+    """Trains a `.KhiopsEncoder` on a star multi-table dataset"""
+    # Load the root table of the dataset into a pandas dataframe
+    accidents_dataset_path = path.join(pk.get_samples_dir(), "AccidentsSummary")
+    accidents_df = pd.read_csv(
+        path.join(accidents_dataset_path, "Accidents.txt"),
+        sep="\t",
+        encoding="latin1",
+    )
+
+    # Obtain the root X feature table and the y target vector ("Class" column)
+    y = accidents_df["Gravity"]
+    X_main = accidents_df.drop("Gravity", axis=1)
+
+    # Load the secondary table of the dataset into a pandas dataframe
+    X_secondary = pd.read_csv(
+        path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
+    )
+
+    # Create the dataset multitable specification for the train/test split
+    # We specify each table with a name and a tuple (dataframe, key_columns)
+    X_dataset = {
+        "main_table": "Accidents",
+        "tables": {
+            "Accidents": (X_main, "AccidentId"),
+            "Vehicles": (X_secondary, ["AccidentId", "VehicleId"]),
+        },
+    }
+
+    # Create the KhiopsEncoder with 10 additional multitable features and fit it
+    pke = KhiopsEncoder(n_features=10)
+    pke.fit(X_dataset, y)
+
+    # Transform the train dataset
+    print("Encoded feature names:")
+    print(pke.feature_names_out_)
+    print("Encoded data:")
+    print(pke.transform(X_dataset)[:10])
+
+
+# Disable line too long just to have a title linking the sklearn documentation
+# pylint: disable=line-too-long
+def khiops_encoder_pipeline_with_hgbc():
+    """Chains a `.KhiopsEncoder` with a `~sklearn.ensemble.HistGradientBoostingClassifier`"""
+    # Load the dataset into a pandas dataframe
+    adult_path = path.join(pk.get_samples_dir(), "Adult", "Adult.txt")
+    adult_df = pd.read_csv(adult_path, sep="\t")
+
+    # Split the whole dataframe into train and test (70%-30%)
+    adult_train_df, adult_test_df = train_test_split(
+        adult_df, test_size=0.3, random_state=1
+    )
+
+    # Split the dataset into:
+    # - the X feature table
+    # - the y target vector ("class" column)
+    X_train = adult_train_df.drop("class", axis=1)
+    X_test = adult_test_df.drop("class", axis=1)
+    y_train = adult_train_df["class"]
+    y_test = adult_test_df["class"]
+
+    # Create the pipeline and fit it. Steps:
+    # - The khiops supervised column encoder, generates a full-categorical table
+    # - One hot encoder in all columns
+    # - Train the HGB classifier
+    pipe_steps = [
+        ("khiops_enc", KhiopsEncoder()),
+        ("onehot_enc", ColumnTransformer([], remainder=OneHotEncoder(sparse=False))),
+        ("hgb_clf", HistGradientBoostingClassifier()),
+    ]
+    pipe = Pipeline(pipe_steps)
+    pipe.fit(X_train, y_train)
+
+    # Predict the classes on the test dataset
+    y_test_pred = pipe.predict(X_test)
+    print("Predicted classes (first 10):")
+    print(y_test_pred[:10])
+    print("---")
+
+    # Predict the class probabilities on the test dataset
+    y_test_probas = pipe.predict_proba(X_test)
+    print("Predicted class probabilities (first 10):")
+    print(y_test_probas[:10])
+    print("---")
+
+    # Evaluate accuracy and auc metrics on the test dataset
+    test_accuracy = metrics.accuracy_score(y_test, y_test_pred)
+    test_auc = metrics.roc_auc_score(y_test, y_test_probas[:, 1])
+    print(f"Test accuracy = {test_accuracy}")
+    print(f"Test auc      = {test_auc}")
+
+
+# pylint: enable=line-too-long
+
+
+def khiops_coclustering():
+    """Trains a `.KhiopsCoclustering` on a dataframe"""
+    # Load the secondary table of the dataset into a pandas dataframe
+    splice_dataset_path = path.join(pk.get_samples_dir(), "SpliceJunction")
+    splice_dna_X = pd.read_csv(
+        path.join(splice_dataset_path, "SpliceJunctionDNA.txt"), sep="\t"
+    )
+
+    # Train with only 70% of data (for speed in this example)
+    X, _ = train_test_split(splice_dna_X, test_size=0.3, random_state=1)
+
+    # Create the KhiopsCoclustering instance
+    pkcc = KhiopsCoclustering()
+
+    # Train the model with the whole dataset
+    pkcc.fit(X, id_column="SampleId")
+
+    # Predict the clusters in some instances
+    X_clusters = pkcc.predict(X)
+    print("Predicted clusters (first 10)")
+    print(X_clusters[:10])
+    print("---")
+
+
 exported_samples = [
     khiops_classifier,
     khiops_classifier_multiclass,
+    khiops_classifier_multitable_star,
+    khiops_classifier_multitable_snowflake,
+    khiops_classifier_multitable_star_file,
+    khiops_classifier_multitable_list,
+    khiops_classifier_pickle,
     khiops_regressor,
-    khiops_classifier_multitable,
     khiops_encoder,
-    khiops_encoder_multitable,
+    khiops_encoder_multitable_star,
+    khiops_encoder_multitable_snowflake,
     khiops_encoder_pipeline_with_hgbc,
     khiops_coclustering,
-    khiops_classifier_pickle,
-    khiops_classifier_multitable_file,
-    khiops_classifier_multitable_dataframe_list,
 ]
 
 

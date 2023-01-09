@@ -149,6 +149,7 @@ class Dataset:
         # Initialize members
         self.main_table = None
         self.secondary_tables = None
+        self.relations = None
         self.sep = None
         self.header = None
 
@@ -273,6 +274,11 @@ class Dataset:
                 self.secondary_tables.append(
                     FileTable(f"secondary_table_{index:02d}", table_path, key=key)
                 )
+        # Create a list of relations
+        main_table_name = self.main_table.name
+        self.relations = [
+            (main_table_name, table.name) for table in self.secondary_tables
+        ]
 
     def _check_input_sequence(self, X, y=None, key=None):
         # Check the first table
@@ -387,6 +393,109 @@ class Dataset:
                         PandasTable(table_name, table_source, key=table_key)
                     )
 
+        if self.secondary_tables:
+            if "relations" not in X:
+                main_table_name = self.main_table.name
+                self.relations = [
+                    (main_table_name, table.name) for table in self.secondary_tables
+                ]
+            else:
+                self.relations = X["relations"]
+
+    def _check_cycle_exists(self, relations, main_table_name):
+        """Check existence of a cycle into 'relations'"""
+        tables_to_visit = [main_table_name]
+        tables_visited = set()
+        while tables_to_visit:
+            current_table = tables_to_visit.pop(0)
+            tables_visited.add(current_table)
+            for relation in relations:
+                parent_table, child_table = relation
+                if parent_table == current_table:
+                    tables_to_visit.append(child_table)
+                    if tables_visited.intersection(tables_to_visit):
+                        raise ValueError(
+                            f"Relations at X['relations'] contain a cycle which"
+                            f" includes the relation '{relation}'"
+                        )
+
+    def _check_relation_keys(self, X, left_table_name, right_table_name):
+        """Check coherence of keys"""
+        _, left_table_key = X["tables"][left_table_name]
+        _, right_table_key = X["tables"][right_table_name]
+        table_key_error = False
+        if isinstance(left_table_key, str) and isinstance(right_table_key, str):
+            table_key_error = right_table_key != left_table_key
+        elif isinstance(left_table_key, str) and is_list_like(right_table_key):
+            table_key_error = left_table_key not in right_table_key
+        elif is_list_like(left_table_key) and is_list_like(right_table_key):
+            table_key_error = not set(left_table_key).issubset(set(right_table_key))
+        elif is_list_like(left_table_key) and isinstance(right_table_key, str):
+            table_key_error = True
+
+        if table_key_error:
+            if isinstance(right_table_key, str):
+                right_table_key_msg = f"[{right_table_key}]"
+            else:
+                right_table_key_msg = f"[{', '.join(right_table_key)}]"
+            if isinstance(left_table_key, str):
+                left_table_key_msg = f"[{left_table_key}]"
+            else:
+                left_table_key_msg = f"[{', '.join(left_table_key)}]"
+            raise ValueError(
+                f"key for table '{right_table_name}' "
+                f"{right_table_key_msg} is incompatible with "
+                f"that of table "
+                f"'{left_table_name}' {left_table_key_msg}"
+            )
+
+    def _check_relations(self, X, relations):
+        """Check relations"""
+        main_table_name = X["main_table"]
+        if not is_list_like(relations):
+            raise TypeError(
+                type_error_message(
+                    "Relations at X['tables']['relations']", relations, "list-like"
+                )
+            )
+        else:
+            for relation in relations:
+                if not isinstance(relation, tuple):
+                    raise TypeError(type_error_message("Relation", relation, tuple))
+                if len(relation) != 2:
+                    raise ValueError(
+                        f"A relation must be of size 2 not {len(relation)}"
+                    )
+                for table in relation:
+                    if not isinstance(table, str):
+                        raise TypeError(
+                            type_error_message("Table of a relation", table, str)
+                        )
+                parent_table, child_table = relation
+                if parent_table == child_table:
+                    raise ValueError(
+                        f"Tables in relation '{relation}' are the same. "
+                        f"They must be different."
+                    )
+                if relations.count(relation) != 1:
+                    raise ValueError(
+                        f"Relation '{relation}' appears "
+                        f"'{relations.count(relation)}' times. "
+                        f"Each relation must be unique."
+                    )
+                if not parent_table in X["tables"].keys():
+                    raise ValueError(
+                        f"X['tables'] does not contain a table named '{parent_table}'. "
+                        f"All tables in X['relations'] must be declared in X['tables']"
+                    )
+                if not child_table in X["tables"].keys():
+                    raise ValueError(
+                        f"X['tables'] does not contain a table named '{child_table}'. "
+                        f"All tables in X['relations'] must be declared in X['tables']."
+                    )
+                self._check_relation_keys(X, parent_table, child_table)
+                self._check_cycle_exists(relations, main_table_name)
+
     def _check_input_mapping(self, X, y=None):
         # Check the "tables" field (basic)
         if "tables" not in X:
@@ -485,31 +594,23 @@ class Dataset:
                         " table keys must be specified in multitable datasets"
                     )
 
-            # Check the coherence of the key of secondary tables
-            for table_name, (_, table_key) in X["tables"].items():
-                table_key_error = False
-                if isinstance(main_table_key, str) and isinstance(table_key, str):
-                    table_key_error = table_key != main_table_key
-                if isinstance(main_table_key, str) and is_list_like(table_key):
-                    table_key_error = main_table_key not in table_key
-                if is_list_like(main_table_key) and is_list_like(table_key):
-                    table_key_error = not set(main_table_key).issubset(set(table_key))
-
-                if table_key_error:
-                    if isinstance(table_key, str):
-                        table_key_msg = f"[{table_key}]"
-                    else:
-                        table_key_msg = f"[{','.join(table_key)}]"
-                    if isinstance(main_table_key, str):
-                        main_table_key_msg = f"[{main_table_key}]"
-                    else:
-                        main_table_key_msg = f"[{','.join(main_table_key)}]"
-                    raise ValueError(
-                        f"key for table '{table_name}' "
-                        f"{table_key_msg} is incompatible with "
-                        f"that of the main table "
-                        f"'{X['main_table']}' {main_table_key_msg}"
-                    )
+            if "relations" not in X:
+                # the schema is by default 'star'
+                # create a list of relations [(main_table, secondary_table), ...]
+                main_table_name = X["main_table"]
+                table_names = X["tables"].keys()
+                relations = [
+                    (main_table_name, name)
+                    for name in table_names
+                    if name != main_table_name
+                ]
+                # check the created 'relations'
+                self._check_relations(X, relations)
+            else:
+                # check the 'relations' field
+                # the schema could be 'star' or 'snowflake'
+                relations = X["relations"]
+                self._check_relations(X, relations)
 
         # Check the 'format' field
         if "format" in X:
@@ -612,17 +713,30 @@ class Dataset:
 
         # Create the dictionaries for each secondary table and the table variables in
         # root dictionary that point to each secondary table
+        # This is performed using a breadth-first-search over the graph of relations
         # Note: In general 'name' and 'object_type' fields of Variable can be different
         if self.secondary_tables:
             root_dictionary.root = True
-            for table in self.secondary_tables:
-                dictionary = table.create_khiops_dictionary()
-                dictionary_domain.add_dictionary(dictionary)
-                table_variable = pk.Variable()
-                table_variable.type = "Table"
-                table_variable.name = table.name
-                table_variable.object_type = table.name
-                root_dictionary.add_variable(table_variable)
+            table_names = [table.name for table in self.secondary_tables]
+            tables_to_visit = [self.main_table.name]
+            for current_table in tables_to_visit:
+                for relation in self.relations:
+                    parent_table, child_table = relation
+                    if parent_table == current_table:
+                        tables_to_visit.append(child_table)
+                        parent_table_name = parent_table
+                        index_table = table_names.index(child_table)
+                        table = self.secondary_tables[index_table]
+                        parent_table_dictionary = dictionary_domain.get_dictionary(
+                            parent_table_name
+                        )
+                        dictionary = table.create_khiops_dictionary()
+                        dictionary_domain.add_dictionary(dictionary)
+                        table_variable = pk.Variable()
+                        table_variable.type = "Table"
+                        table_variable.name = table.name
+                        table_variable.object_type = table.name
+                        parent_table_dictionary.add_variable(table_variable)
 
         return dictionary_domain
 

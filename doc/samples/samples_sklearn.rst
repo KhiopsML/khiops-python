@@ -170,15 +170,15 @@ Samples
         print("---")
 
         # Evaluate R2 and MAE metrics on the test dataset
-        test_r2 = metrics.r2_score(y_test, y_test_pred)
+        test_r2 = metrics.r2_score(y_test, y_test_p red)
         test_mae = metrics.mean_absolute_error(y_test, y_test_pred)
         print(f"Test R2  = {test_r2}")
         print(f"Test MAE = {test_mae}")
 
-.. autofunction:: khiops_classifier_multitable
+.. autofunction:: khiops_classifier_multitable_star
 .. code-block:: python
 
-    def khiops_classifier_multitable():
+    def khiops_classifier_multitable_star():
         # Load the root table of the dataset into a pandas dataframe
         accidents_dataset_path = path.join(pk.get_samples_dir(), "AccidentsSummary")
         accidents_df = pd.read_csv(
@@ -249,6 +249,64 @@ Samples
         print(f"Test accuracy = {test_accuracy}")
         print(f"Test auc      = {test_auc}")
 
+.. autofunction:: khiops_classifier_multitable_snowflake
+.. code-block:: python
+
+    def khiops_classifier_multitable_snowflake():
+        accidents_dataset_path = path.join(pk.get_samples_dir(), "Accidents")
+        accidents_df = pd.read_csv(
+            path.join(accidents_dataset_path, "Accidents.txt"), sep="\t", encoding="latin1"
+        )
+        places_df = pd.read_csv(
+            path.join(accidents_dataset_path, "Places.txt"), sep="\t", encoding="latin1"
+        )
+        users_df = pd.read_csv(
+            path.join(accidents_dataset_path, "Users.txt"), sep="\t", encoding="latin1"
+        )
+        vehicles_df = pd.read_csv(
+            path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t", encoding="latin1"
+        )
+        label_main_table = accidents_df["Gravity"]
+        X_accidents = accidents_df.drop("Gravity", axis=1)
+
+        dataset_spec = {
+            "main_table": "Accidents",
+            "tables": {
+                "Places": (places_df, ["AccidentId"]),
+                "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
+                "Accidents": (X_accidents, "AccidentId"),
+                "Users": (users_df, ["AccidentId", "VehicleId"]),
+            },
+            "relations": [
+                ("Accidents", "Places"),
+                ("Vehicles", "Users"),
+                ("Accidents", "Vehicles"),
+            ],
+        }
+
+        # Train the classifier (by default it analyzes 100 multi-table features)
+        pkc = KhiopsClassifier()
+        pkc.fit(dataset_spec, label_main_table)
+
+        # Predict the class on the test dataset
+        y_test_pred = pkc.predict(dataset_spec)
+        print("Predicted classes (first 10):")
+        print(y_test_pred[:10])
+        print("---")
+
+        # Predict the class probability on the test dataset
+        y_test_probas = pkc.predict_proba(dataset_spec)
+        print(f"Class order: {pkc.classes_}")
+        print("Predicted class probabilities (first 10):")
+        print(y_test_probas[:10])
+        print("---")
+
+        # Evaluate accuracy and auc metrics on the test dataset
+        test_accuracy = metrics.accuracy_score(label_main_table, y_test_pred)
+        test_auc = metrics.roc_auc_score(label_main_table, y_test_probas[:, 1])
+        print(f"Test accuracy = {test_accuracy}")
+        print(f"Test auc      = {test_auc}")
+
 .. autofunction:: khiops_encoder
 .. code-block:: python
 
@@ -278,10 +336,10 @@ Samples
         print(X_transformed[:10])
         print("---")
 
-.. autofunction:: khiops_encoder_multitable
+.. autofunction:: khiops_encoder_multitable_star
 .. code-block:: python
 
-    def khiops_encoder_multitable():
+    def khiops_encoder_multitable_star():
         # Load the root table of the dataset into a pandas dataframe
         accidents_dataset_path = path.join(pk.get_samples_dir(), "AccidentsSummary")
         accidents_df = pd.read_csv(
@@ -318,6 +376,54 @@ Samples
         print(pke.feature_names_out_)
         print("Encoded data:")
         print(pke.transform(X_dataset)[:10])
+
+.. autofunction:: khiops_encoder_multitable_snowflake
+.. code-block:: python
+
+    def khiops_encoder_multitable_snowflake():
+
+        accidents_dataset_path = path.join(pk.get_samples_dir(), "Accidents")
+
+        accidents_df = pd.read_csv(
+            path.join(accidents_dataset_path, "Accidents.txt"), sep="\t", encoding="latin1"
+        )
+        places_df = pd.read_csv(
+            path.join(accidents_dataset_path, "Places.txt"), sep="\t", encoding="latin1"
+        )
+        users_df = pd.read_csv(
+            path.join(accidents_dataset_path, "Users.txt"), sep="\t", encoding="latin1"
+        )
+        vehicles_df = pd.read_csv(
+            path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t", encoding="latin1"
+        )
+
+        label_main_table = accidents_df["Gravity"]
+        X_accidents = accidents_df.drop("Gravity", axis=1)
+
+        dataset_spec = {
+            "main_table": "Accidents",
+            "tables": {
+                "Places": (places_df, ["AccidentId"]),
+                "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
+                "Accidents": (X_accidents, "AccidentId"),
+                "Users": (users_df, ["AccidentId", "VehicleId"]),
+            },
+            "relations": [
+                ("Accidents", "Places"),
+                ("Vehicles", "Users"),
+                ("Accidents", "Vehicles"),
+            ],
+        }
+
+        # Create the KhiopsEncoder with 10 additional multitable features and fit it
+        pke = KhiopsEncoder(n_features=10)
+        pke.fit(dataset_spec, label_main_table)
+
+        # Transform the train dataset
+        print("Encoded feature names:")
+        print(pke.feature_names_out_)
+        print("Encoded data:")
+        print(pke.transform(dataset_spec)[:10])
 
 .. autofunction:: khiops_encoder_pipeline_with_hgbc
 .. code-block:: python
@@ -432,10 +538,10 @@ Samples
         print(y_predicted[:10])
         print("---")
 
-.. autofunction:: khiops_classifier_multitable_file
+.. autofunction:: khiops_classifier_multitable_star_file
 .. code-block:: python
 
-    def khiops_classifier_multitable_file():
+    def khiops_classifier_multitable_star_file():
         # Create output directory
         results_dir = path.join("pk_samples", "khiops_classifier_multitable_file")
         if not path.exists("pk_samples"):
@@ -525,10 +631,10 @@ Samples
         print(f"Test accuracy = {test_accuracy}")
         print(f"Test auc      = {test_auc}")
 
-.. autofunction:: khiops_classifier_multitable_dataframe_list
+.. autofunction:: khiops_classifier_multitable_list
 .. code-block:: python
 
-    def khiops_classifier_multitable_dataframe_list():
+    def khiops_classifier_multitable_list():
         # Load the root table of the dataset into a pandas dataframe
         accidents_dataset_path = path.join(pk.get_samples_dir(), "AccidentsSummary")
         accidents_df = pd.read_csv(

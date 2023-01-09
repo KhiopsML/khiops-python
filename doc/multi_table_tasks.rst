@@ -61,7 +61,7 @@ Two Tables
 ^^^^^^^^^^
 
 Let's consider the following Khiops dictionary file for the ``AccidentsSummary`` dataset
-found in Khiops samples:
+found in Khiops samples. Note that tables in this dataset are related through a *star* schema.
 
 .. code-block:: c
 
@@ -100,7 +100,8 @@ variable ``Vehicle`` the ``additional_data_tables`` parameter should be set as::
 
 Many Tables
 ^^^^^^^^^^^
-Let's now consider the dictionary file for the ``Customer`` dataset:
+Let's now consider the dictionary file for the ``Customer`` dataset where tables are related
+through a *snowflake* schema.
 
 .. code-block:: c
 
@@ -170,38 +171,71 @@ dataset schema in the following way::
    X = {
       "main_table": <name of the main table>,
       "tables" : {
+          <name of the main table>: (<dataframe of the main table>, <key of the main table>),
           <name of table 1>: (<dataframe of table 1>, <key of table 1>),
           <name of table 2>: (<dataframe of table 2>, <key of table 2>),
           ...
        }
+       "relations" : [
+            (<name of the main table>, <name of table 1>),
+            (<name of table 1>, <name of table 2>),
+            ...
+       ],
    }
 
-The keys of tables are either a single column name, or a tuple containing the columns composing the
-key.
+where the keys of tables are either a single column name, or a tuple containing the columns composing the
+key. Note that relations are not necessary if tables are related through a *star* schema.
 
 .. note::
-   pyKhiops ``sklearn`` estimators support a limited number of multi-table features. In
-   particular:
 
-     - pyKhiops ``sklearn`` estimators currently handle only *star* schemas: the secondary tables
-       must be directly linked to the root table.
+    pyKhiops sklearn estimators support a large number of multi-table features but some limitations exist.
+    In particular:
+
      - ``Entity`` (``1:1`` table relations) are not currently supported.
      - External data tables are not currently supported.
 
-   These features will be available in upcoming releases.
+    These features will be available in upcoming releases.
 
-Example
-~~~~~~~
-For the ``AccidentsSummary`` dataset above the input ``X`` can be built as follows::
+Examples
+~~~~~~~~
+For the ``AccidentsSummary`` dataset above where tables are related through a *star* schema, the input
+``X`` can be built as follows::
 
-  accidents_df = pd.read_csv(f"{pk.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
-  vehicles_df = pd.read_csv(f"{pk.get_samples_dir()}/AccidentsSummary/Vehicles.txt", sep="\t", encoding="latin1")
+   accidents_df = pd.read_csv(f"{pk.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
+   vehicles_df = pd.read_csv(f"{pk.get_samples_dir()}/AccidentsSummary/Vehicles.txt", sep="\t", encoding="latin1")
 
-  X = {
+   X = {
       "main_table" : "Accident",
       "tables": {
           "Accident": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
           "Vehicle": (vehicles_df, ["AccidentId", "VehicleId"])
-      }
-  }
+                }
+    }
 
+
+For the ``Accidents`` dataset (extension of ``AccidentsSummary``) where tables are related through a
+*snowflake* schema, the input ``X`` can be built as follows::
+
+    accidents_df = pd.read_csv(f"{pk.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
+    #we use `Accidents.txt` of `AccidentsSummary` as it contains the label `Gravity` unlike `Accidents.txt`
+    #of ``Accidents``.
+    places_df = pd.read_csv(f"{pk.get_samples_dir()}/Accidents/Places.txt", sep="\t", encoding="latin1")
+    vehicles_df = pd.read_csv(f"{pk.get_samples_dir()}/Accidents/Vehicles.txt", sep="\t", encoding="latin1")
+    users_df = pd.read_csv(f"{pk.get_samples_dir()}/Accidents/Users.txt", sep="\t", encoding="latin1")
+
+    X = {
+        "main_table": "Accidents",
+        "tables": {
+            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+            "Places": (places_df, ["AccidentId"]),
+            "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
+            "Users": (users_df, ["AccidentId", "VehicleId"]),
+        },
+        "relations": [
+            ("Accidents", "Places"),
+            ("Accidents", "Vehicles"),
+            ("Vehicles", "Users"),
+        ],
+    }
+
+This dataset can also be found in Khiops samples.
