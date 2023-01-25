@@ -774,18 +774,32 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
         return self._khiops_bin_dir
 
     def _initialize_khiops_bin_dir(self):
-        if platform.system() == "Windows":
-            if "KHIOPS_HOME" in os.environ:
-                self.khiops_bin_dir = os.path.join(os.environ["KHIOPS_HOME"], "bin")
-            elif "KhiopsHome" in os.environ:
-                self.khiops_bin_dir = os.path.join(os.environ["KhiopsHome"], "bin")
-            else:
+        # Warn if both KHIOPS_HOME and KhiopsHome are set
+        if "KHIOPS_HOME" in os.environ and "KhiopsHome" in os.environ:
+            warnings.warn(
+                "Both KHIOPS_HOME and KhiopsHome environment variables "
+                "are set. Only the KHIOPS_HOME will be used."
+            )
+
+        # First look for a KHIOPS_HOME variable (KhiopsHome is legacy)
+        if "KHIOPS_HOME" in os.environ:
+            self.khiops_bin_dir = os.path.join(os.environ["KHIOPS_HOME"], "bin")
+        elif "KhiopsHome" in os.environ:
+            self.khiops_bin_dir = os.path.join(os.environ["KhiopsHome"], "bin")
+        # Otherwise try default locations in *nix systems
+        else:
+            # Error on windows: KHIOPS_HOME mandatory
+            if platform.system() == "Windows":
                 raise PyKhiopsEnvironmentError(
                     "No environment variable named 'KHIOPS_HOME' or 'KhiopsHome' found,"
                     " verify your Khiops installation."
                 )
-        else:
-            self.khiops_bin_dir = os.path.join(os.path.sep, "usr", "bin")
+            # MacOS: /usr/local/bin
+            elif platform.system() == "Darwin":
+                self.khiops_bin_dir = os.path.join(os.path.sep, "usr", "local", "bin")
+            # Linux/Unix: /usr/bin
+            else:
+                self.khiops_bin_dir = os.path.join(os.path.sep, "usr", "bin")
 
     @khiops_bin_dir.setter
     def khiops_bin_dir(self, bin_dir):
