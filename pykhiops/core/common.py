@@ -320,9 +320,45 @@ class KhiopsJSONObject:
 
             # Input check
             if "tool" not in json_data:
-                raise PyKhiopsJSONError("'tool' key not found in JSON data")
+                raise PyKhiopsJSONError(
+                    "Khiops JSON file does not have a 'tool' field "
+                )
             if "version" not in json_data:
-                raise PyKhiopsJSONError("'version' key not found in JSON data")
+                raise PyKhiopsJSONError(
+                    "Khiops JSON file does not have a 'version' field "
+                )
+
+            if "khiops_encoding" not in json_data:
+                warnings.warn(
+                    "Khiops JSON file does not have a 'khiops_encoding' field "
+                    "(generated with Khiops older than 10.0.1?). "
+                    "Exported dictionary/report files may be corrupted. ",
+                    stacklevel=6,
+                )
+            elif json_data["khiops_encoding"] == "colliding_ansi_utf8":
+                if "colliding_utf8_chars" in json_data:
+                    colliding_chars_message = "Colliding chars: " + ", ".join(
+                        json_data["colliding_utf8_chars"]
+                    )
+                else:
+                    colliding_chars_message = ""
+                warnings.warn(
+                    "Khiops JSON file contains colliding characters. "
+                    "Exported dictionary/report files may be unusable. "
+                    f"{colliding_chars_message}",
+                    stacklevel=6,
+                )
+            elif json_data["khiops_encoding"] not in [
+                "ascii",
+                "ansi",
+                "utf8",
+                "mixed_ansi_utf8",
+            ]:
+                raise PyKhiopsJSONError(
+                    "Khiops JSON file khiops_encoding field value must be 'ascii', "
+                    "'ansi', 'utf8', 'mixed_ansi_utf8' or 'colliding_ansi_utf8', "
+                    f"""not '{json_data["khiops_encoding"]}'."""
+                )
 
             # Initialize attributes from data
             self.tool = json_data["tool"]
@@ -331,7 +367,8 @@ class KhiopsJSONObject:
             self.khiops_encoding = json_data.get("khiops_encoding")
             if self.khiops_encoding == "colliding_ansi_utf8":
                 self.ansi_chars = json_data["ansi_chars"]
-                self.colliding_utf8_chars = json_data["colliding_utf8_chars"]
+                if "colliding_utf8_chars" in json_data:
+                    self.colliding_utf8_chars = json_data["colliding_utf8_chars"]
 
     def create_output_file_writer(self, stream):
         """Creates an output file with the proper encoding settings
@@ -392,48 +429,12 @@ class KhiopsJSONObject:
                 json_file_res.read().decode("utf8", errors="replace")
             ) as json_file_stream:
                 json_data = json.load(json_file_stream)
-
-        if "tool" not in json_data:
+        try:
+            self.__init__(json_data)
+        except PyKhiopsJSONError as error:
             raise PyKhiopsJSONError(
-                "Khiops JSON file does not have a 'tool' field "
-                f"Khiops JSON file: {json_file_path}"
-            )
-        if "version" not in json_data:
-            raise PyKhiopsJSONError(
-                "Khiops JSON file does not have a 'version' field "
-                f"Khiops JSON file: {json_file_path}"
-            )
-
-        if "khiops_encoding" not in json_data:
-            warnings.warn(
-                "Khiops JSON file does not have a 'khiops_encoding' field "
-                "(generated with Khiops older than 10.0.1?). "
-                "Exported dictionary/report files may be corrupted. "
-                f"Khiops JSON file: {json_file_path}",
-                stacklevel=4,
-            )
-        elif json_data.get("khiops_encoding") == "colliding_ansi_utf8":
-            warnings.warn(
-                "Khiops JSON file contains colliding characters. "
-                "Exported dictionary/report files may be corrupted. "
-                f"Colliding chars: {', '.join(json_data.get('colliding_utf8_chars'))}. "
-                f"Khiops JSON file: {json_file_path}",
-                stacklevel=4,
-            )
-        elif json_data.get("khiops_encoding") not in [
-            "ascii",
-            "ansi",
-            "utf8",
-            "mixed_ansi_utf8",
-        ]:
-            raise PyKhiopsJSONError(
-                "Khiops JSON file khiops_encoding field value must be 'ascii', 'ansi',"
-                " 'utf8', 'mixed_ansi_utf8' or 'colliding_ansi_utf8', "
-                f"""not '{json_data.get("khiops_encoding")}'."""
-                f"Khiops JSON File: {json_file_path}"
-            )
-
-        self.__init__(json_data)
+                f"Could not load Khiops JSON file: {json_file_path}"
+            ) from error
 
 
 class PyKhiopsOutputWriter:

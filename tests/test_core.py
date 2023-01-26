@@ -49,6 +49,7 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
             "AnyChar",
             "AnyCharLegacy",
             "BadTool",
+            "Deft2017ChallengeNGrams1000",
             "EmptyDatabase",
             "Greek",
             "Iris2D",
