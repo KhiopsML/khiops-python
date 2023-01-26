@@ -10,10 +10,14 @@
 """Helper functions for specific and/or advanced treatments"""
 import os
 
-from . import api
-from . import filesystems as fs
-from .common import create_unambiguous_khiops_path, is_list_like, type_error_message
-from .dictionary import DictionaryDomain, read_dictionary_file
+from pykhiops.core import api
+from pykhiops.core import filesystems as fs
+from pykhiops.core.common import (
+    create_unambiguous_khiops_path,
+    is_list_like,
+    type_error_message,
+)
+from pykhiops.core.dictionary import DictionaryDomain, read_dictionary_file
 
 
 def deploy_coclustering(

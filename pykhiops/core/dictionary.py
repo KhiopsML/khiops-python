@@ -18,10 +18,10 @@
 import io
 import os
 
-from . import api
-from . import filesystems as fs
-from .api_internals.runner import get_runner
-from .common import (
+from pykhiops.core import api
+from pykhiops.core import filesystems as fs
+from pykhiops.core.api_internals.runner import get_runner
+from pykhiops.core.common import (
     KhiopsJSONObject,
     PyKhiopsJSONError,
     PyKhiopsOutputWriter,

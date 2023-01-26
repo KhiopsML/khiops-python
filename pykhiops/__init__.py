@@ -25,8 +25,8 @@ The available sub-modules inside the package are:
   (extension ".khcj")
 - sklearn: Scikit-Learn classes to execute Khiops
 """
-from ._version import get_versions
-from .core.common import KhiopsVersion
+from pykhiops._version import get_versions
+from pykhiops.core.common import KhiopsVersion
 
 __version__ = get_versions()["version"]
 del get_versions

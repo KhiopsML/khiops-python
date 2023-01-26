@@ -2,8 +2,8 @@
 
 This is a "read-only" module that registers all the task definition at __init__ time.
 """
-from ..task import KhiopsTask, get_task_registry
-from . import (
+from pykhiops.core.api_internals.task import KhiopsTask, get_task_registry
+from pykhiops.core.api_internals.tasks import (
     build_deployed_dictionary,
     build_dictionary_from_data_table,
     build_multi_table_dictionary,

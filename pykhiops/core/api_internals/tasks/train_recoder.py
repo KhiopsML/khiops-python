@@ -1,6 +1,6 @@
 """train_recoder tasks"""
-from .. import task as tm
-from ..types import (
+from pykhiops.core.api_internals import task as tm
+from pykhiops.core.api_internals.types import (
     BoolType,
     DictType,
     FloatType,

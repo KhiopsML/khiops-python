@@ -1,6 +1,6 @@
 """simplify_coclustering task family"""
-from .. import task as tm
-from ..types import DictType, IntType, StringLikeType
+from pykhiops.core.api_internals import task as tm
+from pykhiops.core.api_internals.types import DictType, IntType, StringLikeType
 
 # Disable long lines to have readable scenarios
 # pylint: disable=line-too-long

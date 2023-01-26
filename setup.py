@@ -19,9 +19,10 @@ setup(
     },
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
+    python_requires=">=3.8",
     install_requires=[
-        "pandas>=0.25.0",
-        "scikit-learn>=0.21",
+        "pandas>=0.25.3",
+        "scikit-learn>=0.22.2",
     ],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

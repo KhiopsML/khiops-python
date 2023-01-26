@@ -1,19 +1,19 @@
 """Core API functions abstractions"""
 import textwrap
 
-from ..common import (
-    KhiopsVersion,
-    create_unambiguous_khiops_path,
-    encode_file_path,
-    type_error_message,
-)
-from .scenario import ConfigurableKhiopsScenario
-from .types import (
+from pykhiops.core.api_internals.scenario import ConfigurableKhiopsScenario
+from pykhiops.core.api_internals.types import (
     AbstractDictType,
     AbstractListType,
     DictType,
     KhiopsTaskArgumentType,
     StringLikeType,
+)
+from pykhiops.core.common import (
+    KhiopsVersion,
+    create_unambiguous_khiops_path,
+    encode_file_path,
+    type_error_message,
 )
 
 

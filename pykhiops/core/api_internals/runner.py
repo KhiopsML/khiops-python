@@ -20,9 +20,10 @@ import warnings
 from abc import ABC, abstractmethod
 
 import pykhiops
-
-from .. import filesystems as fs
-from ..common import (
+from pykhiops.core import filesystems as fs
+from pykhiops.core.api_internals.common import CommandLineOptions, GeneralOptions
+from pykhiops.core.api_internals.task import KhiopsTask
+from pykhiops.core.common import (
     KhiopsVersion,
     PyKhiopsEnvironmentError,
     PyKhiopsOutputWriter,
@@ -33,8 +34,6 @@ from ..common import (
     renaming_message,
     type_error_message,
 )
-from .common import CommandLineOptions, GeneralOptions
-from .task import KhiopsTask
 
 
 def _isdir_without_all_perms(dir_path):

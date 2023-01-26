@@ -1,7 +1,12 @@
 """Khiops task argument mini-type system"""
 from abc import ABC, abstractmethod
 
-from ..common import is_dict_like, is_list_like, is_string_like, type_error_message
+from pykhiops.core.common import (
+    is_dict_like,
+    is_list_like,
+    is_string_like,
+    type_error_message,
+)
 
 
 class KhiopsTaskArgumentType(ABC):

@@ -20,9 +20,9 @@ pip install pykhiops-10.x.x.tar.gz
 ```
 ### Requirements
 - [Khiops][khiops] (>=9.0)
-- [Python][python] (>=3.6)
-- [Pandas][pandas] (>=0.25)
-- [Scikit-Learn][sklearn] (>=0.21)
+- [Python][python] (>=3.8)
+- [Pandas][pandas] (>=0.25.3)
+- [Scikit-Learn][sklearn] (>=0.22.2)
 
 If you have proxy problems with the installation or want a specific configuration see [Advanced
 Installations](#advanced-installations) section below.

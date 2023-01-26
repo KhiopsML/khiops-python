@@ -1,6 +1,6 @@
 """extract_keys_from_data_table task family"""
-from .. import task as tm
-from ..types import BoolType, StringLikeType
+from pykhiops.core.api_internals import task as tm
+from pykhiops.core.api_internals.types import BoolType, StringLikeType
 
 # Disable long lines to have readable scenarios
 # pylint: disable=line-too-long

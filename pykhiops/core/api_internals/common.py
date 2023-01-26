@@ -1,5 +1,5 @@
 """Common options for Khiops tasks"""
-from ..common import is_string_like, type_error_message
+from pykhiops.core.common import is_string_like, type_error_message
 
 
 class GeneralOptions:

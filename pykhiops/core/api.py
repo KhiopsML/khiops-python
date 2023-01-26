@@ -16,15 +16,18 @@ import io
 import os
 import warnings
 
-from . import filesystems as fs
-from .api_internals.common import CommandLineOptions
-from .api_internals.runner import (
+from pykhiops.core import filesystems as fs
+from pykhiops.core.api_internals.common import CommandLineOptions
+from pykhiops.core.api_internals.runner import (
     _get_tool_info_khiops9,
     _get_tool_info_khiops10,
     get_runner,
 )
-from .api_internals.task import create_unambiguous_khiops_path, get_task_registry
-from .common import (
+from pykhiops.core.api_internals.task import (
+    create_unambiguous_khiops_path,
+    get_task_registry,
+)
+from pykhiops.core.common import (
     KhiopsVersion,
     PyKhiopsRuntimeError,
     deprecation_message,
@@ -33,7 +36,7 @@ from .common import (
     renaming_message,
     type_error_message,
 )
-from .dictionary import DictionaryDomain, read_dictionary_file
+from pykhiops.core.dictionary import DictionaryDomain, read_dictionary_file
 
 __all__ = [
     "all_construction_rules",

@@ -16,7 +16,7 @@ import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from urllib.parse import urlparse
 
-from . import filesystems as fs
+from pykhiops.core import filesystems as fs
 
 ##############
 # Exceptions #
