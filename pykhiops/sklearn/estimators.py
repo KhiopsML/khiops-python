@@ -146,24 +146,20 @@ def _check_numerical_target_type(dataset):
         raise ValueError(f"'y' must be numerical not '{dataset.target_column_type}'")
 
 
-def _cleanup_dir(dir_resource):
+def _cleanup_dir(target_dir):
     """Cleanups a directory with only files in it
 
     Parameters
     ----------
-    dir_resource : `~pykhiops.core.common.FilesystemResource`
-        Resource representing the directory to clean
-
+    target_dir : str
+        path or URI of the directory to clean.
     """
-    if not isinstance(dir_resource, fs.FilesystemResource):
-        raise TypeError(
-            type_error_message("dir_resource", dir_resource, fs.FilesystemResource)
-        )
-    for file_name in dir_resource.list_dir():
-        file_resource = dir_resource.create_child(file_name)
-        file_resource.remove()
-    if fs.is_local_resource(dir_resource.uri):
-        dir_resource.remove()
+    if not isinstance(target_dir, str):
+        raise TypeError(type_error_message("target_dir", target_dir, str))
+    for file_name in fs.list_dir(target_dir):
+        fs.remove(fs.get_child_path(target_dir, file_name))
+    if fs.is_local_resource(target_dir):
+        fs.remove(target_dir)
 
 
 class KhiopsEstimator(ABC, BaseEstimator):
@@ -224,7 +220,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             raise ValueError(f"{self.__class__.__name__} not fitted yet.")
         if self.model_report_ is None:
             raise ValueError("Report not available (imported model?).")
-        with open(report_file_path, "w") as report_file:
+        with open(report_file_path, "w", encoding="utf8") as report_file:
             json.dump(self.model_report_raw_, report_file)
 
     def export_dictionary_file(self, dictionary_file_path):
@@ -237,21 +233,18 @@ class KhiopsEstimator(ABC, BaseEstimator):
         """Sets model instance attribute by importing model from ``.kdic``"""
         self.model_ = pk.read_dictionary_file(kdic_path)
 
-    def _get_output_dir_resource(self, fallback_dir_res):
+    def _get_output_dir(self, fallback_dir):
         if self.output_dir:
-            return fs.create_resource(self.output_dir)
+            return self.output_dir
         else:
-            return fallback_dir_res
+            return fallback_dir
 
-    def _cleanup_computation_dir(self, computation_dir_res):
+    def _cleanup_computation_dir(self, computation_dir):
         """Cleans up the computation dir according to the verbose mode"""
         if not self.verbose:
-            _cleanup_dir(computation_dir_res)
+            _cleanup_dir(computation_dir)
         else:
-            print(
-                "pyKhiops sklearn temporary files located at: "
-                + computation_dir_res.uri
-            )
+            print("pyKhiops sklearn temporary files located at: " + computation_dir)
 
     def fit(self, X, y=None, **kwargs):
         """Fit the estimator
@@ -262,9 +255,9 @@ class KhiopsEstimator(ABC, BaseEstimator):
             The fitted estimator instance.
         """
         # Create temporary directory and tables
-        computation_dir_res = self._create_computation_dir_resource("fit")
+        computation_dir = self._create_computation_dir("fit")
         initial_runner_temp_dir = pk.get_runner().root_temp_dir
-        pk.get_runner().root_temp_dir = computation_dir_res.uri
+        pk.get_runner().root_temp_dir = computation_dir
 
         # Create dataset
         categorical_target = kwargs.get("categorical_target", True)
@@ -272,14 +265,14 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         # Fit the model, reset in case of any failure
         try:
-            self._fit(dataset, computation_dir_res, **kwargs)
+            self._fit(dataset, computation_dir, **kwargs)
         # Reset and re-raise the exception in case of failure
         except Exception:
             self._init_model_state()
             raise
         # Cleanup and restore the runner's temporary dir
         finally:
-            self._cleanup_computation_dir(computation_dir_res)
+            self._cleanup_computation_dir(computation_dir)
             pk.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # If on "fitted" state then:
@@ -294,15 +287,15 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         return self
 
-    def _fit(self, dataset, computation_dir_res, **kwargs):
+    def _fit(self, dataset, computation_dir, **kwargs):
         """Template pattern of a fit method
 
         Parameters
         ----------
         dataset : `Dataset`
             The learning dataset.
-        computation_dir_res : `~pykhiops.core.filesystems.FilesystemResource`
-            Filesystem resource representing the computation directory.
+        computation_dir : str
+            Path or URI where the Khiops computation results will be stored.
 
         The called methods are reimplemented in concrete sub-classes
         """
@@ -313,7 +306,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         self._fit_check_dataset(dataset)
 
         # Build the model
-        self._fit_train_model(dataset, computation_dir_res, **kwargs)
+        self._fit_train_model(dataset, computation_dir, **kwargs)
 
         # If the main attributes are of the proper type finish the fitting
         # Otherwise it means there was an abort (early return) of the previous steps
@@ -343,7 +336,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         """Checks the pre-conditions of the tables to build the model"""
 
     @abstractmethod
-    def _fit_train_model(self, dataset, computation_dir_res, **kwargs):
+    def _fit_train_model(self, dataset, computation_dir, **kwargs):
         """Builds the model with one or more calls to pykhiops.core.api
 
         It must return the path of the ``.kdic`` Khiops model file and the JSON report.
@@ -356,7 +349,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
     def _transform(
         self,
         dataset,
-        computation_dir_res,
+        computation_dir,
         _transform_create_deployment_model_fun,
         drop_key,
     ):
@@ -373,7 +366,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # Create a deployment dataset
         # Note: The input dataset is not necessarily ready to be deployed
         deployment_dataset = self._transform_create_deployment_dataset(
-            dataset, computation_dir_res
+            dataset, computation_dir
         )
 
         # Create a deployment dictionary
@@ -384,7 +377,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             deployment_dataset,
             deployment_dictionary_domain,
             self.model_main_dictionary_name_,
-            computation_dir_res,
+            computation_dir,
         )
 
         # Post-process to return the correct output type
@@ -404,7 +397,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         deployment_dataset,
         model_dictionary_domain,
         model_dictionary_name,
-        computation_dir_res,
+        computation_dir,
     ):
         """Deploys a generic Khiops transformation model
 
@@ -431,7 +424,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             main_table_path,
             secondary_table_paths,
         ) = deployment_dataset.create_table_files_for_khiops(
-            computation_dir_res, sort=self.internal_sort
+            computation_dir, sort=self.internal_sort
         )
 
         # Build the 'additional_data_tables' argument
@@ -454,9 +447,9 @@ class KhiopsEstimator(ABC, BaseEstimator):
             ]
 
         # Set output path files
-        output_dir_res = self._get_output_dir_resource(computation_dir_res)
-        log_file_res = output_dir_res.create_child("khiops.log")
-        output_data_table_res = output_dir_res.create_child("transformed.txt")
+        output_dir = self._get_output_dir(computation_dir)
+        log_file_path = fs.get_child_path(output_dir, "khiops.log")
+        output_data_table_path = fs.get_child_path(output_dir, "transformed.txt")
 
         # Set the format parameters depending on the type of dataset
         if deployment_dataset.is_dataframe_based():
@@ -471,18 +464,18 @@ class KhiopsEstimator(ABC, BaseEstimator):
             model_dictionary_domain,
             model_dictionary_name,
             main_table_path,
-            output_data_table_res.uri,
+            output_data_table_path,
             additional_data_tables=additional_data_tables,
             detect_format=False,
             field_separator=field_separator,
             header_line=header_line,
             output_field_separator=field_separator,
             output_header_line=header_line,
-            log_file_path=log_file_res.uri,
+            log_file_path=log_file_path,
             trace=self.verbose,
         )
 
-        return output_data_table_res.uri
+        return output_data_table_path
 
     def _transform_check_dataset(self, dataset):
         """Checks the dataset before deploying a model on them"""
@@ -494,10 +487,8 @@ class KhiopsEstimator(ABC, BaseEstimator):
     ):
         # Return a dataframe for dataframe based datasets
         if deployment_dataset.is_dataframe_based():
-            output_table_res = fs.create_resource(output_table_path)
-
             # Read the transformed table with the internal table settings
-            with io.BytesIO(output_table_res.read()) as output_table_stream:
+            with io.BytesIO(fs.read(output_table_path)) as output_table_stream:
                 output_table_df = read_internal_data_table(output_table_stream)
 
             # On multi-table:
@@ -529,12 +520,10 @@ class KhiopsEstimator(ABC, BaseEstimator):
         )
         return output_table_df_or_path
 
-    def _create_computation_dir_resource(self, method):
+    def _create_computation_dir(self, method_name):
         """Creates a temporary computation directory"""
-        return fs.create_resource(
-            pk.get_runner().create_temp_dir(
-                prefix=f"{self.__class__.__name__}_{method}_"
-            )
+        return pk.get_runner().create_temp_dir(
+            prefix=f"{self.__class__.__name__}_{method_name}_"
         )
 
 
@@ -750,17 +739,17 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         # No additional checks
         pass
 
-    def _fit_train_model(self, dataset, computation_dir_res, **kwargs):
+    def _fit_train_model(self, dataset, computation_dir, **kwargs):
         assert not dataset.is_multitable(), "Coclustering not available in multitable"
 
         # Prepare the table files and dictionary for Khiops
         main_table_path, _ = dataset.create_table_files_for_khiops(
-            computation_dir_res, sort=self.internal_sort
+            computation_dir, sort=self.internal_sort
         )
 
         # Set the output paths
-        output_dir_res = self._get_output_dir_resource(computation_dir_res)
-        train_log_file_res = output_dir_res.create_child("khiops_train_cc.log")
+        output_dir = self._get_output_dir(computation_dir)
+        train_log_file_path = fs.get_child_path(output_dir, "khiops_train_cc.log")
 
         # Set the 'variables' parameter
         if "columns" in kwargs:
@@ -779,14 +768,14 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             dataset.main_table.name,
             main_table_path,
             variables,
-            output_dir_res.uri,
-            log_file_path=train_log_file_res.uri,
+            output_dir,
+            log_file_path=train_log_file_path,
         )
 
         # Search "No coclustering found" message in the log, warn the user and return
         no_cc_message = "No informative coclustering found in data"
         with io.TextIOWrapper(
-            io.BytesIO(train_log_file_res.read()), encoding="utf8", errors="replace"
+            io.BytesIO(fs.read(train_log_file_path)), encoding="utf8", errors="replace"
         ) as train_log_file:
             for line in train_log_file:
                 if line.startswith(no_cc_message):
@@ -797,9 +786,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
 
         # Save the report file
         self.model_report_raw_ = json.loads(
-            fs.create_resource(coclustering_file_path)
-            .read()
-            .decode("utf8", errors="replace")
+            fs.read(coclustering_file_path).decode("utf8", errors="replace")
         )
         self.model_report_ = pk.read_coclustering_results_file(coclustering_file_path)
 
@@ -830,8 +817,8 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             0
         ].name = f"{self._khiops_model_prefix}{dataset.main_table.name}"
 
-        tmp_dictionary_file_res = computation_dir_res.create_child(
-            "tmp_cc_deploy_model.kdic"
+        tmp_dictionary_file_path = fs.get_child_path(
+            computation_dir, "tmp_cc_deploy_model.kdic"
         )
         self.model_main_dictionary_name_ = (
             f"{self._khiops_model_prefix}Keys_{dataset.main_table.name}"
@@ -840,33 +827,33 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             tmp_domain,
             self.model_main_dictionary_name_,
             tmp_domain.dictionaries[0].name,
-            tmp_dictionary_file_res.uri,
+            tmp_dictionary_file_path,
             overwrite_dictionary_file=True,
             trace=self.verbose,
         )
 
         # Create the model by adding the coclustering variables
         # to the multi-table dictionary created before
-        prepare_log_file_res = output_dir_res.create_child("khiops_prepare_cc.log")
+        prepare_log_file_path = fs.get_child_path(output_dir, "khiops_prepare_cc.log")
         self.model_secondary_table_variable_name = (
             f"{self._khiops_model_prefix}{dataset.main_table.name}"
         )
         pk.prepare_coclustering_deployment(
-            tmp_dictionary_file_res.uri,
+            tmp_dictionary_file_path,
             self.model_main_dictionary_name_,
             coclustering_file_path,
             self.model_secondary_table_variable_name,
             self.model_id_column,
-            output_dir_res.uri,
+            output_dir,
             build_cluster_variable=self.build_name_var,
             build_distance_variables=self.build_distance_vars,
             build_frequency_variables=self.build_frequency_vars,
             max_part_numbers=max_part_numbers,
-            log_file_path=prepare_log_file_res.uri,
+            log_file_path=prepare_log_file_path,
             trace=self.verbose,
         )
         self.model_ = pk.read_dictionary_file(
-            output_dir_res.create_child("Coclustering.kdic").uri
+            fs.get_child_path(output_dir, "Coclustering.kdic")
         )
 
     def _fit_training_post_process(self, dataset):
@@ -904,9 +891,9 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                   returns its path).
         """
         # Create temporary directory
-        computation_dir_res = self._create_computation_dir_resource("predict")
+        computation_dir = self._create_computation_dir("predict")
         initial_runner_temp_dir = pk.get_runner().root_temp_dir
-        pk.get_runner().root_temp_dir = computation_dir_res.uri
+        pk.get_runner().root_temp_dir = computation_dir
 
         # Create the input dataset
         dataset = Dataset(X)
@@ -915,13 +902,13 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         try:
             y_pred = super()._transform(
                 dataset,
-                computation_dir_res,
+                computation_dir,
                 self._transform_prepare_deployment_model_for_predict,
                 False,
             )
         # Cleanup and restore the runner's temporary dir
         finally:
-            self._cleanup_computation_dir(computation_dir_res)
+            self._cleanup_computation_dir(computation_dir)
             pk.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # Transform to numpy.array for in-memory inputs
@@ -958,7 +945,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                     self.__class__.__name__,
                 )
 
-    def _transform_create_deployment_dataset(self, dataset, computation_dir_res):
+    def _transform_create_deployment_dataset(self, dataset, computation_dir):
         assert not dataset.is_multitable(), "'dataset' is multitable"
 
         # Build the multitable deployment dataset
@@ -990,19 +977,19 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             keyed_dataset = dataset.copy()
             keyed_dataset.main_table.key = [self.model_id_column]
             main_table_path = keyed_dataset.main_table.create_table_file_for_khiops(
-                computation_dir_res.uri, sort=self.internal_sort
+                computation_dir, sort=self.internal_sort
             )
 
             # Create a table storing the main table keys
             keys_table_name = f"keys_{dataset.main_table.name}"
-            keys_table_res = computation_dir_res.create_child(
-                f"raw_{keys_table_name}.txt"
+            keys_table_file_path = fs.get_child_path(
+                computation_dir, f"raw_{keys_table_name}.txt"
             )
             pk.extract_keys_from_data_table(
                 keyed_dataset.create_khiops_dictionary_domain(),
                 keyed_dataset.main_table.name,
                 main_table_path,
-                keys_table_res.uri,
+                keys_table_file_path,
                 header_line=dataset.header,
                 field_separator=dataset.sep,
                 output_header_line=dataset.header,
@@ -1010,7 +997,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                 trace=self.verbose,
             )
             deploy_dataset_spec["tables"][keys_table_name] = (
-                keys_table_res.uri,
+                keys_table_file_path,
                 self.model_id_column,
             )
             deploy_dataset_spec["tables"][dataset.main_table.name] = (
@@ -1133,18 +1120,17 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         if self.n_pairs < 0:
             raise ValueError("'n_pairs' must be positive")
 
-    def _fit_train_model(self, dataset, computation_dir_res, **kwargs):
+    def _fit_train_model(self, dataset, computation_dir, **kwargs):
         # Train the model with Khiops
         train_args, train_kwargs = self._fit_prepare_training_function_inputs(
-            dataset, computation_dir_res
+            dataset, computation_dir
         )
         report_file_path, model_kdic_file_path = self._fit_core_training_function(
             *train_args, **train_kwargs
         )
 
         # Abort if the model dictionary file does not exist
-        model_kdic_file_res = fs.create_resource(model_kdic_file_path)
-        if not model_kdic_file_res.exists():
+        if not fs.exists(model_kdic_file_path):
             warnings.warn(
                 "Khiops dictionary model not found. Model not fitted", stacklevel=6
             )
@@ -1154,20 +1140,20 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self.model_ = pk.read_dictionary_file(model_kdic_file_path)
         self.model_report_ = pk.read_analysis_results_file(report_file_path)
         self.model_report_raw_ = json.loads(
-            fs.create_resource(report_file_path).read().decode("utf8", errors="replace")
+            fs.read(report_file_path).decode("utf8", errors="replace")
         )
 
     @abstractmethod
     def _fit_core_training_function(self, *args, **kwargs):
         """A wrapper to the pykhiops.core training function for the estimator"""
 
-    def _fit_prepare_training_function_inputs(self, dataset, computation_dir_res):
+    def _fit_prepare_training_function_inputs(self, dataset, computation_dir):
         # Set output path files
-        output_dir_res = self._get_output_dir_resource(computation_dir_res)
-        log_file_res = output_dir_res.create_child("khiops.log")
+        output_dir = self._get_output_dir(computation_dir)
+        log_file_path = fs.get_child_path(output_dir, "khiops.log")
 
         main_table_path, secondary_table_paths = dataset.create_table_files_for_khiops(
-            computation_dir_res, sort=self.internal_sort
+            computation_dir, sort=self.internal_sort
         )
 
         # Build the 'additional_data_tables' argument
@@ -1188,7 +1174,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             dataset.main_table.get_khiops_variable_name(
                 dataset.main_table.target_column_id
             ),
-            output_dir_res.uri,
+            output_dir,
         ]
 
         # Build the optional parameters from a copy of the estimator parameters
@@ -1220,7 +1206,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         kwargs["additional_data_tables"] = additional_data_tables
 
         # Set the log file and trace parameters
-        kwargs["log_file_path"] = log_file_res.uri
+        kwargs["log_file_path"] = log_file_path
         kwargs["trace"] = kwargs["verbose"]
         del kwargs["verbose"]
 
@@ -1352,9 +1338,9 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         See the documentation of concrete subclasses for more details.
         """
         # Create temporary directory
-        computation_dir_res = self._create_computation_dir_resource("predict")
+        computation_dir = self._create_computation_dir("predict")
         initial_runner_temp_dir = pk.get_runner().root_temp_dir
-        pk.get_runner().root_temp_dir = computation_dir_res.uri
+        pk.get_runner().root_temp_dir = computation_dir
 
         # Create the input dataset
         dataset = Dataset(X, key=self.key)
@@ -1363,13 +1349,13 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         try:
             y_pred = super()._transform(
                 dataset,
-                computation_dir_res,
+                computation_dir,
                 self._transform_prepare_deployment_model_for_predict,
                 True,
             )
         # Cleanup and restore the runner's temporary dir
         finally:
-            self._cleanup_computation_dir(computation_dir_res)
+            self._cleanup_computation_dir(computation_dir)
             pk.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # Restore the runner's temporary dir
@@ -1694,9 +1680,9 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             The key columns are added for multi-table tasks.
         """
         # Create temporary directory and tables
-        computation_dir_res = self._create_computation_dir_resource("predict_proba")
+        computation_dir = self._create_computation_dir("predict_proba")
         initial_runner_temp_dir = pk.get_runner().root_temp_dir
-        pk.get_runner().root_temp_dir = computation_dir_res.uri
+        pk.get_runner().root_temp_dir = computation_dir
 
         # Create the input dataset
         dataset = Dataset(X, key=self.key)
@@ -1705,13 +1691,13 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         try:
             y_probas = self._transform(
                 dataset,
-                computation_dir_res,
+                computation_dir,
                 self._transform_prepare_deployment_model_for_predict_proba,
                 True,
             )
         # Cleanup and restore the runner's temporary dir
         finally:
-            self._cleanup_computation_dir(computation_dir_res)
+            self._cleanup_computation_dir(computation_dir)
             pk.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # For in-memory datasets:
@@ -1862,9 +1848,9 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
     def _fit_core_training_function(self, *args, **kwargs):
         return pk.train_predictor(*args, **kwargs)
 
-    def _fit_train_model(self, dataset, computation_dir_res, **kwargs):
+    def _fit_train_model(self, dataset, computation_dir, **kwargs):
         # Call the parent method
-        super()._fit_train_model(dataset, computation_dir_res, **kwargs)
+        super()._fit_train_model(dataset, computation_dir, **kwargs)
 
         # Warn when there are no informative variables
         if self.model_report_.preparation_report.informative_variable_number == 0:
@@ -2158,10 +2144,10 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
 
     # pylint: enable=useless-super-delegation
 
-    def _fit_prepare_training_function_inputs(self, dataset, computation_dir_res):
+    def _fit_prepare_training_function_inputs(self, dataset, computation_dir):
         # Call the parent method
         args, kwargs = super()._fit_prepare_training_function_inputs(
-            dataset, computation_dir_res
+            dataset, computation_dir
         )
 
         # Rename encoder parameters, delete unused ones
@@ -2225,9 +2211,9 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             A first column containing key column ids is added in multi-table mode.
         """
         # Create temporary directory
-        computation_dir_res = self._create_computation_dir_resource("transform")
+        computation_dir = self._create_computation_dir("transform")
         initial_runner_temp_dir = pk.get_runner().root_temp_dir
-        pk.get_runner().root_temp_dir = computation_dir_res.uri
+        pk.get_runner().root_temp_dir = computation_dir
 
         # Create the input dataset
         dataset = Dataset(X, key=self.key)
@@ -2235,13 +2221,13 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         try:
             X_transformed = super()._transform(
                 dataset,
-                computation_dir_res,
+                computation_dir,
                 self.model_.copy,
                 True,
             )
         # Cleanup and restore the runner's temporary dir
         finally:
-            self._cleanup_computation_dir(computation_dir_res)
+            self._cleanup_computation_dir(computation_dir)
             pk.get_runner().root_temp_dir = initial_runner_temp_dir
         if dataset.is_dataframe_based():
             return X_transformed.to_numpy(copy=False)

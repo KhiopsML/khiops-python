@@ -740,15 +740,15 @@ class Dataset:
 
         return dictionary_domain
 
-    def create_table_files_for_khiops(self, directory_res, sort=True):
+    def create_table_files_for_khiops(self, target_dir, sort=True):
         """Prepares the tables of the dataset to be used by Khiops
 
         If this is a multi-table dataset it will create sorted copies the tables.
 
         Parameters
         ----------
-        directory_res : `pykhiops.core.filesystems.FilesystemResource`
-            A working directory for the sorted tables to be created
+        target_dir : str
+            The directory where the sorted tables will be created
 
         Returns
         -------
@@ -766,14 +766,14 @@ class Dataset:
             self.is_multitable() or self.main_table.key is not None
         )
         main_table_path = self.main_table.create_table_file_for_khiops(
-            directory_res.uri, sort=sort_main_table
+            target_dir, sort=sort_main_table
         )
 
         # Create a copy of each secondary table
         secondary_table_paths = {}
         for table in self.secondary_tables:
             secondary_table_paths[table.name] = table.create_table_file_for_khiops(
-                directory_res.uri, sort=sort
+                target_dir, sort=sort
             )
         return main_table_path, secondary_table_paths
 
@@ -1032,8 +1032,7 @@ class PandasTable(DatasetTable):
         assert not sort or len(self.key) > 0, "Cannot sort table with an empty key"
 
         # Create the output table resource object
-        output_dir_res = fs.create_resource(output_dir)
-        table_res = output_dir_res.create_child(f"{self.name}.txt")
+        output_table_path = fs.get_child_path(output_dir, f"{self.name}.txt")
 
         # Write the output dataframe
         output_dataframe = self._create_dataframe_copy()
@@ -1050,9 +1049,11 @@ class PandasTable(DatasetTable):
         # Write the dataframe to an internal table file
         with io.StringIO() as output_dataframe_stream:
             write_internal_data_table(output_dataframe, output_dataframe_stream)
-            table_res.write(output_dataframe_stream.getvalue().encode("utf-8"))
+            fs.write(
+                output_table_path, output_dataframe_stream.getvalue().encode("utf-8")
+            )
 
-        return table_res.uri
+        return output_table_path
 
 
 class FileTable(DatasetTable):
@@ -1092,8 +1093,7 @@ class FileTable(DatasetTable):
         # Check inputs specific to this sub-class
         if not isinstance(path, str):
             raise TypeError(type_error_message("path", path, str))
-        table_file_res = fs.create_resource(path)
-        if not table_file_res.exists():
+        if not fs.exists(path):
             raise ValueError(f"Non-existent data table file: {path}")
 
         # Initialize members specific to this sub-class
@@ -1104,7 +1104,7 @@ class FileTable(DatasetTable):
 
         # Obtain the columns and their types from a sample of the data table
         # We build the sample by reading the first 100 rows / 4MB of the file
-        table_file_head_contents = table_file_res.read(size=4096 * 1024 - 1)
+        table_file_head_contents = fs.read(self.path, size=4096 * 1024 - 1)
         with io.BytesIO(table_file_head_contents) as table_file_head_contents_stream:
             table_sample_dataframe = pd.read_csv(
                 table_file_head_contents_stream,
@@ -1115,7 +1115,7 @@ class FileTable(DatasetTable):
 
             # Raise error if there is no data in the table
             if table_sample_dataframe.shape[0] == 0:
-                raise ValueError(f"Empty data table file: {path}")
+                raise ValueError(f"Empty data table file: {self.path}")
 
             # Save the columns and their types
             self.column_ids = table_sample_dataframe.columns.values
@@ -1135,20 +1135,18 @@ class FileTable(DatasetTable):
         assert not sort or self.key is not None, "key is 'None'"
 
         # Create the input and output file resources
-        output_dir_res = fs.create_resource(output_dir)
-        table_file_res = fs.create_resource(self.path)
         if sort:
-            output_table_file_res = output_dir_res.create_child(
-                f"sorted_{self.name}.txt"
+            output_table_file_path = fs.get_child_path(
+                output_dir, f"sorted_{self.name}.txt"
             )
         else:
-            output_table_file_res = output_dir_res.create_child(f"copy_{self.name}.txt")
+            output_table_file_path = fs.get_child_path(
+                output_dir, f"copy_{self.name}.txt"
+            )
 
         # Fail if they have the same path
-        if output_table_file_res.uri_info == table_file_res.uri_info:
-            raise ValueError(
-                f"Cannot overwrite this table's path: {table_file_res.uri_info}"
-            )
+        if output_table_file_path == self.path:
+            raise ValueError(f"Cannot overwrite this table's path: {self.path}")
 
         # Create a sorted copy if requested
         if sort:
@@ -1162,7 +1160,7 @@ class FileTable(DatasetTable):
                 sort_dictionary_domain,
                 self.name,
                 self.path,
-                output_table_file_res.uri,
+                output_table_file_path,
                 self.key,
                 field_separator=self.sep,
                 header_line=self.header,
@@ -1172,6 +1170,6 @@ class FileTable(DatasetTable):
 
         # Otherwise copy the contents to the output file
         else:
-            output_table_file_res.write(table_file_res.read())
+            fs.write(output_table_file_path, fs.read(self.path))
 
-        return output_table_file_res.uri
+        return output_table_file_path

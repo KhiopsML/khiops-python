@@ -406,8 +406,7 @@ class KhiopsJSONObject:
         `.PyKhiopsJSONError`
             If the file is an invalid JSON, Khiops JSON or if it is not UTF-8.
         """
-        json_file_res = fs.create_resource(json_file_path)
-        with io.BytesIO(json_file_res.read()) as json_file_stream:
+        with io.BytesIO(fs.read(json_file_path)) as json_file_stream:
             try:
                 json_data = json.load(json_file_stream)
                 first_load_failed = False
@@ -426,7 +425,7 @@ class KhiopsJSONObject:
         # Try a second time with flexible errors
         if first_load_failed:
             with io.StringIO(
-                json_file_res.read().decode("utf8", errors="replace")
+                fs.read(json_file_path).decode("utf8", errors="replace")
             ) as json_file_stream:
                 json_data = json.load(json_file_stream)
         try:

@@ -66,7 +66,7 @@ def create_resource(uri_or_path):
 
     Parameters
     ----------
-    uri : str
+    uri_or_path : str
         The resource's URI . Supported protocols/schemes:
 
         - ``file`` or empty: Local filesystem resource
@@ -159,6 +159,186 @@ def child_uri_info(uri_info, child_name):
     return uri_info._replace(path=child_path(uri_info.path, child_name))
 
 
+##############
+## Main API ##
+##############
+
+# Note: The implementation of this API creates one-use objects. This is suboptimal but
+# this part takes little time compared to ML trainings.
+
+
+def read(uri_or_path, size=None):
+    """Reads the entire file unless size parameter is specified
+
+    Parameters
+    ----------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+    size : int, optional
+        Number of bytes to read.
+
+    Returns
+    -------
+    `bytes`
+        A buffer containing the contents read
+    """
+    return create_resource(uri_or_path).read(size=size)
+
+
+def write(uri_or_path, data):
+    """Writes data in binary mode the provided data as a complete file
+
+    Parameters
+    ----------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+    data : str or `bytes`
+        The data to be written.
+
+    Returns
+    -------
+    `bool`
+        True if the write succeeded
+    """
+    return create_resource(uri_or_path).write(data)
+
+
+def exists(uri_or_path):
+    """Checks the existence of the resource
+
+    Parameters
+    ----------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+
+    Returns
+    -------
+    `bool`
+        True if the resource exists.
+    """
+    return create_resource(uri_or_path).exists()
+
+
+def remove(uri_or_path):
+    """Removes the resource
+
+    Parameters
+    ----------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+
+    Returns
+    -------
+    `bool`
+        `True` if the operation succeeded
+    """
+    return create_resource(uri_or_path).remove()
+
+
+def copy_from_local(uri_or_path, local_path):
+    """Copies the content of a local file to the resource
+
+    Parameters
+    ----------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+    local_path : str
+        The path of the local file to be copied.
+
+    Returns
+    -------
+    `bool`
+        If the operation succeeded.
+    """
+    return create_resource(uri_or_path).copy_from_local(local_path)
+
+
+def copy_to_local(uri_or_path, local_path):
+    """Copies the content of the resource to a local path
+
+    Parameters
+    ----------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+    local_path : str
+        The path of the local file to be copied.
+
+    Returns
+    -------
+    `bool`
+        `True` if the operation succeeded.
+    """
+    return create_resource(uri_or_path).copy_to_local(local_path)
+
+
+def list_dir(uri_or_path):
+    """List a directory resource contents
+
+    Parameters
+    ----------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+
+    Returns
+    -------
+    list
+        A list of paths or URIs.
+    """
+    return create_resource(uri_or_path).list_dir()
+
+
+def make_dir(uri_or_path):
+    """Creates a directory at the resource's path
+
+    Parameters
+    ----------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+
+    Returns
+    -------
+    bool
+      True if the operation succeeded.
+    """
+    return create_resource(uri_or_path).make_dir()
+
+
+def get_child_path(uri_or_path, child_name):
+    """Returns the child path of this URI at the specified child name
+
+    Parameter
+    ---------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+    child_name : str
+        Name of the child to be added to the URI or path.
+
+    Returns
+    -------
+    str
+        The URI or path of the child resource.
+    """
+    res = create_resource(uri_or_path).create_child(child_name)
+    return res.uri
+
+
+def get_parent_path(uri_or_path):
+    """Returns the specified parent path of this URI
+
+    Parameter
+    ---------
+    uri_or_path : str
+        The resource's URI or local filesystem path.
+
+    Returns
+    -------
+    str
+        The URI or path of the parent's resource.
+    """
+    res = create_resource(uri_or_path).create_parent()
+    return res.uri
+
+
 class FilesystemResource(ABC):
     """Abstract Filesystem Resource"""
 
@@ -168,103 +348,35 @@ class FilesystemResource(ABC):
 
     @abstractmethod
     def read(self, size=None):
-        """Reads the entire file unless size parameter is specified
-
-        Parameters
-        ----------
-        size : int, optional
-            Number of bytes to read
-
-        Returns
-        -------
-        `bytes`
-            A buffer containing the contents read
-        """
+        pass
 
     @abstractmethod
     def write(self, data):
-        """Writes data in binary mode the provided data as a complete file
-
-        Parameters
-        ----------
-        data : str or `bytes`
-            The data to be written
-
-        Returns
-        -------
-        `bool`
-            True if the write succeeded
-        """
+        pass
 
     @abstractmethod
     def exists(self):
-        """Checks the existence of the resource
-
-        Returns
-        -------
-        `bool`
-            True if the resource exists
-        """
+        pass
 
     @abstractmethod
     def remove(self):
-        """Removes the resource
-
-        Returns
-        -------
-        `bool`
-            `True` if the operation succeeded
-        """
+        pass
 
     @abstractmethod
     def copy_from_local(self, local_path):
-        """Copies the content of a local file to the resource
-
-        Parameters
-        ----------
-        local_path : str
-            The path of the local file to be copied
-
-        Returns
-        -------
-        `bool`
-            If the operation succeeded
-        """
+        pass
 
     @abstractmethod
     def copy_to_local(self, local_path):
-        """Copies the content of the resource to a local path
-
-        Parameters
-        ----------
-        local_path : str
-            The path of the local file to be copied
-
-        Returns
-        -------
-        `bool`
-            `True` if the operation succeeded
-        """
+        pass
 
     @abstractmethod
     def list_dir(self):
-        """List a directory resource contents
-
-        Returns
-        -------
-        list
-            A list of paths or URIs
-        """
+        pass
 
     @abstractmethod
     def make_dir(self):
-        """Creates a directory at the resource's path
-
-        Returns
-        -------
-        bool
-          True if the operation succeeded
-        """
+        pass
 
     @abstractmethod
     def create_child(self, file_name):

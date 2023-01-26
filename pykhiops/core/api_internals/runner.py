@@ -172,10 +172,9 @@ class PyKhiopsRunner(ABC):
             os.close(tmp_file_fd)
         # Remote resource: Just return a highly probable unique path
         else:
-            root_temp_dir_res = fs.create_resource(self.root_temp_dir)
-            tmp_file_path = root_temp_dir_res.create_child(
-                f"{prefix}{uuid.uuid4()}{suffix}"
-            ).uri
+            tmp_file_path = fs.get_child_path(
+                self.root_temp_dir, f"{prefix}{uuid.uuid4()}{suffix}"
+            )
 
         return tmp_file_path
 
@@ -198,8 +197,7 @@ class PyKhiopsRunner(ABC):
             temp_dir = tempfile.mkdtemp(prefix=prefix, dir=root_temp_dir_path)
         # Remote resource: Just return a highly probable unique path
         else:
-            root_temp_dir_res = fs.create_resource(self.root_temp_dir)
-            temp_dir = root_temp_dir_res.create_child(f"{prefix}{uuid.uuid4()}").uri
+            temp_dir = fs.get_child_path(self.root_temp_dir, f"{prefix}{uuid.uuid4()}")
         return temp_dir
 
     @property
@@ -489,9 +487,9 @@ class PyKhiopsRunner(ABC):
                 print(f"Khiops execution scenario: {scenario_path}")
                 print(f"Khiops log file: {command_line_options.log_file_path}")
             else:
-                fs.create_resource(scenario_path).remove()
+                fs.remove(scenario_path)
                 if tmp_log_file_path is not None:
-                    fs.create_resource(tmp_log_file_path).remove()
+                    fs.remove(tmp_log_file_path)
 
     def _report_exit_status(self, tool_name, return_code, stderr, log_file_path):
         """Reports the exit status of a Khiops execution
@@ -548,8 +546,7 @@ class PyKhiopsRunner(ABC):
         # Look in the log for error lines
         log_file_lines = None
         try:
-            log_file_res = fs.create_resource(log_file_path)
-            log_file_contents = log_file_res.read()
+            log_file_contents = fs.read(log_file_path)
             log_file_lines = io.TextIOWrapper(
                 io.BytesIO(log_file_contents), encoding="utf8", errors="replace"
             )
@@ -592,8 +589,7 @@ class PyKhiopsRunner(ABC):
                 if general_options is not None
                 else self.general_options,
             )
-            scenario_res = fs.create_resource(scenario_path)
-            scenario_res.write(scenario_stream.getvalue())
+            fs.write(scenario_path, scenario_stream.getvalue())
 
         return scenario_path
 
@@ -1144,8 +1140,7 @@ def _get_tool_info_khiops9(runner, tool_name):
     runner.raw_run(tool_name, ["-i", tmp_scenario_path, "-e", tmp_log_file_path, "-b"])
 
     # Parse the contents
-    tmp_log_file_res = fs.create_resource(tmp_log_file_path)
-    tmp_log_file_contents = io.BytesIO(tmp_log_file_res.read())
+    tmp_log_file_contents = io.BytesIO(fs.read(tmp_log_file_path))
     with io.TextIOWrapper(tmp_log_file_contents, encoding="ascii") as tmp_log_file:
         for line in tmp_log_file:
             if line.startswith("Khiops"):
@@ -1168,6 +1163,6 @@ def _get_tool_info_khiops9(runner, tool_name):
                         fields = line.split(" ")
                         remaining_days = int(fields[-2])
     # Clean temporary file
-    tmp_log_file_res.remove()
+    fs.remove(tmp_log_file_path)
 
     return version, computer_name, machine_id, remaining_days

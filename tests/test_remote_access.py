@@ -87,20 +87,11 @@ class PyKhiopsRemoteAccessTestsContainer:
 
         def test_train_predictor_with_remote_access(self):
             """Test train_predictor with remote resources"""
-            iris_data_file_res = (
-                fs.create_resource(pk.get_runner().samples_dir)
-                .create_child("Iris")
-                .create_child("Iris.txt")
-            )
-            iris_kdic_file_res = (
-                fs.create_resource(pk.get_runner().samples_dir)
-                .create_child("Iris")
-                .create_child("Iris.kdic")
-            )
+            iris_data_dir = fs.get_child_path(pk.get_runner().samples_dir, "Iris")
             pk.train_predictor(
-                iris_kdic_file_res.uri,
+                fs.get_child_path(iris_data_dir, "Iris.kdic"),
                 dictionary_name="Iris",
-                data_table_path=iris_data_file_res.uri,
+                data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
                 target_variable="Class",
                 results_dir=self.results_dir_root()
                 + f"/test_{self.remote_access_test_case()}_remote_files",
@@ -110,37 +101,33 @@ class PyKhiopsRemoteAccessTestsContainer:
         def test_khiops_classifier_with_remote_access(self):
             """Test the training of a khiops_classifier with remote resources"""
             # Setup paths
-            output_dir_uri = (
+            output_dir = (
                 pk.get_runner().khiops_tmp_dir
                 + f"/KhiopsClassifier_output_dir_{uuid.uuid4()}/"
             )
-            output_dir_res = fs.create_resource(output_dir_uri)
-            iris_data_file_res = (
-                fs.create_resource(pk.get_runner().samples_dir)
-                .create_child("Iris")
-                .create_child("Iris.txt")
-            )
+            iris_data_dir = fs.get_child_path(pk.get_runner().samples_dir, "Iris")
+            iris_data_file_path = fs.get_child_path(iris_data_dir, "Iris.txt")
             iris_dataset = {
-                "tables": {"Iris": (iris_data_file_res.uri, None)},
+                "tables": {"Iris": (iris_data_file_path, None)},
                 "format": ("\t", True),
             }
 
             # Test if the 'fit' output files were created
-            classifier = KhiopsClassifier(output_dir=output_dir_uri)
+            classifier = KhiopsClassifier(output_dir=output_dir)
             classifier.fit(iris_dataset, "Class")
-            self.assertTrue(output_dir_res.create_child("AllReports.khj").exists())
-            self.assertTrue(output_dir_res.create_child("Modeling.kdic").exists())
+            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "AllReports.khj")))
+            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "Modeling.kdic")))
 
             # Test if the 'predict' output file was created
-            with io.BytesIO(iris_data_file_res.read()) as iris_data_file_contents:
-                iris_df = pd.read_csv(iris_data_file_contents, sep="\t")
+            with io.BytesIO(fs.read(iris_data_file_path)) as iris_data_file:
+                iris_df = pd.read_csv(iris_data_file, sep="\t")
                 iris_df.pop("Class")
             classifier.predict(iris_df)
-            self.assertTrue(output_dir_res.create_child("transformed.txt").exists())
+            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "transformed.txt")))
 
             # Cleanup
-            for filename in output_dir_res.list_dir():
-                output_dir_res.create_child(filename).remove()
+            for filename in fs.list_dir(output_dir):
+                fs.remove(fs.get_child_path(output_dir, filename))
 
         def test_khiops_coclustering_with_remote_access(self):
             """Test the training of a khiops_coclustering with remote resources"""
@@ -149,58 +136,54 @@ class PyKhiopsRemoteAccessTestsContainer:
                 self.skipTest("Skipping long test")
 
             # Setup paths
-            output_dir_uri = (
+            output_dir = (
                 pk.get_runner().khiops_tmp_dir
                 + f"/KhiopsCoclustering_output_dir_{uuid.uuid4()}/"
             )
-            output_dir_res = fs.create_resource(output_dir_uri)
-
-            splice_data_file_res = (
-                fs.create_resource(pk.get_runner().samples_dir)
-                .create_child("SpliceJunction")
-                .create_child("SpliceJunctionDNA.txt")
+            splice_data_dir = fs.get_child_path(
+                pk.get_runner().samples_dir, "SpliceJunction"
+            )
+            splice_data_file_path = fs.get_child_path(
+                splice_data_dir, "SpliceJunctionDNA.txt"
             )
 
             # Read the splice junction secondary datatable
-            with io.BytesIO(splice_data_file_res.read()) as splice_data_file_contents:
-                splice_df = pd.read_csv(splice_data_file_contents, sep="\t")
+            with io.BytesIO(fs.read(splice_data_file_path)) as splice_data_file:
+                splice_df = pd.read_csv(splice_data_file, sep="\t")
 
             # Fit the coclustering
-            pkcc = KhiopsCoclustering(output_dir=output_dir_uri)
+            pkcc = KhiopsCoclustering(output_dir=output_dir)
             pkcc.fit(splice_df, id_column="SampleId")
 
             # Test if the 'fit' files were created
-            self.assertTrue(output_dir_res.create_child("Coclustering.kdic").exists())
-            self.assertTrue(output_dir_res.create_child("Coclustering.khcj").exists())
+            self.assertTrue(
+                fs.exists(fs.get_child_path(output_dir, "Coclustering.kdic"))
+            )
+            self.assertTrue(
+                fs.exists(fs.get_child_path(output_dir, "Coclustering.khcj"))
+            )
 
         def test_train_predictor_fail_and_log_with_remote_access(self):
             """Test train_predictor failure and access to a remote log"""
-            log_file_res = fs.create_resource(
-                f"{pk.get_runner().khiops_tmp_dir}/khiops_log_{uuid.uuid4()}.log"
+            log_file_path = fs.get_child_path(
+                pk.get_runner().khiops_tmp_dir, f"khiops_log_{uuid.uuid4()}.log"
             )
-            iris_data_file_res = (
-                fs.create_resource(pk.get_runner().samples_dir)
-                .create_child("Iris")
-                .create_child("Iris.txt")
-            )
-            iris_fake_kdic_file_res = (
-                fs.create_resource(pk.get_runner().samples_dir)
-                .create_child("Iris")
-                .create_child("INEXISTENT_KDIC.kdic")
-            )
+            iris_data_dir = fs.get_child_path(pk.get_runner().samples_dir, "Iris")
             with self.assertRaises(pk.PyKhiopsRuntimeError):
                 pk.train_predictor(
-                    iris_fake_kdic_file_res.uri,
+                    fs.get_child_path(iris_data_dir, "NONEXISTENT.kdic"),
                     dictionary_name="Iris",
-                    data_table_path=iris_data_file_res.uri,
+                    data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
                     target_variable="Class",
-                    results_dir=self.results_dir_root()
-                    + f"/test_{self.remote_access_test_case()}_remote_files",
-                    log_file_path=log_file_res.uri,
+                    results_dir=fs.get_child_path(
+                        self.results_dir_root(),
+                        f"/test_{self.remote_access_test_case()}_remote_files",
+                    ),
+                    log_file_path=log_file_path,
                 )
             # Check and remove log file
-            self.assertTrue(log_file_res.exists())
-            log_file_res.remove()
+            self.assertTrue(fs.exists(log_file_path))
+            fs.remove(log_file_path)
 
 
 class PyKhiopsS3RemoteFileTests(
@@ -304,24 +287,23 @@ class PyKhiopsDockerRunnerTests(
         if docker_runner_config_exists():
             shared_dir = os.environ["KHIOPS_DOCKER_RUNNER_SHARED_DIR"]
 
-            # copy the samples directory
+            # Copy the samples directory
             source_samples_dir = cls.initial_runner.samples_dir
             target_samples_dir = os.path.join(shared_dir, "samples")
-            target_samples_dir_res = fs.create_resource(target_samples_dir)
-            if not target_samples_dir_res.exists():
-                target_samples_dir_res.make_dir()
-            for dir_name, _, file_names in os.walk(source_samples_dir):
-                target_dir_name_res = fs.create_resource(
-                    os.path.join(target_samples_dir, os.path.split(dir_name)[1])
+            if not fs.exists(target_samples_dir):
+                fs.make_dir(target_samples_dir)
+            for dir_name, _, dataset_file_names in os.walk(source_samples_dir):
+                target_dataset_dir = os.path.join(
+                    target_samples_dir, os.path.split(dir_name)[1]
                 )
-                if not target_dir_name_res.exists():
-                    target_dir_name_res.make_dir()
-                for file_name in file_names:
-                    target_dir_name_res.copy_from_local(
-                        os.path.join(dir_name, file_name)
+                if not fs.exists(target_dataset_dir):
+                    fs.make_dir(target_dataset_dir)
+                for file_name in dataset_file_names:
+                    fs.copy_from_local(
+                        target_dataset_dir, os.path.join(dir_name, file_name)
                     )
 
-            # create khiops service runner
+            # Create khiops service runner
             docker_runner = PyKhiopsDockerRunner(
                 url=os.environ["KHIOPS_DOCKER_RUNNER_URL"],
                 shared_dir=shared_dir,
@@ -330,7 +312,7 @@ class PyKhiopsDockerRunnerTests(
             docker_runner.khiops_tmp_dir = os.path.join(shared_dir, "tmp")
             docker_runner.samples_dir = target_samples_dir
 
-            # set current runner to the created Khiops service runner
+            # Set current runner to the created Khiops service runner
             pk.set_runner(docker_runner)
 
     # pylint: enable=protected-access,consider-using-with

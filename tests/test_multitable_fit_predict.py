@@ -10,10 +10,10 @@
 """Tests for executing fit multiple times on multi-table data"""
 
 import os
+import shutil
 import unittest
 
 import pykhiops.core as pk
-import pykhiops.core.filesystems as fs
 from pykhiops.sklearn.estimators import KhiopsClassifier
 from tests.test_helper import PyKhiopsTestHelper
 
@@ -47,9 +47,7 @@ class PyKhiopsMultitableFitTests(unittest.TestCase, PyKhiopsTestHelper):
         }
 
         # Train classifier
-        output_dir = os.path.join(
-            os.curdir, "resources", "tmp", "test_multitable_fit_predict"
-        )
+        output_dir = os.path.join("resources", "tmp", "test_multitable_fit_predict")
         try:
             for _ in range(2):
                 PyKhiopsTestHelper.fit_helper(
@@ -58,11 +56,7 @@ class PyKhiopsMultitableFitTests(unittest.TestCase, PyKhiopsTestHelper):
                     pickled=False,
                     output_dir=output_dir,
                 )
-
         # Remove data files created during the test
         finally:
-            output_dir_res = fs.create_resource(output_dir)
-            if output_dir_res.exists():
-                for file_name in output_dir_res.list_dir():
-                    output_dir_res.create_child(file_name).remove()
-                output_dir_res.remove()
+            if os.path.exists(output_dir):
+                shutil.rmtree(output_dir)

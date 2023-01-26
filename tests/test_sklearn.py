@@ -76,7 +76,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
 
         # Grab output_dir for subsequent deletion
         cls.output_dir = os.path.join(
-            os.curdir, "resources", "tmp", "test_sklearn_parameter_transfer"
+            "resources", "tmp", "test_sklearn_parameter_transfer"
         )
         if not os.path.isdir(cls.output_dir):
             os.makedirs(cls.output_dir)

@@ -41,7 +41,7 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
         self._url = url
         self._insecure = insecure
         self.shared_dir = shared_dir
-        if self.shared_dir is None or not fs.create_resource(self.shared_dir).exists():
+        if self.shared_dir is None or not fs.exists(self.shared_dir):
             raise ValueError(
                 "'shared_dir' parameter is required to connect with the Khiops service"
             )
@@ -91,13 +91,12 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
                 stacklevel=3,
             )
         if command_line_options.output_scenario_path:
-            output_scenario_res = fs.create_resource(
+            output_scenario_dir = fs.get_parent_path(
                 command_line_options.output_scenario_path
             )
-            output_scenario_dir_res = output_scenario_res.create_parent()
-            if not output_scenario_dir_res.exists():
-                output_scenario_dir_res.make_dir()
-            output_scenario_res.copy_from_local(scenario_path)
+            if not fs.exists(output_scenario_dir):
+                output_scenario_dir.make_dir()
+            fs.copy_from_local(command_line_options.output_scenario_path, scenario_path)
         if command_line_options.task_file_path is not None:
             warnings.warn(
                 "Ignoring unsupported PyKhiopsDockerRunner parameter 'task_file_path'"
@@ -111,8 +110,7 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
         if tool_name == "khiops_coclustering":
             tool_flag = "KHIOPS_COCLUSTERING"
         shared_scenario_path = self.create_temp_file("scenario", "._kh")
-        scenario_file_res = fs.create_resource(shared_scenario_path)
-        scenario_file_res.copy_from_local(scenario_path)
+        fs.copy_from_local(shared_scenario_path, scenario_path)
         post_fields = {"tool": tool_flag, "scenario_path": shared_scenario_path}
         request = Request(url, data=bytes(json.dumps(post_fields), encoding="utf-8"))
         json_response = self._fetch(request)
@@ -151,11 +149,11 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
         # Then report (warn or exception) any errors
         return_code = response["response"]["status"]
         stderr = response["response"]["error"]
-        log_file_res = fs.create_resource(command_line_options.log_file_path)
         with io.StringIO() as log_file_stream:
             log_file_stream.write(response["response"]["output"])
-            log_file_res.write(
-                log_file_stream.getvalue().encode("utf8", errors="replace")
+            fs.write(
+                command_line_options.log_file_path,
+                log_file_stream.getvalue().encode("utf8", errors="replace"),
             )
 
         # Delete the finished operation from the server
@@ -207,11 +205,7 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
         str
             The path of the file to be created.
         """
-        shared_dir_res = fs.create_resource(self.shared_dir)
-        tmp_file_path = shared_dir_res.create_child(
-            f"{prefix}{uuid.uuid4()}{suffix}"
-        ).uri
-        return tmp_file_path
+        return fs.get_child_path(self.shared_dir, f"{prefix}{uuid.uuid4()}{suffix}")
 
     def create_temp_dir(self, prefix):
         """Creates a unique directory in the runner's shared directory
@@ -226,9 +220,8 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
         str
             The path of the created directory.
         """
-        shared_dir_res = fs.create_resource(self.shared_dir)
-        tmp_dir_path_res = shared_dir_res.create_child(
-            f"{prefix}{uuid.uuid4()}{os.path.sep}"
+        tmp_dir_path = fs.get_child_path(
+            self.shared_dir, f"{prefix}{uuid.uuid4()}{os.path.sep}"
         )
-        tmp_dir_path_res.make_dir()
-        return tmp_dir_path_res.uri
+        fs.make_dir(tmp_dir_path)
+        return tmp_dir_path

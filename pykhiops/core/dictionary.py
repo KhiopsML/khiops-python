@@ -367,8 +367,7 @@ class DictionaryDomain(KhiopsJSONObject):
         with io.BytesIO() as kdic_contents_stream:
             kdic_file_writer = self.create_output_file_writer(kdic_contents_stream)
             self.write(kdic_file_writer)
-            kdic_file_res = fs.create_resource(kdic_file_path)
-            kdic_file_res.write(kdic_contents_stream.getvalue())
+            fs.write(kdic_file_path, kdic_contents_stream.getvalue())
 
     def write(self, stream_or_writer):
         """Writes the domain to a file writer in ``.kdic`` format
@@ -450,7 +449,7 @@ def read_dictionary_file(dictionary_file_path):
 
     # Clean the temporary file if the input file was .kdic
     if extension == ".kdic":
-        fs.create_resource(tmp_dictionary_file_path).remove()
+        fs.remove(tmp_dictionary_file_path)
 
     return domain
 

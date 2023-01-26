@@ -12,6 +12,7 @@ import os
 
 from pykhiops.core import api
 from pykhiops.core import filesystems as fs
+from pykhiops.core.api_internals.runner import get_runner
 from pykhiops.core.common import (
     create_unambiguous_khiops_path,
     is_list_like,
@@ -172,7 +173,7 @@ def deploy_coclustering(
     tmp_dictionary.key = key_variable_names
     tmp_domain = DictionaryDomain()
     tmp_domain.add_dictionary(tmp_dictionary)
-    tmp_dictionary_path = api.get_runner().create_temp_file(
+    tmp_dictionary_path = get_runner().create_temp_file(
         "_deploy_coclustering_", ".kdic"
     )
 
@@ -208,14 +209,12 @@ def deploy_coclustering(
 
     # Extract the keys from the tables to a temporary file
     data_table_file_name = os.path.basename(data_table_path)
-    keys_table_res = fs.create_resource(results_dir).create_child(
-        f"Keys{data_table_file_name}"
-    )
+    keys_table_file_path = fs.get_child_path(results_dir, f"Keys{data_table_file_name}")
     api.extract_keys_from_data_table(
         tmp_dictionary_path,
         dictionary_name,
         data_table_path,
-        keys_table_res.uri,
+        keys_table_file_path,
         header_line=header_line,
         field_separator=field_separator,
         output_header_line=header_line,
@@ -224,20 +223,20 @@ def deploy_coclustering(
     )
 
     # Deploy the coclustering model
-    coclustering_dictionary_file_res = fs.create_resource(results_dir).create_child(
-        "Coclustering.kdic"
+    coclustering_dictionary_file_path = fs.get_child_path(
+        results_dir, "Coclustering.kdic"
     )
-    output_data_table_res = fs.create_resource(results_dir).create_child(
-        f"Deployed{data_table_file_name}"
+    output_data_table_path = fs.get_child_path(
+        results_dir, f"Deployed{data_table_file_name}"
     )
     additional_data_tables = {
         f"{root_dictionary_name}`{table_variable_name}": data_table_path
     }
     api.deploy_model(
-        coclustering_dictionary_file_res.uri,
+        coclustering_dictionary_file_path,
         root_dictionary_name,
-        keys_table_res.uri,
-        output_data_table_res.uri,
+        keys_table_file_path,
+        output_data_table_path,
         header_line=header_line,
         field_separator=field_separator,
         output_header_line=output_header_line,
@@ -245,7 +244,7 @@ def deploy_coclustering(
         additional_data_tables=additional_data_tables,
         trace=trace,
     )
-    return output_data_table_res.uri, coclustering_dictionary_file_res.uri
+    return output_data_table_path, coclustering_dictionary_file_path
 
 
 def deploy_predictor_for_metrics(

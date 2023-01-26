@@ -172,7 +172,7 @@ def run_task(task_name, task_args):
         )
     finally:
         if task_called_with_domain and not trace:
-            fs.create_resource(task_args["dictionary_file_path"]).remove()
+            fs.remove(task_args["dictionary_file_path"])
 
 
 def preprocess_task_arguments(task_args):
@@ -730,18 +730,16 @@ def train_predictor(
         reports_file_name += "AllReports.json"
     else:
         reports_file_name += "AllReports.khj"
-    reports_file_res = fs.create_resource(results_dir).create_child(reports_file_name)
+    reports_file_path = fs.get_child_path(results_dir, reports_file_name)
 
     if target_variable != "":
-        modeling_dictionary_file_res = fs.create_resource(results_dir).create_child(
-            f"{results_prefix}Modeling.kdic"
+        modeling_dictionary_file_path = fs.get_child_path(
+            results_dir, f"{results_prefix}Modeling.kdic"
         )
     else:
-        modeling_dictionary_file_res = None
-    return (
-        reports_file_res.uri,
-        modeling_dictionary_file_res.uri if modeling_dictionary_file_res else None,
-    )
+        modeling_dictionary_file_path = None
+
+    return (reports_file_path, modeling_dictionary_file_path)
 
 
 def evaluate_predictor(
@@ -835,10 +833,9 @@ def evaluate_predictor(
     task_args = locals()
 
     # Create the evaluation file path and remove the directory and prefix arguments
-    evaluation_report_res = fs.create_resource(task_args["results_dir"]).create_child(
-        f"{task_args['results_prefix']}EvaluationReport.xls"
+    task_args["evaluation_report_path"] = fs.get_child_path(
+        task_args["results_dir"], f"{task_args['results_prefix']}EvaluationReport.xls"
     )
-    task_args["evaluation_report_path"] = evaluation_report_res.uri
     del task_args["results_dir"]
     del task_args["results_prefix"]
 
@@ -851,8 +848,8 @@ def evaluate_predictor(
         report_file_name += "EvaluationReport.json"
     else:
         report_file_name += "EvaluationReport.khj"
-    report_file_res = fs.create_resource(results_dir).create_child(report_file_name)
-    return report_file_res.uri
+
+    return fs.get_child_path(results_dir, report_file_name)
 
 
 def train_recoder(
@@ -1054,12 +1051,12 @@ def train_recoder(
         reports_file_name += ".json"
     else:
         reports_file_name += ".khj"
-    reports_file_res = fs.create_resource(results_dir).create_child(reports_file_name)
-    modeling_dictionary_file_res = fs.create_resource(results_dir).create_child(
-        f"{results_prefix}Modeling.kdic"
+    reports_file_path = fs.get_child_path(results_dir, reports_file_name)
+    modeling_dictionary_file_path = fs.get_child_path(
+        results_dir, f"{results_prefix}Modeling.kdic"
     )
 
-    return (reports_file_res.uri, modeling_dictionary_file_res.uri)
+    return (reports_file_path, modeling_dictionary_file_path)
 
 
 def deploy_model(
@@ -1494,11 +1491,7 @@ def train_coclustering(
     run_task("train_coclustering", task_args)
 
     # Return the path of the coclustering file
-    coclustering_file_name = results_prefix + "Coclustering.khcj"
-    coclustering_file_res = fs.create_resource(results_dir).create_child(
-        coclustering_file_name
-    )
-    return coclustering_file_res.uri
+    return fs.get_child_path(results_dir, results_prefix + "Coclustering.khcj")
 
 
 def simplify_coclustering(
@@ -1685,9 +1678,8 @@ def extract_clusters(
     # Obtain the directory and name of the clusters file
     clusters_file_path = create_unambiguous_khiops_path(task_args["clusters_file_path"])
     clusters_file_name = os.path.basename(clusters_file_path)
-    clusters_file_res = fs.create_resource(clusters_file_path)
-    clusters_file_dir_res = clusters_file_res.create_parent()
-    clusters_file_dir = create_unambiguous_khiops_path(clusters_file_dir_res.uri)
+    clusters_file_dir_path = fs.get_parent_path(clusters_file_path)
+    clusters_file_dir = create_unambiguous_khiops_path(clusters_file_dir_path)
     task_args["clusters_file_name"] = clusters_file_name
     task_args["results_dir"] = clusters_file_dir
 
@@ -1758,8 +1750,7 @@ def detect_data_table_format(
     # Parse the log file to obtain the header_line and field_separator parameters
     # Note: If there is an error the run method will raise an exception so at this
     #       stage we have a warning in the worst case
-    log_file_res = fs.create_resource(log_file_path)
-    log_file_contents = io.BytesIO(log_file_res.read())
+    log_file_contents = io.BytesIO(fs.read(log_file_path))
     with io.TextIOWrapper(log_file_contents, encoding="ascii") as log_file:
         log_file_lines = log_file.readlines()
 
@@ -1790,7 +1781,7 @@ def detect_data_table_format(
     if trace:
         print(f"detect_format log file: {log_file_path}")
     else:
-        fs.create_resource(log_file_path).remove()
+        fs.remove(log_file_path)
 
     return header_line, field_separator
 
