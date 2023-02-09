@@ -1698,7 +1698,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
 
             # Set the parameter trace for wrapped functions
             parameter_trace = PyKhiopsTestHelper.create_parameter_trace()
-            for (module, function) in self.wrapped_functions[estimator_type_key][
+            for module, function in self.wrapped_functions[estimator_type_key][
                 estimator_method
             ]:
                 PyKhiopsTestHelper.wrap_with_parameter_trace(

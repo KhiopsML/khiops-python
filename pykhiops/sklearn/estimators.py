@@ -2017,7 +2017,6 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         internal_sort=True,
         key=None,
     ):
-
         super().__init__(
             n_features=n_features,
             n_pairs=n_pairs,
@@ -2095,7 +2094,6 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             and self.transform_type_numerical is None
             and self.n_trees == 0
         ):
-
             raise ValueError(
                 "transform_type_categorical and transform_type_numerical "
                 "cannot be both None with n_trees == 0."

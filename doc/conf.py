@@ -80,6 +80,7 @@ html_logo = "./khiops_logo.png"
 # HTML static pages
 html_static_path = []
 
+
 # Suppress warnings:
 # - about sklearn code (`X` or `y`) included via intersphinx
 # - about some literals included via the tutorials transformation

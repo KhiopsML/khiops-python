@@ -269,7 +269,6 @@ class PyKhiopsTestHelper:
 
         @wrapt.patch_function_wrapper(module, function)
         def wrapper(wrapped, _instance, args, kwargs):
-
             # mutate function_parameters as previously bound / initialized in the
             # outer scope of the `wrap_with_parameter_trace` method by its
             # caller:

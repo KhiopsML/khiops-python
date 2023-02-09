@@ -34,6 +34,7 @@ del get_versions
 
 def get_compatible_khiops_version():
     """Returns the latest Khiops version compatible with this version of pyKhiops"""
+
     # Define auxiliary function to remove trailing chars
     def remove_snapshot_trailing_chars(version_part):
         if "+" in version_part:

@@ -1,7 +1,7 @@
 # !/usr/bin/env bash
 set -e
 
-# Check commands
+# Check command existence
 command_requirements="tar git make python zip"
 for command_name in $command_requirements
 do
