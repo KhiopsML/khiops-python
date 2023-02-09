@@ -214,7 +214,7 @@ class DictionaryDomain(KhiopsJSONObject):
     def extract_data_paths(self, source_dictionary_name):
         """Extracts the data paths for a dictionary in a multi-table schema
 
-        See :doc:`/multi_table_tasks` for more details about data paths.
+        See :doc:`/multi_table_primer` for more details about data paths.
 
         Parameters
         ----------

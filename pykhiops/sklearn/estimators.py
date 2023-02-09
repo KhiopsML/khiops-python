@@ -648,7 +648,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -872,7 +872,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         X : `pandas.DataFrame` or dict
             The input samples to be clusterized. Either a dataframe or a ``dict``
             dataset specification. To learn to specify multi-table datasets see
-            :doc:`/multi_table_tasks`.
+            :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -1073,7 +1073,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -1388,7 +1388,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
     """Khiops Selective Naive Bayes Classifier
 
     This classifier supports automatic feature engineering on multi-table datasets. See
-    :doc:`/multi_table_tasks` for more details.
+    :doc:`/multi_table_primer` for more details.
 
     .. note::
 
@@ -1399,7 +1399,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
     ----------
     n_features : int, default 100
         *Multi-table only* : Maximum number of multi-table aggregate features to
-        construct. See :doc:`/multi_table_tasks` for more details.
+        construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features represent a 2D grid
         partition of the domain of a pair of variables in which is optimized in a way
@@ -1450,9 +1450,10 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
     See the following functions of the ``samples_sklearn.py`` documentation script:
         - `samples_sklearn.khiops_classifier()`
         - `samples_sklearn.khiops_classifier_multiclass()`
-        - `samples_sklearn.khiops_classifier_multitable()`
+        - `samples_sklearn.khiops_classifier_multitable_star()`
+        - `samples_sklearn.khiops_classifier_multitable_snowflake()`
         - `samples_sklearn.khiops_classifier_pickle()`
-        - `samples_sklearn.khiops_classifier_multitable_file()`
+        - `samples_sklearn.khiops_classifier_multitable_star_file()`
     """
 
     def __init__(
@@ -1516,7 +1517,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -1595,7 +1596,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -1656,7 +1657,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -1732,7 +1733,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
     """Khiops Selective Naive Bayes Regressor
 
     This regressor supports automatic feature engineering on multi-table datasets. See
-    :doc:`/multi_table_tasks` for more details.
+    :doc:`/multi_table_primer` for more details.
 
     .. note::
 
@@ -1743,7 +1744,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
     ----------
     n_features : int, default 100
         *Multi-table only* : Maximum number of multi-table aggregate features to
-        construct. See :doc:`/multi_table_tasks` for more details.
+        construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features represent a 2D grid
         partition of the domain of a pair of variables in which is optimized in a way
@@ -1820,7 +1821,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -1891,7 +1892,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -1933,7 +1934,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         ``True`` if the target column is categorical.
     n_features : int, default 100
         *Multi-table only* : Maximum number of multi-table aggregate features to
-        construct. See :doc:`/multi_table_tasks` for more details.
+        construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features represent a 2D grid
         partition of the domain of a pair of variables in which is optimized in a way
@@ -2000,7 +2001,8 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
     --------
     See the following functions of the ``samples_sklearn.py`` documentation script:
         - `samples_sklearn.khiops_encoder()`
-        - `samples_sklearn.khiops_encoder_multitable()`
+        - `samples_sklearn.khiops_encoder_multitable_star()`
+        - `samples_sklearn.khiops_encoder_multitable_snowflake()`
     """
 
     def __init__(
@@ -2118,7 +2120,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -2187,7 +2189,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)
@@ -2238,7 +2240,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         ----------
         X : `pandas.DataFrame` or dict
             Training dataset. Either a dataframe or a ``dict`` dataset specification. To
-            learn to specify multi-table datasets see :doc:`/multi_table_tasks`.
+            learn to specify multi-table datasets see :doc:`/multi_table_primer`.
 
             **Deprecated input modes** (will be removed in pyKhiops 11):
                 - tuple: A pair (``path_to_file``, ``separator``)

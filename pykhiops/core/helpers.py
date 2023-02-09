@@ -301,7 +301,7 @@ def deploy_predictor_for_metrics(
         sample_percentage`` percent of data.
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_tasks` documentation.
+        dictionary file. For more details see :doc:`/multi_table_primer` documentation.
     output_header_line : bool, default ``True``
         If True writes a header line containing the column names in the output table.
     output_field_separator : str, default "\\t"

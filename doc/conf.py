@@ -45,7 +45,7 @@ autodoc_default_options = {
     "special-members": False,
 }
 
-# Intersphinx extension config
+## Intersphinx extension config
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/dev", None),
@@ -54,7 +54,6 @@ intersphinx_mapping = {
 }
 
 ## Autosummary extension config
-autosummary_generate = True
 templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and directories to
@@ -63,6 +62,7 @@ templates_path = ["_templates"]
 exclude_patterns = ["_templates", "_build", "Thumbs.db", ".DS_Store"]
 
 # HTML Theme
+# Theme colors and fonts come from https://brand.orange.com
 html_theme = "furo"
 html_theme_options = {
     "light_css_variables": {
@@ -73,22 +73,36 @@ html_theme_options = {
         "color-admonition-title-background--note": "#FFF0E2",
         "font-stack": "Helvetica Neue, sans-serif",
     },
+    "dark_css_variables": {
+        "color-brand-primary": "#FF7900",
+        "color-brand-content": "#F16E00",
+        "color-highlighted-background": "#FFD200",
+        "color-admonition-title--note": "#FF7900",
+        "color-admonition-title-background--note": "#CC6100",
+        "font-stack": "Helvetica Neue, sans-serif",
+    },
 }
 html_title = f"<h6>{project} {release}</h6>"
 html_logo = "./khiops_logo.png"
 
 # HTML static pages
-html_static_path = []
+html_static_path = ["_static"]
+html_css_files = [
+    "css/custom.css",
+]
 
 
-# Suppress warnings:
+# Callback to Suppress warnings:
 # - about sklearn code (`X` or `y`) included via intersphinx
 # - about some literals included via the tutorials transformation
 def suppress_sklearn_warnings(app, env, node, contnode):
     def sklearn_not_found_variable(node):
         return (
-            node.rawsource == "`X`" or node.rawsource == "`y`"
-        ) and node.source.endswith("Mixin.score")
+            node.rawsource == "`X`"
+            or node.rawsource == "`y`"
+            or node.rawsource == '`"default"`'
+            or node.rawsource == '`"pandas"`'
+        ) and node.attributes["py:module"] == "pykhiops.sklearn.estimators"
 
     def tutorial_literal(node):
         return (

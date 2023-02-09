@@ -311,8 +311,8 @@ def make_dir(uri_or_path):
 def get_child_path(uri_or_path, child_name):
     """Returns the child path of this URI at the specified child name
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     uri_or_path : str
         The resource's URI or local filesystem path.
     child_name : str
@@ -330,8 +330,8 @@ def get_child_path(uri_or_path, child_name):
 def get_parent_path(uri_or_path):
     """Returns the specified parent path of this URI
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     uri_or_path : str
         The resource's URI or local filesystem path.
 

@@ -53,8 +53,8 @@ doc/tutorials/
 doc/samples/*.txt
 doc/samples/pk_samples
 doc/samples/my_classifier
-doc/core/pykhiops.*.rst
-doc/sklearn/pykhiops.*.rst
-doc/internal/pykhiops.*.rst
+doc/core/generated
+doc/sklearn/generated
+doc/internal/generated
 doc/_build/
 doc/pykhiops-tutorial

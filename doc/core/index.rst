@@ -1,26 +1,10 @@
+=============
 pykhiops.core
 =============
-
-.. currentmodule:: pykhiops
-
 .. automodule:: pykhiops.core
 
-.. autosummary::
-  :caption: core
-  :recursive:
-  :nosignatures:
-  :toctree:
-
-  pykhiops.core.api
-  pykhiops.core.helpers
-  pykhiops.core.dictionary
-  pykhiops.core.analysis_results
-  pykhiops.core.coclustering_results
-  pykhiops.core.common
-
-
 .. note::
-  Input types on this module are flexible. See :doc:`../core_input_types`
+  Input types in this module are flexible. See :doc:`../notes`.
 
 .. note::
   For convenience, the public members of the above modules are imported to the ``core`` namespace.
@@ -29,8 +13,21 @@ pykhiops.core
     from pykhiops import core as pk
     pk.train_predictor(...)
 
+Main Modules
+============
+.. autosummary::
+  :toctree: generated
+  :recursive:
+  :nosignatures:
+
+  pykhiops.core.api
+  pykhiops.core.dictionary
+  pykhiops.core.analysis_results
+  pykhiops.core.coclustering_results
+  pykhiops.core.common
+
 Related Docs
-------------
+============
 - :doc:`../samples/samples`
-- :doc:`../multi_table_tasks`
-- :doc:`../json_files`
+- :doc:`../multi_table_primer`
+- :doc:`../notes`

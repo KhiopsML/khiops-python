@@ -1,6 +1,9 @@
 # !/usr/bin/env bash
 set -e
 
+# Add the pykhiops directory to the python path
+export PYTHONPATH="$PYTHONPATH:.."
+
 # Check command existence
 command_requirements="tar git make python zip"
 for command_name in $command_requirements

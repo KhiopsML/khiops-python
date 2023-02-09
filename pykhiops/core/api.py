@@ -38,30 +38,6 @@ from pykhiops.core.common import (
 )
 from pykhiops.core.dictionary import DictionaryDomain, read_dictionary_file
 
-__all__ = [
-    "all_construction_rules",
-    "get_khiops_version",
-    "get_samples_dir",
-    "export_dictionary_as_json",
-    "build_dictionary_from_data_table",
-    "check_database",
-    "train_predictor",
-    "evaluate_predictor",
-    "train_recoder",
-    "deploy_model",
-    "build_deployed_dictionary",
-    "sort_data_table",
-    "extract_keys_from_data_table",
-    "build_multi_table_dictionary",
-    "train_coclustering",
-    "simplify_coclustering",
-    "prepare_coclustering_deployment",
-    "extract_clusters",
-    "detect_data_table_format",
-    "get_khiops_info",
-    "get_khiops_coclustering_info",
-]
-
 # List of all available construction rules in the Khiops tool
 all_construction_rules = [
     "Day",
@@ -520,7 +496,7 @@ def check_database(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_tasks`.
+        dictionary file. For more details see :doc:`/multi_table_primer`.
     max_messages : int, default 20
         Maximum number of error messages to write in the log file.
     ... :
@@ -624,7 +600,7 @@ def train_predictor(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_tasks`.
+        dictionary file. For more details see :doc:`/multi_table_primer`.
     main_target_value : str, default ""
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
@@ -799,7 +775,7 @@ def evaluate_predictor(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_tasks`.
+        dictionary file. For more details see :doc:`/multi_table_primer`.
 
         .. note:: Use the initial dictionary name in the data paths.
 
@@ -944,7 +920,7 @@ def train_recoder(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_tasks`.
+        dictionary file. For more details see :doc:`/multi_table_primer`.
     max_constructed_variables : int, default 100
         Maximum number of variables to construct.
     construction_rules : list of str, optional
@@ -1119,14 +1095,14 @@ def deploy_model(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_tasks`.
+        dictionary file. For more details see :doc:`/multi_table_primer`.
     output_header_line : bool, default ``True``
         If ``True`` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
     output_additional_data_tables : dict, optional
         A dictionary containing the output data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_tasks`.
+        dictionary file. For more details see :doc:`/multi_table_primer`.
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
@@ -1165,7 +1141,7 @@ def build_deployed_dictionary(
     trace=False,
     **kwargs,
 ):
-    """Builds a dictionary file to read a deployed data table
+    """Builds a dictionary file to read the output table of a deployed model
 
     Parameters
     ----------
@@ -1450,7 +1426,7 @@ def train_coclustering(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_tasks`.
+        dictionary file. For more details see :doc:`/multi_table_primer`.
     frequency_variable : str, default ""
         Name of frequency variable.
     min_optimization_time : int, default 0
@@ -1748,8 +1724,10 @@ def detect_data_table_format(
         run_task("detect_data_table_format_with_dictionary", task_args)
 
     # Parse the log file to obtain the header_line and field_separator parameters
-    # Note: If there is an error the run method will raise an exception so at this
-    #       stage we have a warning in the worst case
+    # Notes:
+    # - If there is an error the run method will raise an exception; so at this stage we
+    #   have a warning in the worst case.
+    # - The contents of this Khiops execution are always ASCII
     log_file_contents = io.BytesIO(fs.read(log_file_path))
     with io.TextIOWrapper(log_file_contents, encoding="ascii") as log_file:
         log_file_lines = log_file.readlines()

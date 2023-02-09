@@ -1,4 +1,6 @@
-{{ fullname | escape | underline}}
+{{ fullname | replace("pykhiops.", "") | escape | underline }}
+
+Submodule of ``{{ module }}``
 
 .. automodule:: {{ fullname }}
 

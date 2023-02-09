@@ -1,10 +1,9 @@
-Sphinx>=4.4.0
-furo>=2021.08.31
+sphinx>=6.1.0
+furo>=2022.12.7
 ipykernel>=6.9.1
 nbconvert==6.4.4
-nbconvert==6.4.4
 nbformat==5.3.0
-numpydoc>=1.1.0
-pandas>=0.25.0
-scikit-learn>=0.21
+numpydoc>=1.5.0
+pandas>=0.25.3
+scikit-learn>=0.22.2
 sphinx-copybutton>=0.5.0

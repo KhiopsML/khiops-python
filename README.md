@@ -15,8 +15,8 @@ in two ways:
 First download the latest version of pyKhiops from the [Khiops site](https://www.khiops.com). If
 your pyKhiops package file is named
 `pykhiops-10.x.x.tar.gz` execute:
-```
-pip install pykhiops-10.x.x.tar.gz
+```bash
+pip install -U pykhiops-10.x.x.tar.gz
 ```
 ### Requirements
 - [Khiops][khiops] (>=9.0)
@@ -32,7 +32,10 @@ The main documentation of pyKhiops is available [here][pykhiops-doc].
 
 The library itself is documented with docstrings: for example to obtain help on the
 `train_predictor` function you can use:
-```
+```python
+from pykhiops.sklearn import KhiopsClassifier
+help(KhiopsClassifier)
+
 from pykhiops import core as pk
 help(pk.train_predictor)
 ```
@@ -41,11 +44,11 @@ help(pk.train_predictor)
 ### Light Installations
 If you only intend to use the pyKhiops `core` module install it as follows
 ```bash
-pip install pykhiops-10.x.x.tar.gz --no-dependencies
+pip install -U pykhiops-10.x.x.tar.gz --no-dependencies
 ```
 If this doesn't work because of proxy problems try
 ```bash
-pip install pykhiops-10.x.x.tar.gz --no-dependencies --no-build-isolation
+pip install -U pykhiops-10.x.x.tar.gz --no-dependencies --no-build-isolation
 ```
 ##### Requirements for the Light Installation
 - [Khiops][khiops] (>=9.0)
@@ -93,19 +96,19 @@ See the [LICENSE.md](./LICENSE.md) file of this repository or in the `-info` dir
 of the python package installation (you can find it with `pip show -f pykhiops`)
 
 ## Credits
-pyKhiops has been developed at [Orange Labs][olabs-ai]. 
+pyKhiops has been developed at [Orange Labs][olabs-ai].
 
 Current contributors:
-- Marc Boullé
-- Alexis Bondu
-- Stéphane Gouache
 - Yassine Nair Benrekia
 - Felipe Olmos
 - Vladimir Popescu
 
 Past contributors:
+- Alexis Bondu
 - Enzo Bonnal
+- Marc Boullé
 - Pierre Nodet
+- Stéphane Gouache
 
 [khiops]: https://www.khiops.com
 [pykhiops-doc]: https://www.khiops.com/html/pyKhiops

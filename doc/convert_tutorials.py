@@ -101,7 +101,7 @@ def main(args):
         tutorials_file.write("----\n")
         tutorials_file.write(_tutorials_message("core"))
         for name in core_tutorials:
-            tutorials_file.write(f"    - :doc:`{name}`\n")
+            tutorials_file.write(f"- :doc:`{name}`\n")
 
 
 if __name__ == "__main__":

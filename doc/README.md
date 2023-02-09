@@ -8,6 +8,8 @@ Below you'll find the tools and practices related to the pyKhiops documentation.
 # Working dir = pykhiops/doc
 
 # You'll need the python packages in the requirements.txt file in this directory
+# Warning: If you create a virtualenv, do not place it within the pykhiops/doc directory.
+#          The installed packages contain reST files and Sphinx will process them!
 # pip install -U -r requirements.txt
 
 # You'll also need a system-wide installation of pandoc (https://pandoc.org)
@@ -24,9 +26,6 @@ Below you'll find the tools and practices related to the pyKhiops documentation.
 # - Generates the reST version of the tutorials
 # - Executes Sphinx (output: ./_build/html)
 ./create.sh
-
-# Linux: To avoid coclustering bug set KHIOPS_PROC_NUMBER=1
-# KHIOPS_PROC_NUMBER=1 ./create.sh
 
 # To only execute Sphinx on updated reST resources
 # make html

@@ -4,9 +4,9 @@
 import argparse
 import inspect
 import json
+import os
 import sys
 import textwrap
-from os import path
 
 
 def create_boilerplate_code(script_name):
@@ -166,14 +166,16 @@ def main(args):
         script_name = "samples"
 
     # Sanity check
-    if path.abspath(path.join(args.samples_dir, f"{script_name}.py")) == path.abspath(
-        args.output_path
-    ):
+    script_path = os.path.join(args.samples_dir, f"{script_name}.py")
+    if os.path.abspath(script_path) == os.path.abspath(args.output_path):
         print("error: input and output paths are the same")
         sys.exit(1)
 
-    # Change to the directory the samples
-    sys.path.append(path.realpath(args.samples_dir))
+    # Add pykhiops root to the python path
+    pykhiops_root_path = os.path.dirname(
+        os.path.dirname(os.path.realpath(args.samples_dir))
+    )
+    sys.path.append(pykhiops_root_path)
 
     # Import samples as a module
     try:

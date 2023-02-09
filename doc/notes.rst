@@ -1,8 +1,25 @@
-Note on JSON Files
-==================
+Notes
+=====
+
+pykhiops.core Functions Input Types
+-----------------------------------
+
+The types accepted in most methods and classes of `pykhiops.core` are flexible:
+
+- `str` can be replaced by `bytes`
+
+  - This adds flexibility for file paths and automatically created variable names (data-dependent).
+
+- `list` can be replaced by any class implementing the `collections.abc.Sequence` interface except
+  `str` and `bytes`.
+- `dict` can be replaced by any class implementing the `collections.abc.Mapping` interface.
+
+
+Khiops JSON Files
+-----------------
 
 Generalities
-------------
+~~~~~~~~~~~~
 
 The structure of the Khiops JSON files is self-documented:
 
@@ -13,7 +30,7 @@ The structure of the Khiops JSON files is self-documented:
   indentation.
 
 Structure and Performance
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Khiops JSON files may be large (tens of MB) when analyzing datasets with many columns, or when
 specifying the creation of thousands of variables in the multi-table case. To handle these

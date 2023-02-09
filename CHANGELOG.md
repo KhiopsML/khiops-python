@@ -5,7 +5,36 @@
   pyKhiops correlative (third digit). So 10.0.4 = 4th version developed that supports Khiops 10.0.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.1.2 - 2023-03-14
+
+### Added
+- `sklearn`:
+  - Support for snowflake database schemas.
+- `core`:
+  - Support for Khiops on MacOS.
+
+### Fixed
+- core:
+  - Khiops coclustering is not executed with MPI anymore.
+  - Bug when the JSON reports had colliding character ranges but no particular colliding character.
+
+### Changed
+- *Internals*:
+  - The transformation of the `core.api` function parameters to scenario files has now an additional
+    layer mediated by the `KhiopsTask` class. These objects have all the necessary information about
+    a particular Khiops tasks (ex. `train_predictor`) to transform its parameters to an scenario
+    file. Furthermore, this allows to export the task signatures to API description languages such
+    as Protocol Buffers.
+  - The `core.filesystem` now exposes its API as a set of functions instead of _resource_ objects.
+    They are still available but the API should be prioritized for its use.
+
+
+### Removed
+- General:
+  - Support for Python 3.6, pyKhiops 10.1.1 was the last version to support it.
+
 ## 10.1.1 - 2022-11-10
+
 ### Added
 - General:
   - Jupyter notebooks tutorials to the documentation site.
@@ -22,6 +51,7 @@
   - Code samples scripts not being installed: They are located in `<pykhiops_install_dir>/samples`.
 
 ## 10.1.0 - 2022-09-20
+
 ### Added
 - `sklearn`:
   - Estimators now accept dataframes with numerical column indexes.
@@ -76,6 +106,7 @@
   - Bug in dataframe-based datasets with numerical key columns
 
 ## 10.0.5 - 2022-07-04
+
 ### Added
 - `sklearn`:
   - A new way to specify multi-table inputs for estimators via a `dict`. From now on it is the
@@ -130,6 +161,7 @@
     initializing the runner.
 
 ## 10.0.4 - 2022-01-13
+
 ### Added
 - Class `PyKhiopsDockerRunner` in package `pykhiops.extras` allowing to run pyKhiops
   with a remote Khiops Docker image as backend.
@@ -141,6 +173,7 @@
 - Bug in CentOS not taking into account environment variables and failing to execute.
 
 ## 10.0.3 - 2021-11-22
+
 ### Added
 - `extract_clusters` core API function to extract a dimension's clusters into a file.
 - `deploy_predictor_for_metrics` core API function to evaluate performance metrics with
@@ -178,6 +211,7 @@ Internals:
     scripts (only for Khiops >= 10.0.1).
   - Specific pair parameter is not handled anymore with a temporary file.
   - Improved temporary file services in `PyKhiopsRunner`.
+
 ### Removed
 - Field separator constructor parameter for estimator classes of `sklearn`
 
@@ -192,6 +226,7 @@ Internals:
 - Some Python 2 incompatibilities in Linux
 
 ## 10.0.2 - 2021-06-28
+
 ### Added
 - `get_samples_dir` core API function (works only with a local runner).
 - `train_predictor`, `evaluate_model`, `train_recoder`, `train_coclustering` and
@@ -208,6 +243,7 @@ Internals:
 - Messages enabled with the `trace` parameter go again to `stdout`.
 
 ## 10.0.1 - 2021-06-24
+
 ### Added
 - `sklearn` sub-module updated for pyKhiops 10.
 - `sklearn` samples notebooks.
@@ -262,10 +298,11 @@ Internals:
   correctly. Now it just emits a warning.
 
 ## 9.6.0b1- 2021-05-19
+
 ### Added
-- Compatibility for Khiops 10 runtime
-- Legacy mode for Khiops 9 runtime
-- Partial compatibility for Khiops 10 json reports (no tree report)
+- Compatibility for Khiops 10
+- Legacy support for Khiops 9
+- Partial compatibility for Khiops 10 JSON reports (no tree report)
 - Script `tools/convert_pk10.py` to migrate from pyKhiops 9 to 10. See _Changed_ below
 - Extraction of dictionary data paths: See `core.DictionaryDomain.extract_data_paths`
 - Robust JSON loading: tries `utf-8` encoding, then the system's default.
@@ -280,5 +317,6 @@ Internals:
   mode).
 
 ## 9.0.1 - 2020-09-30
+
 ### Added
 - Sources (first commit)
