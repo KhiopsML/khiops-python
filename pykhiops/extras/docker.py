@@ -95,7 +95,7 @@ class PyKhiopsDockerRunner(PyKhiopsRunner):
                 command_line_options.output_scenario_path
             )
             if not fs.exists(output_scenario_dir):
-                output_scenario_dir.make_dir()
+                fs.make_dir(output_scenario_dir)
             fs.copy_from_local(command_line_options.output_scenario_path, scenario_path)
         if command_line_options.task_file_path is not None:
             warnings.warn(

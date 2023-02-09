@@ -88,15 +88,26 @@ class PyKhiopsRemoteAccessTestsContainer:
         def test_train_predictor_with_remote_access(self):
             """Test train_predictor with remote resources"""
             iris_data_dir = fs.get_child_path(pk.get_runner().samples_dir, "Iris")
+            output_dir = fs.get_child_path(
+                self.results_dir_root(),
+                f"test_{self.remote_access_test_case()}_remote_files",
+            )
             pk.train_predictor(
                 fs.get_child_path(iris_data_dir, "Iris.kdic"),
                 dictionary_name="Iris",
                 data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
                 target_variable="Class",
-                results_dir=self.results_dir_root()
-                + f"/test_{self.remote_access_test_case()}_remote_files",
+                results_dir=output_dir,
                 trace=True,
             )
+
+            # Check the existents of the trining files
+            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "AllReports.khj")))
+            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "Modeling.kdic")))
+
+            # Cleanup
+            for filename in fs.list_dir(output_dir):
+                fs.remove(fs.get_child_path(output_dir, filename))
 
         def test_khiops_classifier_with_remote_access(self):
             """Test the training of a khiops_classifier with remote resources"""
@@ -177,7 +188,7 @@ class PyKhiopsRemoteAccessTestsContainer:
                     target_variable="Class",
                     results_dir=fs.get_child_path(
                         self.results_dir_root(),
-                        f"/test_{self.remote_access_test_case()}_remote_files",
+                        f"test_{self.remote_access_test_case()}_remote_files",
                     ),
                     log_file_path=log_file_path,
                 )

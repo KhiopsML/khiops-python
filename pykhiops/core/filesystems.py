@@ -43,6 +43,10 @@ except ImportError as import_error:
 
 # pylint: enable=invalid-name
 
+######################
+## Helper Functions ##
+######################
+
 
 def is_local_resource(uri_or_path):
     r"""Checks if a URI or path is effectively a local path
@@ -168,7 +172,7 @@ def child_uri_info(uri_info, child_name):
 
 
 def read(uri_or_path, size=None):
-    """Reads the entire file unless size parameter is specified
+    """Reads data in binary mode from the target resource
 
     Parameters
     ----------
@@ -180,13 +184,18 @@ def read(uri_or_path, size=None):
     Returns
     -------
     `bytes`
-        A buffer containing the contents read
+        A buffer containing the read contents.
+
+    Raises
+    ------
+    RuntimeError
+        If there was a problem when reading.
     """
     return create_resource(uri_or_path).read(size=size)
 
 
 def write(uri_or_path, data):
-    """Writes data in binary mode the provided data as a complete file
+    """Writes data in binary mode to the target resource
 
     Parameters
     ----------
@@ -195,10 +204,10 @@ def write(uri_or_path, data):
     data : str or `bytes`
         The data to be written.
 
-    Returns
-    -------
-    `bool`
-        True if the write succeeded
+    Raises
+    ------
+    RuntimeError
+        If there was a problem when writing.
     """
     return create_resource(uri_or_path).write(data)
 
@@ -227,12 +236,12 @@ def remove(uri_or_path):
     uri_or_path : str
         The resource's URI or local filesystem path.
 
-    Returns
-    -------
-    `bool`
-        `True` if the operation succeeded
+    Raises
+    ------
+    RuntimeError
+        If there was a problem when removing.
     """
-    return create_resource(uri_or_path).remove()
+    create_resource(uri_or_path).remove()
 
 
 def copy_from_local(uri_or_path, local_path):
@@ -245,12 +254,12 @@ def copy_from_local(uri_or_path, local_path):
     local_path : str
         The path of the local file to be copied.
 
-    Returns
-    -------
-    `bool`
-        If the operation succeeded.
+    Raises
+    ------
+    RuntimeError
+        If there was a problem when removing.
     """
-    return create_resource(uri_or_path).copy_from_local(local_path)
+    create_resource(uri_or_path).copy_from_local(local_path)
 
 
 def copy_to_local(uri_or_path, local_path):
@@ -263,16 +272,16 @@ def copy_to_local(uri_or_path, local_path):
     local_path : str
         The path of the local file to be copied.
 
-    Returns
-    -------
-    `bool`
-        `True` if the operation succeeded.
+    Raises
+    ------
+    RuntimeError
+        If there was a problem when removing.
     """
-    return create_resource(uri_or_path).copy_to_local(local_path)
+    create_resource(uri_or_path).copy_to_local(local_path)
 
 
 def list_dir(uri_or_path):
-    """List a directory resource contents
+    """Lists a directory resource contents
 
     Parameters
     ----------
@@ -295,12 +304,8 @@ def make_dir(uri_or_path):
     uri_or_path : str
         The resource's URI or local filesystem path.
 
-    Returns
-    -------
-    bool
-      True if the operation succeeded.
     """
-    return create_resource(uri_or_path).make_dir()
+    create_resource(uri_or_path).make_dir()
 
 
 def get_child_path(uri_or_path, child_name):
@@ -445,7 +450,6 @@ class LocalFilesystemResource(FilesystemResource):
     def write(self, data):
         with open(self.path, "wb") as output_file:
             output_file.write(data)
-        return True
 
     def exists(self):
         return os.path.exists(self.path)
@@ -455,23 +459,21 @@ class LocalFilesystemResource(FilesystemResource):
             os.rmdir(self.path)
         else:
             os.remove(self.path)
-        return True
 
     def copy_from_local(self, local_path):
         directory = os.path.dirname(self.path)
         if not os.path.isdir(directory):
             os.makedirs(directory)
-        return shutil.copy(local_path, self.path)
+        shutil.copy(local_path, self.path)
 
     def copy_to_local(self, local_path):
-        return shutil.copy(self.path, local_path)
+        shutil.copy(self.path, local_path)
 
     def list_dir(self):
         return os.listdir(self.path)
 
     def make_dir(self):
         os.makedirs(self.path)
-        return True
 
     def create_child(self, file_name):
         return create_resource(os.path.join(self.path, file_name))
@@ -497,50 +499,30 @@ class GoogleCloudStorageResource(FilesystemResource):
             raise gcs_import_error
         super().__init__(uri)
         self.gcs_client = storage.Client()
+        self.blob = self.gcs_client.bucket(self.uri_info.netloc).blob(
+            self.uri_info.path[1:]
+        )
 
     def read(self, size=None):
         end = None
         if size is not None:
             end = size - 1
-        return (
-            self.gcs_client.bucket(self.uri_info.netloc)
-            .blob(self.uri_info.path[1:])
-            .download_as_bytes(end=end, checksum=None)
-        )
+        return self.blob.download_as_bytes(end=end, checksum=None)
 
     def write(self, data):
-        self.gcs_client.bucket(self.uri_info.netloc).blob(
-            self.uri_info.path[1:]
-        ).upload_from_string(data)
-        return True
+        self.blob.upload_from_string(data)
 
     def exists(self):
-        return (
-            self.gcs_client.bucket(self.uri_info.netloc)
-            .blob(self.uri_info.path[1:])
-            .exists()
-        )
+        return self.blob.exists()
 
     def remove(self):
-        return (
-            self.gcs_client.bucket(self.uri_info.netloc)
-            .blob(self.uri_info.path[1:])
-            .delete()
-        )
+        self.blob.delete()
 
     def copy_from_local(self, local_path):
-        return (
-            self.gcs_client.bucket(self.uri_info.netloc)
-            .blob(self.uri_info.path[1:])
-            .upload_from_filename(local_path)
-        )
+        self.blob.upload_from_filename(local_path)
 
     def copy_to_local(self, local_path):
-        return (
-            self.gcs_client.bucket(self.uri_info.netloc)
-            .blob(self.uri_info.path[1:])
-            .download_to_filename(local_path)
-        )
+        self.blob.download_to_filename(local_path)
 
     def list_dir(self):
         # Add an extra slash to the path to treat it as a folder
@@ -564,7 +546,6 @@ class GoogleCloudStorageResource(FilesystemResource):
             "'make_dir' is a non-operation on Google Cloud Storage. "
             "See the documentation at https://cloud.google.com/storage/docs/folders"
         )
-        return True
 
     def create_child(self, file_name):
         return create_resource(child_uri_info(self.uri_info, file_name).geturl())
@@ -648,25 +629,31 @@ class AmazonS3Resource(FilesystemResource):
             with response["Body"] as body:
                 return body.read()
         else:
-            raise ValueError(
+            raise RuntimeError(
                 f"Failed to read of S3 object {self.uri}: {json.dumps(response)}"
             )
 
     def write(self, data):
         response = self.s3_object.put(Body=data)
-        write_ok = 200 <= response["ResponseMetadata"]["HTTPStatusCode"] <= 299
-        return write_ok
+        status_code = response["ResponseMetadata"]["HTTPStatusCode"]
+        write_ok = 200 <= status_code <= 299
+        if not write_ok:
+            raise RuntimeError(
+                f"S3 write failed {self.uri} with code {status_code}: "
+                + json.dumps(response)
+            )
 
     def exists(self):
         # Test the existence by loading the object
         try:
             self.s3_object.load()
             return True
-        # The object does not exist
+        # There is a problen on load
         except ClientError as error:
+            # It is because it doesn't exists
             if error.response["Error"]["Code"] == "404":
                 return False
-            # Something else has gone wrong.
+            # If something else has gone wrong reraise the exception
             else:
                 raise
 
@@ -675,27 +662,37 @@ class AmazonS3Resource(FilesystemResource):
         response = self.s3_object.delete()
 
         # Check exit status
-        remove_ok = 200 <= response["ResponseMetadata"]["HTTPStatusCode"] <= 299
+        status_code = response["ResponseMetadata"]["HTTPStatusCode"]
+        remove_ok = 200 <= status_code <= 299
         if not remove_ok:
-            warnings.warn(f"S3 remove failed {self.uri}: {json.dumps(response)}")
-        return remove_ok
+            raise RuntimeError(
+                f"S3 remove failed {self.uri} with code {status_code}: "
+                + json.dumps(response)
+            )
 
     def copy_from_local(self, local_path):
         response = self.s3_client.Bucket(self.uri_info.netloc).upload_file(
             local_path, self.uri_info.path[1:]
         )
-        copy_ok = 200 <= response["ResponseMetadata"]["HTTPStatusCode"] <= 299
+        status_code = response["ResponseMetadata"]["HTTPStatusCode"]
+        copy_ok = 200 <= status_code <= 299
         if not copy_ok:
-            warnings.warn(f"S3 upload failed {self.uri}: {json.dumps(response)}")
-        return copy_ok
+            raise RuntimeError(
+                f"S3 copy_from_local failed {self.uri} with code {status_code}: "
+                + json.dumps(response)
+            )
 
     def copy_to_local(self, local_path):
         response = self.s3_client.Bucket(self.uri_info.netloc).download_file(
             local_path, self.uri_info.path[1:]
         )
-        copy_ok = 200 <= response["ResponseMetadata"]["HTTPStatusCode"] <= 299
+        status_code = response["ResponseMetadata"]["HTTPStatusCode"]
+        copy_ok = 200 <= status_code <= 299
         if not copy_ok:
-            warnings.warn(f"S3 download failed {self.uri}: {json.dumps(response)}")
+            raise RuntimeError(
+                f"S3 download failed {self.uri} with code {status_code}: "
+                + json.dumps(response)
+            )
         return copy_ok
 
     def list_dir(self):
@@ -716,7 +713,6 @@ class AmazonS3Resource(FilesystemResource):
             "See the documentation at "
             "https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-folders.html"
         )
-        return True
 
     def create_child(self, file_name):
         return create_resource(child_uri_info(self.uri_info, file_name).geturl())
