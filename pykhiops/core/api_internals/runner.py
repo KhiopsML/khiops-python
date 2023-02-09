@@ -971,8 +971,9 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
             self._initialize_execution_configuration()
 
         # Build command line arguments
+        # Nota: Khiops Coclustering is executed without MPI
         khiops_process_args = []
-        if self.execute_with_modl:
+        if self.execute_with_modl and tool_name == "khiops":
             khiops_process_args += self.mpi_command_args
         khiops_process_args += [self.tool_path(tool_name)]
         if command_line_args:
