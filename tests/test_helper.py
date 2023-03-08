@@ -20,7 +20,7 @@ import wrapt
 from sklearn.model_selection import train_test_split
 
 import pykhiops.core as pk
-from pykhiops.core.common import is_iterable
+from pykhiops.core.internals.common import is_iterable
 from pykhiops.sklearn.estimators import KhiopsEncoder, KhiopsEstimator
 
 
@@ -290,7 +290,6 @@ class PyKhiopsTestHelper:
     @staticmethod
     def get_two_table_data(dataset_path, root_table_name, secondary_table_name):
         """Read two-table data from two CSV files from sample dataset"""
-
         samples_dir = pk.get_runner().samples_dir
         data_path = os.path.join(samples_dir, dataset_path)
         root_table = pd.read_csv(
@@ -387,7 +386,6 @@ class PyKhiopsTestHelper:
     @staticmethod
     def predict_helper(data, pickled=True, kind="simple"):  # 'proba' accepted
         """Prediction driver helper for tests"""
-
         estimator_and_data = pickle.loads(data) if pickled else data
         estimator, data = estimator_and_data
         if (

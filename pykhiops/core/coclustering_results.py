@@ -45,12 +45,9 @@ reports.
 """
 import io
 
-from pykhiops.core.common import (
-    KhiopsJSONObject,
-    PyKhiopsJSONError,
-    PyKhiopsOutputWriter,
-    type_error_message,
-)
+from pykhiops.core.exceptions import PyKhiopsJSONError
+from pykhiops.core.internals.common import type_error_message
+from pykhiops.core.internals.io import KhiopsJSONObject, PyKhiopsOutputWriter
 
 
 class CoclusteringResults(KhiopsJSONObject):

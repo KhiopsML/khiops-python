@@ -8,8 +8,8 @@
 # * See the "LICENSE.md" file for more details.                                      #
 ######################################################################################
 """check_database task family"""
-from pykhiops.core.api_internals import task as tm
-from pykhiops.core.api_internals.types import (
+from pykhiops.core.internals import task as tm
+from pykhiops.core.internals.types import (
     BoolType,
     DictType,
     FloatType,

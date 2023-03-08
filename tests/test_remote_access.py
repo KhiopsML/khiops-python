@@ -23,7 +23,7 @@ from urllib.request import Request, urlopen
 import pandas as pd
 
 import pykhiops.core as pk
-import pykhiops.core.filesystems as fs
+import pykhiops.core.internals.filesystems as fs
 from pykhiops.extras.docker import PyKhiopsDockerRunner
 from pykhiops.sklearn import KhiopsClassifier, KhiopsCoclustering
 

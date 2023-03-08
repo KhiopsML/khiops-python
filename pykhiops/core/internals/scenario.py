@@ -10,7 +10,7 @@
 """Classes for creating Khiops scenario files"""
 import re
 
-from pykhiops.core.common import is_string_like
+from pykhiops.core.internals.common import is_string_like
 
 
 class ConfigurableKhiopsScenario:

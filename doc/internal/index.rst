@@ -8,10 +8,12 @@ for completeness.
   :toctree: generated
 
   pykhiops.sklearn.tables
-  pykhiops.core.filesystems
-  pykhiops.core.api_internals.common
-  pykhiops.core.api_internals.runner
-  pykhiops.core.api_internals.task
-  pykhiops.core.api_internals.types
-  pykhiops.core.api_internals.scenario
+  pykhiops.core.internals.common
+  pykhiops.core.internals.filesystems
+  pykhiops.core.internals.io
+  pykhiops.core.internals.runner
+  pykhiops.core.internals.scenario
+  pykhiops.core.internals.task
+  pykhiops.core.internals.types
+  pykhiops.core.internals.version
 

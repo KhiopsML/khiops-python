@@ -16,11 +16,12 @@ import textwrap
 import unittest
 from pathlib import Path
 
-from pykhiops import core as pk
-from pykhiops.core.api_internals.runner import PyKhiopsRunner
-from pykhiops.core.api_internals.scenario import ConfigurableKhiopsScenario
-from pykhiops.core.api_internals.task import create_unambiguous_khiops_path
-from pykhiops.core.common import PyKhiopsOutputWriter
+import pykhiops.core as pk
+from pykhiops.core.internals.common import create_unambiguous_khiops_path
+from pykhiops.core.internals.io import PyKhiopsOutputWriter
+from pykhiops.core.internals.runner import PyKhiopsRunner
+from pykhiops.core.internals.scenario import ConfigurableKhiopsScenario
+from pykhiops.core.internals.version import KhiopsVersion
 
 
 class PyKhiopsCoreIOTests(unittest.TestCase):
@@ -1516,7 +1517,7 @@ class CompareScenarioTestRunner(PyKhiopsRunner):
         self.create_ref = False
 
     def _initialize_khiops_version(self):
-        self._khiops_version = pk.KhiopsVersion("10.1")
+        self._khiops_version = KhiopsVersion("10.1")
 
     @property
     def ref_scenario_dir(self):
@@ -1802,9 +1803,9 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
         ]
 
         for i, version_str1 in enumerate(versions):
-            version1 = pk.KhiopsVersion(version_str1)
+            version1 = KhiopsVersion(version_str1)
             for j, version_str2 in enumerate(versions):
-                version2 = pk.KhiopsVersion(version_str2)
+                version2 = KhiopsVersion(version_str2)
 
                 if i < j:
                     self.assertLess(version1, version2)
@@ -1823,16 +1824,16 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
         """Test zero padded version equalities"""
         versions = ["9", "9.0", "9.0.0"]
         for version_str1 in versions:
-            version1 = pk.KhiopsVersion(version_str1)
+            version1 = KhiopsVersion(version_str1)
             for version_str2 in versions:
-                version2 = pk.KhiopsVersion(version_str2)
+                version2 = KhiopsVersion(version_str2)
                 self.assertEqual(version1, version2)
 
     def test_invalid_version(self):
         """Test invalid versions"""
         for version in ["10i.4", "10.4b.3", "10.@", "10.@.2", "10.1.2u"]:
             with self.assertRaises(ValueError):
-                pk.KhiopsVersion(version)
+                KhiopsVersion(version)
 
     def test_scenario_generation(self):
         """Test the scenario generation from template and arguments"""

@@ -8,5 +8,5 @@
 # * See the "LICENSE.md" file for more details.                                      #
 ######################################################################################
 """API internal implementation"""
-# Bring all tasks to the namespace of api_internals
-from pykhiops.core.api_internals import tasks
+# Bring all tasks to the namespace of internals
+from pykhiops.core.internals import tasks

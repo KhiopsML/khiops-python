@@ -24,10 +24,4 @@ Main Modules
   pykhiops.core.dictionary
   pykhiops.core.analysis_results
   pykhiops.core.coclustering_results
-  pykhiops.core.common
-
-Related Docs
-============
-- :doc:`../samples/samples`
-- :doc:`../multi_table_primer`
-- :doc:`../notes`
+  pykhiops.core.exceptions

@@ -43,8 +43,8 @@ from sklearn.base import (
 )
 
 import pykhiops.core as pk
-import pykhiops.core.filesystems as fs
-from pykhiops.core.common import (
+import pykhiops.core.internals.filesystems as fs
+from pykhiops.core.internals.common import (
     deprecation_message,
     is_dict_like,
     is_list_like,

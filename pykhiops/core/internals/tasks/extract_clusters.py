@@ -8,8 +8,8 @@
 # * See the "LICENSE.md" file for more details.                                      #
 ######################################################################################
 """extract_clusters task family"""
-from pykhiops.core.api_internals import task as tm
-from pykhiops.core.api_internals.types import IntType, StringLikeType
+from pykhiops.core.internals import task as tm
+from pykhiops.core.internals.types import IntType, StringLikeType
 
 # Disable long lines to have readable scenarios
 # pylint: disable=line-too-long

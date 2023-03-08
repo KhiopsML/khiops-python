@@ -10,7 +10,7 @@
 """Khiops task argument mini-type system"""
 from abc import ABC, abstractmethod
 
-from pykhiops.core.common import (
+from pykhiops.core.internals.common import (
     is_dict_like,
     is_list_like,
     is_string_like,

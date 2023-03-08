@@ -18,15 +18,12 @@
 import io
 import os
 
+import pykhiops.core.internals.filesystems as fs
 from pykhiops.core import api
-from pykhiops.core import filesystems as fs
-from pykhiops.core.api_internals.runner import get_runner
-from pykhiops.core.common import (
-    KhiopsJSONObject,
-    PyKhiopsJSONError,
-    PyKhiopsOutputWriter,
-    type_error_message,
-)
+from pykhiops.core.exceptions import PyKhiopsJSONError
+from pykhiops.core.internals.common import type_error_message
+from pykhiops.core.internals.io import KhiopsJSONObject, PyKhiopsOutputWriter
+from pykhiops.core.internals.runner import get_runner
 
 
 def _format_name(name):

@@ -16,27 +16,25 @@ import io
 import os
 import warnings
 
-from pykhiops.core import filesystems as fs
-from pykhiops.core.api_internals.common import CommandLineOptions
-from pykhiops.core.api_internals.runner import (
-    _get_tool_info_khiops9,
-    _get_tool_info_khiops10,
-    get_runner,
-)
-from pykhiops.core.api_internals.task import (
+import pykhiops.core.internals.filesystems as fs
+from pykhiops.core.dictionary import DictionaryDomain, read_dictionary_file
+from pykhiops.core.exceptions import PyKhiopsRuntimeError
+from pykhiops.core.internals.common import (
+    CommandLineOptions,
     create_unambiguous_khiops_path,
-    get_task_registry,
-)
-from pykhiops.core.common import (
-    KhiopsVersion,
-    PyKhiopsRuntimeError,
     deprecation_message,
     is_string_like,
     removal_message,
     renaming_message,
     type_error_message,
 )
-from pykhiops.core.dictionary import DictionaryDomain, read_dictionary_file
+from pykhiops.core.internals.runner import (
+    _get_tool_info_khiops9,
+    _get_tool_info_khiops10,
+    get_runner,
+)
+from pykhiops.core.internals.task import get_task_registry
+from pykhiops.core.internals.version import KhiopsVersion
 
 # List of all available construction rules in the Khiops tool
 all_construction_rules = [
@@ -69,7 +67,7 @@ all_construction_rules = [
 ##########################
 
 
-def check_dictionary_file_path_or_domain(dictionary_file_path_or_domain):
+def _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain):
     """Checks if the argument is a string or DictionaryDomain or raise TypeError"""
     if not is_string_like(dictionary_file_path_or_domain) and not isinstance(
         dictionary_file_path_or_domain, DictionaryDomain
@@ -84,10 +82,10 @@ def check_dictionary_file_path_or_domain(dictionary_file_path_or_domain):
         )
 
 
-def get_or_create_execution_dictionary_file(dictionary_file_path_or_domain, trace):
+def _get_or_create_execution_dictionary_file(dictionary_file_path_or_domain, trace):
     """Access the dictionary path or creates one from a DictionaryDomain object"""
     # Check the type of dictionary_file_path_or_domain
-    check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
+    _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
 
     # If the argument is a DictionaryDomain export it to a temporary file
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
@@ -105,7 +103,7 @@ def get_or_create_execution_dictionary_file(dictionary_file_path_or_domain, trac
     return execution_dictionary_file_path
 
 
-def run_task(task_name, task_args):
+def _run_task(task_name, task_args):
     """Generic task run method
 
     Parameters
@@ -119,7 +117,7 @@ def run_task(task_name, task_args):
     trace = task_args["trace"]
 
     # Execute the preprocess of common task arguments
-    task_called_with_domain = preprocess_task_arguments(task_args)
+    task_called_with_domain = _preprocess_task_arguments(task_args)
 
     # Create a command line options object
     command_line_options = CommandLineOptions(
@@ -136,7 +134,7 @@ def run_task(task_name, task_args):
     )
 
     # Clean the task_args to leave only the task arguments
-    clean_task_args(task_args)
+    _clean_task_args(task_args)
 
     # Obtain the api function from the registry
     task = get_task_registry().get_task(task_name, get_khiops_version())
@@ -151,7 +149,7 @@ def run_task(task_name, task_args):
             fs.remove(task_args["dictionary_file_path"])
 
 
-def preprocess_task_arguments(task_args):
+def _preprocess_task_arguments(task_args):
     """Preprocessing of task arguments common to various tasks
 
     Parameters
@@ -171,7 +169,7 @@ def preprocess_task_arguments(task_args):
         task_called_with_domain = isinstance(
             task_args["dictionary_file_path_or_domain"], DictionaryDomain
         )
-        task_args["dictionary_file_path"] = get_or_create_execution_dictionary_file(
+        task_args["dictionary_file_path"] = _get_or_create_execution_dictionary_file(
             task_args["dictionary_file_path_or_domain"], task_args["trace"]
         )
 
@@ -207,7 +205,7 @@ def preprocess_task_arguments(task_args):
     if "detect_format" in task_args:
         assert "header_line" in task_args
         assert "field_separator" in task_args
-        detect_format, header_line, field_separator = preprocess_format_spec(
+        detect_format, header_line, field_separator = _preprocess_format_spec(
             task_args["detect_format"],
             task_args["header_line"],
             task_args["field_separator"],
@@ -217,7 +215,7 @@ def preprocess_task_arguments(task_args):
         task_args["field_separator"] = field_separator
     if "output_header_line" in task_args:
         assert "output_field_separator" in task_args
-        _, header_line, field_separator = preprocess_format_spec(
+        _, header_line, field_separator = _preprocess_format_spec(
             False, task_args["output_header_line"], task_args["output_field_separator"]
         )
         task_args["output_header_line"] = header_line
@@ -231,7 +229,7 @@ def preprocess_task_arguments(task_args):
     return task_called_with_domain
 
 
-def preprocess_format_spec(detect_format, header_line, field_separator):
+def _preprocess_format_spec(detect_format, header_line, field_separator):
     r"""Preprocess the user format spec to be used in a task
 
     More precisely:
@@ -262,7 +260,7 @@ def preprocess_format_spec(detect_format, header_line, field_separator):
     return detect_format, header_line, field_separator
 
 
-def clean_task_args(task_args):
+def _clean_task_args(task_args):
     """Cleans the task arguments
 
     More precisely:
@@ -364,7 +362,7 @@ def get_samples_dir():
     return get_runner().samples_dir
 
 
-# Disable the unused arg rule because we use locals() to pass the arguments to run_task
+# Disable the unused arg rule because we use locals() to pass the arguments to _run_task
 # pylint: disable=unused-argument
 
 
@@ -396,7 +394,7 @@ def export_dictionary_as_json(
     task_args = locals()
 
     # Run the task
-    run_task("export_dictionary_as_json", task_args)
+    _run_task("export_dictionary_as_json", task_args)
 
 
 def build_dictionary_from_data_table(
@@ -441,7 +439,7 @@ def build_dictionary_from_data_table(
     task_args = locals()
 
     # Run the ttask
-    run_task("build_dictionary_from_data_table", task_args)
+    _run_task("build_dictionary_from_data_table", task_args)
 
 
 def check_database(
@@ -512,7 +510,7 @@ def check_database(
     task_args = locals()
 
     # Run the task
-    run_task("check_database", task_args)
+    _run_task("check_database", task_args)
 
 
 def train_predictor(
@@ -698,7 +696,7 @@ def train_predictor(
     task_args = locals()
 
     # Run the task
-    run_task("train_predictor", task_args)
+    _run_task("train_predictor", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
     reports_file_name = results_prefix
@@ -816,7 +814,7 @@ def evaluate_predictor(
     del task_args["results_prefix"]
 
     # Run the task
-    run_task("evaluate_predictor", task_args)
+    _run_task("evaluate_predictor", task_args)
 
     # Return the path of the JSON report
     report_file_name = results_prefix
@@ -1019,7 +1017,7 @@ def train_recoder(
     task_args = locals()
 
     # Run the task
-    run_task("train_recoder", task_args)
+    _run_task("train_recoder", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
     reports_file_name = f"{results_prefix}AllReports"
@@ -1127,7 +1125,7 @@ def deploy_model(
     task_args = locals()
 
     # Run the task
-    run_task("deploy_model", task_args)
+    _run_task("deploy_model", task_args)
 
 
 def build_deployed_dictionary(
@@ -1169,7 +1167,7 @@ def build_deployed_dictionary(
     task_args = locals()
 
     # run the task
-    run_task("build_deployed_dictionary", task_args)
+    _run_task("build_deployed_dictionary", task_args)
 
 
 def sort_data_table(
@@ -1237,7 +1235,7 @@ def sort_data_table(
     task_args = locals()
 
     # Run the task
-    run_task("sort_data_table", task_args)
+    _run_task("sort_data_table", task_args)
 
 
 def extract_keys_from_data_table(
@@ -1300,7 +1298,7 @@ def extract_keys_from_data_table(
     task_args = locals()
 
     # Run the task
-    run_task("extract_keys_from_data_table", task_args)
+    _run_task("extract_keys_from_data_table", task_args)
 
 
 def build_multi_table_dictionary(
@@ -1342,7 +1340,7 @@ def build_multi_table_dictionary(
     task_args = locals()
 
     # Create the execution dictionary file if it is domain or a file with no overwrite
-    check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
+    _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
         dictionary_file_path = output_dictionary_file_path
         dictionary_file_path_or_domain.export_khiops_dictionary_file(
@@ -1362,7 +1360,7 @@ def build_multi_table_dictionary(
     del task_args["output_dictionary_file_path"]
 
     # Run the task
-    run_task("build_multi_table_dictionary", task_args)
+    _run_task("build_multi_table_dictionary", task_args)
 
 
 def train_coclustering(
@@ -1464,7 +1462,7 @@ def train_coclustering(
         raise ValueError("coclustering_variables must have at most 10 elements")
 
     # Run the task
-    run_task("train_coclustering", task_args)
+    _run_task("train_coclustering", task_args)
 
     # Return the path of the coclustering file
     return fs.get_child_path(results_dir, results_prefix + "Coclustering.khcj")
@@ -1528,7 +1526,7 @@ def simplify_coclustering(
     task_args = locals()
 
     # Run the task
-    run_task("simplify_coclustering", task_args)
+    _run_task("simplify_coclustering", task_args)
 
 
 def prepare_coclustering_deployment(
@@ -1607,7 +1605,7 @@ def prepare_coclustering_deployment(
     task_args = locals()
 
     # Run the task
-    run_task("prepare_coclustering_deployment", task_args)
+    _run_task("prepare_coclustering_deployment", task_args)
 
 
 def extract_clusters(
@@ -1663,7 +1661,7 @@ def extract_clusters(
     del task_args["clusters_file_path"]
 
     # Run the task
-    run_task("extract_clusters", task_args)
+    _run_task("extract_clusters", task_args)
 
 
 def detect_data_table_format(
@@ -1713,7 +1711,7 @@ def detect_data_table_format(
         if "dictionary_name" in task_args:
             del task_args["dictionary_name"]
             del task_args["dictionary_file_path_or_domain"]
-        run_task("detect_data_table_format", task_args)
+        _run_task("detect_data_table_format", task_args)
     # Run the task with dictionary
     else:
         if task_args["dictionary_name"] is None:
@@ -1721,7 +1719,7 @@ def detect_data_table_format(
                 "'dictionary_name' must be specified with "
                 "'dictionary_file_path_or_domain'"
             )
-        run_task("detect_data_table_format_with_dictionary", task_args)
+        _run_task("detect_data_table_format_with_dictionary", task_args)
 
     # Parse the log file to obtain the header_line and field_separator parameters
     # Notes:

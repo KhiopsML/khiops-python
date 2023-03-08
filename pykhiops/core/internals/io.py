@@ -7,177 +7,16 @@
 # * Unauthorized copying of this file, via any medium is strictly prohibited.        #
 # * See the "LICENSE.md" file for more details.                                      #
 ######################################################################################
-"""Common pyKhiops utility functions and classes"""
+"""Classes to handle Khiops specific I/O"""
 import io
 import json
 import os
 import platform
 import warnings
-from collections.abc import Iterable, Mapping, Sequence
-from urllib.parse import urlparse
 
-from pykhiops.core import filesystems as fs
-
-##############
-# Exceptions #
-##############
-
-
-class PyKhiopsJSONError(Exception):
-    """Parsing error for Khiops-generated JSON files"""
-
-
-class PyKhiopsRuntimeError(Exception):
-    """Khiops execution related errors"""
-
-
-class PyKhiopsEnvironmentError(Exception):
-    """PyKhiops execution environment error
-
-    Example: Khiops binary not found.
-    """
-
-
-############
-# Messages #
-############
-
-
-def type_error_message(variable_name, variable, *target_types):
-    """Formats a type error message
-
-    Parameters
-    ----------
-    variable_name : str
-        Name of the variable for whom the type error is signaled.
-    variable : any
-        Actual variable for whom the type error is signaled.
-    target_types : list
-        Expected types for ``variable``, either as a type or as a string.
-
-    Returns
-    -------
-    str
-        The type error message.
-
-    """
-    assert len(target_types) > 0, "At least one target type must be provided"
-    assert all(
-        isinstance(target_type, (type, str)) for target_type in target_types
-    ), "All target types must be 'type' or 'str'"
-    assert isinstance(variable_name, str), "'variable_name' must be 'str'"
-    assert len(variable_name) > 0, "'variable_name' should not be empty"
-
-    # Transform to 'type' the string arguments
-    typed_target_types = []
-    for target_type in target_types:
-        if isinstance(target_type, str):
-            typed_target_types.append(type(target_type, (), {}))
-        else:
-            typed_target_types.append(target_type)
-
-    # Build the type error message
-    if len(typed_target_types) == 1:
-        target_type_str = f"'{typed_target_types[0].__name__}'"
-    elif len(typed_target_types) == 2:
-        target_type_str = (
-            f"either '{typed_target_types[0].__name__}' "
-            f"or '{typed_target_types[1].__name__}'"
-        )
-    else:
-        target_types_str = " or ".join(
-            f"'{target_type.__name__}'" for target_type in typed_target_types
-        )
-        target_type_str = f"one of {target_types_str}"
-
-    if len(variable_name.strip().split(" ")) == 1:
-        variable_name_str = f"'{variable_name}'"
-    else:
-        variable_name_str = variable_name
-
-    return (
-        f"{variable_name_str} type must be {target_type_str}, "
-        f"not '{type(variable).__name__}'"
-    )
-
-
-def removal_message(removed_feature, since, replacement=None):
-    """Formats a feature removal message"""
-    message = f"'{removed_feature}' removed since {since}. "
-    if replacement:
-        message += f"Use '{replacement}'."
-    else:
-        message += "There is no replacement."
-    return message
-
-
-def renaming_message(renamed_feature, new_name, since):
-    """Formats a feature renaming message"""
-    return f"Ignoring '{renamed_feature}': renamed to '{new_name}' since {since}."
-
-
-def invalid_keys_message(kwargs):
-    """Formats an invalid keyword parameter message"""
-    return f"Ignoring invalid parameter(s): {','.join(kwargs.keys())}."
-
-
-def deprecation_message(
-    deprecated_feature, deadline_version, replacement=None, quote=True
-):
-    """Formats a deprecation message"""
-    if quote:
-        message = f"'{deprecated_feature}' is deprecated "
-    else:
-        message = f"{deprecated_feature} is deprecated "
-    message += f"and will be removed by version {deadline_version}."
-    if replacement is not None:
-        if quote:
-            message += f" Prefer '{replacement}'."
-        else:
-            message += f" Prefer {replacement}."
-    else:
-        message += " There will be no replacement when removed."
-    return message
-
-
-###############
-# Type checks #
-###############
-
-
-def is_string_like(test_object):
-    """Returns True if a string is a valid pyKhiops string"""
-    return isinstance(test_object, (str, bytes))
-
-
-def is_list_like(list_like):
-    """Returns True if an object is list-like
-
-    An object is ``list-like`` if and only if inherits from `collections.abc.Sequence`
-    and it is not `string-like <is_string_like>`
-    """
-    return isinstance(list_like, Sequence) and not is_string_like(list_like)
-
-
-def is_dict_like(test_object):
-    """Returns True if an object is dict-like
-
-    An object is ``dict-like`` if and only if inherits from the
-    `collections.abc.Mapping`.
-    """
-    return isinstance(test_object, Mapping)
-
-
-def is_iterable(test_object):
-    """Return True if a container object is iterable, but not string-like"""
-    return isinstance(test_object, (Sequence, Iterable)) and not is_string_like(
-        test_object
-    )
-
-
-#######################
-# Khiops specific I/O #
-#######################
+import pykhiops.core.internals.filesystems as fs
+from pykhiops.core.exceptions import PyKhiopsJSONError
+from pykhiops.core.internals.common import is_string_like, type_error_message
 
 
 def encode_file_path(file_path):
@@ -231,44 +70,6 @@ def encode_file_path(file_path):
     return bytes(decoded_bytes)
 
 
-def create_unambiguous_khiops_path(path):
-    """Creates a path that is unambiguous for Khiops
-
-    Khiops needs that a non absolute path starts with "." so not use the path of an
-    internally saved state as reference point.
-
-    For example: if we open the data table "/some/path/to/data.txt" and then set the
-    results directory simply as "results" the effective location of the results
-    directory will be "/some/path/to/results" instead of "$CWD/results". This behavior
-    is a feature in Khiops but it is undesirable when using it as a library.
-
-    This function returns a path so the library behave as expected: a path relative to
-    the $CWD if it is a non absolute path.
-    """
-    # Check for string
-    if not isinstance(path, (str, bytes)):
-        raise TypeError(type_error_message("path", path, str, bytes))
-
-    # Empty path returned as-is
-    if not path:
-        return path
-
-    # Add a "." to a local path if necessary. It is *not* necessary when:
-    # - `path` is an URI
-    # - `path` is an absolute path
-    # - `path` is a path starting with "."
-    dot = "."
-    empty = ""
-    if isinstance(path, bytes):
-        dot = bytes(dot, encoding="ascii")
-        empty = bytes(empty, encoding="ascii")
-    uri_info = urlparse(path, allow_fragments=False)
-    if os.path.isabs(path) or path.startswith(dot) or uri_info.scheme != empty:
-        return path
-    else:
-        return os.path.join(dot, path)
-
-
 class KhiopsJSONObject:
     """Represents the contents of a Khiops JSON file
 
@@ -280,7 +81,7 @@ class KhiopsJSONObject:
 
     Raises
     ------
-    `PyKhiopsJSONError`
+    `~.PyKhiopsJSONError`
         If the JSON data is invalid.
 
     Attributes
@@ -320,12 +121,10 @@ class KhiopsJSONObject:
 
             # Input check
             if "tool" not in json_data:
-                raise PyKhiopsJSONError(
-                    "Khiops JSON file does not have a 'tool' field "
-                )
+                raise PyKhiopsJSONError("Khiops JSON file does not have a 'tool' field")
             if "version" not in json_data:
                 raise PyKhiopsJSONError(
-                    "Khiops JSON file does not have a 'version' field "
+                    "Khiops JSON file does not have a 'version' field"
                 )
 
             if "khiops_encoding" not in json_data:
@@ -642,164 +441,3 @@ all_ansi_unicode_chars = [
 all_ansi_unicode_chars_to_ansi = {
     char: bytes([128 + i]) for i, char in enumerate(all_ansi_unicode_chars)
 }
-
-
-##################
-# Khiops Version #
-##################
-
-
-class KhiopsVersion:
-    """Encapsulates the Khiops version string
-
-    Implements comparison operators.
-    """
-
-    def __init__(self, version):
-        # Save the version and its parts
-        self.version = version
-        self._parts = None
-        self._trailing_char = None
-        self._allowed_chars = ["c", "i", "a", "b"]
-
-        # Check that :
-        # - each part besides the last is numeric
-        # - the last part is alphanumeric
-        raw_parts = version.split(".")
-        for i, part in enumerate(raw_parts, start=1):
-            if i < len(raw_parts) and not part.isnumeric():
-                raise ValueError(
-                    f"Component #{i} of version string '{version}' " "must be numeric."
-                )
-            if i == len(raw_parts):
-                if not part.isalnum():
-                    raise ValueError(
-                        f"Component #{i} of version string '{version}' "
-                        "must be alphanumeric."
-                    )
-                if not part[0].isnumeric():
-                    raise ValueError(
-                        f"Component #{i} of version string '{version}' "
-                        "must start with a numeric character"
-                    )
-
-                must_be_alpha = False
-                for char in part:
-                    if char.isnumeric() and must_be_alpha:
-                        raise ValueError(
-                            f"Component #{i} of version string '{version}' "
-                            "must have alphabetic characters only at the end"
-                        )
-                    elif char.isalpha() and not must_be_alpha:
-                        must_be_alpha = True
-
-        # Save the numeric parts
-        self._parts = []
-        for part in raw_parts[:-1]:
-            self._parts.append(int(part))
-
-        # Save the numeric portion of the last part and any remaining chars
-        last_part = raw_parts[-1]
-        if last_part.isnumeric():
-            self._parts.append(int(last_part))
-        else:
-            for i, char in enumerate(last_part):
-                if char.isalpha():
-                    self._parts.append(int(last_part[:i]))
-                    self._trailing_char = last_part[i:]
-                    break
-        if (
-            self._trailing_char is not None
-            and self._trailing_char not in self._allowed_chars
-        ):
-            raise ValueError(
-                f"Trailing char of version string '{version}' "
-                f"must be one of {self._allowed_chars}"
-            )
-
-        # Transform numeric parts to tuple
-        self._parts = tuple(self._parts)
-
-        assert isinstance(self._parts, tuple)
-
-    @property
-    def major(self):
-        """int : The major number of this version"""
-        return self._parts[0]
-
-    @property
-    def minor(self):
-        """int : The minor number of this version"""
-        if len(self._parts) < 2:
-            minor_number = 0
-        else:
-            minor_number = self._parts[1]
-        return minor_number
-
-    @property
-    def patch(self):
-        """int : The patch number of this version"""
-        if len(self._parts) < 3:
-            patch_number = 0
-        else:
-            patch_number = self._parts[2]
-        return patch_number
-
-    def __str__(self):
-        return self.version
-
-    def __repr__(self):
-        return self.version
-
-    def __eq__(self, version):
-        # Pad with zeros the versions if necessary
-        if len(self._parts) > len(version._parts):
-            padded_parts = version._parts + (0,) * (
-                len(self._parts) - len(version._parts)
-            )
-            this_padded_parts = self._parts
-        elif len(self._parts) < len(version._parts):
-            this_padded_parts = self._parts + (0,) * (
-                len(version._parts) - len(self._parts)
-            )
-            padded_parts = version._parts
-        else:
-            this_padded_parts = self._parts
-            padded_parts = version._parts
-
-        # Compare the padded parts and the trailing chars
-        if (
-            this_padded_parts == padded_parts
-            and self._trailing_char == version._trailing_char
-        ):
-            return True
-        return False
-
-    def __gt__(self, version):
-        if self == version:
-            return False
-        elif self._parts > version._parts:
-            return True
-        elif self._parts < version._parts:
-            return False
-        else:
-            if self._trailing_char is None and version._trailing_char is not None:
-                return True
-            elif self._trailing_char is not None and version._trailing_char is None:
-                return False
-            else:
-                self_index = self._allowed_chars.index(self._trailing_char)
-                version_index = self._allowed_chars.index(version._trailing_char)
-                return self_index > version_index
-
-    def __ge__(self, version):
-        return self.__eq__(version) or self.__gt__(version)
-
-    def __lt__(self, version):
-        return not self.__ge__(version)
-
-    def __le__(self, version):
-        return not self.__gt__(version)
-
-    def __hash__(self):
-        return self.version.__hash__()

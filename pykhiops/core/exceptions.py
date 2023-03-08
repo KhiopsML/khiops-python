@@ -7,11 +7,19 @@
 # * Unauthorized copying of this file, via any medium is strictly prohibited.        #
 # * See the "LICENSE.md" file for more details.                                      #
 ######################################################################################
-"""Pure Python library for the Khiops AutoML suite"""
-from pykhiops.core.analysis_results import *
-from pykhiops.core.api import *
-from pykhiops.core.coclustering_results import *
-from pykhiops.core.dictionary import *
-from pykhiops.core.exceptions import *
-from pykhiops.core.helpers import *
-from pykhiops.core.internals.runner import get_runner, set_runner
+"""pyKhiops exception classes"""
+
+
+class PyKhiopsJSONError(Exception):
+    """Parsing error for Khiops-generated JSON files"""
+
+
+class PyKhiopsRuntimeError(Exception):
+    """Khiops execution related errors"""
+
+
+class PyKhiopsEnvironmentError(Exception):
+    """PyKhiops execution environment error
+
+    Example: Khiops binary not found.
+    """

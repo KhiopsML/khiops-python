@@ -7,9 +7,9 @@
 # * Unauthorized copying of this file, via any medium is strictly prohibited.        #
 # * See the "LICENSE.md" file for more details.                                      #
 ######################################################################################
-"""train_recoder tasks"""
-from pykhiops.core.api_internals import task as tm
-from pykhiops.core.api_internals.types import (
+"""train_predictor task family"""
+from pykhiops.core.internals import task as tm
+from pykhiops.core.internals.types import (
     BoolType,
     DictType,
     FloatType,
@@ -23,7 +23,7 @@ from pykhiops.core.api_internals.types import (
 # pylint: disable=line-too-long
 TASKS = [
     tm.KhiopsTask(
-        "train_recoder",
+        "train_predictor",
         "khiops",
         "10.0",
         [
@@ -39,9 +39,15 @@ TASKS = [
             ("field_separator", StringLikeType, ""),
             ("sample_percentage", FloatType, 100.0),
             ("sampling_mode", StringLikeType, "Include sample"),
+            ("test_database_mode", StringLikeType, "Complementary"),
             ("selection_variable", StringLikeType, ""),
             ("selection_value", StringLikeType, ""),
             ("additional_data_tables", DictType(StringLikeType, StringLikeType), None),
+            ("main_target_value", StringLikeType, ""),
+            ("snb_predictor", BoolType, True),
+            ("univariate_predictor_number", IntType, 0),
+            ("max_evaluated_variables", IntType, 0),
+            ("max_selected_variables", IntType, 0),
             ("max_constructed_variables", IntType, 0),
             ("construction_rules", ListType(StringLikeType), None),
             ("max_trees", IntType, 10),
@@ -56,13 +62,6 @@ TASKS = [
             ("discretization_method", StringLikeType, "MODL"),
             ("min_interval_frequency", IntType, 0),
             ("max_intervals", IntType, 0),
-            ("informative_variables_only", BoolType, True),
-            ("max_variables", IntType, 0),
-            ("keep_initial_categorical_variables", BoolType, True),
-            ("keep_initial_numerical_variables", BoolType, True),
-            ("categorical_recoding_method", StringLikeType, "part Id"),
-            ("numerical_recoding_method", StringLikeType, "part Id"),
-            ("pairs_recoding_method", StringLikeType, "part Id"),
             ("grouping_method", StringLikeType, "MODL"),
             ("min_group_frequency", IntType, 0),
             ("max_groups", IntType, 0),
@@ -74,6 +73,7 @@ TASKS = [
             "results_dir",
             "additional_data_tables",
         ],
+        # pylint: disable=line-too-long
         # fmt: off
         """
         // Dictionary file and class settings
@@ -100,14 +100,21 @@ TASKS = [
         TrainDatabase.SamplingMode __sampling_mode__
         TrainDatabase.SelectionAttribute __selection_variable__
         TrainDatabase.SelectionValue __selection_value__
+        TrainDatabase.TestDatabaseSpecificationMode __test_database_mode__
 
         // Target variable
         AnalysisSpec.TargetAttributeName __target_variable__
+        AnalysisSpec.MainTargetModality __main_target_value__
 
-        // Disable predictors
-        AnalysisSpec.PredictorsSpec.SelectiveNaiveBayesPredictor false
-        AnalysisSpec.PredictorsSpec.NaiveBayesPredictor false
-        AnalysisSpec.PredictorsSpec.AdvancedSpec.UnivariatePredictorNumber 0
+        // Predictors to train
+        AnalysisSpec.PredictorsSpec.SelectiveNaiveBayesPredictor __snb_predictor__
+        AnalysisSpec.PredictorsSpec.AdvancedSpec.UnivariatePredictorNumber __univariate_predictor_number__
+
+        // Selective Naive Bayes settings
+        AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectSelectiveNaiveBayesParameters
+        TrainParameters.MaxEvaluatedAttributeNumber __max_evaluated_variables__
+        SelectionParameters.MaxSelectedAttributeNumber __max_selected_variables__
+        Exit
 
         // Feature engineering
         AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber __max_trees__
@@ -142,27 +149,17 @@ TASKS = [
         AnalysisSpec.PreprocessingSpec.GrouperSpec.MinGroupFrequency __min_group_frequency__
         AnalysisSpec.PreprocessingSpec.GrouperSpec.MaxGroupNumber __max_groups__
 
-        // Recoder Settings
-        AnalysisSpec.RecodersSpec.Recoder true
-        AnalysisSpec.RecodersSpec.RecodingSpec.FilterAttributes __informative_variables_only__
-        AnalysisSpec.RecodersSpec.RecodingSpec.MaxFilteredAttributeNumber __max_variables__
-        AnalysisSpec.RecodersSpec.RecodingSpec.KeepInitialSymbolAttributes __keep_initial_categorical_variables__
-        AnalysisSpec.RecodersSpec.RecodingSpec.KeepInitialContinuousAttributes __keep_initial_numerical_variables__
-        AnalysisSpec.RecodersSpec.RecodingSpec.RecodeSymbolAttributes __categorical_recoding_method__
-        AnalysisSpec.RecodersSpec.RecodingSpec.RecodeContinuousAttributes __numerical_recoding_method__
-        AnalysisSpec.RecodersSpec.RecodingSpec.RecodeBivariateAttributes __pairs_recoding_method__
-
         // Output settings
         AnalysisResults.ResultFilesDirectory __results_dir__
         AnalysisResults.ResultFilesPrefix __results_prefix__
 
-        // Train recoder
+        // Build model
         ComputeStats
         """,
         # fmt: on
     ),
     tm.KhiopsTask(
-        "train_recoder",
+        "train_predictor",
         "khiops",
         "9.0",
         [
@@ -177,9 +174,16 @@ TASKS = [
             ("field_separator", StringLikeType, ""),
             ("sample_percentage", FloatType, 100.0),
             ("sampling_mode", StringLikeType, "Include sample"),
+            ("fill_test_database_settings", BoolType, False),
             ("selection_variable", StringLikeType, ""),
             ("selection_value", StringLikeType, ""),
             ("additional_data_tables", DictType(StringLikeType, StringLikeType), None),
+            ("main_target_value", StringLikeType, ""),
+            ("snb_predictor", BoolType, True),
+            ("map_predictor", BoolType, False),
+            ("univariate_predictor_number", IntType, 0),
+            ("max_evaluated_variables", IntType, 0),
+            ("max_selected_variables", IntType, 0),
             ("max_constructed_variables", IntType, 0),
             ("construction_rules", ListType(StringLikeType), None),
             ("max_trees", IntType, 10),
@@ -189,13 +193,6 @@ TASKS = [
             ("discretization_method", StringLikeType, "MODL"),
             ("min_interval_frequency", IntType, 0),
             ("max_intervals", IntType, 0),
-            ("informative_variables_only", BoolType, True),
-            ("max_variables", IntType, 0),
-            ("keep_initial_categorical_variables", BoolType, True),
-            ("keep_initial_numerical_variables", BoolType, True),
-            ("categorical_recoding_method", StringLikeType, "part Id"),
-            ("numerical_recoding_method", StringLikeType, "part Id"),
-            ("pairs_recoding_method", StringLikeType, "part Id"),
             ("grouping_method", StringLikeType, "MODL"),
             ("min_group_frequency", IntType, 0),
             ("max_groups", IntType, 0),
@@ -229,14 +226,26 @@ TASKS = [
         TrainDatabase.SamplingMode __sampling_mode__
         TrainDatabase.SelectionAttribute __selection_variable__
         TrainDatabase.SelectionValue __selection_value__
+        __OPT__
+        __fill_test_database_settings__
+        TrainDatabase.FillTestDatabaseSettings
+        __END_OPT__
 
         // Target variable
         AnalysisSpec.TargetAttributeName __target_variable__
+        AnalysisSpec.MainTargetModality __main_target_value__
 
-        // Disable predictors
-        AnalysisSpec.ModelingSpec.SelectiveNaiveBayesPredictor false
+        // Predictors to train
+        AnalysisSpec.ModelingSpec.SelectiveNaiveBayesPredictor __snb_predictor__
+        AnalysisSpec.ModelingSpec.MAPNaiveBayesPredictor __map_predictor__
         AnalysisSpec.ModelingSpec.NaiveBayesPredictor false
-        AnalysisSpec.ModelingSpec.UnivariatePredictorNumber 0
+        AnalysisSpec.ModelingSpec.UnivariatePredictorNumber __univariate_predictor_number__
+
+        // Selective Naive Bayes settings
+        AnalysisSpec.ModelingSpec.InspectSelectiveNaiveBayesParameters
+        TrainParameters.MaxEvaluatedAttributeNumber __max_evaluated_variables__
+        SelectionParameters.MaxSelectedAttributeNumber __max_selected_variables__
+        Exit
 
         // Feature engineering
         AnalysisSpec.AttributeConstructionSpec.MaxTreeNumber __max_trees__
@@ -250,7 +259,6 @@ TASKS = [
         ConstructionRules.List.Key
         ConstructionRules.Used
         __END_DICT__
-        Exit
 
         // Data preparation (discretization & grouping) settings
         AnalysisSpec.PreprocessingSpec.TargetGrouped __group_target_value__
@@ -263,23 +271,11 @@ TASKS = [
         AnalysisSpec.PreprocessingSpec.GrouperSpec.MinGroupFrequency __min_group_frequency__
         AnalysisSpec.PreprocessingSpec.GrouperSpec.MaxGroupNumber __max_groups__
 
-        // Recoder Settings
-        AnalysisSpec.AttributeConstructionSpec.RecodingClass true
-        AnalysisSpec.AttributeConstructionSpec.InspectRecodingSpec
-        FilterAttributes __informative_variables_only__
-        MaxFilteredAttributeNumber __max_variables__
-        KeepInitialSymbolAttributes __keep_initial_categorical_variables__
-        KeepInitialContinuousAttributes __keep_initial_numerical_variables__
-        RecodeSymbolAttributes __categorical_recoding_method__
-        RecodeContinuousAttributes __numerical_recoding_method__
-        RecodeBivariateAttributes __pairs_recoding_method__
-        Exit
-
         // Output settings
         AnalysisResults.ResultFilesDirectory __results_dir__
         AnalysisResults.ResultFilesPrefix __results_prefix__
 
-        // Train recoder
+        // Build model
         ComputeStats
         """,
         # fmt: on

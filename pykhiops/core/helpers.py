@@ -10,15 +10,15 @@
 """Helper functions for specific and/or advanced treatments"""
 import os
 
+import pykhiops.core.internals.filesystems as fs
 from pykhiops.core import api
-from pykhiops.core import filesystems as fs
-from pykhiops.core.api_internals.runner import get_runner
-from pykhiops.core.common import (
+from pykhiops.core.dictionary import DictionaryDomain, read_dictionary_file
+from pykhiops.core.internals.common import (
     create_unambiguous_khiops_path,
     is_list_like,
     type_error_message,
 )
-from pykhiops.core.dictionary import DictionaryDomain, read_dictionary_file
+from pykhiops.core.internals.runner import get_runner
 
 
 def deploy_coclustering(
@@ -131,7 +131,7 @@ def deploy_coclustering(
         - `samples.deploy_coclustering()`
     """
     # Obtain the dictionary of the table where the coclustering variables are
-    api.check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
+    api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
         domain = dictionary_file_path_or_domain
     else:
@@ -310,7 +310,7 @@ def deploy_predictor_for_metrics(
         Options of the `.PyKhiopsRunner.run` method from the class `.PyKhiopsRunner`.
     """
     # Check the dictionary domain
-    api.check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
+    api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
 
     # Load the dictionary file into a domain if necessary
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):

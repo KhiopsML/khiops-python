@@ -18,11 +18,11 @@ import uuid
 import warnings
 from urllib.request import Request, urlopen
 
+import pykhiops.core.internals.filesystems as fs
 from pykhiops import core as pk
 from pykhiops import get_compatible_khiops_version
-from pykhiops.core import filesystems as fs
-from pykhiops.core.api_internals.runner import PyKhiopsRunner
-from pykhiops.core.api_internals.task import KhiopsTask
+from pykhiops.core.internals.runner import PyKhiopsRunner
+from pykhiops.core.internals.task import KhiopsTask
 
 
 class PyKhiopsDockerRunner(PyKhiopsRunner):

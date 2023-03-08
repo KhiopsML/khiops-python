@@ -10,20 +10,20 @@
 """Core API functions abstractions"""
 import textwrap
 
-from pykhiops.core.api_internals.scenario import ConfigurableKhiopsScenario
-from pykhiops.core.api_internals.types import (
+from pykhiops.core.internals.common import (
+    create_unambiguous_khiops_path,
+    type_error_message,
+)
+from pykhiops.core.internals.io import encode_file_path
+from pykhiops.core.internals.scenario import ConfigurableKhiopsScenario
+from pykhiops.core.internals.types import (
     AbstractDictType,
     AbstractListType,
     DictType,
     KhiopsTaskArgumentType,
     StringLikeType,
 )
-from pykhiops.core.common import (
-    KhiopsVersion,
-    create_unambiguous_khiops_path,
-    encode_file_path,
-    type_error_message,
-)
+from pykhiops.core.internals.version import KhiopsVersion
 
 
 def encode_path_valued_arg(arg, arg_name, arg_type):
