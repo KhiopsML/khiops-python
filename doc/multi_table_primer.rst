@@ -163,23 +163,21 @@ through the following *snowflake* schema
     |
     +--- 1:1 --- Place(AccidentId)
 
-We build the input ``X`` as follows::
+We build the input ``X`` as follows (without ``Place`` as it is a ``1:1`` relation, see note
+above)::
 
     # We use `Accidents.txt` table of `AccidentsSummary` as it contains the `Gravity` label pre-calculated
     accidents_df = pd.read_csv(f"{pk.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
-    places_df = pd.read_csv(f"{pk.get_samples_dir()}/Accidents/Places.txt", sep="\t", encoding="latin1")
     vehicles_df = pd.read_csv(f"{pk.get_samples_dir()}/Accidents/Vehicles.txt", sep="\t", encoding="latin1")
     users_df = pd.read_csv(f"{pk.get_samples_dir()}/Accidents/Users.txt", sep="\t", encoding="latin1")
     X = {
         "main_table": "Accidents",
         "tables": {
             "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
-            "Places": (places_df, "AccidentId"),
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
             "Users": (users_df, ["AccidentId", "VehicleId"]),
         },
         "relations": [
-            ("Accidents", "Places"),
             ("Accidents", "Vehicles"),
             ("Vehicles", "Users"),
         ],
@@ -348,8 +346,8 @@ This time, the relational schema is as follows:
 The ``additional_data_tables`` parameter must be set as::
 
     additional_data_tables = {
-        "Customer`Address": "/path/to/Address.txt",
-        "Customer`Services": "/path/to/Service.txt",
-        "Customer`Services`Usages": "/path/to/Usage.txt"
+        "Accident`Place": "/path/to/Places.txt",
+        "Accident`Vehicles": "/path/to/Vehicles.txt",
+        "Accident`Vehicles`Users": "/path/to/Users.txt"
     }
 

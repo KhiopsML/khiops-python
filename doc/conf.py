@@ -39,7 +39,7 @@ numpydoc_show_class_members = False
 ## Autodoc extension config
 autodoc_default_options = {
     "members": True,
-    "inherited-members": True,
+    "inherited-members": False,
     "private-members": False,
     "show-inheritance": True,
     "special-members": False,
@@ -82,7 +82,7 @@ html_theme_options = {
         "font-stack": "Helvetica Neue, sans-serif",
     },
 }
-html_title = f"<h6>{project} {release}</h6>"
+html_title = f"<h6><center>{project} {release}</center></h6>"
 html_logo = "./khiops_logo.png"
 
 # HTML static pages

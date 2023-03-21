@@ -221,9 +221,6 @@ Samples
             sep="\t",
             encoding="latin1",
         )
-        places_df = pd.read_csv(
-            path.join(accidents_dataset_path, "Places.txt"), sep="\t", encoding="latin1"
-        )
         users_df = pd.read_csv(
             path.join(accidents_dataset_path, "Users.txt"), sep="\t", encoding="latin1"
         )
@@ -238,14 +235,12 @@ Samples
             "main_table": "Accidents",
             "tables": {
                 "Accidents": (accidents_df, "AccidentId"),
-                "Places": (places_df, "AccidentId"),
                 "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
                 "Users": (users_df.drop("Gravity", axis=1), ["AccidentId", "VehicleId"]),
             },
             "relations": [
-                ("Accidents", "Places"),
-                ("Vehicles", "Users"),
                 ("Accidents", "Vehicles"),
+                ("Vehicles", "Users"),
             ],
         }
 
@@ -256,8 +251,8 @@ Samples
             encoding="latin1",
         )["Gravity"]
 
-        # Train the classifier (by default it creates 100 multi-table features)
-        pkc = KhiopsClassifier()
+        # Train the classifier (by default it creates 1000 multi-table features)
+        pkc = KhiopsClassifier(n_trees=0)
         pkc.fit(X, y)
 
         # Predict the class on the test dataset
@@ -434,9 +429,6 @@ Samples
         accidents_df = pd.read_csv(
             path.join(accidents_dataset_path, "Accidents.txt"), sep="\t", encoding="latin1"
         )
-        places_df = pd.read_csv(
-            path.join(accidents_dataset_path, "Places.txt"), sep="\t", encoding="latin1"
-        )
         users_df = pd.read_csv(
             path.join(accidents_dataset_path, "Users.txt"), sep="\t", encoding="latin1"
         )
@@ -451,14 +443,12 @@ Samples
             "main_table": "Accidents",
             "tables": {
                 "Accidents": (accidents_df, "AccidentId"),
-                "Places": (places_df, "AccidentId"),
                 "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
                 "Users": (users_df.drop("Gravity", axis=1), ["AccidentId", "VehicleId"]),
             },
             "relations": [
-                ("Accidents", "Places"),
-                ("Vehicles", "Users"),
                 ("Accidents", "Vehicles"),
+                ("Vehicles", "Users"),
             ],
         }
 
