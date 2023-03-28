@@ -596,6 +596,12 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     ("pykhiops.core", "read_coclustering_results_file"),
                     ("pykhiops.core", "build_multi_table_dictionary"),
                     ("pykhiops.core", "prepare_coclustering_deployment"),
+                    ("pykhiops.core", "simplify_coclustering"),
+                ],
+                "simplify": [
+                    ("pykhiops.core", "simplify_coclustering"),
+                    ("pykhiops.core", "build_multi_table_dictionary"),
+                    ("pykhiops.core", "prepare_coclustering_deployment"),
                 ],
                 "predict": [
                     ("pykhiops.core", "deploy_model"),
@@ -624,6 +630,21 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 1: "main_table",
                                 3: ("SampleId", "Pos", "Char"),
                                 4: cls.output_dir,
+                            },
+                            ("pykhiops.core", "simplify_coclustering"): {},
+                        },
+                        "simplify": {
+                            ("pykhiops.core", "simplify_coclustering"): {
+                                2: cls.output_dir
+                            },
+                            ("pykhiops.core", "prepare_coclustering_deployment"): {
+                                2: os.path.join(cls.output_dir, "Coclustering.khcj"),
+                                3: "CC_main_table",
+                                4: "SampleId",
+                                5: cls.output_dir,
+                            },
+                            ("pykhiops.core", "build_multi_table_dictionary"): {
+                                2: "CC_main_table"
                             },
                         },
                         "predict": {
@@ -913,6 +934,11 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                         0: cls.assertEqualPath,
                     },
                 },
+                "simplify": {
+                    ("pykhiops.core", "prepare_coclustering_deployment"): {
+                        2: cls.assertEqualPath,
+                    },
+                },
                 "predict": {
                     ("pykhiops.core", "deploy_model"): {3: cls.assertPathHasPrefix},
                     ("pykhiops.core", "extract_keys_from_data_table"): {
@@ -932,7 +958,6 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "build_cluster_variable": True,
                                 "build_distance_variables": False,
                                 "build_frequency_variables": False,
-                                "max_part_numbers": None,
                             },
                             ("pykhiops.core", "read_coclustering_results_file"): {},
                             ("pykhiops.core", "build_multi_table_dictionary"): {
@@ -942,6 +967,25 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops_train_cc.log"
                                 )
+                            },
+                            ("pykhiops.core", "simplify_coclustering"): {
+                                "max_part_numbers": {"SampleId": 2},
+                            },
+                        },
+                        "simplify": {
+                            ("pykhiops.core", "simplify_coclustering"): {
+                                "max_part_numbers": {"SampleId": 2},
+                                "max_preserved_information": 3,
+                                "max_cells": 4,
+                                "max_total_parts": 1,
+                            },
+                            ("pykhiops.core", "prepare_coclustering_deployment"): {
+                                "build_cluster_variable": True,
+                                "build_distance_variables": False,
+                                "build_frequency_variables": False,
+                            },
+                            ("pykhiops.core", "build_multi_table_dictionary"): {
+                                "overwrite_dictionary_file": True
                             },
                         },
                         "predict": {
@@ -969,7 +1013,6 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "build_cluster_variable": True,
                                 "build_distance_variables": False,
                                 "build_frequency_variables": False,
-                                "max_part_numbers": None,
                             },
                             ("pykhiops.core", "read_coclustering_results_file"): {},
                             ("pykhiops.core", "build_multi_table_dictionary"): {
@@ -1259,6 +1302,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                         "log_file_path": cls.assertEqualPath
                     }
                 },
+                "simplify": {},
                 "predict": {
                     ("pykhiops.core", "deploy_model"): {
                         "additional_data_tables": (
@@ -1707,11 +1751,31 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
 
             # Train the estimator
             estimator = estimator_type(output_dir=self.output_dir, internal_sort=False)
-            fit_kwargs = custom_kwargs["fit"] if custom_kwargs is not None else {}
+            fit_kwargs = (
+                custom_kwargs.get("fit", {}) if custom_kwargs is not None else {}
+            )
             estimator.fit(X_train_data, y_train_data, **fit_kwargs)
 
-            # On a "predict" test : Execute predict/transform on the fitted estimator
-            if estimator_method == "predict":
+            # Custom logic for calling additional methods, after `fit`:
+            # On a "simplify" test: execute `simplify` on the fitted
+            # coclustering estimator
+            if estimator_method == "simplify":
+                if estimator_type == KhiopsCoclustering:
+                    simplify_kwargs = (
+                        custom_kwargs.get("simplify", {})
+                        if custom_kwargs is not None
+                        else {}
+                    )
+                    estimator.simplify(**simplify_kwargs)
+                else:
+                    raise NotImplementedError(
+                        f"The '{estimator_method}' is not implemented on estimators"
+                        f" of type '{estimator_type}'; it is only implemented on"
+                        " estimators of type 'KhiopsCoclustering'"
+                    )
+            # On a "predict" test: execute `predict` / `transform` on the fitted
+            # estimator
+            elif estimator_method == "predict":
                 if estimator_type == KhiopsEncoder:
                     estimator.transform(X_test_data)
                 else:
@@ -2003,6 +2067,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "fit": {
                     "columns": ("SampleId", "Pos", "Char"),
                     "id_column": "SampleId",
+                    "max_part_numbers": {"SampleId": 2},
                 }
             },
         )
@@ -2019,6 +2084,27 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     "columns": ("SampleId", "Pos", "Char"),
                     "id_column": "SampleId",
                 }
+            },
+        )
+
+    def test_parameter_transfer_coclustering_simplify_from_dataframe(self):
+        """Test parameter transfer from dataframe coclustering simplify to core API"""
+        self._test_template(
+            estimator_type=KhiopsCoclustering,
+            estimator_method="simplify",
+            schema_type="not_applicable",
+            source_type="dataframe",
+            custom_kwargs={
+                "fit": {
+                    "columns": ("SampleId", "Pos", "Char"),
+                    "id_column": "SampleId",
+                },
+                "simplify": {
+                    "max_part_numbers": {"SampleId": 2},
+                    "max_preserved_information": 3,
+                    "max_cells": 4,
+                    "max_total_parts": 1,
+                },
             },
         )
 

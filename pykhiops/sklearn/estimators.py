@@ -44,6 +44,7 @@ from sklearn.base import (
 
 import pykhiops.core as pk
 import pykhiops.core.internals.filesystems as fs
+from pykhiops.core.dictionary import DictionaryDomain
 from pykhiops.core.helpers import build_multi_table_dictionary_domain
 from pykhiops.core.internals.common import (
     deprecation_message,
@@ -637,7 +638,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                 deprecation_message(
                     "'max_part_numbers' estimator parameter",
                     "11.0.0",
-                    replacement="'max_part_numbers' parameter of the 'fit' method",
+                    replacement="'max_part_numbers' parameter of the 'simplify' method",
                     quote=False,
                 )
             )
@@ -664,8 +665,10 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         max_part_numbers : dict, optional
             Maximum number of clusters for each of the co-clustered column.
             Specifically, a key-value pair of this dictionary represents the column name
-            and its respective maximum number of clusters. If not specified there is no
-            maximun number of clusters is imposed on any column.
+            and its respective maximum number of clusters. If not specified, then no
+            maximum number of clusters is imposed on any column.
+            **Deprecated** (will be removed in pyKhiops 11). Use the ``simplify``
+            method instead.
 
         Returns
         -------
@@ -712,29 +715,17 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         if id_column not in dataset.main_table.column_ids:
             raise ValueError(f"id column '{id_column}' not found in X")
 
-        # Check that the 'max_part_numbers' parameter:
-        # - Is dict-like
-        # - Its keys are str
-        # - Its values are positive int's
+        # Deprecate the 'max_part_numbers' parameter
         max_part_numbers = kwargs.get("max_part_numbers", self.max_part_numbers)
-        if max_part_numbers is not None and not is_dict_like(max_part_numbers):
-            raise TypeError(
-                type_error_message("max_part_numbers", max_part_numbers, "dict-like")
-            )
         if max_part_numbers is not None:
-            for key in max_part_numbers.keys():
-                if not isinstance(key, str):
-                    raise TypeError(
-                        type_error_message("'max_part_numbers' keys", key, str)
-                    )
-
-            for value in max_part_numbers.values():
-                if not isinstance(value, int):
-                    raise TypeError(
-                        type_error_message("'max_part_numbers' values", value, int)
-                    )
-                elif value < 0:
-                    raise ValueError("'max_part_numbers' values must be positive")
+            warnings.warn(
+                deprecation_message(
+                    "'max_part_numbers' 'fit' parameter",
+                    "11.0.0",
+                    replacement="'max_part_numbers' parameter of the 'simplify' method",
+                    quote=False,
+                )
+            )
 
     def _fit_check_dataset(self, dataset):
         # No additional checks
@@ -759,9 +750,6 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             variables = self.variables
         else:
             variables = list(dataset.main_table.column_ids)
-
-        # Set the 'max_part_numbers' parameter
-        max_part_numbers = kwargs.get("max_part_numbers", self.max_part_numbers)
 
         # Train the coclustering model
         coclustering_file_path = pk.train_coclustering(
@@ -810,31 +798,84 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         # Create a multi-table dictionary from the schema of the table
         # The root table contains the key of the table and points to the main table
         tmp_domain = dataset.create_khiops_dictionary_domain()
-        if not tmp_domain.get_dictionary(dataset.main_table.name).key:
-            tmp_domain.get_dictionary(dataset.main_table.name).key = [
-                self.model_id_column
-            ]
-        tmp_domain.get_dictionary(
-            dataset.main_table.name
-        ).name = f"{self._khiops_model_prefix}{dataset.main_table.name}"
-
-        tmp_dictionary_file_path = fs.get_child_path(
-            computation_dir, "tmp_cc_deploy_model.kdic"
+        main_table_dictionary = tmp_domain.get_dictionary(dataset.main_table.name)
+        if not main_table_dictionary.key:
+            main_table_dictionary.key = [self.model_id_column]
+        main_table_dictionary.name = (
+            f"{self._khiops_model_prefix}{dataset.main_table.name}"
         )
         self.model_main_dictionary_name_ = (
             f"{self._khiops_model_prefix}Keys_{dataset.main_table.name}"
         )
-        # Create the model by adding the coclustering variables
-        # to the multi-table dictionary created before
-        prepare_log_file_path = fs.get_child_path(output_dir, "khiops_prepare_cc.log")
         self.model_secondary_table_variable_name = (
             f"{self._khiops_model_prefix}{dataset.main_table.name}"
         )
+        self._create_coclustering_model_domain(
+            tmp_domain, coclustering_file_path, output_dir
+        )
+
+        # Update the `model_` attribute of the coclustering estimator to the
+        # new coclustering model
+        self.model_ = pk.read_dictionary_file(
+            fs.get_child_path(output_dir, "Coclustering.kdic")
+        )
+
+        # If the deprecated `max_part_numbers` is not None, then call `simplify`
+        max_part_numbers = kwargs.get("max_part_numbers", self.max_part_numbers)
+        if max_part_numbers is not None:
+            # Get simplified estimator
+            simplified_cc = self._simplify(max_part_numbers=max_part_numbers)
+
+            # Update main estimator model and report according to the simplified model
+            self.model_ = simplified_cc.model_
+            self.model_report_ = simplified_cc.model_report_
+            self.model_report_raw_ = simplified_cc.model_report_raw_
+
+    def _fit_training_post_process(self, dataset):
+        assert (
+            len(self.model_.dictionaries) == 2
+        ), "'model_' does not have exactly 2 dictionaries"
+
+        # Set the main dictionary as Root
+        self._get_main_dictionary().root = True
+
+    def _create_coclustering_model_domain(
+        self, domain, coclustering_file_path, output_dir
+    ):
+        """Postprocess the coclustering model
+
+        To this end:
+        - build multi-table dictionary domain from input (dataset-specific)
+          domain.
+        - prepare the coclustering model for deployment, by adding the
+          coclustering variables to the the root (multi-table) dictionary of the
+          multi-table dictionary domain.
+
+        Parameters
+        ----------
+        domain : `.DictionaryDomain`
+            Input dictionary domain reflecting the structure of the input dataset.
+        coclustering_file_path : str
+            Path to the coclustering report file.
+        output_dir : str
+            Path to the output directory, where the deployed model will be
+            written on disk.
+        """
+        # Check for potential programming errors
+        assert isinstance(domain, DictionaryDomain)
+        assert isinstance(coclustering_file_path, str)
+        assert isinstance(output_dir, str)
+
+        # Build multi-table dictionary domain out of the input domain
         mt_domain = build_multi_table_dictionary_domain(
-            tmp_domain,
+            domain,
             self.model_main_dictionary_name_,
             self.model_secondary_table_variable_name,
         )
+
+        # Create the model by adding the coclustering variables
+        # to the multi-table dictionary created before
+        prepare_log_file_path = fs.get_child_path(output_dir, "khiops_prepare_cc.log")
         pk.prepare_coclustering_deployment(
             mt_domain,
             self.model_main_dictionary_name_,
@@ -845,21 +886,209 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             build_cluster_variable=self.build_name_var,
             build_distance_variables=self.build_distance_vars,
             build_frequency_variables=self.build_frequency_vars,
-            max_part_numbers=max_part_numbers,
             log_file_path=prepare_log_file_path,
             trace=self.verbose,
         )
-        self.model_ = pk.read_dictionary_file(
-            fs.get_child_path(output_dir, "Coclustering.kdic")
+
+    def _simplify(
+        self,
+        max_preserved_information=0,
+        max_cells=0,
+        max_total_parts=0,
+        max_part_numbers=None,
+    ):
+        """Simplifies a Khiops coclustering model
+
+        Does *not* check that the estimator is fitted
+
+        Parameters
+        ----------
+        max_preserved_information : int, default 0
+            Maximum information preserve in the simplified coclustering. If equal to 0
+            there is no limit.
+        max_cells : int, default 0
+            Maximum number of cells in the simplified coclustering. If equal to 0 there
+            is no limit.
+        max_total_parts : int, default 0
+            Maximum number of parts totaled over all variables. If equal to 0 there
+            is no limit.
+        max_part_numbers : dict, optional
+            Maximum number of clusters for each of the co-clustered column.
+            Specifically, a key-value pair of this dictionary represents the column name
+            and its respective maximum number of clusters. If not specified, then no
+            maximum number of clusters is imposed on any column.
+
+        Returns
+        -------
+        self : `KhiopsCoclustering`
+            A *new*, simplified `.KhiopsCoclustering` estimator instance.
+        """
+        # Check parameters: types and authorized value ranges
+        assert self.model_report_ is not None
+        assert self.model_report_raw_ is not None
+        assert self.model_ is not None
+        if not isinstance(max_cells, int):
+            raise TypeError(type_error_message("max_cells", max_cells, int))
+        elif max_cells < 0:
+            raise ValueError("'max_cells' must be greater than 0")
+
+        if not isinstance(max_preserved_information, int):
+            raise TypeError(
+                type_error_message(
+                    "max_preserved_information", max_preserved_information, int
+                )
+            )
+        elif max_preserved_information < 0:
+            raise ValueError("'max_preserved_information' must be greater than 0")
+        if not isinstance(max_total_parts, int):
+            raise TypeError(type_error_message("max_total_parts", max_total_parts, int))
+        elif max_total_parts < 0:
+            raise ValueError("'max_total_parts' must be greater than 0")
+        if max_part_numbers is not None and not is_dict_like(max_part_numbers):
+            raise TypeError(
+                type_error_message("max_part_numbers", max_part_numbers, "dict-like")
+            )
+        if max_part_numbers is not None:
+            for key in max_part_numbers.keys():
+                if not isinstance(key, str):
+                    raise TypeError(
+                        type_error_message("'max_part_numbers' keys", key, str)
+                    )
+
+            for value in max_part_numbers.values():
+                if not isinstance(value, int):
+                    raise TypeError(
+                        type_error_message("'max_part_numbers' values", value, int)
+                    )
+                elif value < 0:
+                    raise ValueError("'max_part_numbers' values must be positive")
+        # Create temporary directory and tables
+        computation_dir = self._create_computation_dir("simplify")
+        output_dir = self._get_output_dir(computation_dir)
+        simplify_log_file_path = fs.get_child_path(output_dir, "khiops_simplify_cc.log")
+        initial_runner_temp_dir = pk.get_runner().root_temp_dir
+        full_coclustering_file_path = fs.get_child_path(
+            output_dir, "FullCoclustering.khcj"
         )
+        fs.write(
+            full_coclustering_file_path,
+            json.dumps(self.model_report_raw_).encode("utf-8"),
+        )
+        pk.get_runner().root_temp_dir = computation_dir
+        try:
+            # - simplify_coclustering, then
+            # - prepare_coclustering_deployment
+            # - prepare coclustering deployment and re-initialise the `model_`
+            #   attribute accordingly
+            pk.simplify_coclustering(
+                full_coclustering_file_path,
+                "Coclustering.khc",
+                output_dir,
+                max_preserved_information=max_preserved_information,
+                max_cells=max_cells,
+                max_total_parts=max_total_parts,
+                max_part_numbers=max_part_numbers,
+                log_file_path=simplify_log_file_path,
+                trace=self.verbose,
+            )
 
-    def _fit_training_post_process(self, dataset):
-        assert (
-            len(self.model_.dictionaries) == 2
-        ), "'model_' does not have exactly 2 dictionaries"
+            # Get dataset dictionary from model; it should not be root
+            dataset_dictionary = self.model_.get_dictionary(
+                self.model_secondary_table_variable_name
+            )
+            assert (
+                not dataset_dictionary.root
+            ), "Dataset dictionary in the coclustering model should not be root"
+            if not dataset_dictionary.key:
+                dataset_dictionary.key = self.model_id_column
+            domain = DictionaryDomain()
+            domain.add_dictionary(dataset_dictionary)
+            simplified_coclustering_file_path = fs.get_child_path(
+                output_dir, "Coclustering.khcj"
+            )
 
-        # Set the main dictionary as Root
-        self._get_main_dictionary().root = True
+            # Create new (simplified) coclustering estimator
+            simplified_cc = KhiopsCoclustering()
+
+            # Set its parameters according to the original estimator
+            simplified_cc.set_params(**self.get_params())
+
+            # Copy relevant attributes
+            # Note: do not copy `model_*` attributes, that get rebuilt anyway
+            for attr in (
+                "is_fitted_",
+                "is_multitable_model_",
+                "model_main_dictionary_name_",
+                "model_id_column",
+            ):
+                setattr(simplified_cc, attr, getattr(self, attr))
+
+            # Set the coclustering report according to the simplification
+            simplified_cc.model_report_ = pk.read_coclustering_results_file(
+                simplified_coclustering_file_path
+            )
+            simplified_cc.model_report_raw_ = json.loads(
+                fs.read(simplified_coclustering_file_path).decode(
+                    "utf8", errors="replace"
+                )
+            )
+
+            # Build the individual-variable coclustering model
+            self._create_coclustering_model_domain(
+                domain, simplified_coclustering_file_path, output_dir
+            )
+
+            # Set the `model_` attribute of the new coclustering estimator to
+            # the new coclustering model
+            simplified_cc.model_ = pk.read_dictionary_file(
+                fs.get_child_path(output_dir, "Coclustering.kdic")
+            )
+        finally:
+            self._cleanup_computation_dir(computation_dir)
+            pk.get_runner().root_temp_dir = initial_runner_temp_dir
+        return simplified_cc
+
+    def simplify(
+        self,
+        max_preserved_information=0,
+        max_cells=0,
+        max_total_parts=0,
+        max_part_numbers=None,
+    ):
+        """Creates a simplified coclustering model from the current instance
+
+        Parameters
+        ----------
+        max_preserved_information : int, default 0
+            Maximum information preserve in the simplified coclustering. If equal to 0
+            there is no limit.
+        max_cells : int, default 0
+            Maximum number of cells in the simplified coclustering. If equal to 0 there
+            is no limit.
+        max_total_parts : int, default 0
+            Maximum number of parts totaled over all variables. If equal to 0 there
+            is no limit.
+        max_part_numbers : dict, optional
+            Maximum number of clusters for each of the co-clustered column.
+            Specifically, a key-value pair of this dictionary represents the column name
+            and its respective maximum number of clusters. If not specified, then no
+            maximum number of clusters is imposed on any column.
+
+        Returns
+        -------
+        self : `KhiopsCoclustering`
+            A *new*, simplified `.KhiopsCoclustering` estimator instance.
+        """
+        # Check that the estimator is fitted:
+        if not self.is_fitted_:
+            raise ValueError("Only fitted coclustering estimators can be simplified")
+
+        return self._simplify(
+            max_preserved_information=max_preserved_information,
+            max_cells=max_cells,
+            max_total_parts=max_total_parts,
+            max_part_numbers=max_part_numbers,
+        )
 
     def predict(self, X):
         """Predicts the most probable cluster for the test dataset X

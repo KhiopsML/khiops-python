@@ -545,6 +545,34 @@ Samples
         print(X_clusters[:10])
         print("---")
 
+.. autofunction:: khiops_coclustering_simplify
+.. code-block:: python
+
+    def khiops_coclustering_simplify():
+        # Load the secondary table of the dataset into a pandas dataframe
+        splice_dataset_path = path.join(pk.get_samples_dir(), "SpliceJunction")
+        splice_dna_X = pd.read_csv(
+            path.join(splice_dataset_path, "SpliceJunctionDNA.txt"), sep="\t"
+        )
+
+        # Train with only 70% of data (for speed in this example)
+        X, _ = train_test_split(splice_dna_X, test_size=0.3, random_state=1)
+
+        # Create the KhiopsCoclustering instance
+        pkcc = KhiopsCoclustering()
+
+        # Train the model with the whole dataset
+        pkcc.fit(X, id_column="SampleId")
+
+        # Simplify coclustering along the individual ID dimension
+        simplified_pkcc = pkcc.simplify(max_part_numbers={"SampleId": 3})
+
+        # Predict the clusters using the simplified model
+        X_clusters = simplified_pkcc.predict(X)
+        print("Predicted clusters (only three at most)")
+        print(X_clusters)
+        print("---")
+
 .. autofunction:: khiops_classifier_multitable_list
 .. code-block:: python
 
