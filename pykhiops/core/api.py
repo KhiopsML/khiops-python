@@ -19,6 +19,7 @@ import warnings
 import pykhiops.core.internals.filesystems as fs
 from pykhiops.core.dictionary import DictionaryDomain, read_dictionary_file
 from pykhiops.core.exceptions import PyKhiopsRuntimeError
+from pykhiops.core.helpers import build_multi_table_dictionary_domain
 from pykhiops.core.internals.common import (
     CommandLineOptions,
     create_unambiguous_khiops_path,
@@ -28,6 +29,7 @@ from pykhiops.core.internals.common import (
     renaming_message,
     type_error_message,
 )
+from pykhiops.core.internals.io import PyKhiopsOutputWriter
 from pykhiops.core.internals.runner import (
     _get_tool_info_khiops9,
     _get_tool_info_khiops10,
@@ -1301,68 +1303,6 @@ def extract_keys_from_data_table(
     _run_task("extract_keys_from_data_table", task_args)
 
 
-def build_multi_table_dictionary(
-    dictionary_file_path_or_domain,
-    root_dictionary_name,
-    secondary_table_variable_name,
-    output_dictionary_file_path,
-    overwrite_dictionary_file=False,
-    batch_mode=True,
-    log_file_path=None,
-    output_scenario_path=None,
-    task_file_path=None,
-    trace=False,
-):
-    """Builds a multi-table dictionary from a dictionary with a key
-
-    Parameters
-    ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
-        Path of a Khiops dictionary file or a DictionaryDomain object.
-    root_dictionary_name : str
-        Name for the new root dictionary
-    secondary_table_variable_name : str
-        Name, in the root dictionary, for the "table" variable of the secondary table.
-    output_dictionary_file_path : str
-        Path of the output dictionary path.
-    overwrite_dictionary_file : bool, default ``False``
-        If ``True`` it will overwrite an input dictionary file.
-    ... :
-        Options of the `.PyKhiopsRunner.run` method from the class `.PyKhiopsRunner`.
-
-    Raises
-    ------
-    `ValueError`
-        Invalid values of an argument
-    """
-    # Save the task arguments
-    # WARNING: Do not move this line, see the top of the "tasks" section for details
-    task_args = locals()
-
-    # Create the execution dictionary file if it is domain or a file with no overwrite
-    _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
-    if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
-        dictionary_file_path = output_dictionary_file_path
-        dictionary_file_path_or_domain.export_khiops_dictionary_file(
-            dictionary_file_path
-        )
-        task_args["dictionary_file_path"] = output_dictionary_file_path
-    elif overwrite_dictionary_file:
-        task_args["dictionary_file_path"] = dictionary_file_path_or_domain
-    else:
-        domain = read_dictionary_file(dictionary_file_path_or_domain)
-        domain.export_khiops_dictionary_file(output_dictionary_file_path)
-        task_args["dictionary_file_path"] = output_dictionary_file_path
-
-    # Delete unused task parameters
-    del task_args["dictionary_file_path_or_domain"]
-    del task_args["overwrite_dictionary_file"]
-    del task_args["output_dictionary_file_path"]
-
-    # Run the task
-    _run_task("build_multi_table_dictionary", task_args)
-
-
 def train_coclustering(
     dictionary_file_path_or_domain,
     dictionary_name,
@@ -1767,6 +1707,81 @@ def detect_data_table_format(
 ########################
 # Deprecated functions #
 ########################
+
+
+# pylint: disable=unused-argument
+
+
+def build_multi_table_dictionary(
+    dictionary_file_path_or_domain,
+    root_dictionary_name,
+    secondary_table_variable_name,
+    output_dictionary_file_path,
+    overwrite_dictionary_file=False,
+    batch_mode=True,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
+    trace=False,
+):
+    """Builds a multi-table dictionary from a dictionary with a key
+
+    .. warning::
+        This method is *deprecated* since Khiops 10.1.3 and will be removed in pyKhiops
+        11. Use the `build_multi_table_dictionary_domain` helper to the same effect.
+
+    Parameters
+    ----------
+    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+        Path of a Khiops dictionary file or a DictionaryDomain object.
+    root_dictionary_name : str
+        Name for the new root dictionary
+    secondary_table_variable_name : str
+        Name, in the root dictionary, for the "table" variable of the secondary table.
+    output_dictionary_file_path : str
+        Path of the output dictionary path.
+    overwrite_dictionary_file : bool, default ``False``
+        If ``True`` it will overwrite an input dictionary file.
+    ... :
+        Options of the `.PyKhiopsRunner.run` method from the class `.PyKhiopsRunner`.
+
+    Raises
+    ------
+    `ValueError`
+        Invalid values of an argument
+    """
+    # Warn the user that this API function is deprecated and will be removed
+    warnings.warn(deprecation_message("build_multi_table_dictionary", "11.0.0"))
+
+    # Create the execution dictionary domain if it is a file
+    _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
+    if isinstance(dictionary_file_path_or_domain, str):
+        dictionary_domain = read_dictionary_file(dictionary_file_path_or_domain)
+    else:
+        dictionary_domain = dictionary_file_path_or_domain
+
+    # Generate multi-table domain by using the eponymous helper function
+    # Honor exception API:
+    try:
+        multi_table_domain = build_multi_table_dictionary_domain(
+            dictionary_domain, root_dictionary_name, secondary_table_variable_name
+        )
+    except TypeError as error:
+        raise ValueError from error
+
+    # If overwrite_dictionary_file is set and the input is a path to a dictionary,
+    # then the output path is set to the input path
+    if overwrite_dictionary_file and isinstance(dictionary_file_path_or_domain, str):
+        output_dictionary_file_path = dictionary_file_path_or_domain
+
+    # Write multi-table domain to file
+    with io.BytesIO() as stream:
+        writer = PyKhiopsOutputWriter(stream)
+        multi_table_domain.write(writer)
+        fs.write(output_dictionary_file_path, stream.getvalue())
+
+
+# pylint: enable=unused-argument
 
 
 def get_khiops_info():

@@ -56,4 +56,7 @@ for task_module in task_modules:
     assert isinstance(task_module.TASKS, list)
     for task in task_module.TASKS:
         assert isinstance(task, KhiopsTask)
-        get_task_registry().register_task(task)
+        task_registry = get_task_registry()
+        task_registry.register_task(task)
+
+task_registry.set_task_end_version("build_multi_table_dictionary", "11.0.0")

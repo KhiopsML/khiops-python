@@ -44,6 +44,7 @@ from sklearn.base import (
 
 import pykhiops.core as pk
 import pykhiops.core.internals.filesystems as fs
+from pykhiops.core.helpers import build_multi_table_dictionary_domain
 from pykhiops.core.internals.common import (
     deprecation_message,
     is_dict_like,
@@ -813,9 +814,9 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             tmp_domain.get_dictionary(dataset.main_table.name).key = [
                 self.model_id_column
             ]
-        tmp_domain.dictionaries[
-            0
-        ].name = f"{self._khiops_model_prefix}{dataset.main_table.name}"
+        tmp_domain.get_dictionary(
+            dataset.main_table.name
+        ).name = f"{self._khiops_model_prefix}{dataset.main_table.name}"
 
         tmp_dictionary_file_path = fs.get_child_path(
             computation_dir, "tmp_cc_deploy_model.kdic"
@@ -823,23 +824,19 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         self.model_main_dictionary_name_ = (
             f"{self._khiops_model_prefix}Keys_{dataset.main_table.name}"
         )
-        pk.build_multi_table_dictionary(
-            tmp_domain,
-            self.model_main_dictionary_name_,
-            tmp_domain.dictionaries[0].name,
-            tmp_dictionary_file_path,
-            overwrite_dictionary_file=True,
-            trace=self.verbose,
-        )
-
         # Create the model by adding the coclustering variables
         # to the multi-table dictionary created before
         prepare_log_file_path = fs.get_child_path(output_dir, "khiops_prepare_cc.log")
         self.model_secondary_table_variable_name = (
             f"{self._khiops_model_prefix}{dataset.main_table.name}"
         )
+        mt_domain = build_multi_table_dictionary_domain(
+            tmp_domain,
+            self.model_main_dictionary_name_,
+            self.model_secondary_table_variable_name,
+        )
         pk.prepare_coclustering_deployment(
-            tmp_dictionary_file_path,
+            mt_domain,
             self.model_main_dictionary_name_,
             coclustering_file_path,
             self.model_secondary_table_variable_name,

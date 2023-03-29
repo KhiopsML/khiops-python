@@ -12,13 +12,103 @@ import os
 
 import pykhiops.core.internals.filesystems as fs
 from pykhiops.core import api
-from pykhiops.core.dictionary import DictionaryDomain, read_dictionary_file
+from pykhiops.core.dictionary import (
+    Dictionary,
+    DictionaryDomain,
+    Variable,
+    read_dictionary_file,
+)
 from pykhiops.core.internals.common import (
     create_unambiguous_khiops_path,
     is_list_like,
     type_error_message,
 )
-from pykhiops.core.internals.runner import get_runner
+
+
+def build_multi_table_dictionary_domain(
+    dictionary_domain, root_dictionary_name, secondary_table_variable_name
+):
+    """Builds a multi-table dictionary domain from a dictionary with a key
+
+    Parameters
+    ----------
+    dictionary_domain : `.DictionaryDomain`
+        DictionaryDomain object. Its root dictionary must have its key set.
+    root_dictionary_name : str
+        Name for the new root dictionary
+    secondary_table_variable_name : str
+        Name, in the root dictionary, for the "table" variable of the secondary table.
+
+    Raises
+    ------
+    `TypeError`
+        Invalid type of an argument
+    `ValueError`
+        Invalid values of an argument:
+        - the dictionary domain doesn't contain at least a dictionary
+        - the dictionary domain's root dictionary doesn't have a key set
+    """
+    # Check that `dictionary_domain` is a `DictionaryDomain`
+    if not isinstance(dictionary_domain, DictionaryDomain):
+        raise TypeError(
+            type_error_message("dictionary_domain", dictionary_domain, DictionaryDomain)
+        )
+
+    # Check input types
+    if not isinstance(root_dictionary_name, str):
+        raise TypeError(
+            type_error_message("root_dictionary_name", root_dictionary_name, str)
+        )
+    if not isinstance(secondary_table_variable_name, str):
+        raise TypeError(
+            type_error_message(
+                "secondary_table_variable_name", secondary_table_variable_name, str
+            )
+        )
+
+    # Check that dictionary_domain has one dictionary (i.e. one table)
+    if len(dictionary_domain.dictionaries) < 1:
+        raise ValueError("'dictionary_domain' must contain at least one dictionary")
+
+    # Get root source dictionary
+    root_source_dictionary = dictionary_domain.dictionaries[0]
+
+    # Check that root_source_dictionary has its key set:
+    if not root_source_dictionary.key:
+        raise ValueError("'root_source_dictionary' must have its key set")
+
+    # Build and initialize root target dictionary from the input dictionary domain
+    root_target_dictionary = Dictionary()
+    root_target_dictionary.name = root_dictionary_name
+    root_target_dictionary.key = root_source_dictionary.key
+    root_target_dictionary.root = True
+
+    # Copy the key variables from source dictionary to target dictionary
+    for source_variable in root_source_dictionary.variables:
+        if source_variable.name in root_source_dictionary.key:
+            root_target_dictionary.add_variable(source_variable)
+
+    # Build target variable for the target root dictionary
+    target_variable = Variable()
+    target_variable.name = secondary_table_variable_name
+    target_variable.type = "Table"
+    target_variable.object_type = root_source_dictionary.name
+    root_target_dictionary.add_variable(target_variable)
+
+    # Build secondary target dictionary, by copying root source dictionary
+    secondary_target_dictionary = root_source_dictionary.copy()
+
+    # Build target domain and add dictionaries to it
+    target_domain = DictionaryDomain()
+    target_domain.add_dictionary(root_target_dictionary)
+    target_domain.add_dictionary(secondary_target_dictionary)
+
+    return target_domain
+
+
+# Disable the protected access rule because we need to call on the private API
+# method for checking that a variable is a str or a DictionaryDomain
+# pylint: disable=protected-access
 
 
 def deploy_coclustering(
@@ -173,20 +263,17 @@ def deploy_coclustering(
     tmp_dictionary.key = key_variable_names
     tmp_domain = DictionaryDomain()
     tmp_domain.add_dictionary(tmp_dictionary)
-    tmp_dictionary_path = get_runner().create_temp_file(
-        "_deploy_coclustering_", ".kdic"
-    )
 
     # Create a root dictionary containing the keys
     root_dictionary_name = "CC_" + dictionary_name
     table_variable_name = "Table_" + dictionary_name
-    api.build_multi_table_dictionary(
-        tmp_domain, root_dictionary_name, table_variable_name, tmp_dictionary_path
+    domain = build_multi_table_dictionary_domain(
+        tmp_domain, root_dictionary_name, table_variable_name
     )
 
     # Create the deployment dictionary
     api.prepare_coclustering_deployment(
-        tmp_dictionary_path,
+        domain,
         root_dictionary_name,
         coclustering_file_path,
         table_variable_name,
@@ -211,7 +298,7 @@ def deploy_coclustering(
     data_table_file_name = os.path.basename(data_table_path)
     keys_table_file_path = fs.get_child_path(results_dir, f"Keys{data_table_file_name}")
     api.extract_keys_from_data_table(
-        tmp_dictionary_path,
+        domain,
         dictionary_name,
         data_table_path,
         keys_table_file_path,
@@ -357,3 +444,6 @@ def deploy_predictor_for_metrics(
         output_field_separator=output_field_separator,
         trace=trace,
     )
+
+
+# pylint: enable=protected-access

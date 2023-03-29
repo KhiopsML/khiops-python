@@ -629,12 +629,42 @@ class KhiopsTaskRegistry:
 
         Raises
         ------
+        `TypeError`
+            If task_name is not of type str.
         `ValueError`
             If there are no registered tasks with the specified name.
         """
+        if not isinstance(task_name, str):
+            raise TypeError(type_error_message("task_name", task_name, str))
         if task_name not in self.task_families:
             raise ValueError(f"Task family for '{task_name}' not registered")
         return self.task_families[task_name].end_version
+
+    def set_task_end_version(self, task_name, end_version):
+        """Sets the version where the support of the specified task ended
+
+        Parameters
+        ----------
+        task_name : str
+            Name of the task.
+        end_version : str or `KhiopsVersion`
+            Version where the support of the specified task ended.
+
+        Raises
+        ------
+        `TypeError`
+            - If `task_name` is not of type str.
+            - If `end_version` is not of type str or `.KhiopsVersion`.
+        `ValueError`
+            If there are no registered tasks with the specified name.
+        """
+        # Check input types
+        # Note: `end_version` type check is deferred to `TaskFamily`
+        if not isinstance(task_name, str):
+            raise TypeError(type_error_message("task_name", task_name, str))
+        if task_name not in self.task_families:
+            raise ValueError(f"Task family for '{task_name}' not registered")
+        self.task_families[task_name].end_version = end_version
 
     @property
     def latest_intro_version(self):
