@@ -759,6 +759,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             variables,
             output_dir,
             log_file_path=train_log_file_path,
+            trace=self.verbose,
         )
 
         # Search "No coclustering found" message in the log, warn the user and return
