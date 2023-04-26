@@ -12,7 +12,6 @@ import csv
 import io
 import warnings
 from abc import ABC, abstractmethod
-from collections import Counter
 from collections.abc import Mapping, Sequence
 
 import numpy as np
@@ -479,7 +478,7 @@ class Dataset:
                     )
                 if relations.count(relation) != 1:
                     raise ValueError(
-                        f"Relation '{relation}' appears "
+                        f"Relation '{relation}' occurs "
                         f"'{relations.count(relation)}' times. "
                         f"Each relation must be unique."
                     )
@@ -501,7 +500,7 @@ class Dataset:
         if "tables" not in X:
             raise ValueError("Mandatory key 'tables' missing from dict 'X'")
         if not is_dict_like(X["tables"]):
-            raise TypeError(type_error_message('X["tables"]', X["tables"], Mapping))
+            raise TypeError(type_error_message("X['tables']", X["tables"], Mapping))
         if len(X["tables"]) == 0:
             raise ValueError("X['tables'] cannot be empty")
 
@@ -580,12 +579,6 @@ class Dataset:
                     "key of the root table must be non-empty for multi-table datasets"
                 )
 
-            # Check that there are no repeated table names
-            table_name_counts = Counter(X["tables"].keys())
-            for table_name, count in table_name_counts.items():
-                if count > 1:
-                    raise ValueError(f"There are {count} tables named '{table_name}'")
-
             # Check that all secondary tables have non-None keys
             for table_name, (_, table_key) in X["tables"].items():
                 if table_name != X["main_table"] and table_key is None:
@@ -620,17 +613,13 @@ class Dataset:
                 raise TypeError(
                     type_error_message("X['format'] first element", X["format"][0], str)
                 )
-            if len(X["format"][0]) != 1:
+            sep, header = X["format"][0], X["format"][1]
+            if len(sep) != 1:
                 raise ValueError(
-                    'X["format"] first element must be a single character. '
-                    f'Value: {X["format"][0]}'
+                    "Separator must be a single character. " f"Value: {sep}"
                 )
-            if not isinstance(X["format"][1], bool):
-                raise TypeError(
-                    type_error_message(
-                        "X['format'] first element", X["format"][0], bool
-                    )
-                )
+            if not isinstance(header, bool):
+                raise TypeError(type_error_message("Header", header, bool))
 
         # Check the target coherence with X's tables
         if y is not None:
@@ -938,7 +927,7 @@ class PandasTable(DatasetTable):
                 and target_column.name in dataframe.columns
             ):
                 raise ValueError(
-                    f"Target series name '{target_column.name}'"
+                    f"Target series name '{target_column.name}' "
                     f"is already present in dataframe : {list(dataframe.columns)}"
                 )
 
@@ -953,14 +942,15 @@ class PandasTable(DatasetTable):
                 for i, column_id in enumerate(self.column_ids):
                     if not isinstance(column_id, str):
                         raise TypeError(
-                            f"Dataframe column ids must be integer or string. "
-                            f"Column id at index {i} ('{column_id}') is of type "
-                            f"'{type(column_id).__name__}'"
+                            f"Dataframe column ids must be either all integers or "
+                            f"all strings. Column id at index {i} ('{column_id}') is"
+                            f" of type '{type(column_id).__name__}'"
                         )
             else:
                 raise TypeError(
-                    f"Dataframe column ids must be integer or string. "
-                    f"The column has dtype '{self.column_ids.dtype}'"
+                    f"Dataframe column ids must be either all integers or "
+                    f"all strings. The column index has dtype "
+                    f"'{self.column_ids.dtype}'"
                 )
 
         # Initialize target column (if any)

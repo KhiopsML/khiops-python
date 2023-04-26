@@ -37,6 +37,16 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         - Two schemas of increasing complexity are considered: star and snowflake.
     """
 
+    def setUp(self):
+        """Set-up test-specific output directory"""
+        self.output_dir = os.path.join("resources", "tmp", self._testMethodName)
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def tearDown(self):
+        """Clean-up test-specific output directory"""
+        shutil.rmtree(self.output_dir, ignore_errors=True)
+        del self.output_dir
+
     def create_monotable_dataframe(self):
         data = {
             "User_ID": [
@@ -242,9 +252,17 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         tertiary_table.to_csv(tertiary_table_path, sep="\t", index=False)
         quaternary_table.to_csv(quaternary_table_path, sep="\t", index=False)
 
-    def create_dataset_spec(self, output_dir, data_type, multitable, schema):
+    def create_fixture_dataset_spec(self, output_dir, data_type, multitable, schema):
         if not multitable:
-            if data_type == "file":
+            if data_type == "df":
+                reference_table = self.create_monotable_dataframe()
+                features = reference_table.drop(["class"], axis=1)
+                dataset_spec = {
+                    "main_table": "Reviews",
+                    "tables": {"Reviews": (features, "User_ID")},
+                }
+                label = reference_table["class"]
+            elif data_type == "file":
                 reference_table_path = os.path.join(output_dir, "Reviews.csv")
                 self.create_monotable_data_file(reference_table_path)
                 dataset_spec = {
@@ -253,14 +271,6 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
                     "format": ("\t", True),
                 }
                 label = "class"
-            elif data_type == "df":
-                reference_table = self.create_monotable_dataframe()
-                features = reference_table.drop(["class"], axis=1)
-                dataset_spec = {
-                    "main_table": "Reviews",
-                    "tables": {"Reviews": (features, "User_ID")},
-                }
-                label = reference_table["class"]
 
         elif schema == "star":
             if data_type == "df":
@@ -465,17 +475,13 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         to that of the csv file created by pykhiops.sklearn.
         """
         # Create a monotable dataset object from fixture data
-        output_dir = os.path.join(
-            "resources", "tmp", "test_created_file_from_dataframe_monotable"
-        )
-        os.makedirs(output_dir, exist_ok=True)
-        dataset_spec, label = self.create_dataset_spec(
+        dataset_spec, label = self.create_fixture_dataset_spec(
             output_dir=None, data_type="df", multitable=False, schema=None
         )
         dataset = Dataset(dataset_spec, label)
 
         # Create and load the intermediary Khiops file
-        created_table_path, _ = dataset.create_table_files_for_khiops(output_dir)
+        created_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
         created_table = pd.read_csv(created_table_path, sep="\t")
 
         # Cast "Date" columns to datetime as we don't automatically recognize dates
@@ -489,9 +495,6 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
             reference_table.sort_values(by="User_ID").reset_index(drop=True),
         )
 
-        # Clean created test data
-        shutil.rmtree(output_dir, ignore_errors=True)
-
     def test_created_file_from_data_file_monotable(self):
         """Test consistency of the created data file with the input data file
 
@@ -499,17 +502,12 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         to that of the csv file created by pykhiops.sklearn.
         """
         # Create the test dataset
-        output_dir = os.path.join(
-            "resources", "tmp", "test_created_file_from_data_file_monotable"
-        )
-        os.makedirs(output_dir, exist_ok=True)
-
-        dataset_spec, label = self.create_dataset_spec(
-            output_dir=output_dir, data_type="file", multitable=False, schema=None
+        dataset_spec, label = self.create_fixture_dataset_spec(
+            output_dir=self.output_dir, data_type="file", multitable=False, schema=None
         )
         dataset = Dataset(dataset_spec, label)
 
-        created_table_path, _ = dataset.create_table_files_for_khiops(output_dir)
+        created_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
         created_table = pd.read_csv(created_table_path, sep="\t")
 
         reference_table_path = dataset_spec["tables"]["Reviews"][0]
@@ -521,9 +519,6 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
             reference_table.sort_values(by="User_ID").reset_index(drop=True),
         )
 
-        # Clean created test data
-        shutil.rmtree(output_dir, ignore_errors=True)
-
     def test_created_files_from_dataframes_multitable_star(self):
         """Test consistency of the created data files with the input dataframes
 
@@ -532,13 +527,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
           schema of the dataset is "star".
         """
         # Create the test dataset
-        output_dir = os.path.join(
-            "resources",
-            "tmp",
-            "test_created_files_from_dataframes_multitable_star",
-        )
-        os.makedirs(output_dir, exist_ok=True)
-        dataset_spec, label = self.create_dataset_spec(
+        dataset_spec, label = self.create_fixture_dataset_spec(
             output_dir=None, data_type="df", multitable=True, schema="star"
         )
         dataset = Dataset(dataset_spec, label)
@@ -547,7 +536,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         (
             main_table_path,
             secondary_table_paths,
-        ) = dataset.create_table_files_for_khiops(output_dir)
+        ) = dataset.create_table_files_for_khiops(self.output_dir)
 
         # Load the intermediary files
         secondary_table_path = secondary_table_paths["logs"]
@@ -574,9 +563,6 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
             ).reset_index(drop=True),
         )
 
-        # Clean the test directory
-        shutil.rmtree(output_dir, ignore_errors=True)
-
     def test_created_files_from_data_files_multitable_star(self):
         """Test consistency of the created data files with the input data files
 
@@ -584,20 +570,13 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         through a dictionary, is equal to that of the csv files created by
         pykhiops.sklearn. The schema of the dataset is "star".
         """
-        output_dir = os.path.join(
-            "resources",
-            "tmp",
-            "test_created_files_from_data_files_multitable_star",
-        )
-        os.makedirs(output_dir, exist_ok=True)
-
-        dataset_spec, label = self.create_dataset_spec(
-            output_dir=output_dir, data_type="file", multitable=True, schema="star"
+        dataset_spec, label = self.create_fixture_dataset_spec(
+            output_dir=self.output_dir, data_type="file", multitable=True, schema="star"
         )
 
         dataset = Dataset(dataset_spec, label)
         main_table_path, dico_secondary_table = dataset.create_table_files_for_khiops(
-            output_dir
+            self.output_dir
         )
         secondary_table_path = dico_secondary_table["logs"]
         created_main_table = pd.read_csv(main_table_path, sep="\t")
@@ -627,9 +606,6 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
             ).reset_index(drop=True),
         )
 
-        # Clean up the output directory
-        shutil.rmtree(output_dir, ignore_errors=True)
-
     def test_created_files_from_dataframes_multitable_snowflake(self):
         """Test consistency of the created data files with the input dataframes
 
@@ -637,14 +613,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         through a dictionary, is equal to that of the csv files created by
         pykhiops.sklearn. The schema of the dataset is "snowflake".
         """
-        output_dir = os.path.join(
-            "resources",
-            "tmp",
-            "test_created_files_from_dataframes_multitable_snowflake",
-        )
-        os.makedirs(output_dir, exist_ok=True)
-
-        dataset_spec, label = self.create_dataset_spec(
+        dataset_spec, label = self.create_fixture_dataset_spec(
             output_dir=None, data_type="df", multitable=True, schema="snowflake"
         )
         dataset = Dataset(dataset_spec, label)
@@ -652,7 +621,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         (
             main_table_path,
             additional_table_paths,
-        ) = dataset.create_table_files_for_khiops(output_dir)
+        ) = dataset.create_table_files_for_khiops(self.output_dir)
 
         created_main_table = pd.read_csv(main_table_path, sep="\t")
         reference_main_table = dataset_spec["tables"]["A"][0]
@@ -680,8 +649,6 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
                 ).reset_index(drop=True),
             )
 
-        shutil.rmtree(output_dir, ignore_errors=True)
-
     def test_created_files_from_data_files_multitable_snowflake(self):
         """Test consistency of the created  s with the input data files
 
@@ -689,20 +656,16 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         through a dictionary, is equal to that of the csv files created
         by pykhiops.sklearn. The schema of the dataset is "snowflake".
         """
-        output_dir = os.path.join(
-            "resources",
-            "tmp",
-            "test_created_files_from_data_files_multitable_snowflake",
-        )
-        os.makedirs(output_dir, exist_ok=True)
-
-        dataset_spec, label = self.create_dataset_spec(
-            output_dir=output_dir, data_type="file", multitable=True, schema="snowflake"
+        dataset_spec, label = self.create_fixture_dataset_spec(
+            output_dir=self.output_dir,
+            data_type="file",
+            multitable=True,
+            schema="snowflake",
         )
 
         dataset = Dataset(dataset_spec, label)
         main_table_path, additional_table_paths = dataset.create_table_files_for_khiops(
-            output_dir
+            self.output_dir
         )
 
         created_main_table = pd.read_csv(main_table_path, sep="\t")
@@ -734,8 +697,6 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
                 ).reset_index(drop=True),
             )
 
-        shutil.rmtree(output_dir, ignore_errors=True)
-
     def test_created_dictionary_from_dataframe_monotable(self):
         """Test consistency of the created dictionary with the input dataframe
 
@@ -744,7 +705,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         input monotable dataset. Data is here provided through a dataframe.
         """
 
-        dataset_spec, label = self.create_dataset_spec(
+        dataset_spec, label = self.create_fixture_dataset_spec(
             output_dir=None, data_type="df", multitable=False, schema=None
         )
 
@@ -774,13 +735,8 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         pykhiops.sklearn contains information that is consistent with the
         input monotable dataset. Data is here provided through a data file.
         """
-        output_dir = os.path.join(
-            "resources", "tmp", "test_created_file_from_data_file_monotable"
-        )
-        os.makedirs(output_dir, exist_ok=True)
-
-        dataset_spec, label = self.create_dataset_spec(
-            output_dir=output_dir, data_type="file", multitable=False, schema=None
+        dataset_spec, label = self.create_fixture_dataset_spec(
+            output_dir=self.output_dir, data_type="file", multitable=False, schema=None
         )
         dataset = Dataset(dataset_spec, label)
         created_dictionary_domain = dataset.create_khiops_dictionary_domain()
@@ -802,8 +758,6 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
             created_dictionary_variable_types, reference_dictionary_variable_types
         )
 
-        shutil.rmtree(output_dir, ignore_errors=True)
-
     def test_created_dictionary_from_dataframes_multitable_star(self):
         """Test consistency of the created dictionaries with the input dataframes
 
@@ -813,7 +767,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         and its schema is "star".
         """
 
-        dataset_spec, label = self.create_dataset_spec(
+        dataset_spec, label = self.create_fixture_dataset_spec(
             output_dir=None, data_type="df", multitable=True, schema="star"
         )
         dataset = Dataset(dataset_spec, label)
@@ -859,15 +813,8 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         input multitable dataset. Data is here provided through data files
         and its schema is "star".
         """
-        output_dir = os.path.join(
-            "resources",
-            "tmp",
-            "test_created_files_from_data files_star_multitable",
-        )
-        os.makedirs(output_dir, exist_ok=True)
-
-        dataset_spec, label = self.create_dataset_spec(
-            output_dir=output_dir, data_type="file", multitable=True, schema="star"
+        dataset_spec, label = self.create_fixture_dataset_spec(
+            output_dir=self.output_dir, data_type="file", multitable=True, schema="star"
         )
 
         dataset = Dataset(dataset_spec, label)
@@ -905,8 +852,6 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
             reference_secondary_dictionary_variable_types,
         )
 
-        shutil.rmtree(output_dir, ignore_errors=True)
-
     def test_created_dictionary_from_dataframes_multitable_snowflake(self):
         """Test consistency of the created dictionaries with the input dataframes
 
@@ -915,8 +860,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         input multitable dataset. Data is here provided through dataframes
         and its schema is "snowflake".
         """
-
-        dataset_spec, label = self.create_dataset_spec(
+        dataset_spec, label = self.create_fixture_dataset_spec(
             output_dir=None, data_type="df", multitable=True, schema="snowflake"
         )
         dataset = Dataset(dataset_spec, label)
@@ -997,15 +941,11 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         contains information that is consistent with the input multitable dataset.
         Data is here provided through data files and its schema is "snowflake".
         """
-        output_dir = os.path.join(
-            "resources",
-            "tmp",
-            "test_created_files_from_data files_multitable_snowflake",
-        )
-        os.makedirs(output_dir, exist_ok=True)
-
-        dataset_spec, label = self.create_dataset_spec(
-            output_dir=output_dir, data_type="file", multitable=True, schema="snowflake"
+        dataset_spec, label = self.create_fixture_dataset_spec(
+            output_dir=self.output_dir,
+            data_type="file",
+            multitable=True,
+            schema="snowflake",
         )
         dataset = Dataset(dataset_spec, label)
         created_dictionary_domain = dataset.create_khiops_dictionary_domain()
