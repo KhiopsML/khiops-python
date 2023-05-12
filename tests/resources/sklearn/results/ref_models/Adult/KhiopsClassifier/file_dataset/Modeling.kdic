@@ -3,7 +3,7 @@
 Dictionary	SNB_Adult	(Label)
 <InitialDictionary="Adult"> <PredictorLabel="Selective Naive Bayes"> <PredictorType="Classifier">
 {
-	Categorical	Label		; <Cost=2.77259> <Level=0>	
+	Numerical	Label		; <Cost=2.77259> <Level=0>	
 Unused	Numerical	age		; <Cost=2.77259> <Importance=0.14187> <Level=0.118342> <Weight=0.170074>	
 Unused	Categorical	workclass		; <Cost=2.77259> <Importance=0.0420982> <Level=0.0215645> <Weight=0.0821838>	
 Unused	Numerical	fnlwgt		; <Cost=2.77259> <Level=0.000156589>	

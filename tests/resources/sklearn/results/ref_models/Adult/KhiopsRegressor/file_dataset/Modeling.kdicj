@@ -13,7 +13,7 @@
 			"variables": [
 				{
 					"name": "Label",
-					"type": "Categorical",
+					"type": "Numerical",
 					"metaData": {
 						"Cost": 2.70805,
 						"Level": 0

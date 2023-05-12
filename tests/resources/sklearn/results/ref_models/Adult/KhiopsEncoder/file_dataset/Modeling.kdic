@@ -3,7 +3,7 @@
 // Recoding dictionary
 Dictionary	R_Adult	(Label)
 {
-Unused	Categorical	Label		; <Cost=2.77259> <Level=0>	
+Unused	Numerical	Label		; <Cost=2.77259> <Level=0>	
 Unused	Numerical	age		; <Cost=2.77259> <Level=0.118342>	
 Unused	Categorical	workclass		; <Cost=2.77259> <Level=0.0215645>	
 Unused	Numerical	fnlwgt		; <Cost=2.77259> <Level=0.000156589>	

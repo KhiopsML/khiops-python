@@ -313,7 +313,7 @@ class PyKhiopsTestHelper:
         """Prepare training and testing data for automated tests"""
         if primary_table is None:
             data_train, data_test = train_test_split(
-                data, test_size=0.3, random_state=1
+                data, test_size=0.3, random_state=1, shuffle=False
             )
 
             y_test = data_test[target_variable]
@@ -323,7 +323,7 @@ class PyKhiopsTestHelper:
             x_train = data_train.drop([target_variable], axis=1)
         elif isinstance(primary_table, pd.DataFrame):
             root_table_train, root_table_test = train_test_split(
-                primary_table, test_size=0.3, random_state=1
+                primary_table, test_size=0.3, random_state=1, shuffle=False
             )
             data.index = data[target_variable].values
             x_train = data.loc[root_table_train[target_variable]]

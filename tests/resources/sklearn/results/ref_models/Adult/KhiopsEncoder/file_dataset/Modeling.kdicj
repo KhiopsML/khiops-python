@@ -10,7 +10,7 @@
 				{
 					"name": "Label",
 					"used": false,
-					"type": "Categorical",
+					"type": "Numerical",
 					"metaData": {
 						"Cost": 2.77259,
 						"Level": 0

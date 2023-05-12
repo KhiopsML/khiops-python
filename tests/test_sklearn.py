@@ -1560,12 +1560,12 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
         test_data.to_csv(test_data_path, sep="\t", header=True, index=False)
         train_dataset = {
             "main_table": "Adult",
-            "tables": {"Adult": (train_data_path, "Label")},
+            "tables": {"Adult": (train_data_path, None)},
             "format": ("\t", True),
         }
         test_dataset = {
             "main_table": "Adult",
-            "tables": {"Adult": (test_data_path, "Label")},
+            "tables": {"Adult": (test_data_path, None)},
             "format": ("\t", True),
         }
         return (train_dataset, test_dataset)
@@ -1692,9 +1692,22 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 dataset = copy.deepcopy(data)
                 X_train_data = dataset["train"]
                 del X_train_data["tables"]["SpliceJunction"]  # XXX leaky
+
+                # set the key to None, as the dataset is monotable
+                X_train_data["tables"]["SpliceJunctionDNA"] = (
+                    X_train_data["tables"]["SpliceJunctionDNA"][0],
+                    None,
+                )
+
                 y_train_data = None
                 X_test_data = dataset["test"]
                 del X_test_data["tables"]["SpliceJunction"]  # XXX leaky
+
+                # set the key to None, as the dataset is monotable
+                X_test_data["tables"]["SpliceJunctionDNA"] = (
+                    X_test_data["tables"]["SpliceJunctionDNA"][0],
+                    None,
+                )
         else:
             assert issubclass(estimator_type, KhiopsSupervisedEstimator)
             data = self._retrieve_data(
