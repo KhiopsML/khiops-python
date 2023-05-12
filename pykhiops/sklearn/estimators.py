@@ -175,19 +175,47 @@ class KhiopsEstimator(ABC, BaseEstimator):
     output_dir : str, optional
         Path of the output directory for the resulting artifacts of Khiops learning
         tasks. See concrete estimator classes for more information about this parameter.
-    internal_sort : bool, default ``True``
+    auto_sort : bool, default ``True``
         *Advanced.*: See concrete estimator classes for information about this
         parameter.
     key : str, optional
         The name of the column to be used as key.
         **Deprecated** will be removed in pyKhiops 11.
+    internal_sort : bool, optional
+        *Advanced.*: See concrete estimator classes for information about this
+        parameter.
+        **Deprecated** will be removed in pyKhiops 11. Use the ``auto_sort``
+        estimator parameter instead.
     """
 
-    def __init__(self, key=None, verbose=False, output_dir=None, internal_sort=True):
+    def __init__(
+        self,
+        key=None,
+        verbose=False,
+        output_dir=None,
+        auto_sort=True,
+        internal_sort=None,
+    ):
         self.key = key
         self.output_dir = output_dir
         self.verbose = verbose
+        # Deprecation message for 'internal_sort'
+        if internal_sort is not None:
+            self.auto_sort = internal_sort
+            warnings.warn(
+                deprecation_message(
+                    "the 'internal_sort' estimator parameter",
+                    "11.0.0",
+                    replacement="the 'auto_sort' estimator parameter",
+                    quote=False,
+                )
+            )
+        else:
+            self.auto_sort = auto_sort
+
+        # Make sklearn `get_params` happy
         self.internal_sort = internal_sort
+
         self._khiops_model_prefix = None
         self._init_model_state()
 
@@ -426,7 +454,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             main_table_path,
             secondary_table_paths,
         ) = deployment_dataset.create_table_files_for_khiops(
-            computation_dir, sort=self.internal_sort
+            computation_dir, sort=self.auto_sort
         )
 
         # Build the 'additional_data_tables' argument
@@ -548,11 +576,13 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
     output_dir : str, optional
         Path of the output directory for the ``Coclustering.khcj`` report file and the
         ``Coclustering.kdic`` modeling dictionary file.
-    internal_sort : bool, default ``True``
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
-        by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `predict` method.
+    auto_sort : bool, default ``True``
+        *Advanced.* Only for multi-table inputs: If ``True`` input tables are
+        automatically sorted by their key before executing Khiops. If the input
+        tables are already sorted by their keys set this parameter to ``False``
+        to speed up the processing. This affects the `predict` method.
+        *Note* The sort by key is performed in a left-to-right, hierarchical,
+        lexicographic manner.
     max_part_numbers : dict, optional
         Maximum number of clusters for each of the co-clustered column. Specifically, a
         key-value pair of this dictionary represents the column name and its respective
@@ -568,6 +598,15 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         *Multi-table only* : The name of the column to be used as key.
         **Deprecated** will be removed in pyKhiops 11. Use ``id_column`` parameter of
         the `fit` method.
+    internal_sort : bool, optional
+        *Advanced.* Only for multi-table inputs: If ``True`` input tables are
+        automatically sorted by their key before executing Khiops. If the input
+        tables are already sorted by their keys set this parameter to ``False``
+        to speed up the processing. This affects the `predict` method.
+        *Note* The sort by key is performed in a left-to-right, hierarchical,
+        lexicographic manner.
+        **Deprecated** will be removed in pyKhiops 11. Use the ``auto_sort``
+        parameter of the estimator instead.
 
     Attributes
     ----------
@@ -595,16 +634,21 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         self,
         verbose=False,
         output_dir=None,
-        internal_sort=True,
+        auto_sort=True,
         build_name_var=True,
         build_distance_vars=False,
         build_frequency_vars=False,
         max_part_numbers=None,
         key=None,
         variables=None,
+        internal_sort=None,
     ):
         super().__init__(
-            key=key, verbose=verbose, output_dir=output_dir, internal_sort=internal_sort
+            key=key,
+            verbose=verbose,
+            output_dir=output_dir,
+            auto_sort=auto_sort,
+            internal_sort=internal_sort,
         )
         self._khiops_model_prefix = "CC_"
         self.build_name_var = build_name_var
@@ -736,7 +780,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
 
         # Prepare the table files and dictionary for Khiops
         main_table_path, _ = dataset.create_table_files_for_khiops(
-            computation_dir, sort=self.internal_sort
+            computation_dir, sort=self.auto_sort
         )
 
         # Set the output paths
@@ -1204,7 +1248,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             keyed_dataset = dataset.copy()
             keyed_dataset.main_table.key = [self.model_id_column]
             main_table_path = keyed_dataset.main_table.create_table_file_for_khiops(
-                computation_dir, sort=self.internal_sort
+                computation_dir, sort=self.auto_sort
             )
 
             # Create a table storing the main table keys
@@ -1261,11 +1305,16 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         n_trees=10,
         verbose=False,
         output_dir=None,
-        internal_sort=True,
+        auto_sort=True,
         key=None,
+        internal_sort=None,
     ):
         super().__init__(
-            key=key, verbose=verbose, output_dir=output_dir, internal_sort=internal_sort
+            key=key,
+            verbose=verbose,
+            output_dir=output_dir,
+            auto_sort=auto_sort,
+            internal_sort=internal_sort,
         )
         self.n_features = n_features
         self.n_pairs = n_pairs
@@ -1380,7 +1429,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         log_file_path = fs.get_child_path(output_dir, "khiops.log")
 
         main_table_path, secondary_table_paths = dataset.create_table_files_for_khiops(
-            computation_dir, sort=self.internal_sort
+            computation_dir, sort=self.auto_sort
         )
 
         # Build the 'additional_data_tables' argument
@@ -1407,10 +1456,9 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         # Build the optional parameters from a copy of the estimator parameters
         kwargs = self.get_params()
 
-        # Remove 'key', 'output_dir' and 'internal_sort'
+        # Remove 'key' and 'output_dir'
         del kwargs["key"]
         del kwargs["output_dir"]
-        del kwargs["internal_sort"]
 
         # Set the sampling percentage to a 100%
         kwargs["sample_percentage"] = 100
@@ -1544,8 +1592,9 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         n_trees=10,
         verbose=False,
         output_dir=None,
-        internal_sort=True,
+        auto_sort=True,
         key=None,
+        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -1553,8 +1602,9 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             n_trees=n_trees,
             verbose=verbose,
             output_dir=output_dir,
-            internal_sort=internal_sort,
+            auto_sort=auto_sort,
             key=key,
+            internal_sort=internal_sort,
         )
         # Data to be specified by inherited classes
         self._predicted_target_meta_data_tag = None
@@ -1644,15 +1694,26 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
     output_dir : str, optional
         Path of the output directory for the ``AllReports.khj`` report file and the
         ``Modeling.kdic`` modeling dictionary file. By default these files are deleted.
-    internal_sort : bool, default ``True``
+    auto_sort : bool, default ``True``
         *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
         by their key before executing Khiops. If the input tables are already sorted by
         their keys set this parameter to ``False`` to speed up the processing. This
         affects the `fit`, `predict` and `predict_proba` methods.
+        *Note* The sort by key is performed in a left-to-right, hierarchical,
+        lexicographic manner.
     key : str, optional
         *Multi-table only* : The name of the column to be used as key.
         **Deprecated** will be removed in pyKhiops 11. Use ``dict`` dataset
         specifications in ``fit``, ``fit_predict``, ``predict`` and ``predict_proba``.
+    internal_sort : bool, optional
+        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
+        by their key before executing Khiops. If the input tables are already sorted by
+        their keys set this parameter to ``False`` to speed up the processing. This
+        affects the `fit`, `predict` and `predict_proba` methods.
+        *Note* The sort by key is performed in a left-to-right, hierarchical,
+        lexicographic manner.
+        **Deprecated** will be removed in pyKhiops 11. Use the ``auto_sort``
+        estimator parameter instead.
 
     Attributes
     ----------
@@ -1690,8 +1751,9 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         n_trees=10,
         verbose=False,
         output_dir=None,
-        internal_sort=True,
+        auto_sort=True,
         key=None,
+        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -1699,8 +1761,9 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             n_trees=n_trees,
             verbose=verbose,
             output_dir=output_dir,
-            internal_sort=internal_sort,
+            auto_sort=auto_sort,
             key=key,
+            internal_sort=internal_sort,
         )
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Prediction"
@@ -1760,11 +1823,6 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                   `numpy.dtype`'s are ``string``, ``numerical`` and ``caterogy``.
                 - File-based ``dict`` dataset specification: name of the column that
                   contains the target values.
-        internal_sort : boolean, default ``True``
-            *Advanced.* Only for multi-table inputs: If ``True`` input tables are
-            pre-sorted by their key before executing Khiops. If the input tables are
-            already sorted by their keys set this parameter to ``False`` to speed up the
-            processing.
 
         Returns
         -------
@@ -1984,15 +2042,26 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
     output_dir : str, optional
         Path of the output directory for the ``AllReports.khj`` report file and the
         ``Modeling.kdic`` modeling dictionary file. By default these files are deleted.
-    internal_sort : bool, default ``True``
+    auto_sort : bool, default ``True``
         *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
         by their key before executing Khiops. If the input tables are already sorted by
         their keys set this parameter to ``False`` to speed up the processing. This
         affects the `fit` and `predict` methods.
+        *Note* The sort by key is performed in a left-to-right, hierarchical,
+        lexicographic manner.
     key : str, optional
-        *Multi-table only* : The name of the column to be used as key.  **Deprecated**
-        will be removed in pyKhiops 11. Use ``dict`` dataset specifications in ``fit``,
-        ``fit_predict``  and ``predict``.
+        *Multi-table only* : The name of the column to be used as key.
+        **Deprecated** will be removed in pyKhiops 11. Use ``dict`` dataset
+        specifications in ``fit``, ``fit_predict``  and ``predict``.
+    internal_sort : bool, optional
+        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
+        by their key before executing Khiops. If the input tables are already sorted by
+        their keys set this parameter to ``False`` to speed up the processing. This
+        affects the `fit` and `predict` methods.
+        *Note* The sort by key is performed in a left-to-right, hierarchical,
+        lexicographic manner.
+        **Deprecated** will be removed in pyKhiops 11. Use the ``auto_sort``
+        estimator parameter instead.
 
     Attributes
     ----------
@@ -2022,8 +2091,9 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         n_trees=0,
         verbose=False,
         output_dir=None,
-        internal_sort=True,
+        auto_sort=True,
         key=None,
+        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2031,8 +2101,9 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
             n_trees=n_trees,
             verbose=verbose,
             output_dir=output_dir,
-            internal_sort=internal_sort,
+            auto_sort=auto_sort,
             key=key,
+            internal_sort=internal_sort,
         )
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Mean"
@@ -2199,15 +2270,26 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
     output_dir : str, optional
         Path of the output directory for the ``AllReports.khj`` report file and the
         ``Modeling.kdic`` modeling dictionary file. By default these files are deleted.
-    internal_sort : bool, default ``True``
+    auto_sort : bool, default ``True``
         *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
         by their key before executing Khiops. If the input tables are already sorted by
         their keys set this parameter to ``False`` to speed up the processing. This
         affects the `fit` and `transform` methods.
+        *Note* The sort by key is performed in a left-to-right, hierarchical,
+        lexicographic manner.
     key : str, optional
         *Multi-table only* : The name of the column to be used as key.
         **Deprecated** will be removed in pyKhiops 11. Use ``dict`` dataset
         specifications in ``fit`` and ``transform``.
+    internal_sort : bool, optional
+        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
+        by their key before executing Khiops. If the input tables are already sorted by
+        their keys set this parameter to ``False`` to speed up the processing. This
+        affects the `fit` and `transform` methods.
+        *Note* The sort by key is performed in a left-to-right, hierarchical,
+        lexicographic manner.
+        **Deprecated** will be removed in pyKhiops 11. Use the ``auto_sort``
+        estimator parameter instead.
 
     Attributes
     ----------
@@ -2243,8 +2325,9 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         keep_initial_variables=False,
         verbose=False,
         output_dir=None,
-        internal_sort=True,
+        auto_sort=True,
         key=None,
+        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2252,8 +2335,9 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             n_trees=n_trees,
             verbose=verbose,
             output_dir=output_dir,
-            internal_sort=internal_sort,
+            auto_sort=auto_sort,
             key=key,
+            internal_sort=internal_sort,
         )
         self.categorical_target = categorical_target
         self.transform_type_categorical = transform_type_categorical

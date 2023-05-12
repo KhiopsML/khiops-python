@@ -1763,7 +1763,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 )
 
             # Train the estimator
-            estimator = estimator_type(output_dir=self.output_dir, internal_sort=False)
+            estimator = estimator_type(output_dir=self.output_dir, auto_sort=False)
             fit_kwargs = (
                 custom_kwargs.get("fit", {}) if custom_kwargs is not None else {}
             )
