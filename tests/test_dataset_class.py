@@ -485,7 +485,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         created_table = pd.read_csv(created_table_path, sep="\t")
 
         # Cast "Date" columns to datetime as we don't automatically recognize dates
-        created_table["Date"] = created_table["Date"].astype("datetime64")
+        created_table["Date"] = created_table["Date"].astype("datetime64[ns]")
         reference_table = dataset_spec["tables"]["Reviews"][0]
         reference_table["class"] = label
 
