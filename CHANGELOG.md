@@ -5,6 +5,39 @@
   pyKhiops correlative (third digit). So 10.0.4 = 4th version developed that supports Khiops 10.0.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.1.3 - 2023-06-XY
+
+### Added
+- `sklearn`:
+  - Direct support for coclustering simplification, via the `KhiopsCoclustering.simplify` method.
+- *Internals*:
+  - The `TaskRegistry.set_task_end_version` method for specifying the ending Khiops version for a
+    task.
+
+### Fixed
+- `sklearn`:
+  - Verbose mode support is now complete for coclustering.
+- *Internals*:
+  - User-provided scenario prologue is now taken into account into the tasks.
+
+### Changed
+- `sklearn`:
+  -  ``auto_sort`` replaces ``internal_sort`` to control input table sorting in estimators.
+  - The multi-table documentation has been streamlined to be more precise and clearer.
+- General:
+  - License has been updated to BSD-3 Clear.
+
+### Deprecated
+- `sklearn`:
+  - The `max_part_numbers` parameter of `KhiopsCoclustering` `fit` method. The `KhiopsClustering`
+    `simplify` method now contains the simplification feature.
+  - The `internal_sort` estimator parameter. The `auto_sort` estimator parameter replaces it.
+- `core`:
+  - The `build_multi_table_dictionary` API function. The `build_multi_table_dictionary_domain`
+    helper function provides the same functionality.
+- *Internals*:
+  - The `build_multi_table_dictionary` task. This task will not be supported after Khiops 11.
+
 ## 10.1.2 - 2023-03-14
 
 ### Added
