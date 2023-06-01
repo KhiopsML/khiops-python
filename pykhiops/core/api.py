@@ -448,7 +448,7 @@ def check_database(
     detect_format=True,
     header_line=None,
     field_separator=None,
-    sample_percentage=100,
+    sample_percentage=100.0,
     sampling_mode="Include sample",
     selection_variable="",
     selection_value="",
@@ -481,11 +481,12 @@ def check_database(
     field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
-    sample_percentage : int, default 100
-        See ``sampling_mode`` option below.
+    sample_percentage : float, default 100.0
+        See the ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it checks ``sample_percentage`` percent of data and
-        if equal to "Exclude sample" ``100 - sample_percentage`` percent of data.
+        If equal to "Include sample" it checks ``sample_percentage`` percent of
+        the data; if equal to "Exclude sample" it checks the complement of the
+        data selected with "Include sample".
     selection_variable : str, default ""
         It checks only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -521,7 +522,7 @@ def train_predictor(
     detect_format=True,
     header_line=None,
     field_separator=None,
-    sample_percentage=70,
+    sample_percentage=70.0,
     sampling_mode="Include sample",
     use_complement_as_test=True,
     selection_variable="",
@@ -579,14 +580,16 @@ def train_predictor(
     field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
-    sample_percentage : int, default 100
-        See ``sampling_mode`` option below.
+    sample_percentage : float, default 70.0
+        See the ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it trains the predictor with  ``sample_percentage``
-        percent of data and if equal to "Exclude sample" with ``100 -
-        sample_percentage`` percent of data.
+        If equal to "Include sample" it trains the predictor on ``sample_percentage``
+        percent of the data and tests the model on the remainder of the data
+        if ``use_complement_as_test`` is set to ``True``.
+        If equal to "Exclude sample" the train and test datasets above are exchanged.
     use_complement_as_test : bool, default ``True``
-        Uses the complement of the sampled database as test database.
+        Uses the complement of the sampled database as test database for
+        computing the model's performance metrics.
     fill_test_database_settings : bool, default ``False``
         It creates a test database as the complement of the train database.
         **Deprecated** will be removed in pyKhiops 11, use ``use_complement_as_test``
@@ -723,7 +726,7 @@ def evaluate_predictor(
     detect_format=True,
     header_line=None,
     field_separator=None,
-    sample_percentage=100,
+    sample_percentage=100.0,
     sampling_mode="Include sample",
     selection_variable="",
     selection_value="",
@@ -759,12 +762,13 @@ def evaluate_predictor(
     field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
-    sample_percentage : int, default 100
+    sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it trains the model with  ``sample_percentage``
-        percent of data and if equal to "Exclude sample" with ``100 -
-        sample_percentage`` percent of data.
+        If equal to "Include sample" it evaluates the predictor on
+        ``sample_percentage`` percent of the data. If equal to "Exclude sample"
+        it evaluates the predictor on the complement of the data selected with
+        "Include sample".
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal "".
@@ -834,7 +838,7 @@ def train_recoder(
     detect_format=True,
     header_line=None,
     field_separator=None,
-    sample_percentage=70,
+    sample_percentage=100.0,
     sampling_mode="Include sample",
     selection_variable="",
     selection_value="",
@@ -904,12 +908,12 @@ def train_recoder(
     field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
-    sample_percentage : int, default 100
+    sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it trains the recoder with  ``sample_percentage``
-        percent of data and if equal to "Exclude sample" with ``100 -
-        sample_percentage`` percent of data.
+        If equal to "Include sample" it trains the recoder on ``sample_percentage``
+        percent of the data. If equal to "Exclude sample" it trains the recoder on the
+        complement of the data selected with "Include sample".
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1040,7 +1044,7 @@ def deploy_model(
     detect_format=True,
     header_line=None,
     field_separator=None,
-    sample_percentage=100,
+    sample_percentage=100.0,
     sampling_mode="Include sample",
     selection_variable="",
     selection_value="",
@@ -1079,12 +1083,12 @@ def deploy_model(
     field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
-    sample_percentage : int, default 100
+    sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" deploys the model with  ``sample_percentage``
-        percent of data and if equal to "Exclude sample" with ``100 -
-        sample_percentage`` percent of data.
+        If equal to "Include sample" it deploys the model on ``sample_percentage``
+        percent of the data. If equal to "Exclude sample" it deploys the model on the
+        complement of the data selected with "Include sample".
     selection_variable : str, default ""
         It deploys only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1309,7 +1313,7 @@ def train_coclustering(
     detect_format=True,
     header_line=None,
     field_separator=None,
-    sample_percentage=100,
+    sample_percentage=100.0,
     sampling_mode="Include sample",
     selection_variable="",
     selection_value="",
@@ -1348,12 +1352,13 @@ def train_coclustering(
     field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
-    sample_percentage : int, default 100
+    sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it trains the coclustering with
-        ``sample_percentage`` percent of data and if equal to "Exclude sample" with
-        ``100 - sample_percentage`` percent of data.
+        If equal to "Include sample" it trains the coclustering estimator on
+        ``sample_percentage`` percent of the data. If equal to "Exclude sample"
+        it trains the coclustering estimator on the complement of the data
+        selected with "Include sample".
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1725,12 +1730,13 @@ def build_multi_table_dictionary(
 
     .. warning::
         This method is *deprecated* since Khiops 10.1.3 and will be removed in pyKhiops
-        11. Use the `build_multi_table_dictionary_domain` helper to the same effect.
+        11. Use the `.build_multi_table_dictionary_domain` helper function to
+        the same effect.
 
     Parameters
     ----------
     dictionary_file_path_or_domain : str or `.DictionaryDomain`
-        Path of a Khiops dictionary file or a DictionaryDomain object.
+        Path of a Khiops dictionary file or a `.DictionaryDomain` object.
     root_dictionary_name : str
         Name for the new root dictionary
     secondary_table_variable_name : str

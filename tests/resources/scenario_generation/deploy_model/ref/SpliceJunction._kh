@@ -16,7 +16,7 @@ SourceDatabase.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
 SourceDatabase.HeaderLineUsed true
 SourceDatabase.FieldSeparator 
 SourceDatabase.DatabaseFormatDetector.DetectFileFormat
-SourceDatabase.SampleNumberPercentage 100
+SourceDatabase.SampleNumberPercentage 100.0
 SourceDatabase.SamplingMode Include sample
 SourceDatabase.SelectionAttribute 
 SourceDatabase.SelectionValue 

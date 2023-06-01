@@ -14,7 +14,7 @@ EvaluationDatabase.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
 EvaluationDatabase.HeaderLineUsed true
 EvaluationDatabase.FieldSeparator 
 EvaluationDatabase.DatabaseFormatDetector.DetectFileFormat
-EvaluationDatabase.SampleNumberPercentage 100
+EvaluationDatabase.SampleNumberPercentage 100.0
 EvaluationDatabase.SamplingMode Include sample
 EvaluationDatabase.SelectionAttribute 
 EvaluationDatabase.SelectionValue 

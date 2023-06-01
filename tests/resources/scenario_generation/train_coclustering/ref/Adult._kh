@@ -11,7 +11,7 @@ Database.DatabaseFiles.DataTableName Adult.csv
 Database.HeaderLineUsed true
 Database.FieldSeparator 
 Database.DatabaseFormatDetector.DetectFileFormat
-Database.SampleNumberPercentage 100
+Database.SampleNumberPercentage 100.0
 Database.SamplingMode Include sample
 Database.SelectionAttribute 
 Database.SelectionValue 

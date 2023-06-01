@@ -23,7 +23,7 @@ TrainDatabase.DatabaseFiles.DataTableName ProductBidon.csv
 TrainDatabase.HeaderLineUsed true
 TrainDatabase.FieldSeparator 
 TrainDatabase.DatabaseFormatDetector.DetectFileFormat
-TrainDatabase.SampleNumberPercentage 70
+TrainDatabase.SampleNumberPercentage 100.0
 TrainDatabase.SamplingMode Include sample
 TrainDatabase.SelectionAttribute 
 TrainDatabase.SelectionValue 

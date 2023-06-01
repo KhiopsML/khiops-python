@@ -627,7 +627,7 @@ class KhiopsTaskRegistry:
         Raises
         ------
         `TypeError`
-            If task_name is not of type str.
+            If ``task_name`` is not of type str.
         `ValueError`
             If there are no registered tasks with the specified name.
         """
@@ -644,14 +644,14 @@ class KhiopsTaskRegistry:
         ----------
         task_name : str
             Name of the task.
-        end_version : str or `KhiopsVersion`
+        end_version : str or `.KhiopsVersion`
             Version where the support of the specified task ended.
 
         Raises
         ------
         `TypeError`
-            - If `task_name` is not of type str.
-            - If `end_version` is not of type str or `.KhiopsVersion`.
+            - If ``task_name`` is not of type str.
+            - If ``end_version`` is not of type str or `.KhiopsVersion`.
         `ValueError`
             If there are no registered tasks with the specified name.
         """

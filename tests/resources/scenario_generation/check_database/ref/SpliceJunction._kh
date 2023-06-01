@@ -13,7 +13,7 @@ TrainDatabase.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
 TrainDatabase.HeaderLineUsed true
 TrainDatabase.FieldSeparator 
 TrainDatabase.DatabaseFormatDetector.DetectFileFormat
-TrainDatabase.SampleNumberPercentage 100
+TrainDatabase.SampleNumberPercentage 100.0
 TrainDatabase.SamplingMode Include sample
 TrainDatabase.SelectionAttribute 
 TrainDatabase.SelectionValue 

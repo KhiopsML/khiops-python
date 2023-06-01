@@ -25,3 +25,4 @@ Main Modules
   pykhiops.core.analysis_results
   pykhiops.core.coclustering_results
   pykhiops.core.exceptions
+  pykhiops.core.helpers
