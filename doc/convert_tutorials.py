@@ -25,7 +25,7 @@ def main(args):
     os.makedirs(rest_tutorial_dir, exist_ok=True)
 
     # Collect the notebooks filenames and paths
-    notebook_paths = glob.glob("*.ipynb")
+    notebook_paths = sorted(glob.glob("*.ipynb"))
     notebook_names = [
         os.path.splitext(os.path.basename(path))[0] for path in notebook_paths
     ]
