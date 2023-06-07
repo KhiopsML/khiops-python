@@ -59,8 +59,12 @@ def _extract_path_from_uri(uri):
         #   Just use the original path
         elif len(res.uri_info.scheme) == 1:
             path = uri
+        # Otherwise return URI path as-is
+        else:
+            path = res.uri_info.path
+
     else:
-        path = res.path
+        path = res.uri_info.path
     return path
 
 
@@ -215,7 +219,7 @@ class PyKhiopsRunner(ABC):
     def scenario_prologue(self, prologue):
         if not isinstance(prologue, str):
             raise TypeError(type_error_message("scenario_prologue", prologue, str))
-        self.general_options.scenario_prologue = prologue
+        self.general_options.user_scenario_prologue = prologue
 
     @property
     def max_cores(self):

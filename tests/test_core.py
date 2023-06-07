@@ -514,7 +514,6 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
 
         # Run test for all methods and all mock datasets parameters
         for method_name, method_full_args in method_test_args.items():
-            test_runner.sub_test_name = method_name
             self._test_method_scenario_generation(
                 test_runner,
                 method_name,
@@ -544,6 +543,31 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
                 dataset_args = dataset_method_args["args"]
                 dataset_kwargs = dataset_method_args["kwargs"]
                 method(*dataset_args, **dataset_kwargs)
+
+    def test_general_options(self):
+        """Test that the general options are written to the scenario file"""
+        # Create the root directory of these tests
+        test_resources_dir = os.path.join(resources_dir(), "general_options")
+
+        # Use the test runner that only compares the scenarios
+        default_runner = pk.get_runner()
+        test_runner = CompareScenarioTestRunner(self, test_resources_dir)
+        test_runner.test_name = "general_options"
+        test_runner.subtest_name = "general_options"
+        cleanup_dir(test_runner.output_scenario_dir, "*/output/*._kh")
+        pk.set_runner(test_runner)
+
+        # Set the general options
+        test_runner.max_cores = 10
+        test_runner.max_memory_mb = 1000
+        test_runner.khiops_temp_dir = "/another/tmp"
+        test_runner.scenario_prologue = "// Scenario prologue test"
+
+        # Call check_database (could be any other method)
+        pk.check_database("a.kdic", "dict_name", "data.txt")
+
+        # Set the runner to the default one
+        pk.set_runner(default_runner)
 
 
 class PyKhiopsCoreServicesTests(unittest.TestCase):

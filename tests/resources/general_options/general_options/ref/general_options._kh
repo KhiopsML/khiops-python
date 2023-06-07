@@ -1,0 +1,37 @@
+// System settings
+AnalysisSpec.SystemParameters.MaxCoreNumber 10
+AnalysisSpec.SystemParameters.MemoryLimit 1000
+AnalysisSpec.SystemParameters.TemporaryDirectoryName /another/tmp
+
+// User-defined prologue
+// Scenario prologue test
+
+// Scenario for task check_database
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName a.kdic
+OK
+ClassManagement.ClassName dict_name
+
+// Train database settings
+TrainDatabase.DatabaseFiles.List.Key dict_name
+TrainDatabase.DatabaseFiles.DataTableName data.txt
+TrainDatabase.HeaderLineUsed true
+TrainDatabase.FieldSeparator 
+TrainDatabase.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.SampleNumberPercentage 100
+TrainDatabase.SamplingMode Include sample
+TrainDatabase.SelectionAttribute 
+TrainDatabase.SelectionValue 
+
+// Log messages limit
+AnalysisSpec.SystemParameters.MaxErrorMessageNumberInLog 20
+
+// Execute check database
+LearningTools.CheckData
+
+// End of scenario for task check_database
+
+// Exit Khiops
+ClassManagement.Quit
+OK
