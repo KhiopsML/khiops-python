@@ -3150,7 +3150,7 @@ class PredictorCurve:
             if "classifier" in json_data:
                 self.type = "Lift"
                 self.name = json_data.get("classifier")
-            elif "regressor" in json_data is not None:
+            elif "regressor" in json_data:
                 self.type = "REC"
                 self.name = json_data.get("regressor")
             else:
