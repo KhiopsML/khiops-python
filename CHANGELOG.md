@@ -5,7 +5,7 @@
   pyKhiops correlative (third digit). So 10.0.4 = 4th version developed that supports Khiops 10.0.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## 10.1.3 - 2023-06-XY
+## 10.1.3 - 2023-06-14
 
 ### Added
 - `sklearn`:
