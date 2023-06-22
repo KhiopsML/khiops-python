@@ -1,0 +1,14 @@
+Hierarchical structure	Odor
+              {ALMOND, ANISE}
+      B5
+              {FOUL}
+  B1
+              {FISHY, SPICY}
+            B11
+              {MUSTY}
+     B4
+              {NONE}
+        B7
+              {CREOSOTE}
+         B8
+              {PUNGENT}

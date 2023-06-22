@@ -1,0 +1,21 @@
+// Dictionary file
+ClassManagement.OpenFile
+ClassFileName __dictionary_file__
+OK
+
+// Extract keys settings
+LearningTools.ExtractKeysFromDataTable
+ClassName __dictionary__
+SourceDataTable.DatabaseName __data_file__
+SourceDataTable.HeaderLineUsed __header_line__
+SourceDataTable.FieldSeparator __field_separator__
+__disable_detect_format__ SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+TargetDataTable.DatabaseName __output_data_file__
+TargetDataTable.HeaderLineUsed __output_header_line__
+TargetDataTable.FieldSeparator __output_field_separator__
+ExtractKeysFromDataTable
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

@@ -1,0 +1,47 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Adult.kdic
+OK
+ClassManagement.ClassName Adult
+
+// Train database settings
+// __database_files__ below must be replaced for each data table file with:
+//  Database.DatabaseFiles.List.Key __data_path__
+//  Database.DatabaseFiles.DataTableName __data_file_path__
+Database.DatabaseFiles.List.Key Adult
+Database.DatabaseFiles.DataTableName Adult.csv
+Database.HeaderLineUsed true
+Database.FieldSeparator 
+ Database.DatabaseFormatDetector.DetectFileFormat
+Database.SampleNumberPercentage 100
+Database.SamplingMode Include sample
+Database.SelectionAttribute 
+Database.SelectionValue 
+
+// Coclustering variables settings
+// __coclustering_variables__ below must be replaced for each coclustering variable file with:
+//   AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+//   AnalysisSpec.CoclusteringParameters.Attributes.Name __variable_name__
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name age
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name workclass
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name race
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name sex
+AnalysisSpec.CoclusteringParameters.FrequencyAttribute 
+
+// Minimum optimization time
+AnalysisSpec.SystemParameters.OptimizationTime 0
+
+// Output settings
+AnalysisResults.ResultFilesDirectory .\AdultResults
+AnalysisResults.ResultFilesPrefix 
+
+// Train
+BuildCoclustering
+
+// Exit Khiops Coclustering
+ClassManagement.Quit
+OK

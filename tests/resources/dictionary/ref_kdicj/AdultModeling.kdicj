@@ -1,0 +1,592 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0.0.3i",
+	"dictionaries": [
+		{
+			"name": "BU1_Adult",
+			"metaData": {
+				"InitialDictionary": "Adult",
+				"PredictorLabel": "Univariate relationship",
+				"PredictorType": "Classifier"
+			},
+			"variables": [
+				{
+					"name": "Label",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0
+					}
+				},
+				{
+					"name": "age",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.118138
+					}
+				},
+				{
+					"name": "workclass",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.0206217
+					}
+				},
+				{
+					"name": "fnlwgt",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0
+					}
+				},
+				{
+					"name": "education",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.113452
+					}
+				},
+				{
+					"name": "education_num",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.113274
+					}
+				},
+				{
+					"name": "marital_status",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.19789
+					}
+				},
+				{
+					"name": "occupation",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.0879994
+					}
+				},
+				{
+					"name": "relationship",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.207419,
+						"SourceVariable": true
+					}
+				},
+				{
+					"name": "race",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.0106304
+					}
+				},
+				{
+					"name": "sex",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.0453622
+					}
+				},
+				{
+					"name": "capital_gain",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.134729
+					}
+				},
+				{
+					"name": "capital_loss",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.0523443
+					}
+				},
+				{
+					"name": "hours_per_week",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.0667205
+					}
+				},
+				{
+					"name": "native_country",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0.0063401
+					}
+				},
+				{
+					"name": "class",
+					"type": "Categorical",
+					"metaData": {
+						"TargetVariable": true
+					}
+				},
+				{
+					"name": "Vclass",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueSetC(\"less\", \"more\"), Frequencies(26028, 8146))",
+					"metaData": {
+						"TargetValues": true
+					}
+				},
+				{
+					"name": "Prelationship",
+					"label": "DataGrid(relationship, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"Husband\", \"Wife\"), ValueGroup(\"Not-in-family\"), ValueGroup(\"Own-child\", \"Other-relative\", \" * \"), ValueGroup(\"Unmarried\")), ValueSetC(\"less\", \"more\"), Frequencies(8487, 7916, 6210, 3415, 6942, 871, 107, 226))",
+					"metaData": {
+						"Level": 0.207419
+					}
+				},
+				{
+					"name": "BU1class",
+					"used": false,
+					"type": "Structure",
+					"structureType": "Classifier",
+					"rule": "NBClassifier(DataGridStats(Prelationship, relationship), Vclass)"
+				},
+				{
+					"name": "Predictedclass",
+					"type": "Categorical",
+					"rule": "TargetValue(BU1class)",
+					"metaData": {
+						"Prediction": true
+					}
+				},
+				{
+					"name": "Scoreclass",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetProb(BU1class)",
+					"metaData": {
+						"Score": true
+					}
+				},
+				{
+					"name": "Probclassless",
+					"type": "Numerical",
+					"rule": "TargetProbAt(BU1class, \"less\")",
+					"metaData": {
+						"TargetProb1": "less"
+					}
+				},
+				{
+					"name": "Probclassmore",
+					"type": "Numerical",
+					"rule": "TargetProbAt(BU1class, \"more\")",
+					"metaData": {
+						"TargetProb2": "more"
+					}
+				}
+			]
+		},
+		{
+			"name": "SNB_Adult",
+			"metaData": {
+				"InitialDictionary": "Adult",
+				"PredictorLabel": "Selective Naive Bayes",
+				"PredictorType": "Classifier"
+			},
+			"variables": [
+				{
+					"name": "Label",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0
+					}
+				},
+				{
+					"name": "age",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.260019,
+						"Level": 0.118138,
+						"Weight": 0.572296
+					}
+				},
+				{
+					"name": "workclass",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.0335914,
+						"Level": 0.0206217,
+						"Weight": 0.054718
+					}
+				},
+				{
+					"name": "fnlwgt",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Level": 0
+					}
+				},
+				{
+					"name": "education",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.237481,
+						"Level": 0.113452,
+						"Weight": 0.497101
+					}
+				},
+				{
+					"name": "education_num",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.167633,
+						"Level": 0.113274,
+						"Weight": 0.248077
+					}
+				},
+				{
+					"name": "marital_status",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.323051,
+						"Level": 0.19789,
+						"Weight": 0.527374
+					}
+				},
+				{
+					"name": "occupation",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.207916,
+						"Level": 0.0879994,
+						"Weight": 0.491241
+					}
+				},
+				{
+					"name": "relationship",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.281976,
+						"Level": 0.207419,
+						"Weight": 0.383331
+					}
+				},
+				{
+					"name": "race",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.0503325,
+						"Level": 0.0106304,
+						"Weight": 0.238312
+					}
+				},
+				{
+					"name": "sex",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.0163456,
+						"Level": 0.0453622,
+						"Weight": 0.00588989
+					}
+				},
+				{
+					"name": "capital_gain",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.349431,
+						"Level": 0.134729,
+						"Weight": 0.906281
+					}
+				},
+				{
+					"name": "capital_loss",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.200194,
+						"Level": 0.0523443,
+						"Weight": 0.765656
+					}
+				},
+				{
+					"name": "hours_per_week",
+					"used": false,
+					"type": "Numerical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.172376,
+						"Level": 0.0667205,
+						"Weight": 0.445343
+					}
+				},
+				{
+					"name": "native_country",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 2.70805,
+						"Importance": 0.0477354,
+						"Level": 0.0063401,
+						"Weight": 0.359406
+					}
+				},
+				{
+					"name": "class",
+					"type": "Categorical",
+					"metaData": {
+						"TargetVariable": true
+					}
+				},
+				{
+					"name": "Vclass",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueSetC(\"less\", \"more\"), Frequencies(26028, 8146))",
+					"metaData": {
+						"TargetValues": true
+					}
+				},
+				{
+					"name": "Page",
+					"label": "DataGrid(age, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(20.5, 23.5, 26.5, 28.5, 31.5, 35.5, 42.5, 55.5, 61.5), ValueSetC(\"less\", \"more\"), Frequencies(2523, 2485, 2341, 1538, 2222, 2776, 4024, 4950, 1427, 1742, 1, 34, 136, 190, 526, 898, 2008, 3162, 707, 484))",
+					"metaData": {
+						"Level": 0.118138
+					}
+				},
+				{
+					"name": "Pworkclass",
+					"label": "DataGrid(workclass, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"Private\", \"Without-pay\", \"Never-worked\", \" * \"), ValueGroup(\"Self-emp-not-inc\", \"Local-gov\", \"State-gov\"), ValueGroup(\"Self-emp-inc\"), ValueGroup(\"Federal-gov\")), ValueSetC(\"less\", \"more\"), Frequencies(20389, 4485, 532, 622, 5347, 1768, 656, 375))",
+					"metaData": {
+						"Level": 0.0206217
+					}
+				},
+				{
+					"name": "Peducation",
+					"label": "DataGrid(education, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"HS-grad\"), ValueGroup(\"Some-college\"), ValueGroup(\"Bachelors\"), ValueGroup(\"11th\", \"10th\", \"7th-8th\", \"9th\", \"12th\", \"5th-6th\", \"1st-4th\", \"Preschool\", \" * \"), ValueGroup(\"Assoc-voc\", \"Assoc-acdm\"), ValueGroup(\"Masters\"), ValueGroup(\"Prof-school\", \"Doctorate\")), ValueSetC(\"less\", \"more\"), Frequencies(9292, 6226, 3288, 4224, 1909, 831, 258, 1753, 1437, 2273, 250, 671, 1023, 739))",
+					"metaData": {
+						"Level": 0.113452
+					}
+				},
+				{
+					"name": "Peducation_num",
+					"label": "DataGrid(education_num, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(8.5, 9.5, 10.5, 12.5, 13.5, 14.5), ValueSetC(\"less\", \"more\"), Frequencies(4224, 9292, 6226, 1909, 3288, 831, 258, 250, 1753, 1437, 671, 2273, 1023, 739))",
+					"metaData": {
+						"Level": 0.113274
+					}
+				},
+				{
+					"name": "Pmarital_status",
+					"label": "DataGrid(marital_status, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"Married-civ-spouse\", \"Married-AF-spouse\", \" * \"), ValueGroup(\"Never-married\", \"Separated\"), ValueGroup(\"Divorced\", \"Widowed\", \"Married-spouse-absent\")), ValueSetC(\"less\", \"more\"), Frequencies(8699, 11773, 5556, 6977, 550, 619))",
+					"metaData": {
+						"Level": 0.19789
+					}
+				},
+				{
+					"name": "Poccupation",
+					"label": "DataGrid(occupation, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"Adm-clerical\", \"Machine-op-inspct\", \"Farming-fishing\"), ValueGroup(\"Prof-specialty\", \"Armed-Forces\", \" * \"), ValueGroup(\"Craft-repair\", \"Transport-moving\"), ValueGroup(\"Sales\", \"Tech-support\", \"Protective-serv\"), ValueGroup(\"Exec-managerial\"), ValueGroup(\"Other-service\", \"Priv-house-serv\"), ValueGroup(\"Handlers-cleaners\")), ValueSetC(\"less\", \"more\"), Frequencies(6177, 4161, 4644, 4030, 2222, 3463, 1331, 933, 2140, 1309, 1509, 2018, 138, 99))",
+					"metaData": {
+						"Level": 0.0879994
+					}
+				},
+				{
+					"name": "Prelationship",
+					"label": "DataGrid(relationship, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"Husband\", \"Wife\"), ValueGroup(\"Not-in-family\"), ValueGroup(\"Own-child\", \"Other-relative\", \" * \"), ValueGroup(\"Unmarried\")), ValueSetC(\"less\", \"more\"), Frequencies(8487, 7916, 6210, 3415, 6942, 871, 107, 226))",
+					"metaData": {
+						"Level": 0.207419
+					}
+				},
+				{
+					"name": "Prace",
+					"label": "DataGrid(race, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"White\", \"Asian-Pac-Islander\"), ValueGroup(\"Black\", \"Amer-Indian-Eskimo\", \"Other\", \" * \")), ValueSetC(\"less\", \"more\"), Frequencies(22590, 3438, 7703, 443))",
+					"metaData": {
+						"Level": 0.0106304
+					}
+				},
+				{
+					"name": "Psex",
+					"label": "DataGrid(sex, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"Male\"), ValueGroup(\"Female\", \" * \")), ValueSetC(\"less\", \"more\"), Frequencies(15950, 10078, 6913, 1233))",
+					"metaData": {
+						"Level": 0.0453622
+					}
+				},
+				{
+					"name": "Pcapital_gain",
+					"label": "DataGrid(capital_gain, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(57, 3040, 3120, 4240, 4400, 4668, 4826, 4932.5, 4970, 5119, 5310, 6667, 7070, 7436, 7560, 10543, 10585, 30900, 70000), ValueSetC(\"less\", \"more\"), Frequencies(24935, 483, 3, 327, 11, 76, 0, 17, 0, 87, 0, 31, 37, 0, 5, 2, 5, 1, 8, 0, 6425, 0, 103, 0, 66, 0, 22, 0, 8, 0, 104, 28, 0, 260, 0, 395, 0, 564, 0, 171))",
+					"metaData": {
+						"Level": 0.134729
+					}
+				},
+				{
+					"name": "Pcapital_loss",
+					"label": "DataGrid(capital_loss, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(70, 1457, 1494, 1551, 1568.5, 1820.5, 1859, 1881, 1927, 1975.5, 1978.5, 2161, 2176.5, 2384, 2450), ValueSetC(\"less\", \"more\"), Frequencies(25227, 92, 20, 23, 0, 353, 2, 45, 13, 19, 0, 131, 0, 83, 0, 20, 7329, 2, 33, 0, 29, 3, 49, 0, 372, 0, 183, 0, 9, 32, 71, 34))",
+					"metaData": {
+						"Level": 0.0523443
+					}
+				},
+				{
+					"name": "Phours_per_week",
+					"label": "DataGrid(hours_per_week, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(IntervalBounds(34.5, 39.5, 40.5, 49.5, 64.5), ValueSetC(\"less\", \"more\"), Frequencies(5485, 1923, 12550, 2163, 3154, 753, 410, 359, 3441, 1118, 2406, 412))",
+					"metaData": {
+						"Level": 0.0667205
+					}
+				},
+				{
+					"name": "Pnative_country",
+					"label": "DataGrid(native_country, class)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"United-States\", \"Philippines\", \"Germany\", \"Cuba\", \"China\", \"South\", \"Poland\", \"Portugal\", \"Ireland\", \"Thailand\", \"Yugoslavia\", \"Scotland\"), ValueGroup(\"Mexico\", \"Puerto-Rico\", \"El-Salvador\", \"Dominican-Republic\", \"Jamaica\", \"Columbia\", \"Vietnam\", \"Guatemala\", \"Haiti\", \"Ecuador\", \"Peru\", \"Nicaragua\", \"Laos\", \"Outlying-US\", \"Trinadad&Tobago\", \"Honduras\", \"Holand-Netherlands\", \" * \"), ValueGroup(\"Canada\", \"India\", \"England\", \"Italy\", \"Japan\", \"Taiwan\", \"Iran\", \"Greece\", \"France\", \"Cambodia\", \"Hong\", \"Hungary\")), ValueSetC(\"less\", \"more\"), Frequencies(24257, 1363, 408, 7816, 98, 232))",
+					"metaData": {
+						"Level": 0.0063401
+					}
+				},
+				{
+					"name": "SNBclass",
+					"used": false,
+					"type": "Structure",
+					"structureType": "Classifier",
+					"rule": "SNBClassifier(Vector(0.5722961426, 0.05471801758, 0.4971008301, 0.2480773926, 0.5273742676, 0.4912414551, 0.3833312988, 0.2383117676, 0.005889892578, 0.9062805176, 0.7656555176, 0.4453430176, 0.3594055176), DataGridStats(Page, age), DataGridStats(Pworkclass, workclass), DataGridStats(Peducation, education), DataGridStats(Peducation_num, education_num), DataGridStats(Pmarital_status, marital_status), DataGridStats(Poccupation, occupation), DataGridStats(Prelationship, relationship), DataGridStats(Prace, race), DataGridStats(Psex, sex), DataGridStats(Pcapital_gain, capital_gain), DataGridStats(Pcapital_loss, capital_loss), DataGridStats(Phours_per_week, hours_per_week), DataGridStats(Pnative_country, native_country), Vclass)"
+				},
+				{
+					"name": "Predictedclass",
+					"type": "Categorical",
+					"rule": "TargetValue(SNBclass)",
+					"metaData": {
+						"Prediction": true
+					}
+				},
+				{
+					"name": "Scoreclass",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetProb(SNBclass)",
+					"metaData": {
+						"Score": true
+					}
+				},
+				{
+					"name": "Probclassless",
+					"type": "Numerical",
+					"rule": "TargetProbAt(SNBclass, \"less\")",
+					"metaData": {
+						"TargetProb1": "less"
+					}
+				},
+				{
+					"name": "Probclassmore",
+					"type": "Numerical",
+					"rule": "TargetProbAt(SNBclass, \"more\")",
+					"metaData": {
+						"TargetProb2": "more"
+					}
+				}
+			]
+		}
+	],
+	"khiops_encoding": "ascii"
+}

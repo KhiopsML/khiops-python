@@ -1,0 +1,15 @@
+recursive-exclude cicd *
+recursive-exclude tests *
+recursive-exclude doc *
+exclude .git*
+exclude CONTRIBUTING.md
+exclude MANIFEST.in
+exclude pyproject.toml
+exclude sonar-project.properties
+exclude test-requirements.txt
+include doc/samples/samples.ipynb
+include doc/samples/samples.py
+include doc/samples/samples_sklearn.ipynb
+include doc/samples/samples_sklearn.py
+include pykhiops/_version.py
+include versioneer.py

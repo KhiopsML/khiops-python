@@ -1,0 +1,16 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName SpliceJunctionDNA.kdic
+OK
+ClassManagement.ClassName SpliceJunctionDNA
+
+// Detect format the data table format on the "Extract Keys" window
+LearningTools.ExtractKeysFromDataTable
+SourceDataTable.DatabaseName SpliceJunction.csv
+SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK
+

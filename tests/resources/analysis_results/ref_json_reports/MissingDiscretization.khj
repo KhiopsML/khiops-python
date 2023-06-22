@@ -1,0 +1,104 @@
+{
+	"tool": "Khiops",
+	"version": "10.0.0.3i",
+	"shortDescription": "",
+	"preparationReport": {
+		"reportType": "Preparation",
+		"summary": {
+			"dictionary": "IrisMissing",
+			"variables": {
+				"types": [
+					"Categorical",
+					"Numerical"
+				],
+				"numbers": [
+					1,
+					1
+				]
+			},
+			"database": ".\/IrisMissing.txt",
+			"samplePercentage": 100,
+			"samplingMode": "Include sample",
+			"selectionVariable": "",
+			"selectionValue": "",
+			"instances": 150,
+			"learningTask": "Classification analysis",
+			"targetVariable": "Class",
+			"targetDescriptiveStats": {
+				"values": 3,
+				"mode": "Iris-setosa",
+				"modeFrequency": 50
+			},
+			"targetValues": {
+				"values": ["Iris-setosa","Iris-versicolor","Iris-virginica"],
+				"frequencies": [50,50,50]
+			},
+			"evaluatedVariables": 1,
+			"informativeVariables": 1,
+			"featureEngineering": {
+				"maxNumberOfConstructedVariables": 0,
+				"maxNumberOfTrees": 0,
+				"maxNumberOfVariablePairs": 0
+			},
+			"discretization": "MODL",
+			"valueGrouping": "MODL",
+			"nullModel": {
+				"constructionCost": 0.693147,
+				"preparationCost": 9.34801,
+				"dataCost": 159.587
+			}
+		},
+		"variablesStatistics": [
+			{
+				"rank": "R1",
+				"name": "PW_UM40",
+				"type": "Numerical",
+				"level": 0.65628,
+				"parts": 4,
+				"values": 16,
+				"min": 0.1,
+				"max": 1.8,
+				"mean": 0.8654545455,
+				"stdDev": 0.5961141385,
+				"missingNumber": 40,
+				"constructionCost": 0.693147,
+				"preparationCost": 41.7703,
+				"dataCost": 15.8411
+			}
+		],
+		"variablesDetailedStatistics": {
+			"R1": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_UM40",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.65],
+								[1.65,1.8]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[0,0,40],
+						[50,0,0],
+						[0,48,4],
+						[0,2,6]
+					],
+					"partInterests": [0.300596,0.375745,0.294313,0.0293466]
+				}
+			}
+		}
+	},
+	"khiops_encoding": "ascii"
+}

@@ -1,0 +1,186 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0.3",
+	"dictionaries": [
+		{
+			"name": "Address",
+			"key": ["id_customer"],
+			"variables": [
+				{
+					"name": "id_customer",
+					"type": "Categorical"
+				},
+				{
+					"name": "StreetNumber",
+					"type": "Numerical"
+				},
+				{
+					"name": "StreetName",
+					"type": "Categorical"
+				},
+				{
+					"name": "id_city",
+					"type": "Categorical"
+				},
+				{
+					"name": "City",
+					"type": "Entity",
+					"objectType": "City",
+					"rule": "[id_city]"
+				}
+			]
+		},
+		{
+			"name": "City",
+			"root": true,
+			"key": ["id_city"],
+			"variables": [
+				{
+					"name": "id_city",
+					"type": "Categorical"
+				},
+				{
+					"name": "Name",
+					"type": "Categorical"
+				},
+				{
+					"name": "id_country",
+					"type": "Categorical"
+				},
+				{
+					"name": "Country",
+					"type": "Entity",
+					"objectType": "Country",
+					"rule": "[id_country]"
+				}
+			]
+		},
+		{
+			"name": "Country",
+			"root": true,
+			"key": ["id_country"],
+			"variables": [
+				{
+					"name": "id_country",
+					"type": "Categorical"
+				},
+				{
+					"name": "Name",
+					"type": "Categorical"
+				}
+			]
+		},
+		{
+			"name": "Customer",
+			"root": true,
+			"key": ["id_customer"],
+			"variables": [
+				{
+					"name": "id_customer",
+					"type": "Categorical"
+				},
+				{
+					"name": "Name",
+					"type": "Categorical"
+				},
+				{
+					"name": "Services",
+					"type": "Table",
+					"objectType": "Service"
+				},
+				{
+					"name": "Address",
+					"type": "Entity",
+					"objectType": "Address"
+				}
+			]
+		},
+		{
+			"name": "Product",
+			"root": true,
+			"key": ["id_product"],
+			"variables": [
+				{
+					"name": "id_product",
+					"type": "Categorical"
+				},
+				{
+					"name": "Name",
+					"type": "Categorical"
+				},
+				{
+					"name": "Price",
+					"type": "Numerical"
+				}
+			]
+		},
+		{
+			"name": "Service",
+			"key": ["id_customer","id_product"],
+			"variables": [
+				{
+					"name": "id_customer",
+					"type": "Categorical"
+				},
+				{
+					"name": "id_product",
+					"type": "Categorical"
+				},
+				{
+					"name": "Product",
+					"type": "Entity",
+					"objectType": "Product",
+					"rule": "[id_product]"
+				},
+				{
+					"name": "ProductCopy",
+					"type": "Entity",
+					"objectType": "Product",
+					"rule": "[id_product]"
+				},
+				{
+					"name": "SubscriptionDate",
+					"type": "Date"
+				},
+				{
+					"name": "Usages",
+					"type": "Table",
+					"objectType": "Usage"
+				}
+			]
+		},
+		{
+			"name": "Usage",
+			"key": ["id_customer","id_product"],
+			"variables": [
+				{
+					"name": "id_customer",
+					"type": "Categorical"
+				},
+				{
+					"name": "id_product",
+					"type": "Categorical"
+				},
+				{
+					"name": "Product",
+					"type": "Entity",
+					"objectType": "Product",
+					"rule": "[id_product]"
+				},
+				{
+					"name": "Date",
+					"type": "Date"
+				},
+				{
+					"name": "Time",
+					"type": "Time"
+				},
+				{
+					"name": "Duration",
+					"type": "Numerical"
+				}
+			]
+		}
+	],
+	"khiops_encoding": "ascii"
+}

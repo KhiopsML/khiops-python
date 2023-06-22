@@ -1,0 +1,14 @@
+// Dictionary file settings
+ClassManagement.OpenFile
+ClassFileName __dictionary_file__
+OK
+
+// Export dictionary as JSON file
+ClassManagement.ExportAsJSON
+JSONFileName __json_dictionary_file__
+OK
+
+// Exit Khiops
+ClassManagement.Quit
+OK
+

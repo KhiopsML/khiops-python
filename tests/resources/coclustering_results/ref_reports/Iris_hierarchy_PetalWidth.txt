@@ -1,0 +1,6 @@
+Hierarchical structure	PetalWidth
+         ]-inf;0.8]
+     ]-inf;+inf[
+         ]0.8;1.75]
+       ]0.8;+inf[
+         ]1.75;+inf[

@@ -1,0 +1,37 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+  ClassFileName __dictionary_file__
+  OK
+ClassManagement.ClassName __dictionary__
+
+// Prepare deployment window
+LearningTools.PrepareDeployment
+  // Coclustering file
+  SelectInputCoclustering
+    InputCoclusteringFileName __coclustering_file__
+    OK
+
+  // Simplification settings
+  PostProcessingSpec.MaxPreservedInformation __max_preserved_information__
+  PostProcessingSpec.MaxCellNumber __max_cell_number__
+  __max_part_number_spec__
+
+  // Deployment dictionary settings
+  DeploymentSpec.InputObjectArrayAttributeName __table_variable__
+  DeploymentSpec.DeployedAttributeName __deployed_variable__
+  DeploymentSpec.BuildPredictedClusterAttribute __build_cluster_variable__
+  DeploymentSpec.BuildClusterDistanceAttributes __build_distance_variables__
+  DeploymentSpec.BuildFrequencyRecodingAttributes __build_frequency_variables__
+  DeploymentSpec.OutputAttributesPrefix __variables_prefix__
+
+  // Output settings
+  AnalysisResults.ResultFilesDirectory __results_dir__
+  AnalysisResults.ResultFilesPrefix __results_prefix__
+
+  // Execute prepare deployment
+  PrepareDeployment
+  Exit
+
+// Exit Khiops
+Exit
+OK

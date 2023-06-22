@@ -1,0 +1,45 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName SpliceJunction.kdic
+OK
+ClassManagement.ClassName SpliceJunction
+
+// Train database settings
+// __database_files__ below must be replaced for each data table file with:
+//  Database.DatabaseFiles.List.Key __data_path__
+//  Database.DatabaseFiles.DataTableName __data_file_path__
+Database.DatabaseFiles.List.Key SpliceJunction
+Database.DatabaseFiles.DataTableName SpliceJunction.csv
+Database.DatabaseFiles.List.Key SpliceJunction`DNA
+Database.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
+Database.HeaderLineUsed true
+Database.FieldSeparator 
+ Database.DatabaseFormatDetector.DetectFileFormat
+Database.SampleNumberPercentage 100
+Database.SamplingMode Include sample
+Database.SelectionAttribute 
+Database.SelectionValue 
+
+// Coclustering variables settings
+// __coclustering_variables__ below must be replaced for each coclustering variable file with:
+//   AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+//   AnalysisSpec.CoclusteringParameters.Attributes.Name __variable_name__
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name SampleId
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name NonExistentVar
+AnalysisSpec.CoclusteringParameters.FrequencyAttribute 
+
+// Minimum optimization time
+AnalysisSpec.SystemParameters.OptimizationTime 0
+
+// Output settings
+AnalysisResults.ResultFilesDirectory .\SpliceJunctionResults
+AnalysisResults.ResultFilesPrefix 
+
+// Train
+BuildCoclustering
+
+// Exit Khiops Coclustering
+ClassManagement.Quit
+OK

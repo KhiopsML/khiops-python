@@ -1,0 +1,24 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0.0.3i",
+	"dictionaries": [
+		{
+			"name": "AnsiGreek",
+			"variables": [
+				{
+					"name": "VarAscii_a",
+					"type": "Categorical"
+				},
+				{
+					"name": "VarAnsi_\u00E9",
+					"type": "Categorical"
+				},
+				{
+					"name": "VarGreek_θ",
+					"type": "Categorical"
+				}
+			]
+		}
+	],
+	"khiops_encoding": "mixed_ansi_utf8"
+}

@@ -1,0 +1,12 @@
+Hierarchical structure	occupation
+                        {Craft-repair, Transport-moving, Farming-fishing, ...}
+                     B16
+                        {Machine-op-inspct, Handlers-cleaners}
+          B5
+                        {Prof-specialty}
+                  B13
+                        {Exec-managerial, Sales}
+             B8
+                        {Adm-clerical, Tech-support}
+                    B15
+                        {Other-service, Priv-house-serv}

@@ -1,0 +1,119 @@
+{
+	"tool": "Khiops",
+	"version": "10.0.6i",
+	"shortDescription": "",
+	"preparationReport": {
+		"reportType": "Preparation",
+		"summary": {
+			"dictionary": "BugNC",
+			"variables": {
+				"types": [
+					"Categorical",
+					"Numerical"
+				],
+				"numbers": [
+					1,
+					1
+				]
+			},
+			"database": ".\/BugTiny.txt",
+			"samplePercentage": 100,
+			"samplingMode": "Include sample",
+			"selectionVariable": "",
+			"selectionValue": "",
+			"instances": 2,
+			"learningTask": "Unsupervised analysis",
+			"evaluatedVariables": 2,
+			"featureEngineering": {
+				"maxNumberOfConstructedVariables": 0,
+				"maxNumberOfTrees": 0,
+				"maxNumberOfVariablePairs": 1
+			},
+			"discretization": "EqualWidth",
+			"valueGrouping": "BasicGrouping"
+		},
+		"variablesStatistics": [
+			{
+				"rank": "R1",
+				"name": "Var1",
+				"type": "Numerical",
+				"values": 2,
+				"min": 1,
+				"max": 2,
+				"mean": 1.5,
+				"stdDev": 0.5,
+				"missingNumber": 0,
+				"constructionCost": 1.38629
+			},
+			{
+				"rank": "R2",
+				"name": "Var2",
+				"type": "Categorical",
+				"values": 2,
+				"mode": "A",
+				"modeFrequency": 1,
+				"constructionCost": 1.38629
+			}
+		],
+		"variablesDetailedStatistics": {
+			"R1": {
+				"dataGrid": {
+					"isSupervised": false,
+					"dimensions": [
+						{
+							"variable": "Var1",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[1,1.5],
+								[1.5,2]
+							]
+						}
+					],
+					"frequencies": [1,1]
+				}
+			}
+		}
+	},
+	"bivariatePreparationReport": {
+		"reportType": "BivariatePreparation",
+		"summary": {
+			"dictionary": "BugNC",
+			"variables": {
+				"types": [
+					"Categorical",
+					"Numerical"
+				],
+				"numbers": [
+					1,
+					1
+				]
+			},
+			"database": ".\/BugTiny.txt",
+			"samplePercentage": 100,
+			"samplingMode": "Include sample",
+			"selectionVariable": "",
+			"selectionValue": "",
+			"instances": 2,
+			"learningTask": "Unsupervised analysis",
+			"evaluatedVariablePairs": 1,
+			"informativeVariablePairs": 0
+		},
+		"variablesPairsStatistics": [
+			{
+				"rank": "R1",
+				"name1": "Var1",
+				"name2": "Var2",
+				"level": 0,
+				"variables": 0,
+				"parts1": 1,
+				"parts2": 1,
+				"cells": 1,
+				"constructionCost": 0.693147,
+				"preparationCost": 1.09861,
+				"dataCost": 1.38629
+			}
+		]
+	},
+	"khiops_encoding": "ascii"
+}

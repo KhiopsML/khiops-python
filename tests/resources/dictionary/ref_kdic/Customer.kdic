@@ -1,0 +1,34 @@
+#Khiops 10.0.3
+
+Dictionary	Address	(id_customer)
+{
+	Categorical	id_customer		;	
+	Numerical	StreetNumber		;	
+	Categorical	StreetName		;	
+	Categorical	id_city		;	
+};
+
+Root	Dictionary	Customer	(id_customer)
+{
+	Categorical	id_customer		;	
+	Categorical	Name		;	
+	Table(Service)	Services		;	
+	Entity(Address)	Address		;	
+};
+
+Dictionary	Service	(id_customer, id_product)
+{
+	Categorical	id_customer		;	
+	Categorical	id_product		;	
+	Date	SubscriptionDate		;	
+	Table(Usage)	Usages		;	
+};
+
+Dictionary	Usage	(id_customer, id_product)
+{
+	Categorical	id_customer		;	
+	Categorical	id_product		;	
+	Date	Date		;	
+	Time	Time		;	
+	Numerical	Duration		;	
+};

@@ -1,0 +1,6 @@
+Hierarchical structure	marital_status
+                        {Never-married, Married-AF-spouse}
+      E1
+                        {Married-civ-spouse}
+         E4
+                        {Divorced, Widowed, Separated, ...}

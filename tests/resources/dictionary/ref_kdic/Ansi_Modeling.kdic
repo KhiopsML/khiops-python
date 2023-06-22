@@ -1,0 +1,22 @@
+#Khiops 10.0.0.3i
+
+Dictionary	SNB_MultipleEncodings
+<InitialDictionary="MultipleEncodings"> <PredictorLabel="Selective Naive Bayes"> <PredictorType="Classifier">
+{
+Unused	Categorical	Char		; <Cost=0> <Importance=0.754755> <Level=0.569655> <Weight=1>	
+	Categorical	Type		; <TargetVariable>	
+Unused	Numerical	Ansi	 = InGroup(ValueGroup("ASCII", "ANSI"), Type)	;	
+Unused	Numerical	Latin	 = InGroup(ValueGroup("ASCII", "UTF8 Latin"), Type)	;	
+Unused	Numerical	Greek	 = InGroup(ValueGroup("ASCII", "UTF8 Greek"), Type)	;	
+Unused	Numerical	AnsiLatin	 = InGroup(ValueGroup("ASCII", "ANSI", "UTF8 Latin"), Type)	;	
+Unused	Numerical	AnsiGreek	 = InGroup(ValueGroup("ASCII", "ANSI", "UTF8 Greek"), Type)	;	
+Unused	Numerical	LatinGreek	 = InGroup(ValueGroup("ASCII", "UTF8 Latin", "UTF8 Greek"), Type)	;	
+Unused	Numerical	AnsiLatinGreek	 = InGroup(ValueGroup("ASCII", "ANSI", "UTF8 Latin", "UTF8 Greek"), Type)	;	
+Unused	Structure(DataGrid)	VType	 = DataGrid(ValueSetC("ANSI", "ASCII"), Frequencies(10, 10))	; <TargetValues>	
+Unused	Structure(DataGrid)	PChar	 = DataGrid(ValueGroups(ValueGroup("<a>"), ValueGroup("<é>", " * ")), ValueSetC("ANSI", "ASCII"), Frequencies(0, 10, 10, 0))	; <Level=0.569655>	// DataGrid(Char, Type)
+Unused	Structure(Classifier)	SNBType	 = SNBClassifier(Vector(1), DataGridStats(PChar, Char), VType)	;	
+	Categorical	PredictedType	 = TargetValue(SNBType)	; <Prediction>	
+Unused	Numerical	ScoreType	 = TargetProb(SNBType)	; <Score>	
+	Numerical	ProbTypeANSI	 = TargetProbAt(SNBType, "ANSI")	; <TargetProb1="ANSI">	
+	Numerical	ProbTypeASCII	 = TargetProbAt(SNBType, "ASCII")	; <TargetProb2="ASCII">	
+};

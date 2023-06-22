@@ -1,0 +1,45 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Customer.kdic
+OK
+ClassManagement.ClassName Customer
+
+// Prepare deployment window
+LearningTools.PrepareDeployment
+
+// Coclustering file
+SelectInputCoclustering
+InputCoclusteringFileName Customer._khc
+OK
+
+// Simplification settings
+PostProcessingSpec.MaxPreservedInformation 0
+PostProcessingSpec.MaxCellNumber 0
+
+// __max_part_number_spec__ below must be replaced for each variable with:
+//   PostProcessingSpec.PostProcessedAttributes.List.Key __part_variable__
+//   PostProcessingSpec.PostProcessedAttributes.MaxPartNumber __max_part_number__
+PostProcessingSpec.PostProcessedAttributes.List.Key id_customer
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 128
+PostProcessingSpec.PostProcessedAttributes.List.Key Name
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 256
+
+// Deployment dictionary settings
+DeploymentSpec.InputObjectArrayAttributeName id_customer
+DeploymentSpec.DeployedAttributeName Name
+DeploymentSpec.BuildPredictedClusterAttribute true
+DeploymentSpec.BuildClusterDistanceAttributes false
+DeploymentSpec.BuildFrequencyRecodingAttributes false
+DeploymentSpec.OutputAttributesPrefix 
+
+// Output settings
+AnalysisResults.ResultFilesDirectory .\CustomerResults
+AnalysisResults.ResultFilesPrefix 
+
+// Execute prepare deployment
+PrepareDeployment
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

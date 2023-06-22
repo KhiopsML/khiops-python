@@ -1,0 +1,1083 @@
+{
+	"tool": "Khiops",
+	"version": "10.0.0.3i",
+	"shortDescription": "",
+	"preparationReport": {
+		"reportType": "Preparation",
+		"summary": {
+			"dictionary": "IrisMissing",
+			"variables": {
+				"types": [
+					"Categorical",
+					"Numerical"
+				],
+				"numbers": [
+					1,
+					23
+				]
+			},
+			"database": ".\/IrisMissing.txt",
+			"samplePercentage": 100,
+			"samplingMode": "Include sample",
+			"selectionVariable": "",
+			"selectionValue": "",
+			"instances": 150,
+			"learningTask": "Classification analysis",
+			"targetVariable": "Class",
+			"targetDescriptiveStats": {
+				"values": 3,
+				"mode": "Iris-setosa",
+				"modeFrequency": 50
+			},
+			"targetValues": {
+				"values": ["Iris-setosa","Iris-versicolor","Iris-virginica"],
+				"frequencies": [50,50,50]
+			},
+			"evaluatedVariables": 23,
+			"nativeVariables": 22,
+			"constructedVariables": 1,
+			"informativeVariables": 21,
+			"featureEngineering": {
+				"maxNumberOfConstructedVariables": 0,
+				"maxNumberOfTrees": 0,
+				"maxNumberOfVariablePairs": 0
+			},
+			"discretization": "MODLEqualWidth",
+			"valueGrouping": "MODL",
+			"nullModel": {
+				"constructionCost": 0.693147,
+				"preparationCost": 9.34801,
+				"dataCost": 159.587
+			}
+		},
+		"variablesStatistics": [
+			{
+				"rank": "R01",
+				"name": "PW_UM20",
+				"type": "Numerical",
+				"level": 0.89704,
+				"parts": 6,
+				"values": 19,
+				"min": 0.1,
+				"max": 2.1,
+				"mean": 1.029230769,
+				"stdDev": 0.6707568806,
+				"missingNumber": 20,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R02",
+				"name": "PW_MM40",
+				"type": "Numerical",
+				"level": 0.891562,
+				"parts": 4,
+				"values": 19,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.162727273,
+				"stdDev": 0.88089408,
+				"missingNumber": 40,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R03",
+				"name": "PW_MM20",
+				"type": "Numerical",
+				"level": 0.884611,
+				"parts": 4,
+				"values": 22,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.180769231,
+				"stdDev": 0.8152485373,
+				"missingNumber": 20,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R04",
+				"name": "PW_UM10",
+				"type": "Numerical",
+				"level": 0.881639,
+				"parts": 5,
+				"values": 21,
+				"min": 0.1,
+				"max": 2.3,
+				"mean": 1.113571429,
+				"stdDev": 0.7146638285,
+				"missingNumber": 10,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R05",
+				"name": "PW_LM40",
+				"type": "Numerical",
+				"level": 0.877555,
+				"parts": 6,
+				"values": 21,
+				"min": 0.3,
+				"max": 2.5,
+				"mean": 1.561818182,
+				"stdDev": 0.5415435546,
+				"missingNumber": 40,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R06",
+				"name": "PW_MM10",
+				"type": "Numerical",
+				"level": 0.876232,
+				"parts": 4,
+				"values": 23,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.190714286,
+				"stdDev": 0.7866653335,
+				"missingNumber": 10,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R07",
+				"name": "PW_MM5",
+				"type": "Numerical",
+				"level": 0.872777,
+				"parts": 4,
+				"values": 23,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.195172414,
+				"stdDev": 0.7733787076,
+				"missingNumber": 5,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R08",
+				"name": "PW_LM10",
+				"type": "Numerical",
+				"level": 0.869675,
+				"parts": 4,
+				"values": 22,
+				"min": 0.2,
+				"max": 2.5,
+				"mean": 1.274285714,
+				"stdDev": 0.730691593,
+				"missingNumber": 10,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R09",
+				"name": "PW_LM20",
+				"type": "Numerical",
+				"level": 0.869675,
+				"parts": 4,
+				"values": 22,
+				"min": 0.2,
+				"max": 2.5,
+				"mean": 1.356923077,
+				"stdDev": 0.692369228,
+				"missingNumber": 20,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R10",
+				"name": "PW_LM5",
+				"type": "Numerical",
+				"level": 0.869675,
+				"parts": 4,
+				"values": 23,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.236551724,
+				"stdDev": 0.7452667926,
+				"missingNumber": 5,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R11",
+				"name": "PetalWidth",
+				"type": "Numerical",
+				"level": 0.869675,
+				"parts": 3,
+				"values": 22,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.198666667,
+				"stdDev": 0.7606126186,
+				"missingNumber": 0,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R12",
+				"name": "PW_UM5",
+				"type": "Numerical",
+				"level": 0.865341,
+				"parts": 4,
+				"values": 22,
+				"min": 0.1,
+				"max": 2.4,
+				"mean": 1.155172414,
+				"stdDev": 0.7359658008,
+				"missingNumber": 5,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R13",
+				"name": "PW_RM5",
+				"type": "Numerical",
+				"level": 0.850458,
+				"parts": 4,
+				"values": 23,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.217931034,
+				"stdDev": 0.7590074249,
+				"missingNumber": 5,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R14",
+				"name": "PW_UM40",
+				"type": "Numerical",
+				"level": 0.835953,
+				"parts": 3,
+				"values": 16,
+				"min": 0.1,
+				"max": 1.8,
+				"mean": 0.8654545455,
+				"stdDev": 0.5961141385,
+				"missingNumber": 40,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R15",
+				"name": "PetalLength",
+				"type": "Numerical",
+				"level": 0.83577,
+				"parts": 3,
+				"values": 43,
+				"min": 1,
+				"max": 6.9,
+				"mean": 3.758666667,
+				"stdDev": 1.758529183,
+				"missingNumber": 0,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R16",
+				"name": "PW_RM10",
+				"type": "Numerical",
+				"level": 0.809289,
+				"parts": 4,
+				"values": 23,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.22,
+				"stdDev": 0.7533923281,
+				"missingNumber": 10,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R17",
+				"name": "PW_RM20",
+				"type": "Numerical",
+				"level": 0.76144,
+				"parts": 4,
+				"values": 23,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.237692308,
+				"stdDev": 0.7559268773,
+				"missingNumber": 20,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R18",
+				"name": "PW_RM40",
+				"type": "Numerical",
+				"level": 0.629561,
+				"parts": 4,
+				"values": 23,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.246363636,
+				"stdDev": 0.7555464335,
+				"missingNumber": 40,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R19",
+				"name": "PW_RM80",
+				"type": "Numerical",
+				"level": 0.400545,
+				"parts": 4,
+				"values": 22,
+				"min": 0.1,
+				"max": 2.5,
+				"mean": 1.278571429,
+				"stdDev": 0.7224744893,
+				"missingNumber": 80,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R20",
+				"name": "SepalLength",
+				"type": "Numerical",
+				"level": 0.38626,
+				"parts": 3,
+				"values": 35,
+				"min": 4.3,
+				"max": 7.9,
+				"mean": 5.843333333,
+				"stdDev": 0.8253012918,
+				"missingNumber": 0,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R21",
+				"name": "SepalWidth",
+				"type": "Numerical",
+				"level": 0.242191,
+				"parts": 5,
+				"values": 23,
+				"min": 2,
+				"max": 4.4,
+				"mean": 3.054,
+				"stdDev": 0.4321465801,
+				"missingNumber": 0,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			},
+			{
+				"rank": "R22",
+				"name": "Constant",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 1,
+				"min": 0,
+				"max": 0,
+				"mean": 0,
+				"stdDev": 0,
+				"missingNumber": 0,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0,
+				"derivationRule": "Copy(0)"
+			},
+			{
+				"rank": "R23",
+				"name": "PW_allM",
+				"type": "Numerical",
+				"level": 0,
+				"parts": 1,
+				"values": 1,
+				"min": null,
+				"max": null,
+				"mean": null,
+				"stdDev": null,
+				"missingNumber": 150,
+				"constructionCost": 3.82864,
+				"preparationCost": 0,
+				"dataCost": 0
+			}
+		],
+		"variablesDetailedStatistics": {
+			"R01": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_UM20",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.55],
+								[0.55,0.8],
+								[0.8,1.35],
+								[1.35,1.75],
+								[1.75,2.1]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[0,0,20],
+						[49,0,0],
+						[1,0,0],
+						[0,28,0],
+						[0,21,5],
+						[0,1,25]
+					],
+					"partInterests": [0.148637,0.364161,0.00743185,0.208092,0.107124,0.164555]
+				}
+			},
+			"R02": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_MM40",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[0,39,1],
+						[50,0,0],
+						[0,10,4],
+						[0,1,45]
+					],
+					"partInterests": [0.267272,0.373876,0.047677,0.311175]
+				}
+			},
+			"R03": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_MM20",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[0,20,0],
+						[50,0,0],
+						[0,29,5],
+						[0,1,45]
+					],
+					"partInterests": [0.150725,0.376814,0.158841,0.31362]
+				}
+			},
+			"R04": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_UM10",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.25],
+								[1.25,1.75],
+								[1.75,2.3]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[0,0,10],
+						[50,0,0],
+						[0,15,0],
+						[0,34,5],
+						[0,1,35]
+					],
+					"partInterests": [0.0756168,0.378084,0.113425,0.192106,0.240769]
+				}
+			},
+			"R05": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_LM40",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.3,0.8],
+								[0.8,1.15],
+								[1.15,1.65],
+								[1.65,2.05],
+								[2.05,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[40,0,0],
+						[10,0,0],
+						[0,10,0],
+						[0,38,4],
+						[0,2,23],
+						[0,0,23]
+					],
+					"partInterests": [0.303875,0.0759686,0.0759686,0.227731,0.14173,0.174728]
+				}
+			},
+			"R06": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_MM10",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[0,10,0],
+						[50,0,0],
+						[0,39,5],
+						[0,1,45]
+					],
+					"partInterests": [0.0760833,0.380417,0.226881,0.316619]
+				}
+			},
+			"R07": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_MM5",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[0,5,0],
+						[50,0,0],
+						[0,44,5],
+						[0,1,45]
+					],
+					"partInterests": [0.0381923,0.381923,0.262013,0.317872]
+				}
+			},
+			"R08": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_LM10",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.2,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[10,0,0],
+						[40,0,0],
+						[0,49,5],
+						[0,1,45]
+					],
+					"partInterests": [0.076657,0.306628,0.297709,0.319006]
+				}
+			},
+			"R09": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_LM20",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.2,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[20,0,0],
+						[30,0,0],
+						[0,49,5],
+						[0,1,45]
+					],
+					"partInterests": [0.153314,0.229971,0.297709,0.319006]
+				}
+			},
+			"R10": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_LM5",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[5,0,0],
+						[45,0,0],
+						[0,49,5],
+						[0,1,45]
+					],
+					"partInterests": [0.0383285,0.344956,0.297709,0.319006]
+				}
+			},
+			"R11": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PetalWidth",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[50,0,0],
+						[0,49,5],
+						[0,1,45]
+					],
+					"partInterests": [0.383285,0.297709,0.319006]
+				}
+			},
+			"R12": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_UM5",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.65],
+								[1.65,2.4]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[0,0,5],
+						[50,0,0],
+						[0,48,4],
+						[0,2,41]
+					],
+					"partInterests": [0.0385205,0.385205,0.301723,0.274552]
+				}
+			},
+			"R13": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_RM5",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[3,2,0],
+						[47,0,0],
+						[0,47,5],
+						[0,1,45]
+					],
+					"partInterests": [0.0151839,0.368429,0.290173,0.326214]
+				}
+			},
+			"R14": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_UM40",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.8]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[0,0,40],
+						[50,0,0],
+						[0,50,10]
+					],
+					"partInterests": [0.318997,0.398747,0.282256]
+				}
+			},
+			"R15": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PetalLength",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[1,2.4],
+								[2.4,4.95],
+								[4.95,6.9]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[50,0,0],
+						[0,48,6],
+						[0,2,44]
+					],
+					"partInterests": [0.398834,0.293972,0.307195]
+				}
+			},
+			"R16": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_RM10",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[5,3,2],
+						[45,0,0],
+						[0,46,5],
+						[0,1,43]
+					],
+					"partInterests": [0.00517075,0.370696,0.297462,0.326671]
+				}
+			},
+			"R17": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_RM20",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[9,7,4],
+						[41,0,0],
+						[0,42,4],
+						[0,1,42]
+					],
+					"partInterests": [0.00796284,0.358969,0.294439,0.338629]
+				}
+			},
+			"R18": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_RM40",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.75],
+								[1.75,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[16,13,11],
+						[34,0,0],
+						[0,36,4],
+						[0,1,35]
+					],
+					"partInterests": [0.00454881,0.360039,0.298238,0.337173]
+				}
+			},
+			"R19": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "PW_RM80",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[],
+								[0.1,0.8],
+								[0.8,1.7],
+								[1.7,2.5]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[30,24,26],
+						[20,0,0],
+						[0,25,2],
+						[0,1,22]
+					],
+					"partInterests": [0.00525062,0.33288,0.341377,0.320493]
+				}
+			},
+			"R20": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "SepalLength",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[4.3,5.55],
+								[5.55,6.75],
+								[6.75,7.9]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[47,11,1],
+						[3,36,32],
+						[0,3,17]
+					],
+					"partInterests": [0.496087,0.29154,0.212373]
+				}
+			},
+			"R21": {
+				"dataGrid": {
+					"isSupervised": true,
+					"dimensions": [
+						{
+							"variable": "SepalWidth",
+							"type": "Numerical",
+							"partitionType": "Intervals",
+							"partition": [
+								[2,2.45],
+								[2.45,2.95],
+								[2.95,3.45],
+								[3.45,3.95],
+								[3.95,4.4]
+							]
+						},
+						{
+							"variable": "Class",
+							"type": "Categorical",
+							"partitionType": "Values",
+							"partition": ["Iris-setosa","Iris-versicolor","Iris-virginica"]
+						}
+					],
+					"partTargetFrequencies": [
+						[1,9,1],
+						[1,25,20],
+						[27,16,26],
+						[17,0,3],
+						[4,0,0]
+					],
+					"partInterests": [0.137378,0.370955,0.0428559,0.338705,0.110106]
+				}
+			}
+		}
+	},
+	"khiops_encoding": "ascii"
+}

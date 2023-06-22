@@ -1,0 +1,69 @@
+Tool	Khiops
+Version	10.0.6i
+Short description	
+
+
+Report	Preparation
+
+Dictionary	BugNC
+Variables
+	Categorical	1
+	Numerical	1
+	Total	2
+Database	./BugTiny.txt
+Sample percentage	100
+Sampling mode	Include sample
+Selection variable	
+Selection value	
+Instances	2
+Learning task	Unsupervised analysis
+Evaluated variables	2
+Informative variables	None
+Max number of constructed variables	0
+Max number of trees	0
+Max number of variable pairs	1
+Discretization	EqualWidth
+Value grouping	BasicGrouping
+
+Variable statistics
+Rank	Name	Type	Level	Target parts	Parts	Values	Min	Max	Mean	StdDev	Missing number	Mode	Mode frequency	Construction cost	Preparation cost	Data cost	Derivation rule
+R1	Var1	Numerical				2	1	2	1.5	0.5	0			1.38629			
+R2	Var2	Categorical				2						A	1	1.38629			
+
+Detailed variable statistics
+
+Rank	R1	Var1	Numerical
+
+Data grid	Unsupervised
+Dimensions
+Var1	Numerical	Intervals
+	]-inf;1.5]	1	1.5
+	]1.5;+inf[	1.5	2
+Cells
+Interval	Frequency
+]-inf;1.5]	1
+]1.5;+inf[	1
+
+
+Report	Bivariate preparation
+
+Dictionary	BugNC
+Variables
+	Categorical	1
+	Numerical	1
+	Total	2
+Database	./BugTiny.txt
+Sample percentage	100
+Sampling mode	Include sample
+Selection variable	
+Selection value	
+Instances	2
+Learning task	Unsupervised analysis
+Evaluated variable pairs	1
+Informative variable pairs	0
+
+Variable pair statistics
+Rank	Name 1	Name 2	Level	Variables	Parts 1	Parts 2	Cells	Construction cost	Preparation cost	Data cost
+R1	Var1	Var2	0	0	1	1	1	0.693147	1.09861	1.38629
+
+Detailed variable pair statistics

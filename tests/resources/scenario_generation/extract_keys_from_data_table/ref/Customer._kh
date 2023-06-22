@@ -1,0 +1,21 @@
+// Dictionary file
+ClassManagement.OpenFile
+ClassFileName Customer.kdic
+OK
+
+// Extract keys settings
+LearningTools.ExtractKeysFromDataTable
+ClassName Customer
+SourceDataTable.DatabaseName Customer.csv
+SourceDataTable.HeaderLineUsed true
+SourceDataTable.FieldSeparator 
+ SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+TargetDataTable.DatabaseName CustomerKeys.csv
+TargetDataTable.HeaderLineUsed true
+TargetDataTable.FieldSeparator 
+ExtractKeysFromDataTable
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

@@ -1,0 +1,18 @@
+// Dictionary building settings
+ClassManagement.BuildClassDefButton
+SourceDataTable.DatabaseName Customer.csv
+SourceDataTable.HeaderLineUsed true
+SourceDataTable.FieldSeparator 
+ SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+BuildClassDef
+ClassName Customer
+OK
+Exit
+
+// Save dictionary
+ClassFileName Customer.kdic
+OK
+
+// Exit Khiops
+ClassManagement.Quit
+OK

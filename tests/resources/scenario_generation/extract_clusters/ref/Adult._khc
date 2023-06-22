@@ -1,0 +1,19 @@
+// Extract cluster settings
+LearningTools.ExtractClusters
+SelectInputCoclustering
+InputCoclusteringFileName AdultCoclustering.khc
+OK
+
+CoclusteringAttributeSpec.CoclusteringAttribute age
+PostProcessingSpec.MaxPreservedInformation 0
+PostProcessingSpec.MaxCellNumber 0
+
+AnalysisResults.ResultFilesDirectory .
+AnalysisResults.ClusterFileName AdultClusters.txt
+
+ExtractClusters
+Exit
+
+// Exit Khiops Coclustering
+ClassManagement.Quit
+OK

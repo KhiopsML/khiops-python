@@ -1,0 +1,28 @@
+// Simplify coclustering settings
+LearningTools.PostProcessCoclustering
+SelectInputCoclustering
+InputCoclusteringFileName SpliceJunction._khc
+OK
+
+PostProcessingSpec.MaxPreservedInformation 0
+PostProcessingSpec.MaxCellNumber 0
+PostProcessingSpec.MaxTotalPartNumber 0
+
+// __max_part_number_spec__ below must be replaced for each variable with:
+//   PostProcessingSpec.PostProcessedAttributes.List.Key __part_variable__
+//   PostProcessingSpec.PostProcessedAttributes.MaxPartNumber __max_part_number__
+PostProcessingSpec.PostProcessedAttributes.List.Key SampleId
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 32
+PostProcessingSpec.PostProcessedAttributes.List.Key NonExistentVar
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 64
+
+AnalysisResults.ResultFilesDirectory .\SpliceJunctionResults
+AnalysisResults.ResultFilesPrefix 
+AnalysisResults.PostProcessedCoclusteringFileName SimplifiedSpliceJunction._khc
+
+PostProcessCoclustering
+Exit
+
+// Exit Khiops Coclustering
+ClassManagement.Quit
+OK

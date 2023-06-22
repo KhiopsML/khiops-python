@@ -1,0 +1,76 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0.0.3i",
+	"dictionaries": [
+		{
+			"name": "Adult",
+			"variables": [
+				{
+					"name": "Label",
+					"type": "Categorical"
+				},
+				{
+					"name": "age",
+					"type": "Numerical"
+				},
+				{
+					"name": "workclass",
+					"type": "Categorical"
+				},
+				{
+					"name": "fnlwgt",
+					"type": "Numerical"
+				},
+				{
+					"name": "education",
+					"type": "Categorical"
+				},
+				{
+					"name": "education_num",
+					"type": "Numerical"
+				},
+				{
+					"name": "marital_status",
+					"type": "Categorical"
+				},
+				{
+					"name": "occupation",
+					"type": "Categorical"
+				},
+				{
+					"name": "relationship",
+					"type": "Categorical"
+				},
+				{
+					"name": "race",
+					"type": "Categorical"
+				},
+				{
+					"name": "sex",
+					"type": "Categorical"
+				},
+				{
+					"name": "capital_gain",
+					"type": "Numerical"
+				},
+				{
+					"name": "capital_loss",
+					"type": "Numerical"
+				},
+				{
+					"name": "hours_per_week",
+					"type": "Numerical"
+				},
+				{
+					"name": "native_country",
+					"type": "Categorical"
+				},
+				{
+					"name": "class",
+					"type": "Categorical"
+				}
+			]
+		}
+	],
+	"khiops_encoding": "ascii"
+}

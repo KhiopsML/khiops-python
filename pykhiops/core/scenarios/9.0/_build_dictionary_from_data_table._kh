@@ -1,0 +1,18 @@
+// Dictionary building window
+ClassManagement.BuildClassDefButton
+  // Dictionary building settings
+  SourceDataTable.DatabaseName __data_table__
+  SourceDataTable.HeaderLineUsed __header_line__
+  SourceDataTable.FieldSeparator __field_separator__
+  BuildClassDef
+    ClassName __output_dictionary__
+    OK
+  Exit
+
+// Save dictionary
+ClassFileName __output_dictionary_file__
+OK
+
+// Exit Khiops
+Exit
+OK

@@ -1,0 +1,9 @@
+// Detect format on the "Build Dictionary" window
+ClassManagement.BuildClassDefButton
+SourceDataTable.DatabaseName __data_file__
+SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

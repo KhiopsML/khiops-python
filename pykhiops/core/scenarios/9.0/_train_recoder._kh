@@ -1,0 +1,66 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+  ClassFileName __dictionary_file__
+  OK
+ClassManagement.ClassName __dictionary__
+
+// Train/test database settings
+__train_database_files__
+TrainDatabase.HeaderLineUsed __header_line__
+TrainDatabase.FieldSeparator __field_separator__
+TrainDatabase.SampleNumberPercentage __sample_percentage__
+TrainDatabase.SamplingMode __sampling_mode__
+TrainDatabase.SelectionAttribute __selection_variable__
+TrainDatabase.SelectionValue __selection_value__
+
+// Target variable
+AnalysisSpec.TargetAttributeName __target_variable__
+
+// Disable predictors
+AnalysisSpec.ModelingSpec.SelectiveNaiveBayesPredictor false
+AnalysisSpec.ModelingSpec.NaiveBayesPredictor false
+AnalysisSpec.ModelingSpec.UnivariatePredictorNumber 0
+
+// Feature engineering
+AnalysisSpec.AttributeConstructionSpec.MaxTreeNumber __max_trees__
+AnalysisSpec.AttributeConstructionSpec.MaxAttributePairNumber __max_pairs__
+AnalysisSpec.AttributeConstructionSpec.MandatoryAttributeInPairs __only_pairs_with__
+AnalysisSpec.AttributeConstructionSpec.MaxConstructedAttributeNumber __max_constructed_variables__
+AnalysisSpec.AttributeConstructionSpec.InspectConstructionDomain
+  __variable_construction_unselect_all__ UnselectAll
+  __construction_rules_spec__
+  Exit
+
+// Data preparation (discretization & grouping) settings
+AnalysisSpec.PreprocessingSpec.TargetGrouped __group_target_value__
+AnalysisSpec.PreprocessingSpec.DiscretizerSpec.SupervisedMethodName __supervised_discretization_method__
+AnalysisSpec.PreprocessingSpec.DiscretizerSpec.UnsupervisedMethodName __unsupervised_discretization_method__
+AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MinIntervalFrequency __min_interval_frequency__
+AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MaxIntervalNumber __max_intervals__
+AnalysisSpec.PreprocessingSpec.GrouperSpec.SupervisedMethodName __supervised_grouping_method__
+AnalysisSpec.PreprocessingSpec.GrouperSpec.UnsupervisedMethodName __unsupervised_grouping_method__
+AnalysisSpec.PreprocessingSpec.GrouperSpec.MinGroupFrequency __min_group_frequency__
+AnalysisSpec.PreprocessingSpec.GrouperSpec.MaxGroupNumber __max_groups__
+
+// Recoder Settings
+AnalysisSpec.AttributeConstructionSpec.RecodingClass true
+AnalysisSpec.AttributeConstructionSpec.InspectRecodingSpec
+  FilterAttributes __informative_variables_only__
+  MaxFilteredAttributeNumber __max_variables__
+  KeepInitialSymbolAttributes __keep_categorical_variables__
+  KeepInitialContinuousAttributes __keep_numerical_variables__
+  RecodeSymbolAttributes __categorical_recoding_method__
+  RecodeContinuousAttributes __numerical_recoding_method__
+  RecodeBivariateAttributes __pairs_recoding_method__
+  Exit
+
+// Output settings
+AnalysisResults.ResultFilesDirectory __results_dir__
+AnalysisResults.ResultFilesPrefix __results_prefix__
+
+// Train recoder
+ComputeStats
+
+// Exit Khiops
+Exit
+OK

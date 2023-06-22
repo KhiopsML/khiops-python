@@ -1,0 +1,75 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName __dictionary_file__
+OK
+ClassManagement.ClassName __dictionary__
+
+// Train/test database settings
+// __train_database_files__ below must be replaced for each data table file with:
+//  TrainDatabase.DatabaseFiles.List.Key __data_path__
+//  TrainDatabase.DatabaseFiles.DataTableName __data_file_path__
+__train_database_files__
+TrainDatabase.HeaderLineUsed __header_line__
+TrainDatabase.FieldSeparator __field_separator__
+__disable_detect_format__ TrainDatabase.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.SampleNumberPercentage __sample_percentage__
+TrainDatabase.SamplingMode __sampling_mode__
+TrainDatabase.SelectionAttribute __selection_variable__
+TrainDatabase.SelectionValue __selection_value__
+TrainDatabase.TestDatabaseSpecificationMode __test_database_mode__
+
+// Target variable
+AnalysisSpec.TargetAttributeName __target_variable__
+AnalysisSpec.MainTargetModality __main_target_value__
+
+// Predictors to train
+AnalysisSpec.PredictorsSpec.SelectiveNaiveBayesPredictor __snb_predictor__
+AnalysisSpec.PredictorsSpec.AdvancedSpec.UnivariatePredictorNumber __univariate_predictor_number__
+
+// Selective Naive Bayes settings
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectSelectiveNaiveBayesParameters
+TrainParameters.MaxEvaluatedAttributeNumber __max_evaluated_variables__
+SelectionParameters.MaxSelectedAttributeNumber __max_selected_variables__
+Exit
+
+// Feature engineering
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber __max_trees__
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxAttributePairNumber __max_pairs__
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectAttributePairsParameters
+AllAttributePairs __all_possible_pairs__
+// __specific_pairs_spec__ below must be replaced for each variable with:
+//   SpecificAttributePairs.InsertItemAfter
+//   SpecificAttributePairs.FirstName __first_variable_name__
+//   SpecificAttributePairs.SecondName __second_variable_name__
+__specific_pairs_spec__
+Exit
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxConstructedAttributeNumber __max_constructed_variables__
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectConstructionDomain
+__disable_construction_unselect_all__ UnselectAll
+// __construction_rules_spec__ below must be replaced for each variable with:
+//   ConstructionRules.List.Key __part_variable__
+//   ConstructionRules.Used __max_part_number__
+__construction_rules_spec__
+Exit
+
+// Data preparation (discretization & grouping) settings
+AnalysisSpec.PreprocessingSpec.TargetGrouped __group_target_value__
+AnalysisSpec.PreprocessingSpec.DiscretizerSpec.SupervisedMethodName __supervised_discretization_method__
+AnalysisSpec.PreprocessingSpec.DiscretizerSpec.UnsupervisedMethodName __unsupervised_discretization_method__
+AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MinIntervalFrequency __min_interval_frequency__
+AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MaxIntervalNumber __max_intervals__
+AnalysisSpec.PreprocessingSpec.GrouperSpec.SupervisedMethodName __supervised_grouping_method__
+AnalysisSpec.PreprocessingSpec.GrouperSpec.UnsupervisedMethodName __unsupervised_grouping_method__
+AnalysisSpec.PreprocessingSpec.GrouperSpec.MinGroupFrequency __min_group_frequency__
+AnalysisSpec.PreprocessingSpec.GrouperSpec.MaxGroupNumber __max_groups__
+
+// Output settings
+AnalysisResults.ResultFilesDirectory __results_dir__
+AnalysisResults.ResultFilesPrefix __results_prefix__
+
+// Build model
+ComputeStats
+
+// Exit Khiops
+ClassManagement.Quit
+OK

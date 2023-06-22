@@ -1,0 +1,9 @@
+#! /usr/bin/env bash
+set -e
+
+SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+SAMPLES_DIR="$SCRIPT_DIR/samples"
+python $SCRIPT_DIR/convert_samples.py $SAMPLES_DIR $SAMPLES_DIR/samples.ipynb
+python $SCRIPT_DIR/convert_samples.py -f rst $SAMPLES_DIR $SAMPLES_DIR/samples.rst
+python $SCRIPT_DIR/convert_samples.py --sklearn $SAMPLES_DIR $SAMPLES_DIR/samples_sklearn.ipynb
+python $SCRIPT_DIR/convert_samples.py --sklearn -f rst $SAMPLES_DIR $SAMPLES_DIR/samples_sklearn.rst

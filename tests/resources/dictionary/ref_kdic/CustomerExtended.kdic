@@ -1,0 +1,59 @@
+#Khiops 10.0.3
+
+Dictionary	Address	(id_customer)
+{
+	Categorical	id_customer		;	
+	Numerical	StreetNumber		;	
+	Categorical	StreetName		;	
+	Categorical	id_city		;	
+	Entity(City)	City	[id_city]	;	
+};
+
+Root	Dictionary	City	(id_city)
+{
+	Categorical	id_city		;	
+	Categorical	Name		;	
+	Categorical	id_country		;	
+	Entity(Country)	Country	[id_country]	;	
+};
+
+Root	Dictionary	Country	(id_country)
+{
+	Categorical	id_country		;	
+	Categorical	Name		;	
+};
+
+Root	Dictionary	Customer	(id_customer)
+{
+	Categorical	id_customer		;	
+	Categorical	Name		;	
+	Table(Service)	Services		;	
+	Entity(Address)	Address		;	
+};
+
+Root	Dictionary	Product	(id_product)
+{
+	Categorical	id_product		;	
+	Categorical	Name		;	
+	Numerical	Price		;	
+};
+
+Dictionary	Service	(id_customer, id_product)
+{
+	Categorical	id_customer		;	
+	Categorical	id_product		;	
+	Entity(Product)	Product	[id_product]	;	
+	Entity(Product)	ProductCopy	[id_product]	;	
+	Date	SubscriptionDate		;	
+	Table(Usage)	Usages		;	
+};
+
+Dictionary	Usage	(id_customer, id_product)
+{
+	Categorical	id_customer		;	
+	Categorical	id_product		;	
+	Entity(Product)	Product	[id_product]	;	
+	Date	Date		;	
+	Time	Time		;	
+	Numerical	Duration		;	
+};

@@ -1,0 +1,17 @@
+#Khiops 10.0.0.3i
+
+Dictionary	Dorothea
+{
+	Categorical	Class		;	
+	{
+	Numerical	V1		; <VarKey=1>	
+	Numerical	V2		; <VarKey=2>	
+	Numerical	V3		; <VarKey=3>	
+	Numerical	V4		; <VarKey=4>	
+	Numerical	V5		; <VarKey=5>	
+	Numerical	V6		; <VarKey=6>	
+	Numerical	V7		; <VarKey=7>	
+	Numerical	V8		; <VarKey=8>	
+	Numerical	V9		; <VarKey=9>	
+	}	DataBlock		; <DefaultNumericalValue=0>	
+};

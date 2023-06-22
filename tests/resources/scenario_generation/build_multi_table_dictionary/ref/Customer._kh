@@ -1,0 +1,22 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Customer.kdic
+OK
+
+// Multi-table dictionary creation
+// warning: Overwrites the loaded dictionary file
+LearningTools.ExtractKeysFromDataTable
+BuildMultiTableClass
+MultiTableClassName RootCustomer
+TableVariableName SecondaryCustomer
+OK
+Exit
+
+// Save dictionary
+ClassManagement.SaveFileUnder
+ClassFileName RootCustomer.kdic
+OK
+
+// Exit Khiops
+ClassManagement.Quit
+OK

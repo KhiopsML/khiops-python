@@ -1,0 +1,138 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0.0.3i",
+	"dictionaries": [
+		{
+			"name": "SNB_MultipleEncodings",
+			"metaData": {
+				"InitialDictionary": "MultipleEncodings",
+				"PredictorLabel": "Selective Naive Bayes",
+				"PredictorType": "Classifier"
+			},
+			"variables": [
+				{
+					"name": "Char",
+					"used": false,
+					"type": "Categorical",
+					"metaData": {
+						"Cost": 0,
+						"Importance": 0.754755,
+						"Level": 0.569655,
+						"Weight": 1
+					}
+				},
+				{
+					"name": "Type",
+					"type": "Categorical",
+					"metaData": {
+						"TargetVariable": true
+					}
+				},
+				{
+					"name": "Ansi",
+					"used": false,
+					"type": "Numerical",
+					"rule": "InGroup(ValueGroup(\"ASCII\", \"ANSI\"), Type)"
+				},
+				{
+					"name": "Latin",
+					"used": false,
+					"type": "Numerical",
+					"rule": "InGroup(ValueGroup(\"ASCII\", \"UTF8 Latin\"), Type)"
+				},
+				{
+					"name": "Greek",
+					"used": false,
+					"type": "Numerical",
+					"rule": "InGroup(ValueGroup(\"ASCII\", \"UTF8 Greek\"), Type)"
+				},
+				{
+					"name": "AnsiLatin",
+					"used": false,
+					"type": "Numerical",
+					"rule": "InGroup(ValueGroup(\"ASCII\", \"ANSI\", \"UTF8 Latin\"), Type)"
+				},
+				{
+					"name": "AnsiGreek",
+					"used": false,
+					"type": "Numerical",
+					"rule": "InGroup(ValueGroup(\"ASCII\", \"ANSI\", \"UTF8 Greek\"), Type)"
+				},
+				{
+					"name": "LatinGreek",
+					"used": false,
+					"type": "Numerical",
+					"rule": "InGroup(ValueGroup(\"ASCII\", \"UTF8 Latin\", \"UTF8 Greek\"), Type)"
+				},
+				{
+					"name": "AnsiLatinGreek",
+					"used": false,
+					"type": "Numerical",
+					"rule": "InGroup(ValueGroup(\"ASCII\", \"ANSI\", \"UTF8 Latin\", \"UTF8 Greek\"), Type)"
+				},
+				{
+					"name": "VType",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueSetC(\"ASCII\", \"UTF8 Latin\"), Frequencies(10, 10))",
+					"metaData": {
+						"TargetValues": true
+					}
+				},
+				{
+					"name": "PChar",
+					"label": "DataGrid(Char, Type)",
+					"used": false,
+					"type": "Structure",
+					"structureType": "DataGrid",
+					"rule": "DataGrid(ValueGroups(ValueGroup(\"<a>\"), ValueGroup(\"<é>\", \" * \")), ValueSetC(\"ASCII\", \"UTF8 Latin\"), Frequencies(10, 0, 0, 10))",
+					"metaData": {
+						"Level": 0.569655
+					}
+				},
+				{
+					"name": "SNBType",
+					"used": false,
+					"type": "Structure",
+					"structureType": "Classifier",
+					"rule": "SNBClassifier(Vector(1), DataGridStats(PChar, Char), VType)"
+				},
+				{
+					"name": "PredictedType",
+					"type": "Categorical",
+					"rule": "TargetValue(SNBType)",
+					"metaData": {
+						"Prediction": true
+					}
+				},
+				{
+					"name": "ScoreType",
+					"used": false,
+					"type": "Numerical",
+					"rule": "TargetProb(SNBType)",
+					"metaData": {
+						"Score": true
+					}
+				},
+				{
+					"name": "ProbTypeASCII",
+					"type": "Numerical",
+					"rule": "TargetProbAt(SNBType, \"ASCII\")",
+					"metaData": {
+						"TargetProb1": "ASCII"
+					}
+				},
+				{
+					"name": "ProbTypeUTF8 Latin",
+					"type": "Numerical",
+					"rule": "TargetProbAt(SNBType, \"UTF8 Latin\")",
+					"metaData": {
+						"TargetProb2": "UTF8 Latin"
+					}
+				}
+			]
+		}
+	],
+	"khiops_encoding": "utf8"
+}

@@ -1,0 +1,9 @@
+// Detect format on the "Build Dictionary" window
+ClassManagement.BuildClassDefButton
+SourceDataTable.DatabaseName Customer.csv
+SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

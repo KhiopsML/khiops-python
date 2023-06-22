@@ -1,0 +1,29 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Adult.kdic
+OK
+ClassManagement.ClassName Adult
+
+// Train database settings
+// __train_database_files__ below must be replaced for each data table file with:
+//  TrainDatabase.DatabaseFiles.List.Key __data_path__
+//  TrainDatabase.DatabaseFiles.DataTableName __data_file_path__
+TrainDatabase.DatabaseFiles.List.Key Adult
+TrainDatabase.DatabaseFiles.DataTableName Adult.csv
+TrainDatabase.HeaderLineUsed true
+TrainDatabase.FieldSeparator 
+ TrainDatabase.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.SampleNumberPercentage 100
+TrainDatabase.SamplingMode Include sample
+TrainDatabase.SelectionAttribute 
+TrainDatabase.SelectionValue 
+
+// Log messages limit
+AnalysisSpec.SystemParameters.MaxErrorMessageNumberInLog 20
+
+// Execute check database
+LearningTools.CheckData
+
+// Exit Khiops
+ClassManagement.Quit
+OK

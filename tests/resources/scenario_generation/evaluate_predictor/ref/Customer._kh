@@ -1,0 +1,43 @@
+// Dictionary file settings
+ClassManagement.OpenFile
+ClassFileName ModelingCustomer.kdic
+OK
+
+// Evaluate predictor settings
+LearningTools.EvaluatePredictors
+MainTargetModality 
+
+// Evaluation database settings
+// __evaluation_database_files__ below must be replaced for each data table file with:
+//  EvaluationDatabase.DatabaseFiles.List.Key __data_path__
+//  EvaluationDatabase.DatabaseFiles.DataTableName __data_file_path__
+EvaluationDatabase.DatabaseFiles.List.Key Customer
+EvaluationDatabase.DatabaseFiles.DataTableName Customer.csv
+EvaluationDatabase.DatabaseFiles.List.Key Customer`Services
+EvaluationDatabase.DatabaseFiles.DataTableName ServicesBidon.csv
+EvaluationDatabase.DatabaseFiles.List.Key Customer`Services`Usages
+EvaluationDatabase.DatabaseFiles.DataTableName UsagesBidon.csv
+EvaluationDatabase.DatabaseFiles.List.Key Customer`Address
+EvaluationDatabase.DatabaseFiles.DataTableName AddressBidon.csv
+EvaluationDatabase.DatabaseFiles.List.Key City
+EvaluationDatabase.DatabaseFiles.DataTableName CityBidon.csv
+EvaluationDatabase.DatabaseFiles.List.Key Country
+EvaluationDatabase.DatabaseFiles.DataTableName CountryBidon.csv
+EvaluationDatabase.DatabaseFiles.List.Key Product
+EvaluationDatabase.DatabaseFiles.DataTableName ProductBidon.csv
+EvaluationDatabase.HeaderLineUsed true
+EvaluationDatabase.FieldSeparator 
+ EvaluationDatabase.DatabaseFormatDetector.DetectFileFormat
+EvaluationDatabase.SampleNumberPercentage 100
+EvaluationDatabase.SamplingMode  Include sample
+EvaluationDatabase.SelectionAttribute 
+EvaluationDatabase.SelectionValue 
+EvaluationFileName CustomerResults\EvaluationReport.xls
+
+// Evaluate predictor
+EvaluatePredictors
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

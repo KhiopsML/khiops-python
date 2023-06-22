@@ -1,0 +1,28 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+  ClassFileName __dictionary_file__
+  OK
+ClassManagement.ClassName __dictionary__
+
+// Sort table settings
+LearningTools.SortDataTableByKey
+  __disable_sort_by_key_variables__ SortAttributes.SelectDefaultKeyAttributes
+  __sort_variables__
+
+  // Source table settings
+  SourceDataTable.DatabaseName __data_file__
+  SourceDataTable.HeaderLineUsed __header_line__
+  SourceDataTable.FieldSeparator __field_separator__
+
+  // Target table settings
+  TargetDataTable.HeaderLineUsed __output_header_line__
+  TargetDataTable.DatabaseName __output_data_file__
+  TargetDataTable.FieldSeparator __output_field_separator__
+
+  // Sort table
+  SortDataTableByKey
+  Exit
+
+// Exit Khiops
+Exit
+OK

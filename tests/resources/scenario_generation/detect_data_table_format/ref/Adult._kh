@@ -1,0 +1,16 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Adult.kdic
+OK
+ClassManagement.ClassName Adult
+
+// Detect format the data table format on the "Extract Keys" window
+LearningTools.ExtractKeysFromDataTable
+SourceDataTable.DatabaseName Adult.csv
+SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK
+

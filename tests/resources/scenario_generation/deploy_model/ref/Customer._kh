@@ -1,0 +1,63 @@
+// Dictionary file settings
+ClassManagement.OpenFile
+ClassFileName Customer.kdic
+OK
+
+// Deploy settings
+LearningTools.TransferDatabase
+ClassName Customer
+
+// Source database settings
+// __source_database_files__ below must be replaced for each data table file with:
+//  SourceDatabase.DatabaseFiles.List.Key __data_path__
+//  SourceDatabase.DatabaseFiles.DataTableName __data_file_path__
+SourceDatabase.DatabaseFiles.List.Key Customer
+SourceDatabase.DatabaseFiles.DataTableName Customer.csv
+SourceDatabase.DatabaseFiles.List.Key Customer`Services
+SourceDatabase.DatabaseFiles.DataTableName ServicesBidon.csv
+SourceDatabase.DatabaseFiles.List.Key Customer`Services`Usages
+SourceDatabase.DatabaseFiles.DataTableName UsagesBidon.csv
+SourceDatabase.DatabaseFiles.List.Key Customer`Address
+SourceDatabase.DatabaseFiles.DataTableName AddressBidon.csv
+SourceDatabase.DatabaseFiles.List.Key City
+SourceDatabase.DatabaseFiles.DataTableName CityBidon.csv
+SourceDatabase.DatabaseFiles.List.Key Country
+SourceDatabase.DatabaseFiles.DataTableName CountryBidon.csv
+SourceDatabase.DatabaseFiles.List.Key Product
+SourceDatabase.DatabaseFiles.DataTableName ProductBidon.csv
+SourceDatabase.HeaderLineUsed true
+SourceDatabase.FieldSeparator 
+ SourceDatabase.DatabaseFormatDetector.DetectFileFormat
+SourceDatabase.SampleNumberPercentage 100
+SourceDatabase.SamplingMode  Include sample
+SourceDatabase.SelectionAttribute 
+SourceDatabase.SelectionValue 
+
+// Target database settings
+// __target_database_files__ below must be replaced for each data table file with:
+//  TargetDatabase.DatabaseFiles.List.Key __data_path__
+//  TargetDatabase.DatabaseFiles.DataTableName __data_file_path__
+TargetDatabase.DatabaseFiles.List.Key Customer
+TargetDatabase.DatabaseFiles.DataTableName CustomerDeployed.csv
+TargetDatabase.DatabaseFiles.List.Key Customer`Services
+TargetDatabase.DatabaseFiles.DataTableName TransferServicesBidon.csv
+TargetDatabase.DatabaseFiles.List.Key Customer`Services`Usages
+TargetDatabase.DatabaseFiles.DataTableName TransferUsagesBidon.csv
+TargetDatabase.DatabaseFiles.List.Key Customer`Address
+TargetDatabase.DatabaseFiles.DataTableName TransferAddressBidon.csv
+TargetDatabase.DatabaseFiles.List.Key City
+TargetDatabase.DatabaseFiles.DataTableName TransferCityBidon.csv
+TargetDatabase.DatabaseFiles.List.Key Country
+TargetDatabase.DatabaseFiles.DataTableName TransferCountryBidon.csv
+TargetDatabase.DatabaseFiles.List.Key Product
+TargetDatabase.DatabaseFiles.DataTableName TransferProductBidon.csv
+TargetDatabase.HeaderLineUsed true
+TargetDatabase.FieldSeparator 
+
+// Transfer
+TransferDatabase
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

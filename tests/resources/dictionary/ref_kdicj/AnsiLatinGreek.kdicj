@@ -1,0 +1,34 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0.0.3i",
+	"dictionaries": [
+		{
+			"name": "AnsiLatinGreek",
+			"variables": [
+				{
+					"name": "VarAscii_a",
+					"type": "Categorical"
+				},
+				{
+					"name": "VarAnsi_\u00E9",
+					"type": "Categorical"
+				},
+				{
+					"name": "VarLatin_é",
+					"type": "Categorical"
+				},
+				{
+					"name": "VarGreek_θ",
+					"type": "Categorical"
+				}
+			]
+		}
+	],
+	"khiops_encoding": "colliding_ansi_utf8",
+	"ansi_chars": [
+		"\u00E9"
+	],
+	"colliding_utf8_chars": [
+		"é"
+	]
+}

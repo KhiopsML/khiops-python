@@ -1,0 +1,215 @@
+{
+	"tool": "Khiops Coclustering",
+	"version": "10.0.0.3i",
+	"shortDescription": "",
+	"coclusteringReport": {
+		"summary": {
+			"instances": 30,
+			"cells": 3,
+			"nullCost": 71.79629629,
+			"cost": 54.21221232,
+			"level": 0.2449163102,
+			"initialDimensions": 2,
+			"frequencyVariable": "",
+			"dictionary": "MultipleEncodings",
+			"database": ".\/MultipleEncodings.txt",
+			"samplePercentage": 100,
+			"samplingMode": "Include sample",
+			"selectionVariable": "AnsiGreek",
+			"selectionValue": "1"
+		},
+		"dimensionSummaries": [
+			{
+				"name": "Char",
+				"type": "Categorical",
+				"parts": 3,
+				"initialParts": 3,
+				"values": 3,
+				"interest": 1,
+				"description": ""
+			},
+			{
+				"name": "Type",
+				"type": "Categorical",
+				"parts": 3,
+				"initialParts": 3,
+				"values": 3,
+				"interest": 1,
+				"description": ""
+			}
+		],
+		"dimensionPartitions": [
+			{
+				"name": "Char",
+				"type": "Categorical",
+				"valueGroups": [
+					{
+						"cluster": "{<a>}",
+						"values": ["<a>"],
+						"valueFrequencies": [10],
+						"valueTypicalities": [1]
+					},
+					{
+						"cluster": "{<\u00E9>}",
+						"values": ["<\u00E9>"],
+						"valueFrequencies": [10],
+						"valueTypicalities": [1]
+					},
+					{
+						"cluster": "{<θ>}",
+						"values": ["<θ>"],
+						"valueFrequencies": [10],
+						"valueTypicalities": [1]
+					}
+				],
+				"defaultGroupIndex": 1
+			},
+			{
+				"name": "Type",
+				"type": "Categorical",
+				"valueGroups": [
+					{
+						"cluster": "{ANSI}",
+						"values": ["ANSI"],
+						"valueFrequencies": [10],
+						"valueTypicalities": [1]
+					},
+					{
+						"cluster": "{ASCII}",
+						"values": ["ASCII"],
+						"valueFrequencies": [10],
+						"valueTypicalities": [1]
+					},
+					{
+						"cluster": "{UTF8 Greek}",
+						"values": ["UTF8 Greek"],
+						"valueFrequencies": [10],
+						"valueTypicalities": [1]
+					}
+				],
+				"defaultGroupIndex": 2
+			}
+		],
+		"dimensionHierarchies": [
+			{
+				"name": "Char",
+				"type": "Categorical",
+				"clusters": [
+					{
+						"cluster": "{<a>}",
+						"parentCluster": "A3",
+						"frequency": 10,
+						"interest": 1,
+						"hierarchicalLevel": 1,
+						"rank": 1,
+						"hierarchicalRank": 6,
+						"isLeaf": true
+					},
+					{
+						"cluster": "{<\u00E9>}",
+						"parentCluster": "A3",
+						"frequency": 10,
+						"interest": 1,
+						"hierarchicalLevel": 1,
+						"rank": 3,
+						"hierarchicalRank": 6,
+						"isLeaf": true
+					},
+					{
+						"cluster": "{<θ>}",
+						"parentCluster": "A1",
+						"frequency": 10,
+						"interest": 1,
+						"hierarchicalLevel": 1,
+						"rank": 5,
+						"hierarchicalRank": 6,
+						"isLeaf": true
+					},
+					{
+						"cluster": "A3",
+						"parentCluster": "A1",
+						"frequency": 20,
+						"interest": 1,
+						"hierarchicalLevel": 0.585855,
+						"rank": 2,
+						"hierarchicalRank": 4,
+						"isLeaf": false
+					},
+					{
+						"cluster": "A1",
+						"parentCluster": "",
+						"frequency": 30,
+						"interest": 1,
+						"hierarchicalLevel": 0,
+						"rank": 4,
+						"hierarchicalRank": 2,
+						"isLeaf": false
+					}
+				]
+			},
+			{
+				"name": "Type",
+				"type": "Categorical",
+				"clusters": [
+					{
+						"cluster": "{ANSI}",
+						"parentCluster": "B4",
+						"frequency": 10,
+						"interest": 1,
+						"hierarchicalLevel": 1,
+						"rank": 1,
+						"hierarchicalRank": 6,
+						"isLeaf": true
+					},
+					{
+						"cluster": "{ASCII}",
+						"parentCluster": "B4",
+						"frequency": 10,
+						"interest": 1,
+						"hierarchicalLevel": 1,
+						"rank": 3,
+						"hierarchicalRank": 6,
+						"isLeaf": true
+					},
+					{
+						"cluster": "{UTF8 Greek}",
+						"parentCluster": "B2",
+						"frequency": 10,
+						"interest": 1,
+						"hierarchicalLevel": 1,
+						"rank": 5,
+						"hierarchicalRank": 6,
+						"isLeaf": true
+					},
+					{
+						"cluster": "B4",
+						"parentCluster": "B2",
+						"frequency": 20,
+						"interest": 1,
+						"hierarchicalLevel": 0.474518,
+						"rank": 2,
+						"hierarchicalRank": 5,
+						"isLeaf": false
+					},
+					{
+						"cluster": "B2",
+						"parentCluster": "",
+						"frequency": 30,
+						"interest": 1,
+						"hierarchicalLevel": -0.177223,
+						"rank": 4,
+						"hierarchicalRank": 3,
+						"isLeaf": false
+					}
+				]
+			}
+		],
+		"cellPartIndexes": [
+			[0,1],
+			[2,2],
+			[1,0]
+		],
+		"cellFrequencies": [10,10,10]
+	},
+	"khiops_encoding": "mixed_ansi_utf8"
+}

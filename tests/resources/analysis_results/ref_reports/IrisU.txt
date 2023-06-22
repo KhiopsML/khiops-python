@@ -1,0 +1,1236 @@
+Tool	Khiops
+Version	10.0.0.3i
+Short description	
+
+
+Report	Preparation
+
+Dictionary	Iris
+Variables
+	Categorical	4
+	Numerical	8
+	Total	12
+Database	../../../datasets/Iris/Iris.txt
+Sample percentage	70
+Sampling mode	Include sample
+Selection variable	
+Selection value	
+Instances	99
+Learning task	Unsupervised analysis
+Evaluated variables	12
+Informative variables	None
+Max number of constructed variables	0
+Max number of trees	0
+Max number of variable pairs	100
+Discretization	EqualWidth
+Value grouping	BasicGrouping
+
+Variable statistics
+Rank	Name	Type	Level	Target parts	Parts	Values	Min	Max	Mean	StdDev	Missing number	Mode	Mode frequency	Construction cost	Preparation cost	Data cost	Derivation rule
+R01	Class	Categorical				3						Iris-versicolor	37	3.17805			
+R02	Class1	Categorical				2							68	3.17805			IfC(EQc(Class, "Iris-setosa"), "setosa", "")
+R03	Class2	Categorical				2							62	3.17805			IfC(EQc(Class, "Iris-versicolor"), "versicolor", "")
+R04	Dummy1	Numerical				1	0	0	0	0	0			3.17805			Copy(0)
+R05	Dummy2	Numerical				99	0.01372010867	0.9853969761	0.5371015665	0.2836682962	0			3.17805			Random()
+R06	LowerPetalLength	Numerical				9	1	3	2.517171717	0.7226550938	0			3.17805			If(LE(PetalLength, 3), PetalLength, 3)
+R07	PetalLength	Numerical				36	1	6.9	3.801010101	1.712137004	0			3.17805			
+R08	PetalWidth	Numerical				20	0.1	2.5	1.218181818	0.749863777	0			3.17805			
+R09	SPetalLength	Categorical				5						4	32	3.17805			AsCategorical(Floor(PetalLength))
+R10	SepalLength	Numerical				30	4.3	7.7	5.848484848	0.8065844732	0			3.17805			
+R11	SepalWidth	Numerical				22	2	4.4	3.042424242	0.4422374035	0			3.17805			
+R12	UpperPetalWidth	Numerical				11	1.5	2.5	1.681818182	0.2962266524	0			3.17805			If(GE(PetalWidth, 1.5), PetalWidth, 1.5)
+
+Detailed variable statistics
+
+Rank	R01	Class	Categorical
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-versicolor}	Iris-versicolor
+	{Iris-setosa}	Iris-setosa
+	{Iris-virginica}	Iris-virginica	 * 
+Cells
+Value group	Frequency
+{Iris-versicolor}	37
+{Iris-setosa}	31
+{Iris-virginica}	31
+
+Input values
+	Iris-versicolor	37
+	Iris-setosa	31
+	Iris-virginica	31
+
+Rank	R02	Class1	Categorical
+
+Data grid	Unsupervised
+Dimensions
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+Cells
+Value group	Frequency
+{}	68
+{setosa}	31
+
+Input values
+		68
+	setosa	31
+
+Rank	R03	Class2	Categorical
+
+Data grid	Unsupervised
+Dimensions
+Class2	Categorical	Value groups
+	{}	
+	{versicolor}	versicolor	 * 
+Cells
+Value group	Frequency
+{}	62
+{versicolor}	37
+
+Input values
+		62
+	versicolor	37
+
+Rank	R05	Dummy2	Numerical
+
+Data grid	Unsupervised
+Dimensions
+Dummy2	Numerical	Intervals
+	]-inf;0.118]	0.01372010867	0.118
+	]0.118;0.207]	0.118	0.207
+	]0.207;0.298]	0.207	0.298
+	]0.298;0.408]	0.298	0.408
+	]0.408;0.504]	0.408	0.504
+	]0.504;0.593]	0.504	0.593
+	]0.593;0.6929]	0.593	0.6929
+	]0.6929;0.793]	0.6929	0.793
+	]0.793;0.8874]	0.793	0.8874
+	]0.8874;+inf[	0.8874	0.9853969761
+Cells
+Interval	Frequency
+]-inf;0.118]	12
+]0.118;0.207]	5
+]0.207;0.298]	8
+]0.298;0.408]	9
+]0.408;0.504]	10
+]0.504;0.593]	6
+]0.593;0.6929]	13
+]0.6929;0.793]	13
+]0.793;0.8874]	11
+]0.8874;+inf[	12
+
+Rank	R06	LowerPetalLength	Numerical
+
+Data grid	Unsupervised
+Dimensions
+LowerPetalLength	Numerical	Intervals
+	]-inf;1.2]	1	1.2
+	]1.2;1.45]	1.2	1.45
+	]1.45;1.65]	1.45	1.65
+	]1.65;1.8]	1.65	1.8
+	]1.8;2.4]	1.8	2.4
+	]2.4;+inf[	2.4	3
+Cells
+Interval	Frequency
+]-inf;1.2]	2
+]1.2;1.45]	14
+]1.45;1.65]	11
+]1.65;1.8]	2
+]1.8;2.4]	2
+]2.4;+inf[	68
+
+Rank	R07	PetalLength	Numerical
+
+Data grid	Unsupervised
+Dimensions
+PetalLength	Numerical	Intervals
+	]-inf;1.55]	1	1.55
+	]1.55;2.4]	1.55	2.4
+	]2.4;3.25]	2.4	3.25
+	]3.25;3.95]	3.25	3.95
+	]3.95;4.55]	3.95	4.55
+	]4.55;5.15]	4.55	5.15
+	]5.15;5.75]	5.15	5.75
+	]5.75;6.4]	5.75	6.4
+	]6.4;+inf[	6.4	6.9
+Cells
+Interval	Frequency
+]-inf;1.55]	24
+]1.55;2.4]	7
+]2.4;3.25]	1
+]3.25;3.95]	5
+]3.95;4.55]	20
+]4.55;5.15]	21
+]5.15;5.75]	12
+]5.75;6.4]	6
+]6.4;+inf[	3
+
+Rank	R08	PetalWidth	Numerical
+
+Data grid	Unsupervised
+Dimensions
+PetalWidth	Numerical	Intervals
+	]-inf;0.35]	0.1	0.35
+	]0.35;0.7]	0.35	0.7
+	]0.7;1.05]	0.7	1.05
+	]1.05;1.35]	1.05	1.35
+	]1.35;1.55]	1.35	1.55
+	]1.55;1.75]	1.55	1.75
+	]1.75;2.05]	1.75	2.05
+	]2.05;2.25]	2.05	2.25
+	]2.25;+inf[	2.25	2.5
+Cells
+Interval	Frequency
+]-inf;0.35]	26
+]0.35;0.7]	5
+]0.7;1.05]	4
+]1.05;1.35]	16
+]1.35;1.55]	15
+]1.55;1.75]	3
+]1.75;2.05]	14
+]2.05;2.25]	6
+]2.25;+inf[	10
+
+Rank	R09	SPetalLength	Categorical
+
+Data grid	Unsupervised
+Dimensions
+SPetalLength	Categorical	Value groups
+	{4}	4
+	{1}	1
+	{5}	5
+	{3}	3
+	{6}	6	 * 
+Cells
+Value group	Frequency
+{4}	32
+{1}	31
+{5}	24
+{3}	6
+{6}	6
+
+Input values
+	4	32
+	1	31
+	5	24
+	3	6
+	6	6
+
+Rank	R10	SepalLength	Numerical
+
+Data grid	Unsupervised
+Dimensions
+SepalLength	Numerical	Intervals
+	]-inf;4.65]	4.3	4.65
+	]4.65;4.95]	4.65	4.95
+	]4.95;5.3]	4.95	5.3
+	]5.3;5.65]	5.3	5.65
+	]5.65;6.05]	5.65	6.05
+	]6.05;6.35]	6.05	6.35
+	]6.35;6.65]	6.35	6.65
+	]6.65;7.05]	6.65	7.05
+	]7.05;7.45]	7.05	7.45
+	]7.45;+inf[	7.45	7.7
+Cells
+Interval	Frequency
+]-inf;4.65]	8
+]4.65;4.95]	7
+]4.95;5.3]	12
+]5.3;5.65]	13
+]5.65;6.05]	17
+]6.05;6.35]	14
+]6.35;6.65]	10
+]6.65;7.05]	12
+]7.05;7.45]	2
+]7.45;+inf[	4
+
+Rank	R11	SepalWidth	Numerical
+
+Data grid	Unsupervised
+Dimensions
+SepalWidth	Numerical	Intervals
+	]-inf;2.25]	2	2.25
+	]2.25;2.45]	2.25	2.45
+	]2.45;2.75]	2.45	2.75
+	]2.75;2.95]	2.75	2.95
+	]2.95;3.25]	2.95	3.25
+	]3.25;3.45]	3.25	3.45
+	]3.45;3.65]	3.45	3.65
+	]3.65;4]	3.65	4
+	]4;4.15]	4	4.15
+	]4.15;+inf[	4.15	4.4
+Cells
+Interval	Frequency
+]-inf;2.25]	4
+]2.25;2.45]	3
+]2.45;2.75]	15
+]2.75;2.95]	17
+]2.95;3.25]	33
+]3.25;3.45]	12
+]3.45;3.65]	6
+]3.65;4]	6
+]4;4.15]	1
+]4.15;+inf[	2
+
+Rank	R12	UpperPetalWidth	Numerical
+
+Data grid	Unsupervised
+Dimensions
+UpperPetalWidth	Numerical	Intervals
+	]-inf;1.65]	1.5	1.65
+	]1.65;1.75]	1.65	1.75
+	]1.75;1.85]	1.75	1.85
+	]1.85;1.95]	1.85	1.95
+	]1.95;2.05]	1.95	2.05
+	]2.05;2.15]	2.05	2.15
+	]2.15;2.25]	2.15	2.25
+	]2.25;2.35]	2.25	2.35
+	]2.35;2.45]	2.35	2.45
+	]2.45;+inf[	2.45	2.5
+Cells
+Interval	Frequency
+]-inf;1.65]	68
+]1.65;1.75]	1
+]1.75;1.85]	7
+]1.85;1.95]	4
+]1.95;2.05]	3
+]2.05;2.15]	4
+]2.15;2.25]	2
+]2.25;2.35]	6
+]2.35;2.45]	2
+]2.45;+inf[	2
+
+
+Report	Bivariate preparation
+
+Dictionary	Iris
+Variables
+	Categorical	4
+	Numerical	8
+	Total	12
+Database	../../../datasets/Iris/Iris.txt
+Sample percentage	70
+Sampling mode	Include sample
+Selection variable	
+Selection value	
+Instances	99
+Learning task	Unsupervised analysis
+Evaluated variable pairs	55
+Informative variable pairs	39
+
+Variable pair statistics
+Rank	Name 1	Name 2	Level	Variables	Parts 1	Parts 2	Cells	Construction cost	Preparation cost	Data cost
+R01	Class	Class2	0.284761	2	2	2	2	6.71557	18.6815	103.619
+R02	Class	SPetalLength	0.270098	2	3	3	5	6.71557	41.3295	141.497
+R03	Class	Class1	0.268639	2	2	2	2	6.71557	18.7725	103.619
+R04	Class1	SPetalLength	0.217256	2	2	2	2	6.71557	27.08	131.541
+R05	Class2	SPetalLength	0.180347	2	2	2	4	6.71557	27.3671	142.207
+R06	PetalLength	SPetalLength	0.144064	2	5	5	5	6.71557	67.8275	359.134
+R07	Class	PetalLength	0.141345	2	3	3	4	6.71557	30.7159	367.831
+R08	Class	PetalWidth	0.138676	2	3	3	5	6.71557	30.7159	369.091
+R09	PetalWidth	SPetalLength	0.113809	2	3	3	5	6.71557	40.1193	402.171
+R10	Class1	LowerPetalLength	0.104168	2	2	2	2	6.71557	13.5513	359.134
+R11	Class1	PetalLength	0.104168	2	2	2	2	6.71557	13.5513	359.134
+R12	Class1	PetalWidth	0.104168	2	2	2	2	6.71557	13.5513	359.134
+R13	Class	LowerPetalLength	0.0904843	2	2	2	2	6.71557	18.8841	403.668
+R14	LowerPetalLength	SPetalLength	0.081263	2	2	2	2	6.71557	27.1915	431.589
+R15	PetalLength	PetalWidth	0.0768484	2	3	3	4	6.71557	29.5057	627.489
+R16	Class2	PetalLength	0.0755679	2	2	3	4	6.71557	20.5279	367.831
+R17	Class2	PetalWidth	0.0726203	2	2	3	5	6.71557	20.5279	369.091
+R18	Class	UpperPetalWidth	0.0668354	2	2	2	4	6.71557	18.8841	414.829
+R19	PetalWidth	UpperPetalWidth	0.0638378	2	3	3	3	6.71557	29.5057	636.843
+R20	Class1	Class2	0.0617915	2	2	2	3	6.71557	13.4398	103.619
+R21	SPetalLength	SepalLength	0.0603034	2	3	3	5	6.71557	40.0933	429.307
+R22	LowerPetalLength	PetalLength	0.0599177	2	3	3	3	6.71557	29.5057	639.662
+R23	Class1	SepalLength	0.0587558	2	2	2	4	6.71557	13.5513	378.367
+R24	LowerPetalLength	PetalWidth	0.0548016	2	2	2	2	6.71557	13.6629	659.183
+R25	Class	SepalLength	0.0526999	2	3	3	7	6.71557	30.7159	409.669
+R26	SPetalLength	UpperPetalWidth	0.0472362	2	2	2	4	6.71557	27.49	448.531
+R27	PetalLength	SepalLength	0.0390468	2	3	3	5	6.71557	29.5057	654.667
+R28	PetalLength	UpperPetalWidth	0.0369425	2	2	2	3	6.71557	13.6629	672.023
+R29	PetalWidth	SepalLength	0.0328232	2	3	3	8	6.71557	29.5057	659.142
+R30	LowerPetalLength	SepalLength	0.0280508	2	2	2	4	6.71557	13.6629	678.416
+R31	Class1	SepalWidth	0.0171455	2	2	2	4	6.71557	13.5513	395.99
+R32	Class	SepalWidth	0.0123962	2	2	2	4	6.71557	18.8841	440.523
+R33	SPetalLength	SepalWidth	0.00852231	2	2	2	4	6.71557	27.1915	468.445
+R34	Class2	LowerPetalLength	0.00803804	2	2	2	3	6.71557	13.5513	403.668
+R35	SepalLength	UpperPetalWidth	0.00632132	2	2	2	4	6.71557	13.6629	694.038
+R36	LowerPetalLength	SepalWidth	0.00353941	2	2	2	4	6.71557	13.6629	696.038
+R37	PetalLength	SepalWidth	0.00353941	2	2	2	4	6.71557	13.6629	696.038
+R38	PetalWidth	SepalWidth	0.00353941	2	2	2	4	6.71557	13.6629	696.038
+R39	Class1	UpperPetalWidth	0.00191989	2	2	2	3	6.71557	13.5513	402.438
+R40	Class	Dummy2	0	0	1	1	1	0.693147	8.52714	462.753
+R41	Class1	Dummy2	0	0	1	1	1	0.693147	4.60517	418.22
+R42	Class2	Dummy2	0	0	1	1	1	0.693147	4.60517	422.072
+R43	Class2	SepalLength	0	0	1	1	1	0.693147	4.60517	422.072
+R44	Class2	SepalWidth	0	0	1	1	1	0.693147	4.60517	422.072
+R45	Class2	UpperPetalWidth	0	0	1	1	1	0.693147	4.60517	422.072
+R46	Dummy2	LowerPetalLength	0	0	1	1	1	0.693147	0	718.268
+R47	Dummy2	PetalLength	0	0	1	1	1	0.693147	0	718.268
+R48	Dummy2	PetalWidth	0	0	1	1	1	0.693147	0	718.268
+R49	Dummy2	SPetalLength	0	0	1	1	1	0.693147	15.3019	490.675
+R50	Dummy2	SepalLength	0	0	1	1	1	0.693147	0	718.268
+R51	Dummy2	SepalWidth	0	0	1	1	1	0.693147	0	718.268
+R52	Dummy2	UpperPetalWidth	0	0	1	1	1	0.693147	0	718.268
+R53	LowerPetalLength	UpperPetalWidth	0	0	1	1	1	0.693147	0	718.268
+R54	SepalLength	SepalWidth	0	0	1	1	1	0.693147	0	718.268
+R55	SepalWidth	UpperPetalWidth	0	0	1	1	1	0.693147	0	718.268
+
+Detailed variable pair statistics
+
+Rank	R01
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-setosa, Iris-virginica}	Iris-setosa	Iris-virginica	 * 
+	{Iris-versicolor}	Iris-versicolor
+Class2	Categorical	Value groups
+	{}	
+	{versicolor}	versicolor	 * 
+Cells
+Cell id	Class	Class2	Frequency
+C1	{Iris-setosa, Iris-virginica}	{}	62
+C4	{Iris-versicolor}	{versicolor}	37
+Confusion matrix
+	{Iris-setosa, Iris-virginica}	{Iris-versicolor}
+{}	62	0
+{versicolor}	0	37
+
+Rank	R02
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-versicolor}	Iris-versicolor
+	{Iris-setosa}	Iris-setosa
+	{Iris-virginica}	Iris-virginica	 * 
+SPetalLength	Categorical	Value groups
+	{4, 3}	4	3
+	{1}	1
+	{5, 6}	5	6	 * 
+Cells
+Cell id	Class	SPetalLength	Frequency
+C1	{Iris-versicolor}	{4, 3}	36
+C3	{Iris-virginica}	{4, 3}	2
+C5	{Iris-setosa}	{1}	31
+C7	{Iris-versicolor}	{5, 6}	1
+C9	{Iris-virginica}	{5, 6}	29
+Confusion matrix
+	{Iris-versicolor}	{Iris-setosa}	{Iris-virginica}
+{4, 3}	36	0	2
+{1}	0	31	0
+{5, 6}	1	0	29
+
+Rank	R03
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-versicolor, Iris-virginica}	Iris-versicolor	Iris-virginica	 * 
+	{Iris-setosa}	Iris-setosa
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+Cells
+Cell id	Class	Class1	Frequency
+C1	{Iris-versicolor, Iris-virginica}	{}	68
+C4	{Iris-setosa}	{setosa}	31
+Confusion matrix
+	{Iris-versicolor, Iris-virginica}	{Iris-setosa}
+{}	68	0
+{setosa}	0	31
+
+Rank	R04
+
+Data grid	Unsupervised
+Dimensions
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+SPetalLength	Categorical	Value groups
+	{4, 5, 3, ...}	4	5	3	6	 * 
+	{1}	1
+Cells
+Cell id	Class1	SPetalLength	Frequency
+C1	{}	{4, 5, 3, ...}	68
+C4	{setosa}	{1}	31
+Confusion matrix
+	{}	{setosa}
+{4, 5, 3, ...}	68	0
+{1}	0	31
+
+Rank	R05
+
+Data grid	Unsupervised
+Dimensions
+Class2	Categorical	Value groups
+	{}	
+	{versicolor}	versicolor	 * 
+SPetalLength	Categorical	Value groups
+	{1, 5, 6}	1	5	6	 * 
+	{4, 3}	4	3
+Cells
+Cell id	Class2	SPetalLength	Frequency
+C1	{}	{1, 5, 6}	60
+C2	{versicolor}	{1, 5, 6}	1
+C3	{}	{4, 3}	2
+C4	{versicolor}	{4, 3}	36
+Confusion matrix
+	{}	{versicolor}
+{1, 5, 6}	60	1
+{4, 3}	2	36
+
+Rank	R06
+
+Data grid	Unsupervised
+Dimensions
+PetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;3.95]	2.4	3.95
+	]3.95;4.95]	3.95	4.95
+	]4.95;5.95]	4.95	5.95
+	]5.95;+inf[	5.95	6.9
+SPetalLength	Categorical	Value groups
+	{4}	4
+	{1}	1
+	{5}	5
+	{3}	3
+	{6}	6	 * 
+Cells
+Cell id	PetalLength	SPetalLength	Frequency
+C3	]3.95;4.95]	{4}	32
+C6	]-inf;2.4]	{1}	31
+C14	]4.95;5.95]	{5}	24
+C17	]2.4;3.95]	{3}	6
+C25	]5.95;+inf[	{6}	6
+Confusion matrix
+	]-inf;2.4]	]2.4;3.95]	]3.95;4.95]	]4.95;5.95]	]5.95;+inf[
+{4}	0	0	32	0	0
+{1}	31	0	0	0	0
+{5}	0	0	0	24	0
+{3}	0	6	0	0	0
+{6}	0	0	0	0	6
+
+Rank	R07
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-versicolor}	Iris-versicolor
+	{Iris-setosa}	Iris-setosa
+	{Iris-virginica}	Iris-virginica	 * 
+PetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;4.85]	2.4	4.85
+	]4.85;+inf[	4.85	6.9
+Cells
+Cell id	Class	PetalLength	Frequency
+C2	{Iris-setosa}	]-inf;2.4]	31
+C4	{Iris-versicolor}	]2.4;4.85]	34
+C7	{Iris-versicolor}	]4.85;+inf[	3
+C9	{Iris-virginica}	]4.85;+inf[	31
+Confusion matrix
+	{Iris-versicolor}	{Iris-setosa}	{Iris-virginica}
+]-inf;2.4]	0	31	0
+]2.4;4.85]	34	0	0
+]4.85;+inf[	3	0	31
+
+Rank	R08
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-versicolor}	Iris-versicolor
+	{Iris-setosa}	Iris-setosa
+	{Iris-virginica}	Iris-virginica	 * 
+PetalWidth	Numerical	Intervals
+	]-inf;0.7]	0.1	0.7
+	]0.7;1.75]	0.7	1.75
+	]1.75;+inf[	1.75	2.5
+Cells
+Cell id	Class	PetalWidth	Frequency
+C2	{Iris-setosa}	]-inf;0.7]	31
+C4	{Iris-versicolor}	]0.7;1.75]	36
+C6	{Iris-virginica}	]0.7;1.75]	2
+C7	{Iris-versicolor}	]1.75;+inf[	1
+C9	{Iris-virginica}	]1.75;+inf[	29
+Confusion matrix
+	{Iris-versicolor}	{Iris-setosa}	{Iris-virginica}
+]-inf;0.7]	0	31	0
+]0.7;1.75]	36	0	2
+]1.75;+inf[	1	0	29
+
+Rank	R09
+
+Data grid	Unsupervised
+Dimensions
+PetalWidth	Numerical	Intervals
+	]-inf;0.7]	0.1	0.7
+	]0.7;1.65]	0.7	1.65
+	]1.65;+inf[	1.65	2.5
+SPetalLength	Categorical	Value groups
+	{4, 3}	4	3
+	{1}	1
+	{5, 6}	5	6	 * 
+Cells
+Cell id	PetalWidth	SPetalLength	Frequency
+C2	]0.7;1.65]	{4, 3}	35
+C3	]1.65;+inf[	{4, 3}	3
+C4	]-inf;0.7]	{1}	31
+C8	]0.7;1.65]	{5, 6}	2
+C9	]1.65;+inf[	{5, 6}	28
+Confusion matrix
+	]-inf;0.7]	]0.7;1.65]	]1.65;+inf[
+{4, 3}	0	35	3
+{1}	31	0	0
+{5, 6}	0	2	28
+
+Rank	R10
+
+Data grid	Unsupervised
+Dimensions
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+LowerPetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;+inf[	2.4	3
+Cells
+Cell id	Class1	LowerPetalLength	Frequency
+C2	{setosa}	]-inf;2.4]	31
+C3	{}	]2.4;+inf[	68
+Confusion matrix
+	{}	{setosa}
+]-inf;2.4]	0	31
+]2.4;+inf[	68	0
+
+Rank	R11
+
+Data grid	Unsupervised
+Dimensions
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+PetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;+inf[	2.4	6.9
+Cells
+Cell id	Class1	PetalLength	Frequency
+C2	{setosa}	]-inf;2.4]	31
+C3	{}	]2.4;+inf[	68
+Confusion matrix
+	{}	{setosa}
+]-inf;2.4]	0	31
+]2.4;+inf[	68	0
+
+Rank	R12
+
+Data grid	Unsupervised
+Dimensions
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+PetalWidth	Numerical	Intervals
+	]-inf;0.7]	0.1	0.7
+	]0.7;+inf[	0.7	2.5
+Cells
+Cell id	Class1	PetalWidth	Frequency
+C2	{setosa}	]-inf;0.7]	31
+C3	{}	]0.7;+inf[	68
+Confusion matrix
+	{}	{setosa}
+]-inf;0.7]	0	31
+]0.7;+inf[	68	0
+
+Rank	R13
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-versicolor, Iris-virginica}	Iris-versicolor	Iris-virginica	 * 
+	{Iris-setosa}	Iris-setosa
+LowerPetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;+inf[	2.4	3
+Cells
+Cell id	Class	LowerPetalLength	Frequency
+C2	{Iris-setosa}	]-inf;2.4]	31
+C3	{Iris-versicolor, Iris-virginica}	]2.4;+inf[	68
+Confusion matrix
+	{Iris-versicolor, Iris-virginica}	{Iris-setosa}
+]-inf;2.4]	0	31
+]2.4;+inf[	68	0
+
+Rank	R14
+
+Data grid	Unsupervised
+Dimensions
+LowerPetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;+inf[	2.4	3
+SPetalLength	Categorical	Value groups
+	{4, 5, 3, ...}	4	5	3	6	 * 
+	{1}	1
+Cells
+Cell id	LowerPetalLength	SPetalLength	Frequency
+C2	]2.4;+inf[	{4, 5, 3, ...}	68
+C3	]-inf;2.4]	{1}	31
+Confusion matrix
+	]-inf;2.4]	]2.4;+inf[
+{4, 5, 3, ...}	0	68
+{1}	31	0
+
+Rank	R15
+
+Data grid	Unsupervised
+Dimensions
+PetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;4.75]	2.4	4.75
+	]4.75;+inf[	4.75	6.9
+PetalWidth	Numerical	Intervals
+	]-inf;0.7]	0.1	0.7
+	]0.7;1.65]	0.7	1.65
+	]1.65;+inf[	1.65	2.5
+Cells
+Cell id	PetalLength	PetalWidth	Frequency
+C1	]-inf;2.4]	]-inf;0.7]	31
+C5	]2.4;4.75]	]0.7;1.65]	32
+C6	]4.75;+inf[	]0.7;1.65]	5
+C9	]4.75;+inf[	]1.65;+inf[	31
+Confusion matrix
+	]-inf;2.4]	]2.4;4.75]	]4.75;+inf[
+]-inf;0.7]	31	0	0
+]0.7;1.65]	0	32	5
+]1.65;+inf[	0	0	31
+
+Rank	R16
+
+Data grid	Unsupervised
+Dimensions
+Class2	Categorical	Value groups
+	{}	
+	{versicolor}	versicolor	 * 
+PetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;4.85]	2.4	4.85
+	]4.85;+inf[	4.85	6.9
+Cells
+Cell id	Class2	PetalLength	Frequency
+C1	{}	]-inf;2.4]	31
+C4	{versicolor}	]2.4;4.85]	34
+C5	{}	]4.85;+inf[	31
+C6	{versicolor}	]4.85;+inf[	3
+Confusion matrix
+	{}	{versicolor}
+]-inf;2.4]	31	0
+]2.4;4.85]	0	34
+]4.85;+inf[	31	3
+
+Rank	R17
+
+Data grid	Unsupervised
+Dimensions
+Class2	Categorical	Value groups
+	{}	
+	{versicolor}	versicolor	 * 
+PetalWidth	Numerical	Intervals
+	]-inf;0.7]	0.1	0.7
+	]0.7;1.75]	0.7	1.75
+	]1.75;+inf[	1.75	2.5
+Cells
+Cell id	Class2	PetalWidth	Frequency
+C1	{}	]-inf;0.7]	31
+C3	{}	]0.7;1.75]	2
+C4	{versicolor}	]0.7;1.75]	36
+C5	{}	]1.75;+inf[	29
+C6	{versicolor}	]1.75;+inf[	1
+Confusion matrix
+	{}	{versicolor}
+]-inf;0.7]	31	0
+]0.7;1.75]	2	36
+]1.75;+inf[	29	1
+
+Rank	R18
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-versicolor, Iris-setosa}	Iris-versicolor	Iris-setosa
+	{Iris-virginica}	Iris-virginica	 * 
+UpperPetalWidth	Numerical	Intervals
+	]-inf;1.75]	1.5	1.75
+	]1.75;+inf[	1.75	2.5
+Cells
+Cell id	Class	UpperPetalWidth	Frequency
+C1	{Iris-versicolor, Iris-setosa}	]-inf;1.75]	67
+C2	{Iris-virginica}	]-inf;1.75]	2
+C3	{Iris-versicolor, Iris-setosa}	]1.75;+inf[	1
+C4	{Iris-virginica}	]1.75;+inf[	29
+Confusion matrix
+	{Iris-versicolor, Iris-setosa}	{Iris-virginica}
+]-inf;1.75]	67	2
+]1.75;+inf[	1	29
+
+Rank	R19
+
+Data grid	Unsupervised
+Dimensions
+PetalWidth	Numerical	Intervals
+	]-inf;1.55]	0.1	1.55
+	]1.55;2.05]	1.55	2.05
+	]2.05;+inf[	2.05	2.5
+UpperPetalWidth	Numerical	Intervals
+	]-inf;1.55]	1.5	1.55
+	]1.55;2.05]	1.55	2.05
+	]2.05;+inf[	2.05	2.5
+Cells
+Cell id	PetalWidth	UpperPetalWidth	Frequency
+C1	]-inf;1.55]	]-inf;1.55]	66
+C5	]1.55;2.05]	]1.55;2.05]	17
+C9	]2.05;+inf[	]2.05;+inf[	16
+Confusion matrix
+	]-inf;1.55]	]1.55;2.05]	]2.05;+inf[
+]-inf;1.55]	66	0	0
+]1.55;2.05]	0	17	0
+]2.05;+inf[	0	0	16
+
+Rank	R20
+
+Data grid	Unsupervised
+Dimensions
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+Class2	Categorical	Value groups
+	{}	
+	{versicolor}	versicolor	 * 
+Cells
+Cell id	Class1	Class2	Frequency
+C1	{}	{}	31
+C2	{setosa}	{}	31
+C3	{}	{versicolor}	37
+Confusion matrix
+	{}	{setosa}
+{}	31	31
+{versicolor}	37	0
+
+Rank	R21
+
+Data grid	Unsupervised
+Dimensions
+SPetalLength	Categorical	Value groups
+	{1, 3}	1	3
+	{4}	4
+	{5, 6}	5	6	 * 
+SepalLength	Numerical	Intervals
+	]-inf;5.45]	4.3	5.45
+	]5.45;5.75]	5.45	5.75
+	]5.75;+inf[	5.75	7.7
+Cells
+Cell id	SPetalLength	SepalLength	Frequency
+C1	{1, 3}	]-inf;5.45]	31
+C4	{1, 3}	]5.45;5.75]	6
+C5	{4}	]5.45;5.75]	10
+C8	{4}	]5.75;+inf[	22
+C9	{5, 6}	]5.75;+inf[	30
+Confusion matrix
+	{1, 3}	{4}	{5, 6}
+]-inf;5.45]	31	0	0
+]5.45;5.75]	6	10	0
+]5.75;+inf[	0	22	30
+
+Rank	R22
+
+Data grid	Unsupervised
+Dimensions
+LowerPetalLength	Numerical	Intervals
+	]-inf;1.45]	1	1.45
+	]1.45;2.4]	1.45	2.4
+	]2.4;+inf[	2.4	3
+PetalLength	Numerical	Intervals
+	]-inf;1.45]	1	1.45
+	]1.45;2.4]	1.45	2.4
+	]2.4;+inf[	2.4	6.9
+Cells
+Cell id	LowerPetalLength	PetalLength	Frequency
+C1	]-inf;1.45]	]-inf;1.45]	16
+C5	]1.45;2.4]	]1.45;2.4]	15
+C9	]2.4;+inf[	]2.4;+inf[	68
+Confusion matrix
+	]-inf;1.45]	]1.45;2.4]	]2.4;+inf[
+]-inf;1.45]	16	0	0
+]1.45;2.4]	0	15	0
+]2.4;+inf[	0	0	68
+
+Rank	R23
+
+Data grid	Unsupervised
+Dimensions
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+SepalLength	Numerical	Intervals
+	]-inf;5.45]	4.3	5.45
+	]5.45;+inf[	5.45	7.7
+Cells
+Cell id	Class1	SepalLength	Frequency
+C1	{}	]-inf;5.45]	3
+C2	{setosa}	]-inf;5.45]	28
+C3	{}	]5.45;+inf[	65
+C4	{setosa}	]5.45;+inf[	3
+Confusion matrix
+	{}	{setosa}
+]-inf;5.45]	3	28
+]5.45;+inf[	65	3
+
+Rank	R24
+
+Data grid	Unsupervised
+Dimensions
+LowerPetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;+inf[	2.4	3
+PetalWidth	Numerical	Intervals
+	]-inf;0.7]	0.1	0.7
+	]0.7;+inf[	0.7	2.5
+Cells
+Cell id	LowerPetalLength	PetalWidth	Frequency
+C1	]-inf;2.4]	]-inf;0.7]	31
+C4	]2.4;+inf[	]0.7;+inf[	68
+Confusion matrix
+	]-inf;2.4]	]2.4;+inf[
+]-inf;0.7]	31	0
+]0.7;+inf[	0	68
+
+Rank	R25
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-versicolor}	Iris-versicolor
+	{Iris-setosa}	Iris-setosa
+	{Iris-virginica}	Iris-virginica	 * 
+SepalLength	Numerical	Intervals
+	]-inf;5.45]	4.3	5.45
+	]5.45;5.75]	5.45	5.75
+	]5.75;+inf[	5.75	7.7
+Cells
+Cell id	Class	SepalLength	Frequency
+C1	{Iris-versicolor}	]-inf;5.45]	3
+C2	{Iris-setosa}	]-inf;5.45]	28
+C4	{Iris-versicolor}	]5.45;5.75]	12
+C5	{Iris-setosa}	]5.45;5.75]	3
+C6	{Iris-virginica}	]5.45;5.75]	1
+C7	{Iris-versicolor}	]5.75;+inf[	22
+C9	{Iris-virginica}	]5.75;+inf[	30
+Confusion matrix
+	{Iris-versicolor}	{Iris-setosa}	{Iris-virginica}
+]-inf;5.45]	3	28	0
+]5.45;5.75]	12	3	1
+]5.75;+inf[	22	0	30
+
+Rank	R26
+
+Data grid	Unsupervised
+Dimensions
+SPetalLength	Categorical	Value groups
+	{4, 1, 3}	4	1	3
+	{5, 6}	5	6	 * 
+UpperPetalWidth	Numerical	Intervals
+	]-inf;1.65]	1.5	1.65
+	]1.65;+inf[	1.65	2.5
+Cells
+Cell id	SPetalLength	UpperPetalWidth	Frequency
+C1	{4, 1, 3}	]-inf;1.65]	66
+C2	{5, 6}	]-inf;1.65]	2
+C3	{4, 1, 3}	]1.65;+inf[	3
+C4	{5, 6}	]1.65;+inf[	28
+Confusion matrix
+	{4, 1, 3}	{5, 6}
+]-inf;1.65]	66	2
+]1.65;+inf[	3	28
+
+Rank	R27
+
+Data grid	Unsupervised
+Dimensions
+PetalLength	Numerical	Intervals
+	]-inf;3.95]	1	3.95
+	]3.95;5.15]	3.95	5.15
+	]5.15;+inf[	5.15	6.9
+SepalLength	Numerical	Intervals
+	]-inf;5.45]	4.3	5.45
+	]5.45;6.15]	5.45	6.15
+	]6.15;+inf[	6.15	7.7
+Cells
+Cell id	PetalLength	SepalLength	Frequency
+C1	]-inf;3.95]	]-inf;5.45]	31
+C4	]-inf;3.95]	]5.45;6.15]	6
+C5	]3.95;5.15]	]5.45;6.15]	25
+C8	]3.95;5.15]	]6.15;+inf[	16
+C9	]5.15;+inf[	]6.15;+inf[	21
+Confusion matrix
+	]-inf;3.95]	]3.95;5.15]	]5.15;+inf[
+]-inf;5.45]	31	0	0
+]5.45;6.15]	6	25	0
+]6.15;+inf[	0	16	21
+
+Rank	R28
+
+Data grid	Unsupervised
+Dimensions
+PetalLength	Numerical	Intervals
+	]-inf;4.75]	1	4.75
+	]4.75;+inf[	4.75	6.9
+UpperPetalWidth	Numerical	Intervals
+	]-inf;1.65]	1.5	1.65
+	]1.65;+inf[	1.65	2.5
+Cells
+Cell id	PetalLength	UpperPetalWidth	Frequency
+C1	]-inf;4.75]	]-inf;1.65]	63
+C2	]4.75;+inf[	]-inf;1.65]	5
+C4	]4.75;+inf[	]1.65;+inf[	31
+Confusion matrix
+	]-inf;4.75]	]4.75;+inf[
+]-inf;1.65]	63	5
+]1.65;+inf[	0	31
+
+Rank	R29
+
+Data grid	Unsupervised
+Dimensions
+PetalWidth	Numerical	Intervals
+	]-inf;0.7]	0.1	0.7
+	]0.7;1.35]	0.7	1.35
+	]1.35;+inf[	1.35	2.5
+SepalLength	Numerical	Intervals
+	]-inf;5.45]	4.3	5.45
+	]5.45;5.75]	5.45	5.75
+	]5.75;+inf[	5.75	7.7
+Cells
+Cell id	PetalWidth	SepalLength	Frequency
+C1	]-inf;0.7]	]-inf;5.45]	28
+C2	]0.7;1.35]	]-inf;5.45]	2
+C3	]1.35;+inf[	]-inf;5.45]	1
+C4	]-inf;0.7]	]5.45;5.75]	3
+C5	]0.7;1.35]	]5.45;5.75]	11
+C6	]1.35;+inf[	]5.45;5.75]	2
+C8	]0.7;1.35]	]5.75;+inf[	7
+C9	]1.35;+inf[	]5.75;+inf[	45
+Confusion matrix
+	]-inf;0.7]	]0.7;1.35]	]1.35;+inf[
+]-inf;5.45]	28	2	1
+]5.45;5.75]	3	11	2
+]5.75;+inf[	0	7	45
+
+Rank	R30
+
+Data grid	Unsupervised
+Dimensions
+LowerPetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;+inf[	2.4	3
+SepalLength	Numerical	Intervals
+	]-inf;5.45]	4.3	5.45
+	]5.45;+inf[	5.45	7.7
+Cells
+Cell id	LowerPetalLength	SepalLength	Frequency
+C1	]-inf;2.4]	]-inf;5.45]	28
+C2	]2.4;+inf[	]-inf;5.45]	3
+C3	]-inf;2.4]	]5.45;+inf[	3
+C4	]2.4;+inf[	]5.45;+inf[	65
+Confusion matrix
+	]-inf;2.4]	]2.4;+inf[
+]-inf;5.45]	28	3
+]5.45;+inf[	3	65
+
+Rank	R31
+
+Data grid	Unsupervised
+Dimensions
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+SepalWidth	Numerical	Intervals
+	]-inf;3.35]	2	3.35
+	]3.35;+inf[	3.35	4.4
+Cells
+Cell id	Class1	SepalWidth	Frequency
+C1	{}	]-inf;3.35]	65
+C2	{setosa}	]-inf;3.35]	11
+C3	{}	]3.35;+inf[	3
+C4	{setosa}	]3.35;+inf[	20
+Confusion matrix
+	{}	{setosa}
+]-inf;3.35]	65	11
+]3.35;+inf[	3	20
+
+Rank	R32
+
+Data grid	Unsupervised
+Dimensions
+Class	Categorical	Value groups
+	{Iris-versicolor, Iris-virginica}	Iris-versicolor	Iris-virginica	 * 
+	{Iris-setosa}	Iris-setosa
+SepalWidth	Numerical	Intervals
+	]-inf;3.35]	2	3.35
+	]3.35;+inf[	3.35	4.4
+Cells
+Cell id	Class	SepalWidth	Frequency
+C1	{Iris-versicolor, Iris-virginica}	]-inf;3.35]	65
+C2	{Iris-setosa}	]-inf;3.35]	11
+C3	{Iris-versicolor, Iris-virginica}	]3.35;+inf[	3
+C4	{Iris-setosa}	]3.35;+inf[	20
+Confusion matrix
+	{Iris-versicolor, Iris-virginica}	{Iris-setosa}
+]-inf;3.35]	65	11
+]3.35;+inf[	3	20
+
+Rank	R33
+
+Data grid	Unsupervised
+Dimensions
+SPetalLength	Categorical	Value groups
+	{4, 5, 3, ...}	4	5	3	6	 * 
+	{1}	1
+SepalWidth	Numerical	Intervals
+	]-inf;3.35]	2	3.35
+	]3.35;+inf[	3.35	4.4
+Cells
+Cell id	SPetalLength	SepalWidth	Frequency
+C1	{4, 5, 3, ...}	]-inf;3.35]	65
+C2	{1}	]-inf;3.35]	11
+C3	{4, 5, 3, ...}	]3.35;+inf[	3
+C4	{1}	]3.35;+inf[	20
+Confusion matrix
+	{4, 5, 3, ...}	{1}
+]-inf;3.35]	65	11
+]3.35;+inf[	3	20
+
+Rank	R34
+
+Data grid	Unsupervised
+Dimensions
+Class2	Categorical	Value groups
+	{}	
+	{versicolor}	versicolor	 * 
+LowerPetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;+inf[	2.4	3
+Cells
+Cell id	Class2	LowerPetalLength	Frequency
+C1	{}	]-inf;2.4]	31
+C3	{}	]2.4;+inf[	31
+C4	{versicolor}	]2.4;+inf[	37
+Confusion matrix
+	{}	{versicolor}
+]-inf;2.4]	31	0
+]2.4;+inf[	31	37
+
+Rank	R35
+
+Data grid	Unsupervised
+Dimensions
+SepalLength	Numerical	Intervals
+	]-inf;5.75]	4.3	5.75
+	]5.75;+inf[	5.75	7.7
+UpperPetalWidth	Numerical	Intervals
+	]-inf;1.55]	1.5	1.55
+	]1.55;+inf[	1.55	2.5
+Cells
+Cell id	SepalLength	UpperPetalWidth	Frequency
+C1	]-inf;5.75]	]-inf;1.55]	46
+C2	]5.75;+inf[	]-inf;1.55]	20
+C3	]-inf;5.75]	]1.55;+inf[	1
+C4	]5.75;+inf[	]1.55;+inf[	32
+Confusion matrix
+	]-inf;5.75]	]5.75;+inf[
+]-inf;1.55]	46	20
+]1.55;+inf[	1	32
+
+Rank	R36
+
+Data grid	Unsupervised
+Dimensions
+LowerPetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;+inf[	2.4	3
+SepalWidth	Numerical	Intervals
+	]-inf;3.35]	2	3.35
+	]3.35;+inf[	3.35	4.4
+Cells
+Cell id	LowerPetalLength	SepalWidth	Frequency
+C1	]-inf;2.4]	]-inf;3.35]	11
+C2	]2.4;+inf[	]-inf;3.35]	65
+C3	]-inf;2.4]	]3.35;+inf[	20
+C4	]2.4;+inf[	]3.35;+inf[	3
+Confusion matrix
+	]-inf;2.4]	]2.4;+inf[
+]-inf;3.35]	11	65
+]3.35;+inf[	20	3
+
+Rank	R37
+
+Data grid	Unsupervised
+Dimensions
+PetalLength	Numerical	Intervals
+	]-inf;2.4]	1	2.4
+	]2.4;+inf[	2.4	6.9
+SepalWidth	Numerical	Intervals
+	]-inf;3.35]	2	3.35
+	]3.35;+inf[	3.35	4.4
+Cells
+Cell id	PetalLength	SepalWidth	Frequency
+C1	]-inf;2.4]	]-inf;3.35]	11
+C2	]2.4;+inf[	]-inf;3.35]	65
+C3	]-inf;2.4]	]3.35;+inf[	20
+C4	]2.4;+inf[	]3.35;+inf[	3
+Confusion matrix
+	]-inf;2.4]	]2.4;+inf[
+]-inf;3.35]	11	65
+]3.35;+inf[	20	3
+
+Rank	R38
+
+Data grid	Unsupervised
+Dimensions
+PetalWidth	Numerical	Intervals
+	]-inf;0.7]	0.1	0.7
+	]0.7;+inf[	0.7	2.5
+SepalWidth	Numerical	Intervals
+	]-inf;3.35]	2	3.35
+	]3.35;+inf[	3.35	4.4
+Cells
+Cell id	PetalWidth	SepalWidth	Frequency
+C1	]-inf;0.7]	]-inf;3.35]	11
+C2	]0.7;+inf[	]-inf;3.35]	65
+C3	]-inf;0.7]	]3.35;+inf[	20
+C4	]0.7;+inf[	]3.35;+inf[	3
+Confusion matrix
+	]-inf;0.7]	]0.7;+inf[
+]-inf;3.35]	11	65
+]3.35;+inf[	20	3
+
+Rank	R39
+
+Data grid	Unsupervised
+Dimensions
+Class1	Categorical	Value groups
+	{}	
+	{setosa}	setosa	 * 
+UpperPetalWidth	Numerical	Intervals
+	]-inf;1.55]	1.5	1.55
+	]1.55;+inf[	1.55	2.5
+Cells
+Cell id	Class1	UpperPetalWidth	Frequency
+C1	{}	]-inf;1.55]	35
+C2	{setosa}	]-inf;1.55]	31
+C3	{}	]1.55;+inf[	33
+Confusion matrix
+	{}	{setosa}
+]-inf;1.55]	35	31
+]1.55;+inf[	33	0

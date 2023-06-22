@@ -1,0 +1,14 @@
+// Dictionary file settings
+ClassManagement.OpenFile
+ClassFileName Adult.kdic
+OK
+
+// Export dictionary as JSON file
+ClassManagement.ExportAsJSON
+JSONFileName Adult.kdicj
+OK
+
+// Exit Khiops
+ClassManagement.Quit
+OK
+

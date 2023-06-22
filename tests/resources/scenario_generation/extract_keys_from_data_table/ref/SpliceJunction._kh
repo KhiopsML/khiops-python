@@ -1,0 +1,21 @@
+// Dictionary file
+ClassManagement.OpenFile
+ClassFileName SpliceJunction.kdic
+OK
+
+// Extract keys settings
+LearningTools.ExtractKeysFromDataTable
+ClassName SpliceJunction
+SourceDataTable.DatabaseName SpliceJunction.csv
+SourceDataTable.HeaderLineUsed true
+SourceDataTable.FieldSeparator 
+ SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+TargetDataTable.DatabaseName SpliceJunctionKeys.csv
+TargetDataTable.HeaderLineUsed true
+TargetDataTable.FieldSeparator 
+ExtractKeysFromDataTable
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

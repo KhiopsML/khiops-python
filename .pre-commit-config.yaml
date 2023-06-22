@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        language_version: python3
+  - repo: https://github.com/pycqa/pylint
+    rev: v2.9.3
+    hooks:
+      - id: pylint
+        language_version: python3
+        exclude: doc/convert_samples.py|doc/conf.py|versioneer.py|pykhiops/_version.py|setup.py
+  - repo: https://github.com/pycqa/isort
+    rev: 5.9.2
+    hooks:
+      - id: isort
+        language_version: python3
+  - repo: local
+    hooks:
+      - id: samples-generation
+        name: samples-generation
+        entry: bash doc/convert-samples-hook
+        language: system
+        files: ^doc/samples/samples*.py
+        pass_filenames: false

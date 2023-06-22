@@ -1,0 +1,51 @@
+#Khiops 10.0.0.3i
+Short description	
+Dimensions	2
+Name	Type	Parts	Initial parts	Values	Interest	Description
+Char	Categorical	2	2	2	1	
+Type	Categorical	2	2	2	1	
+
+Coclustering stats
+Instances	20
+Cells	2
+Null cost	31.03577469
+Cost	22.73813924
+Level	0.2673571236
+Initial dimensions	2
+Frequency variable	
+Dictionary	MultipleEncodings
+Database	./MultipleEncodings.txt
+Sample percentage	100
+Sampling mode	Include sample
+Selection variable	Greek
+Selection value	1
+
+Hierarchy	Char
+Cluster	ParentCluster	Frequency	Interest	HierarchicalLevel	Rank	HierarchicalRank
+{<a>}	A1	10	1	1	1	4
+{<θ>}	A1	10	1	1	3	4
+A1		20	1	0	2	2
+
+Hierarchy	Type
+Cluster	ParentCluster	Frequency	Interest	HierarchicalLevel	Rank	HierarchicalRank
+{ASCII}	B2	10	1	1	1	4
+{UTF8 Greek}	B2	10	1	1	3	4
+B2		20	1	-0.210392	2	3
+
+Composition	Char
+Cluster	Value	Frequency	Typicality
+{<a>}	<a>	10	1
+{<θ>}	<θ>	10	1
+{<θ>}	 * 	0	0
+
+Composition	Type
+Cluster	Value	Frequency	Typicality
+{ASCII}	ASCII	10	1
+{UTF8 Greek}	UTF8 Greek	10	1
+{UTF8 Greek}	 * 	0	0
+
+Cells
+Char	Type	Frequency
+{<a>}	{ASCII}	10
+{<θ>}	{UTF8 Greek}	10
+

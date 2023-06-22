@@ -1,0 +1,19 @@
+// Extract cluster settings
+LearningTools.ExtractClusters
+SelectInputCoclustering
+InputCoclusteringFileName SpliceJunctionCoclustering.khc
+OK
+
+CoclusteringAttributeSpec.CoclusteringAttribute SampleId
+PostProcessingSpec.MaxPreservedInformation 0
+PostProcessingSpec.MaxCellNumber 0
+
+AnalysisResults.ResultFilesDirectory .
+AnalysisResults.ClusterFileName SpliceJunctionClusters.txt
+
+ExtractClusters
+Exit
+
+// Exit Khiops Coclustering
+ClassManagement.Quit
+OK

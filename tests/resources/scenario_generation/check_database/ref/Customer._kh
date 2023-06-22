@@ -1,0 +1,41 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Customer.kdic
+OK
+ClassManagement.ClassName Customer
+
+// Train database settings
+// __train_database_files__ below must be replaced for each data table file with:
+//  TrainDatabase.DatabaseFiles.List.Key __data_path__
+//  TrainDatabase.DatabaseFiles.DataTableName __data_file_path__
+TrainDatabase.DatabaseFiles.List.Key Customer
+TrainDatabase.DatabaseFiles.DataTableName Customer.csv
+TrainDatabase.DatabaseFiles.List.Key Customer`Services
+TrainDatabase.DatabaseFiles.DataTableName ServicesBidon.csv
+TrainDatabase.DatabaseFiles.List.Key Customer`Services`Usages
+TrainDatabase.DatabaseFiles.DataTableName UsagesBidon.csv
+TrainDatabase.DatabaseFiles.List.Key Customer`Address
+TrainDatabase.DatabaseFiles.DataTableName AddressBidon.csv
+TrainDatabase.DatabaseFiles.List.Key City
+TrainDatabase.DatabaseFiles.DataTableName CityBidon.csv
+TrainDatabase.DatabaseFiles.List.Key Country
+TrainDatabase.DatabaseFiles.DataTableName CountryBidon.csv
+TrainDatabase.DatabaseFiles.List.Key Product
+TrainDatabase.DatabaseFiles.DataTableName ProductBidon.csv
+TrainDatabase.HeaderLineUsed true
+TrainDatabase.FieldSeparator 
+ TrainDatabase.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.SampleNumberPercentage 100
+TrainDatabase.SamplingMode Include sample
+TrainDatabase.SelectionAttribute 
+TrainDatabase.SelectionValue 
+
+// Log messages limit
+AnalysisSpec.SystemParameters.MaxErrorMessageNumberInLog 20
+
+// Execute check database
+LearningTools.CheckData
+
+// Exit Khiops
+ClassManagement.Quit
+OK

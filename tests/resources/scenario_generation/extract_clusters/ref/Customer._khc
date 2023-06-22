@@ -1,0 +1,19 @@
+// Extract cluster settings
+LearningTools.ExtractClusters
+SelectInputCoclustering
+InputCoclusteringFileName CustomerCoclustering.khc
+OK
+
+CoclusteringAttributeSpec.CoclusteringAttribute id_customer
+PostProcessingSpec.MaxPreservedInformation 0
+PostProcessingSpec.MaxCellNumber 0
+
+AnalysisResults.ResultFilesDirectory .
+AnalysisResults.ClusterFileName CustomerClusters.txt
+
+ExtractClusters
+Exit
+
+// Exit Khiops Coclustering
+ClassManagement.Quit
+OK

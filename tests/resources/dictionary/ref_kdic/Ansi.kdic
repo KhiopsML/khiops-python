@@ -1,0 +1,7 @@
+#Khiops 10.0.0.3i
+
+Dictionary	Ansi
+{
+	Categorical	VarAscii_a		;	
+	Categorical	`VarAnsi_é`		;	
+};

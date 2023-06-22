@@ -1,0 +1,18 @@
+// Dictionary building settings
+ClassManagement.BuildClassDefButton
+SourceDataTable.DatabaseName SpliceJunction.csv
+SourceDataTable.HeaderLineUsed true
+SourceDataTable.FieldSeparator 
+ SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+BuildClassDef
+ClassName SpliceJunction
+OK
+Exit
+
+// Save dictionary
+ClassFileName SpliceJunction.kdic
+OK
+
+// Exit Khiops
+ClassManagement.Quit
+OK

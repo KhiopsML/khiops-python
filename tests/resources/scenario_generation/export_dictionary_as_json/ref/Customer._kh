@@ -1,0 +1,14 @@
+// Dictionary file settings
+ClassManagement.OpenFile
+ClassFileName Customer.kdic
+OK
+
+// Export dictionary as JSON file
+ClassManagement.ExportAsJSON
+JSONFileName Customer.kdicj
+OK
+
+// Exit Khiops
+ClassManagement.Quit
+OK
+

@@ -1,0 +1,45 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName SpliceJunction.kdic
+OK
+ClassManagement.ClassName SpliceJunction
+
+// Prepare deployment window
+LearningTools.PrepareDeployment
+
+// Coclustering file
+SelectInputCoclustering
+InputCoclusteringFileName SpliceJunction._khc
+OK
+
+// Simplification settings
+PostProcessingSpec.MaxPreservedInformation 0
+PostProcessingSpec.MaxCellNumber 0
+
+// __max_part_number_spec__ below must be replaced for each variable with:
+//   PostProcessingSpec.PostProcessedAttributes.List.Key __part_variable__
+//   PostProcessingSpec.PostProcessedAttributes.MaxPartNumber __max_part_number__
+PostProcessingSpec.PostProcessedAttributes.List.Key SampleId
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 32
+PostProcessingSpec.PostProcessedAttributes.List.Key NonExistentVar
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 64
+
+// Deployment dictionary settings
+DeploymentSpec.InputObjectArrayAttributeName SampleId
+DeploymentSpec.DeployedAttributeName NonExistentVar
+DeploymentSpec.BuildPredictedClusterAttribute true
+DeploymentSpec.BuildClusterDistanceAttributes false
+DeploymentSpec.BuildFrequencyRecodingAttributes false
+DeploymentSpec.OutputAttributesPrefix 
+
+// Output settings
+AnalysisResults.ResultFilesDirectory .\SpliceJunctionResults
+AnalysisResults.ResultFilesPrefix 
+
+// Execute prepare deployment
+PrepareDeployment
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

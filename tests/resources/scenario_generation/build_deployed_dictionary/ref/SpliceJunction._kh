@@ -1,0 +1,16 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName SpliceJunction.kdic
+OK
+
+// Transfer settings
+LearningTools.TransferDatabase
+ClassName SpliceJunction
+BuildTransferredClass
+ClassFileName SpliceJunctionDeployed.kdic
+OK
+Exit
+
+// Exit Khiops
+ClassManagement.Quit
+OK

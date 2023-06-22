@@ -1,0 +1,47 @@
+{
+	"tool": "Khiops",
+	"version": "10.0.6i",
+	"shortDescription": "",
+	"logs": [
+		{
+			"taskName": "Modeling",
+			"messages": [
+				"warning : No training: database is empty"
+			]
+		}
+	],
+	"preparationReport": {
+		"reportType": "Preparation",
+		"summary": {
+			"dictionary": "Database",
+			"variables": {
+				"types": [
+					"Categorical",
+					"Numerical"
+				],
+				"numbers": [
+					1,
+					7
+				]
+			},
+			"database": ".\/..\/Standard\/DatabaseEmpty.txt",
+			"samplePercentage": 70,
+			"samplingMode": "Include sample",
+			"selectionVariable": "",
+			"selectionValue": "",
+			"instances": 0,
+			"learningTask": "Classification analysis",
+			"targetVariable": "Class",
+			"targetDescriptiveStats": {
+				"values": 0,
+				"mode": "",
+				"modeFrequency": 0
+			},
+			"targetValues": {
+				"values": [],
+				"frequencies": []
+			}
+		}
+	},
+	"khiops_encoding": "ascii"
+}

@@ -1,0 +1,87 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0.0.3i",
+	"dictionaries": [
+		{
+			"name": "Dorothea",
+			"variables": [
+				{
+					"name": "Class",
+					"type": "Categorical"
+				},
+				{
+					"blockName": "DataBlock",
+					"metaData": {
+						"DefaultNumericalValue": 0
+					},
+					"variables": [
+						{
+							"name": "V1",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 1
+							}
+						},
+						{
+							"name": "V2",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 2
+							}
+						},
+						{
+							"name": "V3",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 3
+							}
+						},
+						{
+							"name": "V4",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 4
+							}
+						},
+						{
+							"name": "V5",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 5
+							}
+						},
+						{
+							"name": "V6",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 6
+							}
+						},
+						{
+							"name": "V7",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 7
+							}
+						},
+						{
+							"name": "V8",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 8
+							}
+						},
+						{
+							"name": "V9",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 9
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"khiops_encoding": "ascii"
+}

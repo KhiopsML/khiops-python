@@ -1,0 +1,18 @@
+// Dictionary building settings
+ClassManagement.BuildClassDefButton
+SourceDataTable.DatabaseName Adult.csv
+SourceDataTable.HeaderLineUsed true
+SourceDataTable.FieldSeparator 
+ SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+BuildClassDef
+ClassName Adult
+OK
+Exit
+
+// Save dictionary
+ClassFileName Adult.kdic
+OK
+
+// Exit Khiops
+ClassManagement.Quit
+OK

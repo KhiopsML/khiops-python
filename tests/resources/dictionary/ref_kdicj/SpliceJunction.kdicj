@@ -1,0 +1,45 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0.0.3i",
+	"dictionaries": [
+		{
+			"name": "SpliceJunction",
+			"root": true,
+			"key": ["SampleId"],
+			"variables": [
+				{
+					"name": "SampleId",
+					"type": "Categorical"
+				},
+				{
+					"name": "Class",
+					"type": "Categorical"
+				},
+				{
+					"name": "DNA",
+					"type": "Table",
+					"objectType": "SpliceJunctionDNA"
+				}
+			]
+		},
+		{
+			"name": "SpliceJunctionDNA",
+			"key": ["SampleId"],
+			"variables": [
+				{
+					"name": "SampleId",
+					"type": "Categorical"
+				},
+				{
+					"name": "Pos",
+					"type": "Numerical"
+				},
+				{
+					"name": "Char",
+					"type": "Categorical"
+				}
+			]
+		}
+	],
+	"khiops_encoding": "ascii"
+}

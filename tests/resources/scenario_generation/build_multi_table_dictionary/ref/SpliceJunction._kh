@@ -1,0 +1,22 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName SpliceJunction.kdic
+OK
+
+// Multi-table dictionary creation
+// warning: Overwrites the loaded dictionary file
+LearningTools.ExtractKeysFromDataTable
+BuildMultiTableClass
+MultiTableClassName RootSpliceJunction
+TableVariableName SecondarySpliceJunction
+OK
+Exit
+
+// Save dictionary
+ClassManagement.SaveFileUnder
+ClassFileName RootSpliceJunction.kdic
+OK
+
+// Exit Khiops
+ClassManagement.Quit
+OK
