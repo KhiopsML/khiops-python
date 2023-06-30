@@ -5,6 +5,7 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Classes to handle Khiops specific I/O"""
+import copy
 import io
 import json
 import os
@@ -109,6 +110,7 @@ class KhiopsJSONObject:
         self.khiops_encoding = "utf8"
         self.ansi_chars = []
         self.colliding_utf8_chars = []
+        self.json_data = None
 
         # Initialize from json data
         if json_data is not None:
@@ -165,6 +167,9 @@ class KhiopsJSONObject:
                 self.ansi_chars = json_data["ansi_chars"]
                 if "colliding_utf8_chars" in json_data:
                     self.colliding_utf8_chars = json_data["colliding_utf8_chars"]
+
+            # Store a copy of the data to be able to write copies of it
+            self.json_data = copy.deepcopy(json_data)
 
     def create_output_file_writer(self, stream):
         """Creates an output file with the proper encoding settings
@@ -230,6 +235,23 @@ class KhiopsJSONObject:
             raise PyKhiopsJSONError(
                 f"Could not load Khiops JSON file: {json_file_path}"
             ) from error
+
+    def write_khiops_json_file(self, json_file_path):
+        """Write the JSON data of the object to a Khiops JSON file
+
+        Parameters
+        ----------
+        json_file_path : str
+            Path to the Khiops JSON file.
+        """
+        if self.json_data is not None:
+            # Serialize JSON data to string
+            # Do not escape non-ASCII Unicode characters
+            json_string = json.dumps(self.json_data, ensure_ascii=False)
+            with io.BytesIO() as json_stream:
+                writer = self.create_output_file_writer(json_stream)
+                writer.write(json_string)
+                fs.write(uri_or_path=json_file_path, data=json_stream.getvalue())
 
 
 class PyKhiopsOutputWriter:

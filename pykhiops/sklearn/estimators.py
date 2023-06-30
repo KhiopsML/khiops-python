@@ -1012,10 +1012,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         full_coclustering_file_path = fs.get_child_path(
             output_dir, "FullCoclustering.khcj"
         )
-        fs.write(
-            full_coclustering_file_path,
-            json.dumps(self.model_report_raw_).encode("utf-8"),
-        )
+        self.model_report_.write_khiops_json_file(full_coclustering_file_path)
         pk.get_runner().root_temp_dir = computation_dir
         try:
             # - simplify_coclustering, then
