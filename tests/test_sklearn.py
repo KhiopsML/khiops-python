@@ -314,6 +314,17 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     ),
                     CoreApiFunctionMock(
                         module_name="pykhiops.core",
+                        function_name="simplify_coclustering",
+                        fixture={
+                            "output_file_paths": {
+                                "report_path": resources["report_path"]
+                            },
+                            "extra_file_paths": {},
+                            "return_values": [],
+                        },
+                    ),
+                    CoreApiFunctionMock(
+                        module_name="pykhiops.core",
                         function_name="build_multi_table_dictionary",
                         fixture={
                             "output_file_paths": {

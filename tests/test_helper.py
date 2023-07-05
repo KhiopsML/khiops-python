@@ -69,6 +69,12 @@ class CoreApiFunctionMock:
             "output_file_keys": ["report_path"],
             "return_value_number": 1,
         },
+        ("pykhiops.core", "simplify_coclustering"): {
+            "output_path_arg_index": 2,
+            "output_path_is_dir": True,
+            "output_file_keys": ["report_path"],
+            "return_value_number": 0,
+        },
         ("pykhiops.core", "prepare_coclustering_deployment"): {
             "output_path_arg_index": 5,
             "output_path_is_dir": True,

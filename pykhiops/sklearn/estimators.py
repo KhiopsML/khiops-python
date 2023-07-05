@@ -223,7 +223,21 @@ class KhiopsEstimator(ABC, BaseEstimator):
         self.model_ = None
         self.model_main_dictionary_name_ = None
         self.model_report_ = None
-        self.model_report_raw_ = None
+
+    @property
+    def model_report_raw_(self):
+        warnings.warn(
+            deprecation_message(
+                "'model_report_raw_' estimator attribute",
+                "11.0.0",
+                replacement=(
+                    "'json_data' parameter of the estimator's 'model_report_' "
+                    "attribute"
+                ),
+                quote=False,
+            )
+        )
+        return self.model_report_.json_data if self.model_report_ is not None else None
 
     def _get_main_dictionary(self):
         """Returns the model's main Khiops dictionary"""
@@ -247,8 +261,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             raise ValueError(f"{self.__class__.__name__} not fitted yet.")
         if self.model_report_ is None:
             raise ValueError("Report not available (imported model?).")
-        with open(report_file_path, "w", encoding="utf8") as report_file:
-            json.dump(self.model_report_raw_, report_file)
+        self.model_report_.write_khiops_json_file(report_file_path)
 
     def export_dictionary_file(self, dictionary_file_path):
         """Export the model's Khiops dictionary file (.kdic)"""
@@ -305,12 +318,10 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # If on "fitted" state then:
         # - self.model_ must be a DictionaryDomain
         # - self.model_report_ must be a KhiopsJSONObject
-        # - self.model_report_raw_ must be a dict
         assert not self.is_fitted_ or isinstance(self.model_, pk.DictionaryDomain)
         assert not self.is_fitted_ or isinstance(
             self.model_report_, pk.KhiopsJSONObject
         )
-        assert not self.is_fitted_ or isinstance(self.model_report_raw_, dict)
 
         return self
 
@@ -337,10 +348,8 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         # If the main attributes are of the proper type finish the fitting
         # Otherwise it means there was an abort (early return) of the previous steps
-        if (
-            isinstance(self.model_, pk.DictionaryDomain)
-            and isinstance(self.model_report_, pk.KhiopsJSONObject)
-            and isinstance(self.model_report_raw_, dict)
+        if isinstance(self.model_, pk.DictionaryDomain) and isinstance(
+            self.model_report_, pk.KhiopsJSONObject
         ):
             self._fit_training_post_process(dataset)
             self.is_fitted_ = True
@@ -620,6 +629,8 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         The Khiops report object.
     model_report_raw_ : dict
         JSON object of the Khiops report.
+        **Deprecated** will be removed in pyKhiops 11. Use the ``json_data``
+        attribute of the `model_report_` estimator attribute instead.
 
     Examples
     --------
@@ -816,9 +827,6 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                     return
 
         # Save the report file
-        self.model_report_raw_ = json.loads(
-            fs.read(coclustering_file_path).decode("utf8", errors="replace")
-        )
         self.model_report_ = pk.read_coclustering_results_file(coclustering_file_path)
 
         # Save the id column
@@ -871,7 +879,6 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             # Update main estimator model and report according to the simplified model
             self.model_ = simplified_cc.model_
             self.model_report_ = simplified_cc.model_report_
-            self.model_report_raw_ = simplified_cc.model_report_raw_
 
     def _fit_training_post_process(self, dataset):
         assert (
@@ -967,7 +974,6 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         """
         # Check parameters: types and authorized value ranges
         assert self.model_report_ is not None
-        assert self.model_report_raw_ is not None
         assert self.model_ is not None
         if not isinstance(max_cells, int):
             raise TypeError(type_error_message("max_cells", max_cells, int))
@@ -1012,10 +1018,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         full_coclustering_file_path = fs.get_child_path(
             output_dir, "FullCoclustering.khcj"
         )
-        fs.write(
-            full_coclustering_file_path,
-            json.dumps(self.model_report_raw_).encode("utf-8"),
-        )
+        self.model_report_.write_khiops_json_file(full_coclustering_file_path)
         pk.get_runner().root_temp_dir = computation_dir
         try:
             # - simplify_coclustering, then
@@ -1068,11 +1071,6 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             # Set the coclustering report according to the simplification
             simplified_cc.model_report_ = pk.read_coclustering_results_file(
                 simplified_coclustering_file_path
-            )
-            simplified_cc.model_report_raw_ = json.loads(
-                fs.read(simplified_coclustering_file_path).decode(
-                    "utf8", errors="replace"
-                )
             )
 
             # Build the individual-variable coclustering model
@@ -1412,9 +1410,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         # Save the model domain object and report
         self.model_ = pk.read_dictionary_file(model_kdic_file_path)
         self.model_report_ = pk.read_analysis_results_file(report_file_path)
-        self.model_report_raw_ = json.loads(
-            fs.read(report_file_path).decode("utf8", errors="replace")
-        )
 
     @abstractmethod
     def _fit_core_training_function(self, *args, **kwargs):
@@ -1729,6 +1724,8 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         The Khiops report object.
     model_report_raw_ : dict
         JSON object of the Khiops report.
+        **Deprecated** will be removed in pyKhiops 11. Use the ``json_data``
+        attribute of the `model_report_` estimator attribute instead.
 
     Examples
     --------
@@ -2074,6 +2071,8 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         The Khiops report object.
     model_report_raw_ : dict
         JSON object of the Khiops report.
+        **Deprecated** will be removed in pyKhiops 11. Use the ``json_data``
+        attribute of the `model_report_` estimator attribute instead.
 
     Examples
     --------
@@ -2302,6 +2301,8 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         The Khiops report object.
     model_report_raw_ : dict
         JSON object of the Khiops report.
+        **Deprecated** will be removed in pyKhiops 11. Use the ``json_data``
+        attribute of the `model_report_` estimator attribute instead.
 
     Examples
     --------
