@@ -1,0 +1,92 @@
+---
+name: Run Unit Tests
+on:
+  workflow_dispatch:
+    inputs:
+      run_long_tests:
+        type: boolean
+        required: false
+        default: 'false'
+        description: Execute long tests
+  push:
+jobs:
+  run-unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    container:
+      image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
+    permissions:
+      id-token: write
+      contents: read
+      checks: write
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          # Get Git tags so that versioneer can function correctly
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
+      - name: Checkout Khiops samples
+        if: success() || failure()
+        uses: actions/checkout@v3
+        with:
+          repository: khiopsml/khiops-samples
+          ref: v10.1.1
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: khiops-samples
+      - name: Move Khiops samples where they are expected
+        run: |
+          mkdir -p /opt/khiops
+          mv khiops-samples /opt/khiops/samples
+      - name: Setup and Install Test Requirements
+        if: success() || failure()
+        run: |
+          mkdir -p -m u+rwx ${{ github.workspace }}/reports
+          pip install unittest-xml-reporting
+          pip install -r test-requirements.txt
+      - name: Install khiops-python dependencies
+        if: success() || failure()
+        run: |
+          python3 setup.py egg_info
+          pip install `grep -v "^\[" pykhiops.egg-info/requires.txt`
+          rm -rf pykhiops.egg-info
+      - name: Run Unit Tests
+        run: |
+          if [ "${{ github.ref }}" != "dev" -a "${{ github.ref }}" != "main" ]
+          then
+            if [ "${{ github.event.inputs.run_long_tests }}" != 'true' ]
+            then
+                echo "Disabled long tests on commit branch: ${{ github.ref }}"
+                export UNITTEST_ONLY_SHORT_TESTS="true"
+            fi
+          fi
+          # This is needed so that the Git tag is parsed and the khiops-python
+          # version is  # retrieved
+          git config --global --add safe.directory $(realpath .)
+          coverage run -m xmlrunner -o "reports" -v
+          coverage report -m
+          coverage xml -o "reports/py-coverage.xml"
+      - name: Display Unit Test Reports
+        uses: dorny/test-reporter@v1
+        with:
+          name: Unit Tests
+          path: reports/TEST-tests.*.*.xml
+          reporter: java-junit
+          path-replace-backslashes: 'true'  # Necessary for windows paths
+      - name: Upload Test Reports as Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: |-
+            reports/TEST-tests.*.*.xml
+            reports/py-coverage.xml
+            tests/resources/scenario_generation/*/ref/*._kh
+            tests/resources/scenario_generation/*/output/*._kh
+            tests/resources/*/output_reports/*.txt
+            tests/resources/*/ref_reports/*.txt
+            tests/resources/dictionary/ref_kdic/*.kdic
+            tests/resources/dictionary/output_kdic/*.kdic
+            tests/resources/dictionary/copy_output_kdic/*.kdic
+            tests/resources/general_options/general_options/*/*._kh
+          retention-days: 7
