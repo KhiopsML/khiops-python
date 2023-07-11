@@ -1,3 +1,4 @@
+---
 repos:
   - repo: https://github.com/psf/black
     rev: 23.3.0
@@ -15,6 +16,10 @@ repos:
     hooks:
       - id: isort
         language_version: python3
+  - repo: https://github.com/lyz-code/yamlfix/
+    rev: 1.12.0
+    hooks:
+      - id: yamlfix
   - repo: local
     hooks:
       - id: samples-generation
