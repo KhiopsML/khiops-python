@@ -6,12 +6,28 @@
 ######################################################################################
 """Class to handle Khiops version strings"""
 
+import sys
+
 
 class KhiopsVersion:
     """Encapsulates the Khiops version string
 
     Implements comparison operators.
     """
+
+    def _remove_prefix(self, text, prefix):
+        assert isinstance(text, str)
+        assert isinstance(prefix, str)
+
+        # If current Python version >= 3.9, then use standard library support
+        if sys.version_info.micro >= 9:
+            return text.removeprefix(prefix)
+
+        # If current Python version is 3.8 (oldest supported version), then
+        # implement the functionality
+        if text.startswith(prefix):
+            return text[len(prefix) :]
+        return text
 
     def __init__(self, version):
         # Save the version and its parts
@@ -20,10 +36,11 @@ class KhiopsVersion:
         self._trailing_char = None
         self._allowed_chars = ["c", "i", "a", "b"]
 
+        # Remove the "v" prefix if present
         # Check that :
         # - each part besides the last is numeric
         # - the last part is alphanumeric
-        raw_parts = version.split(".")
+        raw_parts = self._remove_prefix(version, "v").split(".")
         for i, part in enumerate(raw_parts, start=1):
             if i < len(raw_parts) and not part.isnumeric():
                 raise ValueError(
