@@ -1,0 +1,122 @@
+---
+name: Build Conda Packages
+on:
+  workflow_dispatch:
+  push:
+    tags: ['*']
+defaults:
+  run:
+    shell: bash -el {0}
+jobs:
+  package-conda:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-2022, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Sources
+        uses: actions/checkout@v3
+        with:
+          # Get Git tags so that versioneer can function correctly
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
+      - name: Checkout Khiops Sources
+        if: success() || failure()
+        uses: actions/checkout@v3
+        with:
+          repository: khiopsml/khiops
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: khiops_bin
+      - name: Install Miniconda
+        if: success() || failure()
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: '3.10'
+          auto-activate-base: true
+          activate-environment: true
+      - name: Install conda-build and conda-verify
+        run: conda install conda-build conda-verify
+      - name: Build Khiops Conda Package
+        env:
+          CWD: ${{ github.workspace }}
+        run: |
+          mkdir build
+          conda build --output-folder build packaging/conda
+      - name: Upload Artifacts
+        if: success() || failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: conda-package
+          path: build/*/khiops*.tar.bz2
+          retention-days: 1
+  # Test Conda package on brand new environments
+  test:
+    needs: package-conda
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-2022, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Khiops samples
+        if: success() || failure()
+        uses: actions/checkout@v3
+        with:
+          repository: khiopsml/khiops-samples
+          ref: v10.1.1
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: khiops-samples
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: conda-package
+          path: artifacts
+      - name: Install Miniconda
+        if: success() || failure()
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: '3.10'
+          auto-activate-base: true
+          activate-environment: true
+      - name: Install conda-build and Setup Khiops Conda Channel
+        run: |-
+          conda install conda-build
+          conda index ./artifacts/.
+      - name: Test Conda Package Install
+        env:
+          KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
+        run: |-
+          conda install -c ./artifacts/ khiops
+          SAMPLES_CORE=`conda run --no-capture-output python -W ignore -c "import pykhiops.samples.samples as s; print(s.__file__)"`
+          SAMPLES_SKLEARN=`conda run --no-capture-output python -W ignore -c "import pykhiops.samples.samples_sklearn as s; print(s.__file__)"`
+          conda run --no-capture-output python $SAMPLES_CORE -i train_predictor -e
+          conda run --no-capture-output python $SAMPLES_SKLEARN -i khiops_classifier -e
+  # Build and push Conda package release archive
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: conda-package
+          path: artifacts
+      - name: Extract Conda Package Version
+        run: |-
+          PKG_VERSION=`find ./artifacts/ -name "khiops*.bz2" | awk 'BEGIN {FS = "-"} {print $3}' | sort -u`
+          echo "PKG_VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
+      - name: Create the release zip archive
+        uses: thedoctor0/zip-release@0.7.1
+        with:
+          type: zip
+          directory: ./artifacts/
+          filename: khiops-conda-${{ env.PKG_VERSION }}.zip
+      - name: Move Release Archive to the Current Directory
+        run: mv ./artifacts/khiops-conda-${{ env.PKG_VERSION }}.zip .
+      - name: Release the zip archive
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: khiops-conda-${{ env.PKG_VERSION }}.zip
