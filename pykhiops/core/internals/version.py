@@ -6,7 +6,9 @@
 ######################################################################################
 """Class to handle Khiops version strings"""
 
-import sys
+import platform
+
+import pkg_resources
 
 
 class KhiopsVersion:
@@ -20,7 +22,9 @@ class KhiopsVersion:
         assert isinstance(prefix, str)
 
         # If current Python version >= 3.9, then use standard library support
-        if sys.version_info.micro >= 9:
+        if pkg_resources.parse_version(
+            platform.python_version()
+        ) >= pkg_resources.parse_version("3.9.0"):
             return text.removeprefix(prefix)
 
         # If current Python version is 3.8 (oldest supported version), then
