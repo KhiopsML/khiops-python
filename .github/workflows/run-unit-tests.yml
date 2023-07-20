@@ -3,7 +3,7 @@ name: Run Unit Tests
 on:
   workflow_dispatch:
     inputs:
-      run_long_tests:
+      run-long-tests:
         type: boolean
         required: false
         default: false
@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       id-token: write
       contents: read
@@ -47,18 +50,13 @@ jobs:
         if: success() || failure()
         run: |
           python3 setup.py egg_info
-          pip install `grep -v "^\[" pykhiops.egg-info/requires.txt`
-          rm -rf pykhiops.egg-info
+          pip install `grep -v "^\[" khiops.egg-info/requires.txt`
+          rm -rf khiops.egg-info
+      - name: Prepare Unit Tests Environment
+        if: github.ref != 'dev' && github.ref != 'main' && inputs.run-long-tests != 'true'
+        run: echo "UNITTEST_ONLY_SHORT_TESTS=true" >> "$GITHUB_ENV"
       - name: Run Unit Tests
         run: |
-          if [ "${{ github.ref }}" != "dev" -a "${{ github.ref }}" != "main" ]
-          then
-            if [ "${{ github.event.inputs.run_long_tests }}" != 'true' ]
-            then
-                echo "Disabled long tests on commit branch: ${{ github.ref }}"
-                export UNITTEST_ONLY_SHORT_TESTS="true"
-            fi
-          fi
           # This is needed so that the Git tag is parsed and the khiops-python
           # version is  # retrieved
           git config --global --add safe.directory $(realpath .)

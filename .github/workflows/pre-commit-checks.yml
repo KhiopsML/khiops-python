@@ -14,8 +14,9 @@ jobs:
         uses: actions/setup-python@v3
       - name: Install khiops-python dependencies
         run: |
-          python setup.py egg_info
-          pip install `grep -v "^\[" pykhiops.egg-info/requires.txt`
-          rm -rf pykhiops.egg-info
+          # Extract and install package dependency requirements from metadata
+          pip install pip-tools
+          python -m piptools compile -o requirements.txt
+          pip install -r requirements.txt
       - name: Run pre-commit checks
         uses: pre-commit/action@v3.0.0

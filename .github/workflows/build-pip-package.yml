@@ -40,6 +40,6 @@ jobs:
           pip install $(ls ./test_dist/*.tar.gz)
       - name: Test Pip package
         run: |-
-          PYKHIOPS_LOCATION=$(pip show pykhiops | awk '/^Location:/ { print $2 }')
-          (cd ./test_dist && python3 $PYKHIOPS_LOCATION/pykhiops/samples/samples.py -i train_predictor -e)
-          (cd ./test_dist && python3 $PYKHIOPS_LOCATION/pykhiops/samples/samples_sklearn.py -i khiops_classifier -e)
+          KHIOPS_LOCATION=$(pip show khiops | awk '/^Location:/ { print $2 }')
+          (cd ./test_dist && python3 $KHIOPS_LOCATION/pykhiops/samples/samples.py -i train_predictor -e)
+          (cd ./test_dist && python3 $KHIOPS_LOCATION/pykhiops/samples/samples_sklearn.py -i khiops_classifier -e)

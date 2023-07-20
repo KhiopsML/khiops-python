@@ -121,6 +121,9 @@ disable = [
   "zip-builtin-not-iterating"
 ]
 
+[tool.yamlfix]
+line_length = 100
+
 [tool.coverage.run]
 branch = true
 source = ["pykhiops"]
