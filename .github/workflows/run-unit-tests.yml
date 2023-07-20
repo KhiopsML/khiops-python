@@ -16,6 +16,10 @@ jobs:
       fail-fast: false
     container:
       image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
+      # XXX Credentials should work from after merge on the "dev" branch
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       id-token: write
       contents: read
@@ -49,8 +53,8 @@ jobs:
         if: success() || failure()
         run: |
           python3 setup.py egg_info
-          pip install `grep -v "^\[" pykhiops.egg-info/requires.txt`
-          rm -rf pykhiops.egg-info
+          pip install `grep -v "^\[" khiops.egg-info/requires.txt`
+          rm -rf khiops.egg-info
       - name: Run Unit Tests
         run: |
           if [ "${{ github.ref }}" != "dev" -a "${{ github.ref }}" != "main" ]
