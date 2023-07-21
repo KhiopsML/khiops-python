@@ -1,2 +1,2 @@
-coverage>=5.5[toml]
+coverage[toml]>=5.5
 wrapt<1.14
