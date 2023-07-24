@@ -2,7 +2,8 @@
 name: Build Conda Packages
 on:
   workflow_dispatch:
-  pull_request:
+  push:
+    tags: ['*']
 defaults:
   run:
     shell: bash -el {0}
@@ -91,3 +92,33 @@ jobs:
           SAMPLES_SKLEARN=`conda run --no-capture-output python -W ignore -c "import pykhiops.samples.samples_sklearn as s; print(s.__file__)"`
           conda run --no-capture-output python $SAMPLES_CORE -i train_predictor -e
           conda run --no-capture-output python $SAMPLES_SKLEARN -i khiops_classifier -e
+  # Build and push Conda package release archive
+  release:
+    needs: test
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: conda-package
+          path: artifacts
+      - name: Extract Conda Package Version
+        run: |-
+          PKG_VERSION=`find ./artifacts/ -name "khiops*.bz2" | awk 'BEGIN {FS = "-"} {print $3}' | sort -u`
+          echo "PKG_VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
+      - name: Create the release zip archive
+        uses: thedoctor0/zip-release@0.7.1
+        with:
+          type: zip
+          directory: ./artifacts/
+          filename: khiops-conda-${{ env.PKG_VERSION }}.zip
+      - name: Move Release Archive to the Current Directory
+        run: mv ./artifacts/khiops-conda-${{ env.PKG_VERSION }}.zip .
+      - name: Release the zip archive
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: khiops-conda-${{ env.PKG_VERSION }}.zip
