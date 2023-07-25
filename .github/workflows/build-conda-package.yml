@@ -88,8 +88,8 @@ jobs:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
         run: |-
           conda install -c ./artifacts/ khiops
-          SAMPLES_CORE=`conda run --no-capture-output python -W ignore -c "import pykhiops.samples.samples as s; print(s.__file__)"`
-          SAMPLES_SKLEARN=`conda run --no-capture-output python -W ignore -c "import pykhiops.samples.samples_sklearn as s; print(s.__file__)"`
+          SAMPLES_CORE=`conda run --no-capture-output python -W ignore -c "import khiops.samples.samples as s; print(s.__file__)"`
+          SAMPLES_SKLEARN=`conda run --no-capture-output python -W ignore -c "import khiops.samples.samples_sklearn as s; print(s.__file__)"`
           conda run --no-capture-output python $SAMPLES_CORE -i train_predictor -e
           conda run --no-capture-output python $SAMPLES_SKLEARN -i khiops_classifier -e
   # Build and push Conda package release archive

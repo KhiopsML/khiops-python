@@ -6,7 +6,7 @@
 		"reportType": "Modeling",
 		"summary": {
 			"dictionary": "SpliceJunction",
-			"database": "/path/to/pykhiops/KhiopsClassifier_fit_xth8xkei/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsClassifier_fit_xth8xkei/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -168,7 +168,7 @@
 		"evaluationType": "Train",
 		"summary": {
 			"dictionary": "SpliceJunction",
-			"database": "/path/to/pykhiops/KhiopsClassifier_fit_xth8xkei/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsClassifier_fit_xth8xkei/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -258,7 +258,7 @@
 					1
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsClassifier_fit_xth8xkei/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsClassifier_fit_xth8xkei/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -2921,7 +2921,7 @@
 					1
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsClassifier_fit_xth8xkei/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsClassifier_fit_xth8xkei/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

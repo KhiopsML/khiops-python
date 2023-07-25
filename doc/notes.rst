@@ -1,10 +1,10 @@
 Notes
 =====
 
-pykhiops.core Functions Input Types
+khiops.core Functions Input Types
 -----------------------------------
 
-The types accepted in most methods and classes of `pykhiops.core` are flexible:
+The types accepted in most methods and classes of `khiops.core` are flexible:
 
 - `str` can be replaced by `bytes`
 
@@ -74,13 +74,13 @@ Each report field is organized in three sections:
     - The detailed information may be large (example: data grid).
 
 
-Database Sampling Modes for the pykhiops.core API
+Database Sampling Modes for the khiops.core API
 -------------------------------------------------
 
 Introduction
 ~~~~~~~~~~~~
 
-Several ``pykhiops.core`` API functions can operate on dataset *samples* instead of the full
+Several ``khiops.core`` API functions can operate on dataset *samples* instead of the full
 datasets.  The dataset sampling behavior is fully customizable by the user. Basically, one can
 specify that the function operates on the specified sample, or on its *complement*. In some cases,
 this *complement* can be used for assessing the result of the function operation (viz. the
@@ -89,7 +89,7 @@ statistical model).
 Common Behaviour
 ~~~~~~~~~~~~~~~~
 
-Several ``pykhiops.core`` API functions allow the user to control the dataset sampling behaviour via
+Several ``khiops.core`` API functions allow the user to control the dataset sampling behaviour via
 two parameters:
 
 - ``sample_percentage``: a real number beween 0.0 and 100.O which specifies the relative size of the
@@ -108,7 +108,7 @@ two parameters:
 Some Particulars
 ~~~~~~~~~~~~~~~~
 
-A specific ``pykhiops.core`` API function, ``train_predictor``, can use both the dataset sample and
+A specific ``khiops.core`` API function, ``train_predictor``, can use both the dataset sample and
 its complement, but for different purposes: for training the model *and* for computing the model's
 performance metrics. This behaviour is triggered by the ``use_complement_as_test`` boolean flag: if
 set, then the complement of the data being used for training the model is used for evaluating the

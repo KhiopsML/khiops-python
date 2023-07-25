@@ -12,14 +12,14 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from pykhiops.sklearn.tables import Dataset, FileTable, PandasTable
+from khiops.sklearn.tables import Dataset, FileTable, PandasTable
 
 
-class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
+class KhiopsTriggeringErrorsTests(unittest.TestCase):
     """Test the output message when the input data contains errors
 
     - The following tests allow to verify that:
-        - The message output by pykhiops.sklearn, when data contains a `TypeError`
+        - The message output by khiops.sklearn, when data contains a `TypeError`
         or a `ValueError`, is consistent with the expected message.
     """
 
@@ -377,7 +377,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_x_type_must_be_df_or_tuple_or_sequence_or_mapping(self):
         """test output error when X is a string
 
-        - This test verifies that the `TypeError` output by pykhiops, when X
+        - This test verifies that the `TypeError` output by khiops, when X
         is a string, is the expected one.
         """
         expected_error = (
@@ -393,7 +393,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_y_type_must_be_str_when_x_type_is_tuple(self):
         """test output error when X is a tuple and y is a pd.Series
 
-        - This test verifies that the `TypeError` output by pykhiops, when X
+        - This test verifies that the `TypeError` output by khiops, when X
         is a tuple (str, str) and y is pd.Series, is equal to the expected one.
         """
         expected_error = "'y' type must be 'str', not 'Series'"
@@ -410,7 +410,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_y_type_must_be_series_when_x_type_is_df(self):
         """test output error when X is a df and y is a str
 
-        - This test verifies that the `TypeError` output by pykhiops, when X is
+        - This test verifies that the `TypeError` output by khiops, when X is
          a dataframe and y is a string, is equal to the expected one.
         """
         expected_error = (
@@ -426,7 +426,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_x_tuple_must_have_length_2(self):
         """test output error when X is a tuple of size 3
 
-        - This test verifies that the `ValueError` output by pykhiops, when X is a tuple
+        - This test verifies that the `ValueError` output by khiops, when X is a tuple
         of size 3, is equal to the expected one.
         """
         expected_error = "'X' tuple input must have length 2 not 3"
@@ -439,7 +439,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_1st_element_of_tuple_type_must_be_str(self):
         """test output error when X is a tuple whose 1st element is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops, when X is a tuple
+        - This test verifies that the `TypeError` output by khiops, when X is a tuple
         whose first element is an integer, is equal to the expected one.
         """
         expected_error = "'X[0]' type must be 'str', not 'int'"
@@ -452,7 +452,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_2nd_element_of_tuple_type_must_be_str(self):
         """test output error when X is a tuple whose 2nd element is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops, when X is a tuple
+        - This test verifies that the `TypeError` output by khiops, when X is a tuple
         whose second element is an integer, is equal to the expected one.
         """
         expected_error = "'X[1]' type must be 'str', not 'int'"
@@ -465,7 +465,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_x_must_be_a_non_empty_sequence(self):
         """test output error when X is an empty sequence
 
-        - This test verifies that the `ValueError` output by pykhiops, when X is an
+        - This test verifies that the `ValueError` output by khiops, when X is an
         empty sequence, is equal to the expected one.
         """
         expected_error = "'X' must be a non-empty sequence"
@@ -477,7 +477,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_1st_element_of_sequence_type_must_be_str_or_df(self):
         """test output error when X is a sequence whose 1st element is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops, when X is a
+        - This test verifies that the `TypeError` output by khiops, when X is a
         sequence whose 1st element is an integer, is equal to the expected one.
         """
         expected_error = "'X[0]' type must be either 'str' or 'DataFrame'," " not 'int'"
@@ -489,7 +489,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_2nd_element_of_sequence_type_must_be_str_or_df(self):
         """test output error when X is a sequence whose 2nd element is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops, when X is a
+        - This test verifies that the `TypeError` output by khiops, when X is a
         sequence whose 2nd element is an integer, is equal to the expected one.
         """
         expected_error = (
@@ -503,7 +503,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_relations_of_a_dict_type_must_be_list_like(self):
         """test output error when relations of a dict are of type string
 
-        - This test verifies that the `TypeError` output by pykhiops, when relations
+        - This test verifies that the `TypeError` output by khiops, when relations
         at X['tables']['relations'] are of type string, is equal to the expected one.
         """
         expected_error = (
@@ -522,7 +522,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_relation_type_must_be_tuple(self):
         """test output error when a relation is a list of strings
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when a relation is a list of strings, is equal
         to the expected one.
         """
@@ -539,7 +539,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_relation_must_be_of_size_2(self):
         """test output error when a relation is a tuple of size 3
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when a relation is a tuple of 3 strings, is equal
         to the expected one.
         """
@@ -556,7 +556,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_table_of_a_relation_type_must_be_str(self):
         """test output error when a relation contains an element of numeric type
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when the second element of a relation is an integer, is equal
         to the expected one.
         """
@@ -573,7 +573,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_tables_in_a_relation_are_the_same(self):
         """test output error when tables of a relation are the same
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when tables of a relation are the same, is equal
         to the expected one.
         """
@@ -592,7 +592,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_parent_table_in_relation_not_declared_in_tables(self):
         """test output error when the parent table in a relation is not declared
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when the parent table in a relation is not declared in X['tables'], is equal
         to the expected one.
         """
@@ -612,7 +612,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_child_table_in_relation_not_declared_in_tables(self):
         """test output error when the child table in a relation is not declared
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when the child table in a relation is not declared in X['tables'], is equal
         to the expected one.
         """
@@ -632,7 +632,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_a_relation_occurs_multiple_times(self):
         """test output error when a relation occurs multiple times
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when a relation occurs more than once, is equal
         to the expected one.
         """
@@ -651,7 +651,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_mandatory_key_tables_missing_from_dict(self):
         """test output error when 'tables' is missing from dict X
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when mandatory key 'tables' is missing from dictionary 'X', is equal
         to the expected one.
         """
@@ -668,7 +668,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_tables_type_must_be_mapping(self):
         """test output error when tables is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when X['tables']' type is an integer, is equal
         to the expected one.
         """
@@ -685,7 +685,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_tables_cannot_be_empty(self):
         """test output error when tables is an empty dictionary
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when X['tables']' is an empty dictionary, is equal
         to the expected one.
         """
@@ -702,7 +702,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_table_input_type_must_be_a_tuple(self):
         """test output error when a table is declared as a list
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when a table input at X['tables'] is a tuple, is equal
         to the expected one.
         """
@@ -721,7 +721,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_table_input_tuple_must_have_size_2(self):
         """test output error when a table input is a tuple of size 3
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when a table input at X['tables'] is a tuple of size 3, is equal
         to the expected one.
         """
@@ -740,7 +740,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_source_table_type_must_be_df_or_str(self):
         """test output error when the table source is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when a table at X['tables'] is a tuple whose first element
         (table source) is an integer, is equal to the expected one.
         """
@@ -760,7 +760,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_key_table_type_must_be_str_or_sequence(self):
         """test output error when the table key is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when a table at X['tables'] is a tuple whose second element (key)
          is an integer, is equal to the expected one.
         """
@@ -780,7 +780,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_column_name_of_table_key_type_must_be_str(self):
         """test output error when a key contains a column name of type integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when a key of a table in X['tables'] contains a column name of
         type integer, is equal to the expected one.
         """
@@ -802,7 +802,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_main_table_must_be_specified_for_multitable_datasets(self):
         """test output error when data is MT and main_table is missing
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when the dataset is multi-table and the mandatory key 'main_table' is missing,
         is equal to the expected one.
         """
@@ -819,7 +819,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_main_table_type_must_be_str(self):
         """test output error when X['main_table'] is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when X['main_table'] type is an integer, is equal to the expected one.
         """
         expected_error = "'X['main_table']' type must be 'str', not 'int'"
@@ -835,7 +835,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_main_table_not_declared_in_tables(self):
         """test output error when X['main_table'] is not present in X['tables']
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when X['main_table'] type is an integer, is equal to the expected one.
         """
         expected_error = "X['main_table'] (A) must be present in X['tables']"
@@ -851,7 +851,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_key_of_the_root_table_must_not_be_none(self):
         """test output error when X['main_table'] is not present in X['tables']
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when X['main_table'] is not present in the keys of X['tables'], is equal
         to the expected one.
         """
@@ -870,7 +870,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_key_of_root_table_must_be_non_empty_for_multitable_datasets(self):
         """test output error when data is MT and key of the root table is empty
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when the dataset is multitable and the key of its main table is an empty
         list, is equal to the expected one.
         """
@@ -891,7 +891,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_key_of_a_secondary_table_must_not_be_none(self):
         """test output error when data is MT and key of a secondary table is None
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when the dataset is multitable and the key of a secondary table is None,
         is equal to the expected one.
         """
@@ -912,7 +912,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_format_type_must_be_tuple(self):
         """test output error when format is a string
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when format is a string, is equal to the expected one.
         """
         expected_error = "'X['format']' type must be 'tuple', not 'str'"
@@ -928,7 +928,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_format_tuple_1st_element_must_be_str(self):
         """test output error when the 1st element in format is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when the first element in the format (tuple) is an integer,
         is equal to the expected one.
         """
@@ -945,7 +945,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_format_tuple_2nd_element_must_be_str(self):
         """test output error when the 2nd element in format is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when the second element in the format (tuple) is an integer,
         is equal to the expected one.
         """
@@ -965,7 +965,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_format_tuple_1st_element_must_be_a_single_character(self):
         """test output error when the 1st element in format is a string of size 2
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when the first element in the format is a string of size 2,
         is equal to the expected one.
         """
@@ -985,7 +985,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_y_type_must_be_series_when_x_is_dict_of_dfs(self):
         """test output error when X's tables are DFs and y is a string
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when X's tables are dataframes and y is a string, is equal to the expected one.
         """
         expected_error = (
@@ -1003,7 +1003,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_y_type_must_be_str_when_x_is_dict_of_strs(self):
         """test output error when X's tables are strings and y is a DF
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when X's tables are strings and y is a dataframe, is equal to
         the expected one."""
         expected_error = (
@@ -1025,7 +1025,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_target_column_must_be_set(self):
         """test output error when target column is None
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when target column is None, is equal to the expected one.
         """
         expected_error = "Target column is not set"
@@ -1034,14 +1034,14 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
         )
         dataset = Dataset(dataset_spec, None)
         with self.assertRaises(ValueError) as context:
-            dataset.target_column_type
+            _ = dataset.target_column_type
         output_error = str(context.exception)
         self.assertEqual(output_error, expected_error)
 
     def test_error_table_name_must_be_str(self):
         """test output error when name of a table is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when name of a table is an integer, is equal to the expected one.
         """
         expected_error = "'name' type must be 'str', not 'int'"
@@ -1063,7 +1063,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_table_name_is_empty_string(self):
         """test output error when name of a table is an empty str
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when name of a table is an empty string, is equal to the expected one.
         """
         expected_error = "'name' is the empty string"
@@ -1085,7 +1085,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_key_type_must_be_str_or_list_like(self):
         """test output error when the key type is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when the key type is an integer, is equal to the expected one.
         """
         expected_error = "'key' type must be either 'str' or 'list-like', not 'int'"
@@ -1107,7 +1107,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_key_column_type_must_be_str(self):
         """test output error when a column of a key is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when a column of a key is of type integer, is equal to the expected one.
         """
         expected_error = "'key[0]' type must be 'str', not 'int' at table 'reviews'"
@@ -1129,7 +1129,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_input_of_pandas_table_type_must_be_dataframe(self):
         """test output error when a string is passed to PandasTable
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when string is passed to PandasTable, is equal to the expected one.
         """
         expected_error = "'dataframe' type must be 'DataFrame', not 'str'"
@@ -1147,7 +1147,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_input_of_pandas_table_is_empty(self):
         """test output error when an empty DF is passed to PandasTable
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when an empty df is passed to PandasTable, is equal to the expected one.
         """
         expected_error = "'dataframe' is empty"
@@ -1165,7 +1165,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_target_column_passed_to_pandas_table_must_be_series(self):
         """test output error when a string target column is passed to PandasTable
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when a string target column is passed to PandasTable, is equal to
         the expected one.
         """
@@ -1188,7 +1188,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_target_column_is_already_present_in_the_features(self):
         """test output error when the target is present in the features
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when the target is present in the features, is equal to the expected one.
         """
         expected_error = (
@@ -1215,7 +1215,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_df_column_ids_must_all_be_int_or_str(self):
         """test output error when a column id in a DF is an integer
 
-        - This test verifies that the `TypeError` output by pykhiops,
+        - This test verifies that the `TypeError` output by khiops,
         when a column id in a dataframe is an integer, is equal to the expected one.
         """
         expected_error = (
@@ -1241,7 +1241,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_non_existant_table_file_passed_to_file_table(self):
         """test output error when a non-existent table file is passed to FileTable
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when a non-existent table file is passed to FileTable, is equal to
         the expected one.
         """
@@ -1261,7 +1261,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_empty_table_file_passed_to_file_table(self):
         """test output error when an empty table file is passed to FileTable
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when an empty table file is passed to FileTable, is equal to the expected one.
         """
         expected_error = "Empty data table file"
@@ -1282,7 +1282,7 @@ class PyKhiopsTriggeringErrorsTests(unittest.TestCase):
     def test_error_creation_of_a_table_file_for_khiops_on_an_existing_path(self):
         """test output error when the created file's path already exists
 
-        - This test verifies that the `ValueError` output by pykhiops,
+        - This test verifies that the `ValueError` output by khiops,
         when the path of the created file already exists,
          is equal to the expected one.
         """

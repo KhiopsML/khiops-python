@@ -126,8 +126,8 @@ line_length = 100
 
 [tool.coverage.run]
 branch = true
-source = ["pykhiops"]
-omit = ["pykhiops/_version.py"]
+source = ["khiops"]
+omit = ["khiops/_version.py"]
 
 [tool.coverage.report]
 exclude_lines = [

@@ -18,7 +18,7 @@
 					1
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsEncoder_fit_cizmq031/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsEncoder_fit_cizmq031/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -2681,7 +2681,7 @@
 					1
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsEncoder_fit_cizmq031/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsEncoder_fit_cizmq031/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

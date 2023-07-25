@@ -16,7 +16,7 @@
 					6
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsEncoder_fit_v8gx_no5/sorted_Adult.txt",
+			"database": "/path/to/khiops/KhiopsEncoder_fit_v8gx_no5/sorted_Adult.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -848,7 +848,7 @@
 					6
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsEncoder_fit_v8gx_no5/sorted_Adult.txt",
+			"database": "/path/to/khiops/KhiopsEncoder_fit_v8gx_no5/sorted_Adult.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

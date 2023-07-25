@@ -16,7 +16,7 @@
 					7
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsEncoder_fit_p9tc8cjz/main_table.txt",
+			"database": "/path/to/khiops/KhiopsEncoder_fit_p9tc8cjz/main_table.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -792,7 +792,7 @@
 					7
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsEncoder_fit_p9tc8cjz/main_table.txt",
+			"database": "/path/to/khiops/KhiopsEncoder_fit_p9tc8cjz/main_table.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

@@ -12,7 +12,7 @@
 			"initialDimensions": 3,
 			"frequencyVariable": "",
 			"dictionary": "main_table",
-			"database": "\/tmp\/user\/1000\/pykhiops\/KhiopsCoclustering_fit_jnz5xawm\/main_table.txt",
+			"database": "\/tmp\/user\/1000\/khiops\/KhiopsCoclustering_fit_jnz5xawm\/main_table.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

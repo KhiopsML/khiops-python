@@ -6,7 +6,7 @@
 		"reportType": "Modeling",
 		"summary": {
 			"dictionary": "SpliceJunction",
-			"database": "/path/to/pykhiops/KhiopsRegressor_fit_h39pkl_r/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsRegressor_fit_h39pkl_r/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -168,7 +168,7 @@
 		"evaluationType": "Train",
 		"summary": {
 			"dictionary": "SpliceJunction",
-			"database": "/path/to/pykhiops/KhiopsRegressor_fit_h39pkl_r/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsRegressor_fit_h39pkl_r/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -214,7 +214,7 @@
 					1
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsRegressor_fit_h39pkl_r/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsRegressor_fit_h39pkl_r/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

@@ -1,4 +1,4 @@
-"""Converts the Jupyter notebooks of the pyKhiops tutorial to reST"""
+"""Converts the Jupyter notebooks of the Khiops Python tutorial to reST"""
 import argparse
 import glob
 import os
@@ -77,7 +77,7 @@ def main(args):
         return (
             "These "
             f":download:`Jupyter notebook tutorials <{module_name}_tutorials.zip>` "
-            f"cover the basic usage of the ``{module_name}`` pyKhiops sub-module. The "
+            f"cover the basic usage of the ``{module_name}`` Khiops sub-module. The "
             "solution notebooks are "
             f":download:`available here <{module_name}_tutorials_solutions.zip>` "
             "or you can browse them in this page:\n\n"
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "tutorial_dir",
         metavar="DIR",
-        help="Location of the pykhiops-tutorial directory",
+        help="Location of the khiops-tutorial directory",
     )
     parser.add_argument(
         "-g",

@@ -12,7 +12,7 @@
 			"initialDimensions": 3,
 			"frequencyVariable": "",
 			"dictionary": "SpliceJunctionDNA",
-			"database": "\/tmp\/user\/1000\/pykhiops\/KhiopsCoclustering_fit_hkcc2ma0\/sorted_SpliceJunctionDNA.txt",
+			"database": "\/tmp\/user\/1000\/khiops\/KhiopsCoclustering_fit_hkcc2ma0\/sorted_SpliceJunctionDNA.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

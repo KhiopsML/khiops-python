@@ -7,13 +7,13 @@ for completeness.
   :nosignatures:
   :toctree: generated
 
-  pykhiops.sklearn.tables
-  pykhiops.core.internals.common
-  pykhiops.core.internals.filesystems
-  pykhiops.core.internals.io
-  pykhiops.core.internals.runner
-  pykhiops.core.internals.scenario
-  pykhiops.core.internals.task
-  pykhiops.core.internals.types
-  pykhiops.core.internals.version
+  khiops.sklearn.tables
+  khiops.core.internals.common
+  khiops.core.internals.filesystems
+  khiops.core.internals.io
+  khiops.core.internals.runner
+  khiops.core.internals.scenario
+  khiops.core.internals.task
+  khiops.core.internals.types
+  khiops.core.internals.version
 

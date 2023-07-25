@@ -18,7 +18,7 @@
 					1
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsEncoder_fit_ag4cupld/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsEncoder_fit_ag4cupld/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -2445,7 +2445,7 @@
 					1
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsEncoder_fit_ag4cupld/sorted_SpliceJunction.txt",
+			"database": "/path/to/khiops/KhiopsEncoder_fit_ag4cupld/sorted_SpliceJunction.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

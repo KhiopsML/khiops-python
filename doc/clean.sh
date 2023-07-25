@@ -79,7 +79,7 @@ make clean
 
 if [[ $_arg_clean_tutorial == "on" ]]
 then
-  rm -rfv pykhiops-tutorial
+  rm -rfv khiops-tutorial
 fi
 
 # ] <-- needed because of Argbash

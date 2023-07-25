@@ -2,4 +2,4 @@
 .git_commit_template eol=lf
 
 # Versioneer
-pykhiops/_version.py export-subst
+khiops/_version.py export-subst

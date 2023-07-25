@@ -1,7 +1,7 @@
 =============
-pykhiops.core
+khiops.core
 =============
-.. automodule:: pykhiops.core
+.. automodule:: khiops.core
 
 .. note::
   Input types in this module are flexible. See :doc:`../notes`.
@@ -10,8 +10,8 @@ pykhiops.core
   For convenience, the public members of the above modules are imported to the ``core`` namespace.
   For example the function `~.api.train_predictor` can be used as follows::
 
-    from pykhiops import core as pk
-    pk.train_predictor(...)
+    from khiops import core as kh
+    kh.train_predictor(...)
 
 Main Modules
 ============
@@ -20,9 +20,9 @@ Main Modules
   :recursive:
   :nosignatures:
 
-  pykhiops.core.api
-  pykhiops.core.dictionary
-  pykhiops.core.analysis_results
-  pykhiops.core.coclustering_results
-  pykhiops.core.exceptions
-  pykhiops.core.helpers
+  khiops.core.api
+  khiops.core.dictionary
+  khiops.core.analysis_results
+  khiops.core.coclustering_results
+  khiops.core.exceptions
+  khiops.core.helpers

@@ -1,20 +1,20 @@
-pykhiops.sklearn
+khiops.sklearn
 ================
 .. note::
   For convenience, the public members of the above modules are imported to the
   ``sklearn`` namespace. For example the estimator class
   `~.sklearn.estimators.KhiopsClassifier` can be imported as follows::
 
-    from pykhiops.sklearn import KhiopsClassifier
+    from khiops.sklearn import KhiopsClassifier
     clf = KhiopsClassifier()
 
-.. currentmodule:: pykhiops
+.. currentmodule:: khiops
 .. autosummary::
   :toctree: generated
   :recursive:
   :nosignatures:
 
-  pykhiops.sklearn.estimators
+  khiops.sklearn.estimators
 
 Related Docs
 ------------
