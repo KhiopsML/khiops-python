@@ -4,22 +4,23 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""Tests for the pykhiops.core module"""
+"""Tests for the khiops.core module"""
 import glob
 import io
 import os
 import shutil
+import sys
 import textwrap
 import unittest
 import warnings
 from pathlib import Path
 
-import pykhiops.core as pk
-from pykhiops.core.internals.common import create_unambiguous_khiops_path
-from pykhiops.core.internals.io import PyKhiopsOutputWriter
-from pykhiops.core.internals.runner import PyKhiopsRunner
-from pykhiops.core.internals.scenario import ConfigurableKhiopsScenario
-from pykhiops.core.internals.version import KhiopsVersion
+import khiops.core as pk
+from khiops.core.internals.common import create_unambiguous_khiops_path
+from khiops.core.internals.io import PyKhiopsOutputWriter
+from khiops.core.internals.runner import PyKhiopsRunner
+from khiops.core.internals.scenario import ConfigurableKhiopsScenario
+from khiops.core.internals.version import KhiopsVersion
 from tests.test_helper import PyKhiopsTestHelper
 
 
@@ -1831,6 +1832,21 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
 
     # sonar: enable
 
+    def test_pykhiops_import_deprecation_warning(self):
+        """Test that import pykhiops* raises deprecation warning"""
+        with warnings.catch_warnings(record=True) as warning_list:
+            # This is needed as coverage already imported pykhiops
+            if "pykhiops" in sys.modules:
+                del sys.modules["pykhiops"]
+            import pykhiops.core as pk
+        self.assertEqual(len(warning_list), 1)
+        warning = warning_list[0]
+        self.assertTrue(issubclass(warning.category, UserWarning))
+        warning_message = warning.message
+        self.assertEqual(len(warning_message.args), 1)
+        message = warning_message.args[0]
+        self.assertTrue("'pykhiops'" in message and "deprecated" in message)
+
     @staticmethod
     def _build_multi_table_dictionary_args():
         resources_directory = PyKhiopsTestHelper.get_resources_dir()
@@ -1882,7 +1898,7 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
         in_args = PyKhiopsCoreVariousTests._build_multi_table_dictionary_args()
         helper_name = "build_multi_table_dictionary_domain"
         PyKhiopsTestHelper.wrap_with_parameter_trace(
-            "pykhiops.core.api", helper_name, parameter_trace
+            "khiops.core.api", helper_name, parameter_trace
         )
         with self.assertWarns(UserWarning):
             pk.build_multi_table_dictionary(**in_args)

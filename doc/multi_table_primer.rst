@@ -105,19 +105,19 @@ The three fields of this dictionary are:
   - ``table1`` and ``table2`` are in a ``1:n`` relationship
   - The key of ``table1`` is contained in that of ``table2`` (ie. keys are hierarchical)
 
-  If the ``relations`` field is not present then pyKhiops assumes that the tables are in a *star*
+  If the ``relations`` field is not present then Khiops Python assumes that the tables are in a *star*
   schema.
 
 .. note::
 
-    With respect to Khiops, pyKhiops sklearn estimators have some limitations. They do not support
+    With respect to Khiops, Khiops Python sklearn estimators have some limitations. They do not support
     the following types of multi-table relationships:
 
     - ``Entity`` (``1:1`` table relations) are not currently supported.
     - External data tables are not currently supported.
 
     These features will be available in upcoming releases. If you need to use them, you can use the
-    functions in the `pykhiops.core` sub-module (see below).
+    functions in the `khiops.core` sub-module (see below).
 
 Examples
 --------
@@ -188,7 +188,7 @@ Both datasets can be found in the Khiops samples directory.
 Multi-table learning with the Core API
 ======================================
 
-The functions in `pykhiops.core` that allow using multi-table datasets have the optional parameter
+The functions in `khiops.core` that allow using multi-table datasets have the optional parameter
 ``additional_data_tables``. This dictionary links the secondary tables to their data file paths and
 it's indexed by their **data paths** which are specified as the regular expression::
 

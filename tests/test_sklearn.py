@@ -12,8 +12,8 @@ import shutil
 import unittest
 import warnings
 
-import pykhiops.core as pk
-from pykhiops.sklearn.estimators import (
+import khiops.core as pk
+from khiops.sklearn.estimators import (
     KhiopsClassifier,
     KhiopsCoclustering,
     KhiopsEncoder,
@@ -214,7 +214,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
             KhiopsPredictor: {
                 "fit": lambda resources: [
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="train_predictor",
                         fixture={
                             "output_file_paths": {
@@ -229,7 +229,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     ),
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core.api",
+                        module_name="khiops.core.api",
                         function_name="export_dictionary_as_json",
                         fixture={
                             "output_file_paths": {
@@ -242,7 +242,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 ],
                 "predict": lambda resources: (
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="deploy_model",
                         fixture={
                             "output_file_paths": {
@@ -257,7 +257,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
             KhiopsEncoder: {
                 "fit": lambda resources: [
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="train_recoder",
                         fixture={
                             "output_file_paths": {
@@ -272,7 +272,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     ),
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core.api",
+                        module_name="khiops.core.api",
                         function_name="export_dictionary_as_json",
                         fixture={
                             "output_file_paths": {
@@ -285,7 +285,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 ],
                 "predict": lambda resources: [
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="deploy_model",
                         fixture={
                             "output_file_paths": {
@@ -300,7 +300,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
             KhiopsCoclustering: {
                 "fit": lambda resources: [
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="train_coclustering",
                         fixture={
                             "output_file_paths": {
@@ -313,7 +313,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     ),
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="simplify_coclustering",
                         fixture={
                             "output_file_paths": {
@@ -324,7 +324,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     ),
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="build_multi_table_dictionary",
                         fixture={
                             "output_file_paths": {
@@ -335,7 +335,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     ),
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="prepare_coclustering_deployment",
                         fixture={
                             "output_file_paths": {
@@ -346,7 +346,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     ),
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core.api",
+                        module_name="khiops.core.api",
                         function_name="export_dictionary_as_json",
                         fixture={
                             "output_file_paths": {
@@ -361,7 +361,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 ],
                 "predict": lambda resources: [
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="extract_keys_from_data_table",
                         fixture={
                             "output_file_paths": {
@@ -372,7 +372,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     ),
                     CoreApiFunctionMock(
-                        module_name="pykhiops.core",
+                        module_name="khiops.core",
                         function_name="deploy_model",
                         fixture={
                             "output_file_paths": {
@@ -591,29 +591,29 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
         }
         cls.wrapped_functions = {
             KhiopsPredictor: {
-                "fit": [("pykhiops.core", "train_predictor")],
-                "predict": [("pykhiops.core", "deploy_model")],
+                "fit": [("khiops.core", "train_predictor")],
+                "predict": [("khiops.core", "deploy_model")],
             },
             KhiopsEncoder: {
-                "fit": [("pykhiops.core", "train_recoder")],
-                "predict": [("pykhiops.core", "deploy_model")],
+                "fit": [("khiops.core", "train_recoder")],
+                "predict": [("khiops.core", "deploy_model")],
             },
             KhiopsCoclustering: {
                 "fit": [
-                    ("pykhiops.core", "train_coclustering"),
-                    ("pykhiops.core", "read_coclustering_results_file"),
-                    ("pykhiops.core", "build_multi_table_dictionary"),
-                    ("pykhiops.core", "prepare_coclustering_deployment"),
-                    ("pykhiops.core", "simplify_coclustering"),
+                    ("khiops.core", "train_coclustering"),
+                    ("khiops.core", "read_coclustering_results_file"),
+                    ("khiops.core", "build_multi_table_dictionary"),
+                    ("khiops.core", "prepare_coclustering_deployment"),
+                    ("khiops.core", "simplify_coclustering"),
                 ],
                 "simplify": [
-                    ("pykhiops.core", "simplify_coclustering"),
-                    ("pykhiops.core", "build_multi_table_dictionary"),
-                    ("pykhiops.core", "prepare_coclustering_deployment"),
+                    ("khiops.core", "simplify_coclustering"),
+                    ("khiops.core", "build_multi_table_dictionary"),
+                    ("khiops.core", "prepare_coclustering_deployment"),
                 ],
                 "predict": [
-                    ("pykhiops.core", "deploy_model"),
-                    ("pykhiops.core", "extract_keys_from_data_table"),
+                    ("khiops.core", "deploy_model"),
+                    ("khiops.core", "extract_keys_from_data_table"),
                 ],
             },
         }
@@ -622,45 +622,45 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "dataframe": {
                     KhiopsCoclustering: {
                         "fit": {
-                            ("pykhiops.core", "prepare_coclustering_deployment"): {
+                            ("khiops.core", "prepare_coclustering_deployment"): {
                                 2: os.path.join(cls.output_dir, "Coclustering.khcj"),
                                 3: "CC_main_table",
                                 4: "SampleId",
                                 5: cls.output_dir,
                             },
-                            ("pykhiops.core", "read_coclustering_results_file"): {
+                            ("khiops.core", "read_coclustering_results_file"): {
                                 0: os.path.join(cls.output_dir, "Coclustering.khcj")
                             },
-                            ("pykhiops.core", "build_multi_table_dictionary"): {
+                            ("khiops.core", "build_multi_table_dictionary"): {
                                 2: "CC_main_table"
                             },
-                            ("pykhiops.core", "train_coclustering"): {
+                            ("khiops.core", "train_coclustering"): {
                                 1: "main_table",
                                 3: ("SampleId", "Pos", "Char"),
                                 4: cls.output_dir,
                             },
-                            ("pykhiops.core", "simplify_coclustering"): {},
+                            ("khiops.core", "simplify_coclustering"): {},
                         },
                         "simplify": {
-                            ("pykhiops.core", "simplify_coclustering"): {
+                            ("khiops.core", "simplify_coclustering"): {
                                 2: cls.output_dir
                             },
-                            ("pykhiops.core", "prepare_coclustering_deployment"): {
+                            ("khiops.core", "prepare_coclustering_deployment"): {
                                 2: os.path.join(cls.output_dir, "Coclustering.khcj"),
                                 3: "CC_main_table",
                                 4: "SampleId",
                                 5: cls.output_dir,
                             },
-                            ("pykhiops.core", "build_multi_table_dictionary"): {
+                            ("khiops.core", "build_multi_table_dictionary"): {
                                 2: "CC_main_table"
                             },
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "CC_Keys_main_table",
                                 3: cls.output_dir,
                             },
-                            ("pykhiops.core", "extract_keys_from_data_table"): {
+                            ("khiops.core", "extract_keys_from_data_table"): {
                                 1: "main_table",
                                 2: "copy_main_table.txt",
                                 3: "keys_main_table.txt",
@@ -671,30 +671,30 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "file_dataset": {
                     KhiopsCoclustering: {
                         "fit": {
-                            ("pykhiops.core", "prepare_coclustering_deployment"): {
+                            ("khiops.core", "prepare_coclustering_deployment"): {
                                 2: os.path.join(cls.output_dir, "Coclustering.khcj"),
                                 3: "CC_SpliceJunctionDNA",
                                 4: "SampleId",
                                 5: cls.output_dir,
                             },
-                            ("pykhiops.core", "read_coclustering_results_file"): {
+                            ("khiops.core", "read_coclustering_results_file"): {
                                 0: os.path.join(cls.output_dir, "Coclustering.khcj")
                             },
-                            ("pykhiops.core", "build_multi_table_dictionary"): {
+                            ("khiops.core", "build_multi_table_dictionary"): {
                                 2: "CC_SpliceJunctionDNA"
                             },
-                            ("pykhiops.core", "train_coclustering"): {
+                            ("khiops.core", "train_coclustering"): {
                                 1: "SpliceJunctionDNA",
                                 3: ("SampleId", "Pos", "Char"),
                                 4: cls.output_dir,
                             },
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "CC_Keys_SpliceJunctionDNA",
                                 3: cls.output_dir,
                             },
-                            ("pykhiops.core", "extract_keys_from_data_table"): {
+                            ("khiops.core", "extract_keys_from_data_table"): {
                                 1: "SpliceJunctionDNA",
                                 2: "copy_SpliceJunctionDNA.txt",
                                 3: "keys_SpliceJunctionDNA.txt",
@@ -707,13 +707,13 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "dataframe": {
                     KhiopsRegressor: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 1: "main_table",
                                 3: "age",
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "SNB_main_table",
                                 2: "main_table.txt",
                                 3: cls.output_dir,
@@ -722,14 +722,14 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsClassifier: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 1: "main_table",
                                 2: "main_table.txt",
                                 3: "class",
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "SNB_main_table",
                                 2: "main_table.txt",
                                 3: cls.output_dir,
@@ -738,13 +738,13 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsEncoder: {
                         "fit": {
-                            ("pykhiops.core", "train_recoder"): {
+                            ("khiops.core", "train_recoder"): {
                                 1: "main_table",
                                 3: "class",
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "R_main_table",
                                 2: "main_table.txt",
                                 3: cls.output_dir,
@@ -755,7 +755,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "file_dataset": {
                     KhiopsRegressor: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 1: "Adult",
                                 2: "Adult.txt",
                                 3: "age",
@@ -763,7 +763,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "SNB_Adult",
                                 2: "copy_Adult.txt",
                                 3: cls.output_dir,
@@ -772,7 +772,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsClassifier: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 1: "Adult",
                                 2: "Adult.txt",
                                 3: "class",
@@ -780,7 +780,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "SNB_Adult",
                                 2: "copy_Adult.txt",
                                 3: cls.output_dir,
@@ -789,10 +789,10 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsEncoder: {
                         "fit": {
-                            ("pykhiops.core", "train_recoder"): {1: "Adult", 3: "class"}
+                            ("khiops.core", "train_recoder"): {1: "Adult", 3: "class"}
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "R_Adult",
                                 2: "copy_Adult.txt",
                                 3: cls.output_dir,
@@ -805,13 +805,13 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "dataframe": {
                     KhiopsRegressor: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 1: "SpliceJunction",
                                 3: "Class",
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "SNB_SpliceJunction",
                                 2: "SpliceJunction.txt",
                                 3: cls.output_dir,
@@ -820,13 +820,13 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsClassifier: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 1: "SpliceJunction",
                                 3: "Class",
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "SNB_SpliceJunction",
                                 2: "SpliceJunction.txt",
                                 3: cls.output_dir,
@@ -835,14 +835,14 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsEncoder: {
                         "fit": {
-                            ("pykhiops.core", "train_recoder"): {
+                            ("khiops.core", "train_recoder"): {
                                 1: "SpliceJunction",
                                 3: "Class",
                                 4: cls.output_dir,
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "R_SpliceJunction",
                                 2: "SpliceJunction.txt",
                                 3: cls.output_dir,
@@ -853,14 +853,14 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "file_dataset": {
                     KhiopsRegressor: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 1: "SpliceJunction",
                                 3: "Class",
                                 4: cls.output_dir,
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "SNB_SpliceJunction",
                                 2: "copy_SpliceJunction.txt",
                                 3: cls.output_dir,
@@ -869,14 +869,14 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsClassifier: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 1: "SpliceJunction",
                                 3: "Class",
                                 4: cls.output_dir,
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "SNB_SpliceJunction",
                                 2: "copy_SpliceJunction.txt",
                                 3: cls.output_dir,
@@ -885,13 +885,13 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsEncoder: {
                         "fit": {
-                            ("pykhiops.core", "train_recoder"): {
+                            ("khiops.core", "train_recoder"): {
                                 1: "SpliceJunction",
                                 3: "Class",
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 1: "R_SpliceJunction",
                                 2: "copy_SpliceJunction.txt",
                                 3: cls.output_dir,
@@ -904,13 +904,13 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
         cls.special_arg_checkers = {
             KhiopsPredictor: {
                 "fit": {
-                    ("pykhiops.core", "train_predictor"): {
+                    ("khiops.core", "train_predictor"): {
                         2: cls.assertPathHasSuffix,
                         4: cls.assertPathHasPrefix,
                     }
                 },
                 "predict": {
-                    ("pykhiops.core", "deploy_model"): {
+                    ("khiops.core", "deploy_model"): {
                         2: cls.assertPathHasSuffix,
                         3: cls.assertPathHasPrefix,
                     }
@@ -918,13 +918,13 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
             },
             KhiopsEncoder: {
                 "fit": {
-                    ("pykhiops.core", "train_recoder"): {
+                    ("khiops.core", "train_recoder"): {
                         2: cls.assertPathHasSuffix,
                         4: cls.assertPathHasPrefix,
                     }
                 },
                 "predict": {
-                    ("pykhiops.core", "deploy_model"): {
+                    ("khiops.core", "deploy_model"): {
                         2: cls.assertPathHasSuffix,
                         3: cls.assertPathHasPrefix,
                     }
@@ -932,24 +932,22 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
             },
             KhiopsCoclustering: {
                 "fit": {
-                    ("pykhiops.core", "train_coclustering"): {
-                        4: cls.assertPathHasPrefix
-                    },
-                    ("pykhiops.core", "prepare_coclustering_deployment"): {
+                    ("khiops.core", "train_coclustering"): {4: cls.assertPathHasPrefix},
+                    ("khiops.core", "prepare_coclustering_deployment"): {
                         2: cls.assertEqualPath,
                     },
-                    ("pykhiops.core", "read_coclustering_results_file"): {
+                    ("khiops.core", "read_coclustering_results_file"): {
                         0: cls.assertEqualPath,
                     },
                 },
                 "simplify": {
-                    ("pykhiops.core", "prepare_coclustering_deployment"): {
+                    ("khiops.core", "prepare_coclustering_deployment"): {
                         2: cls.assertEqualPath,
                     },
                 },
                 "predict": {
-                    ("pykhiops.core", "deploy_model"): {3: cls.assertPathHasPrefix},
-                    ("pykhiops.core", "extract_keys_from_data_table"): {
+                    ("khiops.core", "deploy_model"): {3: cls.assertPathHasPrefix},
+                    ("khiops.core", "extract_keys_from_data_table"): {
                         2: cls.assertPathHasSuffix,
                         3: cls.assertPathHasSuffix,
                     },
@@ -962,42 +960,42 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "dataframe": {
                     KhiopsCoclustering: {
                         "fit": {
-                            ("pykhiops.core", "prepare_coclustering_deployment"): {
+                            ("khiops.core", "prepare_coclustering_deployment"): {
                                 "build_cluster_variable": True,
                                 "build_distance_variables": False,
                                 "build_frequency_variables": False,
                             },
-                            ("pykhiops.core", "read_coclustering_results_file"): {},
-                            ("pykhiops.core", "build_multi_table_dictionary"): {
+                            ("khiops.core", "read_coclustering_results_file"): {},
+                            ("khiops.core", "build_multi_table_dictionary"): {
                                 "overwrite_dictionary_file": True
                             },
-                            ("pykhiops.core", "train_coclustering"): {
+                            ("khiops.core", "train_coclustering"): {
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops_train_cc.log"
                                 )
                             },
-                            ("pykhiops.core", "simplify_coclustering"): {
+                            ("khiops.core", "simplify_coclustering"): {
                                 "max_part_numbers": {"SampleId": 2},
                             },
                         },
                         "simplify": {
-                            ("pykhiops.core", "simplify_coclustering"): {
+                            ("khiops.core", "simplify_coclustering"): {
                                 "max_part_numbers": {"SampleId": 2},
                                 "max_preserved_information": 3,
                                 "max_cells": 4,
                                 "max_total_parts": 1,
                             },
-                            ("pykhiops.core", "prepare_coclustering_deployment"): {
+                            ("khiops.core", "prepare_coclustering_deployment"): {
                                 "build_cluster_variable": True,
                                 "build_distance_variables": False,
                                 "build_frequency_variables": False,
                             },
-                            ("pykhiops.core", "build_multi_table_dictionary"): {
+                            ("khiops.core", "build_multi_table_dictionary"): {
                                 "overwrite_dictionary_file": True
                             },
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "detect_format": False,
                                 "header_line": True,
                                 "additional_data_tables": {
@@ -1007,7 +1005,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                                     cls.output_dir, "khiops.log"
                                 ),
                             },
-                            ("pykhiops.core", "extract_keys_from_data_table"): {
+                            ("khiops.core", "extract_keys_from_data_table"): {
                                 "header_line": True,
                                 "output_header_line": True,
                             },
@@ -1017,23 +1015,23 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "file_dataset": {
                     KhiopsCoclustering: {
                         "fit": {
-                            ("pykhiops.core", "prepare_coclustering_deployment"): {
+                            ("khiops.core", "prepare_coclustering_deployment"): {
                                 "build_cluster_variable": True,
                                 "build_distance_variables": False,
                                 "build_frequency_variables": False,
                             },
-                            ("pykhiops.core", "read_coclustering_results_file"): {},
-                            ("pykhiops.core", "build_multi_table_dictionary"): {
+                            ("khiops.core", "read_coclustering_results_file"): {},
+                            ("khiops.core", "build_multi_table_dictionary"): {
                                 "overwrite_dictionary_file": True
                             },
-                            ("pykhiops.core", "train_coclustering"): {
+                            ("khiops.core", "train_coclustering"): {
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops_train_cc.log"
                                 )
                             },
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "detect_format": False,
                                 "header_line": True,
                                 "additional_data_tables": {
@@ -1043,7 +1041,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                                     cls.output_dir, "khiops.log"
                                 ),
                             },
-                            ("pykhiops.core", "extract_keys_from_data_table"): {
+                            ("khiops.core", "extract_keys_from_data_table"): {
                                 "header_line": True,
                                 "output_header_line": True,
                             },
@@ -1055,7 +1053,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "dataframe": {
                     KhiopsPredictor: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1063,7 +1061,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1076,7 +1074,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsEncoder: {
                         "fit": {
-                            ("pykhiops.core", "train_recoder"): {
+                            ("khiops.core", "train_recoder"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1088,7 +1086,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1103,7 +1101,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "file_dataset": {
                     KhiopsPredictor: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1111,7 +1109,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1124,7 +1122,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsEncoder: {
                         "fit": {
-                            ("pykhiops.core", "train_recoder"): {
+                            ("khiops.core", "train_recoder"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1136,7 +1134,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1153,7 +1151,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "dataframe": {
                     KhiopsPredictor: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1163,7 +1161,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1178,7 +1176,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsEncoder: {
                         "fit": {
-                            ("pykhiops.core", "train_recoder"): {
+                            ("khiops.core", "train_recoder"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1192,7 +1190,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1209,7 +1207,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "file_dataset": {
                     KhiopsPredictor: {
                         "fit": {
-                            ("pykhiops.core", "train_predictor"): {
+                            ("khiops.core", "train_predictor"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1222,7 +1220,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1237,7 +1235,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     },
                     KhiopsEncoder: {
                         "fit": {
-                            ("pykhiops.core", "train_recoder"): {
+                            ("khiops.core", "train_recoder"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1251,7 +1249,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                             }
                         },
                         "predict": {
-                            ("pykhiops.core", "deploy_model"): {
+                            ("khiops.core", "deploy_model"): {
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
@@ -1271,7 +1269,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
         cls.special_kwarg_checkers = {
             KhiopsPredictor: {
                 "fit": {
-                    ("pykhiops.core", "train_predictor"): {
+                    ("khiops.core", "train_predictor"): {
                         "log_file_path": cls.assertEqualPath,
                         "additional_data_tables": (
                             cls.assertEqualAdditionalDataTableNames
@@ -1279,7 +1277,7 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
                     }
                 },
                 "predict": {
-                    ("pykhiops.core", "deploy_model"): {
+                    ("khiops.core", "deploy_model"): {
                         "log_file_path": cls.assertEqualPath,
                         "additional_data_tables": (
                             cls.assertEqualAdditionalDataTableNames
@@ -1289,14 +1287,14 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
             },
             KhiopsEncoder: {
                 "fit": {
-                    ("pykhiops.core", "train_recoder"): {
+                    ("khiops.core", "train_recoder"): {
                         "additional_data_tables": (
                             cls.assertEqualAdditionalDataTableNames
                         )
                     }
                 },
                 "predict": {
-                    ("pykhiops.core", "deploy_model"): {
+                    ("khiops.core", "deploy_model"): {
                         "log_file_path": cls.assertEqualPath,
                         "additional_data_tables": (
                             cls.assertEqualAdditionalDataTableNames
@@ -1306,19 +1304,19 @@ class PyKhiopsSklearnParameterPassingTests(unittest.TestCase):
             },
             KhiopsCoclustering: {
                 "fit": {
-                    ("pykhiops.core", "train_coclustering"): {
+                    ("khiops.core", "train_coclustering"): {
                         "log_file_path": cls.assertEqualPath
                     }
                 },
                 "simplify": {},
                 "predict": {
-                    ("pykhiops.core", "deploy_model"): {
+                    ("khiops.core", "deploy_model"): {
                         "additional_data_tables": (
                             cls.assertEqualAdditionalDataTableNames
                         ),
                         "log_file_path": cls.assertEqualPath,
                     },
-                    ("pykhiops.core", "extract_keys_from_data_table"): {},
+                    ("khiops.core", "extract_keys_from_data_table"): {},
                 },
             },
         }

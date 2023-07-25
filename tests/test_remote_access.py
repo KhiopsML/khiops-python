@@ -19,10 +19,10 @@ from urllib.request import Request, urlopen
 
 import pandas as pd
 
-import pykhiops.core as pk
-import pykhiops.core.internals.filesystems as fs
-from pykhiops.extras.docker import PyKhiopsDockerRunner
-from pykhiops.sklearn import KhiopsClassifier, KhiopsCoclustering
+import khiops.core as pk
+import khiops.core.internals.filesystems as fs
+from khiops.extras.docker import PyKhiopsDockerRunner
+from khiops.sklearn import KhiopsClassifier, KhiopsCoclustering
 
 
 def s3_config_exists():
@@ -205,9 +205,9 @@ class PyKhiopsS3RemoteFileTests(
         if s3_config_exists():
             runner = pk.get_runner()
             bucket_name = os.environ["S3_BUCKET_NAME"]
-            runner.samples_dir = f"s3://{bucket_name}/project/pykhiops-cicd/samples"
-            runner.khiops_tmp_dir = f"s3://{bucket_name}/project/pykhiops-cicd/tmp"
-            runner.root_temp_dir = f"s3://{bucket_name}/project/pykhiops-cicd/tmp"
+            runner.samples_dir = f"s3://{bucket_name}/project/khiops-cicd/samples"
+            runner.khiops_tmp_dir = f"s3://{bucket_name}/project/khiops-cicd/tmp"
+            runner.root_temp_dir = f"s3://{bucket_name}/project/khiops-cicd/tmp"
 
     @classmethod
     def tearDownClass(cls):
@@ -233,9 +233,9 @@ class PyKhiopsGCSRemoteFileTests(
         if gcs_config_exists():
             runner = pk.get_runner()
             bucket_name = os.environ["GCS_BUCKET_NAME"]
-            runner.samples_dir = f"gs://{bucket_name}/pykhiops-cicd/samples"
-            runner.khiops_tmp_dir = f"gs://{bucket_name}/pykhiops-cicd/tmp"
-            runner.root_temp_dir = f"gs://{bucket_name}/pykhiops-cicd/tmp"
+            runner.samples_dir = f"gs://{bucket_name}/khiops-cicd/samples"
+            runner.khiops_tmp_dir = f"gs://{bucket_name}/khiops-cicd/tmp"
+            runner.root_temp_dir = f"gs://{bucket_name}/khiops-cicd/tmp"
 
     @classmethod
     def tearDownClass(cls):
@@ -264,11 +264,11 @@ class PyKhiopsDockerRunnerTests(
               launches the service and makes sure it is operational before excuting the
               test case.  Otherwise it skips the test case.
             - Then it copies ``samples`` to a shared directory accessible to both the
-              local Khiops runner service and the process using pyKhiops.
+              local Khiops runner service and the process using Khiops Python.
             - Finnaly it creates create the `.PyKhiopsDockerRunner` client for the
               Khiops service and set it as current runner.
         """
-        # Save the initial pyKhiops runner
+        # Save the initial Khiops Python runner
         cls.initial_runner = pk.get_runner()
 
         if "KHIOPS_RUNNER_SERVICE_PATH" in os.environ:
@@ -338,7 +338,7 @@ class PyKhiopsDockerRunnerTests(
             shutil.rmtree(pk.get_runner().samples_dir)
             shutil.rmtree(pk.get_runner().khiops_tmp_dir)
 
-        # Reset the pyKhiops runner to the initial one
+        # Reset the Khiops Python runner to the initial one
         pk.set_runner(cls.initial_runner)
 
     def config_exists(self):

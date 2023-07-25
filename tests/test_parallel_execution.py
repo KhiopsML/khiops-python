@@ -12,8 +12,8 @@ from functools import partial
 from multiprocessing import Pool
 from unittest import TestCase
 
-from pykhiops.core.internals.common import is_iterable
-from pykhiops.sklearn.estimators import (
+from khiops.core.internals.common import is_iterable
+from khiops.sklearn.estimators import (
     KhiopsClassifier,
     KhiopsCoclustering,
     KhiopsEncoder,

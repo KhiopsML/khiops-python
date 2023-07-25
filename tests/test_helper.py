@@ -16,9 +16,9 @@ import pandas as pd
 import wrapt
 from sklearn.model_selection import train_test_split
 
-import pykhiops.core as pk
-from pykhiops.core.internals.common import is_iterable
-from pykhiops.sklearn.estimators import KhiopsEncoder, KhiopsEstimator
+import khiops.core as pk
+from khiops.core.internals.common import is_iterable
+from khiops.sklearn.estimators import KhiopsEncoder, KhiopsEstimator
 
 
 class CoreApiFunctionMock:
@@ -39,55 +39,55 @@ class CoreApiFunctionMock:
     """
 
     api_function_specs = {
-        ("pykhiops.core.api", "export_dictionary_as_json"): {
+        ("khiops.core.api", "export_dictionary_as_json"): {
             "output_path_arg_index": 1,
             "output_path_is_dir": False,
             "output_file_keys": ["kdicj_path"],
             "return_value_number": 1,
         },
-        ("pykhiops.core", "train_predictor"): {
+        ("khiops.core", "train_predictor"): {
             "output_path_arg_index": 4,
             "output_path_is_dir": True,
             "output_file_keys": ["report_path", "predictor_kdic_path"],
             "return_value_number": 2,
         },
-        ("pykhiops.core", "train_recoder"): {
+        ("khiops.core", "train_recoder"): {
             "output_path_arg_index": 4,
             "output_path_is_dir": True,
             "output_file_keys": ["report_path", "predictor_kdic_path"],
             "return_value_number": 2,
         },
-        ("pykhiops.core", "deploy_model"): {
+        ("khiops.core", "deploy_model"): {
             "output_path_arg_index": 3,
             "output_path_is_dir": False,
             "output_file_keys": ["output_data_table"],
             "return_value_number": 0,
         },
-        ("pykhiops.core", "train_coclustering"): {
+        ("khiops.core", "train_coclustering"): {
             "output_path_arg_index": 4,
             "output_path_is_dir": True,
             "output_file_keys": ["report_path"],
             "return_value_number": 1,
         },
-        ("pykhiops.core", "simplify_coclustering"): {
+        ("khiops.core", "simplify_coclustering"): {
             "output_path_arg_index": 2,
             "output_path_is_dir": True,
             "output_file_keys": ["report_path"],
             "return_value_number": 0,
         },
-        ("pykhiops.core", "prepare_coclustering_deployment"): {
+        ("khiops.core", "prepare_coclustering_deployment"): {
             "output_path_arg_index": 5,
             "output_path_is_dir": True,
             "output_file_keys": ["deploy_kdic_path"],
             "return_value_number": 0,
         },
-        ("pykhiops.core", "build_multi_table_dictionary"): {
+        ("khiops.core", "build_multi_table_dictionary"): {
             "output_path_arg_index": 3,
             "output_path_is_dir": False,
             "output_file_keys": ["kdic_path"],
             "return_value_number": 0,
         },
-        ("pykhiops.core", "extract_keys_from_data_table"): {
+        ("khiops.core", "extract_keys_from_data_table"): {
             "output_path_arg_index": 3,
             "output_path_is_dir": False,
             "output_file_keys": ["keys_table_path"],

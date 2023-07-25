@@ -10,8 +10,8 @@ import os
 import shutil
 import unittest
 
-import pykhiops.core as pk
-from pykhiops.sklearn.estimators import KhiopsClassifier
+import khiops.core as pk
+from khiops.sklearn.estimators import KhiopsClassifier
 from tests.test_helper import PyKhiopsTestHelper
 
 

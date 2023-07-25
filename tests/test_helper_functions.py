@@ -7,8 +7,8 @@
 """Tests for checking the output types of predictors"""
 import unittest
 
-from pykhiops.core.dictionary import DictionaryDomain
-from pykhiops.core.helpers import build_multi_table_dictionary_domain
+from khiops.core.dictionary import DictionaryDomain
+from khiops.core.helpers import build_multi_table_dictionary_domain
 
 
 class PyKhiopsHelperFunctions(unittest.TestCase):

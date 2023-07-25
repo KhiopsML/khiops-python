@@ -8,8 +8,8 @@
 import os.path
 import unittest
 
-import pykhiops.core as pk
-from pykhiops.samples import samples, samples_sklearn
+import khiops.core as pk
+from khiops.samples import samples, samples_sklearn
 
 
 class PyKhiopsSamplesTests(unittest.TestCase):

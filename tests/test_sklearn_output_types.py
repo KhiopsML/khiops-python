@@ -10,7 +10,7 @@ import unittest
 import pandas as pd
 from sklearn import datasets
 
-from pykhiops.sklearn import KhiopsClassifier, KhiopsRegressor
+from khiops.sklearn.estimators import KhiopsClassifier, KhiopsRegressor
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:

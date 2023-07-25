@@ -5,14 +5,14 @@
 Samples core
 ============
 
-The samples on this page demonstrate the basic use of the ``pykhiops.core`` module.
+The samples on this page demonstrate the basic use of the ``khiops.core`` module.
 
 Script and Jupyter notebook
 ---------------------------
 The samples in this page are also available as:
 
-- :download:`Python script <../../pykhiops/samples/samples.py>`
-- :download:`Jupyter notebook <../../pykhiops/samples/samples.ipynb>`
+- :download:`Python script <../../khiops/samples/samples.py>`
+- :download:`Jupyter notebook <../../khiops/samples/samples.ipynb>`
 
 Code Preamble
 -------------
@@ -24,7 +24,7 @@ The following preamble makes sure all samples in this page run correctly
     from math import sqrt
     from os import path
 
-    from pykhiops import core as pk
+    from khiops import core as pk
 
 
 Samples

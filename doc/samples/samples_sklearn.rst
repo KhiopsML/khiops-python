@@ -5,14 +5,14 @@
 Samples sklearn
 ===============
 
-The samples on this page demonstrate the basic use of the ``pykhiops.sklearn`` module.
+The samples on this page demonstrate the basic use of the ``khiops.sklearn`` module.
 
 Script and Jupyter notebook
 ---------------------------
 The samples in this page are also available as:
 
-- :download:`Python script <../../pykhiops/samples/samples_sklearn.py>`
-- :download:`Jupyter notebook <../../pykhiops/samples/samples_sklearn.ipynb>`
+- :download:`Python script <../../khiops/samples/samples_sklearn.py>`
+- :download:`Jupyter notebook <../../khiops/samples/samples_sklearn.ipynb>`
 
 Code Preamble
 -------------
@@ -33,8 +33,8 @@ The following preamble makes sure all samples in this page run correctly
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import OneHotEncoder
 
-    from pykhiops import core as pk
-    from pykhiops.sklearn import (
+    from khiops import core as pk
+    from khiops.sklearn import (
         KhiopsClassifier,
         KhiopsCoclustering,
         KhiopsEncoder,
