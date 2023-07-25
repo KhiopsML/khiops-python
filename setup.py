@@ -22,11 +22,13 @@ if __name__ == "__main__":
         license_files=["LICENSE.md"],
         entry_points={
             "console_scripts": [
-                "convert-pk10=pykhiops.tools:convert_pk10_entry_point",
-                "pk-status=pykhiops.tools:pk_status_entry_point",
+                "kh-status=khiops.tools:kh_status_entry_point",
+                "pk-status=khiops.tools:pk_status_entry_point",  # deprecated
             ]
         },
-        packages=find_packages(include=["pykhiops", "pykhiops.*"]),
+        packages=find_packages(
+            include=["khiops", "khiops.*", "pykhiops", "pykhiops.*"]
+        ),
         include_package_data=True,
         python_requires=">=3.8",
         install_requires=[

@@ -3,7 +3,7 @@ set -e
 
 # Set the documentation and samples directories
 DOC_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
-SAMPLES_DIR="$DOC_DIR/../pykhiops/samples"
+SAMPLES_DIR="$DOC_DIR/../khiops/samples"
 
 # Generate the rEST pages
 python $DOC_DIR/convert_samples.py -f rst $SAMPLES_DIR $DOC_DIR/samples/samples.rst

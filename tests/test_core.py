@@ -4,26 +4,27 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""Tests for the pykhiops.core module"""
+"""Tests for the khiops.core module"""
 import glob
 import io
 import os
 import shutil
+import sys
 import textwrap
 import unittest
 import warnings
 from pathlib import Path
 
-import pykhiops.core as pk
-from pykhiops.core.internals.common import create_unambiguous_khiops_path
-from pykhiops.core.internals.io import PyKhiopsOutputWriter
-from pykhiops.core.internals.runner import PyKhiopsRunner
-from pykhiops.core.internals.scenario import ConfigurableKhiopsScenario
-from pykhiops.core.internals.version import KhiopsVersion
-from tests.test_helper import PyKhiopsTestHelper
+import khiops.core as kh
+from khiops.core.internals.common import create_unambiguous_khiops_path
+from khiops.core.internals.io import KhiopsOutputWriter
+from khiops.core.internals.runner import KhiopsRunner
+from khiops.core.internals.scenario import ConfigurableKhiopsScenario
+from khiops.core.internals.version import KhiopsVersion
+from tests.test_helper import KhiopsTestHelper
 
 
-class PyKhiopsCoreIOTests(unittest.TestCase):
+class KhiopsCoreIOTests(unittest.TestCase):
     """Tests the reading/writing of files for the core module classes/functions"""
 
     def test_analysis_results(self):
@@ -82,18 +83,18 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
             ref_report = os.path.join(ref_reports_dir, f"{report}.txt")
             ref_json_report = os.path.join(ref_json_reports_dir, f"{report}.khj")
             output_report = os.path.join(output_reports_dir, f"{report}.txt")
-            results = pk.AnalysisResults()
+            results = kh.AnalysisResults()
             with self.subTest(report=report):
                 if report in reports_ko:
-                    with self.assertRaises(pk.PyKhiopsJSONError):
-                        results = pk.read_analysis_results_file(ref_json_report)
+                    with self.assertRaises(kh.KhiopsJSONError):
+                        results = kh.read_analysis_results_file(ref_json_report)
                 elif report in reports_warn:
                     with self.assertWarns(UserWarning):
-                        results = pk.read_analysis_results_file(ref_json_report)
+                        results = kh.read_analysis_results_file(ref_json_report)
                         results.write_report_file(output_report)
                         files_equal_or_fail(ref_report, output_report)
                 else:
-                    results = pk.read_analysis_results_file(ref_json_report)
+                    results = kh.read_analysis_results_file(ref_json_report)
                     results.write_report_file(output_report)
                     files_equal_or_fail(ref_report, output_report)
 
@@ -134,9 +135,9 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
             with self.subTest(report=report):
                 if report in reports_warn:
                     with self.assertWarns(UserWarning):
-                        results = pk.read_coclustering_results_file(ref_json_report)
+                        results = kh.read_coclustering_results_file(ref_json_report)
                 else:
-                    results = pk.read_coclustering_results_file(ref_json_report)
+                    results = kh.read_coclustering_results_file(ref_json_report)
                 results.write_report_file(output_report)
                 files_equal_or_fail(ref_report, output_report)
                 for dimension in results.coclustering_report.dimensions:
@@ -209,7 +210,7 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
             output_kdic = os.path.join(output_kdic_dir, f"{dictionary}.kdic")
             copy_output_kdic = os.path.join(copy_output_kdic_dir, f"{dictionary}.kdic")
             with self.subTest(dictionary=dictionary):
-                domain = pk.DictionaryDomain()
+                domain = kh.DictionaryDomain()
                 if dictionary in dictionaries_warn:
                     with self.assertWarns(UserWarning):
                         domain.read_khiops_dictionary_json_file(ref_kdicj)
@@ -505,9 +506,9 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
         test_resources_dir = os.path.join(resources_dir(), "scenario_generation")
 
         # Use the test runner that only compares the scenarios
-        default_runner = pk.get_runner()
+        default_runner = kh.get_runner()
         test_runner = CompareScenarioTestRunner(self, test_resources_dir)
-        pk.set_runner(test_runner)
+        kh.set_runner(test_runner)
 
         # Run test for all methods and all mock datasets parameters
         for method_name, method_full_args in method_test_args.items():
@@ -518,7 +519,7 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
             )
 
         # Restore the default runner
-        pk.set_runner(default_runner)
+        kh.set_runner(default_runner)
 
     def _test_method_scenario_generation(
         self,
@@ -536,7 +537,7 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
         for dataset, dataset_method_args in method_full_args.items():
             runner.subtest_name = dataset
             with self.subTest(dataset=dataset, method=method_name):
-                method = getattr(pk, method_name)
+                method = getattr(kh, method_name)
                 dataset_args = dataset_method_args["args"]
                 dataset_kwargs = dataset_method_args["kwargs"]
                 method(*dataset_args, **dataset_kwargs)
@@ -547,12 +548,12 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
         test_resources_dir = os.path.join(resources_dir(), "general_options")
 
         # Use the test runner that only compares the scenarios
-        default_runner = pk.get_runner()
+        default_runner = kh.get_runner()
         test_runner = CompareScenarioTestRunner(self, test_resources_dir)
         test_runner.test_name = "general_options"
         test_runner.subtest_name = "general_options"
         cleanup_dir(test_runner.output_scenario_dir, "*/output/*._kh")
-        pk.set_runner(test_runner)
+        kh.set_runner(test_runner)
 
         # Set the general options
         test_runner.max_cores = 10
@@ -561,96 +562,96 @@ class PyKhiopsCoreIOTests(unittest.TestCase):
         test_runner.scenario_prologue = "// Scenario prologue test"
 
         # Call check_database (could be any other method)
-        pk.check_database("a.kdic", "dict_name", "data.txt")
+        kh.check_database("a.kdic", "dict_name", "data.txt")
 
         # Set the runner to the default one
-        pk.set_runner(default_runner)
+        kh.set_runner(default_runner)
 
 
-class PyKhiopsCoreServicesTests(unittest.TestCase):
+class KhiopsCoreServicesTests(unittest.TestCase):
     """Test the services of the core module classes
 
     Specifically, the tests in this class are for  the services not used in the *write_*
-    methods, as those are already tested in PyKhiopsCoreIOTests.
+    methods, as those are already tested in KhiopsCoreIOTests.
     """
 
     def test_analysis_results_simple_initializations(self):
         """Tests simple initialization operations analysis_results classes"""
-        results = pk.AnalysisResults()
+        results = kh.AnalysisResults()
         with open(os.devnull, "wb") as devnull_file:
             results.write_report(devnull_file)
             results.tool = "Khiops Coclustering"
             results.write_report(devnull_file)
-        pk.PreparationReport()
-        pk.BivariatePreparationReport()
-        pk.ModelingReport()
-        pk.EvaluationReport()
-        var_stats = pk.VariableStatistics()
+        kh.PreparationReport()
+        kh.BivariatePreparationReport()
+        kh.ModelingReport()
+        kh.EvaluationReport()
+        var_stats = kh.VariableStatistics()
         var_stats.init_details()
-        var_pair_stats = pk.VariablePairStatistics()
+        var_pair_stats = kh.VariablePairStatistics()
         var_pair_stats.init_details()
-        pk.DataGrid()
-        pk.DataGridDimension()
-        pk.PartInterval()
-        pk.PartValue()
-        pk.PartValueGroup()
-        predictor = pk.TrainedPredictor()
+        kh.DataGrid()
+        kh.DataGridDimension()
+        kh.PartInterval()
+        kh.PartValue()
+        kh.PartValueGroup()
+        predictor = kh.TrainedPredictor()
         predictor.init_details()
-        pk.SelectedVariable()
-        predictor_perf = pk.PredictorPerformance()
+        kh.SelectedVariable()
+        predictor_perf = kh.PredictorPerformance()
         predictor_perf.init_details()
-        pk.ConfusionMatrix()
-        pk.PredictorCurve()
+        kh.ConfusionMatrix()
+        kh.PredictorCurve()
 
     def test_analysis_results_simple_edge_cases(self):
         """Test simple edge cases for analysis_results classes"""
         # Test the writing to an invalid object
         with self.assertRaises(TypeError):
-            results = pk.AnalysisResults()
+            results = kh.AnalysisResults()
             results.write_report("A STRING IS NOT A VALID STREAM")
 
         # Test errors on the mandatory fields of the preparation report
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.PreparationReport(json_data={"summary": None})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.PreparationReport(json_data={"reportType": "Preparation"})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.PreparationReport(json_data={"reportType": "WHATEVER", "summary": None})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.PreparationReport(json_data={"summary": None})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.PreparationReport(json_data={"reportType": "Preparation"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.PreparationReport(json_data={"reportType": "WHATEVER", "summary": None})
 
         # Test errors on the mandatory fields of the bivariate preparation report
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.BivariatePreparationReport(json_data={"summary": None})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.BivariatePreparationReport(
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.BivariatePreparationReport(json_data={"summary": None})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.BivariatePreparationReport(
                 json_data={"reportType": "BivariatePreparation"}
             )
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.BivariatePreparationReport(
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.BivariatePreparationReport(
                 json_data={"reportType": "WHATEVER", "summary": None}
             )
 
         # Test errors on the mandatory fields of the modeling report
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.ModelingReport(json_data={"summary": None})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.ModelingReport(json_data={"reportType": "Modeling"})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.ModelingReport(json_data={"reportType": "INVALID TYPE", "summary": None})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.ModelingReport(json_data={"summary": None})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.ModelingReport(json_data={"reportType": "Modeling"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.ModelingReport(json_data={"reportType": "INVALID TYPE", "summary": None})
 
         # Test errors on the mandatory fields of the evaluation report
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.EvaluationReport(json_data={"summary": None})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.EvaluationReport(json_data={"reportType": "Evaluation"})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.EvaluationReport(
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.EvaluationReport(json_data={"summary": None})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.EvaluationReport(json_data={"reportType": "Evaluation"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.EvaluationReport(
                 json_data={"reportType": "INVALID TYPE", "summary": None}
             )
 
         # Test the error when a predictor curve does not have the 'classifier' or
         # 'regression' field.
         with self.assertRaises(ValueError):
-            pk.PredictorCurve(json_data={"curve": [0.0]})
+            kh.PredictorCurve(json_data={"curve": [0.0]})
 
     def test_analysis_results_accessors(self):
         """Test the accessors of the analysis results classes"""
@@ -816,9 +817,9 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
             results_file_path = os.path.join(
                 ref_json_reports_dir, f"{result_file_name}.khj"
             )
-            results = pk.read_analysis_results_file(results_file_path)
+            results = kh.read_analysis_results_file(results_file_path)
             for report in results.get_reports():
-                if isinstance(report, pk.PreparationReport):
+                if isinstance(report, kh.PreparationReport):
                     with self.subTest(
                         result_file_name=result_file_name,
                         report_class="PreparationReport",
@@ -826,7 +827,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
                         self._test_preparation_report_accessors(
                             result_file_name, report, expected_outputs
                         )
-                elif isinstance(report, pk.BivariatePreparationReport):
+                elif isinstance(report, kh.BivariatePreparationReport):
                     with self.subTest(
                         result_file_name=result_file_name,
                         report_class="BivariatePreparationReport",
@@ -834,7 +835,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
                         self._test_bivariate_preparation_report_accessors(
                             result_file_name, report, expected_outputs
                         )
-                elif isinstance(report, pk.ModelingReport):
+                elif isinstance(report, kh.ModelingReport):
                     with self.subTest(
                         result_file_name=result_file_name, report_class="ModelingReport"
                     ):
@@ -846,7 +847,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
                         result_file_name=result_file_name,
                         report_class="EvaluationReport",
                     ):
-                        self.assertIsInstance(report, pk.EvaluationReport)
+                        self.assertIsInstance(report, kh.EvaluationReport)
                         self._test_evaluation_report_accessors(
                             result_file_name, report, expected_outputs
                         )
@@ -864,7 +865,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
         )
         for variable_index, variable_name in enumerate(report.get_variable_names()):
             variable_stats = report.get_variable_statistics(variable_name)
-            self.assertIsInstance(variable_stats, pk.VariableStatistics)
+            self.assertIsInstance(variable_stats, kh.VariableStatistics)
             self.assertEqual(
                 variable_stats, report.variables_statistics[variable_index]
             )
@@ -888,7 +889,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
             report.get_variable_pair_names()
         ):
             var_pair_stats = report.get_variable_pair_statistics(var_name1, var_name2)
-            self.assertIsInstance(var_pair_stats, pk.VariablePairStatistics)
+            self.assertIsInstance(var_pair_stats, kh.VariablePairStatistics)
             self.assertEqual(
                 var_pair_stats, report.variables_pairs_statistics[var_index]
             )
@@ -908,7 +909,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
         )
         for predictor_index, predictor_name in enumerate(report.get_predictor_names()):
             predictor = report.get_predictor(predictor_name)
-            self.assertIsInstance(predictor, pk.TrainedPredictor)
+            self.assertIsInstance(predictor, kh.TrainedPredictor)
             self.assertEqual(predictor, report.trained_predictors[predictor_index])
         self.assertEqual(
             report.get_snb_predictor(),
@@ -932,7 +933,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
         )
         for predictor_index, predictor_name in enumerate(report.get_predictor_names()):
             predictor_performance = report.get_predictor_performance(predictor_name)
-            self.assertIsInstance(predictor_performance, pk.PredictorPerformance)
+            self.assertIsInstance(predictor_performance, kh.PredictorPerformance)
             self.assertEqual(
                 predictor_performance, report.predictors_performance[predictor_index]
             )
@@ -1015,43 +1016,43 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
 
     def test_coclustering_results_simple_initializations(self):
         """Tests simple initalization operations of coclustering_results classes"""
-        results = pk.CoclusteringResults()
+        results = kh.CoclusteringResults()
         with open(os.devnull, "wb") as devnull_file:
             results.write_report(devnull_file)
             results.tool = "Khiops Coclustering"
             results.write_report(devnull_file)
-        pk.CoclusteringReport()
-        dimension = pk.CoclusteringDimension()
+        kh.CoclusteringReport()
+        dimension = kh.CoclusteringDimension()
         dimension.init_summary()
         dimension.init_partition()
         dimension.init_hierarchy()
-        pk.CoclusteringDimensionPart()
-        pk.CoclusteringDimensionPartInterval()
-        pk.CoclusteringDimensionPartValueGroup()
-        pk.CoclusteringDimensionPartValue()
-        pk.CoclusteringCluster()
-        pk.CoclusteringCell()
+        kh.CoclusteringDimensionPart()
+        kh.CoclusteringDimensionPartInterval()
+        kh.CoclusteringDimensionPartValueGroup()
+        kh.CoclusteringDimensionPartValue()
+        kh.CoclusteringCluster()
+        kh.CoclusteringCell()
 
     def test_coclustering_results_simple_edge_cases(self):
         """Test simple edge cases for coclustering_results classes"""
         # Test the writing to an invalid object
         with self.assertRaises(TypeError):
-            results = pk.CoclusteringResults()
+            results = kh.CoclusteringResults()
             results.write_report("A STRING IS NOT A VALID STREAM")
 
         # Test errors on the mandatory fields of coclustering classes
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.CoclusteringReport(json_data={})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.CoclusteringDimensionPart({})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.CoclusteringDimensionPartInterval({"cluster": "MYCLUSTER"})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.CoclusteringDimensionPartValueGroup({"cluster": "MYCLUSTER"})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.CoclusteringCluster({"cluster": "MYCLUSTER"})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.CoclusteringCluster({"parentCluster": "MYPARENTCLUSTER"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.CoclusteringReport(json_data={})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.CoclusteringDimensionPart({})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.CoclusteringDimensionPartInterval({"cluster": "MYCLUSTER"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.CoclusteringDimensionPartValueGroup({"cluster": "MYCLUSTER"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.CoclusteringCluster({"cluster": "MYCLUSTER"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.CoclusteringCluster({"parentCluster": "MYPARENTCLUSTER"})
 
     def test_coclustering_results_accessors(self):
         """Test CoclusteringResults accessors functions"""
@@ -1081,7 +1082,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
             results_file_path = os.path.join(
                 ref_json_reports_dir, f"{results_file_name}.khcj"
             )
-            results = pk.read_coclustering_results_file(results_file_path)
+            results = kh.read_coclustering_results_file(results_file_path)
             self.assertEqual(
                 results.coclustering_report.get_dimension_names(),
                 expected_outputs["CoclusteringReport"]["get_dimension_names"][
@@ -1098,10 +1099,10 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
 
     def test_dictionary_simple_initializations(self):
         """Test simple initialization operation of dictionary classes"""
-        domain = pk.DictionaryDomain()
+        domain = kh.DictionaryDomain()
         domain.tool = "Khiops Dictionary"
         domain.name = "Iris"
-        dictionary = pk.Dictionary()
+        dictionary = kh.Dictionary()
         dictionary.name = "Test"
         dictionary.label = "Some comment"
         domain.add_dictionary(dictionary)
@@ -1111,39 +1112,39 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
     def test_dictionary_simple_edge_cases(self):
         """Test simple edge cases of the classes of dictionary classes"""
         # Test anomalous DictionaryDomain actions
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.DictionaryDomain(json_data={"tool": "INVALID TOOL", "version": "0.0"})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.DictionaryDomain(json_data={"tool": "Khiops Dictionary"})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.DictionaryDomain(
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.DictionaryDomain(json_data={"tool": "INVALID TOOL", "version": "0.0"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.DictionaryDomain(json_data={"tool": "Khiops Dictionary"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.DictionaryDomain(
                 json_data={
                     "tool": "Khiops Dictionary",
                     "version": "0.0",
                     "dictionaries": "NOT A LIST",
                 }
             )
-        domain = pk.DictionaryDomain()
+        domain = kh.DictionaryDomain()
         with self.assertRaises(TypeError):
             domain.add_dictionary("NOT A DICTIONARY OBJECT")
         with self.assertRaises(TypeError):
             domain.write("NOT A STREAM")
 
         # This is anomalous but ok
-        pk.DictionaryDomain(json_data={"tool": "Khiops Dictionary", "version": "0.0"})
+        kh.DictionaryDomain(json_data={"tool": "Khiops Dictionary", "version": "0.0"})
 
         # Test anomalous Dictionary actions
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.Dictionary(json_data="NOT A DICT")
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.Dictionary(json_data={})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.Dictionary(json_data={"name": "Iris", "variables": "NOT A LIST"})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.Dictionary(
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.Dictionary(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.Dictionary(json_data={})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.Dictionary(json_data={"name": "Iris", "variables": "NOT A LIST"})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.Dictionary(
                 json_data={"name": "Iris", "variables": [{"NotNameNorBlockName": None}]}
             )
-        dictionary = pk.Dictionary(json_data={"name": "Iris"})
+        dictionary = kh.Dictionary(json_data={"name": "Iris"})
         with self.assertRaises(TypeError):
             dictionary.add_variable("NOT A VARIABLE OBJECT")
         with self.assertRaises(TypeError):
@@ -1152,24 +1153,24 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
             dictionary.write("NOT A WRITER")
 
         # Test anomalous Variable actions
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.Variable(json_data="NOT A DICT")
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.Variable(json_data={})
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.Variable(json_data={"name": "SomeVar"})
-        variable = pk.Variable()
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.Variable(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.Variable(json_data={})
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.Variable(json_data={"name": "SomeVar"})
+        variable = kh.Variable()
         variable.type = "Categorical"
         variable.name = "SomeVar"
         with self.assertRaises(TypeError):
             variable.write("NOT A WRITER")
 
         # Test anomalous VariableBlock actions
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.VariableBlock(json_data="NOT A DICT")
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.VariableBlock(json_data={})
-        variable_block = pk.VariableBlock()
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.VariableBlock(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.VariableBlock(json_data={})
+        variable_block = kh.VariableBlock()
         with self.assertRaises(TypeError):
             variable_block.add_variable("NOT A VARIABLE")
         with self.assertRaises(TypeError):
@@ -1180,9 +1181,9 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
             variable_block.write("NOT A WRITER")
 
         # Test Anomalous MetaData actions
-        with self.assertRaises(pk.PyKhiopsJSONError):
-            pk.MetaData("NOT A DICT")
-        meta_data = pk.MetaData()
+        with self.assertRaises(kh.KhiopsJSONError):
+            kh.MetaData("NOT A DICT")
+        meta_data = kh.MetaData()
         with self.assertRaises(TypeError):
             meta_data.write("NOT A WRITER")
         with self.assertRaises(TypeError):
@@ -1211,7 +1212,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
         domain_names = ["Adult", "Customer", "SpliceJunction", "SpliceJunctionModeling"]
         for domain_name in domain_names:
             kdicj_path = os.path.join(ref_kdicj_dir, f"{domain_name}.kdicj")
-            domain = pk.read_dictionary_file(kdicj_path)
+            domain = kh.read_dictionary_file(kdicj_path)
 
             # Test addition and removal a dictionary
             dictionary_copy = domain.dictionaries[0].copy()
@@ -1249,8 +1250,8 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
                         self.assertFalse(dictionary_copy.is_key_variable(variable))
 
                 # Test Dictionary variable accessors
-                variable = pk.Variable()
-                variable.name = pk.name = "NewVar"
+                variable = kh.Variable()
+                variable.name = kh.name = "NewVar"
                 dictionary_copy.add_variable(variable)
                 with self.assertRaises(ValueError):
                     dictionary_copy.add_variable(variable)
@@ -1264,12 +1265,12 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
 
                 # Test Dictionary variable block accessors
                 # Create a simple block
-                block = pk.VariableBlock()
+                block = kh.VariableBlock()
                 block.name = ""
                 with self.assertRaises(ValueError):
                     dictionary_copy.add_variable_block(block)
                 block.name = "NewBlock"
-                block_variable = pk.Variable()
+                block_variable = kh.Variable()
                 block_variable.name = "VarInBlock"
                 block_variable.type = "Numerical"
                 block_variable.used = True
@@ -1414,7 +1415,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
 
         # Test the method for different dictionary files
         for domain_name, dictionary_names in dictionaries_by_domain.items():
-            domain = pk.read_dictionary_file(
+            domain = kh.read_dictionary_file(
                 os.path.join(ref_kdicj_dir, f"{domain_name}.kdicj")
             )
             for dictionary_name in dictionary_names:
@@ -1468,7 +1469,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
             expected_dictionary_names_by_data_path,
         ) in expected_dictionary_names.items():
             # Test normal access
-            domain = pk.read_dictionary_file(
+            domain = kh.read_dictionary_file(
                 os.path.join(ref_kdicj_dir, f"{domain_name}.kdicj")
             )
             for (
@@ -1496,7 +1497,7 @@ class PyKhiopsCoreServicesTests(unittest.TestCase):
                 )
 
 
-class PyKhiopsCoreSimpleUnitTests(unittest.TestCase):
+class KhiopsCoreSimpleUnitTests(unittest.TestCase):
     """Test simple testable functions in the core package"""
 
     def test_create_unambiguous_khiops_path(self):
@@ -1516,7 +1517,7 @@ class PyKhiopsCoreSimpleUnitTests(unittest.TestCase):
             self.assertEqual(create_unambiguous_khiops_path(path), unambiguous_path)
 
 
-class CompareScenarioTestRunner(PyKhiopsRunner):
+class CompareScenarioTestRunner(KhiopsRunner):
     """A Pykhiops runner that only compares the generated scenarios to a reference"""
 
     def __init__(self, test_case, root_dir):
@@ -1792,7 +1793,7 @@ def equal_path_statement(ref_line, output_line, line_number):
             )
 
 
-class PyKhiopsCoreVariousTests(unittest.TestCase):
+class KhiopsCoreVariousTests(unittest.TestCase):
     """Test for small units of core"""
 
     # Disable SonarQube here because it believes that some versions are IPs
@@ -1831,14 +1832,32 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
 
     # sonar: enable
 
+    def test_pykhiops_import_deprecation_warning(self):
+        """Test that import pykhiops* raises deprecation warning"""
+        with warnings.catch_warnings(record=True) as warning_list:
+            # This is needed as coverage already imported pykhiops
+            if "pykhiops" in sys.modules:
+                del sys.modules["pykhiops"]
+            import pykhiops.core as pk
+
+            # Test that the alias works
+            pk.get_runner().print_status()
+        self.assertEqual(len(warning_list), 1)
+        warning = warning_list[0]
+        self.assertTrue(issubclass(warning.category, UserWarning))
+        warning_message = warning.message
+        self.assertEqual(len(warning_message.args), 1)
+        message = warning_message.args[0]
+        self.assertTrue("'pykhiops'" in message and "deprecated" in message)
+
     @staticmethod
     def _build_multi_table_dictionary_args():
-        resources_directory = PyKhiopsTestHelper.get_resources_dir()
+        resources_directory = KhiopsTestHelper.get_resources_dir()
         dictionaries_dir = os.path.join(resources_directory, "dictionary", "ref_kdic")
-        splice_domain = pk.read_dictionary_file(
+        splice_domain = kh.read_dictionary_file(
             os.path.join(dictionaries_dir, "SpliceJunction.kdic")
         )
-        monotable_domain = pk.DictionaryDomain()
+        monotable_domain = kh.DictionaryDomain()
         monotable_domain.add_dictionary(
             splice_domain.get_dictionary("SpliceJunctionDNA")
         )
@@ -1860,10 +1879,10 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
 
     def test_build_multi_table_dictionary_deprecation(self):
         """Test that `api.build_multi_table_dictionary` raises deprecation warning"""
-        in_args = PyKhiopsCoreVariousTests._build_multi_table_dictionary_args()
+        in_args = KhiopsCoreVariousTests._build_multi_table_dictionary_args()
 
         with warnings.catch_warnings(record=True) as warning_list:
-            pk.build_multi_table_dictionary(**in_args)
+            kh.build_multi_table_dictionary(**in_args)
 
         self.assertEqual(len(warning_list), 1)
         warning = warning_list[0]
@@ -1877,15 +1896,15 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
 
     def test_build_multi_table_dictionary_behavior(self):
         """Test that the helper function is called with the right parameters"""
-        parameter_trace = PyKhiopsTestHelper.create_parameter_trace()
+        parameter_trace = KhiopsTestHelper.create_parameter_trace()
 
-        in_args = PyKhiopsCoreVariousTests._build_multi_table_dictionary_args()
+        in_args = KhiopsCoreVariousTests._build_multi_table_dictionary_args()
         helper_name = "build_multi_table_dictionary_domain"
-        PyKhiopsTestHelper.wrap_with_parameter_trace(
-            "pykhiops.core.api", helper_name, parameter_trace
+        KhiopsTestHelper.wrap_with_parameter_trace(
+            "khiops.core.api", helper_name, parameter_trace
         )
         with self.assertWarns(UserWarning):
-            pk.build_multi_table_dictionary(**in_args)
+            kh.build_multi_table_dictionary(**in_args)
         # Test that at least one trace has been created, so that the assertions can fail
         self.assertTrue(any(True for _ in parameter_trace.items()))
         for _, function_parameters in parameter_trace.items():
@@ -1903,7 +1922,7 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
 
                 # Test that the first argument passed is a DictionaryDomain
                 domain = args[0]
-                self.assertTrue(isinstance(domain, pk.DictionaryDomain))
+                self.assertTrue(isinstance(domain, kh.DictionaryDomain))
 
                 # Shallowly test that the domain passed to the helper reflects
                 # the source dictionary
@@ -2067,7 +2086,7 @@ class PyKhiopsCoreVariousTests(unittest.TestCase):
 
                 # Detemplatize the scenario with the fixture arguments
                 stream = io.BytesIO()
-                writer = PyKhiopsOutputWriter(stream)
+                writer = KhiopsOutputWriter(stream)
                 scenario = ConfigurableKhiopsScenario(template_code)
                 scenario.write(writer, arguments[template_name, argument_set])
                 output_scenario = stream.getvalue().decode("ascii").replace("\r", "")

@@ -10,12 +10,12 @@ import os
 import shutil
 import unittest
 
-import pykhiops.core as pk
-from pykhiops.sklearn.estimators import KhiopsClassifier
-from tests.test_helper import PyKhiopsTestHelper
+import khiops.core as kh
+from khiops.sklearn.estimators import KhiopsClassifier
+from tests.test_helper import KhiopsTestHelper
 
 
-class PyKhiopsMultitableFitTests(unittest.TestCase, PyKhiopsTestHelper):
+class KhiopsMultitableFitTests(unittest.TestCase, KhiopsTestHelper):
     """Test if Khiops estimator can be fitted on multi-table data"""
 
     def setUp(self):
@@ -27,7 +27,7 @@ class PyKhiopsMultitableFitTests(unittest.TestCase, PyKhiopsTestHelper):
         """Test if estimator can be fitted from paths several times"""
         # Set upt the file based dataset
         dataset_name = "SpliceJunction"
-        samples_dir = pk.get_runner().samples_dir
+        samples_dir = kh.get_runner().samples_dir
         dataset = {
             "main_table": "SpliceJunction",
             "tables": {
@@ -47,7 +47,7 @@ class PyKhiopsMultitableFitTests(unittest.TestCase, PyKhiopsTestHelper):
         output_dir = os.path.join("resources", "tmp", "test_multitable_fit_predict")
         try:
             for _ in range(2):
-                PyKhiopsTestHelper.fit_helper(
+                KhiopsTestHelper.fit_helper(
                     KhiopsClassifier,
                     data=(dataset, "Class"),
                     pickled=False,
