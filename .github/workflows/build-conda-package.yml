@@ -42,6 +42,9 @@ jobs:
         run: |
           mkdir build
           conda build --output-folder build packaging/conda
+      - name: Generate OSX-ARM64 Conda Package
+        if: matrix.os == 'macos-latest'
+        run: conda convert build/osx-64/khiops*.tar.bz2 -o build/ -p osx-arm64
       - name: Upload Artifacts
         if: success() || failure()
         uses: actions/upload-artifact@v3
