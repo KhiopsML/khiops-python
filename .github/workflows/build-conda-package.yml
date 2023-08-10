@@ -45,7 +45,6 @@ jobs:
           set -x
           mkdir -p arm_homebrew
           friendly_version=`awk '/SOFTWARE LICENSE AGREEMENT FOR macOS/' '/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf' | awk -F 'macOS ' '{print $NF}' | awk '{print tolower(substr($0, 0, length($0)-1))}'`
-          echo $friendly_version
           curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C arm_homebrew
           response=$(arm_homebrew/bin/brew fetch --force --bottle-tag=arm64_$friendly_version open-mpi | grep "Downloaded to")
           IFS=" " read -r -a parsed <<< "$response"

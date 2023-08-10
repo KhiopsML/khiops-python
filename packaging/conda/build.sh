@@ -29,12 +29,15 @@ then
     cmake --build --preset macos-clang-release --parallel --target MODL MODL_Coclustering
     copy_modl_binaries_to_miniconda_prefix_path $BUILD_DIR_NAME "bin"
 
-    # Cross-compile to ARM64
-    rm -fr build/$BUILD_DIR_NAME/*
-    cmake --preset macos-clang-release -DCMAKE_OSX_ARCHITECTURES=arm64 -DBUILD_JARS=OFF -DTESTING=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-    cmake --build --preset macos-clang-release -DCMAKE_OSX_ARCHITECTURES=arm64 --parallel --target MODL MODL_Coclustering
-    # Also copy the ARM64 MODL binaries, which *override* the x86 binaries
-    copy_modl_binaries_to_miniconda_prefix_path $BUILD_DIR_NAME "khiops_arm64"
+    # If not on ARM64, then cross-compile to ARM64
+    if [ "$(uname -m)" != "arm64" ]
+    then
+        rm -fr build/$BUILD_DIR_NAME/*
+        cmake --preset macos-clang-release -DCMAKE_OSX_ARCHITECTURES=arm64 -DBUILD_JARS=OFF -DTESTING=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_CXX_FLAGS='-mcpu=apple-m1'
+        cmake --build --preset macos-clang-release --parallel --target MODL MODL_Coclustering
+        # Also copy the ARM64 MODL binaries, which *override* the x86 binaries
+        copy_modl_binaries_to_miniconda_prefix_path $BUILD_DIR_NAME "khiops_arm64"
+    fi
 else
     BUILD_DIR_NAME="linux-gcc-release"
     cmake --preset linux-gcc-release -DBUILD_JARS=OFF -DTESTING=OFF
