@@ -20,6 +20,7 @@ jobs:
       id-token: write
       contents: read
       checks: write
+      packages: read
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -28,7 +29,6 @@ jobs:
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
       - name: Checkout Khiops samples
-        if: success() || failure()
         uses: actions/checkout@v3
         with:
           repository: khiopsml/khiops-samples

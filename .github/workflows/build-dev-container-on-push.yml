@@ -1,0 +1,10 @@
+---
+name: Build development container [push]
+on:
+  push:
+    paths: [packaging/docker/khiopspydev/Dockerfile]
+jobs:
+  build-dev-container:
+    permissions:
+      packages: write
+    uses: ./.github/workflows/build-dev-container.yml
