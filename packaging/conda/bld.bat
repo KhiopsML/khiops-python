@@ -12,7 +12,7 @@ copy /y "%CWD%"\khiops_bin\packaging\install.cmake .\packaging\
 copy /y "%CWD%"\khiops_bin\packaging\packaging.cmake .\packaging\
 
 % REM We use ninja for generator because VS does not work with conda build
-cmake --preset windows-msvc-release -G "Ninja" -DBUILD_JARS=OFF -DTESTING=OFF
+cmake --preset windows-msvc-release -DBUILD_JARS=OFF -DTESTING=OFF
 cmake --build --preset windows-msvc-release --parallel --target MODL --target MODL_Coclustering
 
 REM Copy the MODL binaries to the anaconda PREFIX path

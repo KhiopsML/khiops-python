@@ -24,19 +24,22 @@ function copy_modl_binaries_to_miniconda_prefix_path () {
 
 if [ "$(uname)" == "Darwin" ]
 then
+    BUILD_DIR_NAME="macos-clang-release"
     cmake --preset macos-clang-release -DBUILD_JARS=OFF -DTESTING=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++
     cmake --build --preset macos-clang-release --parallel --target MODL MODL_Coclustering
-    copy_modl_binaries_to_miniconda_prefix_path "macos-clang-release" "bin"
+    copy_modl_binaries_to_miniconda_prefix_path $BUILD_DIR_NAME "bin"
 
     # Cross-compile to ARM64
+    rm -fr build/$BUILD_DIR_NAME/*
     cmake --preset macos-clang-release -DCMAKE_OSX_ARCHITECTURES=arm64 -DBUILD_JARS=OFF -DTESTING=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++
     cmake --build --preset macos-clang-release -DCMAKE_OSX_ARCHITECTURES=arm64 --parallel --target MODL MODL_Coclustering
     # Also copy the ARM64 MODL binaries, which *override* the x86 binaries
-    copy_modl_binaries_to_miniconda_prefix_path "macos-clang-release" "khiops_arm64"
+    copy_modl_binaries_to_miniconda_prefix_path $BUILD_DIR_NAME "khiops_arm64"
 else
+    BUILD_DIR_NAME="linux-gcc-release"
     cmake --preset linux-gcc-release -DBUILD_JARS=OFF -DTESTING=OFF
     cmake --build --preset linux-gcc-release --parallel --target MODL MODL_Coclustering
-    copy_modl_binaries_to_miniconda_prefix_path "linux-gcc-release" "bin"
+    copy_modl_binaries_to_miniconda_prefix_path $BUILD_DIR_NAME "bin"
 fi
 
 $PYTHON -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-isolation -vvv
