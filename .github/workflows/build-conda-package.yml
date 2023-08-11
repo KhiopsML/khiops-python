@@ -1,7 +1,13 @@
 ---
 name: Build Conda Packages
+env:
+  DEFAULT_KHIOPS_REVISION: dev
 on:
   workflow_dispatch:
+    inputs:
+      khiops-revision:
+        default: dev
+        description: Git tag, branch or commit for the khiops-samples repository
   push:
     tags: ['*']
 defaults:
@@ -15,30 +21,33 @@ jobs:
         os: [ubuntu-latest, windows-2022, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      # We move KHIOPS_REVISION to the environment so that we can use
+      # them in both push and workflow_dispatch events
+      - name: Move KHIOPS_REVISION to the environment (push event)
+        if: ${{ github.event_name == 'push' }}
+        run: echo "KHIOPS_REVISION=${DEFAULT_KHIOPS_REVISION}" >> "$GITHUB_ENV"
+      - name: Move KHIOPS_REVISION to the environment (workflow_dispatch event)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "KHIOPS_REVISION=${{ inputs.khiops-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Sources
         uses: actions/checkout@v3
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
-      - name: Checkout Khiops Sources
-        if: success() || failure()
-        uses: actions/checkout@v3
-        with:
-          repository: khiopsml/khiops
-          token: ${{ secrets.GITHUB_TOKEN }}
-          path: khiops_bin
       - name: Install Miniconda
         if: success() || failure()
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-activate-base: true
           activate-environment: true
-      - name: Install conda-build and conda-verify
-        run: conda install conda-build conda-verify
+      - name: Install Dependency Requirements for Building Conda Packages
+        run: |-
+          conda install conda-build conda-verify
+          conda install -c conda-forge ninja
       - name: Build Khiops Conda Package
         env:
-          CWD: ${{ github.workspace }}
+          KHIOPS_REVISION: ${{ env.KHIOPS_REVISION }}
         run: |
           mkdir build
           conda build --output-folder build packaging/conda
