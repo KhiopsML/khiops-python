@@ -12,7 +12,7 @@ build:
   entry_points:
     - kh-status = khiops.tools:kh_status_entry_point
     - pk-status = khiops.tools:pk_status_entry_point  # deprecated
->>>>>>> ddbbdde (Add entry points to the Conda recipe)
+    - kh-samples = khiops.tools:kh_samples_entry_point
   number: 0
 
 # Note for OSX ARM 64:
