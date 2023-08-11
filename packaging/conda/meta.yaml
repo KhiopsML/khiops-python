@@ -7,13 +7,15 @@ source:
   path: ../../
 
 build:
-  script_env:
-    - CWD
   number: 0
 
+# Note for OSX ARM 64:
+# - We impose mpich <=3.3.32 until a release with the fix for
+#   the bug https://github.com/pmodels/mpich/issues/6619
 requirements:
   build:
-    - mpich # [not win]
+    - mpich # [linux or osx and x86]
+    - mpich <=3.3.2 # [arm64]
     - msmpi # [win]
     - cmake
     - ninja # [win]
@@ -21,11 +23,13 @@ requirements:
     - python
     - setuptools
   host:
-    - mpich # [not win]
+    - mpich # [linux or osx and x86]
+    - mpich <=3.3.2 # [arm64]
     - msmpi # [win]
     - python
   run:
-    - mpich # [not win]
+    - mpich # [linux or osx and x86]
+    - mpich <=3.3.2 # [arm64]
     - msmpi # [win]
     - python
     - pandas >=0.25.3

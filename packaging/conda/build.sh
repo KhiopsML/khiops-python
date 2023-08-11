@@ -3,10 +3,11 @@
 # Echo all output
 set -x
 
-cp -R $CWD/khiops_bin/{src,test} .
-cp -R $CWD/khiops_bin/packaging/common ./packaging/
-cp $CWD/khiops_bin/{CMakeLists.txt,CMakePresets.json,LICENSE} .
-cp $CWD/khiops_bin/packaging/{install,packaging}.cmake ./packaging/
+
+cp -R $(pwd)/khiops_bin/{src,test} .
+cp -R $(pwd)/khiops_bin/packaging/common ./packaging/
+cp $(pwd)/khiops_bin/{CMakeLists.txt,CMakePresets.json,LICENSE} .
+cp $(pwd)/khiops_bin/packaging/{install,packaging}.cmake ./packaging/
 
 # On macOS, we have to build with the compiler outside conda. With teh conda's clang the following error occurs:
 # ld: unsupported tapi file type '!tapi-tbd' in YAML file '/Applications/Xcode_14.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libSystem.tbd' for architecture x86_64
