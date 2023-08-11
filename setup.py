@@ -24,6 +24,7 @@ if __name__ == "__main__":
             "console_scripts": [
                 "kh-status=khiops.tools:kh_status_entry_point",
                 "pk-status=khiops.tools:pk_status_entry_point",  # deprecated
+                "kh-samples=khiops.tools:kh_samples_entry_point",
             ]
         },
         packages=find_packages(

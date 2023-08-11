@@ -816,14 +816,25 @@ def filter_samples(sample_list, include, exact_match):
     return filtered_samples
 
 
-# Run the samples if executed as a script
-if __name__ == "__main__":
+def build_argument_parser(prog, description):
+    """Samples argument parser builder function
+
+    Parameters
+    ----------
+    prog : str
+        Name of the program, as required by the argument parser.
+    description : str
+        Description of the program, as required by the argument parser.
+
+    Returns
+    -------
+    ArgumentParser
+        Argument parser object.
+    """
     parser = argparse.ArgumentParser(
-        prog="python samples_sklearn.py",
+        prog=prog,
         formatter_class=argparse.RawTextHelpFormatter,
-        description=(
-            "Examples of use of the sklearn submodule of the Khiops Python library"
-        ),
+        description=description,
     )
     parser.add_argument(
         "-d",
@@ -840,4 +851,15 @@ if __name__ == "__main__":
         action="store_true",
         help="Matches with --include are exact",
     )
-    execute_samples(parser.parse_args())
+    return parser
+
+
+# Run the samples if executed as a script
+if __name__ == "__main__":
+    argument_parser = build_argument_parser(
+        prog="python samples.py",
+        description=(
+            "Examples of use of the sklearn submodule of the Khiops Python library"
+        ),
+    )
+    execute_samples(argument_parser.parse_args())
