@@ -22,7 +22,6 @@ if __name__ == "__main__":
         license_files=["LICENSE.md"],
         entry_points={
             "console_scripts": [
-                "convert-kh10=khiops.tools:convert_kh10_entry_point",
                 "kh-status=khiops.tools:kh_status_entry_point",
                 "pk-status=khiops.tools:pk_status_entry_point",  # deprecated
             ]

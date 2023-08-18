@@ -63,30 +63,6 @@ The requirements of the normal installation plus:
 - s3 : [boto3][boto3] (>=1.17.39)
 - gcs : [google-cloud-storage][gcs] (>=1.37.0)
 
-
-### Migrating from Khiops 9 to Khiops 10
-If you have script using the Khiops 9 module you can fix most, if not all,  problems with the
-script `convert-kh10` installed with the Khiops Python library.
-```
-usage: convert-kh10 [-h] INPYFILE OUTPYFILE
-
-converts a Khiops 9 script to a Khiops 10 script
-
-positional arguments:
-  INPYFILE    input python script path
-  OUTPYFILE   output python script path
-
-optional arguments:
-  -h, --help  show this help message and exit
-
-```
-Usually after installation this script is available in the user's `PATH` and its precise
-location can be found with `pip show -f khiops`. If for any reason you can't find the
-script an alternative is to open a python terminal and execute:
-```python
->>> from khiops import tools
->>> tools.convert_kh10("my_input.py", "my_output.py")
-```
 ## License
 See the [LICENSE.md](./LICENSE.md) file of this repository or in the `-info` directory
 of the python package installation.
