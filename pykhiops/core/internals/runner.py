@@ -18,6 +18,7 @@ import tempfile
 import uuid
 import warnings
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import pykhiops
 import pykhiops.core.internals.filesystems as fs
@@ -671,14 +672,19 @@ class PyKhiopsRunner(ABC):
 class PyKhiopsLocalRunner(PyKhiopsRunner):
     r"""Implementation of a local Khiops runner
 
-    Requires the Khiops desktop app installed in the local machine
+    Requires either:
+    - This package installed through Conda and run from a Conda environment
+    - Or, otherwise, the Khiops desktop app installed on the local machine
 
     Default values for ``samples_dir``:
 
     - The value of the ``KHIOPS_SAMPLES_DIR`` environment variable
     - Otherwise:
-        - Windows: ``%KHIOPS_HOME%\samples`` or ``%KhiopsHome%\samples``
-        - Linux: ``/opt/khiops/samples``
+        - Windows:
+          - ``%KHIOPS_HOME\samples%`` if ``KHIOPS_HOME`` is defined
+          - otherwise, ``%KhiopsHome\samples%`` if ``KhiopsHome`` is defined
+          - otherwise, ``%USERPROFILE%\khiops\samples``
+        - Linux and Mac OS: ``$HOME/khiops/samples``
     """
 
     def __init__(self):
@@ -929,10 +935,11 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
     def khiops_bin_dir(self):
         r"""str: Path of the directory containing Khiops' binaries
 
-        Default values:
+        Default values (for system-wide installations only):
 
             - Windows: ``%KHIOPS_HOME%\bin`` or ``%KhiopsHome%\bin``
             - Linux: ``/usr/bin``
+            - Mac OS: ``/usr/local/bin``
 
 
         Raises
@@ -1034,7 +1041,12 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
         # Take the value of an environment variable in priority
         if "KHIOPS_SAMPLES_DIR" in os.environ:
             self._set_samples_dir(os.environ["KHIOPS_SAMPLES_DIR"])
-        # Take the default value for windows systems ("KhiopsHome" to support Khiops 9)
+        # The samples location of Windows systems is
+        # - %KHIOPS_HOME%\samples if the `KHIOPS_HOME` environment variable is
+        #   defined
+        # - otherwise, %KhiopsHome%\samples if the `KhiopsHome` environment
+        #   variable is defined
+        # - otherwise, %USERPROFILE%\khiops\samples" by default
         elif platform.system() == "Windows":
             if "KHIOPS_HOME" in os.environ:
                 self._set_samples_dir(
@@ -1043,13 +1055,18 @@ class PyKhiopsLocalRunner(PyKhiopsRunner):
             elif "KhiopsHome" in os.environ:
                 self._set_samples_dir(os.path.join(os.environ["KhiopsHome"], "samples"))
             else:
-                raise PyKhiopsEnvironmentError(
-                    "No environment variable named 'KHIOPS_HOME' or 'KhiopsHome' found,"
-                    " verify your Khiops installation"
-                )
-        # The default samples location in Linux is /opt/khiops/samples
+                self._set_samples_dir(os.path.join(Path.home(), "khiops", "samples"))
+        # The default samples location on Unix systems is:
+        # $HOME/khiops/samples on Linux and Mac OS
         else:
-            self._set_samples_dir("/opt/khiops/samples")
+            self._set_samples_dir(os.path.join(Path.home(), "khiops", "samples"))
+
+        # Warn the user if the initialized samples directory does not exist
+        if not os.path.exists(self.samples_dir):
+            warnings.warn(
+                f"The initialized samples directory '{self.samples_dir}' does "
+                "not exist."
+            )
 
     def _set_samples_dir(self, samples_dir):
         # Check existence samples directory if it is a local path

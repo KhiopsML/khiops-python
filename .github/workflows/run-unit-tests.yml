@@ -1,8 +1,13 @@
 ---
 name: Run Unit Tests
+env:
+  DEFAULT_SAMPLES_REVISION: main
 on:
   workflow_dispatch:
     inputs:
+      samples-revision:
+        default: main
+        description: Git tag, branch or commit for the khiops-samples repository
       run-long-tests:
         type: boolean
         required: false
@@ -29,17 +34,21 @@ jobs:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
+      # We move SAMPLES_REVISION to the environment so that we can use
+      # them in both push and workflow_dispatch events
+      - name: Move SAMPLES_REVISION to the environment (push event)
+        if: github.event_name == 'push'
+        run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
+      - name: Move SAMPLES_REVISION to the environment (workflow_dispatch event)
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
         uses: actions/checkout@v3
         with:
           repository: khiopsml/khiops-samples
-          ref: v10.1.1
+          ref: ${{ env.SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
-      - name: Move Khiops samples where they are expected
-        run: |
-          mkdir -p /opt/khiops
-          mv khiops-samples /opt/khiops/samples
       - name: Setup and Install Test Requirements
         if: success() || failure()
         run: |
@@ -56,6 +65,8 @@ jobs:
         if: github.ref != 'dev' && github.ref != 'main' && inputs.run-long-tests != 'true'
         run: echo "UNITTEST_ONLY_SHORT_TESTS=true" >> "$GITHUB_ENV"
       - name: Run Unit Tests
+        env:
+          KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
         run: |
           # This is needed so that the Git tag is parsed and the khiops-python
           # version is  # retrieved
