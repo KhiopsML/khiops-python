@@ -9,6 +9,10 @@ source:
 build:
   script_env:
     - KHIOPS_REVISION=dev
+  entry_points:
+    - kh-status = khiops.tools:kh_status_entry_point
+    - pk-status = khiops.tools:pk_status_entry_point  # deprecated
+>>>>>>> ddbbdde (Add entry points to the Conda recipe)
   number: 0
 
 # Note for OSX ARM 64:
