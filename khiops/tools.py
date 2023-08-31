@@ -38,16 +38,26 @@ def pk_status_entry_point():  # pragma: no cover
 
 def kh_status_entry_point():  # pragma: no cover
     """Entry point of the kh-status command"""
-    try:
-        kh.get_runner().print_status()
-        print("\nKhiops Python installation OK")
-        sys.exit(0)
-    except kh.KhiopsEnvironmentError as error:
-        print(
-            f"Khiops Python backend ERROR: {error}"
-            "\nCheck https://www.khiops.com to install the Khiops app in your computer"
-        )
-        sys.exit(1)
+
+    # Catch runtime warnings
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        try:
+            kh.get_runner().print_status()
+            if len(caught_warnings) == 0:
+                print("\nKhiops Python installation OK")
+            else:
+                print("\nKhiops Python installation OK, with warnings:")
+                for warning in caught_warnings:
+                    print(f"Khiops Python warning: {warning.message}")
+            warnings.resetwarnings()
+            sys.exit(0)
+        except kh.KhiopsEnvironmentError as error:
+            print(
+                f"Khiops Python backend ERROR: {error}"
+                "\nCheck https://www.khiops.com to set-up Khiops on your computer"
+            )
+            sys.exit(1)
 
 
 def kh_samples_entry_point():  # pragma: no cover

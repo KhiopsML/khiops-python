@@ -1060,13 +1060,6 @@ class KhiopsLocalRunner(KhiopsRunner):
         else:
             self._set_samples_dir(os.path.join(Path.home(), "khiops_data", "samples"))
 
-        # Warn the user if the initialized samples directory does not exist
-        if not os.path.exists(self.samples_dir):
-            warnings.warn(
-                f"The initialized samples directory '{self.samples_dir}' does "
-                "not exist."
-            )
-
     def _set_samples_dir(self, samples_dir):
         # Check existence samples directory if it is a local path
         if fs.is_local_resource(samples_dir):
