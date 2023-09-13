@@ -6,14 +6,12 @@ on:
       run_long_tests:
         type: boolean
         required: false
-        default: 'false'
+        default: false
         description: Execute long tests
-  push:
+  pull_request:
 jobs:
   run-unit-tests:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     container:
       image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
     permissions:

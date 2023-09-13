@@ -2,12 +2,10 @@
 name: Build Pip Package
 on:
   workflow_dispatch:
-  push:
+  pull_request:
 jobs:
   build-and-test-pip-package:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     container:
       image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
     permissions:
