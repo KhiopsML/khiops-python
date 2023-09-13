@@ -1,10 +1,10 @@
 # Arguments
 ARG KHIOPSDEV_OS
 FROM ghcr.io/khiopsml/khiops/khiopsdev-${KHIOPSDEV_OS}:latest
-LABEL maintainer="136721202+popescu-v@users.noreply.github.com"
-LABEL description="Contains a Khiops installation"
+LABEL maintainer="khiops.team@orange.com"
+LABEL description="Container for the development of khiops-python"
 
-#  Configure CMake
+# Configure CMake
 # Build Khiops; add KNI to make cmake --install happy
 # Set mpich for default MPI
 ARG KHIOPS_REVISION
@@ -21,7 +21,7 @@ RUN true \
        --target MODL MODL_Coclustering KhiopsNativeInterface \
   && cmake --install ./build/linux-gcc-release \
   && cd .. \
-  # Make sure that MPI is mpich
+  # Make sure that MPI is mpich \
   && update-alternatives --set mpirun /usr/bin/mpirun.mpich \
   # Clean build files \
   && rm -fr /var/lib/apt/lists/* \

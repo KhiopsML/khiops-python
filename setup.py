@@ -17,8 +17,8 @@ if __name__ == "__main__":
         version=versioneer.get_version(),
         url="https://www.khiops.com",
         description="Python library for the Khiops AutoML suite",
-        maintainer="Felipe Olmos",
-        maintainer_email="92923444+felipe-olmos-orange@users.noreply.github.com",
+        maintainer="The Khiops Team",
+        maintainer_email="khiops.team@orange.com",
         license_files=["LICENSE.md"],
         entry_points={
             "console_scripts": [
