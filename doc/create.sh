@@ -1,8 +1,13 @@
 # !/usr/bin/env bash
-set -e
+set -euo pipefail
 
 # Add the khiops directory to the Python path
-export PYTHONPATH="$PYTHONPATH:.."
+if [[ -z "${PYTHONPATH+x}" ]]
+then
+  export PYTHONPATH=".."
+else
+  export PYTHONPATH="$PYTHONPATH:.."
+fi
 
 # Check command existence
 command_requirements="tar git make python zip"
@@ -16,11 +21,11 @@ do
 done
 
 echo "Obtaining khiops-python-tutorial"
-khiops_python_tutorial_repo="git@github.com:KhiopsML/khiops-python-tutorial"
+khiops_python_tutorial_repo="git@github.com:KhiopsML/khiops-python-tutorial.git"
 khiops_python_tutorial_repo_branch="main"
-git archive --prefix=khiops-python-tutorial/ --format=tar \
-   --remote="$khiops_python_tutorial_repo" "$khiops_python_tutorial_repo_branch" |\
-  tar -xf -
+git clone --depth 1 --branch="$khiops_python_tutorial_repo_branch" \
+    "$khiops_python_tutorial_repo" \
+    && rm -rf ./khiops-python-tutorial/.git
 
 echo "Creating coursework"
 tutorials_dir="./tutorials"
