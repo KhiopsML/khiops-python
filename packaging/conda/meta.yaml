@@ -9,11 +9,24 @@ source:
 build:
   script_env:
     - KHIOPS_REVISION=dev
+    # Variables for siging the MODL executables in osx-arm64
+    - KHIOPS_APPLE_CERTIFICATE_BASE64      # [osx and arm64]
+    - KHIOPS_APPLE_CERTIFICATE_PASSWORD    # [osx and arm64]
+    - KHIOPS_APPLE_CERTIFICATE_COMMON_NAME # [osx and arm64]
+    - KHIOPS_APPLE_CERTIFICATE_ID          # [osx and arm64]
+    - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD   # [osx and arm64]
   entry_points:
     - kh-status = khiops.tools:kh_status_entry_point
-    - pk-status = khiops.tools:pk_status_entry_point  # deprecated
     - kh-samples = khiops.tools:kh_samples_entry_point
+    - pk-status = khiops.tools:pk_status_entry_point   # deprecated
   number: 0
+  # Binary relocation of MODL and MODL_Coclustering is done in build.sh script
+  # This is to be able to sign it, see the script for more details.
+  binary_relocation:                     # [osx and arm64]
+    - bin/kh-status                      # [osx and arm64]
+    - bin/kh-samples                     # [osx and arm64]
+    - bin/pk-status                      # [osx and arm64]
+  detect_binary_files_with_prefix: false # [osx and arm64]
 
 # Note for OSX ARM 64:
 # - We impose mpich <=3.3.32 until a release with the fix for
@@ -21,7 +34,7 @@ build:
 requirements:
   build:
     - mpich # [linux or osx and x86]
-    - mpich <=3.3.2 # [arm64]
+    - mpich <=3.3.2 # [osx and arm64]
     - msmpi # [win]
     - cmake
     - ninja # [win]
@@ -30,12 +43,12 @@ requirements:
     - setuptools
   host:
     - mpich # [linux or osx and x86]
-    - mpich <=3.3.2 # [arm64]
+    - mpich <=3.3.2 # [osx and arm64]
     - msmpi # [win]
     - python
   run:
     - mpich # [linux or osx and x86]
-    - mpich <=3.3.2 # [arm64]
+    - mpich <=3.3.2 # [osx and arm64]
     - msmpi # [win]
     - python
     - pandas >=0.25.3
@@ -50,6 +63,7 @@ outputs:
       commands:
         - MODL -v
         - MODL_Coclustering -v
+        - kh-status
       imports:
         - khiops.core.api
         - khiops.sklearn.estimators
