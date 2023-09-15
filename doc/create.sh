@@ -1,4 +1,4 @@
-# !/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # Add the khiops directory to the Python path

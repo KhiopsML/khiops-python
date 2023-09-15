@@ -9,7 +9,7 @@ source:
 build:
   script_env:
     - KHIOPS_REVISION=dev
-    # Variables for siging the MODL executables in osx-arm64
+    # Variables for signing the MODL executables in osx-arm64
     - KHIOPS_APPLE_CERTIFICATE_BASE64      # [osx and arm64]
     - KHIOPS_APPLE_CERTIFICATE_PASSWORD    # [osx and arm64]
     - KHIOPS_APPLE_CERTIFICATE_COMMON_NAME # [osx and arm64]
@@ -33,25 +33,25 @@ build:
 #   the bug https://github.com/pmodels/mpich/issues/6619
 requirements:
   build:
-    - mpich # [linux or osx and x86]
-    - mpich <=3.3.2 # [osx and arm64]
-    - msmpi # [win]
     - cmake
+    - mpich         # [linux or osx and x86]
+    - mpich <=3.3.2 # [osx and arm64]
+    - msmpi         # [win]
     - ninja # [win]
-    - {{ compiler('cxx') }}
     - python
     - setuptools
+    - {{ compiler('cxx') }}
   host:
-    - mpich # [linux or osx and x86]
+    - mpich         # [linux or osx and x86]
     - mpich <=3.3.2 # [osx and arm64]
-    - msmpi # [win]
+    - msmpi         # [win]
     - python
   run:
-    - mpich # [linux or osx and x86]
+    - mpich         # [linux or osx and x86]
     - mpich <=3.3.2 # [osx and arm64]
-    - msmpi # [win]
-    - python
+    - msmpi         # [win]
     - pandas >=0.25.3
+    - python
     - scikit-learn >=0.22.2
   run_constrained:
     - boto3 >=1.17.39
