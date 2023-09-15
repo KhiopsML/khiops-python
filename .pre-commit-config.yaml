@@ -28,6 +28,10 @@ repos:
         args: [--verbose]
       - id: check-github-actions
         args: [--verbose]
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shellcheck
   - repo: local
     hooks:
       - id: samples-generation

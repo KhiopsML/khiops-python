@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 
 # Set-up the shell to behave more like a general-purpose programming language
 set -euo pipefail
@@ -6,7 +6,7 @@ set -euo pipefail
 # Clone Khiops sources (we change working directory there)
 git clone --depth 1 https://github.com/khiopsml/khiops.git khiops-core
 cd khiops-core
-git checkout ${KHIOPS_REVISION}
+git checkout "$KHIOPS_REVISION"
 
 # Copy License file
 cp ./LICENSE ..
@@ -23,8 +23,8 @@ cmake --preset $CMAKE_PRESET -DBUILD_JARS=OFF
 cmake --build --preset $CMAKE_PRESET --parallel --target MODL MODL_Coclustering
 
 # Copy the MODL binaries to the Conda PREFIX path
-cp ./build/$CMAKE_PRESET/bin/MODL $PREFIX/bin
-cp ./build/$CMAKE_PRESET/bin/MODL_Coclustering $PREFIX/bin
+cp "./build/$CMAKE_PRESET/bin/MODL" "$PREFIX/bin"
+cp "./build/$CMAKE_PRESET/bin/MODL_Coclustering" "$PREFIX/bin"
 
 
 # Build the Khiops Python package in the base directory
@@ -42,11 +42,11 @@ $PYTHON -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-
 # application pressing on "Allow" works).
 #
 # However, in the default settings, `conda build` relocalizes the executable by changing rpath of
-# the library paths at $PREFIX by relative ones. But in doing so in nullifies any signature. So we
+# the library paths at $PREFIX by relative ones and in doing so it nullifies any signature. So we
 # do ourselves this procedure first and then sign the binary.
 #
-# Note that in meta.yaml we have the following options for osx-arm64 we have custom
-# build.binary_relocation and build.detect_binary_files_with_prefix option
+# Note that in meta.yaml for osx-arm64 we have custom build.binary_relocation and
+# build.detect_binary_files_with_prefix option
 #
 # This part must be executed in a root machine to be non-interactive (eg. GitHub runner)
 # It also needs the following global variables:
@@ -55,17 +55,17 @@ $PYTHON -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-
 # - KHIOPS_APPLE_CERTIFICATE_BASE64: The identity file .p12 (certificate + private key) in base64
 # - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD: Password to decrypt the certificate
 #
-if [[ "$(uname)" == "Darwin" && $(uname -m) == "arm64" ]]
+if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "arm64" ]]
 then
   # Delete the rpath of each executable
   # Delete two times for MODL because for some reason it is there 2 times
-  install_name_tool -delete_rpath $PREFIX/lib $PREFIX/bin/MODL
-  install_name_tool -delete_rpath $PREFIX/lib $PREFIX/bin/MODL
-  install_name_tool -delete_rpath $PREFIX/lib $PREFIX/bin/MODL_Coclustering
+  install_name_tool -delete_rpath "$PREFIX/lib" "$PREFIX/bin/MODL"
+  install_name_tool -delete_rpath "$PREFIX/lib" "$PREFIX/bin/MODL"
+  install_name_tool -delete_rpath "$PREFIX/lib" "$PREFIX/bin/MODL_Coclustering"
 
   # Add the relative rpath as conda build would
-  install_name_tool -add_rpath "@loader_path/../lib" $PREFIX/bin/MODL
-  install_name_tool -add_rpath "@loader_path/../lib" $PREFIX/bin/MODL_Coclustering
+  install_name_tool -add_rpath "@loader_path/../lib" "$PREFIX/bin/MODL"
+  install_name_tool -add_rpath "@loader_path/../lib" "$PREFIX/bin/MODL_Coclustering"
 
   # Keychain setup slightly modified from: https://stackoverflow.com/a/68577995
   # Before importing identity
@@ -76,12 +76,13 @@ then
   # - Unlock the temporary keychain
   sudo security list-keychains -d user -s login.keychain
   sudo security create-keychain -p "$KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD" kh-tmp.keychain
-  sudo security list-keychains -d user -s kh-tmp.keychain $(security list-keychains -d user | sed s/\"//g)
+  sudo security list-keychains -d user -s kh-tmp.keychain \
+    "$(security list-keychains -d user | sed s/\"//g)"
   sudo security set-keychain-settings kh-tmp.keychain
   sudo security unlock-keychain -p "$KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD" kh-tmp.keychain
 
   # Add identity (certificate + private key) to keychain
-  echo $KHIOPS_APPLE_CERTIFICATE_BASE64 \
+  echo "$KHIOPS_APPLE_CERTIFICATE_BASE64" \
     | base64 --decode -i - -o kh-cert.p12
   sudo security import kh-cert.p12 \
     -k kh-tmp.keychain \
@@ -96,10 +97,10 @@ then
     -t private kh-tmp.keychain
 
   # Sign the MODL executable and check
-  codesign --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" $PREFIX/bin/MODL
-  codesign --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" $PREFIX/bin/MODL_Coclustering
-  codesign -d -vvv $PREFIX/bin/MODL
-  codesign -d -vvv $PREFIX/bin/MODL_Coclustering
+  codesign --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" "$PREFIX/bin/MODL"
+  codesign --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" "$PREFIX/bin/MODL_Coclustering"
+  codesign -d -vvv "$PREFIX/bin/MODL"
+  codesign -d -vvv "$PREFIX/bin/MODL_Coclustering"
 
   # Restore the login keychain as default
   sudo security delete-keychain kh-tmp.keychain

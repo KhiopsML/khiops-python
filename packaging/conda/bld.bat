@@ -21,7 +21,7 @@ copy /y .\khiops_bin\packaging\packaging.cmake .\packaging\
 
 REM Build the Khiops binaries
 cmake --preset windows-msvc-release -DBUILD_JARS=OFF -DTESTING=OFF
-cmake --build --preset windows-msvc-release --parallel --target MODL --target MODL_Coclustering
+cmake --build --preset windows-msvc-release --parallel --target MODL MODL_Coclustering
 
 REM Copy the MODL binaries to the Conda PREFIX path
 mkdir %PREFIX%\bin
