@@ -432,11 +432,11 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         bad_spec = AnotherType()
         y = "class"
         expected_msg = type_error_message(
-            "X", bad_spec, pd.DataFrame, tuple, Sequence, Mapping
+            "X", bad_spec, "array-like", tuple, Sequence, Mapping
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
-    def test_y_type_must_be_str_or_series(self):
+    def test_y_type_must_be_str_or_array_like_1d(self):
         """Test that `.Dataset` init raises TypeError when y has a wrong type"""
         # Test when X is a tuple: expects str
         table_path = os.path.join(self.output_dir, "Reviews.csv")
@@ -447,12 +447,9 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = type_error_message("y", bad_y, str)
         self.assert_dataset_fails(tuple_spec, bad_y, TypeError, expected_msg)
 
-        # Test when X is a dataframe: expects pd.Series
-        bad_y = "class"
-        expected_msg = (
-            type_error_message("y", bad_y, pd.Series)
-            + " (must be coherent with X of type pandas.DataFrame)"
-        )
+        # Test when X is a dataframe: expects array-like
+        bad_y = AnotherType()
+        expected_msg = type_error_message("y", bad_y, "array-like")
         self.assert_dataset_fails(dataframe, bad_y, TypeError, expected_msg)
 
     #########################
@@ -569,14 +566,14 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = "Table input tuple at X['tables']['D'] must have size 2 not 4"
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
-    def test_dict_spec_source_table_type_must_be_df_or_str(self):
+    def test_dict_spec_source_table_type_must_be_array_like_or_str(self):
         """Test Dataset raising TypeError when a table entry is not str nor DataFrame"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["tables"]["D"] = (AnotherType(), bad_spec["tables"]["D"][-1])
         expected_msg = type_error_message(
             "Table source at X['tables']['D']",
             bad_spec["tables"]["D"][0],
-            pd.DataFrame,
+            "array-like",
             str,
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
@@ -828,7 +825,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
                 target_column=AnotherType(),
             )
         output_error_msg = str(context.exception)
-        expected_msg = type_error_message("target_column", AnotherType(), pd.Series)
+        expected_msg = type_error_message("target_column", AnotherType(), "array-like")
         self.assertEqual(output_error_msg, expected_msg)
 
     def test_pandas_table_fails_if_target_column_is_already_in_the_features(self):

@@ -13,6 +13,8 @@ from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
+from sklearn.utils import check_array
+from sklearn.utils.validation import column_or_1d
 
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
@@ -137,8 +139,8 @@ class Dataset:
         ``True`` if the vector ``y`` should be considered as a categorical variable. If
         ``False`` it is considered as numeric. Ignored if ``y`` is ``None``.
     key : str
-        The name of the key column.
-        **Deprecated:** Will be removed in Khiops Python 11.
+        The name of the key column for all tables.
+        **Deprecated:** Will be removed in pyKhiops 11.
     """
 
     def __init__(self, X, y=None, categorical_target=True, key=None):
@@ -150,37 +152,60 @@ class Dataset:
         self.header = None
 
         # Initialization from different types of input "X"
+        # A single pandas dataframe
         if isinstance(X, pd.DataFrame):
             self._init_tables_from_dataframe(
                 X, y, categorical_target=categorical_target
             )
+        # A single numpy array (or compatible object)
+        elif hasattr(X, "__array__"):
+            self._init_tables_from_numpy_array(
+                X,
+                y,
+                categorical_target=categorical_target,
+            )
+        # A tuple spec
         elif isinstance(X, tuple):
             warnings.warn(
                 deprecation_message(
                     "Tuple dataset input",
                     "11.0.0",
-                    replacement="dict dataset input",
+                    replacement="dict dataset spec",
                     quote=False,
                 ),
                 stacklevel=3,
             )
             self._init_tables_from_tuple(X, y, categorical_target=categorical_target)
+        # A sequence
+        # We try first for compatible python arrays then the deprecated sequences spec
         elif is_list_like(X):
-            warnings.warn(
-                deprecation_message(
-                    "List dataset input",
-                    "11.0.0",
-                    replacement="dict dataset input",
-                    quote=False,
-                ),
-                stacklevel=3,
-            )
-            self._init_tables_from_sequence(X, y, key=key)
+            # Try to transform to a numerical array with sklearn's check_array
+            # On failure we try the old deprecated sequence interface
+            # When the old list interface is eliminated this will considerably reduce
+            # this branch's code
+            try:
+                X_checked = check_array(X, ensure_2d=True, force_all_finite=False)
+                self._init_tables_from_numpy_array(
+                    X_checked, y, categorical_target=categorical_target
+                )
+            except ValueError:
+                warnings.warn(
+                    deprecation_message(
+                        "List dataset input",
+                        "11.0.0",
+                        replacement="dict dataset spec",
+                        quote=False,
+                    ),
+                    stacklevel=3,
+                )
+                self._init_tables_from_sequence(X, y, key=key)
+        # A dict specification
         elif is_dict_like(X):
             self._init_tables_from_mapping(X, y)
+        # Fail if X is not recognized
         else:
             raise TypeError(
-                type_error_message("X", X, pd.DataFrame, tuple, Sequence, Mapping)
+                type_error_message("X", X, "array-like", tuple, Sequence, Mapping)
             )
 
         assert self.main_table is not None, "'main_table' is 'None' after init"
@@ -194,15 +219,27 @@ class Dataset:
     def _init_tables_from_dataframe(self, X, y=None, categorical_target=True):
         """Initializes the dataset from a 'X' of type pandas.DataFrame"""
         assert isinstance(X, pd.DataFrame), "'X' must be a pandas.DataFrame"
-
-        if y is not None and not isinstance(y, pd.Series):
-            raise TypeError(
-                type_error_message("y", y, pd.Series)
-                + " (must be coherent with X of type pandas.DataFrame)"
-            )
-
+        if y is not None and not hasattr(y, "__array__"):
+            raise TypeError(type_error_message("y", y, "array-like"))
         self.main_table = PandasTable(
             "main_table", X, target_column=y, categorical_target=categorical_target
+        )
+        self.secondary_tables = []
+
+    def _init_tables_from_numpy_array(self, X, y=None, categorical_target=True):
+        assert hasattr(
+            X, "__array__"
+        ), "'X' must be a numpy.ndarray or implement __array__"
+
+        if y is not None:
+            y_checked = column_or_1d(y, warn=True)
+        else:
+            y_checked = None
+        self.main_table = NumpyTable(
+            "main_table",
+            X,
+            target_column=y_checked,
+            categorical_target=categorical_target,
         )
         self.secondary_tables = []
 
@@ -295,15 +332,9 @@ class Dataset:
         # Check the type of y
         if y is not None:
             if isinstance(X[0], str) and not isinstance(y, str):
-                raise TypeError(
-                    type_error_message("y", y, str)
-                    + " (must be coherent with X's type(s))"
-                )
+                raise TypeError(type_error_message("y", y, str))
             elif isinstance(X[0], pd.DataFrame) and not isinstance(y, pd.Series):
-                raise TypeError(
-                    type_error_message("y", y, pd.Series)
-                    + " (must be coherent with X's type(s))"
-                )
+                raise TypeError(type_error_message("y", y, pd.Series))
 
         # Check the type of key
         if not is_list_like(key) and not isinstance(key, str):
@@ -374,7 +405,7 @@ class Dataset:
                         )
                     )
         # Case of dataframes
-        else:
+        elif isinstance(main_table_source, pd.DataFrame):
             self.main_table = PandasTable(
                 main_table_name,
                 main_table_source,
@@ -388,8 +419,23 @@ class Dataset:
                     self.secondary_tables.append(
                         PandasTable(table_name, table_source, key=table_key)
                     )
+        # Case of numpyarray
+        else:
+            self.main_table = NumpyTable(
+                main_table_name,
+                main_table_source,
+                target_column=y,
+                categorical_target=categorical_target,
+            )
+            if len(X["tables"]) > 1:
+                raise ValueError(
+                    "Multi-table schemas are only allowed "
+                    "with pandas dataframe source tables."
+                )
+            self.secondary_tables = []
 
         if self.secondary_tables:
+            assert not isinstance(self.main_table, NumpyTable)
             if "relations" not in X:
                 main_table_name = self.main_table.name
                 self.relations = [
@@ -517,12 +563,14 @@ class Dataset:
                     f"must have size 2 not {len(table_input)}"
                 )
             table_source, table_key = table_input
-            if not isinstance(table_source, (pd.DataFrame, str)):
+            if not isinstance(table_source, (pd.DataFrame, str)) and not hasattr(
+                table_source, "__array__"
+            ):
                 raise TypeError(
                     type_error_message(
                         f"Table source at X['tables']['{table_name}']",
                         table_source,
-                        pd.DataFrame,
+                        "array-like",
                         str,
                     )
                 )
@@ -637,15 +685,18 @@ class Dataset:
                     + " (X's tables are of type str [file paths])"
                 )
 
-    def is_dataframe_based(self):
-        """Tests whether the dataset is constituted of pandas.DataFrame tables
+    def is_in_memory(self):
+        """Tests whether the dataset is in memory
+
+        A dataset is in memory if it is constituted either of only pandas.DataFrame
+        tables or numpy.ndarray tables.
 
         Returns
         -------
         bool
             `True` if the dataset is constituted of pandas.DataFrame tables.
         """
-        return isinstance(self.main_table, PandasTable)
+        return isinstance(self.main_table, (PandasTable, NumpyTable))
 
     def is_multitable(self):
         """Tests whether the dataset is a multi-table one
@@ -665,7 +716,7 @@ class Dataset:
         dataset_spec = {}
         dataset_spec["main_table"] = self.main_table.name
         dataset_spec["tables"] = {}
-        if self.is_dataframe_based():
+        if self.is_in_memory():
             dataset_spec["tables"][self.main_table.name] = (
                 self.main_table.dataframe,
                 self.main_table.key,
@@ -705,7 +756,8 @@ class Dataset:
             root_dictionary.root = True
             table_names = [table.name for table in self.secondary_tables]
             tables_to_visit = [self.main_table.name]
-            for current_table in tables_to_visit:
+            while tables_to_visit:
+                current_table = tables_to_visit.pop(0)
                 for relation in self.relations:
                     parent_table, child_table = relation
                     if parent_table == current_table:
@@ -768,10 +820,12 @@ class Dataset:
         """The target column's type"""
         if self.main_table.target_column_id is None:
             raise ValueError("Target column is not set")
-        if self.is_dataframe_based():
+        if self.is_in_memory():
             return self.main_table.target_column.dtype
         else:
-            return self.main_table.dtypes[self.main_table.target_column_id]
+            return self.main_table.table_sample_df.dtypes[
+                self.main_table.target_column_id
+            ]
 
     def __repr__(self):
         return str(self.create_khiops_dictionary_domain())
@@ -780,21 +834,22 @@ class Dataset:
 class DatasetTable(ABC):
     """A generic dataset table"""
 
-    @abstractmethod
     def __init__(self, name, categorical_target=True, key=None):
         # Check input
         if not isinstance(name, str):
             raise TypeError(type_error_message("name", name, str))
         if not name:
-            raise ValueError("'name' is the empty string")
+            raise ValueError("'name' cannot be empty")
         if key is not None:
-            if not is_list_like(key) and not isinstance(key, str):
-                raise TypeError(type_error_message("key", key, str, "list-like"))
+            if not is_list_like(key) and not isinstance(key, (str, int)):
+                raise TypeError(type_error_message("key", key, str, int, "list-like"))
             if is_list_like(key):
-                for column_index, column_name in enumerate(key):
-                    if not isinstance(column_name, str):
+                for column_index, column_id in enumerate(key):
+                    if not isinstance(column_id, (str, int)):
                         raise TypeError(
-                            type_error_message(f"key[{column_index}]", column_name, str)
+                            type_error_message(
+                                f"key[{column_index}]", column_id, str, int
+                            )
                             + f" at table '{name}'"
                         )
 
@@ -807,13 +862,16 @@ class DatasetTable(ABC):
             self.key = [key]
         self.target_column_id = None
         self.column_ids = None
-        self.dtypes = None
+        self.khiops_types = None
+        self.n_samples = None
 
     def check_key(self):
         """Checks that the key columns exist"""
         if self.key is not None:
             if not is_list_like(self.key):
-                raise ValueError("'key' must be list-like")
+                raise TypeError(
+                    type_error_message("key", self.key, str, int, "list-like")
+                )
             for column_name in self.key:
                 if column_name not in self.column_ids:
                     raise ValueError(
@@ -824,6 +882,13 @@ class DatasetTable(ABC):
     def create_table_file_for_khiops(self, output_dir, sort=True):
         """Creates a copy of the table at the specified directory"""
 
+    def n_features(self):
+        """Returns the number of features of the table
+
+        The target column does not count.
+        """
+        return len(self.column_ids)
+
     def create_khiops_dictionary(self):
         """Creates a Khiops dictionary representing this table
 
@@ -832,10 +897,6 @@ class DatasetTable(ABC):
         `.Dictionary`:
             The Khiops Dictionary object describing this table's schema
 
-        Raises
-        ------
-        `ValueError`
-            If ``key`` is specified but there is no column with that name
         """
         assert self.column_ids is not None, "Dataset column list is None"
         assert self.key is None or is_list_like(self.key), "'key' is not list-like"
@@ -854,7 +915,7 @@ class DatasetTable(ABC):
             if isinstance(column_id, str):
                 variable.name = str(column_id)
             else:
-                assert isinstance(column_id, np.int64)
+                assert isinstance(column_id, (np.int64, int))
                 variable.name = f"Var{column_id}"
 
             # Set the type of the column/variable
@@ -870,7 +931,7 @@ class DatasetTable(ABC):
                     variable.type = "Numerical"
             # The rest of columns: Obtain the type from dtypes
             else:
-                variable.type = get_khiops_type(self.dtypes[column_id])
+                variable.type = self.khiops_types[column_id]
             dictionary.add_variable(variable)
         return dictionary
 
@@ -897,8 +958,8 @@ class PandasTable(DatasetTable):
         The data frame to be encapsulated.
     key : list-like of str, optional
         The names of the columns composing the key
-    target_column : `pandas.Series`, optional
-        The series representing the target column.
+    target_column : :external:term:`array-like`, optional
+        The array containing the target column.
     categorical_target : bool, default ``True``.
         ``True`` if the target column is categorical.
     """
@@ -915,22 +976,23 @@ class PandasTable(DatasetTable):
         if dataframe.shape[0] == 0:
             raise ValueError("'dataframe' is empty")
         if target_column is not None:
-            if not isinstance(target_column, pd.Series):
+            if not hasattr(target_column, "__array__"):
                 raise TypeError(
-                    type_error_message("target_column", target_column, pd.Series)
+                    type_error_message("target_column", target_column, "array-like")
                 )
-            if (
-                target_column.name is not None
-                and target_column.name in dataframe.columns
-            ):
-                raise ValueError(
-                    f"Target series name '{target_column.name}' "
-                    f"is already present in dataframe : {list(dataframe.columns)}"
-                )
+            if isinstance(target_column, pd.Series):
+                if (
+                    target_column.name is not None
+                    and target_column.name in dataframe.columns
+                ):
+                    raise ValueError(
+                        f"Target series name '{target_column.name}' "
+                        f"is already present in dataframe : {list(dataframe.columns)}"
+                    )
 
         # Initialize the attributes
         self.dataframe = dataframe
-        self.dtypes = self.dataframe.dtypes
+        self.n_samples = len(self.dataframe)
 
         # Initialize feature columns and verify their types
         self.column_ids = self.dataframe.columns.values
@@ -950,17 +1012,26 @@ class PandasTable(DatasetTable):
                     f"'{self.column_ids.dtype}'"
                 )
 
+        # Initialize Khiops types
+        self.khiops_types = {
+            column_id: get_khiops_type(self.dataframe.dtypes[column_id])
+            for column_id in self.column_ids
+        }
+
         # Initialize target column (if any)
         self.target_column = target_column
         if self.target_column is not None:
-            if self.target_column.name is None:
+            if (
+                isinstance(self.target_column, pd.Series)
+                and self.target_column.name is not None
+            ):
+                self.target_column_id = target_column.name
+            else:
                 if pd.api.types.is_integer_dtype(self.column_ids):
                     self.target_column_id = self.column_ids[-1] + 1
                 else:
                     assert pd.api.types.is_string_dtype(self.column_ids)
                     self.target_column_id = "UnknownTargetColumn"
-            else:
-                self.target_column_id = target_column.name
 
         # Check key integrity
         self.check_key()
@@ -982,16 +1053,50 @@ class PandasTable(DatasetTable):
             variable_name = f"Var{column_id}"
         return variable_name
 
+    def create_table_file_for_khiops(self, output_dir, sort=True):
+        assert not sort or self.key is not None, "Cannot sort table without a key"
+        assert not sort or is_list_like(
+            self.key
+        ), "Cannot sort table with a key is that is not list-like"
+        assert not sort or len(self.key) > 0, "Cannot sort table with an empty key"
+
+        # Create the output table resource object
+        output_table_path = fs.get_child_path(output_dir, f"{self.name}.txt")
+
+        # Write the output dataframe
+        output_dataframe = self._create_dataframe_copy()
+
+        # Sort by key if requested (as string)
+        if sort:
+            output_dataframe.sort_values(
+                by=self.key,
+                key=lambda array: array.astype("str"),
+                inplace=True,
+                kind="mergesort",
+            )
+
+        # Write the dataframe to an internal table file
+        with io.StringIO() as output_dataframe_stream:
+            write_internal_data_table(output_dataframe, output_dataframe_stream)
+            fs.write(
+                output_table_path, output_dataframe_stream.getvalue().encode("utf-8")
+            )
+
+        return output_table_path
+
     def _create_dataframe_copy(self):
         """Creates an in memory copy of the dataframe with the target column"""
         # Create a copy of the dataframe and add a copy of the target column (if any)
         if self.target_column is not None:
-            if self.target_column.name is None:
+            if (
+                isinstance(self.target_column, pd.Series)
+                and self.target_column.name is not None
+            ):
+                output_target_column = self.target_column.reset_index(drop=True)
+            else:
                 output_target_column = pd.Series(
                     self.target_column, name=self.target_column_id
                 )
-            else:
-                output_target_column = self.target_column.reset_index(drop=True)
             output_dataframe = pd.concat(
                 [self.dataframe.reset_index(drop=True), output_target_column],
                 axis=1,
@@ -1011,6 +1116,72 @@ class PandasTable(DatasetTable):
 
         return output_dataframe
 
+
+class NumpyTable(DatasetTable):
+    """Table encapsulating (X,y) pair with types (ndarray, ndarray)
+
+    Parameters
+    ----------
+    name : str
+        Name for the table.
+    array : :external:term:`array-like` of shape (n_samples, n_features_in)
+        The data frame to be encapsulated.
+    key : :external:term`array-like` of int, optional
+        The names of the columns composing the key
+    target_column : :external:term:`array-like` of shape (n_samples,) , optional
+        The series representing the target column.
+    categorical_target : bool, default ``True``.
+        ``True`` if the target column is categorical.
+    """
+
+    def __init__(
+        self, name, array, key=None, target_column=None, categorical_target=True
+    ):
+        # Call the parent method
+        super().__init__(name, key=key, categorical_target=categorical_target)
+
+        # Check the array's types and shape
+        if not hasattr(array, "__array__"):
+            raise TypeError(type_error_message("array", array, np.ndarray))
+
+        # Check (and potentially transform with a copy) the array's data
+        checked_array = check_array(array, ensure_2d=True, force_all_finite=False)
+
+        # Check the target's types and shape
+        if target_column is not None:
+            checked_target_column = column_or_1d(target_column, warn=True)
+
+        # Initialize the members
+        self.array = checked_array
+        self.column_ids = list(range(self.array.shape[1]))
+        self.target_column_id = self.array.shape[1]
+        if target_column is not None:
+            self.target_column = checked_target_column
+        else:
+            self.target_column = None
+        self.categorical_target = categorical_target
+        self.khiops_types = {
+            column_id: get_khiops_type(self.array.dtype)
+            for column_id in self.column_ids
+        }
+        self.n_samples = len(self.array)
+
+    def _get_all_column_ids(self):
+        n_columns = len(self.column_ids)
+        if self.target_column is not None:
+            n_columns += 1
+        return list(range(n_columns))
+
+    def get_khiops_variable_name(self, column_id):
+        """Return the khiops variable name associated to a column id"""
+        assert column_id == self.target_column_id or column_id in self.column_ids
+        if isinstance(column_id, str):
+            variable_name = column_id
+        else:
+            assert isinstance(column_id, (np.int64, int))
+            variable_name = f"Var{column_id}"
+        return variable_name
+
     def create_table_file_for_khiops(self, output_dir, sort=True):
         assert not sort or self.key is not None, "Cannot sort table without a key"
         assert not sort or is_list_like(
@@ -1022,11 +1193,15 @@ class PandasTable(DatasetTable):
         output_table_path = fs.get_child_path(output_dir, f"{self.name}.txt")
 
         # Write the output dataframe
-        output_dataframe = self._create_dataframe_copy()
+        output_dataframe = pd.DataFrame(self.array.copy())
+        output_dataframe.columns = [f"Var{column_id}" for column_id in self.column_ids]
+        if self.target_column is not None:
+            output_dataframe[f"Var{self.target_column_id}"] = self.target_column
 
         # Sort by key if requested (as string)
         if sort:
-            output_dataframe.sort_values(
+            np.sort(
+                output_dataframe,
                 by=self.key,
                 key=lambda array: array.astype("str"),
                 inplace=True,
@@ -1093,7 +1268,7 @@ class FileTable(DatasetTable):
         # We build the sample by reading the first 100 rows / 4MB of the file
         table_file_head_contents = fs.read(self.path, size=4096 * 1024 - 1)
         with io.BytesIO(table_file_head_contents) as table_file_head_contents_stream:
-            table_sample_dataframe = pd.read_csv(
+            self.table_sample_df = pd.read_csv(
                 table_file_head_contents_stream,
                 nrows=100,
                 sep=self.sep,
@@ -1101,12 +1276,15 @@ class FileTable(DatasetTable):
             )
 
             # Raise error if there is no data in the table
-            if table_sample_dataframe.shape[0] == 0:
+            if self.table_sample_df.shape[0] == 0:
                 raise ValueError(f"Empty data table file: {self.path}")
 
             # Save the columns and their types
-            self.column_ids = table_sample_dataframe.columns.values
-            self.dtypes = table_sample_dataframe.dtypes
+            self.column_ids = self.table_sample_df.columns.values
+            self.khiops_types = {
+                column_id: get_khiops_type(data_type)
+                for column_id, data_type in self.table_sample_df.dtypes.items()
+            }
 
         # Check key integrity
         self.check_key()

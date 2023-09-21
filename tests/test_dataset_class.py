@@ -11,7 +11,9 @@ import unittest
 
 import numpy as np
 import pandas as pd
+from numpy.testing import assert_equal
 from pandas.testing import assert_frame_equal
+from sklearn import datasets
 
 from khiops.sklearn.tables import Dataset
 
@@ -19,18 +21,17 @@ from khiops.sklearn.tables import Dataset
 class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCase):
     """Test consistency of the created files with the input data
 
-    - The following tests allow to verify that:
-        - The content of the .csv files (created by khiops.sklearn) is consistent
-         with the content of the input data.
-        - The content of the dictionaries (created by khiops.sklearn) is consistent
-         with the content of the input data.
+    The following tests allow to verify that:
+    - The content of the .csv files (created by khiops.sklearn) is consistent with the
+      content of the input data.
+    - The content of the dictionaries (created by khiops.sklearn) is consistent with the
+      content of the input data.
     - The input data used in the test is variable:
         - a monotable dataset: a dataframe or a file path.
         - a multitable dataset: a dictionary with tables of type dataframe or file
          path that are presented in a random order.
         - Data contained in the datasets is unsorted.
-        - Data contained in the datasets is multi-typed: numeric, categorical and
-        dates.
+        - Data contained in the datasets is multi-typed: numeric, categorical and dates.
         - Two schemas of increasing complexity are considered: star and snowflake.
     """
 
@@ -472,10 +473,10 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
         to that of the csv file created by khiops.sklearn.
         """
         # Create a monotable dataset object from fixture data
-        dataset_spec, label = self.create_fixture_dataset_spec(
+        spec, y = self.create_fixture_dataset_spec(
             output_dir=None, data_type="df", multitable=False, schema=None
         )
-        dataset = Dataset(dataset_spec, label)
+        dataset = Dataset(spec, y=y)
 
         # Create and load the intermediary Khiops file
         created_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
@@ -483,13 +484,34 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
 
         # Cast "Date" columns to datetime as we don't automatically recognize dates
         created_table["Date"] = created_table["Date"].astype("datetime64[ns]")
-        reference_table = dataset_spec["tables"]["Reviews"][0]
-        reference_table["class"] = label
+        reference_table = spec["tables"]["Reviews"][0]
+        reference_table["class"] = y
 
         # Check that the dataframes are equal
         assert_frame_equal(
             created_table,
             reference_table.sort_values(by="User_ID").reset_index(drop=True),
+        )
+
+    def test_created_file_from_numpy_array_monotable(self):
+        """Test consistency of the created data file with the input dataframe"""
+        # Create a monotable dahaset from a numpy array
+        iris = datasets.load_iris()
+        spec = {"tables": {"iris": (iris.data, None)}}
+        dataset = Dataset(spec, y=iris.target, categorical_target=True)
+
+        # Create and load the intermediary Khiops file
+        created_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
+        created_table = np.loadtxt(
+            created_table_path, delimiter="\t", skiprows=1, ndmin=2
+        )
+
+        # Check that the arrays are equal
+        assert_equal(
+            created_table,
+            np.concatenate(
+                (iris.data, iris.target.reshape(len(iris.target), 1)), axis=1
+            ),
         )
 
     def test_created_file_from_data_file_monotable(self):
