@@ -4,7 +4,7 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""Tests for executing PyKhiops in parallel"""
+"""Tests for executing Khiops in parallel"""
 
 import os
 import pickle
@@ -12,17 +12,17 @@ from functools import partial
 from multiprocessing import Pool
 from unittest import TestCase
 
-from pykhiops.core.internals.common import is_iterable
-from pykhiops.sklearn.estimators import (
+from khiops.core.internals.common import is_iterable
+from khiops.sklearn.estimators import (
     KhiopsClassifier,
     KhiopsCoclustering,
     KhiopsEncoder,
     KhiopsRegressor,
 )
-from tests.test_helper import PyKhiopsTestHelper
+from tests.test_helper import KhiopsTestHelper
 
 
-class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
+class KhiopsParallelRunningTests(TestCase, KhiopsTestHelper):
     """Test if Khiops estimator instances can be built and run in parallel"""
 
     _n_estimator_instances = 2
@@ -66,7 +66,7 @@ class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
         # Create many classifiers and fit them in parallel
         n_classifiers = self._n_estimator_instances
         estimators = self._parallelise(
-            callback=partial(PyKhiopsTestHelper.fit_helper, KhiopsClassifier),
+            callback=partial(KhiopsTestHelper.fit_helper, KhiopsClassifier),
             arg_sequence=(train_data,) * n_classifiers,
             n_cpus=self._n_cpus,
         )
@@ -84,7 +84,7 @@ class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
         # Create many regressors and fit them in parallel
         n_regressors = self._n_estimator_instances
         regressors = self._parallelise(
-            callback=partial(PyKhiopsTestHelper.fit_helper, KhiopsRegressor),
+            callback=partial(KhiopsTestHelper.fit_helper, KhiopsRegressor),
             arg_sequence=(train_data,) * n_regressors,
             n_cpus=self._n_cpus,
         )
@@ -109,7 +109,7 @@ class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
         n_clusterers = self._n_estimator_instances
         clusterers = self._parallelise(
             callback=partial(
-                PyKhiopsTestHelper.fit_helper,
+                KhiopsTestHelper.fit_helper,
                 KhiopsCoclustering,
                 key="SampleId",
                 variables=["SampleId", "Pos", "Char"],
@@ -128,7 +128,7 @@ class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
         data = self.get_monotable_data("Adult")
         train_data = self.prepare_data(data, "class")[0]
         estimators = self._parallelise(
-            callback=partial(PyKhiopsTestHelper.fit_helper, KhiopsEncoder),
+            callback=partial(KhiopsTestHelper.fit_helper, KhiopsEncoder),
             arg_sequence=(train_data,) * n_encoders,
             n_cpus=self._n_cpus,
         )
@@ -146,21 +146,21 @@ class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
         # Create many classifiers in parallel
         n_classifiers = self._n_estimator_instances
         estimators = self._parallelise(
-            callback=partial(PyKhiopsTestHelper.fit_helper, KhiopsClassifier),
+            callback=partial(KhiopsTestHelper.fit_helper, KhiopsClassifier),
             arg_sequence=(train_data,) * n_classifiers,
             n_cpus=self._n_cpus,
         )
 
         # Fit and predict all classifiers in parallel
         prediction_tables = self._parallelise(
-            callback=partial(PyKhiopsTestHelper.predict_helper, kind="simple"),
+            callback=partial(KhiopsTestHelper.predict_helper, kind="simple"),
             arg_sequence=zip(estimators, (test_data,) * n_classifiers),
             n_cpus=self._n_cpus,
         )
 
         # Fit and predict probabilities for all classifiers in parallel
         probability_tables = self._parallelise(
-            callback=partial(PyKhiopsTestHelper.predict_helper, kind="proba"),
+            callback=partial(KhiopsTestHelper.predict_helper, kind="proba"),
             arg_sequence=zip(estimators, (test_data,) * n_classifiers),
             n_cpus=self._n_cpus,
         )
@@ -202,7 +202,7 @@ class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
         n_clusterers = self._n_estimator_instances
         clusterers = self._parallelise(
             callback=partial(
-                PyKhiopsTestHelper.fit_helper,
+                KhiopsTestHelper.fit_helper,
                 KhiopsCoclustering,
                 key="SampleId",
                 variables=["SampleId", "Pos", "Char"],
@@ -213,7 +213,7 @@ class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
 
         # Fit and predict all clusterers in parallel
         cluster_tables = self._parallelise(
-            callback=PyKhiopsTestHelper.predict_helper,
+            callback=KhiopsTestHelper.predict_helper,
             arg_sequence=zip(clusterers, (secondary_test_data,) * n_clusterers),
             n_cpus=self._n_cpus,
         )
@@ -241,14 +241,14 @@ class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
         # Create many encoders in parallel
         n_regressors = self._n_estimator_instances
         regressors = self._parallelise(
-            callback=partial(PyKhiopsTestHelper.fit_helper, KhiopsRegressor),
+            callback=partial(KhiopsTestHelper.fit_helper, KhiopsRegressor),
             arg_sequence=(train_data,) * n_regressors,
             n_cpus=self._n_cpus,
         )
 
         # Fit all encoders in parallel
         prediction_tables = self._parallelise(
-            callback=PyKhiopsTestHelper.predict_helper,
+            callback=KhiopsTestHelper.predict_helper,
             arg_sequence=zip(regressors, (test_data,) * n_regressors),
             n_cpus=self._n_cpus,
         )
@@ -277,14 +277,14 @@ class PyKhiopsParallelRunningTests(TestCase, PyKhiopsTestHelper):
         # Create many encoders in parallel
         n_encoders = self._n_estimator_instances
         encoders = self._parallelise(
-            callback=partial(PyKhiopsTestHelper.fit_helper, KhiopsEncoder),
+            callback=partial(KhiopsTestHelper.fit_helper, KhiopsEncoder),
             arg_sequence=(train_data,) * n_encoders,
             n_cpus=self._n_cpus,
         )
 
         # Fit all encoders in parallel
         encoded_tables = self._parallelise(
-            callback=PyKhiopsTestHelper.predict_helper,
+            callback=KhiopsTestHelper.predict_helper,
             arg_sequence=zip(encoders, (test_data,) * n_encoders),
             n_cpus=self._n_cpus,
         )

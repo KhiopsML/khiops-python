@@ -1,7 +1,7 @@
 ---
-name: Build development container [push]
+name: Build development container [PR]
 on:
-  push:
+  pull_request:
     paths: [packaging/docker/khiopspydev/Dockerfile]
 jobs:
   build-dev-container:

@@ -1,14 +1,15 @@
-# pyKhiops Documentation²
+# Khiops Python Library Documentation²
 The documentation of the documentation.
 
-Below you'll find the tools and practices related to the pyKhiops documentation.
+Below you'll find the tools and practices related to the documentation of the
+Khiops Python library.
 
 ## Build the documentation
 ```bash
-# Working dir = pykhiops/doc
+# Working dir = khiops/doc
 
 # You'll need the python packages in the requirements.txt file in this directory
-# Warning: If you create a virtualenv, do not place it within the pykhiops/doc directory.
+# Warning: If you create a virtualenv, do not place it within the khiops/doc directory.
 #          The installed packages contain reST files and Sphinx will process them!
 # pip install -U -r requirements.txt
 
@@ -22,7 +23,7 @@ Below you'll find the tools and practices related to the pyKhiops documentation.
 
 
 # Create the HTML documentation (
-# - Downloads the pykhiops-tutorial resources
+# - Downloads the khiops-python-tutorial resources
 # - Generates the reST version of the tutorials
 # - Executes Sphinx (output: ./_build/html)
 ./create.sh
@@ -54,9 +55,9 @@ Warnings emitted by Sphinx **should not be ignored** as there are most likely re
 Sphinx. One important thing that while very similar **it is not Markdown**, reST is not identical
 to it. See below [reSTructuredText Common Problems](#restructuredtext-common-problems).
 
-## pyKhiops Docstring Patterns
+## Khiops Python Docstring Patterns
 
-When documenting pyKhiops respect the following docstring patterns.
+When documenting Khiops Python, respect the following docstring patterns.
 
 ### Parameter and Attributes
 Mandatory parameters and attributes must be written as follows
@@ -184,7 +185,7 @@ some_int : `int`
     an int
 
 # Yes:
-# pyKhiops internal class
+# Khiops internal class
 dictionary : `.Dictionary`
   A Khiops dictionary.
 
@@ -295,12 +296,12 @@ For internal URL links the Sphinx semantics called *domains* help to reference d
 elements of the module. For example the `train_predictor` function of the core API
 belongs to the `:func:` domain so we can reference it as:
 ```
-:func:`pykhiops.core.api.train_predictor`
+:func:`khiops.core.api.train_predictor`
 ```
-This will show the long link `pykhiops.core.api.train_predictor`. Adding a `~` before
+This will show the long link `khiops.core.api.train_predictor`. Adding a `~` before
 the path makes the link show only the last component `train_predictor`.
 ```
-:func:`~pykhiops.core.api.train_predictor`
+:func:`~khiops.core.api.train_predictor`
 ```
 Additionally, we configured Sphinx with
 ```python
@@ -309,9 +310,9 @@ default_object = 'obj'
 ```
 which allows to not use the *domain* most of the time. So the link can be further shortened to
 ```
-`~pykhiops.core.api.train_predictor`
+`~khiops.core.api.train_predictor`
 ```
-and if we were referencing within the `pykhiops.core.api` module one can simply write
+and if we were referencing within the `khiops.core.api` module one can simply write
 ```
 `train_predictor`
 ```

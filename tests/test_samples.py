@@ -8,11 +8,11 @@
 import os.path
 import unittest
 
-import pykhiops.core as pk
-from pykhiops.samples import samples, samples_sklearn
+import khiops.core as kh
+from khiops.samples import samples, samples_sklearn
 
 
-class PyKhiopsSamplesTests(unittest.TestCase):
+class KhiopsSamplesTests(unittest.TestCase):
     """Test if all samples run without problems"""
 
     def setUp(self):
@@ -24,8 +24,8 @@ class PyKhiopsSamplesTests(unittest.TestCase):
         """Test if all samples run without problems"""
         # Obtain the runner version and set the minimal requirements for some samples
         min_version = {
-            samples.detect_data_table_format: pk.KhiopsVersion("10.0.1"),
-            samples.deploy_coclustering: pk.KhiopsVersion("10.0.1"),
+            samples.detect_data_table_format: kh.KhiopsVersion("10.0.1"),
+            samples.deploy_coclustering: kh.KhiopsVersion("10.0.1"),
         }
 
         # Run the samples
@@ -34,7 +34,7 @@ class PyKhiopsSamplesTests(unittest.TestCase):
                 print(f"\n>>> Testing sample.{sample.__name__}")
                 if sample not in min_version:
                     sample.__call__()
-                elif pk.get_runner().khiops_version >= min_version[sample]:
+                elif kh.get_runner().khiops_version >= min_version[sample]:
                     sample.__call__()
                 else:
                     print(

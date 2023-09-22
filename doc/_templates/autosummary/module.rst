@@ -1,4 +1,4 @@
-{{ fullname | replace("pykhiops.", "") | escape | underline }}
+{{ fullname | replace("khiops.", "") | escape | underline }}
 
 Submodule of ``{{ module }}``
 

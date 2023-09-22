@@ -1,4 +1,4 @@
-"""pyKhiops Sphinx configuration file"""
+"""Khiops Python Sphinx configuration file"""
 import os
 import sys
 from datetime import datetime
@@ -6,17 +6,17 @@ from datetime import datetime
 import numpydoc
 
 # Add the root of the repository and the samples directory to sys.path
-# so Sphinx can find both pykhiops and the samples scripts
+# so Sphinx can find both khiops and the samples scripts
 sys.path.append("..")
-sys.path.append("../pykhiops/samples")
-import pykhiops
+sys.path.append("../khiops/samples")
+import khiops
 
-project = "pyKhiops"
+project = "Khiops Python"
 copyright = f"2018-{datetime.today().year}, Orange"
 author = "Orange Innovation"
 
 # The full version, including alpha/beta/rc tags
-release = pykhiops.__version__
+release = khiops.__version__
 
 # Be strict about any broken references
 nitpicky = True
@@ -102,7 +102,7 @@ def suppress_sklearn_warnings(app, env, node, contnode):
             or node.rawsource == "`y`"
             or node.rawsource == '`"default"`'
             or node.rawsource == '`"pandas"`'
-        ) and node.attributes["py:module"] == "pykhiops.sklearn.estimators"
+        ) and node.attributes["py:module"] == "khiops.sklearn.estimators"
 
     def tutorial_literal(node):
         return (

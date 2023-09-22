@@ -8,21 +8,23 @@ on:
     inputs:
       khiops-revision:
         default: dev
+        description: Git tag, branch or commit of the Khiops repository
       khiopsdev-os:
         default: ubuntu22.04
+        description: Github runner OS
   workflow_call:
     inputs:
       khiops-revision:
         type: string
         default: dev
+        description: Git tag, branch or commit of the Khiops repository
       khiopsdev-os:
         type: string
         default: ubuntu22.04
+        description: Github runner OS
 jobs:
   build-dev-container:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     permissions:
       packages: write  # to write in the Github package registry
     steps:

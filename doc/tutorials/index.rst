@@ -3,7 +3,7 @@ Tutorials
 
 Sklearn
 -------
-These :download:`Jupyter notebook tutorials <sklearn_tutorials.zip>` cover the basic usage of the ``sklearn`` pyKhiops sub-module. The solution notebooks are :download:`available here <sklearn_tutorials_solutions.zip>` or you can browse them in this page:
+These :download:`Jupyter notebook tutorials <sklearn_tutorials.zip>` cover the basic usage of the ``sklearn`` Khiops sub-module. The solution notebooks are :download:`available here <sklearn_tutorials_solutions.zip>` or you can browse them in this page:
 
 - :doc:`Sklearn Basics 1 - Train, Evaluate and Deploy a Classifier`
 - :doc:`Sklearn Basics 2 - Train a Classifier on a Star Multi-Table Dataset`
@@ -12,7 +12,7 @@ These :download:`Jupyter notebook tutorials <sklearn_tutorials.zip>` cover the b
 
 Core
 ----
-These :download:`Jupyter notebook tutorials <core_tutorials.zip>` cover the basic usage of the ``core`` pyKhiops sub-module. The solution notebooks are :download:`available here <core_tutorials_solutions.zip>` or you can browse them in this page:
+These :download:`Jupyter notebook tutorials <core_tutorials.zip>` cover the basic usage of the ``core`` Khiops sub-module. The solution notebooks are :download:`available here <core_tutorials_solutions.zip>` or you can browse them in this page:
 
 - :doc:`Core Basics 1 - Train, Evaluate and Deploy a Classifier`
 - :doc:`Core Basics 2 - Train a Classifier on a Star Multi-Table Dataset`

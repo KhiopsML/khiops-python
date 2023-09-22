@@ -1,0 +1,207 @@
+---
+name: Build Conda Packages
+env:
+  DEFAULT_KHIOPS_REVISION: dev
+  DEFAULT_SAMPLES_REVISION: main
+on:
+  workflow_dispatch:
+    inputs:
+      khiops-revision:
+        default: dev
+        description: Git tag, branch or commit for the khiops repository
+      samples-revision:
+        default: main
+        description: Git tag, branch or commit for the khiops-samples repository
+  push:
+    tags: ['*']
+defaults:
+  run:
+    shell: bash -el {0}
+jobs:
+  build-conda-package:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Use oldest supported Mac OS and Ubuntu versions for GLIBC compatibility
+        # Use oldest supported Windows version
+        os: [ubuntu-20.04, windows-2019, macos-11]
+    runs-on: ${{ matrix.os }}
+    steps:
+      # We move KHIOPS_REVISION to the environment so that we can use
+      # them in both push and workflow_dispatch events
+      - name: Move KHIOPS_REVISION to the environment (push event)
+        if: github.event_name == 'push'
+        run: echo "KHIOPS_REVISION=${DEFAULT_KHIOPS_REVISION}" >> "$GITHUB_ENV"
+      - name: Move KHIOPS_REVISION to the environment (workflow_dispatch event)
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "KHIOPS_REVISION=${{ inputs.khiops-revision }}" >> "$GITHUB_ENV"
+      - name: Checkout Sources
+        uses: actions/checkout@v3
+        with:
+          # Checkout the full repository to have the tags so versioneer works properly
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
+      - name: Install Miniconda
+        if: success() || failure()
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: khiops-python-env
+      - name: Install Dependency Requirements for Building Conda Packages
+        run: conda install conda-build conda-verify ninja
+      # We need MacOS SDK 10.10 to build on Big Sur
+      - name: Install Mac OS SDK 10.10
+        if: runner.os == 'macOS'
+        run: |
+          set -x
+          wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.10.sdk.tar.xz
+          sudo tar -zxvf MacOSX10.10.sdk.tar.xz -C /opt
+      - name: Build Khiops Conda Package
+        run: |
+          mkdir build
+          conda build --output-folder build packaging/conda
+      - name: Upload Khiops Conda Package
+        uses: actions/upload-artifact@v3
+        with:
+          name: khiops-conda-package
+          path: build/*/khiops*.tar.bz2
+          retention-days: 7
+  # Test Conda package on brand new environments
+  test-conda-package:
+    needs: build-conda-package
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-20.04
+          - ubuntu-22.04
+          - windows-2019
+          - windows-2022
+          - macos-11
+          - macos-12
+          - macos-13
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    runs-on: ${{ matrix.os }}
+    steps:
+      # We move SAMPLES_REVISION to the environment so that we can use
+      # them in both push and workflow_dispatch events
+      - name: Move SAMPLES_REVISION to the environment (push event)
+        if: github.event_name == 'push'
+        run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
+      - name: Move SAMPLES_REVISION to the environment (workflow_dispatch event)
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
+      - name: Checkout Khiops samples
+        uses: actions/checkout@v3
+        with:
+          repository: khiopsml/khiops-samples
+          ref: ${{ env.SAMPLES_REVISION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: khiops-samples
+      - name: Download Conda Package Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: khiops-conda-package
+          path: khiops-conda-package
+      - name: Install Miniconda
+        if: success() || failure()
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniconda-version: latest  # needed for Mac OS 13
+          python-version: ${{ matrix.python-version }}
+          activate-environment: khiops-python-env
+      - name: Install conda-build and Setup Khiops Conda Channel
+        run: |
+          conda install conda-build
+          conda index ./khiops-conda-package/.
+      - name: Install the Khiops Conda package
+        run: conda install -c ./khiops-conda-package/ khiops
+      - name: Test Khiops Installation Status on Windows
+        if: runner.os == 'Windows'
+        shell: cmd /C CALL {0}
+        run: |
+          C:\Miniconda3\envs\khiops-python-env\Scripts\kh-status.exe
+      - name: Test Khiops Installation Status on Unix
+        if: runner.os != 'Windows'
+        run: kh-status
+      - name: Test Conda Package Installation on Samples
+        env:
+          KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
+        run: |
+          kh-samples core -i train_predictor -e
+          kh-samples core -i train_predictor_error_handling -e
+          kh-samples core -i train_coclustering -e
+          kh-samples sklearn -i khiops_classifier -e
+          kh-samples sklearn -i khiops_coclustering -e
+  # Build and push Conda package release archive
+  release-conda-package:
+    needs: test-conda-package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - name: Download Conda Package Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: khiops-conda-package
+          path: khiops-conda-package
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get Mac OS ARM64 Package from Dedicated Container
+        run: |
+          OSX_ARM_64_IMAGE=ghcr.io/khiopsml/khiops-python/conda-osx-arm64:latest
+          docker pull $OSX_ARM_64_IMAGE
+          CONTAINER_ID=$(docker run -it -d $OSX_ARM_64_IMAGE)
+          docker cp $CONTAINER_ID:/osx-arm64/. ./khiops-conda-package/osx-arm64/
+          docker container rm -f $CONTAINER_ID
+          docker image rm $OSX_ARM_64_IMAGE
+      - name: Install Miniconda
+        if: success() || failure()
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: khiops-python-env
+      - name: Create Conda Channel
+        run: |
+          conda install conda-build
+          conda index ./khiops-conda-package/
+      - name: Extract Conda Package Version
+        run: |
+          PKG_VERSION=$(\
+              conda search --override-channels --channel ./khiops-conda-package/ khiops | \
+              awk '!/#|channels/ {print $2}' | \
+              sort -u \
+          )
+          echo "PKG_VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
+          # Flag if single version is detected (all *.bz2 packages have the same version)
+          # To be removed once GitHub supports Mac OS arm64
+          SINGLE_VERSION=$( \
+              if [ $(echo $PKG_VERSION | \
+                     awk '{ for(i = 1 ; i <= NF; i++) {print $i}}' | \
+                     sort -u | \
+                     wc -l \
+                   ) -eq 1 ]; \
+              then
+                echo true; \
+              else
+                echo false; \
+              fi \
+          )
+          echo "SINGLE_VERSION=$SINGLE_VERSION" >> "$GITHUB_ENV"
+        # Create release only if single package version was detected
+      - name: Create the release zip archive
+        if: env.SINGLE_VERSION == 'true'
+        uses: thedoctor0/zip-release@0.7.1
+        with:
+          type: zip
+          directory: ./khiops-conda-package/
+          filename: khiops-conda-${{ env.PKG_VERSION }}.zip
+      - name: Move Release Archive to the Current Directory
+        run: mv ./khiops-conda-package/khiops-conda-${{ env.PKG_VERSION }}.zip .
+      - name: Release the zip archive
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: khiops-conda-${{ env.PKG_VERSION }}.zip
