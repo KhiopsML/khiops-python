@@ -608,15 +608,15 @@ class Dataset:
                 raise TypeError(type_error_message("X['format']", X["format"], tuple))
             if not isinstance(X["format"][0], str):
                 raise TypeError(
-                    type_error_message("X['format'] first element", X["format"][0], str)
+                    type_error_message("X['format'] 1st element", X["format"][0], str)
                 )
-            sep, header = X["format"][0], X["format"][1]
+            if not isinstance(X["format"][1], bool):
+                raise TypeError(
+                    type_error_message("X['format'] 2nd element", X["format"][1], bool)
+                )
+            sep, _ = X["format"][0], X["format"][1]
             if len(sep) != 1:
-                raise ValueError(
-                    "Separator must be a single character. " f"Value: {sep}"
-                )
-            if not isinstance(header, bool):
-                raise TypeError(type_error_message("Header", header, bool))
+                raise ValueError(f"Separator must be a single character. Value: {sep}")
 
         # Check the target coherence with X's tables
         if y is not None:
