@@ -14,7 +14,7 @@ in two ways:
 ## Installation
 
 ```bash
-conda install -c khiops khiops
+conda install khiops -c conda-forge -c khiops
 ```
 
 ### Requirements
