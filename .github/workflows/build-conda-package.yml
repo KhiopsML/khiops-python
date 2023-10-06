@@ -52,7 +52,6 @@ jobs:
       - name: Install Mac OS SDK 10.10
         if: runner.os == 'macOS'
         run: |
-          set -x
           wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.10.sdk.tar.xz
           sudo tar -zxvf MacOSX10.10.sdk.tar.xz -C /opt
       - name: Build Khiops Conda Package
