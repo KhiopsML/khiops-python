@@ -5,10 +5,13 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Tests for checking the output types of predictors"""
+import os
 import unittest
 
 import pandas as pd
+from numpy.testing import assert_array_equal
 from sklearn import datasets
+from sklearn.utils.validation import column_or_1d
 
 from khiops.sklearn.estimators import KhiopsClassifier, KhiopsRegressor
 
@@ -44,6 +47,11 @@ def create_iris_mt():
 class KhiopsSklearnOutputTypes(unittest.TestCase):
     """Tests for checking the output types of predictors"""
 
+    def setUp(self):
+        if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
+            if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
+                self.skipTest("Skipping long test")
+
     def test_classifier_output_types(self):
         """Test the KhiopsClassifier output types and classes of predict* methods"""
         X, y = create_iris()
@@ -71,14 +79,14 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                 "cat string": pd.api.types.is_string_dtype,
             },
             "expected_classes": {
-                "int": [0, 1, 2],
-                "int binary": [0, 1],
-                "string": ["se", "ve", "vi"],
-                "string binary": ["ve", "vi_or_se"],
-                "int as string": ["10", "8", "9"],
-                "int as string binary": ["10", "89"],
-                "cat int": [0, 1, 2],
-                "cat string": ["se", "ve", "vi"],
+                "int": column_or_1d([0, 1, 2]),
+                "int binary": column_or_1d([0, 1]),
+                "string": column_or_1d(["se", "ve", "vi"]),
+                "string binary": column_or_1d(["ve", "vi_or_se"]),
+                "int as string": column_or_1d(["10", "8", "9"]),
+                "int as string binary": column_or_1d(["10", "89"]),
+                "cat int": column_or_1d([0, 1, 2]),
+                "cat string": column_or_1d(["se", "ve", "vi"]),
             },
             "Xs": {
                 "mono": X,
@@ -107,7 +115,7 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                     khc.fit(X, y)
 
                     # Check the expected classes
-                    self.assertEqual(khc.classes_, expected_classes)
+                    assert_array_equal(khc.classes_, expected_classes)
 
                     # Check the return type of predict
                     y_pred = khc.predict(X)

@@ -348,7 +348,7 @@ class KhiopsRunner(ABC):
 
         Descendant classes can add additional information
         """
-        status_msg = f"khiops-python settings\n"
+        status_msg = "khiops-python settings\n"
         status_msg += f"Version         : {khiops.__version__}\n"
         status_msg += f"Runner class    : {self.__class__.__name__}\n"
         status_msg += f"Max cores       : {self.max_cores}"

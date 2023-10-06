@@ -14,7 +14,7 @@ in two ways:
 ## Installation
 
 ```bash
-conda install -c khiops khiops
+conda install khiops -c conda-forge -c khiops
 ```
 
 ### Requirements
@@ -64,23 +64,13 @@ The requirements of the normal installation plus:
 - gcs : [google-cloud-storage][gcs] (>=1.37.0)
 
 ## License
-See the [LICENSE.md](./LICENSE.md) file of this repository or in the `-info` directory
-of the python package installation.
+This software is distributed under the BSD 3-Clause-clear License, the text of which is available at
+https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the [LICENSE.md](./LICENSE.md) for more
+details.
 
 ## Credits
-The Khiops Python library has been developed at [Orange Labs][olabs-ai].
-
-Current contributors:
-- Yassine Nair Benrekia
-- Felipe Olmos
-- Vladimir Popescu
-
-Past contributors:
-- Alexis Bondu
-- Enzo Bonnal
-- Marc Boullé
-- Pierre Nodet
-- Stéphane Gouache
+The Khiops Python library is currently developed at [Orange Innovation][o-innov] by the Khiops
+Team: khiops.team@orange.com .
 
 [khiops]: https://www.khiops.com
 [khiops-python-doc]: https://www.khiops.com/html/pyKhiops
@@ -89,4 +79,4 @@ Past contributors:
 [sklearn]: https://scikit-learn.org/stable
 [boto3]: https://github.com/boto/boto3
 [gcs]: https://github.com/googleapis/python-storage
-[olabs-ai]: https://hellofuture.orange.com/en/artificial-intelligence
+[o-innov]: https://hellofuture.orange.com/en/

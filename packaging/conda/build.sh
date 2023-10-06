@@ -19,7 +19,7 @@ then
 else
   CMAKE_PRESET="linux-gcc-release"
 fi
-cmake --preset $CMAKE_PRESET -DBUILD_JARS=OFF
+cmake --preset $CMAKE_PRESET -DBUILD_JARS=OFF -DTESTING=OFF -DCMAKE_CXX_COMPILER="$PREFIX/bin/mpicxx"
 cmake --build --preset $CMAKE_PRESET --parallel --target MODL MODL_Coclustering
 
 # Copy the MODL binaries to the Conda PREFIX path
@@ -96,11 +96,17 @@ then
     -D "$KHIOPS_APPLE_CERTIFICATE_COMMON_NAME" \
     -t private kh-tmp.keychain
 
+  # We make sure to use the default macOS/Xcode codesign tool. This is because the sigtool python
+  # package (installed by conda build as a dependency) makes an alias "codesign" which is prioritary
+  # in the build environment. The alias, however, alias doen't support signing with a proper
+  # identity and makes the build fail!
+  CODESIGN="/usr/bin/codesign"
+
   # Sign the MODL executable and check
-  codesign --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" "$PREFIX/bin/MODL"
-  codesign --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" "$PREFIX/bin/MODL_Coclustering"
-  codesign -d -vvv "$PREFIX/bin/MODL"
-  codesign -d -vvv "$PREFIX/bin/MODL_Coclustering"
+  $CODESIGN --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" "$PREFIX/bin/MODL"
+  $CODESIGN --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" "$PREFIX/bin/MODL_Coclustering"
+  $CODESIGN -d -vvv "$PREFIX/bin/MODL"
+  $CODESIGN -d -vvv "$PREFIX/bin/MODL_Coclustering"
 
   # Restore the login keychain as default
   sudo security delete-keychain kh-tmp.keychain

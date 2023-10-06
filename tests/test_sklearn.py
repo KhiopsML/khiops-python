@@ -12,6 +12,8 @@ import shutil
 import unittest
 import warnings
 
+from sklearn.utils.estimator_checks import check_estimator
+
 import khiops.core as kh
 from khiops.sklearn.estimators import (
     KhiopsClassifier,
@@ -43,7 +45,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
     @staticmethod
     def assertPathHasSuffix(test_case, path, suffix):
         test_case.assertTrue(
-            path.endswith(suffix), msg=f"Suffix '{suffix}' not found in path '{path}'"
+            path.endswith(suffix),
+            msg=f"Suffix '{suffix}' not found in path '{path}'",
         )
 
     @staticmethod
@@ -1351,7 +1354,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             self.assertIsInstance(dictionary, kh.dictionary.Dictionary)
         if expected_main_dictionary_name is not None:
             self.assertEqual(
-                dictionary_domain.dictionaries[0].name, expected_main_dictionary_name
+                dictionary_domain.dictionaries[0].name,
+                expected_main_dictionary_name,
             )
         if expected_additional_data_table_names:
             if expected_main_table_key is not None:
@@ -1362,7 +1366,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 expected_additional_data_table_names, start=1
             ):
                 self.assertEqual(
-                    dictionary_domain.dictionaries[i].name, additional_data_table_name
+                    dictionary_domain.dictionaries[i].name,
+                    additional_data_table_name,
                 )
         else:
             self.assertFalse(dictionary_domain.dictionaries[0].root)
@@ -1904,7 +1909,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             source_type="dataframe",
         )
 
-    def test_parameter_transfer_classifier_predict_from_monotable_file_dataset(self):
+    def test_parameter_transfer_classifier_predict_from_monotable_file_dataset(
+        self,
+    ):
         """Test parameter transfer from monotable file dataset predict to core api"""
         self._test_template(
             estimator_type=KhiopsClassifier,
@@ -1922,7 +1929,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             source_type="dataframe",
         )
 
-    def test_parameter_transfer_classifier_predict_from_multitable_file_dataset(self):
+    def test_parameter_transfer_classifier_predict_from_multitable_file_dataset(
+        self,
+    ):
         """Test parameter transfer from file dataset predict to core API"""
         self._test_template(
             estimator_type=KhiopsClassifier,
@@ -2066,7 +2075,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             source_type="dataframe",
         )
 
-    def test_parameter_transfer_regressor_predict_from_multitable_file_dataset(self):
+    def test_parameter_transfer_regressor_predict_from_multitable_file_dataset(
+        self,
+    ):
         """Test parameter transfer from file dataset predict to core API"""
         self._test_template(
             estimator_type=KhiopsRegressor,
@@ -2164,3 +2175,41 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 }
             },
         )
+
+
+class PyKhiopsSklearnEstimatorStandardTests(unittest.TestCase):
+    """Tests to comply with `sklearn.util.estimator_checks.check_estimator`"""
+
+    def test_sklearn_check_estimator(self):
+        # Set the estimators to test
+        # Notes:
+        # - We omit KhiopsCoclustering because he needs special inputs to work well
+        #   and sklearn's check_estimator method does not accept them.
+        # - KhiopsEncoder es set with "0-1_normalization" as the preserve_dtype as the
+        #   default make fail many assert_almost_equal functions in sklearn and those
+        #   expect numeric types
+        khiops_estimators = [
+            KhiopsClassifier(n_trees=0),
+            KhiopsRegressor(n_trees=0),
+            KhiopsEncoder(n_trees=0, transform_type_numerical="0-1_normalization"),
+        ]
+
+        # Execute sklearn's estimator test battery
+        for khiops_estimator in khiops_estimators:
+            for estimator, check in check_estimator(
+                khiops_estimator, generate_only=True
+            ):
+                # Skip:
+                # - sparse data tests (not yet supported)
+                # - some checks for KhiopsEncoder as they yield "empty" deployed tables
+                #   - To be implemented manually
+                check_name = check.func.__name__
+                if check_name == "check_estimator_sparse_data" or (
+                    check_name in ["check_fit_score_takes_y", "check_fit_idempotent"]
+                    and isinstance(estimator, KhiopsEncoder)
+                ):
+                    continue
+                with self.subTest(
+                    sklearn_check_name=check_name, sklearn_check_kwargs=check.keywords
+                ):
+                    check(estimator)
