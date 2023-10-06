@@ -16,10 +16,9 @@ import pathlib
 import shutil
 import sys
 import tempfile
+import urllib.request
 import warnings
 import zipfile
-
-import requests
 
 import khiops.core as kh
 from khiops.core.internals.common import deprecation_message
@@ -166,9 +165,10 @@ def _download_datasets(samples_dir, version, overwrite=False):
         )
 
         # Download the sample zip file and extracted to the home dataset dir
-        with tempfile.NamedTemporaryFile() as temp_zip_file:
-            zip_request = requests.get(samples_zip_url)
-            temp_zip_file.write(zip_request.content)
+        with tempfile.NamedTemporaryFile() as temp_zip_file, urllib.request.urlopen(
+            samples_zip_url
+        ) as zip_request:
+            temp_zip_file.write(zip_request.read())
             temp_zip_file.seek(0)
             with zipfile.ZipFile(temp_zip_file) as temp_zip:
                 temp_zip.extractall(samples_dir)
