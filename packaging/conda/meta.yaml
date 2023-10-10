@@ -79,9 +79,9 @@ outputs:
         - khiops.sklearn.estimators
 
 about:
-  home: https://www.khiops.org
+  home: https://khiops.org
   license: BSD+3-clause
-  license_file: LICENSE
-  summary: "Khiops is a data preparation and scoring tool for supervised learning and unsupervised learning"
-  doc_url: https://khiops.com/html/khiops-doc/index.html
-  dev_url: "https://github.com/khiopsml/khiops-python"
+  license_file: LICENSE.md
+  summary: Khiops is an AutoML suite for supervised and unsupervised learning
+  doc_url: https://khiopsml.github.com/khiops-python
+  dev_url: https://github.com/khiopsml/khiops-python

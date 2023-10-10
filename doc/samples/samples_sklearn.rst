@@ -5,7 +5,7 @@
 Samples sklearn
 ===============
 
-The samples on this page demonstrate the basic use of the ``khiops.sklearn`` module.
+The code snippets on this page demonstrate the basic use of the :py:mod:`khiops.sklearn` module.
 
 Script and Jupyter notebook
 ---------------------------

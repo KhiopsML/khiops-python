@@ -35,12 +35,12 @@ do
     d ) DOWNLOAD_REPO=true && TRANSFORM_NOTEBOOKS="true" ;;
     t ) TRANSFORM_NOTEBOOKS="true" ;;
     r ) KHIOPS_TUTORIAL_REPO_URL="$OPTARG" ;;
-    l ) KHIOPS_TUTORIAL_DIR="$OPTARG" ;;
+    l ) KHIOPS_TUTORIAL_REPO_DIR="$OPTARG" ;;
     * ) exit_bad ;;
   esac
 done
 KHIOPS_TUTORIAL_REPO_URL="${KHIOPS_TUTORIAL_REPO_URL:-$DEFAULT_KHIOPS_TUTORIAL_REPO_URL}"
-KHIOPS_TUTORIAL_DIR="${KHIOPS_TUTORIAL_DIR:-$DEFAULT_KHIOPS_TUTORIAL_DIR}"
+KHIOPS_TUTORIAL_REPO_DIR="${KHIOPS_TUTORIAL_REPO_DIR:-$DEFAULT_KHIOPS_TUTORIAL_DIR}"
 
 
 # Add the khiops directory to the Python path
@@ -72,30 +72,34 @@ then
   echo "Obtaining khiops-python-tutorial"
   khiops_python_tutorial_repo_branch="main"
   git clone --depth 1 --branch="$khiops_python_tutorial_repo_branch" \
-      "$KHIOPS_TUTORIAL_REPO_URL" "$KHIOPS_TUTORIAL_DIR" \
-      && rm -rf "$KHIOPS_TUTORIAL_DIR/.git"
+      "$KHIOPS_TUTORIAL_REPO_URL" "$KHIOPS_TUTORIAL_REPO_DIR" \
+      && rm -rf "$KHIOPS_TUTORIAL_REPO_DIR/.git"
 fi
 
 # Convert tutorials to reST
+tutorials_dir="./tutorials"
+mkdir -p "$tutorials_dir"
 if [[ $TRANSFORM_NOTEBOOKS ]]
 then
   echo "Creating reST tutorial pages"
-  python convert_tutorials.py -g "$KHIOPS_TUTORIAL_DIR"
+  python convert_tutorials.py \
+      --execute-notebooks "$KHIOPS_TUTORIAL_REPO_DIR" "$tutorials_dir"
 fi
 
 
 # Create the coursework materials
 echo "Creating coursework"
-tutorials_dir="$(pwd)/tutorials"
-mkdir -p "$tutorials_dir"
-cd "$KHIOPS_TUTORIAL_DIR"
-zip "$tutorials_dir/core_tutorials_solutions.zip" "Core Basics*.ipynb" helper_functions.py data/*/*
-zip "$tutorials_dir/sklearn_tutorials_solutions.zip" "Sklearn Basics*.ipynb" helper_functions.py data/*/*
+(cd "$KHIOPS_TUTORIAL_REPO_DIR" && cp -r data helper_functions.py "../$tutorials_dir")
+cd "$tutorials_dir"
+zip "core_tutorials_solutions.zip" Core*.ipynb helper_functions.py data/*/*
+zip "sklearn_tutorials_solutions.zip" Sklearn*.ipynb helper_functions.py data/*/*
+cd "$KHIOPS_TUTORIAL_REPO_DIR"
 python create-coursework.py
 cd coursework
-zip "$tutorials_dir/core_tutorials.zip" "Core Basics*.ipynb" helper_functions.py data/*/*
-zip "$tutorials_dir/sklearn_tutorials.zip" "Sklearn Basics*.ipynb" helper_functions.py data/*/*
-cd ../..
+ls
+zip "../../$tutorials_dir/core_tutorials.zip" Core*.ipynb helper_functions.py data/*/*
+zip "../../$tutorials_dir/sklearn_tutorials.zip" Sklearn*.ipynb helper_functions.py data/*/*
+cd "../.."
 
 # Create the documentation with Sphinx
 echo "Executing Sphinx"

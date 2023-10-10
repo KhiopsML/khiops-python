@@ -61,7 +61,7 @@ def create_header_cells(script_name):
                 f"This is a notebook containing the code in the `{script_name}.py` script\n"
                 "of the Khiops Python library.\n\n"
                 "Make sure you have already installed the latest version of ",
-                "[Khiops](http://www.khiops.com) before using this this notebook",
+                "[Khiops](http://www.khiops.org) before using this this notebook",
             ],
         },
         {
@@ -97,13 +97,13 @@ def create_sample_cell(sample_method):
 def create_rest_page_header(script_name):
     boilerplate_code = "".join(create_boilerplate_code(script_name))
     indented_boilerplate_code = textwrap.indent(boilerplate_code, "    ")
-    subtitle = "The samples on this page demonstrate the basic use of the "
+    subtitle = "The code snippets on this page demonstrate the basic use of the "
     if script_name == "samples":
         title = "Samples core"
-        subtitle += "``khiops.core`` module."
+        subtitle += ":py:mod:`khiops.core` module."
     else:
         title = "Samples sklearn"
-        subtitle += "``khiops.sklearn`` module."
+        subtitle += ":py:mod:`khiops.sklearn` module."
     return (
         ":orphan:\n"
         "\n"

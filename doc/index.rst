@@ -1,12 +1,22 @@
-Khiops Python Library
-=====================
+Khiops Python API Docs
+======================
 
-Welcome to the Khiops Python documentation webpage. With it is it possible to script the  `Khiops Auto ML
-suite <https://www.khiops.com>`_ functionalities.
+Welcome to the Khiops Python API documentation page.
 
 Installation
 ------------
-Login to the `Khiops site <https://www.khiops.com>`_ to download and install Khiops Python.
+Khiops is better installed with `conda package manager <https://docs.conda.io/en/latest/>`_
+
+.. code-block:: shell
+
+    conda install khiops -c khiops
+
+    # For Apple Silicon users
+    conda install khiops -c conda-forge -c khiops
+
+Other install method are documented at the `Khiops website
+<https://www.khiops.org/setup/installation>`_.
+
 
 Main Submodules
 ---------------

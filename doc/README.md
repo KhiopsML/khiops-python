@@ -26,7 +26,7 @@ Khiops Python library.
 # - Downloads the khiops-python-tutorial resources
 # - Generates the reST version of the tutorials
 # - Executes Sphinx (output: ./_build/html)
-./create-doc
+./create-doc -d -t
 
 # To only execute Sphinx on updated reST resources
 # make html

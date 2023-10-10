@@ -15,7 +15,7 @@ if __name__ == "__main__":
     setup(
         name="khiops",
         version=versioneer.get_version(),
-        url="https://www.khiops.com",
+        url="https://khiops.org",
         description="Python library for the Khiops AutoML suite",
         maintainer="The Khiops Team",
         maintainer_email="khiops.team@orange.com",
