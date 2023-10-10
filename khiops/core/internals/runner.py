@@ -1060,12 +1060,10 @@ class KhiopsLocalRunner(KhiopsRunner):
                 )
             else:
                 public_samples_dir = None
-            if (
-                public_samples_dir is not None
-                and os.path.exists(public_samples_dir)
-                and os.path.isdir(public_samples_dir)
-            ):
-                self._set_samples_dir(public_samples_dir)
+            if public_samples_dir is not None and self._get_samples_dir_status(
+                public_samples_dir
+            ) in ["ok", "remote"]:
+                self._samples_dir = public_samples_dir
             else:
                 self._set_samples_dir(str(home_samples_dir))
         # The default samples location on Unix systems is:
@@ -1073,8 +1071,7 @@ class KhiopsLocalRunner(KhiopsRunner):
         else:
             self._set_samples_dir(str(home_samples_dir))
 
-    def _set_samples_dir(self, samples_dir):
-        # Check existence samples directory if it is a local path
+    def _get_samples_dir_status(self, samples_dir):
         if fs.is_local_resource(samples_dir):
             # Remove initial slash on windows systems
             # urllib's url2pathname does not work properly
@@ -1085,18 +1082,31 @@ class KhiopsLocalRunner(KhiopsRunner):
                     samples_dir_path = samples_dir_path[1:]
 
             if not os.path.exists(samples_dir_path):
-                warnings.warn(
-                    "Sample datasets local directory does not exist. "
-                    f"Make sure it is located here: {samples_dir_path}",
-                    stacklevel=3,
-                )
+                status = "non-existent"
             elif not os.path.isdir(samples_dir_path):
-                warnings.warn(
-                    "Sample datasets local directory path is not a directory. "
-                    f"Make sure it is located here: {samples_dir_path}",
-                    stacklevel=3,
-                )
-        # There are no checks for non local filesystems (no `else` statement)
+                status = "not-a-dir"
+
+            else:
+                status = "ok"
+        else:
+            status = "remote-path"
+
+        assert status in ["non-existent", "not-a-dir", "ok", "remote-path"]
+        return status
+
+    def _set_samples_dir(self, samples_dir):
+        # Warn if there are problems with local directories
+        samples_dir_status = self._get_samples_dir_status(samples_dir)
+        if samples_dir_status == "non-existent":
+            warnings.warn(
+                f"Sample datasets location does not exist. Path: {samples_dir}",
+                stacklevel=3,
+            )
+        elif samples_dir_status == "not-a-dir":
+            warnings.warn(
+                f"Sample datasets location is not a directory. Path: {samples_dir}",
+                stacklevel=3,
+            )
 
         # Call parent method
         super()._set_samples_dir(samples_dir)

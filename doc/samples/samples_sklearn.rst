@@ -14,9 +14,24 @@ The samples in this page are also available as:
 - :download:`Python script <../../khiops/samples/samples_sklearn.py>`
 - :download:`Jupyter notebook <../../khiops/samples/samples_sklearn.ipynb>`
 
-Code Preamble
--------------
-The following preamble makes sure all samples in this page run correctly
+Setup
+-----
+First make sure you have installed the sample datasets. In a configured
+conda shell (ex. *Anaconda Prompt* in Windows) execute:
+
+.. code-block:: shell
+
+    kh-download-datasets
+
+If that doesn't work open a python console and execute:
+
+.. code-block:: python
+
+    from khiops.tools import kh_download_datasets_entry_point
+    kh_download_datasets_entry_point()
+
+Before copying any code snippet make sure to precede it with following
+preamble:
 
 .. code-block:: python
 

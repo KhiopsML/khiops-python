@@ -23,8 +23,9 @@ if __name__ == "__main__":
         entry_points={
             "console_scripts": [
                 "kh-status=khiops.tools:kh_status_entry_point",
-                "pk-status=khiops.tools:pk_status_entry_point",  # deprecated
                 "kh-samples=khiops.tools:kh_samples_entry_point",
+                "kh-download-datasets=khiops.tools:kh_download_datasets_entry_point",
+                "pk-status=khiops.tools:pk_status_entry_point",  # deprecated
             ]
         },
         packages=find_packages(
