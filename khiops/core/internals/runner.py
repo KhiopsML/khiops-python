@@ -1044,25 +1044,34 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _initialize_samples_dir(self):
         """See class docstring"""
+        # Set the fallback value for the samples directory
+        home_samples_dir = Path.home() / "khiops_data" / "samples"
+
         # Take the value of an environment variable in priority
         if "KHIOPS_SAMPLES_DIR" in os.environ:
             self._set_samples_dir(os.environ["KHIOPS_SAMPLES_DIR"])
-        # The samples location of Windows systems is
+        # The samples location of Windows systems is:
         # - %PUBLIC%\khiops_data\samples if %PUBLIC% exists
         # - %USERPROFILE%\khiops_data\samples otherwise
         elif platform.system() == "Windows":
             if "PUBLIC" in os.environ:
-                self._set_samples_dir(
-                    os.path.join(os.environ["PUBLIC"], "khiops_data", "samples")
+                public_samples_dir = os.path.join(
+                    os.environ["PUBLIC"], "khiops_data", "samples"
                 )
             else:
-                self._set_samples_dir(
-                    os.path.join(Path.home(), "khiops_data", "samples")
-                )
+                public_samples_dir = None
+            if (
+                public_samples_dir is not None
+                and os.path.exists(public_samples_dir)
+                and os.path.isdir(public_samples_dir)
+            ):
+                self._set_samples_dir(public_samples_dir)
+            else:
+                self._set_samples_dir(str(home_samples_dir))
         # The default samples location on Unix systems is:
         # $HOME/khiops/samples on Linux and Mac OS
         else:
-            self._set_samples_dir(os.path.join(Path.home(), "khiops_data", "samples"))
+            self._set_samples_dir(str(home_samples_dir))
 
     def _set_samples_dir(self, samples_dir):
         # Check existence samples directory if it is a local path
