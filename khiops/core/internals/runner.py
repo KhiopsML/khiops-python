@@ -744,8 +744,12 @@ class KhiopsLocalRunner(KhiopsRunner):
             }
             cpu_core_count = len(cpu_entries)
         elif platform.system() == "Windows":
-            cpu_core_count = int(cpu_system_info_output.strip())
-
+            # Each line of the cpu count command contains a number of cores of a socket
+            cores_per_socket = [
+                int(line.strip())
+                for line in cpu_system_info_output.strip().splitlines()
+            ]
+            cpu_core_count = sum(cores_per_socket)
         elif platform.system() == "Darwin":
             cpu_core_count = int(cpu_system_info_output.strip())
         else:
