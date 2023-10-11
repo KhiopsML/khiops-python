@@ -29,7 +29,7 @@ build:
   detect_binary_files_with_prefix: false # [osx and arm64]
 
 # Note for OSX ARM 64:
-# - We impose mpich <=3.3.32 until a release with the fix for
+# - We impose mpich <=3.4.3 until a release with the fix for
 #   the bug https://github.com/pmodels/mpich/issues/6619
 requirements:
   build:
@@ -55,8 +55,9 @@ requirements:
     - msmpi                # [win]
     - python
   run:
-    - mpich         # [linux or osx]
-    - msmpi         # [win]
+    - mpich           # [linux or osx and x64]
+    - msmpi           # [win]
+    - mpich <=3.4.3   # [osx and arm64]
     - pandas >=0.25.3
     - python
     - scikit-learn >=0.22.2
