@@ -18,6 +18,7 @@ build:
   entry_points:
     - kh-status = khiops.tools:kh_status_entry_point
     - kh-samples = khiops.tools:kh_samples_entry_point
+    - kh-download-datasets = khiops.tools:kh_download_datasets_entry_point
     - pk-status = khiops.tools:pk_status_entry_point   # deprecated
   number: 0
   # Binary relocation of MODL and MODL_Coclustering is done in build.sh script
@@ -25,11 +26,12 @@ build:
   binary_relocation:                     # [osx and arm64]
     - bin/kh-status                      # [osx and arm64]
     - bin/kh-samples                     # [osx and arm64]
+    - bin/kh-download-datasets           # [osx and arm64]
     - bin/pk-status                      # [osx and arm64]
   detect_binary_files_with_prefix: false # [osx and arm64]
 
 # Note for OSX ARM 64:
-# - We impose mpich <=3.3.32 until a release with the fix for
+# - We impose mpich <=3.4.3 until a release with the fix for
 #   the bug https://github.com/pmodels/mpich/issues/6619
 requirements:
   build:
@@ -55,8 +57,9 @@ requirements:
     - msmpi                # [win]
     - python
   run:
-    - mpich         # [linux or osx]
-    - msmpi         # [win]
+    - mpich           # [linux or osx and x64]
+    - msmpi           # [win]
+    - mpich <=3.4.3   # [osx and arm64]
     - pandas >=0.25.3
     - python
     - scikit-learn >=0.22.2
@@ -76,9 +79,9 @@ outputs:
         - khiops.sklearn.estimators
 
 about:
-  home: https://www.khiops.org
+  home: https://khiops.org
   license: BSD+3-clause
-  license_file: LICENSE
-  summary: "Khiops is a data preparation and scoring tool for supervised learning and unsupervised learning"
-  doc_url: https://khiops.com/html/khiops-doc/index.html
-  dev_url: "https://github.com/khiopsml/khiops-python"
+  license_file: LICENSE.md
+  summary: Khiops is an AutoML suite for supervised and unsupervised learning
+  doc_url: https://khiopsml.github.com/khiops-python
+  dev_url: https://github.com/khiopsml/khiops-python

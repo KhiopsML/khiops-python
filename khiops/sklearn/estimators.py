@@ -1677,8 +1677,8 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
 
     .. note::
 
-        For more information about the automatic feature engineering algorithm, see the
-        Khiops manual at `the Khiops site  <https://www.khiops.com>`_ .
+        Visit `the Khiops site <https://khiops.org/learn/understand>`_ to learn
+        abouth the automatic feature engineering algorithm.
 
     Parameters
     ----------
@@ -2040,8 +2040,8 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
 
     .. note::
 
-        For more information about the automatic feature engineering algorithm, see the
-        Khiops manual at `the Khiops site  <https://www.khiops.com>`_ .
+        Visit `the Khiops site <https://khiops.org/learn/understand>`_ to learn
+        about the automatic feature engineering algorithm.
 
     Parameters
     ----------

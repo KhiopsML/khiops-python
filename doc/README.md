@@ -19,14 +19,14 @@ Khiops Python library.
 # ./convert-samples-hook
 
 # To clean the html documentation
-# ./clean.sh
+# ./clean-doc
 
 
 # Create the HTML documentation (
 # - Downloads the khiops-python-tutorial resources
 # - Generates the reST version of the tutorials
 # - Executes Sphinx (output: ./_build/html)
-./create.sh
+./create-doc -d -t
 
 # To only execute Sphinx on updated reST resources
 # make html

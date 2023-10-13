@@ -744,8 +744,12 @@ class KhiopsLocalRunner(KhiopsRunner):
             }
             cpu_core_count = len(cpu_entries)
         elif platform.system() == "Windows":
-            cpu_core_count = int(cpu_system_info_output.strip())
-
+            # Each line of the cpu count command contains a number of cores of a socket
+            cores_per_socket = [
+                int(line.strip())
+                for line in cpu_system_info_output.strip().splitlines()
+            ]
+            cpu_core_count = sum(cores_per_socket)
         elif platform.system() == "Darwin":
             cpu_core_count = int(cpu_system_info_output.strip())
         else:
@@ -1040,28 +1044,34 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _initialize_samples_dir(self):
         """See class docstring"""
+        # Set the fallback value for the samples directory
+        home_samples_dir = Path.home() / "khiops_data" / "samples"
+
         # Take the value of an environment variable in priority
         if "KHIOPS_SAMPLES_DIR" in os.environ:
             self._set_samples_dir(os.environ["KHIOPS_SAMPLES_DIR"])
-        # The samples location of Windows systems is
+        # The samples location of Windows systems is:
         # - %PUBLIC%\khiops_data\samples if %PUBLIC% exists
         # - %USERPROFILE%\khiops_data\samples otherwise
         elif platform.system() == "Windows":
             if "PUBLIC" in os.environ:
-                self._set_samples_dir(
-                    os.path.join(os.environ["PUBLIC"], "khiops_data", "samples")
+                public_samples_dir = os.path.join(
+                    os.environ["PUBLIC"], "khiops_data", "samples"
                 )
             else:
-                self._set_samples_dir(
-                    os.path.join(Path.home(), "khiops_data", "samples")
-                )
+                public_samples_dir = None
+            if public_samples_dir is not None and self._get_samples_dir_status(
+                public_samples_dir
+            ) in ["ok", "remote"]:
+                self._samples_dir = public_samples_dir
+            else:
+                self._set_samples_dir(str(home_samples_dir))
         # The default samples location on Unix systems is:
         # $HOME/khiops/samples on Linux and Mac OS
         else:
-            self._set_samples_dir(os.path.join(Path.home(), "khiops_data", "samples"))
+            self._set_samples_dir(str(home_samples_dir))
 
-    def _set_samples_dir(self, samples_dir):
-        # Check existence samples directory if it is a local path
+    def _get_samples_dir_status(self, samples_dir):
         if fs.is_local_resource(samples_dir):
             # Remove initial slash on windows systems
             # urllib's url2pathname does not work properly
@@ -1072,18 +1082,31 @@ class KhiopsLocalRunner(KhiopsRunner):
                     samples_dir_path = samples_dir_path[1:]
 
             if not os.path.exists(samples_dir_path):
-                warnings.warn(
-                    "Sample datasets local directory does not exist. "
-                    f"Make sure it is located here: {samples_dir_path}",
-                    stacklevel=3,
-                )
+                status = "non-existent"
             elif not os.path.isdir(samples_dir_path):
-                warnings.warn(
-                    "Sample datasets local directory path is not a directory. "
-                    f"Make sure it is located here: {samples_dir_path}",
-                    stacklevel=3,
-                )
-        # There are no checks for non local filesystems (no `else` statement)
+                status = "not-a-dir"
+
+            else:
+                status = "ok"
+        else:
+            status = "remote-path"
+
+        assert status in ["non-existent", "not-a-dir", "ok", "remote-path"]
+        return status
+
+    def _set_samples_dir(self, samples_dir):
+        # Warn if there are problems with local directories
+        samples_dir_status = self._get_samples_dir_status(samples_dir)
+        if samples_dir_status == "non-existent":
+            warnings.warn(
+                f"Sample datasets location does not exist. Path: {samples_dir}",
+                stacklevel=3,
+            )
+        elif samples_dir_status == "not-a-dir":
+            warnings.warn(
+                f"Sample datasets location is not a directory. Path: {samples_dir}",
+                stacklevel=3,
+            )
 
         # Call parent method
         super()._set_samples_dir(samples_dir)

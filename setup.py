@@ -15,7 +15,7 @@ if __name__ == "__main__":
     setup(
         name="khiops",
         version=versioneer.get_version(),
-        url="https://www.khiops.com",
+        url="https://khiops.org",
         description="Python library for the Khiops AutoML suite",
         maintainer="The Khiops Team",
         maintainer_email="khiops.team@orange.com",
@@ -23,8 +23,9 @@ if __name__ == "__main__":
         entry_points={
             "console_scripts": [
                 "kh-status=khiops.tools:kh_status_entry_point",
-                "pk-status=khiops.tools:pk_status_entry_point",  # deprecated
                 "kh-samples=khiops.tools:kh_samples_entry_point",
+                "kh-download-datasets=khiops.tools:kh_download_datasets_entry_point",
+                "pk-status=khiops.tools:pk_status_entry_point",  # deprecated
             ]
         },
         packages=find_packages(

@@ -7,66 +7,73 @@
 """Khiops Python exception classes"""
 import warnings
 
-
-class KhiopsJSONError(Exception):
-    """Parsing error for Khiops-generated JSON files"""
-
-
-class KhiopsRuntimeError(Exception):
-    """Khiops execution related errors"""
-
-
-class KhiopsEnvironmentError(Exception):
-    """Khiops execution environment error
-
-    Example: Khiops binary not found.
-    """
-
-
 ######################
-# Deprecated Classes #
+# Deprecated Errors  #
 ######################
 
 # Note: We don't use deprecation_message to avoid a circular import
 
 
-class PyKhiopsJSONError(KhiopsJSONError):
+class PyKhiopsJSONError(Exception):
     """Deprecated
 
     See `KhiopsJSONError`.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
         warnings.warn(
             "'PyKhiopsJSONError' is deprecated and will be removed by "
             "version 11.0.0. Use 'KhiopsJSONError' instead."
         )
 
 
-class PyKhiopsRuntimeError(KhiopsRuntimeError):
+class PyKhiopsRuntimeError(Exception):
     """Deprecated
 
     See `KhiopsRuntimeError`.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
         warnings.warn(
             "'PyKhiopsRuntimeError' is deprecated and will be removed "
             "by version 11.0.0. Use 'KhiopsRuntimeError' instead."
         )
 
 
-class PyKhiopsEnvironmentError(KhiopsEnvironmentError):
+class PyKhiopsEnvironmentError(Exception):
     """Deprecated
 
     See `KhiopsEnvironmentError`.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
         warnings.warn(
             "'PyKhiopsEnvironmentError' is deprecated and will be removed "
             "by version 11.0.0. Use 'KhiopsEnvironmentError' instead."
         )
+
+
+#################
+# Active Errors #
+#################
+
+# Note: We need to put them after the deprecated ones because the latter ones need to be
+# defined.
+
+
+class KhiopsJSONError(PyKhiopsJSONError):
+    """Parsing error for Khiops-generated JSON files"""
+
+
+class KhiopsRuntimeError(PyKhiopsRuntimeError):
+    """Khiops execution related errors"""
+
+
+class KhiopsEnvironmentError(PyKhiopsEnvironmentError):
+    """Khiops execution environment error
+
+    Example: Khiops binary not found.
+    """

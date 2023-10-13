@@ -11,7 +11,7 @@ ARG KHIOPS_REVISION
 RUN true \
   # Install git (for khiops-python version calculation) and pip \
   && apt-get -y update \
-  && apt-get -y --no-install-recommends install git python3-pip \
+  && apt-get -y --no-install-recommends install git python3-pip zip pandoc \
   # Obtain, build and install Khiops \
   && git clone --depth 1 https://github.com/khiopsml/khiops.git \
   && cd khiops \
@@ -21,6 +21,8 @@ RUN true \
        --target MODL MODL_Coclustering KhiopsNativeInterface \
   && cmake --install ./build/linux-gcc-release \
   && cd .. \
+  # Set python to python3 \
+  && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
   # Make sure that MPI is mpich \
   && update-alternatives --set mpirun /usr/bin/mpirun.mpich \
   # Clean build files \

@@ -5,12 +5,14 @@ import os
 import sys
 
 import nbformat
-from nbconvert import RSTExporter
+from jupyter_client import KernelManager
+from nbconvert import NotebookExporter, RSTExporter
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import notebooknode as nbnode
 
 
 def main(args):
+    print(args)
     # Check tutorial directory
     if not os.path.isdir(args.tutorial_dir):
         print(f"Invalid tutorials directory: {args.tutorial_dir}")
@@ -30,44 +32,63 @@ def main(args):
         os.path.splitext(os.path.basename(path))[0] for path in notebook_paths
     ]
 
+    # Create the output directory
+    os.makedirs(args.output_dir, exist_ok=True)
+    abs_output_dir = os.path.abspath(args.output_dir)
+
     # Execute each notebook and convert it to reST if specified
-    if args.generate_rest_notebooks:
+    if args.execute_notebooks:
+        # Set up one kernel for all executions
+        kernel_manager = KernelManager(kernel_name="python3")
+        kernel_manager.start_kernel()
+        preprocessor = ExecutePreprocessor(km=kernel_manager)
+
         for notebook_path, notebook_name in zip(notebook_paths, notebook_names):
-            print(f"Converting {notebook_path} to reST")
-            output_rest_path = os.path.join(rest_tutorial_dir, f"{notebook_name}.rst")
-            with open(notebook_path, encoding="utf8") as notebook_file, open(
-                output_rest_path, "w", encoding="utf8"
-            ) as output_rest_file:
+            print(f"Processing {notebook_path}")
+            with open(notebook_path, encoding="utf8") as notebook_file:
                 notebook = nbformat.read(notebook_file, 4)
-
-                # Add a setup cell
-                # - Disables the html output when displaying dataframes
-                # - Adds "../.." to the sys path
-                setup_cell_dict = {
-                    "cell_type": "code",
-                    "execution_count": None,
-                    "metadata": {},
-                    "outputs": [],
-                    "source": "import pandas as pd\n"
-                    'pd.set_option("display.notebook_repr_html", False)\n'
-                    "import sys\n"
-                    'sys.path.append("../..")\n',
-                }
-                setup_cell = nbnode.from_dict(setup_cell_dict)
-                notebook.cells.insert(0, setup_cell)
-
-                # Execute the notebook to obtain the output cells
-                preprocessor = ExecutePreprocessor()
-                preprocessor.preprocess(notebook, {})
-
-                # Eliminate the setup cell
-                notebook.cells.pop(0)
-
-                # Execute the notebook and write the reST output
+                notebook_exporter = NotebookExporter()
                 rst_exporter = RSTExporter()
-                body, _ = rst_exporter.from_notebook_node(notebook)
-                output_rest_file.write(":orphan:\n\n")
-                output_rest_file.write(body)
+                export_setups = [(rst_exporter, "rst"), (notebook_exporter, "ipynb")]
+
+                for exporter, file_ext in export_setups:
+                    # Add a setup cell for rest
+                    # - Disables the html output when displaying dataframes
+                    # - Adds "../.." to the sys path
+                    setup_source = "import sys\n" 'sys.path.append("../..")\n'
+                    if file_ext == "rst":
+                        setup_source += (
+                            "import pandas as pd\n"
+                            'pd.set_option("display.notebook_repr_html", False)\n'
+                        )
+
+                    setup_cell_dict = {
+                        "cell_type": "code",
+                        "execution_count": None,
+                        "metadata": {},
+                        "outputs": [],
+                        "source": setup_source,
+                    }
+                    setup_cell = nbnode.from_dict(setup_cell_dict)
+                    notebook.cells.insert(0, setup_cell)
+
+                    # Execute the notebook to obtain the output cells
+                    preprocessor.preprocess(notebook, {})
+
+                    # Eliminate the setup cell
+                    notebook.cells.pop(0)
+
+                    # Execute the notebook and write output
+                    output_file_path = os.path.join(
+                        abs_output_dir, f"{notebook_name}.{file_ext}"
+                    )
+                    print(f"Writing file {output_file_path}")
+                    with open(output_file_path, "w", encoding="utf8") as output_file:
+                        body, _ = exporter.from_notebook_node(notebook)
+                        if file_ext == "rst":
+                            output_file.write(":orphan:\n\n")
+                        output_file.write(body)
+        kernel_manager.shutdown_kernel(now=True)
 
     # Restore the initial current directory
     os.chdir(initial_working_dir)
@@ -116,9 +137,14 @@ if __name__ == "__main__":
         help="Location of the khiops-tutorial directory",
     )
     parser.add_argument(
-        "-g",
-        "--generate-rest-notebooks",
+        "output_dir",
+        metavar="OUTDIR",
+        help="Location of the output directory",
+    )
+    parser.add_argument(
+        "-e",
+        "--execute-notebooks",
         action="store_true",
-        help="Generates the notebooks (takes time)",
+        help="Executes the notebooks (takes time)",
     )
     main(parser.parse_args())

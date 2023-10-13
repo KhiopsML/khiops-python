@@ -225,7 +225,7 @@ Types of secondary tables include:
 
 Note that besides the root table names the components of a data path are **table variable names**
 and not *table names*. For further details about the multi-table capabilities of Khiops refer to the
-documentation at `the Khiops site <https://www.khiops.com/html/KhiopsGuide.htm>`_.
+documentation at `the Khiops site <https://khiops.org/setup/KhiopsGuide.pdf>`_.
 
 The class `.DictionaryDomain` provides the helper method `.extract_data_paths` that extracts the
 data paths from a given root dictionary.
@@ -293,7 +293,7 @@ through a *snowflake* schema.
     {
       Categorical AccidentId;
       // The target "Gravity" is calculated from a sub-table
-      // See: https://khiops.com/pdf/KhiopsGuide.pdf#page=58
+      // See: https://khiops.org/setup/KhiopsGuide.pdf#page=58
       Categorical	Gravity = IfC(
           G(TableSum(Vehicles, TableCount(TableSelection(Users, EQc(Gravity, "Death")))), 0),
           "Lethal", "NonLethal");

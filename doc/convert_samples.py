@@ -61,7 +61,7 @@ def create_header_cells(script_name):
                 f"This is a notebook containing the code in the `{script_name}.py` script\n"
                 "of the Khiops Python library.\n\n"
                 "Make sure you have already installed the latest version of ",
-                "[Khiops](http://www.khiops.com) before using this this notebook",
+                "[Khiops](http://www.khiops.org) before using this this notebook",
             ],
         },
         {
@@ -97,13 +97,13 @@ def create_sample_cell(sample_method):
 def create_rest_page_header(script_name):
     boilerplate_code = "".join(create_boilerplate_code(script_name))
     indented_boilerplate_code = textwrap.indent(boilerplate_code, "    ")
-    subtitle = "The samples on this page demonstrate the basic use of the "
+    subtitle = "The code snippets on this page demonstrate the basic use of the "
     if script_name == "samples":
         title = "Samples core"
-        subtitle += "``khiops.core`` module."
+        subtitle += ":py:mod:`khiops.core` module."
     else:
         title = "Samples sklearn"
-        subtitle += "``khiops.sklearn`` module."
+        subtitle += ":py:mod:`khiops.sklearn` module."
     return (
         ":orphan:\n"
         "\n"
@@ -121,9 +121,24 @@ def create_rest_page_header(script_name):
         f"- :download:`Python script <../../khiops/samples/{script_name}.py>`\n"
         f"- :download:`Jupyter notebook <../../khiops/samples/{script_name}.ipynb>`\n"
         "\n"
-        "Code Preamble\n"
-        "-------------\n"
-        "The following preamble makes sure all samples in this page run correctly\n"
+        "Setup\n"
+        "-----\n"
+        "First make sure you have installed the sample datasets. In a configured\n"
+        "conda shell (ex. *Anaconda Prompt* in Windows) execute:\n"
+        "\n"
+        ".. code-block:: shell\n"
+        "\n"
+        "    kh-download-datasets\n"
+        "\n"
+        "If that doesn't work open a python console and execute:\n"
+        "\n"
+        ".. code-block:: python\n"
+        "\n"
+        "    from khiops.tools import kh_download_datasets_entry_point\n"
+        "    kh_download_datasets_entry_point()\n"
+        "\n"
+        "Before copying any code snippet make sure to precede it with following\n"
+        "preamble:\n"
         "\n"
         ".. code-block:: python\n"
         "\n"
