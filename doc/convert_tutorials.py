@@ -12,29 +12,24 @@ from nbformat import notebooknode as nbnode
 
 
 def main(args):
-    print(args)
     # Check tutorial directory
     if not os.path.isdir(args.tutorial_dir):
         print(f"Invalid tutorials directory: {args.tutorial_dir}")
         sys.exit(1)
 
+    # Create the output directory
+    os.makedirs(args.output_dir, exist_ok=True)
+    abs_output_dir = os.path.abspath(args.output_dir)
+
     # Save and change the current directory to that of the notebooks
     initial_working_dir = os.getcwd()
     os.chdir(args.tutorial_dir)
-
-    # Create the reST tutorials directory
-    rest_tutorial_dir = os.path.join(initial_working_dir, "tutorials")
-    os.makedirs(rest_tutorial_dir, exist_ok=True)
 
     # Collect the notebooks filenames and paths
     notebook_paths = sorted(glob.glob("*.ipynb"))
     notebook_names = [
         os.path.splitext(os.path.basename(path))[0] for path in notebook_paths
     ]
-
-    # Create the output directory
-    os.makedirs(args.output_dir, exist_ok=True)
-    abs_output_dir = os.path.abspath(args.output_dir)
 
     # Execute each notebook and convert it to reST if specified
     if args.execute_notebooks:
@@ -107,7 +102,7 @@ def main(args):
     # Write the tutorial page
     sklearn_tutorials = [name for name in notebook_names if name.startswith("Sklearn")]
     core_tutorials = [name for name in notebook_names if name.startswith("Core")]
-    tutorials_file_path = os.path.join(rest_tutorial_dir, "index.rst")
+    tutorials_file_path = os.path.join(abs_output_dir, "index.rst")
     with open(tutorials_file_path, "w", encoding="utf8") as tutorials_file:
         tutorials_file.write("Tutorials\n")
         tutorials_file.write("=========\n")
