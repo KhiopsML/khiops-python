@@ -69,19 +69,149 @@ def _extract_path_from_uri(uri):
     return path
 
 
+def _dir_status(a_dir):
+    """Returns the status of a local or remote directory"""
+    if fs.is_local_resource(a_dir):
+        # Remove initial slash on windows systems
+        # urllib's url2pathname does not work properly
+        a_dir_res = fs.create_resource(os.path.normpath(a_dir))
+        a_dir_path = a_dir_res.uri_info.path
+        if platform.system() == "Windows":
+            if a_dir_path.startswith("/"):
+                a_dir_path = a_dir_path[1:]
+
+        if not os.path.exists(a_dir_path):
+            status = "non-existent"
+        elif not os.path.isdir(a_dir_path):
+            status = "not-a-dir"
+        else:
+            status = "ok"
+    else:
+        status = "remote-path"
+
+    assert status in ["non-existent", "not-a-dir", "ok", "remote-path"]
+    return status
+
+
+def _get_system_cpu_cores():
+    """Portably obtains the number of cpu cores (no hyperthreading)"""
+    if platform.system() == "Linux":
+        cpu_system_info_args = ["lscpu", "-b", "-p=Core,Socket"]
+    elif platform.system() == "Windows":
+        cpu_system_info_args = [
+            "powershell.exe",
+            "-Command",
+            "$OutputEncoding = [System.Text.Encoding]::UTF8;",
+            "Get-CimInstance -ClassName 'Win32_Processor' "
+            "| Select-Object -Property 'NumberOfCores'",
+            "| Format-Table -HideTableHeaders ",
+            "| Write-Output",
+        ]
+    elif platform.system() == "Darwin":
+        cpu_system_info_args = ["sysctl", "-n", "hw.physicalcpu"]
+    else:
+        raise KhiopsRuntimeError(f"The '{platform.system()}' is not supported.")
+
+    # Execute the cpu info process
+    with subprocess.Popen(
+        cpu_system_info_args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    ) as cpu_system_info_process:
+        cpu_system_info_output, _ = cpu_system_info_process.communicate()
+
+    # Count the cpus for each system
+    if platform.system() == "Linux":
+        # Ignore the comment lines starting with '#' tha lscpu puts in the message
+        # Each non commented line is for a cpu
+        cpu_entries = {
+            entry
+            for entry in cpu_system_info_output.splitlines()
+            if not entry.startswith("#")
+        }
+        cpu_core_count = len(cpu_entries)
+    elif platform.system() == "Windows":
+        # Each line of the cpu count command contains a number of cores of a socket
+        cores_per_socket = [
+            int(line.strip()) for line in cpu_system_info_output.strip().splitlines()
+        ]
+        cpu_core_count = sum(cores_per_socket)
+    elif platform.system() == "Darwin":
+        cpu_core_count = int(cpu_system_info_output.strip())
+    else:
+        raise KhiopsRuntimeError(f"The '{platform.system()}' is not supported.")
+
+    return cpu_core_count
+
+
+def _compute_max_cores_from_proc_number(proc_number):
+    # if KHIOPS_PROC_NUMBER is 0 we set max_cores to the system's core number
+    if proc_number == 0:
+        max_cores = _get_system_cpu_cores()
+    # if KHIOPS_PROC_NUMBER is 1 we just set max_cores to 1 (no MPI)
+    elif proc_number == 1:
+        max_cores = 1
+    # Otherwise we set max_cores to KHIOPS_PROC_NUMBER - 1
+    else:
+        max_cores = proc_number - 1
+
+    return max_cores
+
+
+def _is_khiops_installed_in_a_conda_env():
+    """True if the module is in a conda env and the khiops binaries are in it"""
+    # To check that khiops was installed with conda we first check that:
+    # - both `CONDA_PREFIX` and `CONDA_DEFAULT_ENV` environment variables exist
+    # - the value of `CONDA_DEFAULT_ENV` is equal to the basename of the
+    #   value of `CONDA_PREFIX` or is equal to 'base'
+    # - sys.exec_prefix is set to the value of `CONDA_PREFIX`, as Python is
+    #   installed in the current Conda environment
+    is_in_conda_env = False
+    mandatory_conda_vars_in_env = all(
+        os.environ.get(conda_env_var) is not None
+        for conda_env_var in ("CONDA_PREFIX", "CONDA_DEFAULT_ENV")
+    )
+    if mandatory_conda_vars_in_env:
+        valid_default_env_names = ("base", os.path.basename(os.environ["CONDA_PREFIX"]))
+        if os.environ[
+            "CONDA_DEFAULT_ENV"
+        ] in valid_default_env_names and sys.exec_prefix == os.environ.get(
+            "CONDA_PREFIX"
+        ):
+            # Now that we know that we are in a conda environment we check if the Khiops
+            # binaries (MODL*) are installed ithe env's "bin" directory
+            vendored_bin_path = os.path.join(sys.exec_prefix, "bin")
+            for dirname, _, filenames in os.walk(vendored_bin_path):
+                modl_ok = False
+                modl_cc_ok = False
+                for filename in filenames:
+                    is_executable = os.access(os.path.join(dirname, filename), os.X_OK)
+                    if filename == "MODL" or filename == "MODL.exe":
+                        modl_ok = is_executable
+                    elif (
+                        filename == "MODL_Coclustering"
+                        or filename == "MODL_Coclustering.exe"
+                    ):
+                        modl_cc_ok = is_executable
+                if modl_ok and modl_cc_ok:
+                    is_in_conda_env = True
+                    break
+
+    return is_in_conda_env
+
+
 class KhiopsRunner(ABC):
     """Abstract Khiops Python runner to be re-implemented"""
 
     def __init__(self):
         """See class docstring"""
         self.general_options = GeneralOptions()
-        self._init_root_temp_dir()
-
-        # Version and samples directory are set to None for lazy initialization
+        self._initialize_root_temp_dir()
         self._khiops_version = None
         self._samples_dir = None
 
-    def _init_root_temp_dir(self):
+    def _initialize_root_temp_dir(self):
         """Initializes the runner's root temporary directory
 
         It tries to set a proper root temporary directory. It tries the following
@@ -95,7 +225,6 @@ class KhiopsRunner(ABC):
         self._root_temp_dir = os.path.join(tempfile.gettempdir(), "khiops", "python")
         if not os.path.exists(self._root_temp_dir):
             os.makedirs(self._root_temp_dir)
-
         # Create the dir with a hash name if it is a dir but it doesn't have all
         # permissions or if it is a file
         elif os.path.isfile(self._root_temp_dir) or _isdir_without_all_perms(
@@ -133,17 +262,18 @@ class KhiopsRunner(ABC):
         # Check existence, directory status and permissions for local paths
         if fs.is_local_resource(dir_path):
             real_dir_path = _extract_path_from_uri(dir_path)
-            if not os.path.exists(real_dir_path):
+            if os.path.exists(real_dir_path):
+                if os.path.isfile(real_dir_path):
+                    raise KhiopsEnvironmentError(
+                        f"File at temporary directory os.path. Path: {real_dir_path}"
+                    )
+                elif _isdir_without_all_perms(real_dir_path):
+                    raise KhiopsEnvironmentError(
+                        "Temporary directory must have +rwx permissions. "
+                        f"Path: {real_dir_path}"
+                    )
+            else:
                 os.makedirs(real_dir_path)
-            elif os.path.isfile(real_dir_path):
-                raise KhiopsEnvironmentError(
-                    f"File at temporary directory os.path. Path: {real_dir_path}"
-                )
-            elif _isdir_without_all_perms(real_dir_path):
-                raise KhiopsEnvironmentError(
-                    "Temporary directory must have +rwx permissions. "
-                    f"Path: {real_dir_path}"
-                )
         # There are no checks for non local filesystems (no `else` statement)
         self._root_temp_dir = dir_path
 
@@ -165,8 +295,8 @@ class KhiopsRunner(ABC):
         Returns
         -------
         str
-            A unique path within the temporary directory. The file is effectively
-            created file only in the case of a local filesystem.
+            A unique path within the root temporary directory. The file is created only
+            in the case of a local filesystem.
         """
         # Local resource: Effectively create the file with the python file API
         if fs.is_local_resource(self.root_temp_dir):
@@ -197,7 +327,8 @@ class KhiopsRunner(ABC):
         Returns
         -------
         str
-            The path of the created directory.
+            A unique directory path within the root temporary directory. The directory
+            is created only in the case of a local filesystem.
         """
         # Local resource: Effectively create the directory with the python file API
         if fs.is_local_resource(self.root_temp_dir):
@@ -221,9 +352,8 @@ class KhiopsRunner(ABC):
 
     @scenario_prologue.setter
     def scenario_prologue(self, prologue):
-        if not isinstance(prologue, str):
-            raise TypeError(type_error_message("scenario_prologue", prologue, str))
         self.general_options.user_scenario_prologue = prologue
+        self.general_options.check()
 
     @property
     def max_cores(self):
@@ -242,11 +372,8 @@ class KhiopsRunner(ABC):
 
     @max_cores.setter
     def max_cores(self, core_number):
-        if not isinstance(core_number, int):
-            raise TypeError(type_error_message("max_cores", core_number, int))
-        if core_number < 0:
-            raise ValueError("'max_cores' must be non-negative")
         self.general_options.max_cores = core_number
+        self.general_options.check()
 
     @property
     def max_memory_mb(self):
@@ -265,11 +392,8 @@ class KhiopsRunner(ABC):
 
     @max_memory_mb.setter
     def max_memory_mb(self, memory_mb):
-        if not isinstance(memory_mb, int):
-            raise TypeError(type_error_message("max_memory_mb", memory_mb, int))
-        if memory_mb < 0:
-            raise ValueError("'max_memory_mb' must be non-negative")
         self.general_options.max_memory_mb = memory_mb
+        self.general_options.check()
 
     @property
     def khiops_temp_dir(self):
@@ -285,16 +409,16 @@ class KhiopsRunner(ABC):
     @khiops_temp_dir.setter
     def khiops_temp_dir(self, temp_dir):
         """Setter of khiops_temp_dir"""
-        if not isinstance(temp_dir, str):
-            raise TypeError(type_error_message("khiops_temp_dir", temp_dir, str))
         self.general_options.khiops_temp_dir = temp_dir
+        self.general_options.check()
 
     @property
     def samples_dir(self):
         r"""str: Location of the Khiops' sample datasets directory. May be an URL/URI"""
-        # Lazy initialization of the environment if not set
-        if self._samples_dir is None:
-            self._initialize_samples_dir()
+        return self._get_samples_dir()
+
+    def _get_samples_dir(self):
+        """To be overriden by subclasses"""
         return self._samples_dir
 
     @samples_dir.setter
@@ -305,66 +429,74 @@ class KhiopsRunner(ABC):
             )
         self._set_samples_dir(samples_dir)
 
-    def _initialize_samples_dir(self):
-        """To be overridden by child classes if necessary"""
-        self._samples_dir = ""
-
     def _set_samples_dir(self, samples_dir):
         """To be overridden by child classes to add additional checks"""
         self._samples_dir = samples_dir
 
     @property
     def khiops_version(self):
-        """`.KhiopsVersion`: The version of the Khiops backend of this runner
-
-        Its initialization is lazy: it is delayed to its first access.
-        """
+        """`.KhiopsVersion`: The version of the Khiops backend of this runner"""
         return self._get_khiops_version()
 
     def _get_khiops_version(self):
-        """khiops_version getter"""
-        # Initialize the first time it is called
-        if self._khiops_version is None:
-            self._initialize_khiops_version()
-            assert isinstance(self._khiops_version, KhiopsVersion), type_error_message(
-                self._khiops_version, "khiops_version", KhiopsVersion
-            )
-            compatible_khiops_version = khiops.get_compatible_khiops_version()
-            if (
-                self._khiops_version.major > compatible_khiops_version.major
-                or self._khiops_version.minor > compatible_khiops_version.minor
-            ):
-                warnings.warn(
-                    f"Khiops version '{self._khiops_version}' is very ahead "
-                    f"from Khiops Python version '{khiops.__version__}'. "
-                    "There may be compatibility errors and "
-                    "it is recommended to update to the latest Khiops Python version.",
-                    stacklevel=3,
-                )
+        """khiops_version getter to be overriden by subclasses"""
         return self._khiops_version
 
     def _build_status_message(self):
         """Constructs the status message
 
-        Descendant classes can add additional information
+        Descendant classes can add additional information.
+
+        Returns
+        -------
+        tuple
+            A 2-tuple containing:
+            - The status message
+            - A list of warning messages
         """
+        # Capture the status of the the samples dir
+        warning_list = []
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            samples_dir_path = self.samples_dir
+        if caught_warnings is not None:
+            warning_list += caught_warnings
+
         status_msg = "khiops-python settings\n"
-        status_msg += f"Version         : {khiops.__version__}\n"
-        status_msg += f"Runner class    : {self.__class__.__name__}\n"
-        status_msg += f"Max cores       : {self.max_cores}"
+        status_msg += f"version             : {khiops.__version__}\n"
+        status_msg += f"runner class        : {self.__class__.__name__}\n"
+        status_msg += f"max cores           : {self.max_cores}"
         if self.max_cores == 0:
             status_msg += " (no limit)"
         status_msg += "\n"
-        status_msg += f"Max memory (MB) : {self.max_memory_mb}"
+        status_msg += f"max memory (MB)     : {self.max_memory_mb}"
         if self.max_memory_mb == 0:
             status_msg += " (no limit)"
         status_msg += "\n"
-        status_msg += f"temp dir        : {self.root_temp_dir}"
-        return status_msg
+        status_msg += f"temp dir            : {self.root_temp_dir}\n"
+        status_msg += f"sample datasets dir : {samples_dir_path}"
+        return status_msg, warning_list
 
     def print_status(self):
         """Prints the status of the runner to stdout"""
-        print(self._build_status_message())
+        # Obtain the status_msg, errors and warnings
+        try:
+            status_msg, warning_list = self._build_status_message()
+        except (KhiopsEnvironmentError, KhiopsRuntimeError) as error:
+            print(f"khiops-python status KO: {error}")
+            return 1
+
+        # Print status details
+        print(status_msg, end="")
+
+        # Print status
+        print("khiops-python status OK", end="")
+        if warning_list:
+            print(", with warnings:")
+            for warning in warning_list:
+                print(f"warning: {warning.message}")
+        else:
+            print("")
+        return 0
 
     @abstractmethod
     def _initialize_khiops_version(self):
@@ -690,84 +822,96 @@ class KhiopsLocalRunner(KhiopsRunner):
     """
 
     def __init__(self):
-        # Parent constructor
+        # Call parent constructor
         super().__init__()
 
-        # Lazy initialization until the first run to avoid errors
+        # Initialize lazily until the first run to avoid errors
         # in environments without a local installation
+        self.is_initialized = False
         self.execute_with_modl = None
         self.mpi_command_args = None
         self._khiops_bin_dir = None
+        self._khiops_version = None
+        self._samples_dir = None
 
-        if self._check_vendored_khiops():
-            self.is_khiops_vendored = True
-            self._initialize_vendored_execution_configuration()
+    def _initialize_khiops_environment(self):
+        if _is_khiops_installed_in_a_conda_env():
+            self._initialize_khiops_conda_environment()
         else:
-            self.is_khiops_vendored = False
+            self._initialize_khiops_system_wide_environment()
+        self.is_initialized = True
 
-    def _get_system_cpu_cores(self):
-        """Portably obtains the number of cpu cores (no hyperthreading)"""
-        if platform.system() == "Linux":
-            cpu_system_info_args = ["lscpu", "-b", "-p=Core,Socket"]
-        elif platform.system() == "Windows":
-            cpu_system_info_args = [
-                "powershell.exe",
-                "-Command",
-                "$OutputEncoding = [System.Text.Encoding]::UTF8;",
-                "Get-CimInstance -ClassName 'Win32_Processor' "
-                "| Select-Object -Property 'NumberOfCores'",
-                "| Format-Table -HideTableHeaders ",
-                "| Write-Output",
-            ]
-        elif platform.system() == "Darwin":
-            cpu_system_info_args = ["sysctl", "-n", "hw.physicalcpu"]
+    def _initialize_khiops_conda_environment(self):
+        # Execute with MODL* binaries in vendored contexts
+        self.execute_with_modl = True
+
+        # Set Khiops binary directory with respect to the conda environment
+        self._khiops_bin_dir = os.path.join(sys.exec_prefix, "bin")
+        self._check_tools()
+
+        # Initialize the khiops version
+        self._initialize_khiops_version()
+
+        # Set the Khiops process number
+        if "KHIOPS_PROC_NUMBER" in os.environ:
+            self.max_cores = _compute_max_cores_from_proc_number(
+                int(os.environ["KHIOPS_PROC_NUMBER"])
+            )
+        # Set the Khiops memory limit
+        if "KHIOPS_MEMORY_LIMIT" in os.environ:
+            self.max_memory_mb = int(os.environ["KHIOPS_MEMORY_LIMIT"])
         else:
-            raise KhiopsRuntimeError(f"The '{platform.system()}' is not supported.")
+            self.max_memory_mb = 0
 
-        # Execute the cpu info process
-        with subprocess.Popen(
-            cpu_system_info_args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        ) as cpu_system_info_process:
-            cpu_system_info_output, _ = cpu_system_info_process.communicate()
+        # Set MPI command
+        self._initialize_default_mpi_command_args()
 
-        # Count the cpus for each system
-        if platform.system() == "Linux":
-            # Ignore the comment lines starting with '#' tha lscpu puts in the message
-            # Each non commented line is for a cpu
-            cpu_entries = {
-                entry
-                for entry in cpu_system_info_output.splitlines()
-                if not entry.startswith("#")
-            }
-            cpu_core_count = len(cpu_entries)
-        elif platform.system() == "Windows":
-            # Each line of the cpu count command contains a number of cores of a socket
-            cores_per_socket = [
-                int(line.strip())
-                for line in cpu_system_info_output.strip().splitlines()
-            ]
-            cpu_core_count = sum(cores_per_socket)
-        elif platform.system() == "Darwin":
-            cpu_core_count = int(cpu_system_info_output.strip())
+        # Set the default Khiops temporary directory ("" means system's default)
+        if "KHIOPS_TMP_DIR" in os.environ:
+            self.khiops_temp_dir = os.environ["KHIOPS_TMP_DIR"]
         else:
-            raise KhiopsRuntimeError(f"The '{platform.system()}' is not supported.")
+            self.khiops_temp_dir = ""
 
-        return cpu_core_count
+        # Initialize and check the default samples dir
+        self._initialize_default_samples_dir()
+        self._check_samples_dir()
 
-    def _mpiexec_command_args(self):
+    def _initialize_khiops_version(self):
+        # Run khiops with the -v
+        stdout, _, return_code = self.raw_run("khiops", ["-v"], use_mpi=False)
+
+        # On success parse and save the version
+        if return_code == 0:
+            # Skip potential non-version lines (ex: Completed loading of file driver...)
+            for line in stdout.split(os.linesep):
+                if line.startswith("Khiops"):
+                    khiops_version_str = line.rstrip().split(" ")[1]
+                    break
+        # If -v fails it means it is Khiops 9 or lower so we try the old way
+        else:
+            khiops_version_str, _, _, _ = _get_tool_info_khiops9(self, "khiops")
+            warnings.warn(
+                "Khiops version is earlier than 10.0; khiops-python will "
+                f"run in legacy mode. Khiops path: {self._tool_path('khiops')}",
+                stacklevel=3,
+            )
+        self._khiops_version = KhiopsVersion(khiops_version_str)
+
+    def _initialize_default_mpi_command_args(self):
         """Creates the mpiexec call arguments for each platform"""
         # Note: The conda environment mpiexec takes precedence over any other mpiexec
         # install. So the correct mpiexec is found.
         mpiexec_path = shutil.which("mpiexec")
         if mpiexec_path is None:
-            command_args = []
+            self.mpi_command_args = []
+            warnings.warn(
+                "mpiexec is not in PATH, Khiops will run with just one CPU. "
+                "Check your MPI installation to run Khiops in parallel"
+            )
         else:
-            command_args = [mpiexec_path]
+            self.mpi_command_args = [mpiexec_path]
             if platform.system() == "Linux":
-                command_args += [
+                self.mpi_command_args += [
                     "-bind-to",
                     "hwthread",
                     "-map-by",
@@ -779,16 +923,20 @@ class KhiopsLocalRunner(KhiopsRunner):
                 # Note: The '-host localhost' arguments for arm64
                 #       may be removed when mpich > 4.1.2 is released
                 if platform.processor() == "arm":
-                    command_args += [
+                    self.mpi_command_args += [
                         "-host",
                         "localhost",
                         "-n",
                         str(self.max_cores + 1),
                     ]
                 else:
-                    command_args = [mpiexec_path, "-n", str(self.max_cores + 1)]
+                    self.mpi_command_args = [
+                        mpiexec_path,
+                        "-n",
+                        str(self.max_cores + 1),
+                    ]
             elif platform.system() == "Windows":
-                command_args += [
+                self.mpi_command_args += [
                     "-al",
                     "spr:P",
                     "-n",
@@ -797,196 +945,273 @@ class KhiopsLocalRunner(KhiopsRunner):
                     "1",
                 ]
             else:
-                raise KhiopsRuntimeError(f"The '{platform.system()}' is not supported.")
-        return command_args
+                raise KhiopsRuntimeError(f"System '{platform.system()}' not supported.")
 
-    def _initialize_vendored_execution_configuration(self):
-        # Execute with MODL* binaries in vendored contexts
-        self.execute_with_modl = True
+    def _initialize_default_samples_dir(self):
+        """See class docstring"""
+        # Set the fallback value for the samples directory
+        home_samples_dir = Path.home() / "khiops_data" / "samples"
 
-        # Set Khiops binary directory with respect to the vendored environment
-        self._khiops_bin_dir = os.path.join(sys.exec_prefix, "bin")
+        # Take the value of an environment variable in priority
+        if "KHIOPS_SAMPLES_DIR" in os.environ:
+            self._samples_dir = os.environ["KHIOPS_SAMPLES_DIR"]
 
-        # Set Khiops the Khiops process number
-        self.max_cores = self._get_system_cpu_cores()
-        os.environ["KHIOPS_PROC_NUMBER"] = str(self.max_cores + 1)
+        # The samples location of Windows systems is:
+        # - %PUBLIC%\khiops_data\samples if %PUBLIC% exists
+        # - %USERPROFILE%\khiops_data\samples otherwise
+        elif platform.system() == "Windows":
+            if "PUBLIC" in os.environ:
+                public_samples_dir = os.path.join(
+                    os.environ["PUBLIC"], "khiops_data", "samples"
+                )
+            else:
+                public_samples_dir = None
+            if public_samples_dir is not None and _dir_status(public_samples_dir) in [
+                "ok",
+                "remote",
+            ]:
+                self._samples_dir = public_samples_dir
+            else:
+                self._samples_dir = str(home_samples_dir)
 
-        # Set MPI command
-        self.mpi_command_args = self._mpiexec_command_args()
-        os.environ["KHIOPS_MPI_COMMAND"] = " ".join(self.mpi_command_args)
-
-        # Set the default Khiops temporary directory ("" means system's default)
-        self.khiops_temp_dir = ""
-        os.environ["KHIOPS_TMP_DIR"] = self.khiops_temp_dir
-
-    def _check_vendored_khiops(self):
-        # Check that the execution takes place inside a Conda environment:
-        # - both `CONDA_PREFIX` and `CONDA_DEFAULT_ENV` environment variables
-        #   exist
-        # - the value of `CONDA_DEFAULT_ENV` is equal to the basename of the
-        #   value of `CONDA_PREFIX` or is equal to 'base'
-        # - sys.exec_prefix is set to the value of `CONDA_PREFIX`, as Python is
-        #   installed in the current Conda environment
-        if (
-            all(
-                os.environ.get(conda_env_var) is not None
-                for conda_env_var in ("CONDA_PREFIX", "CONDA_DEFAULT_ENV")
-            )
-            and os.environ["CONDA_DEFAULT_ENV"]
-            in ["base", os.path.basename(os.environ["CONDA_PREFIX"])]
-            and sys.exec_prefix == os.environ.get("CONDA_PREFIX")
-        ):
-            vendored_bin_path = os.path.join(
-                sys.exec_prefix,
-                "bin",
-            )
-            # Recursively look for MODL and MODL_Coclustering and set khiops
-            # path to the directory where they are found
-            for dirname, _, filenames in os.walk(vendored_bin_path):
-                for filename in filenames:
-                    # MODL* executable file found
-                    if filename.startswith("MODL") and os.access(
-                        os.path.join(dirname, filename), os.X_OK
-                    ):
-                        return True
-        # Khiops vendoring not supported for other OSes
-        return False
-
-    def _initialize_system_execution_configuration(self):
-        # Set the environment script name
-        if platform.system() == "Windows":
-            khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops_env.cmd")
+        # The default samples location on Unix systems is:
+        # $HOME/khiops/samples on Linux and Mac OS
         else:
-            khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops-env")
+            self._samples_dir = str(home_samples_dir)
 
-        # If the environment script exists then obtain the execution environment
-        if os.path.exists(khiops_env_script_path):
-            # Execute khiops environment script
-            with subprocess.Popen(
-                [khiops_env_script_path, "--env"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-            ) as khiops_process:
-                stdout, _ = khiops_process.communicate()
+        assert self._samples_dir is not None
 
-            # Parse the output of the khiops environment script and save the
-            # settings
-            path_additions = ["KHIOPS_PATH", "KHIOPS_JAVA_PATH"]
-            for line in stdout.split("\n"):
-                tokens = line.rstrip().split(maxsplit=1)
-                if len(tokens) == 2:
-                    var_name, var_value = tokens
-                elif len(tokens) == 1:
-                    var_name = tokens[0]
-                    var_value = ""
-                else:
-                    continue
+    def _initialize_khiops_system_wide_environment(self):
+        # Initialize bin dir
+        self._initialize_default_khiops_bin_dir()
 
-                if var_name in path_additions:
-                    os.environ["PATH"] = var_value + os.pathsep + os.environ["PATH"]
-                elif var_name == "KHIOPS_CLASSPATH":
-                    if "CLASSPATH" in os.environ:
-                        os.environ["CLASSPATH"] = (
-                            var_value + os.pathsep + os.environ["CLASSPATH"]
-                        )
-                    else:
-                        os.environ["CLASSPATH"] = var_value
-                elif var_name == "KHIOPS_MPI_LIB":
-                    if "LD_LIBRARY_PATH" in os.environ:
-                        os.environ["LD_LIBRARY_PATH"] = (
-                            var_value + os.pathsep + os.environ["LD_LIBRARY_PATH"]
-                        )
-                    else:
-                        os.environ["LD_LIBRARY_PATH"] = var_value
-                elif var_name == "KHIOPS_MPI_COMMAND":
-                    self.mpi_command_args = shlex.split(var_value)
-                elif var_name == "KHIOPS_PROC_NUMBER" and var_value:
-                    self.max_cores = int(var_value) - 1
-                    os.environ["KHIOPS_PROC_NUMBER"] = var_value
-                elif var_name == "KHIOPS_MEMORY_LIMIT" and var_value:
-                    self.max_memory_mb = int(var_value)
-                    os.environ["KHIOPS_MEMORY_LIMIT"] = var_value
-                elif var_name == "KHIOPS_TMP_DIR" and var_value:
-                    self.khiops_temp_dir = var_value
-                    os.environ["KHIOPS_TMP_DIR"] = var_value
-                else:
-                    os.environ[var_name] = var_value
+        # Set to execute with MODL if the env script exists
+        if self._khiops_env_script_exists():
             self.execute_with_modl = True
-        # If there is no environment script then just the `khiops` script
         else:
             self.execute_with_modl = False
 
-        # Check the tool binaries
+        # Check the tools
         self._check_tools()
 
-    def _build_status_message(self):
-        status_msg = super()._build_status_message()
-        status_msg += "\n\n"
-        status_msg += "Local runner settings\n"
-        status_msg += f"khiops core version    : {self.khiops_version}\n"
-        status_msg += f"khiops executables dir : {self.khiops_bin_dir}\n"
-        status_msg += f"samples dir            : {self.samples_dir}\n"
-        status_msg += f"temp dir               : {self.khiops_temp_dir}"
-        if self.khiops_temp_dir == "":
-            status_msg += "<empty> (system's default)\n"
-        else:
-            status_msg += "\n"
-        status_msg += (
-            "MPI command arguments  : " + " ".join(self._mpiexec_command_args()) + "\n"
-        )
-        return status_msg
+        # Initialize the khiops version
+        self._initialize_khiops_version()
 
-    @property
-    def khiops_bin_dir(self):
-        r"""str: Path of the directory containing Khiops' binaries
+        # If the environment script exists then obtain the execution environment
+        if self._khiops_env_script_exists():
+            self._initialize_from_env_script()
 
-        Default values (for system-wide installations only):
+        # Initialize the default samples dir
+        self._initialize_default_samples_dir()
+        self._check_samples_dir()
 
-            - Windows: ``%KHIOPS_HOME%\bin`` or ``%KhiopsHome%\bin``
-            - Linux: ``/usr/bin``
-            - Mac OS: ``/usr/local/bin``
-
-
-        Raises
-        ------
-        `.KhiopsEnvironmentError`
-            - When set to a path that does not exist.
-            - When set to a path that is actually a file.
-        """
-        # Lazy initialization of the environment
-        if self._khiops_bin_dir is None:
-            self._initialize_khiops_bin_dir()
-        return self._khiops_bin_dir
-
-    def _initialize_khiops_bin_dir(self):
+    def _initialize_default_khiops_bin_dir(self):
         # Warn if both KHIOPS_HOME and KhiopsHome are set
         if "KHIOPS_HOME" in os.environ and "KhiopsHome" in os.environ:
             warnings.warn(
                 "Both KHIOPS_HOME and KhiopsHome environment variables "
                 "are set. Only the KHIOPS_HOME will be used."
             )
-
-        # First look for a KHIOPS_HOME variable
-        # Nota: KhiopsHome is to support Khiops 9 in Windows
-        if "KHIOPS_HOME" in os.environ:
-            self.khiops_bin_dir = os.path.join(os.environ["KHIOPS_HOME"], "bin")
-        elif "KhiopsHome" in os.environ:
-            self.khiops_bin_dir = os.path.join(os.environ["KhiopsHome"], "bin")
-        # Otherwise try default locations in *nix systems
-        else:
-            # Error on windows: KHIOPS_HOME mandatory
-            if platform.system() == "Windows":
-                raise KhiopsEnvironmentError(
-                    "No environment variable named 'KHIOPS_HOME' or 'KhiopsHome' found,"
-                    " verify your Khiops installation."
-                )
-            # MacOS: /usr/local/bin
-            elif platform.system() == "Darwin":
-                self.khiops_bin_dir = os.path.join(os.path.sep, "usr", "local", "bin")
-            # Linux/Unix: /usr/bin
+        # Windows: KHIOPS_HOME value
+        if platform.system() == "Windows":
+            # KHIOPS_HOME variable by default
+            if "KHIOPS_HOME" in os.environ:
+                self._khiops_bin_dir = os.path.join(os.environ["KHIOPS_HOME"], "bin")
+            # Look for KhiopsHome to support Khiops 9
+            elif "KhiopsHome" in os.environ:
+                self._khiops_bin_dir = os.path.join(os.environ["KhiopsHome"], "bin")
+            # Erro if KHIOPS_HOME is not set
             else:
-                self.khiops_bin_dir = os.path.join(os.path.sep, "usr", "bin")
+                raise KhiopsEnvironmentError(
+                    "No environment variable named 'KHIOPS_HOME' or "
+                    "'KhiopsHome' found. Verify your Khiops installation."
+                )
+        # MacOS: /usr/local/bin
+        elif platform.system() == "Darwin":
+            self._khiops_bin_dir = os.path.join(os.path.sep, "usr", "local", "bin")
+        # Linux/Unix: /usr/bin
+        elif platform.system() == "Linux":
+            self._khiops_bin_dir = os.path.join(os.path.sep, "usr", "bin")
+        # Raise an error for unknown platforms
+        else:
+            raise KhiopsEnvironmentError(f"Unsupported platform {platform.system()}")
+
+    def _khiops_env_script_exists(self):
+        return os.path.exists(self._build_khiops_env_script_path())
+
+    def _build_khiops_env_script_path(self):
+        assert self._khiops_bin_dir is not None
+        if platform.system() == "Windows":
+            khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops_env.cmd")
+        else:
+            khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops-env")
+        return khiops_env_script_path
+
+    def _initialize_from_env_script(self):
+        # Execute khiops environment script
+        with subprocess.Popen(
+            [self._build_khiops_env_script_path(), "--env"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        ) as khiops_process:
+            stdout, _ = khiops_process.communicate()
+
+        # Parse the output of the khiops environment script and save the settings
+        path_additions = ["KHIOPS_PATH", "KHIOPS_JAVA_PATH"]
+        for line in stdout.split("\n"):
+            # Tokenize the lines
+            tokens = line.rstrip().split(maxsplit=1)
+            if len(tokens) == 2:
+                var_name, var_value = tokens
+            elif len(tokens) == 1:
+                var_name = tokens[0]
+                var_value = ""
+            else:
+                continue
+
+            # We always update the environment but not in the same way for all variables
+            # PATH additions: Update PATH
+            if var_name in path_additions:
+                os.environ["PATH"] = var_value + os.pathsep + os.environ["PATH"]
+            # KHIOPS_CLASSPATH: Update Java's CLASSPATH
+            elif var_name == "KHIOPS_CLASSPATH":
+                if "CLASSPATH" in os.environ:
+                    os.environ["CLASSPATH"] = (
+                        var_value + os.pathsep + os.environ["CLASSPATH"]
+                    )
+                else:
+                    os.environ["CLASSPATH"] = var_value
+            # KHIOPS_MPI_LIB: Update LD_LIBRARY_PATH
+            elif var_name == "KHIOPS_MPI_LIB":
+                if "LD_LIBRARY_PATH" in os.environ:
+                    os.environ["LD_LIBRARY_PATH"] = (
+                        var_value + os.pathsep + os.environ["LD_LIBRARY_PATH"]
+                    )
+                else:
+                    os.environ["LD_LIBRARY_PATH"] = var_value
+            # KHIOPS_MPI_COMMAND, KHIOPS_PROC_NUMBER, KHIOPS_MEMORY_LIMIT and
+            # KHIOPS_TMP_DIR: Update the runner and the environment
+            elif var_name == "KHIOPS_MPI_COMMAND":
+                self.mpi_command_args = shlex.split(var_value)
+            elif var_name == "KHIOPS_PROC_NUMBER" and var_value:
+                self.max_cores = _compute_max_cores_from_proc_number(int(var_value))
+                os.environ["KHIOPS_PROC_NUMBER"] = var_value
+            elif var_name == "KHIOPS_MEMORY_LIMIT" and var_value:
+                self.max_memory_mb = int(var_value)
+                os.environ["KHIOPS_MEMORY_LIMIT"] = var_value
+            elif var_name == "KHIOPS_TMP_DIR" and var_value:
+                self.khiops_temp_dir = var_value
+                os.environ["KHIOPS_TMP_DIR"] = var_value
+            # Any other case: Just update the environment
+            else:
+                os.environ[var_name] = var_value
+
+    def _check_samples_dir(self, samples_dir=None):
+        # Check the runners samples_dir if samples_dir is not specified
+        if samples_dir is None:
+            samples_dir_to_check = self._samples_dir
+        else:
+            samples_dir_to_check = samples_dir
+
+        # Warn if there are problems with the samples_dir
+        samples_dir_status = _dir_status(samples_dir_to_check)
+        download_msg = (
+            "Execute the kh-download-datasets script or "
+            "the khiops.tools.download_datasets function to download them."
+        )
+        if samples_dir_status == "non-existent":
+            warnings.warn(
+                "Sample datasets location does not exist "
+                f"({samples_dir_to_check}). {download_msg}",
+                stacklevel=3,
+            )
+        elif samples_dir_status == "not-a-dir":
+            warnings.warn(
+                "Sample datasets location is not a directory "
+                f"({samples_dir_to_check}). {download_msg}",
+                stacklevel=3,
+            )
+
+    def _build_status_message(self):
+        # Initialize if necessary
+        with warnings.catch_warnings(record=True) as warning_list:
+            if not self.is_initialized:
+                self._initialize_khiops_environment()
+
+        # Call the parent's method
+        status_msg, parent_warning_list = super()._build_status_message()
+        warning_list += parent_warning_list
+
+        # Capture the tmp dir status
+        if self.khiops_temp_dir == "":
+            khiops_temp_dir_msg = "<empty> (system's default)"
+        else:
+            khiops_temp_dir_msg = self.khiops_temp_dir
+
+        if _is_khiops_installed_in_a_conda_env():
+            install_type = "conda"
+        else:
+            install_type = "pip + system-wide"
+
+        # Build the MPI command args message
+        if self.mpi_command_args:
+            mpi_command_args_msg = " ".join(self.mpi_command_args)
+        else:
+            mpi_command_args_msg = "<empty>"
+
+        # Build the message
+        status_msg += "\n\n"
+        status_msg += "khiops local installation settings\n"
+        status_msg += f"version         : {self._khiops_version}\n"
+        status_msg += f"executables dir : {self._khiops_bin_dir}\n"
+        status_msg += f"temp dir        : {khiops_temp_dir_msg}\n"
+        status_msg += f"install type    : {install_type}\n"
+        status_msg += f"MPI command     : {mpi_command_args_msg}\n"
+        status_msg += "\n"
+
+        return status_msg, warning_list
+
+    def _get_khiops_version(self):
+        # Initialize the first time it is called
+        if not self.is_initialized:
+            self._initialize_khiops_environment()
+            assert isinstance(self._khiops_version, KhiopsVersion), type_error_message(
+                self._khiops_version, "khiops_version", KhiopsVersion
+            )
+            compatible_khiops_version = khiops.get_compatible_khiops_version()
+            if (
+                self._khiops_version.major > compatible_khiops_version.major
+                or self._khiops_version.minor > compatible_khiops_version.minor
+            ):
+                warnings.warn(
+                    f"Khiops version '{self._khiops_version}' is very ahead "
+                    f"from Khiops Python version '{khiops.__version__}'. "
+                    "There may be compatibility errors and "
+                    "it is recommended to update to the latest Khiops Python version.",
+                    stacklevel=3,
+                )
+        return self._khiops_version
+
+    @property
+    def khiops_bin_dir(self):
+        r"""str: Path of the directory containing Khiops' binaries
+
+        Default values:
+
+            - conda installation: ``$CONDA_PREFIX/bin``
+            - system-wide installations :
+
+                - Windows:
+
+                    - ``%KHIOPS_HOME%\bin``
+                    - ``%KhiopsHome%\bin`` (deprecated)
+
+                - Linux: ``/usr/bin``
+                - Mac OS: ``/usr/local/bin``
+
+        """
+        return self._khiops_bin_dir
 
     @khiops_bin_dir.setter
     def khiops_bin_dir(self, bin_dir):
@@ -999,17 +1224,22 @@ class KhiopsLocalRunner(KhiopsRunner):
             raise KhiopsEnvironmentError(
                 f"Khiops binaries directory is a file: {bin_dir}"
             )
-        # Set the khiops version to None so it will be reinitialized on access
-        self._khiops_version = None
 
+        # Set the directory
         self._khiops_bin_dir = bin_dir
 
-    def tool_path(self, tool_name):
+        # Check that the directory contains MODL and MODL_Coclustering
+        self._check_tools()
+
+        # Initialize the khiops version
+        self._initialize_khiops_version()
+
+    def _tool_path(self, tool_name):
         """Full path of a Khiops tool binary"""
+        assert self.khiops_bin_dir is not None
         tool_name = tool_name.lower()
         if tool_name not in ["khiops", "khiops_coclustering"]:
             raise ValueError(f"Invalid tool name: {tool_name}")
-
         if self.execute_with_modl:
             modl_binaries = {
                 "khiops": "MODL",
@@ -1027,8 +1257,9 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _check_tools(self):
         """Checks the that the tool binaries exist and are executable"""
+        assert self.khiops_bin_dir is not None
         for tool_name in ["khiops", "khiops_coclustering"]:
-            tool_bin_path = self.tool_path(tool_name)
+            tool_bin_path = self._tool_path(tool_name)
             if not os.path.exists(tool_bin_path):
                 raise KhiopsEnvironmentError(
                     f"Inexistent Khiops binary path: {tool_bin_path}"
@@ -1042,96 +1273,19 @@ class KhiopsLocalRunner(KhiopsRunner):
                     f"Tool has no execution rights. Path: {tool_bin_path}"
                 )
 
-    def _initialize_samples_dir(self):
-        """See class docstring"""
-        # Set the fallback value for the samples directory
-        home_samples_dir = Path.home() / "khiops_data" / "samples"
-
-        # Take the value of an environment variable in priority
-        if "KHIOPS_SAMPLES_DIR" in os.environ:
-            self._set_samples_dir(os.environ["KHIOPS_SAMPLES_DIR"])
-        # The samples location of Windows systems is:
-        # - %PUBLIC%\khiops_data\samples if %PUBLIC% exists
-        # - %USERPROFILE%\khiops_data\samples otherwise
-        elif platform.system() == "Windows":
-            if "PUBLIC" in os.environ:
-                public_samples_dir = os.path.join(
-                    os.environ["PUBLIC"], "khiops_data", "samples"
-                )
-            else:
-                public_samples_dir = None
-            if public_samples_dir is not None and self._get_samples_dir_status(
-                public_samples_dir
-            ) in ["ok", "remote"]:
-                self._samples_dir = public_samples_dir
-            else:
-                self._set_samples_dir(str(home_samples_dir))
-        # The default samples location on Unix systems is:
-        # $HOME/khiops/samples on Linux and Mac OS
-        else:
-            self._set_samples_dir(str(home_samples_dir))
-
-    def _get_samples_dir_status(self, samples_dir):
-        if fs.is_local_resource(samples_dir):
-            # Remove initial slash on windows systems
-            # urllib's url2pathname does not work properly
-            samples_dir_res = fs.create_resource(os.path.normpath(samples_dir))
-            samples_dir_path = samples_dir_res.uri_info.path
-            if platform.system() == "Windows":
-                if samples_dir_path.startswith("/"):
-                    samples_dir_path = samples_dir_path[1:]
-
-            if not os.path.exists(samples_dir_path):
-                status = "non-existent"
-            elif not os.path.isdir(samples_dir_path):
-                status = "not-a-dir"
-
-            else:
-                status = "ok"
-        else:
-            status = "remote-path"
-
-        assert status in ["non-existent", "not-a-dir", "ok", "remote-path"]
-        return status
-
     def _set_samples_dir(self, samples_dir):
-        # Warn if there are problems with local directories
-        samples_dir_status = self._get_samples_dir_status(samples_dir)
-        if samples_dir_status == "non-existent":
-            warnings.warn(
-                f"Sample datasets location does not exist. Path: {samples_dir}",
-                stacklevel=3,
-            )
-        elif samples_dir_status == "not-a-dir":
-            warnings.warn(
-                f"Sample datasets location is not a directory. Path: {samples_dir}",
-                stacklevel=3,
-            )
+        # Check the new directory
+        self._check_samples_dir(samples_dir)
 
         # Call parent method
         super()._set_samples_dir(samples_dir)
 
-    def _initialize_khiops_version(self):
-        # Run khiops with the -v flag
-        # Determine which Khiops to run
-        stdout, _, return_code = self.raw_run("khiops", ["-v"], use_mpi=False)
+    def _get_samples_dir(self):
+        # Initialize if necessary
+        if not self.is_initialized:
+            self._initialize_khiops_environment()
 
-        # On success parse and save the version
-        if return_code == 0:
-            # Skip potential non-version lines (ex: Completed loading of file driver...)
-            for line in stdout.split(os.linesep):
-                if line.startswith("Khiops"):
-                    khiops_version_str = line.rstrip().split(" ")[1]
-                    break
-        # If -v fails it means it is khiops 9 or lower we try the old way
-        else:
-            khiops_version_str, _, _, _ = _get_tool_info_khiops9(self, "khiops")
-            warnings.warn(
-                "Khiops version is earlier than 10.0; Khiops Python will "
-                f"run in legacy mode. Khiops path: {self.tool_path('khiops')}",
-                stacklevel=3,
-            )
-        self._khiops_version = KhiopsVersion(khiops_version_str)
+        return self._samples_dir
 
     def raw_run(self, tool_name, command_line_args=None, use_mpi=True, trace=False):
         """Execute a Khiops tool with given command line arguments
@@ -1160,17 +1314,13 @@ class KhiopsLocalRunner(KhiopsRunner):
             raise TypeError(
                 type_error_message("command_line_args", command_line_args, list)
             )
-        # Lazy initialization of the system-wide execution configuration,
-        # if previous initialization attempt failed
-        if self.execute_with_modl is None:
-            self._initialize_system_execution_configuration()
 
         # Build command line arguments
         # Nota: Khiops Coclustering is executed without MPI
         khiops_process_args = []
         if self.execute_with_modl and tool_name == "khiops" and use_mpi:
             khiops_process_args += self.mpi_command_args
-        khiops_process_args += [self.tool_path(tool_name)]
+        khiops_process_args += [self._tool_path(tool_name)]
         if command_line_args:
             khiops_process_args += command_line_args
 
@@ -1206,6 +1356,10 @@ class KhiopsLocalRunner(KhiopsRunner):
         command_line_options,
         trace,
     ):
+        # Initialize if necessary (lazy initialization)
+        if not self.is_initialized:
+            self._initialize_khiops_environment()
+
         # Execute the tool
         khiops_args = command_line_options.build_command_line_options(scenario_path)
         _, stderr, return_code = self.raw_run(

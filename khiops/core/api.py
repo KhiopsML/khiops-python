@@ -330,7 +330,7 @@ def _clean_task_args(task_args):
 # Tasks #
 #########
 
-# WARNING: All API methods tha use task objects have the following first instruction:
+# WARNING: All API methods that use task objects have the following first instruction:
 #
 #     task_args = locals()
 #
