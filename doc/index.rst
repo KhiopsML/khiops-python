@@ -48,6 +48,7 @@ files (``.kdic``).
 
   sklearn <sklearn/index>
   core <core/index>
+  tools <tools/index>
   internals <internal/index>
 
 .. toctree::

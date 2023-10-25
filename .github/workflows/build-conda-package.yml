@@ -8,15 +8,18 @@ on:
     inputs:
       khiops-revision:
         default: dev
-        description: Git tag, branch or commit for the khiops repository
+        description: khiops repo tag/branch/hash
       samples-revision:
         default: main
-        description: Git tag, branch or commit for the khiops-samples repository
+        description: khiops-samples repo tag/branch/hash
   push:
     tags: ['*']
 defaults:
   run:
     shell: bash -el {0}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   build-conda-package:
     strategy:
@@ -80,6 +83,8 @@ jobs:
           - macos-13
         python-version: ['3.8', '3.9', '3.10', '3.11']
     runs-on: ${{ matrix.os }}
+    env:
+      KHIOPS_SAMPLES_DIR: ./khiops-samples-repo
     steps:
       # We move SAMPLES_REVISION to the environment so that we can use
       # them in both push and workflow_dispatch events
@@ -95,7 +100,7 @@ jobs:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          path: khiops-samples
+          path: ${{ env.KHIOPS_SAMPLES_DIR }}
       - name: Download Conda Package Artifact
         uses: actions/download-artifact@v3
         with:
@@ -114,17 +119,14 @@ jobs:
           conda index ./khiops-conda-package/.
       - name: Install the Khiops Conda package
         run: conda install -c ./khiops-conda-package/ khiops
-      - name: Test Khiops Installation Status on Windows
+      - name: Test Khiops Installation Status (Windows)
         if: runner.os == 'Windows'
         shell: cmd /C CALL {0}
-        run: |
-          C:\Miniconda3\envs\khiops-python-env\Scripts\kh-status.exe
-      - name: Test Khiops Installation Status on Unix
+        run: C:\Miniconda3\envs\khiops-python-env\Scripts\kh-status.exe
+      - name: Test Khiops Installation Status (Linux/macOS)
         if: runner.os != 'Windows'
         run: kh-status
       - name: Test Conda Package Installation on Samples
-        env:
-          KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
         run: |
           kh-samples core -i train_predictor -e
           kh-samples core -i train_predictor_error_handling -e

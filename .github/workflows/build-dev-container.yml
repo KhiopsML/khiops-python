@@ -22,6 +22,9 @@ on:
         type: string
         default: ubuntu22.04
         description: Github runner OS
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   build-dev-container:
     runs-on: ubuntu-latest

@@ -9,6 +9,9 @@ on:
         default: main
         description: Git tag, branch or commit for the khiops-samples repository
   pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   build-and-test-pip-package:
     runs-on: ubuntu-latest

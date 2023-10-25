@@ -27,8 +27,8 @@ If that doesn't work open a python console and execute:
 
 .. code-block:: python
 
-    from khiops.tools import kh_download_datasets_entry_point
-    kh_download_datasets_entry_point()
+    from khiops.tools import download_datasets
+    download_datasets()
 
 Before copying any code snippet make sure to precede it with following
 preamble:

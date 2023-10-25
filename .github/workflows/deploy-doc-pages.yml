@@ -1,5 +1,5 @@
 ---
-name: Deploy API docs to GH Pages
+name: Build (and deploy) API docs to GH Pages
 on:
   push:
     tags: [v*]
@@ -48,7 +48,7 @@ jobs:
         run: |
           # Install package itself to install the samples datasets
           pip3 install .
-          kh-download-datasets -o
+          kh-download-datasets --force-overwrite
           kh-status
 
           # Install the doc python requirements

@@ -18,7 +18,11 @@ from pathlib import Path
 import khiops.core as kh
 from khiops.core.internals.common import create_unambiguous_khiops_path
 from khiops.core.internals.io import KhiopsOutputWriter
-from khiops.core.internals.runner import KhiopsRunner
+from khiops.core.internals.runner import (
+    KhiopsLocalRunner,
+    KhiopsRunner,
+    _get_system_cpu_cores,
+)
 from khiops.core.internals.scenario import ConfigurableKhiopsScenario
 from khiops.core.internals.version import KhiopsVersion
 from tests.test_helper import KhiopsTestHelper
@@ -1518,7 +1522,7 @@ class KhiopsCoreSimpleUnitTests(unittest.TestCase):
 
 
 class CompareScenarioTestRunner(KhiopsRunner):
-    """A Pykhiops runner that only compares the generated scenarios to a reference"""
+    """A khiops runner that only compares the generated scenarios to a reference"""
 
     def __init__(self, test_case, root_dir):
         super().__init__()
@@ -1527,6 +1531,7 @@ class CompareScenarioTestRunner(KhiopsRunner):
         self.test_name = None
         self.subtest_name = None
         self.create_ref = False
+        self._initialize_khiops_version()
 
     def _initialize_khiops_version(self):
         self._khiops_version = KhiopsVersion("10.1")
@@ -2200,6 +2205,86 @@ class KhiopsCoreVariousTests(unittest.TestCase):
             with self.subTest(template_name=template_name, template_code=template_code):
                 with self.assertRaisesRegex(ValueError, error_msgs[template_name]):
                     ConfigurableKhiopsScenario(template_code)
+
+    def test_khiops_environment_variables(self):
+        """Tests that the KHIOPS_* environment variables are taken into account"""
+        fixtures = [
+            {
+                "variable": "KHIOPS_TMP_DIR",
+                "value": os.path.join("", "mytmp"),
+                "runner_field": "khiops_temp_dir",
+                "expected_field_value": os.path.join("", "mytmp"),
+            },
+            {
+                "variable": "KHIOPS_PROC_NUMBER",
+                "value": 0,
+                "runner_field": "max_cores",
+                "expected_field_value": _get_system_cpu_cores(),
+            },
+            {
+                "variable": "KHIOPS_PROC_NUMBER",
+                "value": 1,
+                "runner_field": "max_cores",
+                "expected_field_value": 1,
+            },
+            {
+                "variable": "KHIOPS_PROC_NUMBER",
+                "value": 2,
+                "runner_field": "max_cores",
+                "expected_field_value": 1,
+            },
+            {
+                "variable": "KHIOPS_PROC_NUMBER",
+                "value": -1,
+                "runner_field": "max_cores",
+                "expected_error": ValueError,
+            },
+            {
+                "variable": "KHIOPS_MEMORY_LIMIT",
+                "value": 1001,
+                "runner_field": "max_memory_mb",
+                "expected_field_value": 1001,
+            },
+            {
+                "variable": "KHIOPS_MEMORY_LIMIT",
+                "value": -10,
+                "runner_field": "max_memory_mb",
+                "expected_error": ValueError,
+            },
+        ]
+
+        # Execute the tests
+        for fixture in fixtures:
+            with self.subTest(variable=fixture["variable"], value=fixture["value"]):
+                # Create a fresh runner
+                runner = KhiopsLocalRunner()
+
+                # Save the old env var value
+                if fixture["variable"] in os.environ:
+                    old_value = os.environ[fixture["variable"]]
+                else:
+                    old_value = None
+
+                # Set the variable in the environment
+                os.environ[fixture["variable"]] = str(fixture["value"])
+
+                # Check the expected result (or error) on initialization
+                if "expected_error" in fixture:
+                    with self.assertRaises(fixture["expected_error"]):
+                        runner._initialize_khiops_system_wide_environment()
+                else:
+                    assert "expected_field_value" in fixture
+                    runner._initialize_khiops_system_wide_environment()
+                    self.assertEqual(
+                        getattr(runner, fixture["runner_field"]),
+                        fixture["expected_field_value"],
+                    )
+
+                # Restore the old environment value (if any)
+                if old_value is None:
+                    del os.environ[fixture["variable"]]
+                else:
+                    os.environ[fixture["variable"]] = old_value
 
 
 if __name__ == "__main__":

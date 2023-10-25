@@ -22,10 +22,11 @@ class PyKhiopsJSONError(Exception):
 
     def __init__(self, *args):
         super().__init__(*args)
-        warnings.warn(
-            "'PyKhiopsJSONError' is deprecated and will be removed by "
-            "version 11.0.0. Use 'KhiopsJSONError' instead."
-        )
+        if self.__class__.__name__ == "PyKhiopsJSONError":
+            warnings.warn(
+                "'PyKhiopsJSONError' is deprecated and will be removed "
+                "by version 11.0.0. Use 'KhiopsJSONError' instead."
+            )
 
 
 class PyKhiopsRuntimeError(Exception):
@@ -36,10 +37,11 @@ class PyKhiopsRuntimeError(Exception):
 
     def __init__(self, *args):
         super().__init__(*args)
-        warnings.warn(
-            "'PyKhiopsRuntimeError' is deprecated and will be removed "
-            "by version 11.0.0. Use 'KhiopsRuntimeError' instead."
-        )
+        if self.__class__.__name__ == "PyKhiopsRuntimeError":
+            warnings.warn(
+                "'PyKhiopsRuntimeError' is deprecated and will be removed "
+                "by version 11.0.0. Use 'KhiopsRuntimeError' instead."
+            )
 
 
 class PyKhiopsEnvironmentError(Exception):
@@ -50,10 +52,11 @@ class PyKhiopsEnvironmentError(Exception):
 
     def __init__(self, *args):
         super().__init__(*args)
-        warnings.warn(
-            "'PyKhiopsEnvironmentError' is deprecated and will be removed "
-            "by version 11.0.0. Use 'KhiopsEnvironmentError' instead."
-        )
+        if self.__class__.__name__ == "PyKhiopsEnvironmentError":
+            warnings.warn(
+                "'PyKhiopsEnvironmentError' is deprecated and will be removed "
+                "by version 11.0.0. Use 'KhiopsEnvironmentError' instead."
+            )
 
 
 #################

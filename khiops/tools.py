@@ -7,7 +7,7 @@
 """Miscellaneous utility tools
 
 .. warning::
-    Entry point functions in this module use `sys.exit`. They are not designed to be
+    The entry point functions in this module use `sys.exit`. They are not designed to be
     called from another program or python shell.
 """
 import argparse
@@ -44,43 +44,16 @@ def pk_status_entry_point():  # pragma: no cover
         deprecation_message(
             deprecated_feature="pk-status",
             replacement="kh-status",
-            deadline_version="11.0",
+            deadline_version="11.0.0",
         )
     )
-    return kh_status_entry_point()
+    kh_status_entry_point()
 
 
 def kh_status_entry_point():  # pragma: no cover
     """Entry point of the kh-status command"""
-    try:
-        # Catch runtime warnings
-        with warnings.catch_warnings(record=True) as caught_warnings:
-            warnings.simplefilter("always")
-            kh.get_runner().print_status()
-            if len(caught_warnings) == 0:
-                print("khiops-python installation OK")
-            else:
-                print("khiops-python installation OK, with warnings:")
-                # Print the warning message and remember any related to sample datasets
-                provide_dataset_info = False
-                for warning in caught_warnings:
-                    print(f"warning: {warning.message}")
-                    if "Sample datasets" in str(warning.message):
-                        provide_dataset_info = True
-
-                # Show additional info for the datasets if the were related warnings
-                if provide_dataset_info:
-                    print(
-                        "You may install the datasets by executing kh-download-datasets"
-                    )
-            warnings.resetwarnings()
-            sys.exit(0)
-    except kh.KhiopsEnvironmentError as error:
-        print(
-            f"Khiops core installation error: {error}"
-            "\nCheck https://www.khiops.org to set-up Khiops on your computer"
-        )
-        sys.exit(1)
+    status_code = kh.get_runner().print_status()
+    sys.exit(status_code)
 
 
 def kh_samples_entry_point():  # pragma: no cover
@@ -98,27 +71,18 @@ def kh_samples_entry_point():  # pragma: no cover
             submodule = "core"
 
         # Execute the required samples
-        if submodule == "sklearn":
-            argument_parser = samples_sklearn.build_argument_parser(
-                prog="kh-samples sklearn",
-                description=(
-                    "Examples of use of the sklearn submodule of the "
-                    "Khiops Python library"
-                ),
-            )
-            samples_sklearn.execute_samples(argument_parser.parse_args(args))
-        # The khiops.core samples are used
+        if submodule == "core":
+            samples_module = samples_core
         else:
-            argument_parser = samples_sklearn.build_argument_parser(
-                prog="kh-samples core",
-                description=(
-                    "Examples of use of the core submodule of the "
-                    "Khiops Python library"
-                ),
-            )
-            samples_core.execute_samples(argument_parser.parse_args(args))
+            samples_module = samples_sklearn
+
+        argument_parser = samples_module.build_argument_parser(
+            prog="kh-samples [core|sklearn]",
+            description="Executes the sample code snippets of khiops-python",
+        )
+        samples_module.execute_samples(argument_parser.parse_args(args))
     except kh.KhiopsRuntimeError as error:
-        print(f"Khiops Python backend ERROR: {error}")
+        print(f"khiops engine error: {error}")
         sys.exit(1)
 
 
@@ -133,28 +97,58 @@ def kh_download_datasets_entry_point():
         "-v", "--version", default="10.1.1", help="Sample datasets version"
     )
     arg_parser.add_argument(
-        "-o",
-        "--overwrite",
+        "-f",
+        "--force-overwrite",
         default=False,
         action="store_true",
         help=f"Overwrites any existent directory at {samples_dir}",
     )
     args = arg_parser.parse_args()
-    _download_datasets(samples_dir, args.version, overwrite=args.overwrite)
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        download_datasets(
+            force_overwrite=args.force_overwrite,
+            version=args.version,
+            _called_from_shell=True,
+        )
+        if caught_warnings:
+            for warning in caught_warnings:
+                print(f"warning: {warning.message}")
+    sys.exit(0)
 
 
-def _download_datasets(samples_dir, version, overwrite=False):
-    """Download the khiops sample datasets for a given version"""
+def download_datasets(
+    force_overwrite=False, version="10.1.1", _called_from_shell=False
+):
+    """Downloads the Khiops sample datasets for a given version
+
+    The datasets are downloaded to:
+        - Windows: ``%USERPROFILE%\\khiops_data\\samples``
+        - Linux/macOS: ``$HOME/khiops_data/samples``
+
+    Parameters
+    ==========
+    force_overwrite : bool, default ``False``
+        If ``True`` it always overwrites the local samples directory even if it exists.
+    version : str, default "10.1.1"
+        The version of the samples datasets.
+    """
+    # Note: The hidden parameter _called_from_shell is just to change the user messages.
+
     # Check if the home sample dataset location is available and build it if necessary
-    write_samples_dir = True
-    if samples_dir.exists() and not overwrite:
-        write_samples_dir = _query_user(f"Overwrite {samples_dir} ?")
-        if write_samples_dir:
-            shutil.rmtree(samples_dir)
-
-    # Write if the check went ok
-    if write_samples_dir:
+    samples_dir = pathlib.Path.home() / "khiops_data" / "samples"
+    if samples_dir.exists() and not force_overwrite:
+        if _called_from_shell:
+            instructions = "Execute with '--force-overwrite' to overwrite it"
+        else:
+            instructions = "Set 'force_overwrite=True' to overwrite it"
+        warnings.warn(
+            "Download not executed since the sample datasets directory "
+            f"already exists. {instructions}. Path: {samples_dir}"
+        )
+    else:
         # Create the samples dataset directory
+        if samples_dir.exists():
+            shutil.rmtree(samples_dir)
         os.makedirs(samples_dir, exist_ok=True)
 
         # Set the sample dataset zip URL
@@ -173,33 +167,3 @@ def _download_datasets(samples_dir, version, overwrite=False):
             with zipfile.ZipFile(temp_zip_file) as temp_zip:
                 temp_zip.extractall(samples_dir)
             print(f"Samples dataset successfully downloaded to {samples_dir}")
-
-
-def _query_user(question, default="no"):
-    """Ask a yes/no question via raw_input() and return their answer.
-
-    "question" is a string that is presented to the user.
-    "default" is the presumed answer if the user just hits <Enter>.
-        It must be "yes" (the default), "no" or None (meaning
-        an answer is required of the user).
-
-    The "answer" return value is True for "yes" or False for "no".
-    """
-    valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
-    if default is None:
-        prompt = " (y/n) "
-    elif default == "yes":
-        prompt = " (Y/n) "
-    elif default == "no":
-        prompt = " (y/N) "
-    else:
-        raise ValueError(f"invalid default answer: '{default}'")
-    while True:
-        print(question + prompt, end="")
-        choice = input().lower()
-        if default is not None and choice == "":
-            return valid[default]
-        elif choice in valid:
-            return valid[choice]
-        else:
-            print("Please respond with 'yes' or 'no' (or 'y' or 'n')", end="")
