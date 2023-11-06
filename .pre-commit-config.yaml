@@ -1,12 +1,12 @@
 ---
 repos:
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1
+    rev: 23.10.1
     hooks:
       - id: black
         language_version: python3
   - repo: https://github.com/pycqa/pylint
-    rev: v2.17.5
+    rev: v3.0.1
     hooks:
       - id: pylint
         language_version: python3
@@ -17,12 +17,12 @@ repos:
       - id: isort
         language_version: python3
   - repo: https://github.com/lyz-code/yamlfix/
-    rev: 1.13.0
+    rev: 1.15.0
     hooks:
       - id: yamlfix
         exclude: packaging/conda/(meta|conda_build_config).yaml
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.23.2
+    rev: 0.27.1
     hooks:
       - id: check-github-workflows
         args: [--verbose]
