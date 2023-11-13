@@ -161,42 +161,25 @@ def _compute_max_cores_from_proc_number(proc_number):
 
 def _is_khiops_installed_in_a_conda_env():
     """True if the module is in a conda env and the khiops binaries are in it"""
-    # To check that khiops was installed with conda we first check that:
-    # - both `CONDA_PREFIX` and `CONDA_DEFAULT_ENV` environment variables exist
-    # - the value of `CONDA_DEFAULT_ENV` is equal to the basename of the
-    #   value of `CONDA_PREFIX` or is equal to 'base'
-    # - sys.exec_prefix is set to the value of `CONDA_PREFIX`, as Python is
-    #   installed in the current Conda environment
+    # We are in a conda environment if
+    # - if the CONDA_PREFIX environment variable exists and,
+    # - if MODL and MODL_Coclustering executables are in `$CONDA_PREFIX/bin`
     is_in_conda_env = False
-    mandatory_conda_vars_in_env = all(
-        os.environ.get(conda_env_var) is not None
-        for conda_env_var in ("CONDA_PREFIX", "CONDA_DEFAULT_ENV")
-    )
-    if mandatory_conda_vars_in_env:
-        valid_default_env_names = ("base", os.path.basename(os.environ["CONDA_PREFIX"]))
-        if os.environ[
-            "CONDA_DEFAULT_ENV"
-        ] in valid_default_env_names and sys.exec_prefix == os.environ.get(
-            "CONDA_PREFIX"
-        ):
-            # Now that we know that we are in a conda environment we check if the Khiops
-            # binaries (MODL*) are installed ithe env's "bin" directory
-            vendored_bin_path = os.path.join(sys.exec_prefix, "bin")
-            for dirname, _, filenames in os.walk(vendored_bin_path):
-                modl_ok = False
-                modl_cc_ok = False
-                for filename in filenames:
-                    is_executable = os.access(os.path.join(dirname, filename), os.X_OK)
-                    if filename == "MODL" or filename == "MODL.exe":
-                        modl_ok = is_executable
-                    elif (
-                        filename == "MODL_Coclustering"
-                        or filename == "MODL_Coclustering.exe"
-                    ):
-                        modl_cc_ok = is_executable
-                if modl_ok and modl_cc_ok:
-                    is_in_conda_env = True
-                    break
+    if "CONDA_PREFIX" in os.environ:
+        # Check that the Khiops binaries exists within `$CONDA_PREFIX/bin`
+        modl_ok = False
+        modl_cc_ok = False
+        vendored_bin_path = os.path.join(os.environ["CONDA_PREFIX"], "bin")
+        for dirname, _, filenames in os.walk(vendored_bin_path):
+            for filename in filenames:
+                is_executable = os.access(os.path.join(dirname, filename), os.X_OK)
+                if filename in ("MODL", "MODL.exe"):
+                    modl_ok = is_executable
+                elif filename in ("MODL_Coclustering", "MODL_Coclustering.exe"):
+                    modl_cc_ok = is_executable
+            if modl_ok and modl_cc_ok:
+                is_in_conda_env = True
+                break
 
     return is_in_conda_env
 
@@ -473,7 +456,8 @@ class KhiopsRunner(ABC):
             status_msg += " (no limit)"
         status_msg += "\n"
         status_msg += f"temp dir            : {self.root_temp_dir}\n"
-        status_msg += f"sample datasets dir : {samples_dir_path}"
+        status_msg += f"sample datasets dir : {samples_dir_path}\n"
+        status_msg += f"package dir         : {os.path.dirname(khiops.__file__)}\n"
         return status_msg, warning_list
 
     def print_status(self):
