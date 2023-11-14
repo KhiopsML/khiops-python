@@ -14,11 +14,12 @@
 """
 import io
 import os
+import re
 
 import khiops.core.internals.filesystems as fs
 from khiops.core import api
 from khiops.core.exceptions import KhiopsJSONError
-from khiops.core.internals.common import type_error_message
+from khiops.core.internals.common import is_string_like, type_error_message
 from khiops.core.internals.io import (
     KhiopsJSONObject,
     KhiopsOutputWriter,
@@ -36,27 +37,29 @@ def _format_name(name):
 
     Otherwise, it returns the name between backquoted (backquotes within are doubled)
     """
-    # Check that the type of name is string
-    if not isinstance(name, str):
-        raise TypeError(type_error_message("name", name, str))
+    # Check that the type of name is string or bytes
+    if not is_string_like(name):
+        raise TypeError(type_error_message("name", name, "string-like"))
 
-    # Check if the name is an identifier (a regexp could be used instead)
-    is_identifier = True
-    for char in name:
-        # Python isalnum is not used because of utf-8 encoding
-        # (accentuated chars are considered alphanumeric)
-        is_identifier = is_identifier and (
-            char == "_"
-            or ("a" <= char <= "z")
-            or ("A" <= char <= "Z")
-            or ("0" <= char <= "9")
-        )
-    is_identifier = is_identifier and not name[0].isdigit()
-
+    # Check if the name is an identifier
+    # Python isalnum is not used because of utf-8 encoding (accentuated chars
+    # are considered alphanumeric)
     # Return original name if is an identifier, otherwise between backquotes
-    if is_identifier:
-        return name
-    return "`" + name.replace("`", "``") + "`"
+    identifier_pattern = r"^[a-zA-Z][a-zA-Z0-9_]*"
+    str_identifier_regex = re.compile(identifier_pattern)
+    bytes_identifier_regex = re.compile(bytes(identifier_pattern, encoding="ascii"))
+    if isinstance(name, str):
+        if str_identifier_regex.fullmatch(name) is not None:
+            formatted_name = name
+        else:
+            formatted_name = "`" + name.replace("`", "``") + "`"
+    else:
+        assert isinstance(name, bytes)
+        if bytes_identifier_regex.fullmatch(name) is not None:
+            formatted_name = name
+        else:
+            formatted_name = b"`" + name.replace(b"`", b"``") + b"`"
+    return formatted_name
 
 
 def _quote_value(value):
@@ -64,7 +67,12 @@ def _quote_value(value):
 
     Categorical and metadata values are quoted with this method.
     """
-    return '"' + value.replace('"', '""') + '"'
+    if isinstance(value, str):
+        quoted_value = '"' + value.replace('"', '""') + '"'
+    else:
+        assert isinstance(value, bytes)
+        quoted_value = b'"' + value.replace(b'"', b'""') + b'"'
+    return quoted_value
 
 
 class DictionaryDomain(KhiopsJSONObject):
@@ -372,7 +380,8 @@ class DictionaryDomain(KhiopsJSONObject):
                     KhiopsOutputWriter,
                 )
             )
-        writer.writeln(f"#Khiops {self.version}")
+        writer.write("#Khiops ")
+        writer.writeln(self.version)
         for dictionary in self.dictionaries:
             dictionary.write(writer)
 
@@ -808,10 +817,12 @@ class Dictionary:
         # Write dictionary header
         writer.writeln("")
         if self.label:
-            writer.writeln(f"// {self.label}")
+            writer.write("// ")
+            writer.writeln(self.label)
         if self.root:
             writer.write("Root\t")
-        writer.write(f"Dictionary\t{_format_name(self.name)}")
+        writer.write("Dictionary\t")
+        writer.write(_format_name(self.name))
         if self.key:
             writer.write("\t(")
             for i, variable_name in enumerate(self.key):
@@ -1049,7 +1060,9 @@ class Variable:
         writer.write("\t" + self.full_type())
 
         # Write external name
-        writer.write(f"\t{_format_name(self.name)}\t")
+        writer.write("\t")
+        writer.write(_format_name(self.name))
+        writer.write("\t")
 
         # Write derivation rule if available
         if self.rule:
@@ -1066,7 +1079,8 @@ class Variable:
 
         # Write label/commentary if available
         if self.label:
-            writer.write(f"// {self.label}")
+            writer.write("// ")
+            writer.write(self.label)
         writer.writeln("")
 
 
@@ -1208,11 +1222,14 @@ class VariableBlock:
         writer.write("\t}")
 
         # Write block's name
-        writer.write(f"\t{_format_name(self.name)}\t")
+        writer.write("\t")
+        writer.write(_format_name(self.name))
+        writer.write("\t")
 
         # Write derivation rule if available
         if self.rule:
-            writer.write(f" = {self.rule}")
+            writer.write(" = ")
+            writer.write(self.rule)
         writer.write("\t;")
 
         # Write metadata if available
@@ -1223,7 +1240,8 @@ class VariableBlock:
 
         # Write label/commentary if available
         if self.label:
-            writer.write(f"// {self.label}")
+            writer.write("// ")
+            writer.write(self.label)
         writer.writeln("")
 
 
@@ -1309,8 +1327,8 @@ class MetaData:
             If ``key`` is not found.
         """
         # Check the argument types
-        if not isinstance(key, str):
-            raise TypeError(type_error_message("key", key, str))
+        if not is_string_like(key):
+            raise TypeError(type_error_message("key", key, "string-like"))
 
         # Linear search for the key
         for i, stored_key in enumerate(self.keys):
@@ -1325,7 +1343,9 @@ class MetaData:
         ----------
         key : str
             Key to be added.
-        value : bool, int or float
+            A valid key is a sequence of non-accented alphanumeric characters
+            which starts with a non-numeric character.
+        value : bool, int, float or str
             Value to be added.
 
         Raises
@@ -1337,12 +1357,14 @@ class MetaData:
             If the key is already stored.
         """
         # Check that the type of key is string-like
-        if not isinstance(key, str):
-            raise TypeError(type_error_message("name", key, str))
+        if not is_string_like(key):
+            raise TypeError(type_error_message("name", key, "string-like"))
 
         # Check that the type of the value is a valid-one
-        if not isinstance(value, (bool, int, float, str)):
-            raise TypeError(type_error_message("value", value, bool, str, int, float))
+        if not (isinstance(value, (bool, int, float)) or is_string_like(value)):
+            raise TypeError(
+                type_error_message("value", value, bool, "string-like", int, float)
+            )
 
         # Linear search to check if the key already exists
         for stored_key in self.keys:
@@ -1361,7 +1383,7 @@ class MetaData:
 
         Returns
         -------
-        bool, int, float or str
+        bool, int, float, str
             The value associated to the key removed.
 
         Raises
@@ -1372,8 +1394,8 @@ class MetaData:
             If the key is not contained in this metadata.
         """
         # Check that the type of key is string-like
-        if not isinstance(key, str):
-            raise TypeError(type_error_message("name", key, str))
+        if not is_string_like(key):
+            raise TypeError(type_error_message("name", key, "string-like"))
 
         # Linear search and elimination of the key and its value if they exist
         for i, stored_key in enumerate(self.keys):
@@ -1402,9 +1424,12 @@ class MetaData:
 
             # Write the key-value bracket, values are:
             #  quoted strings, unquoted ints/floats and nothing for booleans.
-            writer.write(f"<{key}")
-            if isinstance(value, str):
-                writer.write(f"={_quote_value(value)}")
+            writer.write("<")
+            writer.write(key)
+            if is_string_like(value):
+                writer.write("=")
+                writer.write(_quote_value(value))
             elif isinstance(value, (int, float)) and not isinstance(value, bool):
-                writer.write(f"={value}")
+                writer.write("=")
+                writer.write(str(value))
             writer.write(">")

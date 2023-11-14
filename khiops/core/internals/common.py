@@ -315,7 +315,7 @@ def deprecation_message(
 
 
 def is_string_like(test_object):
-    """Returns True if a string is a valid Khiops Python string"""
+    """Returns True if an object is a valid Python string or sequence of bytes"""
     return isinstance(test_object, (str, bytes))
 
 

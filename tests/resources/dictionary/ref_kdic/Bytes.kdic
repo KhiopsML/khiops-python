@@ -1,0 +1,6 @@
+#Khiops 10.0.0.3i
+
+Dictionary	`MyDictê`
+{
+	Categorical	`MyVarî`		; <aKey="aValué">	
+};
