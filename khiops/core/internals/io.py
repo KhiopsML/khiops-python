@@ -68,6 +68,48 @@ def encode_file_path(file_path):
     return bytes(decoded_bytes)
 
 
+def flexible_json_load(json_file_path):
+    """Loads flexibly a JSON file
+
+    First it tries a vanilla read, then if that fails it warns and then loads the files
+    replacing the errors.
+
+    Parameters
+    ----------
+    json_file_path : str
+        Path of the Khiops JSON file.
+
+    Returns
+    -------
+    dict
+        The in-memory representation of the JSON file.
+    """
+    with io.BytesIO(fs.read(json_file_path)) as json_file_stream:
+        try:
+            json_data = json.load(json_file_stream)
+            first_load_failed = False
+        except UnicodeDecodeError as error:
+            warnings.warn(
+                "Khiops JSON file raised UnicodeDecodeError, "
+                "probably because the file is not encoded in UTF-8. "
+                "The file will be loaded with replacement characters on "
+                "decoding errors and this may generate problems downstream. "
+                "To avoid any problem, regenerate the file with Khiops 10.0 "
+                f"or newer.\nKhiops JSON file: {json_file_path}.\n"
+                f"UnicodeDecodeError message:\n{error}"
+            )
+            first_load_failed = True
+
+    # Try a second time with flexible errors
+    if first_load_failed:
+        with io.StringIO(
+            fs.read(json_file_path).decode("utf8", errors="replace")
+        ) as json_file_stream:
+            json_data = json.load(json_file_stream)
+
+    return json_data
+
+
 class KhiopsJSONObject:
     """Represents the contents of a Khiops JSON file
 
@@ -103,29 +145,20 @@ class KhiopsJSONObject:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Initialize empty object attributes
-        self.version = ""
-        self.tool = ""
-        self.sub_tool = None
-        self.khiops_encoding = "utf8"
-        self.ansi_chars = []
-        self.colliding_utf8_chars = []
-        self.json_data = None
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Initialize from json data
-        if json_data is not None:
-            # Check the type of json_data
-            if not isinstance(json_data, dict):
-                raise TypeError(type_error_message("json_data", json_data, dict))
-
-            # Input check
+        # Input check
+        if json_data is None:
+            json_data = {}
+        else:
             if "tool" not in json_data:
                 raise KhiopsJSONError("Khiops JSON file does not have a 'tool' field")
             if "version" not in json_data:
                 raise KhiopsJSONError(
                     "Khiops JSON file does not have a 'version' field"
                 )
-
             if "khiops_encoding" not in json_data:
                 warnings.warn(
                     "Khiops JSON file does not have a 'khiops_encoding' field "
@@ -153,23 +186,28 @@ class KhiopsJSONObject:
                 "mixed_ansi_utf8",
             ]:
                 raise KhiopsJSONError(
-                    "Khiops JSON file khiops_encoding field value must be 'ascii', "
+                    "Khiops JSON file 'khiops_encoding' field value must be 'ascii', "
                     "'ansi', 'utf8', 'mixed_ansi_utf8' or 'colliding_ansi_utf8', "
                     f"""not '{json_data["khiops_encoding"]}'."""
                 )
 
-            # Initialize attributes from data
-            self.tool = json_data["tool"]
-            self.version = json_data["version"]
-            self.sub_tool = json_data.get("subTool")
-            self.khiops_encoding = json_data.get("khiops_encoding")
-            if self.khiops_encoding == "colliding_ansi_utf8":
-                self.ansi_chars = json_data["ansi_chars"]
-                if "colliding_utf8_chars" in json_data:
-                    self.colliding_utf8_chars = json_data["colliding_utf8_chars"]
+        # Initialize attributes from data
+        self.tool = json_data.get("tool")
+        self.version = json_data.get("version")
+        self.sub_tool = json_data.get("subTool")
 
-            # Store a copy of the data to be able to write copies of it
-            self.json_data = copy.deepcopy(json_data)
+        # Obtain encoding fields
+        self.khiops_encoding = json_data.get("khiops_encoding")
+        if self.khiops_encoding is not None:
+            self.ansi_chars = json_data.get("ansi_chars")
+            self.colliding_utf8_chars = json_data.get("colliding_utf8_chars")
+        # To support Khiops < 10.0.1
+        else:
+            self.ansi_chars = []
+            self.colliding_utf8_chars = []
+
+        # Store a copy of the data to be able to write copies of it
+        self.json_data = copy.deepcopy(json_data)
 
     def create_output_file_writer(self, stream):
         """Creates an output file with the proper encoding settings
@@ -193,48 +231,6 @@ class KhiopsJSONObject:
                 )
             else:
                 return KhiopsOutputWriter(stream, force_ansi=True)
-
-    def load_khiops_json_file(self, json_file_path):
-        """Initializes the object from a Khiops JSON file
-
-        Parameters
-        ----------
-        json_file_path : str
-            Path of the Khiops JSON file.
-
-        Raises
-        ------
-        `.KhiopsJSONError`
-            If the file is an invalid JSON, Khiops JSON or if it is not UTF-8.
-        """
-        with io.BytesIO(fs.read(json_file_path)) as json_file_stream:
-            try:
-                json_data = json.load(json_file_stream)
-                first_load_failed = False
-            except UnicodeDecodeError as error:
-                warnings.warn(
-                    "Khiops JSON file raised UnicodeDecodeError, "
-                    "probably because the file is not encoded in UTF-8. "
-                    "The file will be loaded with replacement characters on "
-                    "decoding errors and this may generate problems downstream. "
-                    "To avoid any problem, regenerate the file with Khiops 10.0 "
-                    f"or newer.\nKhiops JSON file: {json_file_path}.\n"
-                    f"UnicodeDecodeError message:\n{error}"
-                )
-                first_load_failed = True
-
-        # Try a second time with flexible errors
-        if first_load_failed:
-            with io.StringIO(
-                fs.read(json_file_path).decode("utf8", errors="replace")
-            ) as json_file_stream:
-                json_data = json.load(json_file_stream)
-        try:
-            self.__init__(json_data)
-        except KhiopsJSONError as error:
-            raise KhiopsJSONError(
-                f"Could not load Khiops JSON file: {json_file_path}"
-            ) from error
 
     def write_khiops_json_file(self, json_file_path):
         """Write the JSON data of the object to a Khiops JSON file

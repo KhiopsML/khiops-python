@@ -44,7 +44,11 @@ import io
 
 from khiops.core.exceptions import KhiopsJSONError
 from khiops.core.internals.common import type_error_message
-from khiops.core.internals.io import KhiopsJSONObject, KhiopsOutputWriter
+from khiops.core.internals.io import (
+    KhiopsJSONObject,
+    KhiopsOutputWriter,
+    flexible_json_load,
+)
 
 
 class CoclusteringResults(KhiopsJSONObject):
@@ -54,7 +58,7 @@ class CoclusteringResults(KhiopsJSONObject):
     ----------
     json_data : dict, optional
         Python dictionary representing the data of a Khiops Coclustering JSON report
-        file. If not specified it returns an empty object.
+        file. If not specified it returns an empty instance.
 
         .. note::
             Prefer either the `read_khiops_coclustering_json_file` method or the
@@ -77,32 +81,20 @@ class CoclusteringResults(KhiopsJSONObject):
         # Initialize super class
         super().__init__(json_data=json_data)
 
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
         # Initialize empty report attributes
-        self.short_description = ""
-        self.coclustering_report = None
+        self.short_description = json_data.get("shortDescription", "")
 
-        # Initialize from json data
-        if json_data is not None:
-            if "shortDescription" in json_data:
-                self.short_description = json_data.get("shortDescription")
+        # Initialize the sub-report only if available
+        if "coclusteringReport" in json_data:
             self.coclustering_report = CoclusteringReport(
-                json_data.get("coclusteringReport")
+                json_data["coclusteringReport"]
             )
-
-    def read_khiops_coclustering_json_file(self, json_file_path):
-        """Constructs an instance from a Khiops JSON file
-
-        Parameters
-        ----------
-        json_file_path : str
-            Path of the Khiops JSON report.
-
-        Returns
-        -------
-        `CoclusteringResults`
-            An instance of CoclusteringResults containing information on the file.
-        """
-        self.load_khiops_json_file(json_file_path)
+        else:
+            self.coclustering_report = None
 
     def write_report_file(self, report_file_path):
         """Writes a TSV report file with the object's information
@@ -138,9 +130,6 @@ class CoclusteringResults(KhiopsJSONObject):
                     KhiopsOutputWriter,
                 )
             )
-        # Write nothing if tool is not defined
-        if self.tool == "":
-            return
 
         # Write report
         writer.writeln(f"#Khiops {self.version}")
@@ -162,9 +151,7 @@ def read_coclustering_results_file(json_file_path):
     `.CoclusteringResults`
         An instance of CoclusteringResults containing the report's information.
     """
-    coclustering_results = CoclusteringResults()
-    coclustering_results.read_khiops_coclustering_json_file(json_file_path)
-    return coclustering_results
+    return CoclusteringResults(json_data=flexible_json_load(json_file_path))
 
 
 class CoclusteringReport:
@@ -193,7 +180,7 @@ class CoclusteringReport:
     ----------
     json_data : dict, optional
         JSON data of the ``coclusteringReport`` field of a Khiops Coclustering JSON
-        report file. If not specified it returns an empty object.
+        report file. If not specified it returns an empty instance.
 
     Attributes
     ----------
@@ -216,7 +203,7 @@ class CoclusteringReport:
         Name dictionary from which the model was learned.
     database : str
         Path of the main training data table file.
-    sample_percentage : int
+    sample_percentage : float
         Percentage of instances used in training.
     sampling_mode : "Include sample" or "Exclude samples"
         Sampling mode used to split the train and datasets.
@@ -232,80 +219,58 @@ class CoclusteringReport:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Coclustering summary attributes
-        self.instance_number = 0
-        self.cell_number = 0
-        self.null_cost = 0
-        self.cost = 0
-        self.level = 0
-        self.initial_dimension_number = 0
-        self.frequency_variable = ""
-        self.dictionary = ""
-        self.database = ""
-        self.sample_percentage = 0
-        self.sampling_mode = ""
-        self.selection_variable = None
-        self.selection_value = None
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Coclustering dimensions
-        self.dimensions = []
-
-        # Coclustering cells
-        self.cells = []
-
-        # Internal dimension dictionary
-        self._dimensions_by_name = {}
-
-        # Return if no JSON data
+        # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
-            return
-
-        # Raise exception if the summary is not found
-        if "summary" not in json_data:
+            json_data = {}
+        # Otherwise raise an exception if the summary is not found
+        elif "summary" not in json_data:
             raise KhiopsJSONError("'summary' key not found in coclustering report")
 
         # Initialize summary fields
-        json_summary = json_data.get("summary")
-        self.instance_number = json_summary.get("instances")
-        self.cell_number = json_summary.get("cells")
-        self.null_cost = json_summary.get("nullCost")
-        self.cost = json_summary.get("cost")
-        self.level = json_summary.get("level")
-        self.initial_dimension_number = json_summary.get("initialDimensions")
-        self.frequency_variable = json_summary.get("frequencyVariable")
-        self.dictionary = json_summary.get("dictionary")
-        self.database = json_summary.get("database")
-        self.sample_percentage = json_summary.get("samplePercentage")
-        self.sampling_mode = json_summary.get("samplingMode")
+        json_summary = json_data.get("summary", {})
+        self.instance_number = json_summary.get("instances", 0)
+        self.cell_number = json_summary.get("cells", 0)
+        self.null_cost = json_summary.get("nullCost", 0)
+        self.cost = json_summary.get("cost", 0)
+        self.level = json_summary.get("level", 0)
+        self.initial_dimension_number = json_summary.get("initialDimensions", 0)
+        self.frequency_variable = json_summary.get("frequencyVariable", "")
+        self.dictionary = json_summary.get("dictionary", "")
+        self.database = json_summary.get("database", "")
+        self.sample_percentage = json_summary.get("samplePercentage", 0.0)
+        self.sampling_mode = json_summary.get("samplingMode", "")
         self.selection_variable = json_summary.get("selectionVariable")
         self.selection_value = json_summary.get("selectionValue")
 
         # Create dimensions and initialize their summaries
-        json_dimension_summaries = json_data.get("dimensionSummaries")
-        if json_dimension_summaries is not None:
-            for json_dimension_summary in json_dimension_summaries:
-                dimension = CoclusteringDimension()
-                dimension.init_summary(json_dimension_summary)
+        self.dimensions = []
+        self._dimensions_by_name = {}
+        if "dimensionSummaries" in json_data:
+            for json_dimension_summary in json_data["dimensionSummaries"]:
+                dimension = CoclusteringDimension().init_summary(json_dimension_summary)
                 self.dimensions.append(dimension)
                 self._dimensions_by_name[dimension.name] = dimension
 
         # Initialize dimensions' partitions
-        json_dimension_partitions = json_data.get("dimensionPartitions")
-        if json_dimension_partitions is not None:
+        if "dimensionPartitions" in json_data:
+            json_dimension_partitions = json_data["dimensionPartitions"]
             if len(self.dimensions) != len(json_dimension_partitions):
                 raise KhiopsJSONError(
                     "'dimensionPartitions' list has length "
                     f"{len(json_dimension_partitions)} instead of "
                     f"{len(self.dimensions)}"
                 )
-
             for i, json_dimension_partition in enumerate(json_dimension_partitions):
                 dimension = self.dimensions[i]
                 dimension.init_partition(json_dimension_partition)
 
         # Initialize dimensions' hierarchies
-        json_dimension_hierarchies = json_data.get("dimensionHierarchies")
-        if json_dimension_hierarchies is not None:
+        if "dimensionHierarchies" in json_data:
+            json_dimension_hierarchies = json_data["dimensionHierarchies"]
             if len(self.dimensions) != len(json_dimension_hierarchies):
                 raise KhiopsJSONError(
                     "'dimensionHierarchies' list has length "
@@ -317,28 +282,30 @@ class CoclusteringReport:
                 dimension.init_hierarchy(json_dimension_hierarchy)
 
         # Initialize cells
-        json_cell_part_indexes = json_data.get("cellPartIndexes")
-        json_cell_frequencies = json_data.get("cellFrequencies")
-        if json_cell_part_indexes is not None:
+        self.cells = []
+        if "cellPartIndexes" in json_data:
             # Check minimum consistency of input data
             if "cellFrequencies" not in json_data:
-                raise KhiopsJSONError("'cellFrequencies' key not found")
+                raise KhiopsJSONError(
+                    "'cellFrequencies' key not found " "but 'cellPartIndexes' found."
+                )
+            json_cell_frequencies = json_data["cellFrequencies"]
+            json_cell_part_indexes = json_data["cellPartIndexes"]
             if len(json_cell_part_indexes) != len(json_cell_frequencies):
                 raise KhiopsJSONError(
                     "'cellPartIndexes' length is different from "
                     f"that of 'cellFrequencies': {len(json_cell_part_indexes)} != "
                     f"{len(json_cell_frequencies)}"
                 )
-
             # Create and initialize all cells
             for i, part_indexes in enumerate(json_cell_part_indexes):
                 # Initialize cell
                 cell = CoclusteringCell()
                 cell.frequency = json_cell_frequencies[i]
 
-                # Initialize cell parts
+                # Initialize cell parts:
+                # Retrieve part from its index in the partition, per dimension
                 for j, index in enumerate(part_indexes):
-                    # Retrieve part from its index in the partition, per dimension
                     dimension = self.dimensions[j]
                     part = dimension.parts[index]
                     cell.parts.append(part)
@@ -523,7 +490,7 @@ class CoclusteringReport:
 class CoclusteringDimension:
     """A coclustering dimension (variable)
 
-    A coclustering dimension is a hierarchical clustering of an input variable.  The
+    A coclustering dimension is a hierarchical clustering of an input variable. The
     leafs of this hierarchy are linked to an element of a partition of the input
     variable. Leaf clusters have variable parts as their children.
 
@@ -597,142 +564,184 @@ class CoclusteringDimension:
         # Clusters internal dictionary
         self._clusters_by_name = {}
 
-    def init_summary(self, json_summary_data=None):
+    def init_summary(self, json_data=None):
         """Initializes the summary attributes from a Python JSON object
 
         Parameters
         ----------
-        json_summary_data : dict, optional
+        json_data : dict, optional
             Dictionary representing the data of an element of the list found at the
             ``dimensionSummaries`` field of a Khiops Coclustering JSON report file. If
             not specified it leaves the object as-is.
-        """
-        if json_summary_data is not None:
-            self.name = json_summary_data.get("name")
-            self.type = json_summary_data.get("type")
-            self.part_number = json_summary_data.get("parts")
-            self.initial_part_number = json_summary_data.get("initialParts")
-            self.value_number = json_summary_data.get("values")
-            self.interest = json_summary_data.get("interest")
-            self.description = json_summary_data.get("description")
-            self.min = json_summary_data.get("min")
-            self.max = json_summary_data.get("max")
 
-    def init_partition(self, json_partition_data=None):
+        Returns
+        -------
+        self
+            A reference to the caller instance.
+        """
+        # Do nothing if json_data is not specified
+        if json_data is None:
+            return self
+        # Otherwise check the type of json_data
+        elif not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Initialize the summary fields
+        self.name = json_data.get("name", "")
+        self.type = json_data.get("type", "")
+        self.part_number = json_data.get("parts", 0)
+        self.initial_part_number = json_data.get("initialParts", 0)
+        self.value_number = json_data.get("values", 0)
+        self.interest = json_data.get("interest", 0)
+        self.description = json_data.get("description", "")
+        self.min = json_data.get("min")
+        self.max = json_data.get("max")
+
+        return self
+
+    def init_partition(self, json_data=None):
         """Initializes the partition attributes from a Python JSON object
 
         Parameters
         ----------
-        json_summary_data : dict, optional
+        json_data : dict, optional
             Python dictionary representing the data of an element of the list found at
             the ``dimensionPartitions`` field of a Khiops Coclustering JSON report file.
             If not specified it leaves the object as-is.
+
+        Returns
+        -------
+        self
+            A reference to the caller instance.
         """
-        if json_partition_data is not None:
-            # Check minimum required attributes
-            if self.name != json_partition_data.get("name"):
+        # Do nothing if json_data is not specified
+        if json_data is None:
+            return self
+        # Otherwise check the type of json_data
+        elif not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Check minimum required attributes
+        if self.name != json_data.get("name"):
+            raise KhiopsJSONError(
+                f"""'name' field value is '{json_data.get("name")}' """
+                f"it should be '{self.name}'"
+            )
+        if self.type != json_data.get("type"):
+            raise KhiopsJSONError(
+                f"""'name' field value is '{json_data.get("type")}' """
+                f"it should be '{self.type}'"
+            )
+
+        # Initialize interval partitions
+        if self.type == "Numerical":
+            # Check the "intervals" field
+            if "intervals" not in json_data:
                 raise KhiopsJSONError(
-                    f"""'name' field value is '{json_partition_data.get("name")}' """
-                    f"it should be '{self.name}'"
+                    "'intervals' key not found in numerical partition"
                 )
-            if self.type != json_partition_data.get("type"):
-                raise KhiopsJSONError(
-                    f"""'name' field value is '{json_partition_data.get("type")}' """
-                    f"it should be '{self.type}'"
-                )
+            elif not isinstance(json_data["intervals"], list):
+                raise KhiopsJSONError("'intervals' key must be a list")
+            elif len(json_data["intervals"]) < 2:
+                raise KhiopsJSONError("'intervals' key must have length at least 2")
 
-            # Initialize interval partitions
-            if self.type == "Numerical":
-                # Initialize intervals
-                if "intervals" not in json_partition_data:
-                    raise KhiopsJSONError("'intervals' key not found")
-                json_intervals = json_partition_data.get("intervals")
-                for json_interval in json_intervals:
-                    interval = CoclusteringDimensionPartInterval(json_interval)
-                    self.parts.append(interval)
-                    self._parts_by_name[interval.cluster_name] = interval
+            # Initialize the intervals data
+            for json_interval in json_data["intervals"]:
+                interval = CoclusteringDimensionPartInterval(json_interval)
+                self.parts.append(interval)
+                self._parts_by_name[interval.cluster_name] = interval
 
-                # Initialize open interval flags
-                first_interval = self.parts[0]
-                if first_interval.is_missing:
-                    first_interval = self.parts[1]
-                first_interval.is_left_open = True
-                last_interval = self.parts[-1]
-                last_interval.is_right_open = True
+            # Initialize open interval flags
+            first_interval = self.parts[0]
+            if first_interval.is_missing:
+                first_interval = self.parts[1]
+            first_interval.is_left_open = True
+            last_interval = self.parts[-1]
+            last_interval.is_right_open = True
 
-            # Initialize value groups partitions
-            if self.type == "Categorical":
-                # Initialize regular value groups
-                if "valueGroups" not in json_partition_data:
-                    raise KhiopsJSONError("'valueGroups' key not found")
-                json_value_groups = json_partition_data.get("valueGroups")
-                for json_value_group in json_value_groups:
-                    value_group = CoclusteringDimensionPartValueGroup(json_value_group)
-                    self.parts.append(value_group)
-                    self._parts_by_name[value_group.cluster_name] = value_group
+        # Initialize value groups partitions
+        elif self.type == "Categorical":
+            # Initialize regular value groups
+            if "valueGroups" not in json_data:
+                raise KhiopsJSONError("'valueGroups' key not found")
+            for json_value_group in json_data["valueGroups"]:
+                value_group = CoclusteringDimensionPartValueGroup(json_value_group)
+                self.parts.append(value_group)
+                self._parts_by_name[value_group.cluster_name] = value_group
 
-                # Initialize default group
-                # The default group contains all the values not specified in
-                # any part of the partition and all the unknown values
-                default_group_index = json_partition_data.get("defaultGroupIndex")
-                self.default_group = self.parts[default_group_index]
-                self.default_group.is_default_part = True
+            # Initialize default group
+            # The default group contains all the values not specified in
+            # any part of the partition and all the unknown values
+            default_group_index = json_data.get("defaultGroupIndex")
+            self.default_group = self.parts[default_group_index]
+            self.default_group.is_default_part = True
 
-    def init_hierarchy(self, json_hierarchy_data=None):
+        return self
+
+    def init_hierarchy(self, json_data):
         """Initializes the hierarchy attributes from a Python JSON object
 
         Parameters
         ----------
-        json_summary_data : dict, optional
+        json_data : dict, optional
             Python dictionary representing the data of an element of the list found at
             the ``dimensionHierarchies`` field of a Khiops Coclustering JSON report
             file. If not specified it leaves the object as-is.
+
+        Returns
+        -------
+        self
+            A reference to the caller instance.
         """
-        if json_hierarchy_data is not None:
-            # Check minimum required attributes
-            if self.name != json_hierarchy_data.get("name"):
-                raise KhiopsJSONError(
-                    f"""'name' field is '{json_hierarchy_data.get("name")}' """
-                    f"it should be '{self.name}'"
-                )
-            if self.type != json_hierarchy_data.get("type"):
-                raise KhiopsJSONError(
-                    f"""'name' field is '{json_hierarchy_data.get("type")}' """
-                    f"it should be '{self.type}'"
-                )
+        # Do nothing if json_data is not specified
+        if json_data is None:
+            return self
+        # Otherwise check the type of json_data
+        elif not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-            # Initialize clusters
-            if "clusters" not in json_hierarchy_data:
-                raise KhiopsJSONError("'clusters' key not found")
-            json_clusters = json_hierarchy_data.get("clusters")
-            for json_cluster in json_clusters:
-                cluster = CoclusteringCluster(json_cluster)
-                self.clusters.append(cluster)
-                self._clusters_by_name[cluster.name] = cluster
+        # Check minimum required attributes
+        if self.name != json_data.get("name"):
+            raise KhiopsJSONError(
+                f"""'name' field is '{json_data.get("name")}' """
+                f"it should be '{self.name}'"
+            )
+        if self.type != json_data.get("type"):
+            raise KhiopsJSONError(
+                f"""'name' field is '{json_data.get("type")}' """
+                f"it should be '{self.type}'"
+            )
 
-            # Link the clusters according to their hierarchy
-            # and link the leaf cluster to their parts
-            for cluster in self.clusters:
-                # Link leaf cluster to its part
-                if cluster.is_leaf:
-                    cluster.leaf_part = self.get_part(cluster.name)
+        # Initialize clusters
+        if "clusters" not in json_data:
+            raise KhiopsJSONError("'clusters' key not found")
+        for json_cluster in json_data["clusters"]:
+            cluster = CoclusteringCluster(json_cluster)
+            self.clusters.append(cluster)
+            self._clusters_by_name[cluster.name] = cluster
 
-                # Root cluster case: Set the dimension's root cluster reference
-                if cluster.parent_cluster_name == "":
-                    self.root_cluster = cluster
-                # Non root case: Link the parent to the current cluster
+        # Link the clusters according to their hierarchy
+        # and link the leaf cluster to their parts
+        for cluster in self.clusters:
+            # Link leaf cluster to its part
+            if cluster.is_leaf:
+                cluster.leaf_part = self.get_part(cluster.name)
+
+            # Root cluster case: Set the dimension's root cluster reference
+            if cluster.parent_cluster_name == "":
+                self.root_cluster = cluster
+            # Non root case: Link the parent to the current cluster
+            else:
+                # Lookup the parent
+                cluster.parent_cluster = self.get_cluster(cluster.parent_cluster_name)
+
+                # If parent's first child empty: Set current cluster to it
+                if cluster.parent_cluster.child_cluster1 is None:
+                    cluster.parent_cluster.child_cluster1 = cluster
+                # If not: Set current cluster to the second child
                 else:
-                    # Lookup the parent
-                    cluster.parent_cluster = self.get_cluster(
-                        cluster.parent_cluster_name
-                    )
-
-                    # If parent's first child empty: Set current cluster to it
-                    if cluster.parent_cluster.child_cluster1 is None:
-                        cluster.parent_cluster.child_cluster1 = cluster
-                    # If not: Set current cluster to the second child
-                    else:
-                        cluster.parent_cluster.child_cluster2 = cluster
+                    cluster.parent_cluster.child_cluster2 = cluster
+        return self
 
     def get_part(self, part_name):
         """Returns a part of the dimension given the part's name
@@ -909,7 +918,12 @@ class CoclusteringDimension:
 class CoclusteringDimensionPart:
     """An element of a partition of a dimension
 
-    Abstract class
+    Abstract class.
+
+    Parameters
+    ----------
+    json_data: dict, optional
+        See child classes for specific information about this parameter.
 
     Attributes
     ----------
@@ -919,12 +933,19 @@ class CoclusteringDimensionPart:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Name of the part (only referenced by a leaf cluster of a hierarchy)
-        self.cluster_name = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Verify that JSON data corresponds to this class
-        if json_data is not None and "cluster" not in json_data:
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+        # Otherise check the validity of json_data
+        elif "cluster" not in json_data:
             raise KhiopsJSONError("'cluster' key not found")
+
+        # Cluster name of the part (only referenced by a leaf cluster of a hierarchy)
+        self.cluster_name = json_data.get("cluster", "")
 
 
 class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
@@ -935,7 +956,7 @@ class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
     json_data : dict, optional
         Python dictionary representing an element of type "Numerical" of the list at the
         ``dimensionPartitions`` field of a Khiops Coclustering JSON report file. If not
-        specifed it returns an empty object.
+        specifed it returns an empty instance.
 
     Raises
     ------
@@ -965,28 +986,35 @@ class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
     def __init__(self, json_data=None):
         """See class docstring"""
         # Initialize base class
-        super().__init__(json_data)
+        super().__init__(json_data=json_data)
 
-        self.lower_bound = None
-        self.upper_bound = None
-        self.is_missing = False
-        self.is_left_open = False
-        self.is_right_open = False
-
-        # Initialize from JSON data
-        if json_data is not None:
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+        # Otherwise check that the 'bounds' key exists
+        else:
             if "bounds" not in json_data:
                 raise KhiopsJSONError("'bounds' key not found")
-            self.cluster_name = json_data.get("cluster")
-            json_bounds = json_data.get("bounds")
+            elif not isinstance(json_data["bounds"], list):
+                raise KhiopsJSONError("'bounds' key must be a list")
+            elif len(json_data["bounds"]) != 2:
+                raise KhiopsJSONError("'bounds' key must be a list of length 2")
 
-            # Missing value if array of bounds is empty
-            if len(json_bounds) == 0:
-                self.is_missing = True
-            # Actual interval if array of bounds not empty
-            else:
-                self.lower_bound = json_bounds[0]
-                self.upper_bound = json_bounds[1]
+        # Initialize a "true" interval
+        json_bounds = json_data.get("bounds")
+        if json_bounds:
+            self.is_missing = False
+            self.lower_bound = json_bounds[0]
+            self.upper_bound = json_bounds[1]
+        # Initialize a "missing part" interval
+        else:
+            self.is_missing = True
+            self.lower_bound = None
+            self.upper_bound = None
+
+        # Initialize the 'open' flags (initialized by another class)
+        self.is_left_open = False
+        self.is_right_open = False
 
     def __str__(self):
         """Returns a human-readable string representation"""
@@ -1022,7 +1050,7 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
     json_data : dict, optional
         Python dictionary representing an element of type "Categorical" of the list at
         the ``dimensionPartitions`` field of a Khiops Coclustering JSON report file. If
-        None it returns an empty object.
+        None it returns an empty instance.
 
     Raises
     ------
@@ -1041,32 +1069,39 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
 
     def __init__(self, json_data=None):
         """Constructs an instance from a python JSON object"""
-
         # Initialize base class
-        super().__init__(json_data)
+        super().__init__(json_data=json_data)
 
-        # Initialize default values
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+        # Otherwise raise an error if the relevant keys are not found
+        else:
+            mandatory_keys = ("values", "valueFrequencies", "valueTypicalities")
+            for key in mandatory_keys:
+                if key not in json_data:
+                    raise KhiopsJSONError(f"'{key}' key not found")
+                elif not isinstance(json_data[key], list):
+                    raise KhiopsJSONError(f"'{key}' key must be a list")
+                elif len(json_data[key]) != len(json_data["values"]):
+                    raise KhiopsJSONError(
+                        f"'{key}' key list must have the same length as 'values'"
+                    )
+
+        # Initialize value list
         self.values = []
+        json_values = json_data.get("values", [])
+        json_value_frequencies = json_data.get("valueFrequencies", [])
+        json_value_typicalities = json_data.get("valueTypicalities", [])
+        for i, json_value in enumerate(json_values):
+            value = CoclusteringDimensionPartValue()
+            self.values.append(value)
+            value.value = json_value
+            value.frequency = json_value_frequencies[i]
+            value.typicality = json_value_typicalities[i]
+
+        # Initialize default values (set for real from another class)
         self.is_default_part = False
-
-        # Initialize from JSON data
-        if json_data is not None:
-            if "values" not in json_data:
-                raise KhiopsJSONError("'values' key not found")
-
-            # Initialize cluster name
-            self.cluster_name = json_data.get("cluster")
-
-            # Initialize value list
-            json_values = json_data.get("values")
-            json_value_frequencies = json_data.get("valueFrequencies")
-            json_value_typicalities = json_data.get("valueTypicalities")
-            for i, json_value in enumerate(json_values):
-                value = CoclusteringDimensionPartValue()
-                self.values.append(value)
-                value.value = json_value
-                value.frequency = json_value_frequencies[i]
-                value.typicality = json_value_typicalities[i]
 
     def __str__(self):
         """Returns a human-readable string representation"""
@@ -1125,7 +1160,7 @@ class CoclusteringCluster:
     json_data : dict, optional
         JSON data of an element of the list at the ``dimensionHierarchies`` field within
         the ``coclusteringReport`` field of a Khiops Coclustering JSON report file. If
-        not specified it returns an empty object.
+        not specified it returns an empty instance.
 
     Attributes
     ----------
@@ -1164,55 +1199,39 @@ class CoclusteringCluster:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Summary attributes
-        # (cf section "Coclustering stats" in Khiops coclustering reports .khc)
-        self.name = ""
-        self.parent_cluster_name = ""
-        self.frequency = 0
-        self.interest = 0
-        self.hierarchical_level = 0
-        self.rank = 0
-        self.hierarchical_rank = 0
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Flag for leaf (terminal) clusters in the hierarchy
-        self.is_leaf = False
-
-        # Annotation fields. Optional in JSON data
-        self.short_description = ""
-        self.description = ""
-
-        # Link to a CoclusteringDimensionPart for leaf clusters, None otherwise
-        self.leaf_part = None
-
-        # Link to parent cluster, None for the root of the hierarchy
-        self.parent_cluster = None
-
-        # Link to child clusters, None for the leafs of the hierarchy
-        self.child_cluster1 = None
-        self.child_cluster2 = None
-
-        # Initialize from JSON data
-        if json_data is not None:
-            # Check if json_data is from the "Coclustering Stats" section
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+        # Otherwise check the "cluter" and "parentCluster" keys
+        else:
             if "cluster" not in json_data:
                 raise KhiopsJSONError("'cluster' key not found")
-            if "parentCluster" not in json_data:
+            elif "parentCluster" not in json_data:
                 raise KhiopsJSONError("'parentCluster' key not found")
 
-            # Initialize attributes
-            self.name = json_data.get("cluster")
-            self.parent_cluster_name = json_data.get("parentCluster")
-            self.frequency = json_data.get("frequency")
-            self.interest = json_data.get("interest")
-            self.hierarchical_level = json_data.get("hierarchicalLevel")
-            self.rank = json_data.get("rank")
-            self.hierarchical_rank = json_data.get("hierarchicalRank")
-            self.is_leaf = json_data.get("isLeaf")
-            self.short_description = json_data.get("shortDescription", "")
-            self.description = json_data.get("description", "")
+        # Initialize attributes
+        self.name = json_data.get("cluster", "")
+        self.parent_cluster_name = json_data.get("parentCluster", "")
+        self.frequency = json_data.get("frequency", 0)
+        self.interest = json_data.get("interest", 0.0)
+        self.hierarchical_level = json_data.get("hierarchicalLevel", 0.0)
+        self.rank = json_data.get("rank", 0)
+        self.hierarchical_rank = json_data.get("hierarchicalRank", 0)
+        self.is_leaf = json_data.get("isLeaf", False)
+        self.short_description = json_data.get("shortDescription", "")
+        self.description = json_data.get("description", "")
 
-            # The caller must specify the CoclusteringCluster references parent_cluster
-            # and child_cluster that link this instance to the hierarchy
+        # Link to child clusters, None for the leafs of the hierarchy
+        # The user must specify the CoclusteringCluster references parent_cluster
+        # and child_cluster that link this instance to the hierarchy
+        self.parent_cluster = None
+        self.child_cluster1 = None
+        self.child_cluster2 = None
+        self.leaf_part = None
 
     def write_hierarchy_header_line(self, writer):
         """Writes the "hierarchy" section's header to a writer object

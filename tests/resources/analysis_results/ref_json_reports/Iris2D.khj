@@ -12,7 +12,8 @@
 			"selectionVariable": "",
 			"selectionValue": "",
 			"learningTask": "Classification analysis",
-			"targetVariable": "Class"
+			"targetVariable": "Class",
+			"mainTargetValue": "Iris-setosa"
 		},
 		"trainedPredictors": [
 			{
@@ -77,7 +78,8 @@
 			"selectionValue": "",
 			"instances": 99,
 			"learningTask": "Classification analysis",
-			"targetVariable": "Class"
+			"targetVariable": "Class",
+			"mainTargetValue": "Iris-setosa"
 		},
 		"predictorsPerformance": [
 			{
@@ -215,7 +217,8 @@
 			"selectionValue": "",
 			"instances": 51,
 			"learningTask": "Classification analysis",
-			"targetVariable": "Class"
+			"targetVariable": "Class",
+			"mainTargetValue": "Iris-setosa"
 		},
 		"predictorsPerformance": [
 			{
@@ -363,6 +366,7 @@
 			"instances": 99,
 			"learningTask": "Classification analysis",
 			"targetVariable": "Class",
+      "mainTargetValue": "Iris-setosa",
 			"targetDescriptiveStats": {
 				"values": 3,
 				"mode": "Iris-versicolor",
@@ -856,6 +860,7 @@
 			"instances": 99,
 			"learningTask": "Classification analysis",
 			"targetVariable": "Class",
+      "mainTargetValue": "Iris-setosa",
 			"targetDescriptiveStats": {
 				"values": 3,
 				"mode": "Iris-versicolor",
