@@ -1127,18 +1127,15 @@ class KhiopsLocalRunner(KhiopsRunner):
         status_msg, parent_warning_list = super()._build_status_message()
         warning_list += parent_warning_list
 
-        # Capture the tmp dir status
-        if self.khiops_temp_dir == "":
-            khiops_temp_dir_msg = "<empty> (system's default)"
-        else:
+        # Build the messages for temp_dir, install type and mpi
+        if self.khiops_temp_dir:
             khiops_temp_dir_msg = self.khiops_temp_dir
-
-        if _is_khiops_installed_in_a_conda_env():
-            install_type = "conda"
         else:
-            install_type = "pip + system-wide"
-
-        # Build the MPI command args message
+            khiops_temp_dir_msg = "<empty> (system's default)"
+        if _is_khiops_installed_in_a_conda_env():
+            install_type_msg = "conda"
+        else:
+            install_type_msg = "pip + system-wide"
         if self.mpi_command_args:
             mpi_command_args_msg = " ".join(self.mpi_command_args)
         else:
@@ -1150,7 +1147,7 @@ class KhiopsLocalRunner(KhiopsRunner):
         status_msg += f"version         : {self._khiops_version}\n"
         status_msg += f"executables dir : {self._khiops_bin_dir}\n"
         status_msg += f"temp dir        : {khiops_temp_dir_msg}\n"
-        status_msg += f"install type    : {install_type}\n"
+        status_msg += f"install type    : {install_type_msg}\n"
         status_msg += f"MPI command     : {mpi_command_args_msg}\n"
         status_msg += "\n"
 
@@ -1209,13 +1206,9 @@ class KhiopsLocalRunner(KhiopsRunner):
                 f"Khiops binaries directory is a file: {bin_dir}"
             )
 
-        # Set the directory
+        # Set the directory, check and initialize the version
         self._khiops_bin_dir = bin_dir
-
-        # Check that the directory contains MODL and MODL_Coclustering
         self._check_tools()
-
-        # Initialize the khiops version
         self._initialize_khiops_version()
 
     def _tool_path(self, tool_name):
@@ -1258,10 +1251,8 @@ class KhiopsLocalRunner(KhiopsRunner):
                 )
 
     def _set_samples_dir(self, samples_dir):
-        # Check the new directory
+        """Checks and sets the samples directory"""
         self._check_samples_dir(samples_dir)
-
-        # Call parent method
         super()._set_samples_dir(samples_dir)
 
     def _get_samples_dir(self):

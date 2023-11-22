@@ -19,7 +19,11 @@ import khiops.core.internals.filesystems as fs
 from khiops.core import api
 from khiops.core.exceptions import KhiopsJSONError
 from khiops.core.internals.common import type_error_message
-from khiops.core.internals.io import KhiopsJSONObject, KhiopsOutputWriter
+from khiops.core.internals.io import (
+    KhiopsJSONObject,
+    KhiopsOutputWriter,
+    flexible_json_load,
+)
 from khiops.core.internals.runner import get_runner
 
 
@@ -73,7 +77,7 @@ class DictionaryDomain(KhiopsJSONObject):
     ----------
     json_data : dict, optional
         Python dictionary representing the data of a Khiops Dictionary JSON file. If not
-        specified it returns an empty object.
+        specified it returns an empty instance.
 
         .. note::
             Prefer either the `read_khiops_dictionary_json_file` method or the
@@ -92,30 +96,29 @@ class DictionaryDomain(KhiopsJSONObject):
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Initialize super class
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Initialize base attributes
         super().__init__(json_data=json_data)
 
-        # Initialize empty attributes
-        self.dictionaries = []
-        self._dictionaries_by_name = {}
-
-        # Initialize from json data
-        if json_data is not None:
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+        # Otherwise check if the tool field is the proper one
+        else:
             if self.tool != "Khiops Dictionary":
                 raise KhiopsJSONError(
                     f"'tool' value must be 'Khiops Dictionary' not '{self.tool}'"
                 )
-            if "dictionaries" in json_data:
-                json_dictionaries = json_data["dictionaries"]
-                if not isinstance(json_dictionaries, list):
-                    raise KhiopsJSONError(
-                        type_error_message(
-                            "'dictionaries' json data", json_dictionaries, list
-                        )
-                    )
-                for json_dictionary in json_dictionaries:
-                    dictionary = Dictionary(json_dictionary)
-                    self.add_dictionary(dictionary)
+
+        # Initialize the Khiops dictionary objects
+        self.dictionaries = []
+        self._dictionaries_by_name = {}
+        for json_dictionary in json_data.get("dictionaries", []):
+            dictionary = Dictionary(json_dictionary)
+            self.add_dictionary(dictionary)
 
     def __repr__(self):
         """Returns a human readable string representation"""
@@ -335,21 +338,6 @@ class DictionaryDomain(KhiopsJSONObject):
                 ) from error
         return dictionary
 
-    def read_khiops_dictionary_json_file(self, json_file_path):
-        """Constructs an instance from a Khiops Dictionary JSON file
-
-        Parameters
-        ----------
-        json_file_path : str
-            Path of the Khiops Dictionary JSON file.
-
-        Returns
-        -------
-        `DictionaryDomain`
-            The dictionary domain containing the information in the file.
-        """
-        self.load_khiops_json_file(json_file_path)
-
     def export_khiops_dictionary_file(self, kdic_file_path):
         """Exports the domain in ``.kdic`` format
 
@@ -438,8 +426,7 @@ def read_dictionary_file(dictionary_file_path):
         json_dictionary_file_path = dictionary_file_path
 
     # Read the JSON dictionary file into a dictionary domain object
-    domain = DictionaryDomain()
-    domain.read_khiops_dictionary_json_file(json_dictionary_file_path)
+    domain = DictionaryDomain(json_data=flexible_json_load(json_dictionary_file_path))
 
     # Clean the temporary file if the input file was .kdic
     if extension == ".kdic":
@@ -465,7 +452,7 @@ class Dictionary:
     json_data : dict, optional
         Python dictionary representing an element of the list at the ``dictionaries``
         field of a Khiops Dictionary JSON file. If not specified returns an empty
-        object.
+        instance.
 
     Attributes
     ----------
@@ -486,73 +473,52 @@ class Dictionary:
     """
 
     def __init__(self, json_data=None):
-        """Constructs an instance from a python JSON object"""
-        # Main attributes
-        self.name = ""
-        self.label = ""
-        self.root = False
+        """See class docstring"""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Names of key variables
-        self.key = []
-
-        # Metadata object
-        self.meta_data = MetaData()
-
-        # Variables
-        self.variables = []
-
-        # Internal dictionary of variables. Indexed by name
-        self._variables_by_name = {}
-
-        # Variable blocks
-        self.variable_blocks = []
-
-        # Internal dictionary of variable blocks. Indexed by name
-        self._variable_blocks_by_name = {}
-
-        # Return empty instance if no JSON data
+        # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
-            return
-
-        # Check the type of the json data and its integrity
-        if not isinstance(json_data, dict):
-            raise KhiopsJSONError(
-                type_error_message("json data for dictionary", json_data, dict)
-            )
-        if "name" not in json_data:
-            raise KhiopsJSONError("'name' key not found")
+            json_data = {}
+        # Otherwise check the type of the json data and its integrity
+        else:
+            if "name" not in json_data:
+                raise KhiopsJSONError("'name' key not found")
 
         # Initialize main attributes
-        self.name = json_data.get("name")
+        self.name = json_data.get("name", "")
         self.label = json_data.get("label", "")
         self.root = json_data.get("root", False)
 
         # Initialize names of key variable
         self.key = json_data.get("key", [])
 
-        # Initialize metadata
+        # Initialize the metadata
         json_meta_data = json_data.get("metaData")
-        if json_meta_data is not None:
+        if json_meta_data is None:
+            self.meta_data = MetaData()
+        else:
             self.meta_data = MetaData(json_meta_data)
 
-        # Initialize variables
-        json_variables = json_data.get("variables")
-        if json_variables is not None:
-            if not isinstance(json_variables, list):
+        # Initialize variables and blocks
+        self.variables = []
+        self.variable_blocks = []
+        self._variables_by_name = {}
+        self._variable_blocks_by_name = {}
+        for json_variable in json_data.get("variables", []):
+            # Case of a simple variable
+            if "name" in json_variable:
+                variable = Variable(json_variable)
+                self.add_variable(variable)
+            # Case of a variable block
+            elif "blockName" in json_variable:
+                variable_block = VariableBlock(json_variable)
+                self.add_variable_block(variable_block)
+            else:
                 raise KhiopsJSONError(
-                    type_error_message("variables", json_variables, list)
+                    f"Variable/block name not found. JSON data: {json_variable}"
                 )
-            for json_variable in json_variables:
-                # Case of a simple variable
-                if "name" in json_variable:
-                    variable = Variable(json_variable)
-                    self.add_variable(variable)
-                # Case of a variable block
-                elif "blockName" in json_variable:
-                    variable_block = VariableBlock(json_variable)
-                    self.add_variable_block(variable_block)
-                else:
-                    raise KhiopsJSONError("variable/block name not found")
 
     def __repr__(self):
         """Returns a human readable string representation"""
@@ -882,7 +848,7 @@ class Variable:
     json_data : dict, optional
         Python dictionary representing an element of the list at the ``variables`` field
         of dictionaries found in a Khiops Dictionary JSON file. If not specified it
-        returns an empty object.
+        returns an empty instance.
 
     Attributes
     ----------
@@ -909,6 +875,10 @@ class Variable:
 
     def __init__(self, json_data=None):
         """See class docstring"""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
         # Main attributes
         self.name = ""
         self.label = ""
@@ -1108,7 +1078,7 @@ class VariableBlock:
     json_data : dict, optional
         Python dictionary representing an element of the list at the ``variables`` field
         of a dictionary object in a Khiops Dictionary JSON file. The element must have a
-        ``blockName`` field.  If not specified it returns an empty object.
+        ``blockName`` field.  If not specified it returns an empty instance.
 
     Attributes
     ----------
@@ -1126,33 +1096,20 @@ class VariableBlock:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Main attributes
-        self.name = ""
-        self.label = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Derivation rule
-        self.rule = ""
-
-        # Block metadata
-        self.meta_data = MetaData()
-
-        # Block variables
-        self.variables = []
-
-        # Return empty instance if no JSON data
+        # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
-            return
-
-        # Check the type of the json data and its integrity
-        if not isinstance(json_data, dict):
-            raise KhiopsJSONError(
-                type_error_message("json data for variable block", json_data, dict)
-            )
-        if "blockName" not in json_data:
-            raise KhiopsJSONError("'blockName' key not found")
+            json_data = {}
+        # Otherwise fail if 'blockName' is present in json_data
+        else:
+            if "blockName" not in json_data:
+                raise KhiopsJSONError("'blockName' key not found")
 
         # Initialize main attributes
-        self.name = json_data.get("blockName")
+        self.name = json_data.get("blockName", "")
         self.label = json_data.get("label", "")
 
         # Initialize derivation rule
@@ -1160,12 +1117,14 @@ class VariableBlock:
 
         # Initialize metadata if available
         json_meta_data = json_data.get("metaData")
-        if json_meta_data is not None:
+        if json_meta_data is None:
+            self.meta_data = MetaData()
+        else:
             self.meta_data = MetaData(json_meta_data)
 
         # Initialize variables
-        json_variables = json_data.get("variables")
-        for json_variable in json_variables:
+        self.variables = []
+        for json_variable in json_data.get("variables", []):
             variable = Variable(json_variable)
             self.add_variable(variable)
 
@@ -1280,7 +1239,7 @@ class MetaData:
     json_data : dict, optional
         Python dictionary representing the object at a ``metaData`` field of a
         dictionary domain, dictionary or variable in a Khiops Dictionary JSON file. If
-        None it returns an empty object.
+        None it returns an empty instance.
 
     Attributes
     ----------
@@ -1293,20 +1252,18 @@ class MetaData:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Keys and values are stored internally in two separate lists
-        # This is to keep the key ordering and to have a smaller footprint
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialize the key-value pairs
+        # They are stored in two separate lists to keep the key ordering
         self.keys = []
         self.values = []
-
-        # Return empty instance if no JSON data
-        if json_data is None:
-            return
-
-        # Check the type of the json data and its integrity
-        if not isinstance(json_data, dict):
-            raise KhiopsJSONError("Metadata section must be a dictionary")
-
-        # Add the key-value pairs
         for key, value in json_data.items():
             self.add_value(key, value)
 

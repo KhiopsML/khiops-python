@@ -87,7 +87,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
             ref_report = os.path.join(ref_reports_dir, f"{report}.txt")
             ref_json_report = os.path.join(ref_json_reports_dir, f"{report}.khj")
             output_report = os.path.join(output_reports_dir, f"{report}.txt")
-            results = kh.AnalysisResults()
             with self.subTest(report=report):
                 if report in reports_ko:
                     with self.assertRaises(kh.KhiopsJSONError):
@@ -214,12 +213,11 @@ class KhiopsCoreIOTests(unittest.TestCase):
             output_kdic = os.path.join(output_kdic_dir, f"{dictionary}.kdic")
             copy_output_kdic = os.path.join(copy_output_kdic_dir, f"{dictionary}.kdic")
             with self.subTest(dictionary=dictionary):
-                domain = kh.DictionaryDomain()
                 if dictionary in dictionaries_warn:
                     with self.assertWarns(UserWarning):
-                        domain.read_khiops_dictionary_json_file(ref_kdicj)
+                        domain = kh.read_dictionary_file(ref_kdicj)
                 else:
-                    domain.read_khiops_dictionary_json_file(ref_kdicj)
+                    domain = kh.read_dictionary_file(ref_kdicj)
                 domain.export_khiops_dictionary_file(output_kdic)
                 files_equal_or_fail(ref_kdic, output_kdic)
 
@@ -575,7 +573,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
 class KhiopsCoreServicesTests(unittest.TestCase):
     """Test the services of the core module classes
 
-    Specifically, the tests in this class are for  the services not used in the *write_*
+    Specifically, the tests in this class are for the services not used in the *write_*
     methods, as those are already tested in KhiopsCoreIOTests.
     """
 
@@ -614,46 +612,139 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             results = kh.AnalysisResults()
             results.write_report("A STRING IS NOT A VALID STREAM")
 
-        # Test errors on the mandatory fields of the preparation report
-        with self.assertRaises(kh.KhiopsJSONError):
+        # Test errors on the preparation report creation
+        with self.assertRaises(TypeError):
+            kh.PreparationReport(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.PreparationReport(json_data={"summary": None})
-        with self.assertRaises(kh.KhiopsJSONError):
+        self.assertIn("'reportType' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.PreparationReport(json_data={"reportType": "Preparation"})
-        with self.assertRaises(kh.KhiopsJSONError):
+        self.assertIn("'summary' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.PreparationReport(json_data={"reportType": "WHATEVER", "summary": None})
+        self.assertIn("'reportType' is not 'Preparation'", cm.exception.args[0])
 
-        # Test errors on the mandatory fields of the bivariate preparation report
-        with self.assertRaises(kh.KhiopsJSONError):
+        # Test errors on the bivariate preparation report creation
+        with self.assertRaises(TypeError):
+            kh.BivariatePreparationReport(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.BivariatePreparationReport(json_data={"summary": None})
-        with self.assertRaises(kh.KhiopsJSONError):
+        self.assertIn("'reportType' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.BivariatePreparationReport(
                 json_data={"reportType": "BivariatePreparation"}
             )
-        with self.assertRaises(kh.KhiopsJSONError):
+        self.assertIn("'summary' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.BivariatePreparationReport(
                 json_data={"reportType": "WHATEVER", "summary": None}
             )
+        self.assertIn(
+            "'reportType' is not 'BivariatePreparation'", cm.exception.args[0]
+        )
 
-        # Test errors on the mandatory fields of the modeling report
-        with self.assertRaises(kh.KhiopsJSONError):
+        # Test errors modeling report creation
+        with self.assertRaises(TypeError):
+            kh.ModelingReport(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.ModelingReport(json_data={"summary": None})
-        with self.assertRaises(kh.KhiopsJSONError):
+        self.assertIn("'reportType' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.ModelingReport(json_data={"reportType": "Modeling"})
+        self.assertIn("'summary' key not found", cm.exception.args[0])
         with self.assertRaises(kh.KhiopsJSONError):
-            kh.ModelingReport(json_data={"reportType": "INVALID TYPE", "summary": None})
+            kh.ModelingReport(json_data={"reportType": "WHATEVER", "summary": None})
 
-        # Test errors on the mandatory fields of the evaluation report
-        with self.assertRaises(kh.KhiopsJSONError):
+        # Test the evaluation report creation
+        with self.assertRaises(TypeError):
+            kh.EvaluationReport(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.EvaluationReport(json_data={"summary": None})
-        with self.assertRaises(kh.KhiopsJSONError):
+        self.assertIn("'reportType' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.EvaluationReport(json_data={"reportType": "Evaluation"})
-        with self.assertRaises(kh.KhiopsJSONError):
+        self.assertIn("'summary' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            kh.EvaluationReport(json_data={"reportType": "Evaluation", "summary": None})
+        self.assertIn("'evaluationType' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.EvaluationReport(
-                json_data={"reportType": "INVALID TYPE", "summary": None}
+                json_data={
+                    "reportType": "WHATEVER",
+                    "evaluationType": "Train",
+                    "summary": None,
+                }
             )
+        self.assertIn("'reportType' is not 'Evaluation'", cm.exception.args[0])
+
+        # Test errors in the variable stats creation
+        with self.assertRaises(TypeError):
+            kh.VariableStatistics(json_data="NOT A DICT")
+        with self.assertRaises(TypeError):
+            var_stats = kh.VariableStatistics()
+            var_stats.init_details(json_data="NOT A DICT")
+
+        # Test errors in the pair variable stats creation
+        with self.assertRaises(TypeError):
+            kh.VariablePairStatistics(json_data="NOT A DICT")
+        with self.assertRaises(TypeError):
+            var_pair_stats = kh.VariablePairStatistics()
+            var_pair_stats.init_details(json_data="NOT A DICT")
+
+        # Test errors in the data grid creation
+        with self.assertRaises(TypeError):
+            kh.DataGrid(json_data="NOT A DICT")
+
+        # Test errors in the data grid dimension creation
+        with self.assertRaises(TypeError):
+            kh.DataGridDimension(json_data="NOT A DICT")
+
+        # Test errors in the interval part creation
+        with self.assertRaises(TypeError):
+            kh.PartInterval(json_data="NOT A LIST")
+        with self.assertRaises(ValueError):
+            kh.PartInterval([0])
+        with self.assertRaises(ValueError):
+            kh.PartInterval([0, 1, 2])
+
+        # Test errors in the value part creation
+        with self.assertRaises(TypeError):
+            kh.PartValue(json_data={})
+
+        # Test errors in the value group part creation
+        with self.assertRaises(TypeError):
+            kh.PartValueGroup(json_data="NOT A LIST")
+
+        # Test errors in the trained predictor creation
+        with self.assertRaises(TypeError):
+            kh.TrainedPredictor(json_data="NOT A DICT")
+
+        # Test errors in the selected variable creation
+        with self.assertRaises(TypeError):
+            kh.SelectedVariable(json_data="NOT A DICT")
+        with self.assertRaises(TypeError):
+            trained_predictor = kh.TrainedPredictor()
+            trained_predictor.init_details(json_data="NOT A DICT")
+
+        # Test errors in the confusion matrix creation
+        with self.assertRaises(TypeError):
+            kh.ConfusionMatrix(json_data="NOT A DICT")
+
+        # Test errors in the predictor performance creation
+        with self.assertRaises(TypeError):
+            kh.PredictorPerformance(json_data="NOT A DICT")
+        with self.assertRaises(TypeError):
+            predictor_perf = kh.PredictorPerformance()
+            predictor_perf.init_details(json_data="NOT A DICT")
+        with self.assertRaises(ValueError):
+            predictor_perf = kh.PredictorPerformance()
+            predictor_perf.get_metric_names()
 
         # Test the error when a predictor curve does not have the 'classifier' or
         # 'regression' field.
+        with self.assertRaises(TypeError):
+            kh.PredictorCurve(json_data="NOT A DICT")
         with self.assertRaises(ValueError):
             kh.PredictorCurve(json_data={"curve": [0.0]})
 
@@ -1019,17 +1110,9 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 report.get_metric("auc")
 
     def test_coclustering_results_simple_initializations(self):
-        """Tests simple initalization operations of coclustering_results classes"""
-        results = kh.CoclusteringResults()
-        with open(os.devnull, "wb") as devnull_file:
-            results.write_report(devnull_file)
-            results.tool = "Khiops Coclustering"
-            results.write_report(devnull_file)
+        kh.CoclusteringResults()
         kh.CoclusteringReport()
-        dimension = kh.CoclusteringDimension()
-        dimension.init_summary()
-        dimension.init_partition()
-        dimension.init_hierarchy()
+        kh.CoclusteringDimension()
         kh.CoclusteringDimensionPart()
         kh.CoclusteringDimensionPartInterval()
         kh.CoclusteringDimensionPartValueGroup()
@@ -1044,19 +1127,86 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             results = kh.CoclusteringResults()
             results.write_report("A STRING IS NOT A VALID STREAM")
 
-        # Test errors on the mandatory fields of coclustering classes
-        with self.assertRaises(kh.KhiopsJSONError):
+        # Test errors in the creation of coclustering classes
+        # Test the evaluation report creation
+        with self.assertRaises(TypeError):
+            kh.CoclusteringResults(json_data="NOT A DICT")
+        with self.assertRaises(TypeError):
+            kh.CoclusteringReport(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.CoclusteringReport(json_data={})
-        with self.assertRaises(kh.KhiopsJSONError):
-            kh.CoclusteringDimensionPart({})
-        with self.assertRaises(kh.KhiopsJSONError):
-            kh.CoclusteringDimensionPartInterval({"cluster": "MYCLUSTER"})
-        with self.assertRaises(kh.KhiopsJSONError):
+        self.assertIn("'summary' key not found", cm.exception.args[0])
+        dimension = kh.CoclusteringDimension()
+        with self.assertRaises(TypeError):
+            dimension.init_summary(json_data="NOT A DICT")
+        with self.assertRaises(TypeError):
+            dimension.init_partition(json_data="NOT A DICT")
+        with self.assertRaises(TypeError):
+            dimension.init_hierarchy(json_data="NOT A DICT")
+        with self.assertRaises(TypeError):
+            kh.CoclusteringDimensionPart(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            kh.CoclusteringDimensionPart(json_data={})
+        self.assertIn("'cluster' key not found", cm.exception.args[0])
+        with self.assertRaises(TypeError):
+            kh.CoclusteringDimensionPartInterval(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            kh.CoclusteringDimensionPartInterval(json_data={"cluster": "MYCLUSTER"})
+        self.assertIn("'bounds' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            kh.CoclusteringDimensionPartInterval(
+                json_data={"cluster": "MYCLUSTER", "bounds": []}
+            )
+        self.assertIn("'bounds' key must be a list of length 2", cm.exception.args[0])
+        with self.assertRaises(TypeError):
+            kh.CoclusteringDimensionPartValueGroup(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.CoclusteringDimensionPartValueGroup({"cluster": "MYCLUSTER"})
-        with self.assertRaises(kh.KhiopsJSONError):
+        self.assertIn("'values' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            kh.CoclusteringDimensionPartValueGroup(
+                {"cluster": "MYCLUSTER", "values": []}
+            )
+        self.assertIn("'valueFrequencies' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            kh.CoclusteringDimensionPartValueGroup(
+                {"cluster": "MYCLUSTER", "values": [], "valueFrequencies": []}
+            )
+        self.assertIn("'valueTypicalities' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            kh.CoclusteringDimensionPartValueGroup(
+                {
+                    "cluster": "MYCLUSTER",
+                    "values": [],
+                    "valueFrequencies": [1],
+                    "valueTypicalities": [],
+                }
+            )
+        self.assertIn(
+            "'valueFrequencies' key list must have the same length",
+            cm.exception.args[0],
+        )
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            kh.CoclusteringDimensionPartValueGroup(
+                {
+                    "cluster": "MYCLUSTER",
+                    "values": [],
+                    "valueFrequencies": [],
+                    "valueTypicalities": [1],
+                }
+            )
+        self.assertIn(
+            "'valueTypicalities' key list must have the same length",
+            cm.exception.args[0],
+        )
+        with self.assertRaises(TypeError):
+            kh.CoclusteringCluster(json_data="NOT A DICT")
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            kh.CoclusteringCluster({})
+        self.assertIn("'cluster' key not found", cm.exception.args[0])
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.CoclusteringCluster({"cluster": "MYCLUSTER"})
-        with self.assertRaises(kh.KhiopsJSONError):
-            kh.CoclusteringCluster({"parentCluster": "MYPARENTCLUSTER"})
+        self.assertIn("'parentCluster' key not found", cm.exception.args[0])
 
     def test_coclustering_results_accessors(self):
         """Test CoclusteringResults accessors functions"""
@@ -1120,14 +1270,6 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             kh.DictionaryDomain(json_data={"tool": "INVALID TOOL", "version": "0.0"})
         with self.assertRaises(kh.KhiopsJSONError):
             kh.DictionaryDomain(json_data={"tool": "Khiops Dictionary"})
-        with self.assertRaises(kh.KhiopsJSONError):
-            kh.DictionaryDomain(
-                json_data={
-                    "tool": "Khiops Dictionary",
-                    "version": "0.0",
-                    "dictionaries": "NOT A LIST",
-                }
-            )
         domain = kh.DictionaryDomain()
         with self.assertRaises(TypeError):
             domain.add_dictionary("NOT A DICTIONARY OBJECT")
@@ -1138,7 +1280,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         kh.DictionaryDomain(json_data={"tool": "Khiops Dictionary", "version": "0.0"})
 
         # Test anomalous Dictionary actions
-        with self.assertRaises(kh.KhiopsJSONError):
+        with self.assertRaises(TypeError):
             kh.Dictionary(json_data="NOT A DICT")
         with self.assertRaises(kh.KhiopsJSONError):
             kh.Dictionary(json_data={})
@@ -1157,7 +1299,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             dictionary.write("NOT A WRITER")
 
         # Test anomalous Variable actions
-        with self.assertRaises(kh.KhiopsJSONError):
+        with self.assertRaises(TypeError):
             kh.Variable(json_data="NOT A DICT")
         with self.assertRaises(kh.KhiopsJSONError):
             kh.Variable(json_data={})
@@ -1170,7 +1312,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             variable.write("NOT A WRITER")
 
         # Test anomalous VariableBlock actions
-        with self.assertRaises(kh.KhiopsJSONError):
+        with self.assertRaises(TypeError):
             kh.VariableBlock(json_data="NOT A DICT")
         with self.assertRaises(kh.KhiopsJSONError):
             kh.VariableBlock(json_data={})
@@ -1185,7 +1327,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             variable_block.write("NOT A WRITER")
 
         # Test Anomalous MetaData actions
-        with self.assertRaises(kh.KhiopsJSONError):
+        with self.assertRaises(TypeError):
             kh.MetaData("NOT A DICT")
         meta_data = kh.MetaData()
         with self.assertRaises(TypeError):
@@ -1659,8 +1801,8 @@ def default_line_comparator(
     if len(ref_line) != len(output_line):
         raise ValueError(
             f"line {line_number} has different length\n"
-            + f"Ref file            : {shorten_path(ref_file_path, 3)}\n"
-            + f"Output file         : {shorten_path(output_file_path, 3)}\n"
+            + f"Ref file            : {shorten_path(ref_file_path, 5)}\n"
+            + f"Output file         : {shorten_path(output_file_path, 5)}\n"
             + f"Ref byte length     : {len(ref_line)}\n"
             + f"Output byte length  : {len(output_line)}"
         )
@@ -1674,8 +1816,8 @@ def default_line_comparator(
 
             raise ValueError(
                 f"line {line_number} is different\n"
-                + f"Ref file            : {shorten_path(ref_file_path, 3)}\n"
-                + f"Output file         : {shorten_path(output_file_path, 3)}\n"
+                + f"Ref file            : {shorten_path(ref_file_path, 5)}\n"
+                + f"Output file         : {shorten_path(output_file_path, 5)}\n"
                 + f"First diff position : {first_diff_pos}\n"
                 + f"Ref byte            : {first_diff_ref_byte}\n"
                 + f"Output byte         : {first_diff_output_byte}"
@@ -1742,8 +1884,8 @@ def files_equal_or_fail(
     if ref_file_len != output_file_len:
         raise ValueError(
             "Files have different number of lines\n"
-            + f"Ref file           : {shorten_path(ref_file_path, 3)}\n"
-            + f"Output file        : {shorten_path(output_file_path, 3)}\n"
+            + f"Ref file           : {shorten_path(ref_file_path, 5)}\n"
+            + f"Output file        : {shorten_path(output_file_path, 5)}\n"
             + f"Ref no. of lines   : {ref_file_len}\n"
             + f"Output no. of lines: {output_file_len}"
         )

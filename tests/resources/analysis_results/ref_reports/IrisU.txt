@@ -18,7 +18,7 @@ Selection value
 Instances	99
 Learning task	Unsupervised analysis
 Evaluated variables	12
-Informative variables	None
+Informative variables	0
 Max number of constructed variables	0
 Max number of trees	0
 Max number of variable pairs	100

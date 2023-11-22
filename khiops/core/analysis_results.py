@@ -73,7 +73,11 @@ import io
 
 from khiops.core.exceptions import KhiopsJSONError
 from khiops.core.internals.common import type_error_message
-from khiops.core.internals.io import KhiopsJSONObject, KhiopsOutputWriter
+from khiops.core.internals.io import (
+    KhiopsJSONObject,
+    KhiopsOutputWriter,
+    flexible_json_load,
+)
 
 
 class AnalysisResults(KhiopsJSONObject):
@@ -88,9 +92,8 @@ class AnalysisResults(KhiopsJSONObject):
         specified it returns an empty instance.
 
         .. note::
-            Prefer either the `read_khiops_json_file` method or the
-            `.read_analysis_results_file` function from the core API to obtain an
-            instance of this class from a Khiops JSON file.
+            See also the `.read_analysis_results_file` function from the core API to
+            obtain an instance of this class from a Khiops JSON file.
 
     Attributes
     ----------
@@ -126,72 +129,50 @@ class AnalysisResults(KhiopsJSONObject):
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Initialize super class
+        # Call the parent's initialization
         super().__init__(json_data=json_data)
 
-        # Initialize empty report attributes
-        self.short_description = ""
-        self.logs = None
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+        # Otherwise check that the tool is the proper one (it was set by the parent)
+        elif self.tool != "Khiops":
+            raise KhiopsJSONError(
+                f"'tool' value in JSON data must be 'Khiops', not '{self.tool}'"
+            )
+
+        # Initialize report basic data
+        self.short_description = json_data.get("shortDescription", "")
+        json_logs = json_data.get("logs", [])
+        self.logs = []
+        for log in json_logs:
+            self.logs.append((log.get("taskName"), log.get("messages")))
+
+        # Initialize sub-reports
         self.preparation_report = None
+        if "preparationReport" in json_data:
+            self.preparation_report = PreparationReport(json_data["preparationReport"])
         self.bivariate_preparation_report = None
+        if "bivariatePreparationReport" in json_data:
+            self.bivariate_preparation_report = BivariatePreparationReport(
+                json_data["bivariatePreparationReport"]
+            )
         self.modeling_report = None
+        if "modelingReport" in json_data:
+            self.modeling_report = ModelingReport(json_data["modelingReport"])
         self.train_evaluation_report = None
+        if "trainEvaluationReport" in json_data:
+            self.train_evaluation_report = EvaluationReport(
+                json_data["trainEvaluationReport"]
+            )
         self.test_evaluation_report = None
+        if "testEvaluationReport" in json_data:
+            self.test_evaluation_report = EvaluationReport(
+                json_data["testEvaluationReport"]
+            )
         self.evaluation_report = None
-
-        # Initialize from json data
-        if json_data is not None:
-            if self.tool != "Khiops":
-                raise KhiopsJSONError(
-                    f"'tool' value in JSON data must be 'Khiops', not '{self.tool}'"
-                )
-
-            # Initialize report basic data
-            if "shortDescription" in json_data:
-                self.short_description = json_data.get("shortDescription")
-            if "logs" in json_data:
-                self.logs = []
-                for log in json_data.get("logs"):
-                    self.logs.append((log["taskName"], log["messages"]))
-
-            # Initialize sub-reports
-            if "preparationReport" in json_data:
-                self.preparation_report = PreparationReport(
-                    json_data.get("preparationReport")
-                )
-            if "bivariatePreparationReport" in json_data:
-                self.bivariate_preparation_report = BivariatePreparationReport(
-                    json_data.get("bivariatePreparationReport")
-                )
-            if "modelingReport" in json_data:
-                self.modeling_report = ModelingReport(json_data.get("modelingReport"))
-            if "trainEvaluationReport" in json_data:
-                self.train_evaluation_report = EvaluationReport(
-                    json_data.get("trainEvaluationReport")
-                )
-            if "testEvaluationReport" in json_data:
-                self.test_evaluation_report = EvaluationReport(
-                    json_data.get("testEvaluationReport")
-                )
-            if "evaluationReport" in json_data:
-                self.evaluation_report = EvaluationReport(
-                    json_data.get("evaluationReport")
-                )
-
-    def read_khiops_json_file(self, json_file_path):
-        """Constructs an instance from a Khiops JSON file
-
-        Parameters
-        ----------
-        json_file_path : str
-            Path of the Khiops JSON report.
-
-        Returns
-        -------
-        `AnalysisResults`
-            An instance of AnalysisResults containing the information on the file.
-        """
-        self.load_khiops_json_file(json_file_path)
+        if "evaluationReport" in json_data:
+            self.evaluation_report = EvaluationReport(json_data["evaluationReport"])
 
     def get_reports(self):
         """Returns all available sub-reports
@@ -251,15 +232,11 @@ class AnalysisResults(KhiopsJSONObject):
                 )
             )
 
-        # Write nothing if tool is not defined
-        if self.tool == "":
-            return
-
         # Write report self-data to the file
         writer.writeln(f"Tool\t{self.tool}")
         writer.writeln(f"Version\t{self.version}")
         writer.writeln(f"Short description\t{self.short_description}")
-        if self.logs is not None:
+        if self.logs:
             writer.writeln("Logs")
             for subtask_name, messages in self.logs:
                 writer.writeln(subtask_name)
@@ -293,9 +270,7 @@ def read_analysis_results_file(json_file_path):
         - `samples.train_predictor_with_cross_validation()`
         - `samples.multiple_train_predictor()`
     """
-    results = AnalysisResults()
-    results.read_khiops_json_file(json_file_path)
-    return results
+    return AnalysisResults(json_data=flexible_json_load(json_file_path))
 
 
 class PreparationReport:
@@ -308,7 +283,7 @@ class PreparationReport:
     ----------
     json_data : dict, optional
         JSON data of the ``preparationReport`` field of a
-        Khiops JSON report file. If not specified it returns an empty object.
+        Khiops JSON report file. If not specified it returns an empty instance.
 
     Attributes
     ----------
@@ -334,9 +309,9 @@ class PreparationReport:
         Number of training instances.
     learning_task : str
         Name of the associated learning task. Possible values:
-            - "Classification analysis",
+            - "Classification analysis"
             - "Regression analysis"
-            - "Unsupervised analysis".
+            - "Unsupervised analysis"
     target_variable : str
         Target variable name.
     main_target_value : str
@@ -385,153 +360,97 @@ class PreparationReport:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Report type field
-        self.report_type = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Summary attributes
-        self.dictionary = ""
-        self.variable_types = []
-        self.variable_numbers = []
-        self.database = ""
-        self.sample_percentage = 0
-        self.sampling_mode = ""
-        self.selection_variable = None
-        self.selection_value = None
-        self.instance_number = 0
-        self.learning_task = ""
-        self.target_variable = None
-        self.main_target_value = None
-
-        # Target descriptive stats for regression
-        self.target_stats_min = None
-        self.target_stats_max = None
-        self.target_stats_mean = None
-        self.target_stats_std_dev = None
-        self.target_stats_missing_number = None
-
-        # Target descriptive stats for classification
-        self.target_stats_mode = None
-        self.target_stats_mode_frequency = None
-        self.target_values = None
-        self.target_value_frequencies = None
-
-        # Other summary attributes
-        self.evaluated_variables_number = 0
-        self.informative_variable_number = 0
-        self.max_constructed_variables = None
-        self.max_trees = None
-        self.max_pairs = None
-        self.discretization = ""
-        self.value_grouping = ""
-
-        # Cost of model in the supervised case
-        self.null_model_construction_cost = None
-        self.null_model_preparation_cost = None
-        self.null_model_data_cost = None
-
-        # List and dictionary (internal) of variables
-        self.variables_statistics = []
-        self._variables_statistics_by_name = {}
-
-        # Return if no JSON data
+        # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
-            return
-
-        # Raise exception if the preparation report is not valid
-        if "reportType" not in json_data:
-            raise KhiopsJSONError("'reportType' key not found in preparation report")
-        if "summary" not in json_data:
-            raise KhiopsJSONError("'summary' key not found in preparation report")
-        if json_data.get("reportType") != "Preparation":
-            raise KhiopsJSONError(
-                "'reportType' is not 'Preparation', "
-                f"""it is: '{json_data.get("reportType")}'"""
-            )
+            json_data = {}
+        # Otherwise raise an exception if the preparation report is not valid
+        else:
+            if "reportType" not in json_data:
+                raise KhiopsJSONError("'reportType' key not found")
+            if "summary" not in json_data:
+                raise KhiopsJSONError("'summary' key not found in preparation report")
+            if json_data["reportType"] != "Preparation":
+                raise KhiopsJSONError(
+                    "'reportType' is not 'Preparation', "
+                    f"""it is: '{json_data.get("reportType")}'"""
+                )
 
         # Initialize report type
-        self.report_type = json_data.get("reportType")
+        self.report_type = json_data.get("reportType", "Preparation")
 
         # Initialize summary attributes
-        json_summary = json_data.get("summary")
-        self.dictionary = json_summary.get("dictionary")
-        self.variable_types = json_summary.get("variables").get("types")
-        self.variable_numbers = json_summary.get("variables").get("numbers")
-        self.database = json_summary.get("database")
-        self.instance_number = json_summary.get("instances")
-        self.learning_task = json_summary.get("learningTask")
+        json_summary = json_data.get("summary", {})
+        self.dictionary = json_summary.get("dictionary", "")
+        self.database = json_summary.get("database", "")
+        self.instance_number = json_summary.get("instances", 0)
+        self.learning_task = json_summary.get("learningTask", "")
         self.target_variable = json_summary.get("targetVariable")
+        json_variables = json_summary.get("variables", {})
+        self.variable_types = json_variables.get("types", [])
+        self.variable_numbers = json_variables.get("numbers", [])
+        self.sample_percentage = json_summary.get("samplePercentage", 0)
+        self.sampling_mode = json_summary.get("samplingMode", "")
+        self.selection_variable = json_summary.get("selectionVariable")
+        self.selection_value = json_summary.get("selectionValue")
 
-        # Initialze optional sampling attributes (Khiops >= 10.0)
-        if json_summary.get("samplePercentage") is not None:
-            self.sample_percentage = json_summary.get("samplePercentage")
-            self.sampling_mode = json_summary.get("samplingMode")
-            self.selection_variable = json_summary.get("selectionVariable")
-            self.selection_value = json_summary.get("selectionValue")
+        # Initialize target descriptive stats for supervised tasks
+        json_stats = json_summary.get("targetDescriptiveStats", {})
+        self.target_stats_values = json_stats.get("values")
+        json_target_values = json_summary.get("targetValues", {})
+        self.target_values = json_target_values.get("values")
+        self.target_value_frequencies = json_target_values.get("frequencies")
 
-        # Initialize target descriptive stats for regression
-        if "Regression" in self.learning_task:
-            stats = json_summary.get("targetDescriptiveStats")
-            self.target_stats_values = stats.get("values")
-            self.target_stats_min = stats.get("min")
-            self.target_stats_max = stats.get("max")
-            self.target_stats_mean = stats.get("mean")
-            self.target_stats_std_dev = stats.get("stdDev")
-            self.target_stats_missing_number = stats.get("missingNumber")
+        # Initialize regression only target stats
+        self.target_stats_min = json_stats.get("min")
+        self.target_stats_max = json_stats.get("max")
+        self.target_stats_mean = json_stats.get("mean")
+        self.target_stats_std_dev = json_stats.get("stdDev")
+        self.target_stats_missing_number = json_stats.get("missingNumber")
 
-        # Initialize target descriptive stats for classification
-        if "Classification" in self.learning_task:
-            self.main_target_value = json_summary.get("mainTargetValue")
-            stats = json_summary.get("targetDescriptiveStats")
-            self.target_stats_values = stats.get("values")
-            self.target_stats_mode = stats.get("mode")
-            self.target_stats_mode_frequency = stats.get("modeFrequency")
-            target_values = json_summary.get("targetValues")
-            self.target_values = target_values.get("values")
-            self.target_value_frequencies = target_values.get("frequencies")
+        # Initialize classification only target stats
+        self.main_target_value = json_summary.get("mainTargetValue")
+        self.target_stats_mode = json_stats.get("mode")
+        self.target_stats_mode_frequency = json_stats.get("modeFrequency")
 
         # Initialize other summary attributes
-        self.evaluated_variable_number = json_summary.get("evaluatedVariables")
-        self.informative_variable_number = json_summary.get("informativeVariables")
-        json_feature_eng = json_summary.get("featureEngineering")
-        if json_feature_eng is not None:
-            self.max_constructed_variables = json_feature_eng.get(
-                "maxNumberOfConstructedVariables"
-            )
-            self.max_trees = json_feature_eng.get("maxNumberOfTrees")
-            self.max_pairs = json_feature_eng.get("maxNumberOfVariablePairs")
-        self.discretization = json_summary.get("discretization")
-        self.value_grouping = json_summary.get("valueGrouping")
+        self.evaluated_variable_number = json_summary.get("evaluatedVariables", 0)
+        self.informative_variable_number = json_summary.get("informativeVariables", 0)
+        json_feature_eng = json_summary.get("featureEngineering", {})
+        self.max_constructed_variables = json_feature_eng.get(
+            "maxNumberOfConstructedVariables"
+        )
+        self.max_trees = json_feature_eng.get("maxNumberOfTrees")
+        self.max_pairs = json_feature_eng.get("maxNumberOfVariablePairs")
+        self.discretization = json_summary.get("discretization", "")
+        self.value_grouping = json_summary.get("valueGrouping", "")
 
         # Cost of model (supervised case and non empty database)
-        null_model = json_summary.get("nullModel")
-        if null_model is not None:
-            self.null_model_construction_cost = null_model.get("constructionCost")
-            self.null_model_preparation_cost = null_model.get("preparationCost")
-            self.null_model_data_cost = null_model.get("dataCost")
+        json_null_model = json_summary.get("nullModel", {})
+        self.null_model_construction_cost = json_null_model.get("constructionCost")
+        self.null_model_preparation_cost = json_null_model.get("preparationCost")
+        self.null_model_data_cost = json_null_model.get("dataCost")
 
         # Initialize statistics per variable
-        json_variables_statistics = json_data.get("variablesStatistics")
-        if json_variables_statistics is not None:
-            # Initialize main attributes of all variable
-            for json_variable_stats in json_variables_statistics:
-                variable_statistics = VariableStatistics(json_variable_stats)
-                self.variables_statistics.append(variable_statistics)
+        json_variables_statistics = json_data.get("variablesStatistics", [])
+        self.variables_statistics = []
+        self._variables_statistics_by_name = {}
+        for json_variable_stats in json_variables_statistics:
+            variable_stats = VariableStatistics(json_variable_stats)
+            self.variables_statistics.append(variable_stats)
+            self._variables_statistics_by_name[variable_stats.name] = variable_stats
 
-            # Store initialized variables statistics in dictionary by name
-            for stats in self.variables_statistics:
-                self._variables_statistics_by_name[stats.name] = stats
-
-            # Initialize detailed statistics attributes when available
-            # These are stored in JSON as a dict indexed by variables' ranks
-            json_variables_detailed_statistics = json_data.get(
-                "variablesDetailedStatistics"
-            )
-            if json_variables_detailed_statistics is not None:
-                for stats in self.variables_statistics:
-                    json_detailed_data = json_variables_detailed_statistics.get(
-                        stats.rank
-                    )
-                    stats.init_details(json_detailed_data)
+        # Initialize detailed statistics attributes when available
+        # These are stored in JSON as a dict indexed by variables' ranks
+        json_variables_detailed_statistics = json_data.get(
+            "variablesDetailedStatistics", {}
+        )
+        for stats in self.variables_statistics:
+            json_detailed_data = json_variables_detailed_statistics.get(stats.rank)
+            stats.init_details(json_detailed_data)
 
     def get_variable_names(self):
         """Returns the names of the variables analyzed during the preparation
@@ -669,8 +588,8 @@ class BivariatePreparationReport:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of the ``bivariatePreparationReport``
-        field of a Khiops JSON report file. If not specified it returns an empty object.
+        JSON data of the ``bivariatePreparationReport`` field of a Khiops JSON report
+        file. If not specified it returns an empty instance.
 
     Attributes
     ----------
@@ -723,97 +642,71 @@ class BivariatePreparationReport:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Report type
-        self.report_type = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Summary attributes
-        self.dictionary = ""
-        self.variable_types = []
-        self.variable_numbers = []
-        self.database = ""
-        self.sample_percentage = 0
-        self.sampling_mode = ""
-        self.selection_variable = None
-        self.selection_value = None
-        self.instance_number = 0
-        self.learning_task = ""
-        self.target_variable = None
-        self.main_target_value = None
-
-        # Target descriptive stats for classification
-        # Note: There is no bivariate preparation in the regression case
-        self.target_stats_mode = None
-        self.target_stats_mode_frequency = None
-        self.target_values = None
-        self.target_value_frequencies = None
-
-        # Information of the pair evaluations
-        self.evaluated_pair_number = None
-        self.informative_pair_number = None
-
-        # List and dictionary (internal) of variable pairs
-        self.variables_pairs_statistics = []
-        self._variables_pairs_statistics_by_name = {}
-
-        # Return if no json_data
+        # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
-            return
-
-        # Raise exception if the bivariate preparation report is not valid
-        if "reportType" not in json_data:
-            raise KhiopsJSONError(
-                "'reportType' key not found in bivariate preparation report"
-            )
-        if "summary" not in json_data:
-            raise KhiopsJSONError(
-                "'summary' key not found in bivariate preparation report"
-            )
-        if json_data.get("reportType") != "BivariatePreparation":
-            raise KhiopsJSONError(
-                "'reportType' is not 'BivariatePreparation', "
-                f"""it is: '{json_data.get("reportType")}'"""
-            )
+            json_data = {}
+        # Otherwise raise exception if the basic fields are not properly set
+        else:
+            if "reportType" not in json_data:
+                raise KhiopsJSONError(
+                    "'reportType' key not found in bivariate preparation report"
+                )
+            if "summary" not in json_data:
+                raise KhiopsJSONError(
+                    "'summary' key not found in bivariate preparation report"
+                )
+            if json_data["reportType"] != "BivariatePreparation":
+                raise KhiopsJSONError(
+                    "'reportType' is not 'BivariatePreparation', "
+                    f"""it is: '{json_data.get("reportType")}'"""
+                )
 
         # Initialize report type
-        self.report_type = json_data.get("reportType")
+        self.report_type = json_data.get("reportType", "BivariatePreparation")
 
         # Initialize summary attributes
-        json_summary = json_data.get("summary")
-        self.dictionary = json_summary.get("dictionary")
-        self.variable_types = json_summary.get("variables").get("types")
-        self.variable_numbers = json_summary.get("variables").get("numbers")
-        self.database = json_summary.get("database")
-        if "samplingMode" in json_summary:
-            self.sample_percentage = json_summary.get("samplePercentage")
-            self.sampling_mode = json_summary.get("samplingMode")
-            self.selection_variable = json_summary.get("selectionVariable")
-            self.selection_value = json_summary.get("selectionValue")
-        self.instance_number = json_summary.get("instances")
-        self.learning_task = json_summary.get("learningTask")
+        json_summary = json_data.get("summary", {})
+        self.dictionary = json_summary.get("dictionary", "")
+        json_variables = json_summary.get("variables", {})
+        self.variable_types = json_variables.get("types", [])
+        self.variable_numbers = json_variables.get("numbers", [])
+        self.database = json_summary.get("database", "")
+        self.sample_percentage = json_summary.get("samplePercentage", 0)
+        self.sampling_mode = json_summary.get("samplingMode", "")
+        self.selection_variable = json_summary.get("selectionVariable")
+        self.selection_value = json_summary.get("selectionValue")
+        self.instance_number = json_summary.get("instances", 0)
+        self.learning_task = json_summary.get("learningTask", "")
         self.target_variable = json_summary.get("targetVariable")
 
         # Classification task: Initialize target descriptive stats
-        if "Classification" in self.learning_task:
-            self.main_target_value = json_summary.get("mainTargetValue")
-            stats = json_summary.get("targetDescriptiveStats")
-            self.target_stats_values = stats.get("values")
-            self.target_stats_mode = stats.get("mode")
-            self.target_stats_mode_frequency = stats.get("modeFrequency")
-            target_values = json_summary.get("targetValues")
-            self.target_values = target_values.get("values")
-            self.target_value_frequencies = target_values.get("frequencies")
+        # Note: There is no bivariate preparation in the regression case
+        self.main_target_value = json_summary.get("mainTargetValue")
+        json_stats = json_summary.get("targetDescriptiveStats", {})
+        self.target_stats_values = json_stats.get("values")
+        self.target_stats_mode = json_stats.get("mode")
+        self.target_stats_mode_frequency = json_stats.get("modeFrequency")
+        json_target_values = json_summary.get("targetValues", {})
+        self.target_values = json_target_values.get("values")
+        self.target_value_frequencies = json_target_values.get("frequencies")
 
         # Initialize the information of the pair evaluations
         self.evaluated_pair_number = json_summary.get("evaluatedVariablePairs")
         self.informative_pair_number = json_summary.get("informativeVariablePairs")
 
         # Initialize main attributes for all variables
-        json_variables_pair_statistics = json_data.get("variablesPairsStatistics")
-        for json_pair_stats in json_variables_pair_statistics:
-            variable_pair_statistics = VariablePairStatistics(json_pair_stats)
-            self.variables_pairs_statistics.append(variable_pair_statistics)
+        self.variables_pairs_statistics = []
+        for json_pair_stats in json_data.get("variablesPairsStatistics", []):
+            self.variables_pairs_statistics.append(
+                VariablePairStatistics(json_pair_stats)
+            )
 
         # Store variable stats in dict indexed by name pairs in both senses
+        self._variables_pairs_statistics_by_name = {}
         for stats in self.variables_pairs_statistics:
             name1 = stats.name1
             name2 = stats.name2
@@ -822,11 +715,10 @@ class BivariatePreparationReport:
 
         # Initialize the variables' detailed statistics when available
         # These are stored in JSON as a dict indexed by the variables ranks
-        if "variablesPairsDetailedStatistics" in json_data:
-            json_detailed_statistics = json_data.get("variablesPairsDetailedStatistics")
-            for stats in self.variables_pairs_statistics:
-                json_detailed_data = json_detailed_statistics.get(stats.rank)
-                stats.init_details(json_detailed_data)
+        json_detailed_statistics = json_data.get("variablesPairsDetailedStatistics", {})
+        for stats in self.variables_pairs_statistics:
+            json_detailed_data = json_detailed_statistics.get(stats.rank)
+            stats.init_details(json_detailed_data)
 
     def get_variable_pair_names(self):
         """Returns the pairs of variable names available on this report
@@ -909,7 +801,6 @@ class BivariatePreparationReport:
             for i, target_value in enumerate(self.target_values):
                 writer.write(f"\t{target_value}")
                 writer.writeln(f"\t{self.target_value_frequencies[i]}")
-
         if self.evaluated_pair_number is not None:
             writer.writeln(f"Evaluated variable pairs\t{self.evaluated_pair_number}")
         if self.informative_pair_number is not None:
@@ -937,8 +828,8 @@ class ModelingReport:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of the ``modelingReport`` field of
-        Khiops JSON report file. If not specified it returns an empty object.
+        JSON data of the ``modelingReport`` field of Khiops JSON report file. If not
+        specified it returns an empty instance.
 
     Attributes
     ----------
@@ -968,67 +859,53 @@ class ModelingReport:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Report type
-        self.report_type = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Summary attributes
-        self.dictionary = ""
-        self.database = ""
-        self.sample_percentage = 0
-        self.sampling_mode = ""
-        self.selection_variable = None
-        self.selection_value = None
-        self.learning_task = ""
-        self.target_variable = None
-        self.main_target_value = None
-
-        # List and dictionary (internal) of trained predictors
-        self.trained_predictors = []
-        self._trained_predictors_by_name = {}
-
-        # Return if no JSON data
+        # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
-            return
-
-        # Raise exception if the modeling report is not valid
-        if "reportType" not in json_data:
-            raise KhiopsJSONError("'reportType' key not found in modeling report")
-        if "summary" not in json_data:
-            raise KhiopsJSONError("'summary' key not found in modeling report")
-        if json_data.get("reportType") != "Modeling":
-            raise KhiopsJSONError(
-                "'reportType' is not 'Modeling', "
-                f"""it is: '{json_data.get("reportType")}'"""
-            )
+            json_data = {}
+        # Otherwise raise an exception if the modeling report is not valid
+        else:
+            if "reportType" not in json_data:
+                raise KhiopsJSONError("'reportType' key not found in modeling report")
+            if "summary" not in json_data:
+                raise KhiopsJSONError("'summary' key not found in modeling report")
+            if json_data.get("reportType") != "Modeling":
+                raise KhiopsJSONError(
+                    "'reportType' is not 'Modeling', "
+                    f"""it is: '{json_data.get("reportType")}'"""
+                )
 
         # Initialize report type
-        self.report_type = json_data.get("reportType")
+        self.report_type = json_data.get("reportType", "Modeling")
 
         # Initialize the summary attributes
-        json_summary = json_data.get("summary")
-        self.dictionary = json_summary.get("dictionary")
-        self.database = json_summary.get("database")
-        if "samplingMode" in json_summary:
-            self.sample_percentage = json_summary.get("samplePercentage")
-            self.sampling_mode = json_summary.get("samplingMode")
-            self.selection_variable = json_summary.get("selectionVariable")
-            self.selection_value = json_summary.get("selectionValue")
-        self.learning_task = json_summary.get("learningTask")
+        json_summary = json_data.get("summary", {})
+        self.dictionary = json_summary.get("dictionary", "")
+        self.database = json_summary.get("database", "")
+        self.sample_percentage = json_summary.get("samplePercentage", 0)
+        self.sampling_mode = json_summary.get("samplingMode", "")
+        self.selection_variable = json_summary.get("selectionVariable")
+        self.selection_value = json_summary.get("selectionValue")
+        self.learning_task = json_summary.get("learningTask", "")
         self.target_variable = json_summary.get("targetVariable")
         self.main_target_value = json_summary.get("mainTargetValue")
 
         # Initialize specifications per trained predictor
-        for json_trained_predictor in json_data.get("trainedPredictors"):
+        self.trained_predictors = []
+        self._trained_predictors_by_name = {}
+        json_predictors_details = json_data.get("trainedPredictorsDetails", {})
+        for json_trained_predictor in json_data.get("trainedPredictors", []):
             # Initialize basic trained predictor data
             predictor = TrainedPredictor(json_trained_predictor)
             self.trained_predictors.append(predictor)
             self._trained_predictors_by_name[predictor.name] = predictor
 
             # Initialize detailed trained predictor data
-            if "trainedPredictorsDetails" in json_data:
-                json_predictors_details = json_data.get("trainedPredictorsDetails")
-                json_detailed_data = json_predictors_details.get(predictor.rank)
-                predictor.init_details(json_detailed_data)
+            if predictor.rank in json_predictors_details:
+                predictor.init_details(json_predictors_details[predictor.rank])
 
     def get_predictor(self, predictor_name):
         """Returns the specified predictor
@@ -1132,7 +1009,7 @@ class EvaluationReport:
         evaluation: either with the *Evaluate Predictor* feature of the Khiops app or
         the `~.api.evaluate_predictor` function of the Khiops Python core API.
 
-        If not specified it returns an empty object.
+        If not specified it returns an empty instance.
 
     Attributes
     ----------
@@ -1173,113 +1050,89 @@ class EvaluationReport:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Type attributes
-        self.report_type = ""
-        self.evaluation_type = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Summary attributes
-        self.dictionary = ""
-        self.database = ""
-        self.sample_percentage = 0
-        self.sampling_mode = ""
-        self.selection_variable = None
-        self.selection_value = None
-        self.instance_number = 0
-        self.learning_task = ""
-        self.target_variable = ""
-        self.main_target_value = None
-
-        # List and private dictionary of PredictorPerformance objects
-        # One for each predictor
-        self.predictors_performance = []
-        self._predictors_performance_by_name = {}
-
-        # List with a PredictorCurve object for each regressor REC curve
-        self.regression_rec_curves = None
-
-        # Classification task: List of target values and their associates lift curves
-        # For each evaluated target value, there is a list of lift curves:
-        # one PredictorCurve object per classifier plus an extra one named "Optimal"
-        # put at the beginning of the list.
-        # Note that there is no curve for "Random", because it can be easily calculated
-        self.classification_target_values = None
-        self.classification_lift_curves = None
-
-        # Return if no JSON data
+        # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
-            return
-
-        # Raise exception if the evaluation report is not valid
-        if "reportType" not in json_data:
-            raise KhiopsJSONError("'reportType' key not found in evaluation report")
-        if "summary" not in json_data:
-            raise KhiopsJSONError("'summary' key not found in evaluation report")
-        if json_data.get("reportType") != "Evaluation":
-            raise KhiopsJSONError(
-                "'reportType' is not 'Evaluation' it is: "
-                f"""'{json_data.get("reportType")}'"""
-            )
+            json_data = {}
+        # Otherwise raise an exception if the evaluation report is not valid
+        else:
+            if "reportType" not in json_data:
+                raise KhiopsJSONError("'reportType' key not found in evaluation report")
+            if "summary" not in json_data:
+                raise KhiopsJSONError("'summary' key not found in evaluation report")
+            if "evaluationType" not in json_data:
+                raise KhiopsJSONError(
+                    "'evaluationType' key not found in evaluation report"
+                )
+            if json_data["reportType"] != "Evaluation":
+                raise KhiopsJSONError(
+                    "'reportType' is not 'Evaluation' it is: "
+                    f"""'{json_data.get("reportType")}'"""
+                )
 
         # Initialize type attributes
-        self.report_type = json_data.get("reportType")
-        self.evaluation_type = json_data.get("evaluationType")
+        self.report_type = json_data.get("reportType", "Evaluation")
+        self.evaluation_type = json_data.get("evaluationType", "")
 
         # Initialize summary attributes
-        json_summary = json_data.get("summary")
-        self.dictionary = json_summary.get("dictionary")
-        self.database = json_summary.get("database")
-        if "samplingMode" in json_summary:
-            self.sample_percentage = json_summary.get("samplePercentage")
-            self.sampling_mode = json_summary.get("samplingMode")
-            self.selection_variable = json_summary.get("selectionVariable")
-            self.selection_value = json_summary.get("selectionValue")
-        self.instance_number = json_summary.get("instances")
-        self.instance_number = json_summary.get("instances")
-        self.learning_task = json_summary.get("learningTask")
-        self.target_variable = json_summary.get("targetVariable")
+        json_summary = json_data.get("summary", {})
+        self.dictionary = json_summary.get("dictionary", "")
+        self.database = json_summary.get("database", "")
+        self.sample_percentage = json_summary.get("samplePercentage", 0)
+        self.sampling_mode = json_summary.get("samplingMode", "")
+        self.selection_variable = json_summary.get("selectionVariable")
+        self.selection_value = json_summary.get("selectionValue")
+        self.instance_number = json_summary.get("instances", 0)
+        self.learning_task = json_summary.get("learningTask", "")
+        self.target_variable = json_summary.get("targetVariable", "")
         self.main_target_value = json_summary.get("mainTargetValue")
 
         # Initialize the performance attributes for each predictor
-        json_predictors_performance = json_data.get("predictorsPerformance")
+        self.predictors_performance = []
+        self._predictors_performance_by_name = {}
+        json_predictors_performance = json_data.get("predictorsPerformance", [])
+        json_detailed_performance = json_data.get("predictorsDetailedPerformance", {})
         for json_predictor_performance in json_predictors_performance:
             # Initialize main performance info
             performance = PredictorPerformance(json_predictor_performance)
             self.predictors_performance.append(performance)
             self._predictors_performance_by_name[performance.name] = performance
 
-            # Initialize detailed performance info
-            if "predictorsDetailedPerformance" in json_data:
-                json_detailed_performance = json_data.get(
-                    "predictorsDetailedPerformance"
-                )
-                json_detailed_data = json_detailed_performance.get(performance.rank)
-                performance.init_details(json_detailed_data)
+            # Initialize detailed performance info if available
+            if performance.rank in json_detailed_performance:
+                performance.init_details(json_detailed_performance[performance.rank])
 
         # Collect REC curves for each regressor
-        if "Regression" in self.learning_task:
-            self.regression_rec_curves = []
-            for json_rec_curve in json_data.get("recCurves"):
-                rec_curve = PredictorCurve(json_rec_curve)
-                self.regression_rec_curves.append(rec_curve)
+        self.regression_rec_curves = None
+        if self.learning_task == "Regression analysis":
+            self.regression_rec_curves = [
+                PredictorCurve(json_rec_curve)
+                for json_rec_curve in json_data.get("recCurves", [])
+            ]
 
         # Fill Lift curves for a classification task if available
-        if "Classification" in self.learning_task:
+        # Note that there is no curve for "Random", because it can be easily calculated
+        self.classification_target_values = None
+        self.classification_lift_curves = None
+        if self.learning_task == "Classification analysis":
             self.classification_target_values = []
             self.classification_lift_curves = []
 
             # Collect all lift curves per target value and per classifier
-            for json_lift_curves in json_data.get("liftCurves"):
-                target_value = json_lift_curves.get("targetValue")
-                json_curves = json_lift_curves.get("curves")
-                lift_curves = []
-
+            for json_lift_curves in json_data.get("liftCurves", []):
                 # Collect lift curves for each classifier
-                for json_curve in json_curves:
-                    lift_curve = PredictorCurve(json_curve)
-                    lift_curves.append(lift_curve)
+                lift_curves = [
+                    PredictorCurve(json_lift_curve)
+                    for json_lift_curve in json_lift_curves.get("curves")
+                ]
 
                 # Store collected target values with their lift curves
-                self.classification_target_values.append(target_value)
+                self.classification_target_values.append(
+                    json_lift_curves.get("targetValue")
+                )
                 self.classification_lift_curves.append(lift_curves)
 
     def get_predictor_names(self):
@@ -1403,13 +1256,15 @@ class EvaluationReport:
             if value == target_value:
                 if classifier_name == "Random":
                     point_number = len(self.classification_lift_curves[i][0].values)
-                    curve = PredictorCurve()
-                    curve.type = "Lift"
-                    curve.name = "Random"
-                    curve.values = [
-                        i * 100.0 / (point_number - 1) for i in range(point_number)
-                    ]
-                    return curve
+                    return PredictorCurve(
+                        {
+                            "classifier": "Random",
+                            "values": [
+                                j * 100.0 / (point_number - 1)
+                                for j in range(point_number)
+                            ],
+                        }
+                    )
                 else:
                     for lift_curve in self.classification_lift_curves[i]:
                         if lift_curve.name == classifier_name:
@@ -1558,14 +1413,14 @@ class VariableStatistics:
     json_data : dict, optional
         JSON data of an element of the list found at the
         ``variablesStatistics`` field within the ``preparationReport`` field of a Khiops
-        JSON report file. If not specified it returns an empty object.
+        JSON report file. If not specified it returns an empty instance.
 
 
         .. note::
             The ``data_grid`` field is considered a "detail" and is not initialized in
             the constructor. Instead, it is initialized explicitly via the
             ``init_details`` method. This allows to make partial initializations for
-            large reports.
+            large reports. If not specified it returns an empty instance.
 
 
     Attributes
@@ -1628,35 +1483,45 @@ class VariableStatistics:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Common attributes
-        self.rank = ""
-        self.name = ""
-        self.type = ""
-        self.level = None
-        self.target_part_number = None
-        self.part_number = None
-        self.value_number = 0
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Numerical variable statistics attributes
-        self.min = None
-        self.max = None
-        self.mean = None
-        self.std_dev = None
-        self.missing_number = None
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
 
-        # Categorical variable statistics attributes
-        self.mode = None
-        self.mode_frequency = None
+        # Initialize common attributes
+        self.rank = json_data.get("rank", "")
+        self.name = json_data.get("name", "")
+        self.type = json_data.get("type", "")
+        self.level = json_data.get("level")
+        self.target_part_number = json_data.get("targetParts")
+        self.part_number = json_data.get("parts")
+        self.value_number = json_data.get("values", 0)
 
-        # Cost attributes
-        self.construction_cost = None
-        self.preparation_cost = None
-        self.data_cost = None
+        # Initialize numerical variable attributes
+        self.min = json_data.get("min")
+        self.max = json_data.get("max")
+        self.mean = json_data.get("mean")
+        self.std_dev = json_data.get("stdDev")
+        self.missing_number = json_data.get("missingNumber")
 
-        # Derivation rule
-        self.derivation_rule = None
+        # Initialize categorical variable attributes
+        self.mode = json_data.get("mode")
+        self.mode_frequency = json_data.get("modeFrequency")
+
+        # Initialize cost attributes
+        self.construction_cost = json_data.get("constructionCost")
+        self.preparation_cost = json_data.get("preparationCost")
+        self.data_cost = json_data.get("dataCost")
+
+        # Initialize derivation rule
+        self.derivation_rule = json_data.get("derivationRule")
 
         # Details' attributes
+        # They may or not be initialized with the init_details method
+
         # Data grid for density estimation
         self.data_grid = None
 
@@ -1666,37 +1531,7 @@ class VariableStatistics:
         self.input_values = None
         self.input_value_frequencies = None
 
-        # Initialization from JSON data (except for the details' attributes)
-        if json_data is not None:
-            # Initialize common attributes
-            self.rank = json_data.get("rank")
-            self.name = json_data.get("name")
-            self.type = json_data.get("type")
-            self.level = json_data.get("level")
-            self.target_part_number = json_data.get("targetParts")
-            self.part_number = json_data.get("parts")
-            self.value_number = json_data.get("values")
-
-            # Initialize numerical variable attributes
-            self.min = json_data.get("min")
-            self.max = json_data.get("max")
-            self.mean = json_data.get("mean")
-            self.std_dev = json_data.get("stdDev")
-            self.missing_number = json_data.get("missingNumber")
-
-            # Initialize categorical variable attributes
-            self.mode = json_data.get("mode")
-            self.mode_frequency = json_data.get("modeFrequency")
-
-            # Initialize cost attributes
-            self.construction_cost = json_data.get("constructionCost")
-            self.preparation_cost = json_data.get("preparationCost")
-            self.data_cost = json_data.get("dataCost")
-
-            # Initialize derivation rule
-            self.derivation_rule = json_data.get("derivationRule")
-
-    def init_details(self, json_detailed_data=None):
+    def init_details(self, json_data=None):
         """Initializes the details' attributes from a Python JSON object
 
         Parameters
@@ -1707,17 +1542,22 @@ class VariableStatistics:
             of a Khiops JSON report file. If not specified it leaves the object as-is.
 
         """
-        if json_detailed_data is not None:
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Initialize details if not empty
+        if json_data is not None:
             # Initialize data grid
-            json_data_grid = json_detailed_data.get("dataGrid")
-            if json_data_grid is not None:
-                self.data_grid = DataGrid(json_data_grid)
+            json_data_grid = json_data.get("dataGrid")
+            self.data_grid = DataGrid(json_data_grid)
 
             # Initialize input values and their frequencies
-            json_input_values = json_detailed_data.get("inputValues")
-            if json_input_values is not None:
-                self.input_values = json_input_values.get("values")
-                self.input_value_frequencies = json_input_values.get("frequencies")
+            json_input_values = json_data.get("inputValues", {})
+            self.input_values = json_input_values.get("values")
+            self.input_value_frequencies = json_input_values.get("frequencies")
+
+        return self
 
     def is_detailed(self):
         """Returns True if the report contains any detailed information
@@ -1858,15 +1698,15 @@ class VariablePairStatistics:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of an element of the list found at the
-        ``variablesPairStatistics`` field within the ``bivariatePreparationReport``
-        field of a Khiops JSON report file. If not specified it returns an empty object.
+        JSON data of an element of the list found at the ``variablesPairStatistics``
+        field within the ``bivariatePreparationReport`` field of a Khiops JSON report
+        file. If not specified it returns an empty instance.
 
         .. note::
             The ``data_grid`` field is considered as "detail" and is not initialized in
             the constructor. Instead, it is initialized explicitly via the
             `init_details` method. This allows to make partial initializations for large
-            reports.
+            reports. If not specified it returns an empty instance.
 
 
     Attributes
@@ -1912,47 +1752,36 @@ class VariablePairStatistics:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Common attributes
-        self.rank = ""
-        self.name1 = ""
-        self.name2 = ""
-        self.level = 0
-        self.level1 = None
-        self.level2 = None
-        self.delta_level = None
-        self.variable_number = 0
-        self.part_number1 = 0
-        self.part_number2 = 0
-        self.cell_number = 0
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Cost attributes
-        self.construction_cost = None
-        self.preparation_cost = None
-        self.data_cost = None
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialization from JSON data (except for details' attributes)
+        self.rank = json_data.get("rank", "")
+        self.name1 = json_data.get("name1", "")
+        self.name2 = json_data.get("name2", "")
+        self.level = json_data.get("level", 0)
+        self.level1 = json_data.get("level1")
+        self.level2 = json_data.get("level2")
+        self.delta_level = json_data.get("deltaLevel")
+        self.variable_number = json_data.get("variables", 0)
+        self.part_number1 = json_data.get("parts1", 0)
+        self.part_number2 = json_data.get("parts2", 0)
+        self.cell_number = json_data.get("cells", 0)
+
+        # Initialize cost attributes
+        self.construction_cost = json_data.get("constructionCost")
+        self.preparation_cost = json_data.get("preparationCost")
+        self.data_cost = json_data.get("dataCost")
 
         # Data grid for density estimation (detail)
         self.data_grid = None
 
-        # Initialization from JSON data (except for details' attributes)
-        if json_data is not None:
-            self.rank = json_data.get("rank")
-            self.name1 = json_data.get("name1")
-            self.name2 = json_data.get("name2")
-            self.delta_level = json_data.get("deltaLevel")
-            self.level = json_data.get("level")
-            self.level1 = json_data.get("level1")
-            self.level2 = json_data.get("level2")
-            self.variable_number = json_data.get("variables")
-            self.part_number1 = json_data.get("parts1")
-            self.part_number2 = json_data.get("parts2")
-            self.cell_number = json_data.get("cells")
-
-            # Cost attributes
-            self.construction_cost = json_data.get("constructionCost")
-            self.preparation_cost = json_data.get("preparationCost")
-            self.data_cost = json_data.get("dataCost")
-
-    def init_details(self, json_detailed_data=None):
+    def init_details(self, json_data=None):
         """Initializes the details' attributes from a Python JSON object
 
         Parameters
@@ -1963,10 +1792,15 @@ class VariablePairStatistics:
             ``bivariatePreparationReport`` field of a Khiops JSON report file. If not
             specified it leaves the object as-is.
         """
-        if json_detailed_data is not None:
-            json_data_grid = json_detailed_data.get("dataGrid")
-            if json_data_grid is not None:
-                self.data_grid = DataGrid(json_data_grid)
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Initialize the data grid field
+        if json_data is not None:
+            self.data_grid = DataGrid(json_data.get("dataGrid"))
+
+        return self
 
     def is_detailed(self):
         """Returns True if the report contains any detailed information
@@ -2093,7 +1927,7 @@ class DataGrid:
     json_data : dict, optional
         JSON data at a ``dataGrid`` field of an element of the list found at the
         ``variablesDetailedStatistics`` field within the ``preparationReport`` field of
-        a Khiops JSON report file. If not specified it returns an empty object.
+        a Khiops JSON report file. If not specified it returns an empty instance.
 
     Attributes
     ----------
@@ -2124,60 +1958,45 @@ class DataGrid:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Supervised data grid flag
-        self.is_supervised = False
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Dimensions: one per variable, with its partition
-        self.dimensions = []
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
 
-        # Frequency per part (univariate) or cell (multivariate)
-        self.frequencies = None
+        # Initialize supervised status
+        self.is_supervised = json_data.get("isSupervised", False)
 
-        # Attributes for a multivariate data grid
-        self.cell_ids = None
-        self.cell_part_indexes = None
-        self.cell_frequencies = None
+        # Initialize dimensions
+        self.dimensions = [
+            DataGridDimension(json_dimension)
+            for json_dimension in json_data.get("dimensions", [])
+        ]
 
-        # Attributes for a supervised univariate data grid
-        self.part_target_frequencies = None
-        self.part_interests = None
+        # Initialize frequencies in case of univariate unsupervised data grid
+        if not self.is_supervised and len(self.dimensions) == 1:
+            self.frequencies = json_data.get("frequencies")
 
-        # Attributes for a multivariate supervised data grid
-        self.cell_part_indexes = None
-        self.cell_target_frequencies = None
-        self.cell_interests = None
+        # Initialize attributes for a multivariate unsupervised data grid
+        elif not self.is_supervised and len(self.dimensions) > 1:
+            self.cell_ids = json_data.get("cellIds")
+            self.cell_part_indexes = json_data.get("cellPartIndexes")
+            self.cell_frequencies = json_data.get("cellFrequencies")
 
-        # Return if no JSON data
-        if json_data is not None:
-            # Initialize from JSON data
-            self.is_supervised = json_data.get("isSupervised")
-            json_dimensions = json_data.get("dimensions")
-            for json_dimension in json_dimensions:
-                dimension = DataGridDimension(json_dimension)
-                self.dimensions.append(dimension)
+        # Initialize attributes for a supervised data grid with one input variable
+        elif self.is_supervised and len(self.dimensions) == 2:
+            self.part_target_frequencies = json_data.get("partTargetFrequencies")
+            self.part_interests = json_data.get("partInterests")
 
-            # Initialize frequencies in case of univariate unsupervised data grid
-            if not self.is_supervised and len(self.dimensions) == 1:
-                self.frequencies = json_data.get("frequencies")
-
-            # Initialize attributes for a multivariate unsupervised data grid
-            elif not self.is_supervised and len(self.dimensions) > 1:
-                self.cell_ids = json_data.get("cellIds")
-                self.cell_part_indexes = json_data.get("cellPartIndexes")
-                self.cell_frequencies = json_data.get("cellFrequencies")
-
-            # Initialize attributes for a supervised data grid with one input variable
-            elif self.is_supervised and len(self.dimensions) == 2:
-                self.part_target_frequencies = json_data.get("partTargetFrequencies")
-                self.part_interests = json_data.get("partInterests")
-
-            # Initialize attributes for a supervised data grid with several input vars.
-            elif self.is_supervised and len(self.dimensions) > 2:
-                self.cell_ids = json_data.get("cellIds")
-                self.cell_part_indexes = json_data.get("cellPartIndexes")
-                self.cell_frequencies = json_data.get("cellFrequencies")
-                self.cell_target_frequencies = json_data.get("cellTargetFrequencies")
-                self.cell_interests = json_data.get("cellInterests")
+        # Initialize attributes for a supervised data grid with several input variables
+        elif self.is_supervised and len(self.dimensions) > 2:
+            self.cell_ids = json_data.get("cellIds")
+            self.cell_part_indexes = json_data.get("cellPartIndexes")
+            self.cell_frequencies = json_data.get("cellFrequencies")
+            self.cell_target_frequencies = json_data.get("cellTargetFrequencies")
+            self.cell_interests = json_data.get("cellInterests")
 
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
@@ -2315,7 +2134,7 @@ class DataGridDimension:
         JSON data of an element at the ``dimensions`` field of a ``dataGrid`` field of
         an element of the list found at the ``variablesDetailedStatistics`` field within
         the ``preparationReport`` field of a Khiops JSON report file. If not specified
-        it returns an empty object.
+        it returns an empty instance.
 
     Attributes
     ----------
@@ -2334,51 +2153,60 @@ class DataGridDimension:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        self.variable = ""
-        self.type = ""
-        self.partition_type = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialize basic attributes
+        self.variable = json_data.get("variable", "")
+        self.type = json_data.get("type", "")
+        self.partition_type = json_data.get("partitionType", "")
+
+        # Initialize partition
         self.partition = []
+        if "partition" in json_data:
+            json_partition = json_data["partition"]
+            if not isinstance(json_partition, list):
+                raise KhiopsJSONError("'partition' must be a list")
+        else:
+            json_partition = []
 
-        # Initialize attributes from JSON data
-        if json_data is not None:
-            self.variable = json_data.get("variable")
-            self.type = json_data.get("type")
-            self.partition_type = json_data.get("partitionType")
-            json_partition = json_data.get("partition")
+        # Numerical partition
+        if self.partition_type == "Intervals":
+            # Check the length of the partition
+            if len(json_partition) < 2:
+                raise KhiopsJSONError(
+                    "'partition' for interval must have length at least 2"
+                )
 
-            # Initialize Numerical interval partition
-            if self.partition_type == "Intervals":
-                # Initialize intervals
-                for json_interval in json_partition:
-                    interval = PartInterval(json_interval)
-                    self.partition.append(interval)
+            # Initialize intervals
+            self.partition = [PartInterval(json_part) for json_part in json_partition]
 
-                # Initialize open interval flags
-                first_interval = self.partition[0]
-                if first_interval.is_missing:
-                    first_interval = self.partition[1]
-                first_interval.is_left_open = True
-                last_interval = self.partition[-1]
-                last_interval.is_right_open = True
+            # Initialize open interval flags
+            first_interval = self.partition[0]
+            if first_interval.is_missing:
+                first_interval = self.partition[1]
+            first_interval.is_left_open = True
+            last_interval = self.partition[-1]
+            last_interval.is_right_open = True
 
-            # Initialize Value partition (singletons)
-            if self.partition_type == "Values":
-                for json_value in json_partition:
-                    value = PartValue(json_value)
-                    self.partition.append(value)
+        # Value partition (singletons)
+        elif self.partition_type == "Values":
+            self.partition = [PartValue(json_part) for json_part in json_partition]
 
-            # Initialize ValueGroups partition
-            if self.partition_type == "Value groups":
-                # Initialize value groups
-                for json_value_group in json_partition:
-                    value_group = PartValueGroup(json_value_group)
-                    self.partition.append(value_group)
+        # ValueGroups partition
+        elif self.partition_type == "Value groups":
+            # Initialize value groups
+            self.partition = [PartValueGroup(json_part) for json_part in json_partition]
 
-                # Initialize default group containing all values not specified
-                # in any partition element and all unknown values
-                default_group_index = json_data.get("defaultGroupIndex")
-                default_group = self.partition[default_group_index]
-                default_group.is_default_part = True
+            # Initialize default group containing all values not specified
+            # in any partition element and all unknown values
+            default_group_index = json_data["defaultGroupIndex"]
+            self.partition[default_group_index].is_default_part = True
 
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
@@ -2401,11 +2229,11 @@ class PartInterval:
 
     Parameters
     ----------
-    json_data : dict, optional
+    json_data : list, optional
         JSON data of the ``partition`` field of a ``dataGrid`` field of an element of
         the list found at the ``variablesDetailedStatistics`` field within the
         ``preparationReport`` field of a Khiops JSON report file. If not specified it
-        returns an empty object.
+        returns an empty instance.
 
     Attributes
     ----------
@@ -2425,21 +2253,31 @@ class PartInterval:
 
     def __init__(self, json_data=None):
         """See class docstring"""
+        # Check the type of json_data
+        if json_data is not None:
+            if not isinstance(json_data, list):
+                raise TypeError(type_error_message("json_data", json_data, list))
+            if len(json_data) not in (0, 2):
+                raise ValueError("'json_data' must be a list of size two or empty.")
+
+        # Transform to an empty list if json_data is not specified
+        if json_data is None:
+            json_data = []
+
+        # Missing value if array of bounds is empty
         self.lower_bound = None
         self.upper_bound = None
         self.is_missing = False
+        if not json_data:
+            self.is_missing = True
+        # Actual interval if array of bounds not empty
+        else:
+            self.lower_bound = json_data[0]
+            self.upper_bound = json_data[1]
+
+        # These fields are initialized by another class
         self.is_left_open = False
         self.is_right_open = False
-
-        # Initialization from JSON data
-        if json_data is not None:
-            # Missing value if array of bounds is empty
-            if len(json_data) == 0:
-                self.is_missing = True
-            # Actual interval if array of bounds not empty
-            else:
-                self.lower_bound = json_data[0]
-                self.upper_bound = json_data[1]
 
     def __str__(self):
         """Returns a human readable string representation"""
@@ -2488,6 +2326,12 @@ class PartInterval:
 class PartValue:
     """Element of a value partition (singletons) in a data grid
 
+    Parameters
+    ----------
+    json_data : str, optional
+        The value contained in this singleton part. If not specified it returns an empty
+        object.
+
     Attributes
     ----------
       value : str
@@ -2496,9 +2340,15 @@ class PartValue:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        self.value = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, str):
+            raise TypeError(type_error_message("json_data", json_data, str))
+
+        # Set the value
         if json_data is not None:
             self.value = json_data
+        else:
+            self.value = ""
 
     def __str__(self):
         """Returns a readable string representation"""
@@ -2529,6 +2379,11 @@ class PartValue:
 class PartValueGroup:
     """Element of a categorical partition in a data grid
 
+    Parameters
+    ----------
+    json_data : list of str, optional
+        The list of values of the group. If not specified it returns an empty instance.
+
     Attributes
     ----------
     values : list of str
@@ -2539,10 +2394,15 @@ class PartValueGroup:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        self.values = []
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, list):
+            raise TypeError(type_error_message("json_data", json_data, list))
+
+        # Set the values
+        self.values = json_data
+
+        # Initialize default part to False: It will be set by DataGridDimension
         self.is_default_part = False
-        if json_data is not None:
-            self.values = json_data
 
     def __str__(self):
         """Returns a human readable string representation"""
@@ -2592,10 +2452,10 @@ class TrainedPredictor:
 
     Parameters
     ----------
-    json_data : dict
+    json_data : dict, optional
         JSON data of an element of the list found at the ``trainedPredictors`` field
         within the ``modelingReport`` field of a Khiops JSON report file. If not
-        specified it returns an empty object.
+        specified it returns an empty instance.
 
         .. note::
             The ``selected_variables`` field is considered a "detail" and is not
@@ -2636,25 +2496,25 @@ class TrainedPredictor:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Common attributes
-        self.rank = ""
-        self.type = ""
-        self.family = ""
-        self.name = ""
-        self.variable_number = 0
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialize common attributes
+        self.rank = json_data.get("rank", "")
+        self.type = json_data.get("type", "")
+        self.family = json_data.get("family", "")
+        self.name = json_data.get("name", "")
+        self.variable_number = json_data.get("variables", 0)
 
         # Detailed attributes, depending on the predictor
         self.selected_variables = None
 
-        # Initialization from JSON data (except for details' attributes)
-        if json_data is not None:
-            self.rank = json_data.get("rank")
-            self.type = json_data.get("type")
-            self.family = json_data.get("family")
-            self.name = json_data.get("name")
-            self.variable_number = json_data.get("variables")
-
-    def init_details(self, json_detailed_data=None):
+    def init_details(self, json_data=None):
         """Initializes the details' attributes from a Python JSON object
 
         Parameters
@@ -2664,14 +2524,22 @@ class TrainedPredictor:
             within the ``modelingReport`` field of a Khiops JSON report file. If not
             specified it leaves the object as-is.
         """
-        if json_detailed_data is not None:
-            json_selected_variables = json_detailed_data.get("selectedVariables")
-            if json_selected_variables is not None:
-                # Initialize the selected variable attributes
-                self.selected_variables = []
-                for json_data in json_selected_variables:
-                    selected_variable = SelectedVariable(json_data)
-                    self.selected_variables.append(selected_variable)
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialize the selected variable attributes
+        if "selectedVariables" in json_data:
+            self.selected_variables = [
+                SelectedVariable(json_selected_variable)
+                for json_selected_variable in json_data["selectedVariables"]
+            ]
+
+        return self
 
     def is_detailed(self):
         """Returns True if the report contains any detailed information
@@ -2744,7 +2612,7 @@ class SelectedVariable:
     json_data : dict, optional
         JSON data representing an element of the ``selectedVariables`` list in the
         ``trainedPredictorsDetails`` field within the ``modelingReport`` field of a
-        Khiops JSON report file. If not specified it leaves the object as-is.
+        Khiops JSON report file. If not specified it returns an empty instance.
 
     Attributes
     ----------
@@ -2766,26 +2634,21 @@ class SelectedVariable:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Common attributes
-        self.prepared_name = ""
-        self.name = ""
-        self.level = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Attributes specific to Selective Naive Bayes
-        self.weight = None
-        self.importance = None
-        self.map = None
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
 
-        # Initialization from JSON data (except for details' attributes)
-        if json_data is not None:
-            self.prepared_name = json_data.get("preparedName")
-            self.name = json_data.get("name")
-            self.level = json_data.get("level")
-            self.weight = json_data.get("weight")
-            if json_data.get("importance"):
-                self.importance = json_data.get("importance")
-            if json_data.get("map") is not None:
-                self.map = json_data.get("map")
+        # Initialize fierds
+        self.prepared_name = json_data.get("preparedName", "")
+        self.name = json_data.get("name", "")
+        self.level = json_data.get("level", "")
+        self.weight = json_data.get("weight")
+        self.importance = json_data.get("importance")
+        self.map = json_data.get("map")
 
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
@@ -2834,10 +2697,10 @@ class PredictorPerformance:
 
     Parameters
     ----------
-    json_data : dict
+    json_data : dict, optional
         JSON data of an element of the dictionary found at the ``predictorPerformances``
         field within the one of the evaluation report fields of a Khiops JSON report
-        file. If not specified it returns an empty object.
+        file. If not specified it returns an empty instance.
 
         .. note::
             The ``confusion_matrix`` field is considered as "detail" and is not
@@ -2881,64 +2744,56 @@ class PredictorPerformance:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        # Common attributes
-        self.rank = ""
-        self.type = ""
-        self.family = ""
-        self.name = ""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Classifier evaluation criteria
-        self.accuracy = None
-        self.compression = None
-        self.auc = None
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
 
-        # Regressor evaluation criteria
-        self.rmse = None
-        self.mae = None
-        self.nlpd = None
-        self.rank_rmse = None
-        self.rank_mae = None
-        self.rank_nlpd = None
+        # Initialize common attributes
+        self.rank = json_data.get("rank", "")
+        self.type = json_data.get("type", "")
+        self.family = json_data.get("family", "")
+        self.name = json_data.get("name", "")
+
+        # Initialize classifier evaluation criteria
+        self.accuracy = json_data.get("accuracy")
+        self.compression = json_data.get("compression")
+        self.auc = json_data.get("auc")
+
+        # Initialize regressor evaluation criteria
+        self.rmse = json_data.get("rmse")
+        self.mae = json_data.get("mae")
+        self.nlpd = json_data.get("nlpd")
+        self.rank_rmse = json_data.get("rankRmse")
+        self.rank_mae = json_data.get("rankMae")
+        self.rank_nlpd = json_data.get("rankNlpd")
 
         # Detailed attributes, depending on the predictor
         self.confusion_matrix = None  # for a Classifier
         self.data_grid = None  # for a univariate predictor
 
-        # Initialization from the input JSON object (not the detailed info)
-        if json_data is not None:
-            # Initialize common attributes
-            self.rank = json_data.get("rank")
-            self.type = json_data.get("type")
-            self.family = json_data.get("family")
-            self.name = json_data.get("name")
-
-            # Initialize classifier evaluation criteria
-            if self.type == "Classifier":
-                self.accuracy = json_data.get("accuracy")
-                self.compression = json_data.get("compression")
-                self.auc = json_data.get("auc")
-
-            # Initialize regressor evaluation criteria
-            if self.type == "Regressor":
-                self.rmse = json_data.get("rmse")
-                self.mae = json_data.get("mae")
-                self.nlpd = json_data.get("nlpd")
-                self.rank_rmse = json_data.get("rankRmse")
-                self.rank_mae = json_data.get("rankMae")
-                self.rank_nlpd = json_data.get("rankNlpd")
-
-    def init_details(self, json_detailed_data=None):
+    def init_details(self, json_data=None):
         """Initializes the details' attributes from a python JSON object"""
-        if json_detailed_data is not None:
-            # Confusion matrix
-            json_confusion_matrix = json_detailed_data.get("confusionMatrix")
-            if json_confusion_matrix is not None:
-                self.confusion_matrix = ConfusionMatrix(json_confusion_matrix)
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-            # Data grid
-            json_data_grid = json_detailed_data.get("dataGrid")
-            if json_data_grid is not None:
-                self.data_grid = DataGrid(json_data_grid)
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialize confusion matrix
+        if "confusionMatrix" in json_data:
+            self.confusion_matrix = ConfusionMatrix(json_data["confusionMatrix"])
+
+        # Initialize data grid
+        if "dataGrid" in json_data:
+            self.data_grid = DataGrid(json_data["dataGrid"])
+
+        return self
 
     def is_detailed(self):
         """Returns True if the report contains any detailed information
@@ -3068,7 +2923,7 @@ class ConfusionMatrix:
 
     Parameters
     ----------
-    json_data : dict
+    json_data : dict, optional
         JSON data of the ``confusionMatrix`` field of an element of the dictionary found
         at the ``predictorsDetailedPerformances`` field within one of the evaluation
         report fields of a Khiops JSON report file. If not specified it returns an empty
@@ -3086,13 +2941,17 @@ class ConfusionMatrix:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        self.values = []
-        self.matrix = []
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Initialization from the input JSON object
-        if json_data is not None:
-            self.values = json_data.get("values")
-            self.matrix = json_data.get("matrix")
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialize fields
+        self.values = json_data.get("values", [])
+        self.matrix = json_data.get("matrix", [])
 
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
@@ -3124,10 +2983,10 @@ class PredictorCurve:
 
     Parameters
     ----------
-    json_data : dict
+    json_data : dict, optional
         JSON data of an element of the ``liftCurves`` or ``recCurves`` field of one of
         the evaluation report fields of a Khiops JSON report file. If not specified it
-        returns an empty object.
+        returns an empty instance.
 
     Attributes
     ----------
@@ -3141,20 +3000,28 @@ class PredictorCurve:
 
     def __init__(self, json_data=None):
         """See class docstring"""
-        self.type = None
-        self.name = None
-        self.values = None
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Initialization from the input JSON object
-        if json_data is not None:
-            if "classifier" in json_data:
-                self.type = "Lift"
-                self.name = json_data.get("classifier")
-            elif "regressor" in json_data:
-                self.type = "REC"
-                self.name = json_data.get("regressor")
-            else:
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+        # Otherwise check that either 'classifier' or 'regressor' keys are present
+        else:
+            if "classifier" not in json_data and "regressor" not in json_data:
                 raise ValueError(
                     "Either 'classifier' or 'regressor' must be in curve data"
                 )
-            self.values = json_data.get("values")
+
+        # Initialize the fields
+        if "classifier" in json_data:
+            self.type = "Lift"
+            self.name = json_data.get("classifier")
+        elif "regressor" in json_data:
+            self.type = "REC"
+            self.name = json_data.get("regressor")
+        else:
+            self.type = None
+            self.name = None
+        self.values = json_data.get("values")

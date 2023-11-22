@@ -18,6 +18,7 @@ Selection value
 Instances	99
 Learning task	Classification analysis
 Target variable	Class
+Main target value	Iris-setosa
 Target descriptive stats
 	Values	3
 	Mode	Iris-versicolor
@@ -237,6 +238,7 @@ Selection value
 Instances	99
 Learning task	Classification analysis
 Target variable	Class
+Main target value	Iris-setosa
 Target descriptive stats
 	Values	3
 	Mode	Iris-versicolor
@@ -696,6 +698,7 @@ Selection variable
 Selection value	
 Learning task	Classification analysis
 Target variable	Class
+Main target value	Iris-setosa
 
 Trained predictors
 Rank	Type	Family	Name	Variables
@@ -725,6 +728,7 @@ Selection value
 Instances	99
 Learning task	Classification analysis
 Target variable	Class
+Main target value	Iris-setosa
 
 Predictors performance
 Rank	Type	Family	Name	Accuracy	Compression	AUC
@@ -3789,6 +3793,7 @@ Selection value
 Instances	51
 Learning task	Classification analysis
 Target variable	Class
+Main target value	Iris-setosa
 
 Predictors performance
 Rank	Type	Family	Name	Accuracy	Compression	AUC

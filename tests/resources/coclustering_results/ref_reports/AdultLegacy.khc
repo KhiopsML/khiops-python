@@ -19,8 +19,8 @@ Initial dimensions	6
 Frequency variable	
 Dictionary	Adult
 Database	C:\Applications\khiops9\samples\Adult\Adult.txt
-Sample percentage	None
-Sampling mode	None
+Sample percentage	0.0
+Sampling mode	
 Selection variable	None
 Selection value	None
 
