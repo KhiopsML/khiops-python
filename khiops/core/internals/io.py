@@ -192,8 +192,10 @@ class KhiopsJSONObject:
                 )
 
         # Initialize attributes from data
-        self.tool = json_data.get("tool")
-        self.version = json_data.get("version")
+        # `tool` and `version` need to be strings by default, so that they can
+        # be written
+        self.tool = json_data.get("tool", "")
+        self.version = json_data.get("version", "")
         self.sub_tool = json_data.get("subTool")
 
         # Obtain encoding fields

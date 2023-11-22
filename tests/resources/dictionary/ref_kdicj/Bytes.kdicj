@@ -1,0 +1,19 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "10.0.0.3i",
+	"dictionaries": [
+		{
+			"name": "MyDict\u00EA",
+			"variables": [
+				{
+					"name": "MyVar\u00EE",
+					"type": "Categorical",
+					"metaData": {
+						"aKey": "aValu\u00E9"
+					}
+				}
+			]
+		}
+	],
+	"khiops_encoding": "ansi"
+}

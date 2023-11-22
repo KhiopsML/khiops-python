@@ -155,6 +155,56 @@ class KhiopsCoreIOTests(unittest.TestCase):
                     )
                     files_equal_or_fail(ref_hierarchy_report, output_hierarchy_report)
 
+    def test_binary_dictionary_domain(self):
+        """Test binary dictionary write"""
+        # Set the test paths
+        test_resources_dir = os.path.join(resources_dir(), "dictionary")
+        dictionary_name = "Bytes"
+        ref_kdic = os.path.join(
+            test_resources_dir, "ref_kdic", f"{dictionary_name}.kdic"
+        )
+        ref_kdicj = os.path.join(
+            test_resources_dir, "ref_kdicj", f"{dictionary_name}.kdicj"
+        )
+        output_kdic_dir = os.path.join(test_resources_dir, "output_kdic")
+        output_kdic = os.path.join(output_kdic_dir, f"{dictionary_name}.kdic")
+        copy_output_kdic_dir = os.path.join(test_resources_dir, "copy_output_kdic")
+        copy_output_kdic = os.path.join(copy_output_kdic_dir, f"{dictionary_name}.kdic")
+
+        # Create output dirs if not existing, and delete their contents
+        cleanup_dir(output_kdic_dir, "*.kdic")
+        cleanup_dir(copy_output_kdic_dir, "*.kdic")
+
+        # Build dictionary domain programmatically
+        domain_from_api = kh.DictionaryDomain()
+        domain_from_api.version = b"10.0.0.3i"
+        dictionary = kh.Dictionary()
+        dictionary.name = bytes("MyDictê", encoding="cp1252")
+        metadata = kh.MetaData()
+        metadata.add_value(
+            bytes("aKey", encoding="cp1252"), bytes("aValué", encoding="cp1252")
+        )
+        variable = kh.Variable()
+        variable.name = bytes("MyVarî", encoding="cp1252")
+        variable.type = "Categorical"
+        variable.meta_data = metadata
+        dictionary.add_variable(variable)
+        domain_from_api.add_dictionary(dictionary)
+
+        # Read domain from JSON file
+        domain_from_json = kh.read_dictionary_file(ref_kdicj)
+
+        for domain in (domain_from_api, domain_from_json):
+            # Dump domain object as kdic file and compare it to the reference
+            domain.export_khiops_dictionary_file(output_kdic)
+            files_equal_or_fail(ref_kdic, output_kdic)
+
+            # Make a copy of the domain object, then dump it as kdic file and
+            # compare it to the reference
+            domain_copy = domain.copy()
+            domain_copy.export_khiops_dictionary_file(copy_output_kdic)
+            files_equal_or_fail(ref_kdic, copy_output_kdic)
+
     def test_dictionary(self):
         """Tests for the dictionary module"""
         # Set the test paths
