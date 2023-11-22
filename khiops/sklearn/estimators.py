@@ -127,7 +127,7 @@ def _check_categorical_target_type(dataset):
         dataset.main_table.target_column_id is not None
     ), "Target column not specified in dataset."
     if not (
-        pd.api.types.is_categorical_dtype(dataset.target_column_type)
+        isinstance(dataset.target_column_type, pd.CategoricalDtype)
         or pd.api.types.is_string_dtype(dataset.target_column_type)
         or pd.api.types.is_integer_dtype(dataset.target_column_type)
         or pd.api.types.is_float_dtype(dataset.target_column_type)
@@ -1781,7 +1781,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
     def _is_real_target_dtype_integer(self):
         assert self._original_target_type is not None, "Original target type not set"
         return pd.api.types.is_integer_dtype(self._original_target_type) or (
-            pd.api.types.is_categorical_dtype(self._original_target_type)
+            isinstance(self._original_target_type, pd.CategoricalDtype)
             and pd.api.types.is_integer_dtype(self._original_target_type.categories)
         )
 
