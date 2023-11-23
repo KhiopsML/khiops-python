@@ -95,6 +95,7 @@ def _dir_status(a_dir):
 
 def _get_system_cpu_cores():
     """Portably obtains the number of cpu cores (no hyperthreading)"""
+    # Set the cpu info command and arguments for each platform
     if platform.system() == "Linux":
         cpu_system_info_args = ["lscpu", "-b", "-p=Core,Socket"]
     elif platform.system() == "Windows":
@@ -160,28 +161,35 @@ def _compute_max_cores_from_proc_number(proc_number):
 
 
 def _is_khiops_installed_in_a_conda_env():
-    """True if the module is in a conda env and the khiops binaries are in it"""
+    """True if the module is in a conda env and the khiops binaries are its "bin" dir"""
     # We are in a conda environment if
     # - if the CONDA_PREFIX environment variable exists and,
-    # - if MODL and MODL_Coclustering executables are in `$CONDA_PREFIX/bin`
-    is_in_conda_env = False
+    # - if MODL and MODL_Coclustering files exists in `$CONDA_PREFIX/bin`
+    #
+    # Note: The check that MODL and MODL_Coclustering are actually executable is done
+    #       afterwards by the initializations method.
     if "CONDA_PREFIX" in os.environ:
-        # Check that the Khiops binaries exists within `$CONDA_PREFIX/bin`
-        modl_ok = False
-        modl_cc_ok = False
-        vendored_bin_path = os.path.join(os.environ["CONDA_PREFIX"], "bin")
-        for dirname, _, filenames in os.walk(vendored_bin_path):
-            for filename in filenames:
-                is_executable = os.access(os.path.join(dirname, filename), os.X_OK)
-                if filename in ("MODL", "MODL.exe"):
-                    modl_ok = is_executable
-                elif filename in ("MODL_Coclustering", "MODL_Coclustering.exe"):
-                    modl_cc_ok = is_executable
-            if modl_ok and modl_cc_ok:
-                is_in_conda_env = True
-                break
+        # We are in a conda env if the Khiops binaries exists within `$CONDA_PREFIX/bin`
+        conda_env_bin_dir = os.path.join(os.environ["CONDA_PREFIX"], "bin")
+        modl_path = os.path.join(conda_env_bin_dir, "MODL")
+        modl_cc_path = os.path.join(conda_env_bin_dir, "MODL_Coclustering")
+        if platform.system() == "Windows":
+            modl_path += ".exe"
+            modl_cc_path += ".exe"
+        is_in_conda_env = os.path.exists(modl_path) and os.path.exists(modl_cc_path)
+    else:
+        is_in_conda_env = False
 
     return is_in_conda_env
+
+
+def _check_executable(bin_path):
+    if not os.path.isfile(bin_path):
+        raise KhiopsEnvironmentError(f"Non-regular executable file. Path: {bin_path}")
+    elif not os.access(bin_path, os.X_OK):
+        raise KhiopsEnvironmentError(
+            f"Executable has no execution rights. Path: {bin_path}"
+        )
 
 
 class KhiopsRunner(ABC):
@@ -1236,19 +1244,11 @@ class KhiopsLocalRunner(KhiopsRunner):
         """Checks the that the tool binaries exist and are executable"""
         assert self.khiops_bin_dir is not None
         for tool_name in ["khiops", "khiops_coclustering"]:
-            tool_bin_path = self._tool_path(tool_name)
-            if not os.path.exists(tool_bin_path):
+            if not os.path.exists(self._tool_path(tool_name)):
                 raise KhiopsEnvironmentError(
-                    f"Inexistent Khiops binary path: {tool_bin_path}"
+                    f"Inexistent Khiops executable path: {self._tool_path(tool_name)}"
                 )
-            if not os.path.isfile(tool_bin_path):
-                raise KhiopsEnvironmentError(
-                    f"Non-regular binary file. Path: {tool_bin_path}"
-                )
-            if not os.access(tool_bin_path, os.X_OK):
-                raise KhiopsEnvironmentError(
-                    f"Tool has no execution rights. Path: {tool_bin_path}"
-                )
+            _check_executable(self._tool_path(tool_name))
 
     def _set_samples_dir(self, samples_dir):
         """Checks and sets the samples directory"""
