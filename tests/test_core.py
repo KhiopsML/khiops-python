@@ -555,7 +555,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
         }
 
         # Set the root directory of these tests
-        test_resources_dir = os.path.join(resources_dir(), "scenario_generation")
+        test_resources_dir = os.path.join(resources_dir(), "scenario_generation", "api")
 
         # Use the test runner that only compares the scenarios
         default_runner = kh.get_runner()
@@ -597,13 +597,13 @@ class KhiopsCoreIOTests(unittest.TestCase):
     def test_general_options(self):
         """Test that the general options are written to the scenario file"""
         # Create the root directory of these tests
-        test_resources_dir = os.path.join(resources_dir(), "general_options")
+        test_resources_dir = os.path.join(resources_dir(), "scenario_generation")
 
         # Use the test runner that only compares the scenarios
         default_runner = kh.get_runner()
         test_runner = CompareScenarioTestRunner(self, test_resources_dir)
         test_runner.test_name = "general_options"
-        test_runner.subtest_name = "general_options"
+        test_runner.subtest_name = "default"
         cleanup_dir(test_runner.output_scenario_dir, "*/output/*._kh")
         kh.set_runner(test_runner)
 
