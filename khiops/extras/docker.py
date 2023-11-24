@@ -62,6 +62,11 @@ class KhiopsDockerRunner(KhiopsRunner):
 
         self._khiops_version = get_compatible_khiops_version()
 
+    def _get_khiops_version(self):
+        if self._khiops_version is None:
+            self._initialize_khiops_version()
+        return self._khiops_version
+
     def _fetch(self, request):
         # HTTPS mode
         response = None
