@@ -112,8 +112,10 @@ def _run_task(task_name, task_args):
     task_args : dict
         Arguments of the task.
     """
-    # Save the trace argument
+    # Save the `runner.run` arguments other than the task parameters and options
     trace = task_args["trace"]
+    stdout_file_path = task_args["stdout_file_path"]
+    stderr_file_path = task_args["stderr_file_path"]
 
     # Execute the preprocess of common task arguments
     task_called_with_domain = _preprocess_task_arguments(task_args)
@@ -141,7 +143,12 @@ def _run_task(task_name, task_args):
     # Execute the Khiops task and cleanup when necessary
     try:
         get_runner().run(
-            task, task_args, command_line_options=command_line_options, trace=trace
+            task,
+            task_args,
+            command_line_options=command_line_options,
+            trace=trace,
+            stdout_file_path=stdout_file_path,
+            stderr_file_path=stderr_file_path,
         )
     finally:
         if task_called_with_domain and not trace:
@@ -296,7 +303,13 @@ def _clean_task_args(task_args):
         "output_scenario_path",
         "task_file_path",
     ]
-    other_arg_names = ["dictionary_file_path_or_domain", "trace", "kwargs"]
+    other_arg_names = [
+        "dictionary_file_path_or_domain",
+        "trace",
+        "stdout_file_path",
+        "stderr_file_path",
+        "kwargs",
+    ]
     for arg_name in command_line_arg_names + other_arg_names:
         if arg_name in task_args:
             del task_args[arg_name]
@@ -395,6 +408,8 @@ def export_dictionary_as_json(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
 ):
     """Exports a Khiops dictionary file to JSON format (``.kdicj``)
 
@@ -430,6 +445,8 @@ def build_dictionary_from_data_table(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Builds a dictionary file by analyzing a data table file
@@ -481,6 +498,8 @@ def check_database(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Checks if a data table is compatible with a dictionary file
@@ -574,6 +593,8 @@ def train_predictor(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Trains a model from a data table
@@ -760,6 +781,8 @@ def evaluate_predictor(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Evaluates the predictors in a dictionary file on a database
@@ -891,6 +914,8 @@ def train_recoder(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Trains a recoding model from a data table
@@ -1079,6 +1104,8 @@ def deploy_model(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Deploys a model on a data table
@@ -1162,6 +1189,8 @@ def build_deployed_dictionary(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     """Builds a dictionary file to read the output table of a deployed model
@@ -1211,6 +1240,8 @@ def sort_data_table(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Sorts a data table
@@ -1278,6 +1309,8 @@ def extract_keys_from_data_table(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Extracts from data table unique occurrences of a key variable
@@ -1348,6 +1381,8 @@ def train_coclustering(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Trains a coclustering model from a data table
@@ -1446,6 +1481,8 @@ def simplify_coclustering(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     """Simplifies a coclustering model
@@ -1513,6 +1550,8 @@ def prepare_coclustering_deployment(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     """Prepares a *individual-variable* coclustering deployment
@@ -1583,6 +1622,8 @@ def extract_clusters(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     """Extracts clusters to a tab separated (TSV) file
@@ -1633,6 +1674,8 @@ def detect_data_table_format(
     dictionary_file_path_or_domain=None,
     dictionary_name=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
 ):
     """Detects the format of a data table
 
