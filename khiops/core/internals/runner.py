@@ -95,6 +95,7 @@ def _dir_status(a_dir):
 
 def _get_system_cpu_cores():
     """Portably obtains the number of cpu cores (no hyperthreading)"""
+    # Set the cpu info command and arguments for each platform
     if platform.system() == "Linux":
         cpu_system_info_args = ["lscpu", "-b", "-p=Core,Socket"]
     elif platform.system() == "Windows":
@@ -160,28 +161,35 @@ def _compute_max_cores_from_proc_number(proc_number):
 
 
 def _is_khiops_installed_in_a_conda_env():
-    """True if the module is in a conda env and the khiops binaries are in it"""
+    """True if the module is in a conda env and the khiops binaries are its "bin" dir"""
     # We are in a conda environment if
     # - if the CONDA_PREFIX environment variable exists and,
-    # - if MODL and MODL_Coclustering executables are in `$CONDA_PREFIX/bin`
-    is_in_conda_env = False
+    # - if MODL and MODL_Coclustering files exists in `$CONDA_PREFIX/bin`
+    #
+    # Note: The check that MODL and MODL_Coclustering are actually executable is done
+    #       afterwards by the initializations method.
     if "CONDA_PREFIX" in os.environ:
-        # Check that the Khiops binaries exists within `$CONDA_PREFIX/bin`
-        modl_ok = False
-        modl_cc_ok = False
-        vendored_bin_path = os.path.join(os.environ["CONDA_PREFIX"], "bin")
-        for dirname, _, filenames in os.walk(vendored_bin_path):
-            for filename in filenames:
-                is_executable = os.access(os.path.join(dirname, filename), os.X_OK)
-                if filename in ("MODL", "MODL.exe"):
-                    modl_ok = is_executable
-                elif filename in ("MODL_Coclustering", "MODL_Coclustering.exe"):
-                    modl_cc_ok = is_executable
-            if modl_ok and modl_cc_ok:
-                is_in_conda_env = True
-                break
+        # We are in a conda env if the Khiops binaries exists within `$CONDA_PREFIX/bin`
+        conda_env_bin_dir = os.path.join(os.environ["CONDA_PREFIX"], "bin")
+        modl_path = os.path.join(conda_env_bin_dir, "MODL")
+        modl_cc_path = os.path.join(conda_env_bin_dir, "MODL_Coclustering")
+        if platform.system() == "Windows":
+            modl_path += ".exe"
+            modl_cc_path += ".exe"
+        is_in_conda_env = os.path.exists(modl_path) and os.path.exists(modl_cc_path)
+    else:
+        is_in_conda_env = False
 
     return is_in_conda_env
+
+
+def _check_executable(bin_path):
+    if not os.path.isfile(bin_path):
+        raise KhiopsEnvironmentError(f"Non-regular executable file. Path: {bin_path}")
+    elif not os.access(bin_path, os.X_OK):
+        raise KhiopsEnvironmentError(
+            f"Executable has no execution rights. Path: {bin_path}"
+        )
 
 
 class KhiopsRunner(ABC):
@@ -193,6 +201,10 @@ class KhiopsRunner(ABC):
         self._initialize_root_temp_dir()
         self._khiops_version = None
         self._samples_dir = None
+
+        # Whether to write the khiops-python version of the scenarios
+        # For development uses only
+        self._write_version = True
 
     def _initialize_root_temp_dir(self):
         """Initializes the runner's root temporary directory
@@ -588,7 +600,7 @@ class KhiopsRunner(ABC):
         try:
             # Disable pylint warning about abstract method _run returning None
             # pylint: disable=assignment-from-no-return
-            return_code, stderr = self._run(
+            return_code, stdout, stderr = self._run(
                 task.tool_name,
                 scenario_path,
                 command_line_options,
@@ -603,6 +615,7 @@ class KhiopsRunner(ABC):
             self._report_exit_status(
                 task.tool_name,
                 return_code,
+                stdout,
                 stderr,
                 command_line_options.log_file_path,
             )
@@ -616,26 +629,38 @@ class KhiopsRunner(ABC):
                 if tmp_log_file_path is not None:
                     fs.remove(tmp_log_file_path)
 
-    def _report_exit_status(self, tool_name, return_code, stderr, log_file_path):
-        """Reports the exit status of a Khiops execution
+    def _report_exit_status(
+        self, tool_name, return_code, stdout, stderr, log_file_path
+    ):
+        """Reports the exit status of a Khiops execution"""
+        # Note:
+        #   We report stdout and stderr in both branches below because we use a log file
+        #   and thus normally Khiops doesn't write anything to these streams. In
+        #   practice MPI and the remote filesystems plugins may write to them to report
+        #   anomalies.
 
-        - If there were fatal errors it raises a KhiopsRuntimeError
-        - If there were only errors it warns them
-        - If the process ended ok but there was stderr output it warns as well
-        """
-        # If there were no errors warn if:
-        # - stderr was not empty
-        # - There were warnings in the log
+        # If the execution was correct, warn and report:
+        # - the stdout if it was not empty
+        # - the stderr if it was not empty
+        # - any warnings found in the log
         if return_code == 0:
             # Add Khiops log warnings to the warning message if any
             warning_msg = ""
             _, _, warning_messages = self._collect_errors(log_file_path)
             if warning_messages:
-                warning_msg += "\nWarnings in log:\n" + "".join(warning_messages)
+                warning_msg += "Warnings in log:\n" + "".join(warning_messages)
+
+            # Add stdout to the warning message if non empty
+            if stdout:
+                if warning_msg:
+                    warning_msg += "\n"
+                warning_msg += f"Contents of stdout:\n{stdout}"
 
             # Add stderr to the warning message if non empty
             if stderr:
-                warning_msg += f"\nContents of stderr:\n{stderr}"
+                if warning_msg:
+                    warning_msg += "\n"
+                warning_msg += f"Contents of stderr:\n{stderr}"
 
             # Report the message if there were any
             if warning_msg:
@@ -643,24 +668,40 @@ class KhiopsRunner(ABC):
                     "Khiops ended correctly but there were minor issues" + warning_msg
                 )
                 warnings.warn(warning_msg.rstrip(), stacklevel=4)
-        # If there were errors or fatal errors collect them and report
+        # If the execution was incorrect raise an exception reporting:
+        # - The warnings in the log
+        # - The errors and/or fatal errors in the log
+        # - The stdout if not empty
+        # - The stderr if not empty
         else:
             # Collect errors and warnings
             errors, fatal_errors, warning_messages = self._collect_errors(log_file_path)
 
             # Create the message reporting the errors
-            error_msg = f"{tool_name} ended with return code {return_code}"
+            error_msg = ""
             if warning_messages:
-                error_msg += "\nWarnings in log:\n" + "".join(warning_messages)
+                error_msg += "Warnings in log:\n" + "".join(warning_messages)
             if errors:
-                error_msg += "\nErrors in log:\n" + "".join(errors)
+                if error_msg:
+                    error_msg += "\n"
+                error_msg += "Errors in log:\n" + "".join(errors)
             if fatal_errors:
-                error_msg += "\nFatal errors in log:\n" + "".join(fatal_errors)
+                if error_msg:
+                    error_msg += "\n"
+                error_msg += "Fatal errors in log:\n" + "".join(fatal_errors)
+            if stdout:
+                if error_msg:
+                    error_msg += "\n"
+                error_msg += f"Contents of stdout:\n{stdout}"
             if stderr:
-                error_msg += f"\nContents of stderr:\n{stderr}"
+                if error_msg:
+                    error_msg += "\n"
+                error_msg += f"Contents of stderr:\n{stderr}"
 
             # Raise an exception with the errors
-            raise KhiopsRuntimeError(error_msg)
+            raise KhiopsRuntimeError(
+                f"{tool_name} ended with return code {return_code}\n{error_msg}"
+            )
 
     def _collect_errors(self, log_file_path):
         # Collect errors any errors found in the log
@@ -704,6 +745,8 @@ class KhiopsRunner(ABC):
         scenario_path = self._create_scenario_file(task)
         with io.BytesIO() as scenario_stream:
             writer = KhiopsOutputWriter(scenario_stream, force_ansi=force_ansi_scenario)
+            if self._write_version:
+                writer.writeln(f"// Generated by khiops-python {khiops.__version__}")
             self._write_task_scenario(
                 writer,
                 task,
@@ -778,7 +821,8 @@ class KhiopsRunner(ABC):
         Returns
         -------
         tuple
-            A 2-tuple containing the return code and the stderr of the Khiops process
+            A 3-tuple containing the return code, the stdout and the stderr of the
+            Khiops process.
 
         Raises
         ------
@@ -1236,19 +1280,11 @@ class KhiopsLocalRunner(KhiopsRunner):
         """Checks the that the tool binaries exist and are executable"""
         assert self.khiops_bin_dir is not None
         for tool_name in ["khiops", "khiops_coclustering"]:
-            tool_bin_path = self._tool_path(tool_name)
-            if not os.path.exists(tool_bin_path):
+            if not os.path.exists(self._tool_path(tool_name)):
                 raise KhiopsEnvironmentError(
-                    f"Inexistent Khiops binary path: {tool_bin_path}"
+                    f"Inexistent Khiops executable path: {self._tool_path(tool_name)}"
                 )
-            if not os.path.isfile(tool_bin_path):
-                raise KhiopsEnvironmentError(
-                    f"Non-regular binary file. Path: {tool_bin_path}"
-                )
-            if not os.access(tool_bin_path, os.X_OK):
-                raise KhiopsEnvironmentError(
-                    f"Tool has no execution rights. Path: {tool_bin_path}"
-                )
+            _check_executable(self._tool_path(tool_name))
 
     def _set_samples_dir(self, samples_dir):
         """Checks and sets the samples directory"""
@@ -1337,11 +1373,11 @@ class KhiopsLocalRunner(KhiopsRunner):
 
         # Execute the tool
         khiops_args = command_line_options.build_command_line_options(scenario_path)
-        _, stderr, return_code = self.raw_run(
+        stdout, stderr, return_code = self.raw_run(
             tool_name, command_line_args=khiops_args, trace=trace
         )
 
-        return return_code, stderr
+        return return_code, stdout, stderr
 
 
 #########################

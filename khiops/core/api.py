@@ -174,17 +174,39 @@ def _preprocess_task_arguments(task_args):
 
     # Set the discretization/grouping default values
     if "discretization_method" in task_args:
+        # Set the default values if the discretization method is not specified
         if task_args["discretization_method"] is None:
             if task_args["target_variable"]:
                 task_args["discretization_method"] = "MODL"
             else:
                 task_args["discretization_method"] = "EqualWidth"
+        # Otherwise raise an error if the values are not in the range to avoid a khiops
+        # segmentation fault. This won't be necessary from version 11 on.
+        else:
+            if not task_args["target_variable"] and task_args[
+                "discretization_method"
+            ] not in ("EqualWidth", "EqualLenght", "None"):
+                raise ValueError(
+                    "'discretization_method' must be either "
+                    "'EqualWidth', 'EqualFrequency' or 'None'."
+                )
+
     if "grouping_method" in task_args:
+        # Set the default values if the grouping method is not specified
         if task_args["grouping_method"] is None:
             if task_args["target_variable"]:
                 task_args["grouping_method"] = "MODL"
             else:
                 task_args["grouping_method"] = "BasicGrouping"
+        # Otherwise raise an error if the values are not in the range to avoid a khiops
+        # segmentation fault. This won't be necessary from version 11 on.
+        else:
+            if not task_args["target_variable"] and task_args[
+                "grouping_method"
+            ] not in ("BasicGrouping", "None"):
+                raise ValueError(
+                    "'grouping_method' must be either 'BasicGrouping' or 'None'."
+                )
 
     # Transform the use_complement_as_test bool parameter to its string counterpart
     if "use_complement_as_test" in task_args:
