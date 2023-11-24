@@ -1861,7 +1861,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         command_line_options,
         trace,
     ):
-        return 0, ""
+        return 0, "", ""
 
 
 def resources_dir():

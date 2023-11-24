@@ -162,7 +162,9 @@ class KhiopsDockerRunner(KhiopsRunner):
         if trace:
             print(f"Docker runner delete job: {json_response}")
 
-        return return_code, stderr
+        # We return empty stdout because the 'output' field of the JSON response are the
+        # contents of the log
+        return return_code, "", stderr
 
     def _create_local_temp_file(self, prefix, suffix):
         """Creates a unique temporary file in the runner's root temporary directory
