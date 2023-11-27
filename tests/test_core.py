@@ -693,6 +693,40 @@ class KhiopsCoreIOTests(unittest.TestCase):
             # Clean up the output file
             os.remove(stream_file_path)
 
+    def test_std_stream_warnings(self):
+        """Test that if Khiops OK + non-empty std streams they are shown in a warning"""
+        # Run the tests for each stream
+        fixtures = {
+            "stdout": create_mocked_raw_run(True, False, 0),
+            "stderr": create_mocked_raw_run(False, True, 0),
+        }
+        for stream_name, mocked_raw_run in fixtures.items():
+            # Run the subtest with the mocked runner
+            with self.subTest(stream_name=stream_name):
+                with MockedRunnerContext(mocked_raw_run):
+                    with self.assertWarns(UserWarning) as cm:
+                        kh.check_database("a.kdic", "a", "a.txt")
+
+            # Check that the warning contains the stream content
+            self.assertIn(f"{stream_name}_content", str(cm.warning))
+
+    def test_std_stream_errors(self):
+        """Test that if Khiops KO + non-empty std streams they are show in the exc."""
+        # Run the tests for each stream
+        fixtures = {
+            "stdout": create_mocked_raw_run(True, False, 1),
+            "stderr": create_mocked_raw_run(False, True, 1),
+        }
+        for stream_name, mocked_raw_run in fixtures.items():
+            # Run the subtest with the mocked runner
+            with self.subTest(stream_name=stream_name):
+                with MockedRunnerContext(mocked_raw_run):
+                    with self.assertRaises(kh.KhiopsRuntimeError) as cm:
+                        kh.check_database("a.kdic", "a", "a.txt")
+
+            # Check that the error contains the stream content
+            self.assertIn(f"{stream_name}_content", str(cm.exception))
+
 
 class MockedRunnerContext:
     """A context to mock the `~.KhiopsLocalRunner.raw_run` function"""
