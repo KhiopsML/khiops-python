@@ -1,6 +1,7 @@
 # Arguments
 ARG KHIOPSDEV_OS
-FROM ghcr.io/khiopsml/khiops/khiopsdev-${KHIOPSDEV_OS}:latest
+ARG SERVER_REVISION
+FROM ghcr.io/khiopsml/khiops/khiopsdev-${KHIOPSDEV_OS}:latest AS khiopsdev
 LABEL maintainer="khiops.team@orange.com"
 LABEL description="Container for the development of khiops-python"
 
@@ -30,3 +31,12 @@ RUN true \
   && apt-get clean \
   && rm -rf ./khiops \
   && true
+
+RUN mkdir -p /scripts
+COPY ./run_service.sh /scripts/run_service.sh
+RUN chmod +x /scripts/run_service.sh && \
+  useradd -rm -d /home/ubuntu -s /bin/bash -g root -u 1000 ubuntu
+
+FROM ghcr.io/khiopsml/khiops-server/server:${SERVER_REVISION} AS server
+FROM khiopsdev AS base
+COPY --from=server /service /usr/bin/service
