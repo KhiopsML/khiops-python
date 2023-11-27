@@ -705,6 +705,64 @@ class KhiopsCoreIOTests(unittest.TestCase):
             with self.subTest(stream_name=stream_name):
                 _test(stream_name, mock_raw_run)
 
+    def test_std_stream_warnings(self):
+        def _test(stream_name, mock_raw_run):
+            # Create the function arguments
+            stream_args = ["a.kdic", "a", "a.txt"]
+
+            # Run a normal local runner with the `raw_run` function mocked
+            default_runner = kh.get_runner()
+            mock_runner = KhiopsLocalRunner()
+            mock_runner._initialize_khiops_environment()
+            kh.set_runner(mock_runner)
+            with mock.patch.object(KhiopsLocalRunner, "raw_run", new=mock_raw_run):
+                with self.assertWarns(UserWarning) as cm:
+                    kh.check_database(*stream_args)
+
+            # Check that the warning contains the stream content
+            self.assertIn(f"{stream_name}_content", str(cm.warning))
+
+            # Restore the original runner
+            kh.set_runner(default_runner)
+
+        # Run the tests for each stream
+        fixtures = {
+            "stdout": create_mock_raw_run(True, False, 0),
+            "stderr": create_mock_raw_run(False, True, 0),
+        }
+        for stream_name, mock_raw_run in fixtures.items():
+            with self.subTest(stream_name=stream_name):
+                _test(stream_name, mock_raw_run)
+
+    def test_std_stream_errors(self):
+        def _test(stream_name, mock_raw_run):
+            # Create the function arguments
+            stream_args = ["a.kdic", "a", "a.txt"]
+
+            # Run a normal local runner with the `raw_run` function mocked
+            default_runner = kh.get_runner()
+            mock_runner = KhiopsLocalRunner()
+            mock_runner._initialize_khiops_environment()
+            kh.set_runner(mock_runner)
+            with mock.patch.object(KhiopsLocalRunner, "raw_run", new=mock_raw_run):
+                with self.assertRaises(kh.KhiopsRuntimeError) as cm:
+                    kh.check_database(*stream_args)
+
+            # Check that the error contains the stream content
+            self.assertIn(f"{stream_name}_content", str(cm.exception))
+
+            # Restore the original runner
+            kh.set_runner(default_runner)
+
+        # Run the tests for each stream
+        fixtures = {
+            "stdout": create_mock_raw_run(True, False, 1),
+            "stderr": create_mock_raw_run(False, True, 1),
+        }
+        for stream_name, mock_raw_run in fixtures.items():
+            with self.subTest(stream_name=stream_name):
+                _test(stream_name, mock_raw_run)
+
 
 def create_mock_raw_run(stdout, stderr, return_code):
     """Creates a mock for the `.KhiopsRunner.run` method"""
