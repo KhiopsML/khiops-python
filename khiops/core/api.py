@@ -8,6 +8,10 @@
 
 The methods in this module allow to execute all Khiops and Khiops Coclustering tasks.
 
+See also:
+    - :ref:`core-api-common-params`
+    - :ref:`core-api-input-types`
+    - :ref:`core-api-sampling-mode`
 """
 import io
 import os
@@ -418,7 +422,7 @@ def export_dictionary_as_json(
     dictionary_file_path_or_domain : str or `.DictionaryDomain`
         Path of a Khiops dictionary file or a DictionaryDomain object.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Examples
     --------
@@ -470,7 +474,7 @@ def build_dictionary_from_data_table(
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
     """
     # Save the task arguments
     # WARNING: Do not move this line, see the top of the "tasks" section for details
@@ -527,7 +531,7 @@ def check_database(
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it checks ``sample_percentage`` percent of
         the data; if equal to "Exclude sample" it checks the complement of the
-        data selected with "Include sample".
+        data selected with "Include sample". See also :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It checks only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -539,7 +543,7 @@ def check_database(
     max_messages : int, default 20
         Maximum number of error messages to write in the log file.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Examples
     --------
@@ -627,9 +631,10 @@ def train_predictor(
         See the ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the predictor on ``sample_percentage``
-        percent of the data and tests the model on the remainder of the data
-        if ``use_complement_as_test`` is set to ``True``.
-        If equal to "Exclude sample" the train and test datasets above are exchanged.
+        percent of the data and tests the model on the remainder of the data if
+        ``use_complement_as_test`` is set to ``True``.  If equal to "Exclude sample" the
+        train and test datasets above are exchanged. See also
+        :ref:`core-api-sampling-mode`.
     use_complement_as_test : bool, default ``True``
         Uses the complement of the sampled database as test database for
         computing the model's performance metrics.
@@ -704,7 +709,7 @@ def train_predictor(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Returns
     -------
@@ -810,10 +815,10 @@ def evaluate_predictor(
     sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it evaluates the predictor on
-        ``sample_percentage`` percent of the data. If equal to "Exclude sample"
-        it evaluates the predictor on the complement of the data selected with
-        "Include sample".
+        If equal to "Include sample" it evaluates the predictor on ``sample_percentage``
+        percent of the data. If equal to "Exclude sample" it evaluates the predictor on
+        the complement of the data selected with "Include sample". See also
+        :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal "".
@@ -831,7 +836,7 @@ def evaluate_predictor(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Returns
     -------
@@ -960,7 +965,8 @@ def train_recoder(
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the recoder on ``sample_percentage``
         percent of the data. If equal to "Exclude sample" it trains the recoder on the
-        complement of the data selected with "Include sample".
+        complement of the data selected with "Include sample". See also
+        :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1046,7 +1052,7 @@ def train_recoder(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Returns
     -------
@@ -1137,7 +1143,8 @@ def deploy_model(
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it deploys the model on ``sample_percentage``
         percent of the data. If equal to "Exclude sample" it deploys the model on the
-        complement of the data selected with "Include sample".
+        complement of the data selected with "Include sample". See also
+        :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It deploys only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1156,7 +1163,7 @@ def deploy_model(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1204,7 +1211,7 @@ def build_deployed_dictionary(
     output_dictionary_file_path : str
         Path of the output dictionary file.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1273,7 +1280,8 @@ def sort_data_table(
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
+
 
     Raises
     ------
@@ -1339,7 +1347,7 @@ def extract_keys_from_data_table(
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1413,9 +1421,9 @@ def train_coclustering(
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the coclustering estimator on
-        ``sample_percentage`` percent of the data. If equal to "Exclude sample"
-        it trains the coclustering estimator on the complement of the data
-        selected with "Include sample".
+        ``sample_percentage`` percent of the data. If equal to "Exclude sample" it
+        trains the coclustering estimator on the complement of the data selected with
+        "Include sample". See also :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1431,7 +1439,7 @@ def train_coclustering(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Returns
     -------
@@ -1510,7 +1518,7 @@ def simplify_coclustering(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1591,7 +1599,7 @@ def prepare_coclustering_deployment(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1643,7 +1651,7 @@ def extract_clusters(
         Maximum number of cells in the simplified coclustering. If equal to 0 there is
         no limit.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Examples
     --------
@@ -1811,7 +1819,7 @@ def build_multi_table_dictionary(
     overwrite_dictionary_file : bool, default ``False``
         If ``True`` it will overwrite an input dictionary file.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------

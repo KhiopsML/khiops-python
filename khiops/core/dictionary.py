@@ -88,9 +88,9 @@ class DictionaryDomain(KhiopsJSONObject):
         specified it returns an empty instance.
 
         .. note::
-            Prefer either the `read_khiops_dictionary_json_file` method or the
-            `.read_dictionary_file` function from the core API to obtain an instance of
-            this class from a Khiops Dictionary file (``kdic`` or ``kdicj``).
+            Prefer the `.read_dictionary_file` function from the core API to obtain an
+            instance of this class from a Khiops Dictionary file (``kdic`` or
+            ``kdicj``).
 
     Attributes
     ----------

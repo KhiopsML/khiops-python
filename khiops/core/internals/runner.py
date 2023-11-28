@@ -532,12 +532,12 @@ class KhiopsRunner(ABC):
             options with the runner's accessors. See the `.GeneralOptions` class for
             more information.
         stdout_file_path : str, default ""
-            *Advanced* Path of a file to which write the Khiops process stdout stream.
+            *Advanced* Path to a file where the Khiops process writes its stdout stream.
             Normally Khiops should not write to this stream but MPI, filesystems plugins
             or debug versions may do it. The stream is captured with a UTF-8 encoding
             and replacing encoding errors. If equal to "" then it writes no file.
         stderr_file_path : str, default ""
-            *Advanced* Path of a file to which write the Khiops process stderr stream.
+            *Advanced* Path to a file where the Khiops process writes its stderr stream.
             Normally Khiops should not write to this stream but MPI, filesystems plugins
             or debug versions may do it. The stream is captured with a UTF-8 encoding
             and replacing encoding errors. If equal to "" then it writes no file.

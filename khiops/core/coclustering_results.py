@@ -61,9 +61,8 @@ class CoclusteringResults(KhiopsJSONObject):
         file. If not specified it returns an empty instance.
 
         .. note::
-            Prefer either the `read_khiops_coclustering_json_file` method or the
-            `read_coclustering_results_file` function from the core
-            API to obtain an instance of this class from a Khiops Coclustering JSON
+            Prefer either the the `read_coclustering_results_file` function from the
+            core API to obtain an instance of this class from a Khiops Coclustering JSON
             file.
 
     Attributes
