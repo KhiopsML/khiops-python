@@ -61,7 +61,7 @@ def create_header_cells(script_name):
                 f"This is a notebook containing the code in the `{script_name}.py` script\n"
                 "of the Khiops Python library.\n\n"
                 "Make sure you have already installed the latest version of ",
-                "[Khiops](http://www.khiops.org) before using this this notebook",
+                "[Khiops](https://khiops.org) before using this this notebook",
             ],
         },
         {

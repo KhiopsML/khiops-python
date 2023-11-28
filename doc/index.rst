@@ -35,14 +35,6 @@ you are familiar with the Khiops workflow based on plain-text tabular data files
 files (``.kdic``).
 
 .. toctree::
-  :caption: Tutorials and Code Samples
-  :hidden:
-
-  Tutorials <tutorials/index>
-  samples/samples_sklearn
-  Samples core <samples/samples>
-
-.. toctree::
   :caption: API Reference
   :hidden:
 
@@ -50,6 +42,14 @@ files (``.kdic``).
   core <core/index>
   tools <tools/index>
   internals <internal/index>
+
+.. toctree::
+  :caption: Tutorials and Code Samples
+  :hidden:
+
+  Tutorials <tutorials/index>
+  samples/samples_sklearn
+  Samples core <samples/samples>
 
 .. toctree::
   :caption: Other Topics
