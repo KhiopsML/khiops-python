@@ -1,9 +1,5 @@
 ---
 name: Build development container
-env:
-  DEFAULT_KHIOPS_REVISION: dev
-  DEFAULT_KHIOPSDEV_OS: ubuntu22.04
-  DEFAULT_SERVER_REVISION: latest
 on:
   workflow_dispatch:
     inputs:
@@ -14,7 +10,7 @@ on:
         default: ubuntu22.04
         description: Github runner OS
       server-revision:
-        default: latest
+        default: main
         description: Tag of the server Docker image
   workflow_call:
     inputs:
@@ -28,7 +24,7 @@ on:
         description: Github runner OS
       server-revision:
         type: string
-        default: latest
+        default: main
         description: Tag of the server Docker image
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
