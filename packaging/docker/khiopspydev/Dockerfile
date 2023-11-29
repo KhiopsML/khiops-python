@@ -37,6 +37,6 @@ COPY ./run_service.sh /scripts/run_service.sh
 RUN chmod +x /scripts/run_service.sh && \
   useradd -rm -d /home/ubuntu -s /bin/bash -g root -u 1000 ubuntu
 
-FROM ghcr.io/khiopsml/khiops-server/server:${SERVER_REVISION} AS server
+FROM ghcr.io/khiopsml/khiops-server:${SERVER_REVISION} AS server
 FROM khiopsdev AS base
 COPY --from=server /service /usr/bin/service
