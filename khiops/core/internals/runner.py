@@ -899,12 +899,18 @@ class KhiopsLocalRunner(KhiopsRunner):
         self.is_initialized = True
 
     def _initialize_khiops_conda_environment(self):
+        # Set Khiops binary directory with respect to the conda environment
+        self._khiops_bin_dir = os.path.join(os.environ["CONDA_PREFIX"], "bin")
+
+        self._check_tools()
+
+        self._initialize_with_found_modl_tools()
+
+    def _initialize_with_found_modl_tools(self):
+        assert self._check_tools()
+
         # Execute with MODL* binaries in vendored contexts
         self.execute_with_modl = True
-
-        # Set Khiops binary directory with respect to the conda environment
-        self._khiops_bin_dir = os.path.join(sys.exec_prefix, "bin")
-        self._check_tools()
 
         # Initialize the khiops version
         self._initialize_khiops_version()
@@ -1057,6 +1063,8 @@ class KhiopsLocalRunner(KhiopsRunner):
         # If the environment script exists then obtain the execution environment
         if self._khiops_env_script_exists():
             self._initialize_from_env_script()
+        else:
+            self._initialize_with_found_modl_tools()
 
         # Initialize the default samples dir
         self._initialize_default_samples_dir()
