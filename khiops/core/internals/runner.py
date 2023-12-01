@@ -9,10 +9,8 @@
 import io
 import os
 import platform
-import shlex
 import shutil
 import subprocess
-import sys
 import tempfile
 import uuid
 import warnings
@@ -885,7 +883,6 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Initialize lazily until the first run to avoid errors
         # in environments without a local installation
         self.is_initialized = False
-        self.execute_with_modl = None
         self.mpi_command_args = None
         self._khiops_bin_dir = None
         self._khiops_version = None
@@ -899,11 +896,17 @@ class KhiopsLocalRunner(KhiopsRunner):
         self.is_initialized = True
 
     def _initialize_khiops_conda_environment(self):
-        # Execute with MODL* binaries in vendored contexts
-        self.execute_with_modl = True
-
-        # Set Khiops binary directory with respect to the conda environment
+        # Set Khiops binary directory with respect to the Conda environment
         self._khiops_bin_dir = os.path.join(os.environ["CONDA_PREFIX"], "bin")
+
+        # Initialize execution environment
+        self._initialize_execution_environment()
+
+    def _initialize_execution_environment(self):
+        # Khiops binary directory should be already set
+        assert self._khiops_bin_dir is not None
+
+        # Check the tools exist and are executable
         self._check_tools()
 
         # Initialize the khiops version
@@ -1042,25 +1045,8 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Initialize bin dir
         self._initialize_default_khiops_bin_dir()
 
-        # Set to execute with MODL if the env script exists
-        if self._khiops_env_script_exists():
-            self.execute_with_modl = True
-        else:
-            self.execute_with_modl = False
-
-        # Check the tools
-        self._check_tools()
-
-        # Initialize the khiops version
-        self._initialize_khiops_version()
-
-        # If the environment script exists then obtain the execution environment
-        if self._khiops_env_script_exists():
-            self._initialize_from_env_script()
-
-        # Initialize the default samples dir
-        self._initialize_default_samples_dir()
-        self._check_samples_dir()
+        # Initialize execution environment
+        self._initialize_execution_environment()
 
     def _initialize_default_khiops_bin_dir(self):
         # Warn if both KHIOPS_HOME and KhiopsHome are set
@@ -1092,77 +1078,6 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Raise an error for unknown platforms
         else:
             raise KhiopsEnvironmentError(f"Unsupported platform {platform.system()}")
-
-    def _khiops_env_script_exists(self):
-        return os.path.exists(self._build_khiops_env_script_path())
-
-    def _build_khiops_env_script_path(self):
-        assert self._khiops_bin_dir is not None
-        if platform.system() == "Windows":
-            khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops_env.cmd")
-        else:
-            khiops_env_script_path = os.path.join(self.khiops_bin_dir, "khiops-env")
-        return khiops_env_script_path
-
-    def _initialize_from_env_script(self):
-        # Execute khiops environment script
-        with subprocess.Popen(
-            [self._build_khiops_env_script_path(), "--env"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        ) as khiops_process:
-            stdout, _ = khiops_process.communicate()
-
-        # Parse the output of the khiops environment script and save the settings
-        path_additions = ["KHIOPS_PATH", "KHIOPS_JAVA_PATH"]
-        for line in stdout.split("\n"):
-            # Tokenize the lines
-            tokens = line.rstrip().split(maxsplit=1)
-            if len(tokens) == 2:
-                var_name, var_value = tokens
-            elif len(tokens) == 1:
-                var_name = tokens[0]
-                var_value = ""
-            else:
-                continue
-
-            # We always update the environment but not in the same way for all variables
-            # PATH additions: Update PATH
-            if var_name in path_additions:
-                os.environ["PATH"] = var_value + os.pathsep + os.environ["PATH"]
-            # KHIOPS_CLASSPATH: Update Java's CLASSPATH
-            elif var_name == "KHIOPS_CLASSPATH":
-                if "CLASSPATH" in os.environ:
-                    os.environ["CLASSPATH"] = (
-                        var_value + os.pathsep + os.environ["CLASSPATH"]
-                    )
-                else:
-                    os.environ["CLASSPATH"] = var_value
-            # KHIOPS_MPI_LIB: Update LD_LIBRARY_PATH
-            elif var_name == "KHIOPS_MPI_LIB":
-                if "LD_LIBRARY_PATH" in os.environ:
-                    os.environ["LD_LIBRARY_PATH"] = (
-                        var_value + os.pathsep + os.environ["LD_LIBRARY_PATH"]
-                    )
-                else:
-                    os.environ["LD_LIBRARY_PATH"] = var_value
-            # KHIOPS_MPI_COMMAND, KHIOPS_PROC_NUMBER, KHIOPS_MEMORY_LIMIT and
-            # KHIOPS_TMP_DIR: Update the runner and the environment
-            elif var_name == "KHIOPS_MPI_COMMAND":
-                self.mpi_command_args = shlex.split(var_value)
-            elif var_name == "KHIOPS_PROC_NUMBER" and var_value:
-                self.max_cores = _compute_max_cores_from_proc_number(int(var_value))
-                os.environ["KHIOPS_PROC_NUMBER"] = var_value
-            elif var_name == "KHIOPS_MEMORY_LIMIT" and var_value:
-                self.max_memory_mb = int(var_value)
-                os.environ["KHIOPS_MEMORY_LIMIT"] = var_value
-            elif var_name == "KHIOPS_TMP_DIR" and var_value:
-                self.khiops_temp_dir = var_value
-                os.environ["KHIOPS_TMP_DIR"] = var_value
-            # Any other case: Just update the environment
-            else:
-                os.environ[var_name] = var_value
 
     def _check_samples_dir(self, samples_dir=None):
         # Check the runners samples_dir if samples_dir is not specified
@@ -1290,18 +1205,13 @@ class KhiopsLocalRunner(KhiopsRunner):
         tool_name = tool_name.lower()
         if tool_name not in ["khiops", "khiops_coclustering"]:
             raise ValueError(f"Invalid tool name: {tool_name}")
-        if self.execute_with_modl:
-            modl_binaries = {
-                "khiops": "MODL",
-                "khiops_coclustering": "MODL_Coclustering",
-            }
-            bin_path = os.path.join(self.khiops_bin_dir, modl_binaries[tool_name])
-            if platform.system() == "Windows":
-                bin_path += ".exe"
-        else:
-            bin_path = os.path.join(self.khiops_bin_dir, tool_name)
-            if platform.system() == "Windows":
-                bin_path += ".cmd"
+        modl_binaries = {
+            "khiops": "MODL",
+            "khiops_coclustering": "MODL_Coclustering",
+        }
+        bin_path = os.path.join(self.khiops_bin_dir, modl_binaries[tool_name])
+        if platform.system() == "Windows":
+            bin_path += ".exe"
 
         return bin_path
 
@@ -1358,7 +1268,7 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Build command line arguments
         # Nota: Khiops Coclustering is executed without MPI
         khiops_process_args = []
-        if self.execute_with_modl and tool_name == "khiops" and use_mpi:
+        if tool_name == "khiops" and use_mpi:
             khiops_process_args += self.mpi_command_args
         khiops_process_args += [self._tool_path(tool_name)]
         if command_line_args:
