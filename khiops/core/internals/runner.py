@@ -903,7 +903,7 @@ class KhiopsLocalRunner(KhiopsRunner):
         self.execute_with_modl = True
 
         # Set Khiops binary directory with respect to the conda environment
-        self._khiops_bin_dir = os.path.join(sys.exec_prefix, "bin")
+        self._khiops_bin_dir = os.path.join(os.environ["CONDA_PREFIX"], "bin")
         self._check_tools()
 
         # Initialize the khiops version
