@@ -8,6 +8,7 @@
 import glob
 import io
 import os
+import shlex
 import shutil
 import sys
 import textwrap
@@ -2545,8 +2546,10 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, error_msgs[template_name]):
                     ConfigurableKhiopsScenario(template_code)
 
-    def test_khiops_environment_variables(self):
-        """Tests that the KHIOPS_* environment variables are taken into account"""
+    def test_khiops_environment_variables_basic(self):
+        """Tests that the KHIOPS_* environment variables are properly handled"""
+
+        # Define test fixtures
         fixtures = [
             {
                 "variable": "KHIOPS_TMP_DIR",
@@ -2610,10 +2613,10 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                 # Check the expected result (or error) on initialization
                 if "expected_error" in fixture:
                     with self.assertRaises(fixture["expected_error"]):
-                        runner._initialize_khiops_system_wide_environment()
+                        runner._initialize_khiops_environment()
                 else:
                     assert "expected_field_value" in fixture
-                    runner._initialize_khiops_system_wide_environment()
+                    runner._initialize_khiops_environment()
                     self.assertEqual(
                         getattr(runner, fixture["runner_field"]),
                         fixture["expected_field_value"],
@@ -2624,6 +2627,128 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                     del os.environ[fixture["variable"]]
                 else:
                     os.environ[fixture["variable"]] = old_value
+
+    def test_undefined_khiops_proc_number_env_var(self):
+        """Test default value for KHIOPS_PROC_NUMBER env var
+
+        If undefined, `KHIOPS_PROC_NUMBER` is set to the number of system CPU
+        cores.
+        """
+        old_khiops_proc_number = None
+        if "KHIOPS_PROC_NUMBER" in os.environ:
+            old_khiops_proc_number = os.environ["KHIOPS_PROC_NUMBER"]
+            del os.environ["KHIOPS_PROC_NUMBER"]
+
+        # Define default `KHIOPS_PROC_NUMBER`
+        default_khiops_proc_number = _get_system_cpu_cores() + 1
+
+        # Create a fresh runner
+        runner = KhiopsLocalRunner()
+
+        # Initialize runner
+        runner._initialize_khiops_environment()
+
+        # Check attribute is set
+        self.assertEqual(runner.max_cores, default_khiops_proc_number - 1)
+
+        # Check default environment variable value is added
+        self.assertTrue("KHIOPS_PROC_NUMBER" in os.environ)
+        self.assertEqual(
+            os.environ["KHIOPS_PROC_NUMBER"], str(default_khiops_proc_number)
+        )
+
+        # Restore the old environment variable value (if applicable)
+        if old_khiops_proc_number is not None:
+            os.environ["KHIOPS_PROC_NUMBER"] = old_khiops_proc_number
+        else:
+            del os.environ["KHIOPS_PROC_NUMBER"]
+
+    def test_khiops_mpi_lib_env_var(self):
+        """Test defined KHIOPS_MPI_LIB env var is added to LD_LIBRARY_PATH"""
+        variables = ("KHIOPS_MPI_LIB", "LD_LIBRARY_PATH")
+        old_variable_values = {}
+        for variable in variables:
+            if variable in os.environ:
+                old_variable_values[variable] = os.environ[variable]
+            os.environ[variable] = f"my{variable.lower()}"
+
+        # Create a fresh runner
+        runner = KhiopsLocalRunner()
+
+        # Store the LD_LIBRARY_PATH before Khiops environment initialization
+        initial_ld_library_path = os.environ["LD_LIBRARY_PATH"]
+
+        # Initialize runner environment
+        runner._initialize_khiops_environment()
+
+        # Check that `LD_LIBRARY_PATH` has been updated
+        self.assertEqual(
+            os.environ["LD_LIBRARY_PATH"],
+            f"{os.environ['KHIOPS_MPI_LIB']}{os.pathsep}{initial_ld_library_path}",
+        )
+
+        # Restore the old environment variable values (if any)
+        for variable in variables:
+            if variable in old_variable_values:
+                os.environ[variable] = old_variable_values[variable]
+            else:
+                del os.environ[variable]
+
+    def test_khiops_mpiexec_path_var(self):
+        """
+        Test defined KHIOPS_MPIEXEC_PATH env var specifies the path to `mpiexec`
+        """
+
+        # set `KHIOPS_MPIEXEC_PATH`
+        old_mpiexec_path = None
+        new_mpiexec_path = "/mypath/to/mpiexec"
+        if "KHIOPS_MPIEXEC_PATH" in os.environ:
+            old_mpiexec_path = os.environ["KHIOPS_MPIEXEC_PATH"]
+        os.environ["KHIOPS_MPIEXEC_PATH"] = new_mpiexec_path
+
+        # Create a fresh runner
+        runner = KhiopsLocalRunner()
+
+        # Initialize runner environment
+        runner._initialize_khiops_environment()
+
+        # Check custom KHIOPS_MPIEXEC_PATH is used
+        self.assertEqual(runner.mpi_command_args[0], new_mpiexec_path)
+
+        # Restore old KHIOPS_MPIEXEC_PATH if defined
+        if old_mpiexec_path is not None:
+            os.environ["KHIOPS_MPIEXEC_PATH"] = old_mpiexec_path
+        else:
+            del os.environ["KHIOPS_MPIEXEC_PATH"]
+
+    def test_khiops_mpi_command_args_var(self):
+        """
+        Test defined KHIOPS_MPI_COMMAND_ARGS environment variable handling
+        """
+        # Test that, if defined, `KHIOPS_MPI_COMMAND_ARGS` customizes the
+        # command arguments of `mpiexec`
+
+        # set `KHIOPS_MPI_COMMAND_ARGS`
+        old_mpi_command_args = None
+        new_mpi_command_args = "-a foo -b bar -c-d baz"
+        if "KHIOPS_MPI_COMMAND_ARGS" in os.environ:
+            old_mpi_command_args = os.environ["KHIOPS_MPI_COMMAND_ARGS"]
+        os.environ["KHIOPS_MPI_COMMAND_ARGS"] = new_mpi_command_args
+
+        # Create a fresh runner
+        runner = KhiopsLocalRunner()
+
+        # Initialize runner environment
+        runner._initialize_khiops_environment()
+
+        # Check custom MPI_COMMAND_ARGS is used
+        self.assertEqual(runner.mpi_command_args[1:], shlex.split(new_mpi_command_args))
+
+        # Restore old MPI_COMMAND_ARGS if defined
+        if old_mpi_command_args is not None:
+            os.environ["KHIOPS_MPI_COMMAND_ARGS"] = old_mpi_command_args
+        else:
+            del os.environ["KHIOPS_MPI_COMMAND_ARGS"]
 
 
 if __name__ == "__main__":

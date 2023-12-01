@@ -9,6 +9,7 @@
 import io
 import os
 import platform
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -874,6 +875,18 @@ class KhiopsLocalRunner(KhiopsRunner):
           - ``%USERPROFILE%\khiops_data\samples%`` otherwise
         - Linux and Mac OS:
           - ``$HOME/khiops_data/samples``
+
+    Environment variables taken into account by the runner:
+    - `KHIOPS_PROC_NUMBER`: number of processes launched by Khiops
+    - `KHIOPS_MEMORY_LIMIT`: memory limit of the Khiops executables (in
+      megabytes); ignored if set above the system memory limit
+    - `KHIOPS_TMP_DIR`: path to Khiops' temporary directory
+    - `KHIOPS_HOME`: *Windows only*: path to the Khiops installation directory
+    - `KHIOPS_SAMPLES_DIR`: path to the Khiops samples directory
+    - `KHIOPS_MPI_COMMAND_ARGS`: arguments to the `mpiexec` command
+    - `KHIOPS_MPIEXEC_PATH`: path to the `mpiexec` command
+    - `KHIOPS_MPI_LIB`: *Linux and MacOS only*: path to the MPI library; added
+      to the beginning of `LD_LIBRARY_PATH`
     """
 
     def __init__(self):
@@ -912,11 +925,16 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Initialize the khiops version
         self._initialize_khiops_version()
 
-        # Set the Khiops process number
+        # Set the Khiops process number according to the relevant env var
         if "KHIOPS_PROC_NUMBER" in os.environ:
             self.max_cores = _compute_max_cores_from_proc_number(
                 int(os.environ["KHIOPS_PROC_NUMBER"])
             )
+        # If not defined, set it to the number of system cores + 1
+        else:
+            self.max_cores = _get_system_cpu_cores()
+            os.environ["KHIOPS_PROC_NUMBER"] = str(self.max_cores + 1)
+
         # Set the Khiops memory limit
         if "KHIOPS_MEMORY_LIMIT" in os.environ:
             self.max_memory_mb = int(os.environ["KHIOPS_MEMORY_LIMIT"])
@@ -924,7 +942,18 @@ class KhiopsLocalRunner(KhiopsRunner):
             self.max_memory_mb = 0
 
         # Set MPI command
-        self._initialize_default_mpi_command_args()
+        self._initialize_mpi_command_args()
+
+        # Add custom path to MPI library to LD_LIBRARY_PATH, to be used in priority
+        if "KHIOPS_MPI_LIB" in os.environ:
+            custom_mpi_lib_path = os.environ["KHIOPS_MPI_LIB"]
+            if "LD_LIBRARY_PATH" in os.environ:
+                old_ld_library_path = os.environ["LD_LIBRARY_PATH"]
+                os.environ["LD_LIBRARY_PATH"] = (
+                    custom_mpi_lib_path + os.pathsep + old_ld_library_path
+                )
+            else:
+                os.environ["LD_LIBRARY_PATH"] = custom_mpi_lib_path
 
         # Set the default Khiops temporary directory ("" means system's default)
         if "KHIOPS_TMP_DIR" in os.environ:
@@ -957,11 +986,12 @@ class KhiopsLocalRunner(KhiopsRunner):
             )
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
-    def _initialize_default_mpi_command_args(self):
+    def _initialize_mpi_command_args(self):
         """Creates the mpiexec call arguments for each platform"""
-        # Note: The conda environment mpiexec takes precedence over any other mpiexec
-        # install. So the correct mpiexec is found.
-        mpiexec_path = shutil.which("mpiexec")
+        # Note: Unless enforced by `KHIOPS_MPIEXEC_PATH`, Conda environment
+        # mpiexec takes precedence over any other mpiexec install.
+        # So the correct mpiexec is found.
+        mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or shutil.which("mpiexec")
         if mpiexec_path is None:
             self.mpi_command_args = []
             warnings.warn(
@@ -970,7 +1000,10 @@ class KhiopsLocalRunner(KhiopsRunner):
             )
         else:
             self.mpi_command_args = [mpiexec_path]
-            if platform.system() == "Linux":
+            mpi_command_args = os.environ.get("KHIOPS_MPI_COMMAND_ARGS")
+            if mpi_command_args is not None:
+                self.mpi_command_args += shlex.split(mpi_command_args)
+            elif platform.system() == "Linux":
                 self.mpi_command_args += [
                     "-bind-to",
                     "hwthread",
