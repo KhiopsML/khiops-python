@@ -8,6 +8,10 @@
 
 The methods in this module allow to execute all Khiops and Khiops Coclustering tasks.
 
+See also:
+    - :ref:`core-api-common-params`
+    - :ref:`core-api-input-types`
+    - :ref:`core-api-sampling-mode`
 """
 import io
 import os
@@ -112,8 +116,10 @@ def _run_task(task_name, task_args):
     task_args : dict
         Arguments of the task.
     """
-    # Save the trace argument
+    # Save the `runner.run` arguments other than the task parameters and options
     trace = task_args["trace"]
+    stdout_file_path = task_args["stdout_file_path"]
+    stderr_file_path = task_args["stderr_file_path"]
 
     # Execute the preprocess of common task arguments
     task_called_with_domain = _preprocess_task_arguments(task_args)
@@ -141,7 +147,12 @@ def _run_task(task_name, task_args):
     # Execute the Khiops task and cleanup when necessary
     try:
         get_runner().run(
-            task, task_args, command_line_options=command_line_options, trace=trace
+            task,
+            task_args,
+            command_line_options=command_line_options,
+            trace=trace,
+            stdout_file_path=stdout_file_path,
+            stderr_file_path=stderr_file_path,
         )
     finally:
         if task_called_with_domain and not trace:
@@ -296,7 +307,13 @@ def _clean_task_args(task_args):
         "output_scenario_path",
         "task_file_path",
     ]
-    other_arg_names = ["dictionary_file_path_or_domain", "trace", "kwargs"]
+    other_arg_names = [
+        "dictionary_file_path_or_domain",
+        "trace",
+        "stdout_file_path",
+        "stderr_file_path",
+        "kwargs",
+    ]
     for arg_name in command_line_arg_names + other_arg_names:
         if arg_name in task_args:
             del task_args[arg_name]
@@ -395,6 +412,8 @@ def export_dictionary_as_json(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
 ):
     """Exports a Khiops dictionary file to JSON format (``.kdicj``)
 
@@ -403,7 +422,7 @@ def export_dictionary_as_json(
     dictionary_file_path_or_domain : str or `.DictionaryDomain`
         Path of a Khiops dictionary file or a DictionaryDomain object.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Examples
     --------
@@ -430,6 +449,8 @@ def build_dictionary_from_data_table(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Builds a dictionary file by analyzing a data table file
@@ -453,7 +474,7 @@ def build_dictionary_from_data_table(
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
     """
     # Save the task arguments
     # WARNING: Do not move this line, see the top of the "tasks" section for details
@@ -481,6 +502,8 @@ def check_database(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Checks if a data table is compatible with a dictionary file
@@ -508,7 +531,7 @@ def check_database(
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it checks ``sample_percentage`` percent of
         the data; if equal to "Exclude sample" it checks the complement of the
-        data selected with "Include sample".
+        data selected with "Include sample". See also :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It checks only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -520,7 +543,7 @@ def check_database(
     max_messages : int, default 20
         Maximum number of error messages to write in the log file.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Examples
     --------
@@ -574,6 +597,8 @@ def train_predictor(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Trains a model from a data table
@@ -606,9 +631,10 @@ def train_predictor(
         See the ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the predictor on ``sample_percentage``
-        percent of the data and tests the model on the remainder of the data
-        if ``use_complement_as_test`` is set to ``True``.
-        If equal to "Exclude sample" the train and test datasets above are exchanged.
+        percent of the data and tests the model on the remainder of the data if
+        ``use_complement_as_test`` is set to ``True``.  If equal to "Exclude sample" the
+        train and test datasets above are exchanged. See also
+        :ref:`core-api-sampling-mode`.
     use_complement_as_test : bool, default ``True``
         Uses the complement of the sampled database as test database for
         computing the model's performance metrics.
@@ -683,7 +709,7 @@ def train_predictor(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Returns
     -------
@@ -760,6 +786,8 @@ def evaluate_predictor(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Evaluates the predictors in a dictionary file on a database
@@ -787,10 +815,10 @@ def evaluate_predictor(
     sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it evaluates the predictor on
-        ``sample_percentage`` percent of the data. If equal to "Exclude sample"
-        it evaluates the predictor on the complement of the data selected with
-        "Include sample".
+        If equal to "Include sample" it evaluates the predictor on ``sample_percentage``
+        percent of the data. If equal to "Exclude sample" it evaluates the predictor on
+        the complement of the data selected with "Include sample". See also
+        :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal "".
@@ -808,7 +836,7 @@ def evaluate_predictor(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Returns
     -------
@@ -891,6 +919,8 @@ def train_recoder(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Trains a recoding model from a data table
@@ -935,7 +965,8 @@ def train_recoder(
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the recoder on ``sample_percentage``
         percent of the data. If equal to "Exclude sample" it trains the recoder on the
-        complement of the data selected with "Include sample".
+        complement of the data selected with "Include sample". See also
+        :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1021,7 +1052,7 @@ def train_recoder(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Returns
     -------
@@ -1079,6 +1110,8 @@ def deploy_model(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Deploys a model on a data table
@@ -1110,7 +1143,8 @@ def deploy_model(
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it deploys the model on ``sample_percentage``
         percent of the data. If equal to "Exclude sample" it deploys the model on the
-        complement of the data selected with "Include sample".
+        complement of the data selected with "Include sample". See also
+        :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It deploys only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1129,7 +1163,7 @@ def deploy_model(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1162,6 +1196,8 @@ def build_deployed_dictionary(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     """Builds a dictionary file to read the output table of a deployed model
@@ -1175,7 +1211,7 @@ def build_deployed_dictionary(
     output_dictionary_file_path : str
         Path of the output dictionary file.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1211,6 +1247,8 @@ def sort_data_table(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Sorts a data table
@@ -1242,7 +1280,8 @@ def sort_data_table(
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
+
 
     Raises
     ------
@@ -1278,6 +1317,8 @@ def extract_keys_from_data_table(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Extracts from data table unique occurrences of a key variable
@@ -1306,7 +1347,7 @@ def extract_keys_from_data_table(
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1348,6 +1389,8 @@ def train_coclustering(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     r"""Trains a coclustering model from a data table
@@ -1378,9 +1421,9 @@ def train_coclustering(
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the coclustering estimator on
-        ``sample_percentage`` percent of the data. If equal to "Exclude sample"
-        it trains the coclustering estimator on the complement of the data
-        selected with "Include sample".
+        ``sample_percentage`` percent of the data. If equal to "Exclude sample" it
+        trains the coclustering estimator on the complement of the data selected with
+        "Include sample". See also :ref:`core-api-sampling-mode`.
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1396,7 +1439,7 @@ def train_coclustering(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Returns
     -------
@@ -1446,6 +1489,8 @@ def simplify_coclustering(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     """Simplifies a coclustering model
@@ -1473,7 +1518,7 @@ def simplify_coclustering(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1513,6 +1558,8 @@ def prepare_coclustering_deployment(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     """Prepares a *individual-variable* coclustering deployment
@@ -1552,7 +1599,7 @@ def prepare_coclustering_deployment(
     results_prefix : str, default ""
         Prefix of the result files.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------
@@ -1583,6 +1630,8 @@ def extract_clusters(
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
     **kwargs,
 ):
     """Extracts clusters to a tab separated (TSV) file
@@ -1602,7 +1651,7 @@ def extract_clusters(
         Maximum number of cells in the simplified coclustering. If equal to 0 there is
         no limit.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Examples
     --------
@@ -1633,6 +1682,8 @@ def detect_data_table_format(
     dictionary_file_path_or_domain=None,
     dictionary_name=None,
     trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
 ):
     """Detects the format of a data table
 
@@ -1768,7 +1819,7 @@ def build_multi_table_dictionary(
     overwrite_dictionary_file : bool, default ``False``
         If ``True`` it will overwrite an input dictionary file.
     ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+        See :ref:`core-api-common-params`.
 
     Raises
     ------

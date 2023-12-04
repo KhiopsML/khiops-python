@@ -84,9 +84,6 @@ html_theme_options = {
         "font-stack": "Helvetica Neue, Helvetica, sans-serif",
     },
     "source_repository": "https://github.com/khiopsml/khiops/",
-    "announcement": "<h5>🚧 Beta Version: This documentation is in beta. "
-    "Please help us to improve! 🚧 You can use our "
-    '<a href="https://msurvey.orange.com/khiopsdoc">feedback form</a></h5>',
     # Sets the Github Icon (the SVG is embedded, copied from furo's repo)
     "footer_icons": [
         {

@@ -81,14 +81,15 @@ class CommandLineOptions:
     Attributes
     ----------
     log_file_path : str, default ""
-        Path of the log file (command line option ``-e`` of the app). If the empty
-        string is specified no log file is generated.
+        Path of the log file for the Khiops process (command line option ``-e`` of the
+        desktop app). If equal to "" then it writes no log file.
     output_scenario_path : str, default ""
-        Path of the output Khiops scenario file (command line option ``-o`` of the app).
-        If the empty string is specified no output scenario file is generated.
+        Path of the output Khiops scenario file (command line option ``-o`` of the
+        desktop app). If the empty string is specified no output scenario file is
+        generated.
     task_file_path : str, default ""
-        Path of the task file (command line option ``-p`` of the desktop app). If the
-        empty string is specified no task file is generated.
+        Path of the task file for the Khiops process (command line option ``-p`` of the
+        desktop app). If equal to "" then it writes no task file.
     batch_mode : bool, default True
         *Deprecated* Will be removed in Khiops 11. If ``True`` activates batch mode
         (command line option ``-b`` of the app).
