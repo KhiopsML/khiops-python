@@ -10,15 +10,14 @@ import unittest
 
 import khiops.core as kh
 from khiops.samples import samples, samples_sklearn
+from tests.test_helper import KhiopsTestHelper
 
 
 class KhiopsSamplesTests(unittest.TestCase):
     """Test if all samples run without problems"""
 
     def setUp(self):
-        if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
-            if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
-                self.skipTest("Skipping long test")
+        KhiopsTestHelper.skip_long_test(self)
 
     def test_samples(self):
         """Test if all samples run without problems"""

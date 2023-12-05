@@ -23,6 +23,7 @@ import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.extras.docker import KhiopsDockerRunner
 from khiops.sklearn import KhiopsClassifier, KhiopsCoclustering
+from tests.test_helper import KhiopsTestHelper
 
 
 def s3_config_exists():
@@ -50,7 +51,7 @@ def docker_runner_config_exists():
 class KhiopsRemoteAccessTestsContainer:
     """Container class to allow unittest.TestCase inheritance"""
 
-    class KhiopsRemoteAccessTests(unittest.TestCase):
+    class KhiopsRemoteAccessTests(unittest.TestCase, KhiopsTestHelper):
         """Generic class to test remote filesystems and Khiops runners"""
 
         def results_dir_root(self):
@@ -140,8 +141,7 @@ class KhiopsRemoteAccessTestsContainer:
         def test_khiops_coclustering_with_remote_access(self):
             """Test the training of a khiops_coclustering with remote resources"""
             # Skip if only short tests are run
-            if os.environ.get("UNITTEST_ONLY_SHORT_TESTS") == "true":
-                self.skipTest("Skipping long test")
+            KhiopsTestHelper.skip_long_test(self)
 
             # Setup paths
             output_dir = (
