@@ -21,7 +21,7 @@ then
   cmake --preset $CMAKE_PRESET -DBUILD_JARS=OFF -DTESTING=OFF -DCMAKE_CXX_COMPILER="$PREFIX/bin/mpicxx"
 else
   CMAKE_PRESET="linux-gcc-release"
-  cmake --preset $CMAKE_PRESET -DBUILD_JARS=OFF -DTESTING=OFF"
+  cmake --preset $CMAKE_PRESET -DBUILD_JARS=OFF -DTESTING=OFF
 fi
 
 cmake --build --preset $CMAKE_PRESET --parallel --target MODL MODL_Coclustering
