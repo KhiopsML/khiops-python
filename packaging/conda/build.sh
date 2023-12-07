@@ -4,7 +4,9 @@
 set -euo pipefail
 
 # Clone Khiops sources (we change working directory there)
+#git clone --depth 1 https://github.com/khiopsml/khiops.git khiops-core
 git clone --depth 1 https://github.com/sgouache/khiops.git khiops-core
+#git clone --depth 1 git@github.com:sgouache/khiops.git khiops-core
 cd khiops-core
 git checkout "$KHIOPS_REVISION"
 
