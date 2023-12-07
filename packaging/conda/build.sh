@@ -18,10 +18,12 @@ cp ./LICENSE ..
 if [[ "$(uname)" == "Darwin" ]]
 then
   CMAKE_PRESET="macos-clang-release"
+  cmake --preset $CMAKE_PRESET -DBUILD_JARS=OFF -DTESTING=OFF -DCMAKE_CXX_COMPILER="$PREFIX/bin/mpicxx"
 else
   CMAKE_PRESET="linux-gcc-release"
+  cmake --preset $CMAKE_PRESET -DBUILD_JARS=OFF -DTESTING=OFF"
 fi
-cmake --preset $CMAKE_PRESET -DBUILD_JARS=OFF -DTESTING=OFF -DCMAKE_CXX_COMPILER="$PREFIX/bin/mpicxx"
+
 cmake --build --preset $CMAKE_PRESET --parallel --target MODL MODL_Coclustering
 
 # Copy the MODL binaries to the Conda PREFIX path

@@ -61,7 +61,7 @@ jobs:
       - name: Build Khiops Conda Package
         run: |
           mkdir build
-          conda build -c conda-forge --output-folder build packaging/conda
+          conda build --output-folder build packaging/conda
       - name: Upload Khiops Conda Package
         uses: actions/upload-artifact@v3
         with:
