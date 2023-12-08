@@ -8,7 +8,7 @@ source:
 
 build:
   script_env:
-    - KHIOPS_REVISION=dev
+    - KHIOPS_REVISION
     # Variables for signing the MODL executables in osx-arm64
     - KHIOPS_APPLE_CERTIFICATE_BASE64      # [osx and arm64]
     - KHIOPS_APPLE_CERTIFICATE_PASSWORD    # [osx and arm64]
@@ -35,31 +35,27 @@ build:
 #   the bug https://github.com/pmodels/mpich/issues/6619
 requirements:
   build:
-    - cmake
-    - mpich                # [linux or osx and x86]
-    - mpich-mpicc          # [linux or osx and x86]
-    - mpich-mpicxx         # [linux or osx and x86]
-    - mpich <=3.4.3        # [osx and arm64]
-    - mpich-mpicc <=3.4.3  # [osx and arm64]
-    - mpich-mpicxx <=3.4.3 # [osx and arm64]
+    - mpich <=4.0.3        # [linux]
+    - mpich-mpicxx <=4.0.3 # [linux]
+    - mpich <=3.4.3        # [osx]
+    - mpich-mpicxx <=3.4.3 # [osx]
     - msmpi                # [win]
-    - ninja                # [win]
+    - cmake
+    - ninja
     - python
     - setuptools
     - {{ compiler('cxx') }}
   host:
-    - mpich                # [linux or osx and x86]
-    - mpich-mpicc          # [linux or osx and x86]
-    - mpich-mpicxx         # [linux or osx and x86]
-    - mpich <=3.4.3        # [osx and arm64]
-    - mpich-mpicc <=3.4.3  # [osx and arm64]
-    - mpich-mpicxx <=3.4.3 # [osx and arm64]
+    - mpich <=4.0.3        # [linux]
+    - mpich-mpicxx <=4.0.3 # [linux]
+    - mpich <=3.4.3        # [osx]
+    - mpich-mpicxx <=3.4.3 # [osx]
     - msmpi                # [win]
     - python
   run:
-    - mpich           # [linux or osx and x64]
+    - mpich <=4.0.3   # [linux]
+    - mpich <=3.4.3   # [osx]
     - msmpi           # [win]
-    - mpich <=3.4.3   # [osx and arm64]
     - pandas >=0.25.3
     - python
     - scikit-learn >=0.22.2
