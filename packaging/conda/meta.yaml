@@ -36,22 +36,29 @@ build:
 requirements:
   build:
     - cmake
-    - mpich <=3.4.3        # [not win]
-    - mpich-mpicc <=3.4.3  # [not win]
-    - mpich-mpicxx <=3.4.3 # [not win]
+    - mpich <=3.4.3        # [not win and py<=3.10]
+    - mpich                # [not win and py>3.10]
+    - mpich-mpicc <=3.4.3  # [not win and py<=3.10]
+    - mpich-mpicc          # [not win and py>3.10]]
+    - mpich-mpicxx <=3.4.3 # [not win and py<=3.10]
+    - mpich-mpicxx         # [not win and py>3.10]]
     - msmpi                # [win]
     - ninja                # [win]
     - python
     - setuptools
     - {{ compiler('cxx') }}
   host:
-    - mpich <=3.4.3        # [not win]
-    - mpich-mpicc <=3.4.3  # [not win]
-    - mpich-mpicxx <=3.4.3 # [not win]
+    - mpich <=3.4.3        # [not win and py<=3.10]
+    - mpich                # [not win and py>3.10]
+    - mpich-mpicc <=3.4.3  # [not win and py<=3.10]
+    - mpich-mpicc          # [not win and py>3.10]]
+    - mpich-mpicxx <=3.4.3 # [not win and py<=3.10]
+    - mpich-mpicxx         # [not win and py>3.10]]
     - msmpi                # [win]
     - python
   run:
-    - mpich <=3.4.3   # [not win]
+    - mpich <=3.4.3        # [not win and py<=3.10]
+    - mpich                # [not win and py>3.10]
     - msmpi           # [win]
     - pandas >=0.25.3
     - python
