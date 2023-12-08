@@ -25,9 +25,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Use oldest supported Mac OS and Ubuntu versions for GLIBC compatibility
-        # Use oldest supported Windows version
-        os: [ubuntu-20.04, windows-2019, macos-11]
+        #  Use the oldest supported Mac OS and Ubuntu versions for GLIBC compatibility
+        os: [ubuntu-20.04, windows-latest, macos-11]
     runs-on: ${{ matrix.os }}
     steps:
       # We move KHIOPS_REVISION to the environment so that we can use
@@ -46,7 +45,7 @@ jobs:
           fetch-depth: 0
       - name: Install Miniconda
         if: success() || failure()
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: khiops-python-env
       - name: Install Dependency Requirements for Building Conda Packages
@@ -57,10 +56,17 @@ jobs:
         run: |
           wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.10.sdk.tar.xz
           sudo tar -zxvf MacOSX10.10.sdk.tar.xz -C /opt
-      - name: Build Khiops Conda Package
+      - name: Build Khiops Conda Package (Windows)
+        if: runner.os == 'Windows'
         run: |
           mkdir build
           conda build --output-folder build packaging/conda
+      # In Linux/macOS we need the conda-forge channel to install mpi 3.4.3
+      - name: Build Khiops Conda Package (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir build
+          conda build --channel conda-forge --output-folder build packaging/conda
       - name: Upload Khiops Conda Package
         uses: actions/upload-artifact@v3
         with:
@@ -108,23 +114,23 @@ jobs:
           path: khiops-conda-package
       - name: Install Miniconda
         if: success() || failure()
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: latest  # needed for Mac OS 13
           python-version: ${{ matrix.python-version }}
           activate-environment: khiops-python-env
-      - name: Install conda-build and Setup Khiops Conda Channel
+      - name: Install conda-build and setup a local conda channel
         run: |
           conda install conda-build
           conda index ./khiops-conda-package/.
-      - name: Install the Khiops Conda package
-        run: conda install -c ./khiops-conda-package/ khiops
-      - name: Test Khiops Installation Status (Windows)
+      - name: Install the Khiops Conda pagkage (Windows)
         if: runner.os == 'Windows'
-        shell: cmd /C CALL {0}
-        run: C:\Miniconda3\envs\khiops-python-env\Scripts\kh-status.exe
-      - name: Test Khiops Installation Status (Linux/macOS)
+        run: conda install -c ./khiops-conda-package/ khiops
+      # In Linux/macOS we need the conda-forge channel to install their pinned versions
+      - name: Install the Khiops Conda package (Linux/macOS)
         if: runner.os != 'Windows'
+        run: conda install -c conda-forge -c ./khiops-conda-package/ khiops
+      - name: Test Khiops Installation Status
         run: kh-status
       - name: Test Conda Package Installation on Samples
         run: |
@@ -162,7 +168,7 @@ jobs:
           docker image rm $OSX_ARM_64_IMAGE
       - name: Install Miniconda
         if: success() || failure()
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: khiops-python-env
       - name: Create Conda Channel
