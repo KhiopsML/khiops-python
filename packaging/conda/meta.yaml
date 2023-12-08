@@ -36,30 +36,23 @@ build:
 requirements:
   build:
     - cmake
-    - mpich <=3.4.3        # [linux or osx and x86]
-    - mpich-mpicc <=3.4.3  # [linux or osx and x86]
-    - mpich-mpicxx <=3.4.3 # [linux or osx and x86]
-    - mpich <=3.4.3        # [osx and arm64]
-    - mpich-mpicc <=3.4.3  # [osx and arm64]
-    - mpich-mpicxx <=3.4.3 # [osx and arm64]
+    - mpich <=3.4.3        # [not win]
+    - mpich-mpicc <=3.4.3  # [osx]
+    - mpich-mpicxx <=3.4.3 # [osx]
     - msmpi                # [win]
     - ninja                # [win]
     - python
     - setuptools
     - {{ compiler('cxx') }}
   host:
-    - mpich <=3.4.3        # [linux or osx and x86]
-    - mpich-mpicc <=3.4.3  # [linux or osx and x86]
-    - mpich-mpicxx <=3.4.3 # [linux or osx and x86]
-    - mpich <=3.4.3        # [osx and arm64]
-    - mpich-mpicc <=3.4.3  # [osx and arm64]
-    - mpich-mpicxx <=3.4.3 # [osx and arm64]
+    - mpich <=3.4.3        # [not win]
+    - mpich-mpicc <=3.4.3  # [osx]
+    - mpich-mpicxx <=3.4.3 # [osx]
     - msmpi                # [win]
     - python
   run:
-    - mpich <=3.4.3   # [linux or osx and x64]
+    - mpich <=3.4.3   # [not win]
     - msmpi           # [win]
-    - mpich <=3.4.3   # [osx and arm64]
     - pandas >=0.25.3
     - python
     - scikit-learn >=0.22.2
