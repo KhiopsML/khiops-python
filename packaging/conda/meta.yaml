@@ -37,8 +37,8 @@ requirements:
   build:
     - cmake
     - mpich <=3.4.3        # [not win]
-    - mpich-mpicc <=3.4.3  # [osx]
-    - mpich-mpicxx <=3.4.3 # [osx]
+    - mpich-mpicc <=3.4.3  # [not win]
+    - mpich-mpicxx <=3.4.3 # [not win]
     - msmpi                # [win]
     - ninja                # [win]
     - python
@@ -46,8 +46,8 @@ requirements:
     - {{ compiler('cxx') }}
   host:
     - mpich <=3.4.3        # [not win]
-    - mpich-mpicc <=3.4.3  # [osx]
-    - mpich-mpicxx <=3.4.3 # [osx]
+    - mpich-mpicc <=3.4.3  # [not win]
+    - mpich-mpicxx <=3.4.3 # [not win]
     - msmpi                # [win]
     - python
   run:
