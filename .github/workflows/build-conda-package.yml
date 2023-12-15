@@ -46,11 +46,11 @@ jobs:
           fetch-depth: 0
       - name: Install Miniconda
         if: success() || failure()
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: khiops-python-env
       - name: Install Dependency Requirements for Building Conda Packages
-        run: conda install conda-build conda-verify ninja
+        run: conda install conda-build conda-verify
       # We need MacOS SDK 10.10 to build on Big Sur
       - name: Install Mac OS SDK 10.10
         if: runner.os == 'macOS'
@@ -108,7 +108,7 @@ jobs:
           path: khiops-conda-package
       - name: Install Miniconda
         if: success() || failure()
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: latest  # needed for Mac OS 13
           python-version: ${{ matrix.python-version }}
@@ -162,7 +162,7 @@ jobs:
           docker image rm $OSX_ARM_64_IMAGE
       - name: Install Miniconda
         if: success() || failure()
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: khiops-python-env
       - name: Create Conda Channel
