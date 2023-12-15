@@ -12,6 +12,7 @@ See also:
     - :ref:`core-api-common-params`
     - :ref:`core-api-input-types`
     - :ref:`core-api-sampling-mode`
+    - :ref:`core-api-env-vars`
 """
 import io
 import os

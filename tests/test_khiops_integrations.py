@@ -8,20 +8,62 @@
 
 import os
 import shutil
+import tempfile
 import unittest
 
 import khiops.core as kh
+from khiops.core.internals.runner import KhiopsLocalRunner
 from khiops.sklearn.estimators import KhiopsClassifier
 from tests.test_helper import KhiopsTestHelper
+
+
+class KhiopsCustomRunnerEnvironmentTests(unittest.TestCase):
+    """Test that runners in custom environments work"""
+
+    def test_runner_with_custom_khiops_binary_directory(self):
+        """Test that local runner works with custom Khiops binary directory"""
+        # Get default runner
+        default_runner = kh.get_runner()
+
+        # Create a fresh local runner and initialize its default Khiops binary dir
+        runner = KhiopsLocalRunner()
+        runner._initialize_khiops_bin_dir()
+
+        # Get runner's default Khiops binary directory
+        default_bin_dir = runner.khiops_bin_dir
+
+        # Create temporary directory
+        with tempfile.TemporaryDirectory() as tmp_khiops_bin_dir:
+            # Copy Khiops binaries into the temporary directory
+            for binary_file in os.listdir(default_bin_dir):
+                if binary_file.startswith("MODL"):
+                    shutil.copy(
+                        os.path.join(default_bin_dir, binary_file),
+                        os.path.join(tmp_khiops_bin_dir, binary_file),
+                    )
+
+            # Change runner's Khiops binary directory to the temporary directory
+            runner.khiops_bin_dir = tmp_khiops_bin_dir
+
+            # Set current runner to the fresh runner
+            kh.set_runner(runner)
+
+            # Test the core API works
+            # Call check_database (could be any other method)
+            with self.assertRaises(kh.KhiopsRuntimeError) as cm:
+                kh.check_database("a.kdic", "dict_name", "data.txt")
+            # Test that MODL executable can be found and launched
+            self.assertIn("khiops ended with return code 2", str(cm.exception))
+
+        # Set current runner to the default runner
+        kh.set_runner(default_runner)
 
 
 class KhiopsMultitableFitTests(unittest.TestCase, KhiopsTestHelper):
     """Test if Khiops estimator can be fitted on multi-table data"""
 
     def setUp(self):
-        if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
-            if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
-                self.skipTest("Skipping long test")
+        KhiopsTestHelper.skip_long_test(self)
 
     def test_estimator_multiple_create_and_fit_does_not_raise_exception(self):
         """Test if estimator can be fitted from paths several times"""

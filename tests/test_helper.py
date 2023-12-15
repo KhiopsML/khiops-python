@@ -262,6 +262,12 @@ class KhiopsTestHelper:
     """
 
     @staticmethod
+    def skip_long_test(test_case):
+        if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
+            if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
+                test_case.skipTest("Skipping long test")
+
+    @staticmethod
     def create_parameter_trace():
         """Create empty, updatable, three-level look-up dictionary"""
         return defaultdict(lambda: defaultdict(list))

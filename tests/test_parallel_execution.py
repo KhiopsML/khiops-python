@@ -6,7 +6,6 @@
 ######################################################################################
 """Tests for executing Khiops in parallel"""
 
-import os
 import pickle
 from functools import partial
 from multiprocessing import Pool
@@ -29,9 +28,7 @@ class KhiopsParallelRunningTests(TestCase, KhiopsTestHelper):
     _n_cpus = -1
 
     def setUp(self):
-        if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
-            if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
-                self.skipTest("Skipping long test")
+        KhiopsTestHelper.skip_long_test(self)
 
     def _parallelise(self, callback, arg_sequence, n_cpus):
         """Parallelisation driver"""

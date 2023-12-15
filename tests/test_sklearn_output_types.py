@@ -14,6 +14,7 @@ from sklearn import datasets
 from sklearn.utils.validation import column_or_1d
 
 from khiops.sklearn.estimators import KhiopsClassifier, KhiopsRegressor
+from tests.test_helper import KhiopsTestHelper
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
@@ -48,9 +49,7 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
     """Tests for checking the output types of predictors"""
 
     def setUp(self):
-        if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
-            if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
-                self.skipTest("Skipping long test")
+        KhiopsTestHelper.skip_long_test(self)
 
     def test_classifier_output_types(self):
         """Test the KhiopsClassifier output types and classes of predict* methods"""
