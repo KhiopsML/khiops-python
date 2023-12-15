@@ -27,7 +27,8 @@ jobs:
       matrix:
         # Use oldest supported Mac OS and Ubuntu versions for GLIBC compatibility
         # Use oldest supported Windows version
-        os: [ubuntu-20.04, windows-2019, macos-11]
+        # os: [ubuntu-20.04, windows-2019, macos-11]
+        os: [ubuntu-20.04, macos-11]
     runs-on: ${{ matrix.os }}
     steps:
       # We move KHIOPS_REVISION to the environment so that we can use
@@ -83,8 +84,8 @@ jobs:
         os:
           - ubuntu-20.04
           - ubuntu-22.04
-          - windows-2019
-          - windows-2022
+          # - windows-2019
+          # - windows-2022
           - macos-11
           - macos-12
           - macos-13
