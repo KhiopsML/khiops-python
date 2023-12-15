@@ -36,29 +36,32 @@ build:
 requirements:
   build:
     - cmake
-    - mpich                # [linux or osx and x86]
-    - mpich-mpicc          # [linux or osx and x86]
-    - mpich-mpicxx         # [linux or osx and x86]
+    - mpich <=4.0          # [linux]
+    - mpich                # [osx and x86]
+    - mpich-mpicc          # [osx and x86]
+    - mpich-mpicxx         # [osx and x86]
     - mpich <=3.4.3        # [osx and arm64]
     - mpich-mpicc <=3.4.3  # [osx and arm64]
     - mpich-mpicxx <=3.4.3 # [osx and arm64]
     - msmpi                # [win]
-    - ninja                # [win]
+    - ninja
     - python
     - setuptools
     - {{ compiler('cxx') }}
   host:
-    - mpich                # [linux or osx and x86]
-    - mpich-mpicc          # [linux or osx and x86]
-    - mpich-mpicxx         # [linux or osx and x86]
+    - mpich <=4.0          # [linux]
+    - mpich                # [osx and x86]
+    - mpich-mpicc          # [osx and x86]
+    - mpich-mpicxx         # [osx and x86]
     - mpich <=3.4.3        # [osx and arm64]
     - mpich-mpicc <=3.4.3  # [osx and arm64]
     - mpich-mpicxx <=3.4.3 # [osx and arm64]
     - msmpi                # [win]
     - python
   run:
-    - mpich           # [linux or osx and x64]
+    - mpich <=4.0     # [linux]
     - msmpi           # [win]
+    - mpich           # [osx and x86]
     - mpich <=3.4.3   # [osx and arm64]
     - pandas >=0.25.3
     - python
