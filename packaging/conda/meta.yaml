@@ -35,34 +35,24 @@ build:
 #   the bug https://github.com/pmodels/mpich/issues/6619
 requirements:
   build:
-    - cmake
-    - mpich <=4.0          # [linux]
-    - mpich                # [osx and x86]
-    - mpich-mpicc          # [osx and x86]
-    - mpich-mpicxx         # [osx and x86]
-    - mpich <=3.4.3        # [osx and arm64]
-    - mpich-mpicc <=3.4.3  # [osx and arm64]
-    - mpich-mpicxx <=3.4.3 # [osx and arm64]
+    - mpich <=3.4.3        # [unix]
+    - mpich-mpicc <=3.4.3  # [unix]
+    - mpich-mpicxx <=3.4.3 # [unix]
     - msmpi                # [win]
+    - cmake
     - ninja
     - python
     - setuptools
     - {{ compiler('cxx') }}
   host:
-    - mpich <=4.0          # [linux]
-    - mpich                # [osx and x86]
-    - mpich-mpicc          # [osx and x86]
-    - mpich-mpicxx         # [osx and x86]
-    - mpich <=3.4.3        # [osx and arm64]
-    - mpich-mpicc <=3.4.3  # [osx and arm64]
-    - mpich-mpicxx <=3.4.3 # [osx and arm64]
+    - mpich <=3.4.3        # [unix]
+    - mpich-mpicc <=3.4.3  # [unix]
+    - mpich-mpicxx <=3.4.3 # [unix]
     - msmpi                # [win]
     - python
   run:
-    - mpich <=4.0     # [linux]
+    - mpich <=3.4.3   # [unix]
     - msmpi           # [win]
-    - mpich           # [osx and x86]
-    - mpich <=3.4.3   # [osx and arm64]
     - pandas >=0.25.3
     - python
     - scikit-learn >=0.22.2
