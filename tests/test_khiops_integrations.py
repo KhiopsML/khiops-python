@@ -12,9 +12,14 @@ import tempfile
 import unittest
 
 import khiops.core as kh
+from khiops.core.exceptions import KhiopsEnvironmentError
 from khiops.core.internals.runner import KhiopsLocalRunner
+from khiops.extras.docker import KhiopsDockerRunner
 from khiops.sklearn.estimators import KhiopsClassifier
 from tests.test_helper import KhiopsTestHelper
+
+# Eliminate protected-access check from these tests
+# pylint: disable=protected-access
 
 
 class KhiopsCustomRunnerEnvironmentTests(unittest.TestCase):
@@ -59,7 +64,7 @@ class KhiopsCustomRunnerEnvironmentTests(unittest.TestCase):
         kh.set_runner(default_runner)
 
 
-class KhiopsMultitableFitTests(unittest.TestCase, KhiopsTestHelper):
+class KhiopsMultitableFitTests(unittest.TestCase):
     """Test if Khiops estimator can be fitted on multi-table data"""
 
     def setUp(self):
@@ -99,3 +104,13 @@ class KhiopsMultitableFitTests(unittest.TestCase, KhiopsTestHelper):
         finally:
             if os.path.exists(output_dir):
                 shutil.rmtree(output_dir)
+
+
+class DockerKhiopsEdgeCases(unittest.TestCase):
+    """Test for KhiopsDocker runner edge cases"""
+
+    def test_shared_dir_edge_cases(self):
+        """Test that the existence check for shared_dir is done only for local paths"""
+        with self.assertRaises(KhiopsEnvironmentError) as ctx:
+            KhiopsDockerRunner("localhost://", "NONEXISTENT/DIRECTORY")
+        self.assertRegex(str(ctx.exception), "^'shared_dir' does not exist.")

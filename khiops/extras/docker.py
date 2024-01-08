@@ -17,6 +17,9 @@ from urllib.request import Request, urlopen
 
 import khiops.core.internals.filesystems as fs
 from khiops import core as kh
+from khiops import get_compatible_khiops_version
+from khiops.core.exceptions import KhiopsEnvironmentError
+from khiops.core.internals.common import type_error_message
 from khiops.core.internals.runner import KhiopsRunner
 from khiops.core.internals.task import KhiopsTask
 
@@ -25,10 +28,30 @@ class KhiopsDockerRunner(KhiopsRunner):
     """Implementation of a dockerized remote Khiops runner
 
     Requires a running docker Khiops instance
+
+    Parameters
+    ----------
+
+    url : str
+        URL for the Docker Khiops server.
+    shared_dir : str
+        Location of the shared directory. May be an URL/URI.
+    insecure : bool, default ``False``
+        If ``True`` the target server an HTTPS URL connection requires a certificate.
     """
 
     def __init__(self, url, shared_dir, insecure=False):
-        # Parent constructor
+        # Check the parameters
+        if not isinstance(url, str):
+            raise TypeError(type_error_message("url", url, str))
+        if not isinstance(shared_dir, str):
+            raise TypeError(type_error_message("shared_dir", shared_dir, str))
+        elif fs.is_local_resource(shared_dir) and not fs.exists(shared_dir):
+            raise KhiopsEnvironmentError(
+                f"'shared_dir' does not exists. Path: {shared_dir}."
+            )
+
+        # Call parent constructor
         super().__init__()
 
         # Initialize this class specific members
@@ -37,11 +60,6 @@ class KhiopsDockerRunner(KhiopsRunner):
         self._url = url
         self._insecure = insecure
         self.shared_dir = shared_dir
-        if self.shared_dir is None or not fs.exists(self.shared_dir):
-            raise ValueError(
-                "'shared_dir' parameter is required to connect with the Khiops service"
-            )
-
         # Define SSL context only for https
         if url.startswith("https"):
             # Compare URL host and certificate contents
@@ -57,9 +75,6 @@ class KhiopsDockerRunner(KhiopsRunner):
             self._ctx = None
 
     def _initialize_khiops_version(self):
-        # To avoid circular import from khiops/__init__.py due to deprecation management
-        from khiops import get_compatible_khiops_version
-
         self._khiops_version = get_compatible_khiops_version()
 
     def _get_khiops_version(self):
@@ -69,12 +84,13 @@ class KhiopsDockerRunner(KhiopsRunner):
 
     def _fetch(self, request):
         # HTTPS mode
-        response = None
         if self._ctx:
-            response = urlopen(request, context=self._ctx).read().decode()
+            with urlopen(request, context=self._ctx) as response_obj:
+                response = response_obj.read().decode()
         # HTTP mode
         else:
-            response = urlopen(request).read().decode()
+            with urlopen(request) as response_obj:
+                response = response_obj.read().decode()
         return response
 
     def _create_scenario_file(self, task):
