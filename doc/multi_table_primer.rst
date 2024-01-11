@@ -84,8 +84,8 @@ specifies the dataset schema in the following way::
           ...
        }
        "relations" : [
-            (<name of the main table>, <name of a different table>),
-            (<name of another table>, <name of yet another table>),
+            (<name of the main table>, <name of a different table>, <entity flag>),
+            (<name of another table>, <name of yet another table>, <entity flag>),
             ...
        ],
    }
@@ -99,10 +99,13 @@ The three fields of this dictionary are:
   - The `pandas.DataFrame` object of the table.
   - The key columns' names : Either a list of strings or a single string.
 
-- ``relations``: An optional field containing a list of 2-tuples of strings describing the relations
-  between tables. If the tuple ``(table1, table2)`` is contained in this field means that:
+- ``relations``: An optional field containing a list of tuples describing the relations between
+  tables. The first two values (Strings) of each tuple correspond to names of both the parent and the child table
+  involved in the relation. A third value (Boolean) can be optionally added to the tuple to indicate if the relation is
+  either ``1:n`` or ``1:1`` (entity). For example, If the tuple ``(table1, table2, True)`` is contained in this
+  field, it means that:
 
-  - ``table1`` and ``table2`` are in a ``1:n`` relationship
+  - ``table1`` and ``table2`` are in a ``1:1`` relationship
   - The key of ``table1`` is contained in that of ``table2`` (ie. keys are hierarchical)
 
   If the ``relations`` field is not present then Khiops Python assumes that the tables are in a *star*
@@ -110,14 +113,11 @@ The three fields of this dictionary are:
 
 .. note::
 
-    With respect to Khiops, Khiops Python sklearn estimators have some limitations. They do not support
-    the following types of multi-table relationships:
+    With respect to Khiops, Khiops Python sklearn estimators have some limitations. They currently do not
+    support external data tables.
 
-    - ``Entity`` (``1:1`` table relations) are not currently supported.
-    - External data tables are not currently supported.
-
-    These features will be available in upcoming releases. If you need to use them, you can use the
-    functions in the `khiops.core` sub-module (see below).
+    This feature will be available in upcoming releases. If you need to use it, you can use the `khiops.core`
+    sub-module (see below).
 
 Examples
 --------
@@ -132,7 +132,6 @@ schema:
     Accident(AccidentId)
     |
     +---1:n--- Vehicle(AccidentId, VehicleId)
-
 
 We build the input ``X`` as follows::
 
@@ -163,23 +162,27 @@ through the following *snowflake* schema
     |
     +--- 1:1 --- Place(AccidentId)
 
-We build the input ``X`` as follows (without ``Place`` as it is a ``1:1`` relation, see note
-above)::
+We build the input ``X`` as follows::
 
     # We use `Accidents.txt` table of `AccidentsSummary` as it contains the `Gravity` label pre-calculated
     accidents_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
     vehicles_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Vehicles.txt", sep="\t", encoding="latin1")
     users_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Users.txt", sep="\t", encoding="latin1")
+    places_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Places.txt", sep="\t", encoding="latin1")
+
     X = {
         "main_table": "Accidents",
         "tables": {
             "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
             "Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, ["AccidentId"]),
+
         },
         "relations": [
             ("Accidents", "Vehicles"),
             ("Vehicles", "Users"),
+            ("Accidents", "Places", True),
         ],
     }
 

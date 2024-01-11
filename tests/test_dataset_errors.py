@@ -150,13 +150,13 @@ class DatasetSpecErrorsTests(unittest.TestCase):
                             reference_quaternary_table,
                             ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
                         ),
-                        "C": (reference_secondary_table_2, ["User_ID", "VAR_1"]),
+                        "C": (reference_secondary_table_2, "User_ID"),
                         "A": (features_reference_main_table, "User_ID"),
                     },
                     "relations": [
-                        ("B", "D"),
-                        ("A", "C"),
-                        ("D", "E"),
+                        ("B", "D", False),
+                        ("A", "C", True),
+                        ("D", "E", False),
                         ("A", "B"),
                     ],
                 }
@@ -190,7 +190,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
                         ),
                         "C": (
                             reference_secondary_table_path_2,
-                            ["User_ID", "VAR_1"],
+                            "User_ID",
                         ),
                         "A": (reference_main_table_path, "User_ID"),
                         "D": (
@@ -200,9 +200,9 @@ class DatasetSpecErrorsTests(unittest.TestCase):
                     },
                     "relations": [
                         ("B", "D"),
-                        ("A", "B"),
-                        ("D", "E"),
-                        ("A", "C"),
+                        ("A", "B", False),
+                        ("D", "E", False),
+                        ("A", "C", True),
                     ],
                     "format": ("\t", True),
                 }
@@ -361,11 +361,15 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         secondary_table_1 = pd.DataFrame(secondary_table_data_1)
 
         secondary_table_data_2 = {
-            "User_ID": np.random.choice(main_table["User_ID"], 20),
-            "VAR_1": np.random.choice(["W", "X", "Y", "Z"], 20),
-            "VAR_2": np.random.randint(low=5, high=100, size=20).astype("int64"),
-            "VAR_3": np.random.choice([1, 0], 20).astype("int64"),
-            "VAR_4": np.round(np.random.rand(20).tolist(), 2),
+            "User_ID": np.random.choice(
+                main_table["User_ID"], len(main_table), replace=False
+            ),
+            "VAR_1": np.random.choice(["W", "X", "Y", "Z"], len(main_table)),
+            "VAR_2": np.random.randint(low=5, high=100, size=len(main_table)).astype(
+                "int64"
+            ),
+            "VAR_3": np.random.choice([1, 0], len(main_table)).astype("int64"),
+            "VAR_4": np.round(np.random.rand(len(main_table)).tolist(), 2),
         }
         secondary_table_2 = pd.DataFrame(secondary_table_data_2)
 
@@ -474,12 +478,12 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = type_error_message("Relation", bad_spec["relations"][0], "tuple")
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
-    def test_dict_spec_relations_must_be_of_size_2(self):
-        """Test Dataset raising ValueError when a relation is not of size 2"""
+    def test_dict_spec_relations_must_be_of_size_2_or_3(self):
+        """Test Dataset raising ValueError when a relation is not of size 2 or 3"""
         bad_spec, y = self.create_fixture_dataset_spec()
-        for size in [0, 1, 3, 4]:
+        for size in [0, 1, 4, 5]:
             bad_spec["relations"][0] = tuple((f"Table{i}" for i in range(size)))
-            expected_msg = f"A relation must be of size 2 not {size}"
+            expected_msg = f"A relation must be of size 2 or 3, not {size}"
             with self.subTest(tuple_size=size):
                 self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
@@ -500,12 +504,21 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
+    def test_dict_spec_entiy_flag_relation_must_be_bool(self):
+        """Test Dataset raising TypeError when the entity flag is not boolean"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        bad_spec["relations"][0] = ("B", "D", AnotherType())
+        expected_msg = type_error_message(
+            "1-1 flag for relation (B, D)", bad_spec["relations"][0][2], bool
+        )
+        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
+
     def test_dict_spec_relation_tables_must_not_be_the_same(self):
         """Test Dataset raising TypeError when tables of a relation are the same"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["relations"][0] = ("Table", "Table")
         expected_msg = (
-            "Tables in relation '('Table', 'Table')' are the same. "
+            "Tables in relation '(Table, Table)' are the same. "
             "They must be different."
         )
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
@@ -525,7 +538,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["relations"].append(("B", "D"))
         expected_msg = (
-            "Relation '('B', 'D')' occurs '2' times. Each relation must be unique."
+            "Relation '(B, D)' occurs '2' times. Each relation must be unique."
         )
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 

@@ -227,7 +227,9 @@ def khiops_classifier_multitable_snowflake():
     vehicles_df = pd.read_csv(
         path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t", encoding="latin1"
     )
-
+    places_df = pd.read_csv(
+        path.join(accidents_dataset_path, "Places.txt"), sep="\t", encoding="latin1"
+    )
     # Build the multitable input X
     # Note: We discard the "Gravity" field from the "Users" table as it was used to
     # build the target column
@@ -237,10 +239,12 @@ def khiops_classifier_multitable_snowflake():
             "Accidents": (accidents_df, "AccidentId"),
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
             "Users": (users_df.drop("Gravity", axis=1), ["AccidentId", "VehicleId"]),
+            "Places": (places_df, ["AccidentId"]),
         },
         "relations": [
             ("Accidents", "Vehicles"),
             ("Vehicles", "Users"),
+            ("Accidents", "Places", True),
         ],
     }
 

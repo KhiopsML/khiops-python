@@ -196,11 +196,15 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
         secondary_table_1 = pd.DataFrame(secondary_table_data_1)
 
         secondary_table_data_2 = {
-            "User_ID": np.random.choice(main_table["User_ID"], 20),
-            "VAR_1": np.random.choice(["W", "X", "Y", "Z"], 20),
-            "VAR_2": np.random.randint(low=5, high=100, size=20).astype("int64"),
-            "VAR_3": np.random.choice([1, 0], 20).astype("int64"),
-            "VAR_4": np.round(np.random.rand(20).tolist(), 2),
+            "User_ID": np.random.choice(
+                main_table["User_ID"], len(main_table), replace=False
+            ),
+            "VAR_1": np.random.choice(["W", "X", "Y", "Z"], len(main_table)),
+            "VAR_2": np.random.randint(low=5, high=100, size=len(main_table)).astype(
+                "int64"
+            ),
+            "VAR_3": np.random.choice([1, 0], len(main_table)).astype("int64"),
+            "VAR_4": np.round(np.random.rand(len(main_table)).tolist(), 2),
         }
         secondary_table_2 = pd.DataFrame(secondary_table_data_2)
 
@@ -328,14 +332,14 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
                             reference_quaternary_table,
                             ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
                         ),
-                        "C": (reference_secondary_table_2, ["User_ID", "VAR_1"]),
+                        "C": (reference_secondary_table_2, ["User_ID"]),
                         "A": (features_reference_main_table, "User_ID"),
                     },
                     "relations": [
-                        ("B", "D"),
-                        ("A", "C"),
+                        ("B", "D", False),
+                        ("A", "C", True),
                         ("D", "E"),
-                        ("A", "B"),
+                        ("A", "B", False),
                     ],
                 }
                 label = reference_main_table["class"]
@@ -366,7 +370,7 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
                         ),
                         "C": (
                             reference_secondary_table_path_2,
-                            ["User_ID", "VAR_1"],
+                            ["User_ID"],
                         ),
                         "A": (reference_main_table_path, "User_ID"),
                         "D": (
@@ -375,10 +379,10 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
                         ),
                     },
                     "relations": [
-                        ("B", "D"),
-                        ("A", "B"),
+                        ("B", "D", False),
+                        ("A", "B", False),
                         ("D", "E"),
-                        ("A", "C"),
+                        ("A", "C", True),
                     ],
                     "format": ("\t", True),
                 }
@@ -423,7 +427,7 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
                 "User_ID": "Categorical",
                 "class": "Categorical",
                 "B": "Table",
-                "C": "Table",
+                "C": "Entity",
             }
             reference_secondary_dictionary_1 = {
                 "User_ID": "Categorical",
@@ -465,6 +469,29 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
             )
 
         return reference_dictionaries
+
+    def test_dataset_is_correctly_built(self):
+        """Test that the dataset structure is consistent with the input spec"""
+        dataset_spec, label = self.create_fixture_dataset_spec(
+            output_dir=None, data_type="df", multitable=True, schema="snowflake"
+        )
+        dataset = Dataset(dataset_spec, label)
+
+        self.assertEqual(dataset.main_table.name, "A")
+        self.assertEqual(len(dataset.secondary_tables), 4)
+        dataset_secondary_table_names = set(
+            [secondary_table.name for secondary_table in dataset.secondary_tables]
+        )
+        self.assertEqual(dataset_secondary_table_names, {"B", "C", "D", "E"})
+        self.assertEqual(len(dataset.relations), 4)
+
+        spec_relations = dataset_spec["relations"]
+        for relation, spec_relation in zip(dataset.relations, spec_relations):
+            self.assertEqual(relation[:2], spec_relation[:2])
+            if len(spec_relation) == 3:
+                self.assertEqual(relation[2], spec_relation[2])
+            else:
+                self.assertFalse(relation[2])
 
     def test_created_file_from_dataframe_monotable(self):
         """Test consistency of the created data file with the input dataframe
