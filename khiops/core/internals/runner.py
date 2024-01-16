@@ -6,16 +6,20 @@
 ######################################################################################
 """Classes implementing Khiops Python' backend runners"""
 
+import importlib
 import io
 import os
 import platform
+import re
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 import uuid
 import warnings
 from abc import ABC, abstractmethod
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import khiops
@@ -1014,58 +1018,145 @@ class KhiopsLocalRunner(KhiopsRunner):
             )
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
+    def _set_empty_mpi_command_args_and_raise_warning(self):
+        self.mpi_command_args = []
+        warnings.warn(
+            "mpiexec is not in PATH, Khiops will run with just one CPU. "
+            "Check your MPI installation to run Khiops in parallel"
+        )
+
+    def _set_mpi_command_args_with_mpiexec(self, mpiexec_path):
+        self.mpi_command_args = [mpiexec_path]
+        mpi_command_args = os.environ.get("KHIOPS_MPI_COMMAND_ARGS")
+        if mpi_command_args is not None:
+            self.mpi_command_args += shlex.split(mpi_command_args)
+        elif platform.system() == "Linux":
+            self.mpi_command_args += [
+                "-bind-to",
+                "hwthread",
+                "-map-by",
+                "core",
+                "-n",
+                str(self.max_cores + 1),
+            ]
+        elif platform.system() == "Darwin":
+            # Note: The '-host localhost' arguments for arm64
+            #       may be removed when mpich > 4.1.2 is released
+            if platform.processor() == "arm":
+                self.mpi_command_args += [
+                    "-host",
+                    "localhost",
+                    "-n",
+                    str(self.max_cores + 1),
+                ]
+            else:
+                self.mpi_command_args = [
+                    mpiexec_path,
+                    "-n",
+                    str(self.max_cores + 1),
+                ]
+        elif platform.system() == "Windows":
+            self.mpi_command_args += [
+                "-al",
+                "spr:P",
+                "-n",
+                str(self.max_cores + 1),
+                "/priority",
+                "1",
+            ]
+        else:
+            raise KhiopsRuntimeError(f"System '{platform.system()}' not supported.")
+
     def _initialize_mpi_command_args(self):
         """Creates the mpiexec call arguments for each platform"""
         # Note: Unless enforced by `KHIOPS_MPIEXEC_PATH`, the mpiexec
         # accessible in the path takes precedence over any other mpiexec install.
         mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or shutil.which("mpiexec")
+        # If mpiexec is not in the path, then try to load MPI environment module
+        # so that mpiexec is in the path
         if mpiexec_path is None:
-            self.mpi_command_args = []
-            warnings.warn(
-                "mpiexec is not in PATH, Khiops will run with just one CPU. "
-                "Check your MPI installation to run Khiops in parallel"
+            # If environment modules are installed, then load the MPI module
+            # Procedure inspired from the official documentation
+            # https://modules.readthedocs.io/en/latest/module.html#examples-of-initialization
+            # in a more Pythonic way
+
+            # Initialize subshell environment to get the MODULESHOME environment
+            # variable
+            # Thus, one does not assume khiops-python is launched in a shell
+            # with initialized environment modules
+            module_init_script_path = os.path.join(
+                os.path.sep, "etc", "profile.d", "modules.sh"
             )
-        else:
-            self.mpi_command_args = [mpiexec_path]
-            mpi_command_args = os.environ.get("KHIOPS_MPI_COMMAND_ARGS")
-            if mpi_command_args is not None:
-                self.mpi_command_args += shlex.split(mpi_command_args)
-            elif platform.system() == "Linux":
-                self.mpi_command_args += [
-                    "-bind-to",
-                    "hwthread",
-                    "-map-by",
-                    "core",
-                    "-n",
-                    str(self.max_cores + 1),
-                ]
-            elif platform.system() == "Darwin":
-                # Note: The '-host localhost' arguments for arm64
-                #       may be removed when mpich > 4.1.2 is released
-                if platform.processor() == "arm":
-                    self.mpi_command_args += [
-                        "-host",
-                        "localhost",
-                        "-n",
-                        str(self.max_cores + 1),
-                    ]
+            modules_home_path = None
+            if os.path.exists(module_init_script_path):
+                shell_command = shlex.split(
+                    f"bash -c 'source {module_init_script_path} && env'"
+                )
+                with subprocess.Popen(
+                    shell_command,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                ) as env_modules_init_process:
+                    stdout, _ = env_modules_init_process.communicate()
+                for env_line in stdout.splitlines():
+                    env_var, _, value = env_line.partition(b"=")
+                    if env_var == b"MODULESHOME":
+                        modules_home_path = value.decode("utf-8")
+                        break
                 else:
-                    self.mpi_command_args = [
-                        mpiexec_path,
-                        "-n",
-                        str(self.max_cores + 1),
-                    ]
-            elif platform.system() == "Windows":
-                self.mpi_command_args += [
-                    "-al",
-                    "spr:P",
-                    "-n",
-                    str(self.max_cores + 1),
-                    "/priority",
-                    "1",
-                ]
+                    self._set_empty_mpi_command_args_and_raise_warning()
+
+            # If environment modules are available, then initialize them for Python
+            if modules_home_path is not None:
+                # Update sys.path so that the Python module support can be imported
+                sys.path.append(os.path.join(modules_home_path, "init"))
+                # The Python environment modules API module is available only here
+                env_modules_api = importlib.import_module("python")
+
+                module = env_modules_api.module
+                mpich_module = None
+                with (
+                    io.StringIO() as stdout_buffer,
+                    io.StringIO() as stderr_buffer,
+                    redirect_stdout(stdout_buffer),
+                    redirect_stderr(stderr_buffer),
+                ):
+                    module_availability_status = module("avail")
+                    stdout = stdout_buffer.getvalue()
+                    stderr = stderr_buffer.getvalue()
+                if module_availability_status:
+                    # module writes to stderr, even though this is not documented
+                    # hence, both stdout and stderr are scanned
+                    # the most recent MPICH version is searched
+                    for line in sorted(
+                        re.sub("\\s+", "\\n", stdout + stderr).splitlines(),
+                        reverse=True,
+                    ):
+                        if (
+                            re.search("mpich-[0-9]", line) is not None
+                            and platform.machine() in line
+                            or f"mpich-{platform.machine()}" in line
+                        ):
+                            mpich_module = line
+                            break
+                if mpich_module is not None:
+                    mpich_loaded = module("load", mpich_module)
+                    # mpiexec is in the PATH after environment module load
+                    if mpich_loaded:
+                        mpiexec_path = shutil.which("mpiexec")
+                        if mpiexec_path is not None:
+                            self._set_mpi_command_args_with_mpiexec(mpiexec_path)
+                        else:
+                            self._set_empty_mpi_command_args_and_raise_warning()
+                    # If for some reason MPI environment module loading fails,
+                    # then just do not use MPI
+                    else:
+                        self._set_empty_mpi_command_args_and_raise_warning()
             else:
-                raise KhiopsRuntimeError(f"System '{platform.system()}' not supported.")
+                self._set_empty_mpi_command_args_and_raise_warning()
+        else:
+            self._set_mpi_command_args_with_mpiexec(mpiexec_path)
 
     def _initialize_default_samples_dir(self):
         """See class docstring"""
