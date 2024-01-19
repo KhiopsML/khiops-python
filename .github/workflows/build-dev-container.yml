@@ -46,11 +46,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get Linux codename from OS version
+        run: |
+          OS_CODENAME=$(echo ${{ inputs.khiopsdev-os }} | tr -d '0-9.')
+          echo "OS_CODENAME=$OS_CODENAME" >> "$GITHUB_ENV"
       - name: Build image and push to GitHub Container Registry
         uses: docker/build-push-action@v5
         with:
           context: ./packaging/docker/khiopspydev/
-          file: ./packaging/docker/khiopspydev/Dockerfile
+          file: ./packaging/docker/khiopspydev/Dockerfile.${{ env.OS_CODENAME }}
           build-args: |
             "KHIOPS_REVISION=${{ inputs.khiops-revision }}"
             "KHIOPSDEV_OS=${{ inputs.khiopsdev-os }}"

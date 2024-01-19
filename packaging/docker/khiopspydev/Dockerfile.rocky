@@ -1,0 +1,46 @@
+# Arguments
+ARG KHIOPSDEV_OS
+ARG SERVER_REVISION
+FROM ghcr.io/khiopsml/khiops/khiopsdev-${KHIOPSDEV_OS}:latest AS khiopsdev
+LABEL maintainer="khiops.team@orange.com"
+LABEL description="Container for the development of khiops-python"
+
+# Configure CMake
+# Build Khiops; add KNI to make cmake --install happy
+# Set mpich for default MPI
+ARG KHIOPS_REVISION
+RUN useradd -rm -d /home/rocky -s /bin/bash -g root -u 1000 rocky
+RUN true \
+  # Install git (for khiops-python version calculation) and pip \
+  && yum install -y epel-release \
+  && yum -y update \
+  && yum -y install git python3-pip zip pandoc \
+  # Obtain, build and install Khiops \
+  && git clone --depth 1 https://github.com/khiopsml/khiops.git \
+  && cd khiops \
+  && git checkout ${KHIOPS_REVISION} \
+  # Make sure that MPI is mpich \
+  && source /etc/profile.d/modules.sh \
+  && module unload mpi \
+  # Hard-code MPICH module name \
+  && module load mpi/mpich-x86_64 \
+  && cmake --preset linux-gcc-release -DTESTING=OFF -DBUILD_JARS=OFF -DCMAKE_INSTALL_PREFIX= \
+  && cmake --build --preset linux-gcc-release --parallel \
+       --target MODL${MPI_SUFFIX} MODL_Coclustering${MPI_SUFFIX} KhiopsNativeInterface \
+  && cmake --install ./build/linux-gcc-release \
+  && cd .. \
+  # Set python to python3 \
+  && alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+  # Clean build files \
+  && yum clean all \
+  && rm -fr /var/cache/yum/* \
+  && rm -rf ./khiops \
+  && true
+
+RUN mkdir -p /scripts
+COPY ./run_service.sh /scripts/run_service.sh
+RUN chmod +x /scripts/run_service.sh
+
+FROM ghcr.io/khiopsml/khiops-server:${SERVER_REVISION} AS server
+FROM khiopsdev AS base
+COPY --from=server /service /usr/bin/service
