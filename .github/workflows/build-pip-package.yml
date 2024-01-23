@@ -14,9 +14,13 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-and-test-pip-package:
+    strategy:
+      fail-fast: false
+      matrix:
+        container: [ubuntu22.04, rocky9]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
+      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:latest
     permissions:
       checks: write
       contents: read
@@ -55,6 +59,13 @@ jobs:
         env:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
         run: |-
+          # Make sure MPI support is not loaded through env modules
+          # Note: As Docker container's shell is non-interactive, environment
+          # modules are currently not initializing the shell anyway
+          if [[ -n "$MODULESHOME" ]]; then module unload mpi; fi
           cd ./test_dist
           kh-samples core -i train_predictor -e
           kh-samples sklearn -i khiops_classifier -e
+          # Test that the line containing "MPI command" also contains
+          # "mpiexec", which means that `mpiexec` has been found
+          kh-status | grep "MPI command" | grep -wq mpiexec

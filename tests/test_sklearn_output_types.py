@@ -5,7 +5,6 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Tests for checking the output types of predictors"""
-import os
 import unittest
 
 import pandas as pd

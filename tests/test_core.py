@@ -751,9 +751,9 @@ class MockedRunnerContext:
         # Return the runner to be used in the context
         return self.mocked_runner
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         # Restore the mock context and the original runner
-        self.mock_context.__exit__(type, value, traceback)
+        self.mock_context.__exit__(exc_type, exc_value, exc_traceback)
         kh.set_runner(self._initial_runner)
 
 

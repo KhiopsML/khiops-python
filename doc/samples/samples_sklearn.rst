@@ -511,7 +511,12 @@ Samples
         # - Train the HGB classifier
         pipe_steps = [
             ("khiops_enc", KhiopsEncoder()),
-            ("onehot_enc", ColumnTransformer([], remainder=OneHotEncoder(sparse=False))),
+            (
+                "onehot_enc",
+                ColumnTransformer([], remainder=OneHotEncoder(sparse_output=False)),
+                # For sklearn < 1.2, use
+                # ColumnTransformer([], remainder=OneHotEncoder(sparse=False)),
+            ),
             ("hgb_clf", HistGradientBoostingClassifier()),
         ]
         pipe = Pipeline(pipe_steps)

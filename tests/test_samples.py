@@ -5,7 +5,6 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Test run all samples"""
-import os.path
 import unittest
 
 import khiops.core as kh

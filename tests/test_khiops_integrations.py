@@ -7,7 +7,9 @@
 """Tests for executing fit multiple times on multi-table data"""
 
 import os
+import platform
 import shutil
+import subprocess
 import tempfile
 import unittest
 
@@ -22,8 +24,77 @@ from tests.test_helper import KhiopsTestHelper
 # pylint: disable=protected-access
 
 
-class KhiopsCustomRunnerEnvironmentTests(unittest.TestCase):
-    """Test that runners in custom environments work"""
+class KhiopsRunnerEnvironmentTests(unittest.TestCase):
+    """Test that runners in different environments work"""
+
+    @unittest.skipIf(
+        platform.system() != "Linux", "Skipping test for non-Linux platform"
+    )
+    def test_runner_has_mpiexec_on_linux(self):
+        """Test that local runner has executable mpiexec on Linux if MPI is installed"""
+        # Check package is installed on supported platform:
+        # Check /etc/os-release for Linux version
+        linux_distribution = None
+        mpich_found = None
+        with open(
+            os.path.join(os.sep, "etc", "os-release"), encoding="ascii"
+        ) as os_release_info:
+            for entry in os_release_info:
+                if entry.startswith("NAME"):
+                    linux_distribution = entry.split("=")[-1].strip('"\n').lower()
+                    break
+
+        # Check if MPICH is installed on the Debian Linux OS
+        if linux_distribution == "ubuntu":
+            with subprocess.Popen(
+                ["dpkg", "-l", "mpich"],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                universal_newlines=True,
+            ) as mpich_query:
+                stdout, _ = mpich_query.communicate()
+                if mpich_query.returncode != 0:
+                    mpich_found = False
+                for line in stdout.splitlines():
+                    if all(field in line for field in ("ii", "mpich")):
+                        # MPICH installed
+                        mpich_found = True
+                        break
+                else:
+                    mpich_found = False
+
+        # Check if MPICH is installed on the CentOS / Rocky Linux OS
+        elif linux_distribution == "rocky linux":
+            with subprocess.Popen(
+                ["yum", "list", "installed", "mpich"],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                universal_newlines=True,
+            ) as mpich_query:
+                stdout, _ = mpich_query.communicate()
+                if mpich_query.returncode != 0:
+                    mpich_found = False
+                for line in stdout.splitlines():
+                    if line.startswith("mpich"):
+                        # MPICH installed
+                        mpich_found = True
+                        break
+                else:
+                    mpich_found = False
+        else:
+            self.skipTest("Skipping test: platform not Ubuntu or Rocky Linux")
+        if mpich_found:
+            runner = kh.get_runner()
+            if not runner.mpi_command_args:
+                self.fail("MPI support found, but MPI command args not set")
+            mpiexec_path = runner.mpi_command_args[0]
+            self.assertTrue(os.path.exists(mpiexec_path))
+            self.assertTrue(os.path.isfile(mpiexec_path))
+            self.assertTrue(os.access(mpiexec_path, os.X_OK))
+        else:
+            self.skipTest("Skipping test: MPI support is not installed")
 
     def test_runner_with_custom_khiops_binary_directory(self):
         """Test that local runner works with custom Khiops binary directory"""
