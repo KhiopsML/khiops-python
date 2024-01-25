@@ -1116,15 +1116,16 @@ class KhiopsLocalRunner(KhiopsRunner):
 
                 module = env_modules_api.module
                 mpich_module = None
-                with (
-                    io.StringIO() as stdout_buffer,
-                    io.StringIO() as stderr_buffer,
-                    redirect_stdout(stdout_buffer),
-                    redirect_stderr(stderr_buffer),
-                ):
-                    module_availability_status = module("avail")
-                    stdout = stdout_buffer.getvalue()
-                    stderr = stderr_buffer.getvalue()
+                # Support Python 3.8 which does not parse parenthesized context
+                # managers (introduced in Python 3.9 via PEP 617:
+                # https://peps.python.org/pep-0617/)
+                with io.StringIO() as stdout_buffer:
+                    with io.StringIO() as stderr_buffer:
+                        with redirect_stdout(stdout_buffer):
+                            with redirect_stderr(stderr_buffer):
+                                module_availability_status = module("avail")
+                                stdout = stdout_buffer.getvalue()
+                                stderr = stderr_buffer.getvalue()
                 if module_availability_status:
                     # module writes to stderr, even though this is not documented
                     # hence, both stdout and stderr are scanned
