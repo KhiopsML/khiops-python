@@ -55,7 +55,7 @@ $PYTHON -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-
 # - KHIOPS_APPLE_CERTIFICATE_BASE64: The identity file .p12 (certificate + private key) in base64
 # - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD: Password to decrypt the certificate
 #
-if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "arm64" ]]
+if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "arm64" && -n "${KHIOPS_APPLE_CERTIFICATE_BASE64-}" ]]
 then
   # Delete the rpath of each executable
   # Delete two times for MODL because for some reason it is there 2 times
@@ -98,7 +98,7 @@ then
 
   # We make sure to use the default macOS/Xcode codesign tool. This is because the sigtool python
   # package (installed by conda build as a dependency) makes an alias "codesign" which is prioritary
-  # in the build environment. The alias, however, alias doen't support signing with a proper
+  # in the build environment. The alias, however, alias doesn't support signing with a proper
   # identity and makes the build fail!
   CODESIGN="/usr/bin/codesign"
 
