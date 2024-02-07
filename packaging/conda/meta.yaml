@@ -39,10 +39,10 @@ build:
 # - requires conda-forge
 requirements:
   build:
-    - mpich=4.0.3        # [linux]
-    - mpich-mpicxx=4.0.3 # [linux]
-    - mpich=3.4.3        # [osx]
-    - mpich-mpicxx=3.4.3 # [osx]
+    - mpich 4.0.3        # [linux]
+    - mpich-mpicxx 4.0.3 # [linux]
+    - mpich 3.4.3        # [osx]
+    - mpich-mpicxx 3.4.3 # [osx]
     - msmpi              # [win]
     - cmake
     - ninja
@@ -50,15 +50,15 @@ requirements:
     - setuptools
     - {{ compiler('cxx') }}
   host:
-    - mpich=4.0.3        # [linux]
-    - mpich-mpicxx=4.0.3 # [linux]
-    - mpich=3.4.3        # [osx]
-    - mpich-mpicxx=3.4.3 # [osx]
+    - mpich 4.0.3        # [linux]
+    - mpich-mpicxx 4.0.3 # [linux]
+    - mpich 3.4.3        # [osx]
+    - mpich-mpicxx 3.4.3 # [osx]
     - msmpi                # [win]
     - python
   run:
-    - mpich=4.0.3   # [linux]
-    - mpich=3.4.3   # [osx]
+    - mpich 4.0.3   # [linux]
+    - mpich 3.4.3   # [osx]
     - msmpi         # [win]
     - pandas >=0.25.3
     - python
