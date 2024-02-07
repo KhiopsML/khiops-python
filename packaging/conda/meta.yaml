@@ -8,7 +8,7 @@ source:
 
 build:
   script_env:
-    - KHIOPS_REVISION=dev
+    - KHIOPS_REVISION
     # Variables for signing the MODL executables in osx-arm64
     - KHIOPS_APPLE_CERTIFICATE_BASE64      # [osx and arm64]
     - KHIOPS_APPLE_CERTIFICATE_PASSWORD    # [osx and arm64]
@@ -30,36 +30,36 @@ build:
     - bin/pk-status                      # [osx and arm64]
   detect_binary_files_with_prefix: false # [osx and arm64]
 
-# Note for OSX ARM 64:
-# - We impose mpich <=3.4.3 until a release with the fix for
-#   the bug https://github.com/pmodels/mpich/issues/6619
+# Note on version pinning:
+# OSX:
+# - mpich=3.4.3 because 4.* is still unstable
+# - requires conda-forge
+# Linux:
+# - mpich=4.0.3 because of bugs of the 3.* series
+# - requires conda-forge
 requirements:
   build:
+    - mpich 4.0.3        # [linux]
+    - mpich-mpicxx 4.0.3 # [linux]
+    - mpich 3.4.3        # [osx]
+    - mpich-mpicxx 3.4.3 # [osx]
+    - msmpi              # [win]
     - cmake
-    - mpich                # [linux or osx and x86]
-    - mpich-mpicc          # [linux or osx and x86]
-    - mpich-mpicxx         # [linux or osx and x86]
-    - mpich <=3.4.3        # [osx and arm64]
-    - mpich-mpicc <=3.4.3  # [osx and arm64]
-    - mpich-mpicxx <=3.4.3 # [osx and arm64]
-    - msmpi                # [win]
-    - ninja                # [win]
+    - ninja
     - python
     - setuptools
     - {{ compiler('cxx') }}
   host:
-    - mpich                # [linux or osx and x86]
-    - mpich-mpicc          # [linux or osx and x86]
-    - mpich-mpicxx         # [linux or osx and x86]
-    - mpich <=3.4.3        # [osx and arm64]
-    - mpich-mpicc <=3.4.3  # [osx and arm64]
-    - mpich-mpicxx <=3.4.3 # [osx and arm64]
+    - mpich 4.0.3        # [linux]
+    - mpich-mpicxx 4.0.3 # [linux]
+    - mpich 3.4.3        # [osx]
+    - mpich-mpicxx 3.4.3 # [osx]
     - msmpi                # [win]
     - python
   run:
-    - mpich           # [linux or osx and x64]
-    - msmpi           # [win]
-    - mpich <=3.4.3   # [osx and arm64]
+    - mpich 4.0.3   # [linux]
+    - mpich 3.4.3   # [osx]
+    - msmpi         # [win]
     - pandas >=0.25.3
     - python
     - scikit-learn >=0.22.2
