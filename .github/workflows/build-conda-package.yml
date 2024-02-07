@@ -50,7 +50,7 @@ jobs:
         with:
           activate-environment: khiops-python-env
       - name: Install Dependency Requirements for Building Conda Packages
-        run: conda install conda-build conda-verify ninja
+        run: conda install conda-build=3.27.0 conda-verify
       # We need MacOS SDK 10.10 to build on Big Sur
       - name: Install Mac OS SDK 10.10
         if: runner.os == 'macOS'
