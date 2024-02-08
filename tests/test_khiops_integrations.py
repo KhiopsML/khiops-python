@@ -96,6 +96,43 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         else:
             self.skipTest("Skipping test: MPI support is not installed")
 
+    def test_runner_with_conda_based_environment(self):
+        """Test that local runner works in non-Conda, Conda-based environments"""
+
+        # Emulate Conda-based environment:
+        # - unset `CONDA_PREFIX` if set
+        # - create new KhiopsLocalRunner and initialize its Khiops binary
+        #   directory
+        # - check that the Khiops binary directory contains the MODL* binaries
+        #   and `mpiexec` (which should be its default location)
+
+        # Unset `CONDA_PREFIX` if existing
+        if "CONDA_PREFIX" in os.environ:
+            del os.environ["CONDA_PREFIX"]
+
+        # Create a fresh local runner and initialize its default Khiops binary dir
+        runner = KhiopsLocalRunner()
+        runner._initialize_khiops_bin_dir()
+
+        # Get runner's default Khiops binary directory
+        default_bin_dir = runner.khiops_bin_dir
+
+        # Check that MODL* are indeed in the runner's Khiops binary directory
+        self.assertTrue(
+            all(
+                binary_file in os.listdir(default_bin_dir)
+                for binary_file in ("MODL", "MODL_Coclustering")
+            )
+        )
+
+        # Check that mpiexec is set correctly in the runner:
+        mpi_command_args = runner.mpi_command_args
+        self.assertTrue(len(mpi_command_args) > 0)
+        mpiexec_path = runner.mpi_command_args[0]
+        self.assertTrue(os.path.exists(mpiexec_path))
+        self.assertTrue(os.path.isfile(mpiexec_path))
+        self.assertTrue(os.access(mpiexec_path, os.X_OK))
+
     def test_runner_with_custom_khiops_binary_directory(self):
         """Test that local runner works with custom Khiops binary directory"""
         # Get default runner

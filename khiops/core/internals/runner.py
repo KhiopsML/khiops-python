@@ -163,27 +163,72 @@ def _compute_max_cores_from_proc_number(proc_number):
     return max_cores
 
 
-def _is_khiops_installed_in_a_conda_env():
-    """True if the module is in a conda env and the khiops binaries are its "bin" dir"""
+def _mpiexec_path(bin_dir):
+    mpiexec_exe = "mpiexec"
+    if platform.system() == "Windows":
+        mpiexec_exe += ".exe"
+    return os.path.join(bin_dir, mpiexec_exe)
+
+
+def _modl_and_mpiexec_executables_exist(bin_dir):
+    """Check MODL* executables exist relative to the specified binary dir"""
+    modl_path = os.path.join(bin_dir, "MODL")
+    modl_cc_path = os.path.join(bin_dir, "MODL_Coclustering")
+    mpiexec_path = _mpiexec_path(bin_dir)
+    if platform.system() == "Windows":
+        modl_path += ".exe"
+        modl_cc_path += ".exe"
+        if not os.path.exists(mpiexec_path):
+            mpiexec_path = _mpiexec_path(
+                Path(bin_dir).parent.joinpath("Library", "bin").as_posix()
+            )
+    return all(
+        os.path.exists(exe_path) for exe_path in (modl_path, modl_cc_path, mpiexec_path)
+    )
+
+
+def _infer_env_bin_dir_for_conda_based_installations():
+    """Infer reference directory for Conda-based Khiops installations"""
+    reference_file = khiops.__file__
+    assert reference_file is not None
+    # Windows: Match %CONDA_PREFIX%\Lib\site-packages\khiops\__init__.py
+    if platform.platform() == "Windows":
+        conda_env_dir = Path(reference_file).parents[3]
+    # Linux/macOS:
+    # Match $CONDA_PREFIX/[Ll]ib/python3.X/site-packages/khiops/__init__.py
+    else:
+        conda_env_dir = Path(reference_file).parents[4]
+    env_bin_dir = os.path.join(conda_env_dir.as_posix(), "bin")
+    return env_bin_dir
+
+
+def _infer_khiops_installation_method(trace=False):
+    """Return the Khiops installation method"""
     # We are in a conda environment if
     # - if the CONDA_PREFIX environment variable exists and,
-    # - if MODL and MODL_Coclustering files exists in `$CONDA_PREFIX/bin`
+    # - if MODL, MODL_Coclustering and mpiexec files exists in
+    # `$CONDA_PREFIX/bin`
     #
     # Note: The check that MODL and MODL_Coclustering are actually executable is done
     #       afterwards by the initializations method.
-    if "CONDA_PREFIX" in os.environ:
-        # We are in a conda env if the Khiops binaries exists within `$CONDA_PREFIX/bin`
-        conda_env_bin_dir = os.path.join(os.environ["CONDA_PREFIX"], "bin")
-        modl_path = os.path.join(conda_env_bin_dir, "MODL")
-        modl_cc_path = os.path.join(conda_env_bin_dir, "MODL_Coclustering")
-        if platform.system() == "Windows":
-            modl_path += ".exe"
-            modl_cc_path += ".exe"
-        is_in_conda_env = os.path.exists(modl_path) and os.path.exists(modl_cc_path)
+    # We are in a conda env if the Khiops binaries exists within `$CONDA_PREFIX/bin`
+    if "CONDA_PREFIX" in os.environ and _modl_and_mpiexec_executables_exist(
+        os.path.join(os.environ["CONDA_PREFIX"], "bin")
+    ):
+        installation_method = "conda"
+    # Otherwise, we choose between conda-based and local (default choice)
     else:
-        is_in_conda_env = False
-
-    return is_in_conda_env
+        env_bin_dir = _infer_env_bin_dir_for_conda_based_installations()
+        if trace:
+            print(f"Environment binary dir: '{env_bin_dir}'")
+        if _modl_and_mpiexec_executables_exist(env_bin_dir):
+            installation_method = "conda-based"
+        else:
+            installation_method = "binary+pip"
+    if trace:
+        print(f"Installation method: '{installation_method}'")
+    assert installation_method in ("conda", "conda-based", "binary+pip")
+    return installation_method
 
 
 def _check_executable(bin_path):
@@ -920,9 +965,12 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _initialize_khiops_bin_dir(self):
         # Initialize Khiops bin dir, according to the environment
-        if _is_khiops_installed_in_a_conda_env():
+        installation_method = _infer_khiops_installation_method()
+        if installation_method == "conda":
             self._khiops_bin_dir = os.path.join(os.environ["CONDA_PREFIX"], "bin")
-        # Non-Conda environment
+        elif installation_method == "conda-based":
+            self._khiops_bin_dir = _infer_env_bin_dir_for_conda_based_installations()
+        # Local environment
         else:
             # Warn if both KHIOPS_HOME and KhiopsHome are set
             if "KHIOPS_HOME" in os.environ and "KhiopsHome" in os.environ:
@@ -1073,7 +1121,31 @@ class KhiopsLocalRunner(KhiopsRunner):
         """Creates the mpiexec call arguments for each platform"""
         # Note: Unless enforced by `KHIOPS_MPIEXEC_PATH`, the mpiexec
         # accessible in the path takes precedence over any other mpiexec install.
-        mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or shutil.which("mpiexec")
+        installation_method = _infer_khiops_installation_method()
+        # In Conda-based, but non-Conda environment, specify mpiexec path
+        if installation_method == "conda-based":
+            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or os.path.join(
+                _infer_env_bin_dir_for_conda_based_installations(), "mpiexec"
+            )
+            if platform.system() == "Windows" and not os.path.splitext(mpiexec_path):
+                mpiexec_path += ".exe"
+                # If mpiexec[.exe] is not in the Conda environment's bin path,
+                # update mpiexec's path to the expected Windows path to mpiexec:
+                # - replace "bin" with "Library/bin" in the binary directory
+                # - re-add mpiexec[.exe] to the path: look it up in the original
+                #   path (so that extension calculation is not repeated)
+                if not os.path.exists(mpiexec_path):
+                    mpiexec_path = (
+                        Path(mpiexec_path)
+                        .parents[1]
+                        .joinpath("Library", "bin", Path(mpiexec_path).parts[-1])
+                        .as_posix()
+                    )
+        # In Conda or local installations, expect mpiexec in the PATH
+        else:
+            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or shutil.which(
+                "mpiexec"
+            )
         # If mpiexec is not in the path, then try to load MPI environment module
         # so that mpiexec is in the path
         if mpiexec_path is None:
@@ -1267,10 +1339,7 @@ class KhiopsLocalRunner(KhiopsRunner):
             khiops_temp_dir_msg = self.khiops_temp_dir
         else:
             khiops_temp_dir_msg = "<empty> (system's default)"
-        if _is_khiops_installed_in_a_conda_env():
-            install_type_msg = "conda"
-        else:
-            install_type_msg = "pip + system-wide"
+        install_type_msg = _infer_khiops_installation_method()
         if self.mpi_command_args:
             mpi_command_args_msg = " ".join(self.mpi_command_args)
         else:
