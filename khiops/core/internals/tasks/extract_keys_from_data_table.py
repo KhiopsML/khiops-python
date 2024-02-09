@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "extract_keys_from_data_table",
         "khiops",
-        "10.0",
+        "10.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
@@ -61,7 +61,7 @@ TASKS = [
     tm.KhiopsTask(
         "extract_keys_from_data_table",
         "khiops",
-        "9.0",
+        "9.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),

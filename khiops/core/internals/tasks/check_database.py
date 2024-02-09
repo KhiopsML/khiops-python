@@ -20,7 +20,7 @@ TASKS = [
     tm.KhiopsTask(
         "check_database",
         "khiops",
-        "10.0",
+        "10.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
@@ -76,7 +76,7 @@ TASKS = [
     tm.KhiopsTask(
         "check_database",
         "khiops",
-        "9.0",
+        "9.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),

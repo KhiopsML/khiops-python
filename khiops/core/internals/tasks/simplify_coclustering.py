@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "simplify_coclustering",
         "khiops_coclustering",
-        "10.1",
+        "10.1.0",
         [
             ("coclustering_file_path", StringLikeType),
             ("simplified_coclustering_file_path", StringLikeType),
@@ -62,7 +62,7 @@ TASKS = [
     tm.KhiopsTask(
         "simplify_coclustering",
         "khiops_coclustering",
-        "9.0",
+        "9.0.0",
         [
             ("coclustering_file_path", StringLikeType),
             ("simplified_coclustering_file_path", StringLikeType),

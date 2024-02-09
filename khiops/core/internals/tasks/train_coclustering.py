@@ -21,7 +21,7 @@ TASKS = [
     tm.KhiopsTask(
         "train_coclustering",
         "khiops_coclustering",
-        "10.0",
+        "10.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
@@ -98,7 +98,7 @@ TASKS = [
     tm.KhiopsTask(
         "train_coclustering",
         "khiops_coclustering",
-        "9.0",
+        "9.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),

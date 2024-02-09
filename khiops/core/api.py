@@ -223,7 +223,7 @@ def _preprocess_task_arguments(task_args):
     # Transform the use_complement_as_test bool parameter to its string counterpart
     if "use_complement_as_test" in task_args:
         if task_args["use_complement_as_test"]:
-            if get_khiops_version() < KhiopsVersion("10"):
+            if get_khiops_version() < KhiopsVersion("10.0.0"):
                 task_args["fill_test_database_settings"] = True
             else:
                 task_args["test_database_mode"] = "Complementary"
@@ -751,7 +751,7 @@ def train_predictor(
 
     # Return the paths of the JSON report and modelling dictionary file
     reports_file_name = results_prefix
-    if get_runner().khiops_version < KhiopsVersion("10"):
+    if get_runner().khiops_version < KhiopsVersion("10.0.0"):
         reports_file_name += "AllReports.json"
     else:
         reports_file_name += "AllReports.khj"
@@ -872,7 +872,7 @@ def evaluate_predictor(
 
     # Return the path of the JSON report
     report_file_name = results_prefix
-    if get_runner().khiops_version < KhiopsVersion("10"):
+    if get_runner().khiops_version < KhiopsVersion("10.0.0"):
         report_file_name += "EvaluationReport.json"
     else:
         report_file_name += "EvaluationReport.khj"
@@ -1078,7 +1078,7 @@ def train_recoder(
 
     # Return the paths of the JSON report and modelling dictionary file
     reports_file_name = f"{results_prefix}AllReports"
-    if get_runner().khiops_version < KhiopsVersion("10"):
+    if get_runner().khiops_version < KhiopsVersion("10.0.0"):
         reports_file_name += ".json"
     else:
         reports_file_name += ".khj"
@@ -1879,9 +1879,9 @@ def get_khiops_info():
         - The number of remaining days for the license
     """
     warnings.warn(deprecation_message("get_khiops_info", "11.0.0"))
-    if get_runner().khiops_version >= KhiopsVersion("10.1"):
+    if get_runner().khiops_version >= KhiopsVersion("10.1.0"):
         return get_khiops_version(), None, None, None
-    elif get_runner().khiops_version >= KhiopsVersion("10.0"):
+    elif get_runner().khiops_version >= KhiopsVersion("10.0.0"):
         return _get_tool_info_khiops10(get_runner(), "khiops")
     else:
         return _get_tool_info_khiops9(get_runner(), "khiops")
@@ -1905,9 +1905,9 @@ def get_khiops_coclustering_info():
         - The number of remaining days for the license
     """
     warnings.warn(deprecation_message("get_khiops_coclustering_info", "11.0.0"))
-    if get_runner().khiops_version >= KhiopsVersion("10.1"):
+    if get_runner().khiops_version >= KhiopsVersion("10.1.0"):
         return get_khiops_version(), None, None, None
-    elif get_runner().khiops_version >= KhiopsVersion("10.0"):
+    elif get_runner().khiops_version >= KhiopsVersion("10.0.0"):
         return _get_tool_info_khiops10(get_runner(), "khiops_coclustering")
     else:
         return _get_tool_info_khiops9(get_runner(), "khiops_coclustering")

@@ -9,149 +9,175 @@
 import re
 
 
+def _is_simple_number(string):
+    """Tests if a string contains only characters [0-9] and no left zeroes
+
+    note::
+        We do not use str.isdigit() because it returns ``True`` for digit-like UTF-8
+        characters (fractions and superscripts for example).
+    """
+    if string:
+        all_chars = all(char in "0123456789" for char in string)
+        no_left_zeroes = not string.startswith("0") or string == "0"
+        is_simple_number = all_chars and no_left_zeroes
+    else:
+        is_simple_number = False
+    return is_simple_number
+
+
 class KhiopsVersion:
     """Encapsulates the Khiops version string
 
     Implements comparison operators.
     """
 
-    def __init__(self, version):
-        # Save the version and its parts
-        self.version = version
-        self._parts = None
-        self._trailing_char = None
-        self._allowed_chars = ["c", "i", "a", "b"]
+    def __init__(self, version_str):
+        # Save the raw version string
+        self._version_str = version_str
 
         # Remove the "v" prefix if present
-        # Check that :
-        # - each part besides the last is numeric
-        # - the last part is alphanumeric
-        raw_parts = re.sub("^v", "", self.version).split(".")
-        for i, part in enumerate(raw_parts, start=1):
-            if i < len(raw_parts) and not part.isnumeric():
-                raise ValueError(
-                    f"Component #{i} of version string '{version}' " "must be numeric."
-                )
-            if i == len(raw_parts):
-                if not part.isalnum():
-                    raise ValueError(
-                        f"Component #{i} of version string '{version}' "
-                        "must be alphanumeric."
-                    )
-                if not part[0].isnumeric():
-                    raise ValueError(
-                        f"Component #{i} of version string '{version}' "
-                        "must start with a numeric character"
-                    )
+        raw_parts = re.sub("^v", "", self._version_str).split(".")
 
-                must_be_alpha = False
-                for char in part:
-                    if char.isnumeric() and must_be_alpha:
-                        raise ValueError(
-                            f"Component #{i} of version string '{version}' "
-                            "must have alphabetic characters only at the end"
-                        )
-                    elif char.isalpha() and not must_be_alpha:
-                        must_be_alpha = True
-
-        # Save the numeric parts
-        self._parts = []
-        for part in raw_parts[:-1]:
-            self._parts.append(int(part))
-
-        # Save the numeric portion of the last part and any remaining chars
-        last_part = raw_parts[-1]
-        if last_part.isnumeric():
-            self._parts.append(int(last_part))
-        else:
-            for i, char in enumerate(last_part):
-                if char.isalpha():
-                    self._parts.append(int(last_part[:i]))
-                    self._trailing_char = last_part[i:]
-                    break
-        if (
-            self._trailing_char is not None
-            and self._trailing_char not in self._allowed_chars
-        ):
-            raise ValueError(
-                f"Trailing char of version string '{version}' "
-                f"must be one of {self._allowed_chars}"
+        # Check the Khiops version format: MAJOR.MINOR.PATCH[-PRE_RELEASE]
+        if len(raw_parts) != 3:
+            self._raise_init_error(
+                "Version must have the format " "MAJOR.MINOR.PATCH[-PRE_RELEASE]",
+                version_str,
             )
+        self._major, self._minor, patch_and_pre_release = raw_parts
 
-        # Transform numeric parts to tuple
-        self._parts = tuple(self._parts)
+        # Check MAJOR and MINOR are numeric
+        if _is_simple_number(self._major):
+            self._major = int(self._major)
+        else:
+            self._raise_init_error("MAJOR part of version isn't numeric", version_str)
+        if _is_simple_number(self._minor):
+            self._minor = int(self._minor)
+        else:
+            self._raise_init_error("MINOR part of version isn't numeric", version_str)
 
-        assert isinstance(self._parts, tuple)
+        # Check that the third part:
+        # - Follows the PATCH[-PRE_RELEASE] format
+        # - PATCH is numeric
+        # - If PRE_RELEASE is present that is a,b or rc followed by a number
+        # Third part with only digits
+        if _is_simple_number(patch_and_pre_release):
+            self._patch = int(patch_and_pre_release)
+            self._pre_release_id = None
+            self._pre_release_increment = None
+        # Third part with not only digits
+        else:
+            # Check that it has only one dash and store the delimited parts
+            if patch_and_pre_release.count("-") != 1:
+                self._raise_init_error(
+                    "PATCH-PRE_RELEASE version part must contain a single '-'",
+                    version_str,
+                )
+            self._patch, _pre_release = patch_and_pre_release.split("-")
+
+            # Store only the patch version part if there are only digits
+            if _is_simple_number(self._patch):
+                self._patch = int(self._patch)
+            else:
+                self._raise_init_error("PATCH version part isn't numeric", version_str)
+
+            # Store the pre-release id (alpha, beta or release candidate)
+            self._pre_release_id = None
+            for pre_release_id in ("a", "b", "rc"):
+                if _pre_release.startswith(pre_release_id):
+                    self._pre_release_id = pre_release_id
+            if self._pre_release_id is None:
+                self._raise_init_error(
+                    "PRE_RELEASE version part must start with 'a', 'b' or 'rc'",
+                    version_str,
+                )
+
+            # Store the rest of the prelease (if any) and check it is a number
+            self._pre_release_increment = _pre_release.replace(self._pre_release_id, "")
+            if _is_simple_number(self._pre_release_increment):
+                self._pre_release_increment = int(self._pre_release_increment)
+            else:
+                self._raise_init_error(
+                    "PRE_RELEASE version part increment is not numeric", version_str
+                )
+
+    def _raise_init_error(self, msg, version_str):
+        raise ValueError(f"{msg}. Version string: {version_str}.")
 
     @property
     def major(self):
-        """int : The major number of this version"""
-        return self._parts[0]
+        """int : The version's major number"""
+        return self._major
 
     @property
     def minor(self):
-        """int : The minor number of this version"""
-        if len(self._parts) < 2:
-            minor_number = 0
-        else:
-            minor_number = self._parts[1]
-        return minor_number
+        """int : The version's minor number"""
+        return self._minor
 
     @property
     def patch(self):
-        """int : The patch number of this version"""
-        if len(self._parts) < 3:
-            patch_number = 0
-        else:
-            patch_number = self._parts[2]
-        return patch_number
+        """int : The version's patch number"""
+        return self._patch
 
-    def __str__(self):
-        return self.version
+    @property
+    def pre_release(self):
+        """str : The version's pre-release tag
+
+        Returns: either 'a', 'b' or 'rc' followed by a number or None.
+        """
+        if self._pre_release_id is None:
+            return None
+        else:
+            return f"{self._pre_release_id}{self._pre_release_increment}"
 
     def __repr__(self):
-        return self.version
+        return self._version_str
 
     def __eq__(self, version):
-        # Pad with zeros the versions if necessary
-        if len(self._parts) > len(version._parts):
-            padded_parts = version._parts + (0,) * (
-                len(self._parts) - len(version._parts)
-            )
-            this_padded_parts = self._parts
-        elif len(self._parts) < len(version._parts):
-            this_padded_parts = self._parts + (0,) * (
-                len(version._parts) - len(self._parts)
-            )
-            padded_parts = version._parts
-        else:
-            this_padded_parts = self._parts
-            padded_parts = version._parts
-
-        # Compare the padded parts and the trailing chars
-        if (
-            this_padded_parts == padded_parts
-            and self._trailing_char == version._trailing_char
-        ):
-            return True
-        return False
+        return (
+            self.major == version.major
+            and self.minor == version.minor
+            and self.patch == version.patch
+            and self._pre_release_id == version._pre_release_id
+            and self._pre_release_increment == version._pre_release_increment
+        )
 
     def __gt__(self, version):
-        if self == version:
-            return False
-        elif self._parts > version._parts:
-            return True
-        elif self._parts < version._parts:
-            return False
-        else:
-            if self._trailing_char is None and version._trailing_char is not None:
-                return True
-            elif self._trailing_char is not None and version._trailing_char is None:
-                return False
+        """Normal versioning order
+
+        Not having a pre-release part has more priority than having it.
+        For example: 10.1.0-b1 < 10.1.0.
+        """
+        if self.major > version.major:
+            is_greater = True
+        elif self.major < version.major:
+            is_greater = False
+        elif self.minor > version.minor:
+            is_greater = True
+        elif self.minor < version.minor:
+            is_greater = False
+        elif self.patch > version.patch:
+            is_greater = True
+        elif self.patch < version.patch:
+            is_greater = False
+        elif self.pre_release is None and version.pre_release is not None:
+            is_greater = True
+        elif self.pre_release is not None and version.pre_release is None:
+            is_greater = False
+        elif self.pre_release is not None and version.pre_release is not None:
+            if self._pre_release_id > version._pre_release_id:
+                is_greater = True
+            elif self._pre_release_id < version._pre_release_id:
+                is_greater = False
             else:
-                self_index = self._allowed_chars.index(self._trailing_char)
-                version_index = self._allowed_chars.index(version._trailing_char)
-                return self_index > version_index
+                is_greater = (
+                    self._pre_release_increment > version._pre_release_increment
+                )
+        else:
+            assert self.__eq__(version)
+            is_greater = False
+
+        return is_greater
 
     def __ge__(self, version):
         return self.__eq__(version) or self.__gt__(version)
@@ -163,4 +189,4 @@ class KhiopsVersion:
         return not self.__gt__(version)
 
     def __hash__(self):
-        return self.version.__hash__()
+        return self.__repr__().__hash__()
