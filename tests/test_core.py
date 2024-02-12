@@ -1879,7 +1879,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         self._write_version = False
 
     def _initialize_khiops_version(self):
-        self._khiops_version = KhiopsVersion("10.1")
+        self._khiops_version = KhiopsVersion("10.1.0")
 
     @property
     def ref_scenario_dir(self):
@@ -2141,27 +2141,31 @@ class KhiopsCoreVariousTests(unittest.TestCase):
 
     # Disable SonarQube here because it believes that some versions are IPs
     # sonar: disable
+
     def test_version_comparisons(self):
         """Test version comparisons"""
         versions = [
-            "8.5b",
+            "8.5.0-b10",
             "9.0.1",
-            "9.5.1a",
-            "9.5.1b",
+            "9.5.1-a1",
+            "9.5.1-a2",
             "9.5.1",
-            "10",
+            "10.0.0",
             "10.0.1",
-            "10.0.8b",
+            "10.0.8-a57",
+            "10.0.8-b1",
+            "10.0.8-b2",
+            "10.0.8-b10",
+            "10.0.8-b12",
+            "10.0.8-rc1",
             "10.0.8",
-            "10.0.8.7i",
-            "10.1",
+            "10.1.0",
         ]
 
         for i, version_str1 in enumerate(versions):
             version1 = KhiopsVersion(version_str1)
             for j, version_str2 in enumerate(versions):
                 version2 = KhiopsVersion(version_str2)
-
                 if i < j:
                     self.assertLess(version1, version2)
                     self.assertLessEqual(version1, version2)
@@ -2174,6 +2178,26 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                     self.assertGreater(version1, version2)
 
     # sonar: enable
+
+    def test_invalid_versions(self):
+        """Test invalid versions"""
+        for version in [
+            "ver10.0.0",
+            "10",
+            "10.0",
+            "10i.4.0",
+            "10.4b.3",
+            "10.2.@",
+            "10.@.2",
+            "10.1.2b",
+            "10.1.2-b01",
+            "10.1.0-beta",
+            "10.1.1.1",
+            "10.0.8-b",
+            "10.01.8",
+        ]:
+            with self.assertRaises(ValueError):
+                KhiopsVersion(version)
 
     def test_pykhiops_import_deprecation_warning(self):
         """Test that import pykhiops* raises deprecation warning"""
@@ -2277,21 +2301,6 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                 dictionary = domain.dictionaries[0]
                 self.assertEqual(dictionary.name, "SpliceJunctionDNA")
                 self.assertEqual(dictionary.key, ["SampleId"])
-
-    def test_zero_padded_version_equality(self):
-        """Test zero padded version equalities"""
-        versions = ["9", "9.0", "9.0.0"]
-        for version_str1 in versions:
-            version1 = KhiopsVersion(version_str1)
-            for version_str2 in versions:
-                version2 = KhiopsVersion(version_str2)
-                self.assertEqual(version1, version2)
-
-    def test_invalid_version(self):
-        """Test invalid versions"""
-        for version in ["10i.4", "10.4b.3", "10.@", "10.@.2", "10.1.2u"]:
-            with self.assertRaises(ValueError):
-                KhiopsVersion(version)
 
     def test_scenario_generation(self):
         """Test the scenario generation from template and arguments"""

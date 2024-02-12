@@ -22,7 +22,7 @@ TASKS = [
     tm.KhiopsTask(
         "train_recoder",
         "khiops",
-        "10.0",
+        "10.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
@@ -161,7 +161,7 @@ TASKS = [
     tm.KhiopsTask(
         "train_recoder",
         "khiops",
-        "9.0",
+        "9.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),

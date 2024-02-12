@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "build_deployed_dictionary",
         "khiops",
-        "10.0",
+        "10.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),

@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "evaluate_predictor",
         "khiops",
-        "10.0",
+        "10.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("train_dictionary_name", StringLikeType),
@@ -76,7 +76,7 @@ TASKS = [
     tm.KhiopsTask(
         "evaluate_predictor",
         "khiops",
-        "9.0",
+        "9.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("train_dictionary_name", StringLikeType),

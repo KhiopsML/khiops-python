@@ -562,22 +562,24 @@ class KhiopsRunner(ABC):
         """
         # Handle renamed parameters
         if "batch" in kwargs:
-            warnings.warn(renaming_message("batch", "batch_mode", "10.0"), stacklevel=3)
+            warnings.warn(
+                renaming_message("batch", "batch_mode", "10.0.0"), stacklevel=3
+            )
             del kwargs["batch"]
         if "output_script" in kwargs:
             warnings.warn(
-                renaming_message("output_script", "output_scenario_path", "10.0"),
+                renaming_message("output_script", "output_scenario_path", "10.0.0"),
                 stacklevel=3,
             )
             del kwargs["output_script"]
         if "log" in kwargs:
             warnings.warn(
-                renaming_message("log", "log_file_path", "10.0"), stacklevel=3
+                renaming_message("log", "log_file_path", "10.0.0"), stacklevel=3
             )
             del kwargs["log"]
         if "task" in kwargs:
             warnings.warn(
-                renaming_message("task", "task_file_path", "10.0"), stacklevel=3
+                renaming_message("task", "task_file_path", "10.0.0"), stacklevel=3
             )
             del kwargs["task"]
 
@@ -697,7 +699,7 @@ class KhiopsRunner(ABC):
             # Report the message if there were any
             if warning_msg:
                 warning_msg = (
-                    "Khiops ended correctly but there were minor issues" + warning_msg
+                    "Khiops ended correctly but there were minor issues: " + warning_msg
                 )
                 warnings.warn(warning_msg.rstrip(), stacklevel=4)
         # If the execution was incorrect raise an exception reporting:
@@ -829,7 +831,7 @@ class KhiopsRunner(ABC):
 
     def _write_scenario_exit_statement(self, writer):
         # Set the exit statement depending on the version
-        if self.khiops_version >= KhiopsVersion("10"):
+        if self.khiops_version >= KhiopsVersion("10.0.0"):
             exit_statement = "ClassManagement.Quit"
         else:
             exit_statement = "Exit"
@@ -1302,7 +1304,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                 f"Khiops version '{self._khiops_version}' is very ahead "
                 f"from Khiops Python version '{khiops.__version__}'. "
                 "There may be compatibility errors and "
-                "it is recommended to update to the latest Khiops Python version.",
+                "it is recommended to update to the latest khiops-python version.",
                 stacklevel=3,
             )
         return self._khiops_version

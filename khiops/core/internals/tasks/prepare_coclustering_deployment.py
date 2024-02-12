@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "prepare_coclustering_deployment",
         "khiops_coclustering",
-        "9.0",
+        "9.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
