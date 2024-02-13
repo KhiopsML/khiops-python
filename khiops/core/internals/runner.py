@@ -914,30 +914,48 @@ class KhiopsLocalRunner(KhiopsRunner):
     r"""Implementation of a local Khiops runner
 
     Requires either:
-    - This package installed through Conda and run from a Conda environment
-    - Or, otherwise, the Khiops desktop app installed on the local machine
 
-    Default values for ``samples_dir``:
+    - This package installed through Conda and run from a Conda environment, or
+    - the Khiops desktop app installed on the local machine
+
+    .. rubric:: Environment variables taken into account by the runner:
+
+    - part of the Khiops API:
+
+      - ``KHIOPS_PROC_NUMBER``: number of processes launched by Khiops
+      - ``KHIOPS_MEMORY_LIMIT``: memory limit of the Khiops executables in megabytes;
+        ignored if set above the system memory limit
+      - ``KHIOPS_TMP_DIR``: path to Khiops' temporary directory
+
+    - other environment variables:
+
+      - ``KHIOPS_HOME``: *Windows only* path to the Khiops installation directory
+      - ``KHIOPS_SAMPLES_DIR``: path to the Khiops sample datasets directory
+
+    - advanced configuration variables. Most of the time the user does not need modify
+      them:
+
+      - ``KHIOPS_MPI_COMMAND_ARGS``: arguments to the ``mpiexec`` command
+      - ``KHIOPS_MPIEXEC_PATH``: path to the ``mpiexec`` command
+      - ``KHIOPS_MPI_LIB``: *Linux and MacOS only* path to the MPI library; added to
+        the beginning of ``LD_LIBRARY_PATH``
+
+    .. rubric:: Samples directory settings
+
+    Default values for the ``samples_dir``:
 
     - The value of the ``KHIOPS_SAMPLES_DIR`` environment variable
     - Otherwise:
-        - Windows:
-          - ``%PUBLIC%\khiops_data\samples%`` if it exists and is a directory
-          - ``%USERPROFILE%\khiops_data\samples%`` otherwise
-        - Linux and Mac OS:
-          - ``$HOME/khiops_data/samples``
 
-    Environment variables taken into account by the runner:
-    - `KHIOPS_PROC_NUMBER`: number of processes launched by Khiops
-    - `KHIOPS_MEMORY_LIMIT`: memory limit of the Khiops executables (in
-      megabytes); ignored if set above the system memory limit
-    - `KHIOPS_TMP_DIR`: path to Khiops' temporary directory
-    - `KHIOPS_HOME`: *Windows only*: path to the Khiops installation directory
-    - `KHIOPS_SAMPLES_DIR`: path to the Khiops samples directory
-    - `KHIOPS_MPI_COMMAND_ARGS`: arguments to the `mpiexec` command
-    - `KHIOPS_MPIEXEC_PATH`: path to the `mpiexec` command
-    - `KHIOPS_MPI_LIB`: *Linux and MacOS only*: path to the MPI library; added
-      to the beginning of `LD_LIBRARY_PATH`
+      - Windows:
+
+        - ``%PUBLIC%\khiops_data\samples%`` if it exists and is a directory
+        - ``%USERPROFILE%\khiops_data\samples%`` otherwise
+
+      - Linux and macOS:
+
+        - ``$HOME/khiops_data/samples``
+
     """
 
     def __init__(self):

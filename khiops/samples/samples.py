@@ -1307,7 +1307,7 @@ def extract_clusters():
 def deploy_coclustering():
     """Deploys an "individual-variable" coclustering"""
     # Set the initial file paths
-    splice_dir = path.join(kh.get_runner().samples_dir, "SpliceJunction")
+    splice_dir = path.join(kh.get_samples_dir(), "SpliceJunction")
     data_table_path = path.join(splice_dir, "SpliceJunctionDNA.txt")
     dictionary_file_path = path.join(splice_dir, "SpliceJunction.kdic")
     results_dir = path.join("kh_samples", "deploy_coclustering")

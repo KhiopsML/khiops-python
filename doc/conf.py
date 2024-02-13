@@ -102,7 +102,7 @@ html_title = f"<h6><center>{project} {release}</center></h6>"
 
 # HTML static assets
 html_static_path = ["_static"]
-html_logo = "_static/images/new_khiops_logo_with_border.svg"
+html_logo = "_static/images/orange_small_logo.png"
 html_css_files = ["css/custom.css"]
 
 

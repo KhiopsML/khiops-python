@@ -1,3 +1,4 @@
+
 Khiops Python API Docs
 ======================
 
@@ -9,13 +10,14 @@ Khiops is better installed with `conda package manager <https://docs.conda.io/en
 
 .. code-block:: shell
 
+    # Windows
     conda install khiops -c khiops
 
-    # For Apple Silicon users
+    # Linux/macOS
     conda install khiops -c conda-forge -c khiops
 
-Other install method are documented at the `Khiops website
-<https://www.khiops.org/setup/installation>`_.
+More details and other install methods are documented at the `Khiops website
+<https://www.khiops.org/setup>`_.
 
 
 Main Submodules

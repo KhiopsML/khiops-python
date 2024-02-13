@@ -18,3 +18,7 @@ h4 {
 h5 {
   font-size: 0.90em;
 }
+
+img.sidebar-logo {
+  width: 40px;
+}

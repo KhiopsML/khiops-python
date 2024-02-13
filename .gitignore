@@ -59,5 +59,6 @@ doc/samples/my_classifier
 doc/core/generated
 doc/sklearn/generated
 doc/internal/generated
+doc/tools/generated
 doc/_build/
 doc/khiops-python-tutorial
