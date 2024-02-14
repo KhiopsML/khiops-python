@@ -21,11 +21,13 @@ conda build --channel conda-forge --output-folder ./khiops-conda-build packaging
 
 ### Executable Signatures in macOS
 The script can sign the Khiops binaries. This is to avoid annoying firewall pop-ups. To enable this
-set the following environment variables:
-- `KHIOPS_APPLE_CERTIFICATE_ID`: The id of the signing certificate.
+set the following environment variable:
 - `KHIOPS_APPLE_CERTIFICATE_COMMON_NAME`: The common name of the signing certificate.
--`KHIOPS_APPLE_CERTIFICATE_PASSWORD`: The password of the signing certificate.
+
+Additionally a certificate file encoded in base64 may be provided by setting the following
+environment variables:
 - `KHIOPS_APPLE_CERTIFICATE_BASE64`: The base64 encoding of the signing certificate.
+-`KHIOPS_APPLE_CERTIFICATE_PASSWORD`: The password of the signing certificate.
 - `KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD` : A password for the temporary keychain created in the process.
 
 For more details see the comments in the signing section of `build.sh`.
