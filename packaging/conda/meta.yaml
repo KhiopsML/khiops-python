@@ -9,12 +9,16 @@ source:
 build:
   script_env:
     - KHIOPS_REVISION
-    # Variables for signing the MODL executables in osx-arm64
-    - KHIOPS_APPLE_CERTIFICATE_BASE64      # [osx and arm64]
-    - KHIOPS_APPLE_CERTIFICATE_PASSWORD    # [osx and arm64]
-    - KHIOPS_APPLE_CERTIFICATE_COMMON_NAME # [osx and arm64]
-    - KHIOPS_APPLE_CERTIFICATE_ID          # [osx and arm64]
-    - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD   # [osx and arm64]
+    # Variables for signing the MODL executables in osx-arm64.
+    {% if "KHIOPS_APPLE_CERTIFICATE_COMMON_NAME" in os.environ %}
+    - KHIOPS_APPLE_CERTIFICATE_COMMON_NAME # [osx]
+    # Only available when "KHIOPS_APPLE_CERTIFICATE_BASE64" is defined in the environment.
+    {% if "KHIOPS_APPLE_CERTIFICATE_BASE64" in os.environ %}
+    - KHIOPS_APPLE_CERTIFICATE_BASE64      # [osx]
+    - KHIOPS_APPLE_CERTIFICATE_PASSWORD    # [osx]
+    - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD   # [osx]
+    {% endif %}
+    {% endif %}
   entry_points:
     - kh-status = khiops.tools:kh_status_entry_point
     - kh-samples = khiops.tools:kh_samples_entry_point
@@ -23,12 +27,15 @@ build:
   number: 0
   # Binary relocation of MODL and MODL_Coclustering is done in build.sh script
   # This is to be able to sign it, see the script for more details.
-  binary_relocation:                     # [osx and arm64]
-    - bin/kh-status                      # [osx and arm64]
-    - bin/kh-samples                     # [osx and arm64]
-    - bin/kh-download-datasets           # [osx and arm64]
-    - bin/pk-status                      # [osx and arm64]
-  detect_binary_files_with_prefix: false # [osx and arm64]
+  # Only done when "KHIOPS_APPLE_CERTIFICATE_BASE64" is defined in the environment.
+  {% if "KHIOPS_APPLE_CERTIFICATE_COMMON_NAME" in os.environ %}
+  binary_relocation:                     # [osx]
+    - bin/kh-status                      # [osx]
+    - bin/kh-samples                     # [osx]
+    - bin/kh-download-datasets           # [osx]
+    - bin/pk-status                      # [osx]
+  detect_binary_files_with_prefix: false # [osx]
+  {% endif %}
 
 # Note on version pinning:
 # OSX:

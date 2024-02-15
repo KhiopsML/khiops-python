@@ -1,5 +1,5 @@
 khiops.sklearn
-================
+==============
 .. note::
   For convenience, the public members of the above modules are imported to the
   ``sklearn`` namespace. For example the estimator class

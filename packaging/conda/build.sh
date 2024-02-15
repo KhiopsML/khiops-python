@@ -49,13 +49,14 @@ $PYTHON -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-
 # build.detect_binary_files_with_prefix option
 #
 # This part must be executed in a root machine to be non-interactive (eg. GitHub runner)
-# It also needs the following global variables:
-# - KHIOPS_APPLE_CERTIFICATE_ID: The first column of the `security find-identity` command
+# It also needs the following environment variable:
 # - KHIOPS_APPLE_CERTIFICATE_COMMON_NAME: The second column of the `security find-identity` command
+# A base64 encoded certificate may also be provided, the following 2 variables must be set
 # - KHIOPS_APPLE_CERTIFICATE_BASE64: The identity file .p12 (certificate + private key) in base64
-# - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD: Password to decrypt the certificate
+# - KHIOPS_APPLE_CERTIFICATE_PASSWORD: Password for the certificate file
+# - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD: A temporary password to decrypt the certificate
 #
-if [[ "$(uname)" == "Darwin" && "$(uname -m)" == "arm64" && -n "${KHIOPS_APPLE_CERTIFICATE_BASE64-}" ]]
+if [[ "$(uname)" == "Darwin" && -n "${KHIOPS_APPLE_CERTIFICATE_COMMON_NAME-}" ]]
 then
   # Delete the rpath of each executable
   # Delete two times for MODL because for some reason it is there 2 times
@@ -67,34 +68,37 @@ then
   install_name_tool -add_rpath "@loader_path/../lib" "$PREFIX/bin/MODL"
   install_name_tool -add_rpath "@loader_path/../lib" "$PREFIX/bin/MODL_Coclustering"
 
-  # Keychain setup slightly modified from: https://stackoverflow.com/a/68577995
-  # Before importing identity
-  # - Set the default user login keychain
-  # - Create a temporary keychain
-  # - Append temporary keychain to the user domain
-  # - Remove relock timeout
-  # - Unlock the temporary keychain
-  sudo security list-keychains -d user -s login.keychain
-  sudo security create-keychain -p "$KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD" kh-tmp.keychain
-  sudo security list-keychains -d user -s kh-tmp.keychain \
-    "$(security list-keychains -d user | sed s/\"//g)"
-  sudo security set-keychain-settings kh-tmp.keychain
-  sudo security unlock-keychain -p "$KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD" kh-tmp.keychain
+  if [[ -n "${KHIOPS_APPLE_CERTIFICATE_BASE64-}" ]]
+  then
+    # Keychain setup slightly modified from: https://stackoverflow.com/a/68577995
+    # Before importing identity
+    # - Set the default user login keychain
+    # - Create a temporary keychain
+    # - Append temporary keychain to the user domain
+    # - Remove relock timeout
+    # - Unlock the temporary keychain
+    sudo security list-keychains -d user -s login.keychain
+    sudo security create-keychain -p "$KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD" kh-tmp.keychain
+    sudo security list-keychains -d user -s kh-tmp.keychain \
+      "$(security list-keychains -d user | sed s/\"//g)"
+    sudo security set-keychain-settings kh-tmp.keychain
+    sudo security unlock-keychain -p "$KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD" kh-tmp.keychain
 
-  # Add identity (certificate + private key) to keychain
-  echo "$KHIOPS_APPLE_CERTIFICATE_BASE64" \
-    | base64 --decode -i - -o kh-cert.p12
-  sudo security import kh-cert.p12 \
-    -k kh-tmp.keychain \
-    -P "$KHIOPS_APPLE_CERTIFICATE_PASSWORD" \
-    -A -T "/usr/bin/codesign"
-  rm -f kh-cert.p12
+    # Add identity (certificate + private key) to keychain
+    echo "$KHIOPS_APPLE_CERTIFICATE_BASE64" \
+      | base64 --decode -i - -o kh-cert.p12
+    sudo security import kh-cert.p12 \
+      -k kh-tmp.keychain \
+      -P "$KHIOPS_APPLE_CERTIFICATE_PASSWORD" \
+      -A -T "/usr/bin/codesign"
+    rm -f kh-cert.p12
 
-  # Enable codesigning from a non user interactive shell
-  sudo security set-key-partition-list -S apple-tool:,apple:, \
-    -s -k "$KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD" \
-    -D "$KHIOPS_APPLE_CERTIFICATE_COMMON_NAME" \
-    -t private kh-tmp.keychain
+    # Enable codesigning from a non user interactive shell
+    sudo security set-key-partition-list -S apple-tool:,apple:, \
+      -s -k "$KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD" \
+      -D "$KHIOPS_APPLE_CERTIFICATE_COMMON_NAME" \
+      -t private kh-tmp.keychain
+  fi
 
   # We make sure to use the default macOS/Xcode codesign tool. This is because the sigtool python
   # package (installed by conda build as a dependency) makes an alias "codesign" which is prioritary
@@ -103,12 +107,15 @@ then
   CODESIGN="/usr/bin/codesign"
 
   # Sign the MODL executable and check
-  $CODESIGN --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" "$PREFIX/bin/MODL"
-  $CODESIGN --force --sign "$KHIOPS_APPLE_CERTIFICATE_ID" "$PREFIX/bin/MODL_Coclustering"
+  $CODESIGN --force --sign "$KHIOPS_APPLE_CERTIFICATE_COMMON_NAME" "$PREFIX/bin/MODL"
+  $CODESIGN --force --sign "$KHIOPS_APPLE_CERTIFICATE_COMMON_NAME" "$PREFIX/bin/MODL_Coclustering"
   $CODESIGN -d -vvv "$PREFIX/bin/MODL"
   $CODESIGN -d -vvv "$PREFIX/bin/MODL_Coclustering"
 
-  # Restore the login keychain as default
-  sudo security delete-keychain kh-tmp.keychain
-  sudo security list-keychains -d user -s login.keychain
+  # Remove the temporary keychain and restore the login keychain as default if created
+  if [[ -n "${KHIOPS_APPLE_CERTIFICATE_BASE64-}" ]]
+  then
+    sudo security delete-keychain kh-tmp.keychain
+    sudo security list-keychains -d user -s login.keychain
+  fi
 fi

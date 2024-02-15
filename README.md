@@ -14,15 +14,21 @@ in two ways:
 ## Installation
 
 ```bash
+# Windows
 conda install khiops -c khiops
 
-# For Apple Silicon users
+# Linux/macOS
 conda install khiops -c khiops -c conda-forge
 ```
 Other install method are documented at the [Khiops website][khiops-install].
 
 ### Requirements
 - [Python][python] (>=3.8)
+- [Pandas][pandas] (>=0.25.3)
+- [Scikit-Learn][sklearn] (>=0.22.2)
+
+[pandas]: https://pandas.pydata.org
+[sklearn]: https://scikit-learn.org/stable
 
 ## Documentation
 The main documentation of the Khiops Python library is available [here][khiops-python-doc].
@@ -47,7 +53,7 @@ The Khiops Python library is currently developed at [Orange Innovation][o-innov]
 Team: khiops.team@orange.com .
 
 [khiops]: https://khiops.org
-[khiops-install]: https://khiops.org/setup/installation
+[khiops-install]: https://khiops.org/setup
 [khiops-python-doc]: https://khiopsml.github.io/khiops-python
 [python]: https://www.python.org
 [pandas]: https://pandas.pydata.org

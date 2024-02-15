@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2023 Orange. All rights reserved.                                    #
+# Copyright (c) 2024 Orange. All rights reserved.                                    #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -10,9 +10,9 @@ The methods in this module allow to execute all Khiops and Khiops Coclustering t
 
 See also:
     - :ref:`core-api-common-params`
+    - :ref:`core-api-env-vars`
     - :ref:`core-api-input-types`
     - :ref:`core-api-sampling-mode`
-    - :ref:`core-api-env-vars`
 """
 import io
 import os
