@@ -197,7 +197,7 @@ As for the use of feature branches, GitHub makes it easy to implement the follow
 Use the automatic branch names that GitHub creates from an issue. Name issues succinctly so the
 branches have short names. If you name branches by yourself try informative and succinct.
 
-### Merge Requests
+### Pull Requests
 This project's GitHub repository is configured to create merge commits for PR and to remove the
 feature branches by default after merging. This strategy has the following pros and cons:
 
