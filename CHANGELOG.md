@@ -1,9 +1,41 @@
 # Changelog
 
 **Notes:**
-- Versioning: The versioning scheme depends on the Khiops version supported (first 2 digits) and a
-  pyKhiops correlative (third digit). So 10.0.4 = 4th version developed that supports Khiops 10.0.
+- Versioning: The versioning scheme depends on the Khiops version supported (first 3 digits) and
+  a `khiops-python` correlative (4th digit).
+  - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
+
+## 10.2.0.1 - 2023-02-15
+Note: This release marks the open sourcing of Khiops:
+- The `khiops-python` replaces the old `pykhiops` package. We recommend to uninstall `pykhiops`
+  before installing `khiops-python`. More information at the [Khiops website][khiops].
+- `khiops-python` uses a new four digit versioning convention.
+- The `khiops` conda package is available for many environments. See the [Khiops website][khiops]
+  for more information.
+
+### Added
+- General:
+  - `khiops-python` is now available with conda `khiops` package. This package bundles
+    `khiops-python` and the Khiops binaries so no system-wide Khiops installation is needed. More
+    information at the [Khiops website][khiops].
+- `sklearn`
+  - Estimator classes can now be trained from Numpy arrays in single-table mode.
+- `core`
+  - `stdout_file_path` and `stderr_file_path` parameters for `khiops.core.api` functions. These
+    parameters allow to save the stdout/stderr output of the Khiops execution.
+
+### Changed
+- `sklearn`
+  - Estimator classes now comply with scikit-learn standards.
+- `core`
+  - The JSON initialization of `AnalysisResults`, `CoclusteringResults` and its component classes
+    is coherent with the empty initialization.
+
+### Fixed
+- `core`
+  - Wrong default discretization and grouping methods in `train_predictor` and `train_recoder`.
+  - `KhiopsDockerRunner` checking the existence `shared_dir` on remote paths.
 
 ## 10.1.3 - 2023-06-14
 
@@ -21,11 +53,11 @@
   - User-provided scenario prologue is now taken into account into the tasks.
 
 ### Changed
+- General:
+  - License has been updated to BSD-3 Clear.
 - `sklearn`:
   -  ``auto_sort`` replaces ``internal_sort`` to control input table sorting in estimators.
   - The multi-table documentation has been streamlined to be more precise and clearer.
-- General:
-  - License has been updated to BSD-3 Clear.
 
 ### Deprecated
 - `sklearn`:
@@ -74,14 +106,14 @@
   - `pk-status` script to check the pyKhiops installation.
 
 ### Fixed
+- General:
+  - Code samples scripts not being installed: They are located in `<pykhiops_install_dir>/samples`.
 - `sklearn`
   - `KhiopsCoclustering` raising an exception instead of a warning when no informative coclustering
     was found.
   - `internal_sort` parameter being ignored in `KhiopsCoclustering`.
 - `core`
   - `detect_format` failing when the Khiops log had extra output.
-- General:
-  - Code samples scripts not being installed: They are located in `<pykhiops_install_dir>/samples`.
 
 ## 10.1.0 - 2022-09-20
 
@@ -160,6 +192,8 @@
     transformations for Khiops.
 
 ### Changed
+- General:
+  - Improved documentation completeness and layout.
 - `sklearn`
   - Estimators do not depend anymore on local files. This fixes many issues including those related
     to serialization.
@@ -168,8 +202,6 @@
   - Functions `deploy_coclustering` and `deploy_model_for_metrics` are moved from `core.api` to
     `core.helpers`. The latter module will contain non-basic functionality, whereas `core.api` will
     contain only the official Khiops API.
-- Other:
-  - Improved documentation completeness and layout.
 
 ### Deprecated
 - `sklearn`:
@@ -353,3 +385,5 @@ Internals:
 
 ### Added
 - Sources (first commit)
+
+[khiops]: https://khiops.org

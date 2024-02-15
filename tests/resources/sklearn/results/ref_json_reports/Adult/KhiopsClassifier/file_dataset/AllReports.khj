@@ -6,7 +6,7 @@
 		"reportType": "Modeling",
 		"summary": {
 			"dictionary": "Adult",
-			"database": "/path/to/pykhiops/KhiopsClassifier_fit_dnfiqudw/sorted_Adult.txt",
+			"database": "/path/to/khiops/KhiopsClassifier_fit_dnfiqudw/sorted_Adult.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -175,7 +175,7 @@
 		"evaluationType": "Train",
 		"summary": {
 			"dictionary": "Adult",
-			"database": "/path/to/pykhiops/KhiopsClassifier_fit_dnfiqudw/sorted_Adult.txt",
+			"database": "/path/to/khiops/KhiopsClassifier_fit_dnfiqudw/sorted_Adult.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -249,7 +249,7 @@
 					6
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsClassifier_fit_dnfiqudw/sorted_Adult.txt",
+			"database": "/path/to/khiops/KhiopsClassifier_fit_dnfiqudw/sorted_Adult.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -1081,7 +1081,7 @@
 					6
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsClassifier_fit_dnfiqudw/sorted_Adult.txt",
+			"database": "/path/to/khiops/KhiopsClassifier_fit_dnfiqudw/sorted_Adult.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

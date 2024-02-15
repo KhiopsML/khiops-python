@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2023 Orange. All rights reserved.                                    #
+# Copyright (c) 2024 Orange. All rights reserved.                                    #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -7,11 +7,11 @@
 """Tests for checking the output types of predictors"""
 import unittest
 
-from pykhiops.core.dictionary import DictionaryDomain
-from pykhiops.core.helpers import build_multi_table_dictionary_domain
+from khiops.core.dictionary import DictionaryDomain
+from khiops.core.helpers import build_multi_table_dictionary_domain
 
 
-class PyKhiopsHelperFunctions(unittest.TestCase):
+class KhiopsHelperFunctions(unittest.TestCase):
     """Tests for checking the behaviour of the helper functions"""
 
     def test_build_multi_table_dictionary_domain(self):

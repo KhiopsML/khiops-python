@@ -1,0 +1,71 @@
+---
+name: Build Pip Package
+env:
+  DEFAULT_SAMPLES_REVISION: main
+on:
+  workflow_dispatch:
+    inputs:
+      samples-revision:
+        default: main
+        description: Git tag, branch or commit for the khiops-samples repository
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-and-test-pip-package:
+    strategy:
+      fail-fast: false
+      matrix:
+        container: [ubuntu22.04, rocky9]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:latest
+    permissions:
+      checks: write
+      contents: read
+      id-token: write
+      packages: read
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          # Get Git tags so that versioneer can function correctly
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
+      # We move SAMPLES_REVISION to the environment so that we can use
+      # them in both push and workflow_dispatch events
+      - name: Move SAMPLES_REVISION to the environment (push event)
+        if: github.event_name == 'push'
+        run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
+      - name: Move SAMPLES_REVISION to the environment (workflow_dispatch event)
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
+      - name: Checkout Khiops samples
+        uses: actions/checkout@v3
+        with:
+          repository: khiopsml/khiops-samples
+          ref: ${{ env.SAMPLES_REVISION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: khiops-samples
+      - name: Build and Install Pip Package
+        run: |
+          # This is needed so that the Git tag is parsed and the khiops-python
+          # version is retrieved
+          git config --global --add safe.directory $(realpath .)
+          python3 setup.py sdist --dist-dir=./test_dist
+          pip install $(ls ./test_dist/*.tar.gz)
+      - name: Test Pip package
+        env:
+          KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
+        run: |-
+          # Make sure MPI support is not loaded through env modules
+          # Note: As Docker container's shell is non-interactive, environment
+          # modules are currently not initializing the shell anyway
+          if [[ -n "$MODULESHOME" ]]; then module unload mpi; fi
+          cd ./test_dist
+          kh-samples core -i train_predictor -e
+          kh-samples sklearn -i khiops_classifier -e
+          # Test that the line containing "MPI command" also contains
+          # "mpiexec", which means that `mpiexec` has been found
+          kh-status | grep "MPI command" | grep -wq mpiexec

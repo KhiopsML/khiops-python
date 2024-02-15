@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2023 Orange. All rights reserved.                                    #
+# Copyright (c) 2024 Orange. All rights reserved.                                    #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -8,8 +8,8 @@
 The main package for Khiops support for Python.
 
 Example:
-   from pykhiops import core as pk
-   pk.train_predictor(...)
+   from pykhiops import core as kh
+   kh.train_predictor(...)
 
 The available sub-modules inside the package are:
 
@@ -21,29 +21,25 @@ The available sub-modules inside the package are:
 - core/coclustering_results: Classes to instpect Khiops Coclustering report files
   (extension ".khcj")
 - sklearn: Scikit-Learn classes to execute Khiops
+
+**Deprecated** will be removed in Khiops 11, use ``khiops`` top-level package instead.
+
 """
-from pykhiops._version import get_versions
-from pykhiops.core.internals.version import KhiopsVersion
+import importlib
+import sys
+import warnings
 
-__version__ = get_versions()["version"]
-del get_versions
+# Make sure khiops is in sys.modules
+import khiops
 
+# Deprecate pykhiops in favor of khiops
+from khiops.core.internals.common import deprecation_message
 
-def get_compatible_khiops_version():
-    """Returns the latest Khiops version compatible with this version of pyKhiops"""
+warnings.warn(
+    deprecation_message(
+        deprecated_feature="pykhiops", replacement="khiops", deadline_version="11.0"
+    )
+)
 
-    # Define auxiliary function to remove trailing chars
-    def remove_snapshot_trailing_chars(version_part):
-        if "+" in version_part:
-            clean_version_part = version_part[: version_part.index("+")]
-        else:
-            clean_version_part = version_part
-        return clean_version_part
-
-    # Build the pyKhiops version without the snapshot part
-    pykhiops_version_parts = __version__.split(".")
-    if len(pykhiops_version_parts) < 2:
-        raise ValueError(f"Invalid pyKhiops version '{__version__}'")
-    khiops_version_major = remove_snapshot_trailing_chars(pykhiops_version_parts[0])
-    khiops_version_minor = remove_snapshot_trailing_chars(pykhiops_version_parts[1])
-    return KhiopsVersion(f"{khiops_version_major}.{khiops_version_minor}")
+# Link pykhiops to khiops
+sys.modules[__name__] = importlib.import_module("khiops")

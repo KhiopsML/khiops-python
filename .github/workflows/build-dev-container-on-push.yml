@@ -1,0 +1,13 @@
+---
+name: Build development container [PR]
+on:
+  pull_request:
+    paths: [packaging/docker/khiopspydev/Dockerfile]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-dev-container:
+    permissions:
+      packages: write
+    uses: ./.github/workflows/build-dev-container.yml

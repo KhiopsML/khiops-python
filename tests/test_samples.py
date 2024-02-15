@@ -1,31 +1,29 @@
 ######################################################################################
-# Copyright (c) 2023 Orange. All rights reserved.                                    #
+# Copyright (c) 2024 Orange. All rights reserved.                                    #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Test run all samples"""
-import os.path
 import unittest
 
-import pykhiops.core as pk
-from pykhiops.samples import samples, samples_sklearn
+import khiops.core as kh
+from khiops.samples import samples, samples_sklearn
+from tests.test_helper import KhiopsTestHelper
 
 
-class PyKhiopsSamplesTests(unittest.TestCase):
+class KhiopsSamplesTests(unittest.TestCase):
     """Test if all samples run without problems"""
 
     def setUp(self):
-        if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
-            if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
-                self.skipTest("Skipping long test")
+        KhiopsTestHelper.skip_long_test(self)
 
     def test_samples(self):
         """Test if all samples run without problems"""
         # Obtain the runner version and set the minimal requirements for some samples
         min_version = {
-            samples.detect_data_table_format: pk.KhiopsVersion("10.0.1"),
-            samples.deploy_coclustering: pk.KhiopsVersion("10.0.1"),
+            samples.detect_data_table_format: kh.KhiopsVersion("10.0.1"),
+            samples.deploy_coclustering: kh.KhiopsVersion("10.0.1"),
         }
 
         # Run the samples
@@ -34,7 +32,7 @@ class PyKhiopsSamplesTests(unittest.TestCase):
                 print(f"\n>>> Testing sample.{sample.__name__}")
                 if sample not in min_version:
                     sample.__call__()
-                elif pk.get_runner().khiops_version >= min_version[sample]:
+                elif kh.get_runner().khiops_version >= min_version[sample]:
                     sample.__call__()
                 else:
                     print(

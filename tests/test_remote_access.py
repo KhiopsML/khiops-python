@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2023 Orange. All rights reserved.                                    #
+# Copyright (c) 2024 Orange. All rights reserved.                                    #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -19,10 +19,11 @@ from urllib.request import Request, urlopen
 
 import pandas as pd
 
-import pykhiops.core as pk
-import pykhiops.core.internals.filesystems as fs
-from pykhiops.extras.docker import PyKhiopsDockerRunner
-from pykhiops.sklearn import KhiopsClassifier, KhiopsCoclustering
+import khiops.core as kh
+import khiops.core.internals.filesystems as fs
+from khiops.extras.docker import KhiopsDockerRunner
+from khiops.sklearn import KhiopsClassifier, KhiopsCoclustering
+from tests.test_helper import KhiopsTestHelper
 
 
 def s3_config_exists():
@@ -47,10 +48,10 @@ def docker_runner_config_exists():
     )
 
 
-class PyKhiopsRemoteAccessTestsContainer:
+class KhiopsRemoteAccessTestsContainer:
     """Container class to allow unittest.TestCase inheritance"""
 
-    class PyKhiopsRemoteAccessTests(unittest.TestCase):
+    class KhiopsRemoteAccessTests(unittest.TestCase, KhiopsTestHelper):
         """Generic class to test remote filesystems and Khiops runners"""
 
         def results_dir_root(self):
@@ -84,12 +85,12 @@ class PyKhiopsRemoteAccessTestsContainer:
 
         def test_train_predictor_with_remote_access(self):
             """Test train_predictor with remote resources"""
-            iris_data_dir = fs.get_child_path(pk.get_runner().samples_dir, "Iris")
+            iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
             output_dir = fs.get_child_path(
                 self.results_dir_root(),
                 f"test_{self.remote_access_test_case()}_remote_files",
             )
-            pk.train_predictor(
+            kh.train_predictor(
                 fs.get_child_path(iris_data_dir, "Iris.kdic"),
                 dictionary_name="Iris",
                 data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
@@ -110,10 +111,10 @@ class PyKhiopsRemoteAccessTestsContainer:
             """Test the training of a khiops_classifier with remote resources"""
             # Setup paths
             output_dir = (
-                pk.get_runner().khiops_tmp_dir
+                kh.get_runner().khiops_temp_dir
                 + f"/KhiopsClassifier_output_dir_{uuid.uuid4()}/"
             )
-            iris_data_dir = fs.get_child_path(pk.get_runner().samples_dir, "Iris")
+            iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
             iris_data_file_path = fs.get_child_path(iris_data_dir, "Iris.txt")
             iris_dataset = {
                 "tables": {"Iris": (iris_data_file_path, None)},
@@ -140,16 +141,15 @@ class PyKhiopsRemoteAccessTestsContainer:
         def test_khiops_coclustering_with_remote_access(self):
             """Test the training of a khiops_coclustering with remote resources"""
             # Skip if only short tests are run
-            if os.environ.get("UNITTEST_ONLY_SHORT_TESTS") == "true":
-                self.skipTest("Skipping long test")
+            KhiopsTestHelper.skip_long_test(self)
 
             # Setup paths
             output_dir = (
-                pk.get_runner().khiops_tmp_dir
+                kh.get_runner().khiops_temp_dir
                 + f"/KhiopsCoclustering_output_dir_{uuid.uuid4()}/"
             )
             splice_data_dir = fs.get_child_path(
-                pk.get_runner().samples_dir, "SpliceJunction"
+                kh.get_runner().samples_dir, "SpliceJunction"
             )
             splice_data_file_path = fs.get_child_path(
                 splice_data_dir, "SpliceJunctionDNA.txt"
@@ -160,8 +160,8 @@ class PyKhiopsRemoteAccessTestsContainer:
                 splice_df = pd.read_csv(splice_data_file, sep="\t")
 
             # Fit the coclustering
-            pkcc = KhiopsCoclustering(output_dir=output_dir)
-            pkcc.fit(splice_df, id_column="SampleId")
+            khcc = KhiopsCoclustering(output_dir=output_dir)
+            khcc.fit(splice_df, id_column="SampleId")
 
             # Test if the 'fit' files were created
             self.assertTrue(
@@ -174,11 +174,11 @@ class PyKhiopsRemoteAccessTestsContainer:
         def test_train_predictor_fail_and_log_with_remote_access(self):
             """Test train_predictor failure and access to a remote log"""
             log_file_path = fs.get_child_path(
-                pk.get_runner().khiops_tmp_dir, f"khiops_log_{uuid.uuid4()}.log"
+                kh.get_runner().khiops_temp_dir, f"khiops_log_{uuid.uuid4()}.log"
             )
-            iris_data_dir = fs.get_child_path(pk.get_runner().samples_dir, "Iris")
-            with self.assertRaises(pk.PyKhiopsRuntimeError):
-                pk.train_predictor(
+            iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
+            with self.assertRaises(kh.KhiopsRuntimeError):
+                kh.train_predictor(
                     fs.get_child_path(iris_data_dir, "NONEXISTENT.kdic"),
                     dictionary_name="Iris",
                     data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
@@ -194,26 +194,24 @@ class PyKhiopsRemoteAccessTestsContainer:
             fs.remove(log_file_path)
 
 
-class PyKhiopsS3RemoteFileTests(
-    PyKhiopsRemoteAccessTestsContainer.PyKhiopsRemoteAccessTests
-):
+class KhiopsS3RemoteFileTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAccessTests):
     """Integration tests with Amazon S3 filesystems"""
 
     @classmethod
     def setUpClass(cls):
         """Sets up remote directories in runner"""
         if s3_config_exists():
-            runner = pk.get_runner()
+            runner = kh.get_runner()
             bucket_name = os.environ["S3_BUCKET_NAME"]
-            runner.samples_dir = f"s3://{bucket_name}/project/pykhiops-cicd/samples"
-            runner.khiops_tmp_dir = f"s3://{bucket_name}/project/pykhiops-cicd/tmp"
-            runner.root_temp_dir = f"s3://{bucket_name}/project/pykhiops-cicd/tmp"
+            runner.samples_dir = f"s3://{bucket_name}/project/khiops-cicd/samples"
+            runner.khiops_temp_dir = f"s3://{bucket_name}/project/khiops-cicd/tmp"
+            runner.root_temp_dir = f"s3://{bucket_name}/project/khiops-cicd/tmp"
 
     @classmethod
     def tearDownClass(cls):
         """Sets back the runner defaults"""
         if s3_config_exists():
-            pk.get_runner().__init__()
+            kh.get_runner().__init__()
 
     def config_exists(self):
         return s3_config_exists()
@@ -222,8 +220,8 @@ class PyKhiopsS3RemoteFileTests(
         return "S3"
 
 
-class PyKhiopsGCSRemoteFileTests(
-    PyKhiopsRemoteAccessTestsContainer.PyKhiopsRemoteAccessTests
+class KhiopsGCSRemoteFileTests(
+    KhiopsRemoteAccessTestsContainer.KhiopsRemoteAccessTests
 ):
     """Integration tests with Google Cloud Storage filesystems"""
 
@@ -231,17 +229,17 @@ class PyKhiopsGCSRemoteFileTests(
     def setUpClass(cls):
         """Sets up remote directories in runner"""
         if gcs_config_exists():
-            runner = pk.get_runner()
+            runner = kh.get_runner()
             bucket_name = os.environ["GCS_BUCKET_NAME"]
-            runner.samples_dir = f"gs://{bucket_name}/pykhiops-cicd/samples"
-            runner.khiops_tmp_dir = f"gs://{bucket_name}/pykhiops-cicd/tmp"
-            runner.root_temp_dir = f"gs://{bucket_name}/pykhiops-cicd/tmp"
+            runner.samples_dir = f"gs://{bucket_name}/khiops-cicd/samples"
+            runner.khiops_temp_dir = f"gs://{bucket_name}/khiops-cicd/tmp"
+            runner.root_temp_dir = f"gs://{bucket_name}/khiops-cicd/tmp"
 
     @classmethod
     def tearDownClass(cls):
         """Sets back the runner defaults"""
         if gcs_config_exists():
-            pk.get_runner().__init__()
+            kh.get_runner().__init__()
 
     def config_exists(self):
         return gcs_config_exists()
@@ -250,9 +248,7 @@ class PyKhiopsGCSRemoteFileTests(
         return "GCS"
 
 
-class PyKhiopsDockerRunnerTests(
-    PyKhiopsRemoteAccessTestsContainer.PyKhiopsRemoteAccessTests
-):
+class KhiopsDockerRunnerTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAccessTests):
     """Integration tests with the Docker runner service"""
 
     # pylint: disable=protected-access,consider-using-with
@@ -264,12 +260,12 @@ class PyKhiopsDockerRunnerTests(
               launches the service and makes sure it is operational before excuting the
               test case.  Otherwise it skips the test case.
             - Then it copies ``samples`` to a shared directory accessible to both the
-              local Khiops runner service and the process using pyKhiops.
-            - Finnaly it creates create the `.PyKhiopsDockerRunner` client for the
+              local Khiops runner service and the process using Khiops Python.
+            - Finnaly it creates create the `.KhiopsDockerRunner` client for the
               Khiops service and set it as current runner.
         """
-        # Save the initial pyKhiops runner
-        cls.initial_runner = pk.get_runner()
+        # Save the initial Khiops Python runner
+        cls.initial_runner = kh.get_runner()
 
         if "KHIOPS_RUNNER_SERVICE_PATH" in os.environ:
             # Start runner process
@@ -312,16 +308,16 @@ class PyKhiopsDockerRunnerTests(
                     )
 
             # Create khiops service runner
-            docker_runner = PyKhiopsDockerRunner(
+            docker_runner = KhiopsDockerRunner(
                 url=os.environ["KHIOPS_DOCKER_RUNNER_URL"],
                 shared_dir=shared_dir,
                 insecure=True,
             )
-            docker_runner.khiops_tmp_dir = os.path.join(shared_dir, "tmp")
+            docker_runner.khiops_temp_dir = os.path.join(shared_dir, "tmp")
             docker_runner.samples_dir = target_samples_dir
 
             # Set current runner to the created Khiops service runner
-            pk.set_runner(docker_runner)
+            kh.set_runner(docker_runner)
 
     # pylint: enable=protected-access,consider-using-with
 
@@ -335,17 +331,17 @@ class PyKhiopsDockerRunnerTests(
 
         # Cleanup: remove directories created in `setUpClass`
         if docker_runner_config_exists():
-            shutil.rmtree(pk.get_runner().samples_dir)
-            shutil.rmtree(pk.get_runner().khiops_tmp_dir)
+            shutil.rmtree(kh.get_runner().samples_dir)
+            shutil.rmtree(kh.get_runner().khiops_temp_dir)
 
-        # Reset the pyKhiops runner to the initial one
-        pk.set_runner(cls.initial_runner)
+        # Reset the Khiops Python runner to the initial one
+        kh.set_runner(cls.initial_runner)
 
     def config_exists(self):
         return docker_runner_config_exists()
 
     def remote_access_test_case(self):
-        return "PyKhiopsDockerRunner"
+        return "KhiopsDockerRunner"
 
     def results_dir_root(self):
-        return pk.get_runner().khiops_tmp_dir
+        return kh.get_runner().khiops_temp_dir

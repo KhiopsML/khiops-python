@@ -105,19 +105,19 @@ The three fields of this dictionary are:
   - ``table1`` and ``table2`` are in a ``1:n`` relationship
   - The key of ``table1`` is contained in that of ``table2`` (ie. keys are hierarchical)
 
-  If the ``relations`` field is not present then pyKhiops assumes that the tables are in a *star*
+  If the ``relations`` field is not present then Khiops Python assumes that the tables are in a *star*
   schema.
 
 .. note::
 
-    With respect to Khiops, pyKhiops sklearn estimators have some limitations. They do not support
+    With respect to Khiops, Khiops Python sklearn estimators have some limitations. They do not support
     the following types of multi-table relationships:
 
     - ``Entity`` (``1:1`` table relations) are not currently supported.
     - External data tables are not currently supported.
 
     These features will be available in upcoming releases. If you need to use them, you can use the
-    functions in the `pykhiops.core` sub-module (see below).
+    functions in the `khiops.core` sub-module (see below).
 
 Examples
 --------
@@ -136,8 +136,8 @@ schema:
 
 We build the input ``X`` as follows::
 
-   accidents_df = pd.read_csv(f"{pk.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
-   vehicles_df = pd.read_csv(f"{pk.get_samples_dir()}/AccidentsSummary/Vehicles.txt", sep="\t", encoding="latin1")
+   accidents_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
+   vehicles_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Vehicles.txt", sep="\t", encoding="latin1")
    X = {
       "main_table" : "Accident",
       "tables": {
@@ -167,9 +167,9 @@ We build the input ``X`` as follows (without ``Place`` as it is a ``1:1`` relati
 above)::
 
     # We use `Accidents.txt` table of `AccidentsSummary` as it contains the `Gravity` label pre-calculated
-    accidents_df = pd.read_csv(f"{pk.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
-    vehicles_df = pd.read_csv(f"{pk.get_samples_dir()}/Accidents/Vehicles.txt", sep="\t", encoding="latin1")
-    users_df = pd.read_csv(f"{pk.get_samples_dir()}/Accidents/Users.txt", sep="\t", encoding="latin1")
+    accidents_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
+    vehicles_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Vehicles.txt", sep="\t", encoding="latin1")
+    users_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Users.txt", sep="\t", encoding="latin1")
     X = {
         "main_table": "Accidents",
         "tables": {
@@ -188,7 +188,7 @@ Both datasets can be found in the Khiops samples directory.
 Multi-table learning with the Core API
 ======================================
 
-The functions in `pykhiops.core` that allow using multi-table datasets have the optional parameter
+The functions in `khiops.core` that allow using multi-table datasets have the optional parameter
 ``additional_data_tables``. This dictionary links the secondary tables to their data file paths and
 it's indexed by their **data paths** which are specified as the regular expression::
 
@@ -225,7 +225,7 @@ Types of secondary tables include:
 
 Note that besides the root table names the components of a data path are **table variable names**
 and not *table names*. For further details about the multi-table capabilities of Khiops refer to the
-documentation at `the Khiops site <https://www.khiops.com/html/KhiopsGuide.htm>`_.
+documentation at `the Khiops site <https://khiops.org/setup/KhiopsGuide.pdf>`_.
 
 The class `.DictionaryDomain` provides the helper method `.extract_data_paths` that extracts the
 data paths from a given root dictionary.
@@ -277,7 +277,7 @@ In this case the ``additional_data_tables`` argument consists of only one path: 
 secondary table ``Vehicle``. Since it is pointed by the main table ``Accident`` via the table
 variable ``Vehicle`` the ``additional_data_tables`` parameter should be set as::
 
-    additional_data_tables = {"Accident`Vehicles": f"{pk.get_samples_dir()}/Vehicles.txt"}
+    additional_data_tables = {"Accident`Vehicles": f"{kh.get_samples_dir()}/Vehicles.txt"}
 
 
 Snowflake Schema
@@ -293,7 +293,7 @@ through a *snowflake* schema.
     {
       Categorical AccidentId;
       // The target "Gravity" is calculated from a sub-table
-      // See: https://khiops.com/pdf/KhiopsGuide.pdf#page=58
+      // See: https://khiops.org/setup/KhiopsGuide.pdf#page=58
       Categorical	Gravity = IfC(
           G(TableSum(Vehicles, TableCount(TableSelection(Users, EQc(Gravity, "Death")))), 0),
           "Lethal", "NonLethal");

@@ -6,7 +6,7 @@
 		"reportType": "Modeling",
 		"summary": {
 			"dictionary": "main_table",
-			"database": "/path/to/pykhiops/KhiopsRegressor_fit_e31jij6p/main_table.txt",
+			"database": "/path/to/khiops/KhiopsRegressor_fit_e31jij6p/main_table.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -119,7 +119,7 @@
 		"evaluationType": "Train",
 		"summary": {
 			"dictionary": "main_table",
-			"database": "/path/to/pykhiops/KhiopsRegressor_fit_e31jij6p/main_table.txt",
+			"database": "/path/to/khiops/KhiopsRegressor_fit_e31jij6p/main_table.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",
@@ -163,7 +163,7 @@
 					7
 				]
 			},
-			"database": "/path/to/pykhiops/KhiopsRegressor_fit_e31jij6p/main_table.txt",
+			"database": "/path/to/khiops/KhiopsRegressor_fit_e31jij6p/main_table.txt",
 			"samplePercentage": 100,
 			"samplingMode": "Include sample",
 			"selectionVariable": "",

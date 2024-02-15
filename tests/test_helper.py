@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2023 Orange. All rights reserved.                                    #
+# Copyright (c) 2024 Orange. All rights reserved.                                    #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -16,9 +16,9 @@ import pandas as pd
 import wrapt
 from sklearn.model_selection import train_test_split
 
-import pykhiops.core as pk
-from pykhiops.core.internals.common import is_iterable
-from pykhiops.sklearn.estimators import KhiopsEncoder, KhiopsEstimator
+import khiops.core as kh
+from khiops.core.internals.common import is_iterable
+from khiops.sklearn.estimators import KhiopsEncoder, KhiopsEstimator
 
 
 class CoreApiFunctionMock:
@@ -39,49 +39,55 @@ class CoreApiFunctionMock:
     """
 
     api_function_specs = {
-        ("pykhiops.core.api", "export_dictionary_as_json"): {
+        ("khiops.core.api", "export_dictionary_as_json"): {
             "output_path_arg_index": 1,
             "output_path_is_dir": False,
             "output_file_keys": ["kdicj_path"],
             "return_value_number": 1,
         },
-        ("pykhiops.core", "train_predictor"): {
+        ("khiops.core", "train_predictor"): {
             "output_path_arg_index": 4,
             "output_path_is_dir": True,
             "output_file_keys": ["report_path", "predictor_kdic_path"],
             "return_value_number": 2,
         },
-        ("pykhiops.core", "train_recoder"): {
+        ("khiops.core", "train_recoder"): {
             "output_path_arg_index": 4,
             "output_path_is_dir": True,
             "output_file_keys": ["report_path", "predictor_kdic_path"],
             "return_value_number": 2,
         },
-        ("pykhiops.core", "deploy_model"): {
+        ("khiops.core", "deploy_model"): {
             "output_path_arg_index": 3,
             "output_path_is_dir": False,
             "output_file_keys": ["output_data_table"],
             "return_value_number": 0,
         },
-        ("pykhiops.core", "train_coclustering"): {
+        ("khiops.core", "train_coclustering"): {
             "output_path_arg_index": 4,
             "output_path_is_dir": True,
             "output_file_keys": ["report_path"],
             "return_value_number": 1,
         },
-        ("pykhiops.core", "prepare_coclustering_deployment"): {
+        ("khiops.core", "simplify_coclustering"): {
+            "output_path_arg_index": 2,
+            "output_path_is_dir": True,
+            "output_file_keys": ["report_path"],
+            "return_value_number": 0,
+        },
+        ("khiops.core", "prepare_coclustering_deployment"): {
             "output_path_arg_index": 5,
             "output_path_is_dir": True,
             "output_file_keys": ["deploy_kdic_path"],
             "return_value_number": 0,
         },
-        ("pykhiops.core", "build_multi_table_dictionary"): {
+        ("khiops.core", "build_multi_table_dictionary"): {
             "output_path_arg_index": 3,
             "output_path_is_dir": False,
             "output_file_keys": ["kdic_path"],
             "return_value_number": 0,
         },
-        ("pykhiops.core", "extract_keys_from_data_table"): {
+        ("khiops.core", "extract_keys_from_data_table"): {
             "output_path_arg_index": 3,
             "output_path_is_dir": False,
             "output_file_keys": ["keys_table_path"],
@@ -249,11 +255,17 @@ class CoreApiFunctionMock:
         return False
 
 
-class PyKhiopsTestHelper:
+class KhiopsTestHelper:
     """Helper functions for the actual tests
 
     Some of them need to be static so that they can be serialized for multiprocessing.
     """
+
+    @staticmethod
+    def skip_long_test(test_case):
+        if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
+            if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
+                test_case.skipTest("Skipping long test")
 
     @staticmethod
     def create_parameter_trace():
@@ -287,7 +299,7 @@ class PyKhiopsTestHelper:
     @staticmethod
     def get_two_table_data(dataset_path, root_table_name, secondary_table_name):
         """Read two-table data from two CSV files from sample dataset"""
-        samples_dir = pk.get_runner().samples_dir
+        samples_dir = kh.get_runner().samples_dir
         data_path = os.path.join(samples_dir, dataset_path)
         root_table = pd.read_csv(
             os.path.join(data_path, f"{root_table_name}.txt"), sep="\t"
@@ -300,7 +312,7 @@ class PyKhiopsTestHelper:
     @staticmethod
     def get_monotable_data(dataset_name):
         """Read monotable data from CSV sample dataset"""
-        samples_dir = pk.get_runner().samples_dir
+        samples_dir = kh.get_runner().samples_dir
         return pd.read_csv(
             os.path.join(samples_dir, dataset_name, f"{dataset_name}.txt"), sep="\t"
         )
@@ -359,7 +371,7 @@ class PyKhiopsTestHelper:
         ), "'training_data' should be an iterable with 2 elements"
 
         # Build a fitted estimator
-        fitted_estimator = PyKhiopsTestHelper._create_and_fit_estimator_to_data(
+        fitted_estimator = KhiopsTestHelper._create_and_fit_estimator_to_data(
             estimator_class,
             training_data[0],  # observations
             training_data[1],  # labels
@@ -391,16 +403,16 @@ class PyKhiopsTestHelper:
             and len(data) == 2
         ):
             if isinstance(estimator, KhiopsEncoder):
-                predictions = PyKhiopsTestHelper._transform_data_with_encoder(
+                predictions = KhiopsTestHelper._transform_data_with_encoder(
                     estimator, data[0]
                 )
             else:
                 if kind == "simple":
-                    predictions = PyKhiopsTestHelper._predict_data_with_estimator(
+                    predictions = KhiopsTestHelper._predict_data_with_estimator(
                         estimator, data[0]
                     )
                 elif kind == "proba":
-                    predictions = PyKhiopsTestHelper._predict_proba_with_estimator(
+                    predictions = KhiopsTestHelper._predict_proba_with_estimator(
                         estimator, data[0]
                     )
                 else:

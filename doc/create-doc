@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Obtain this script's dir
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# Default parameter values
+TRANSFORM_NOTEBOOKS=""
+DOWNLOAD_REPO=""
+DEFAULT_KHIOPS_TUTORIAL_REPO_URL="git@github.com:KhiopsML/khiops-python-tutorial.git"
+DEFAULT_KHIOPS_TUTORIAL_DIR="${SCRIPT_DIR}/khiops-python-tutorial"
+
+# Function to display the usage help
+usage() {
+  echo "Usage: create-doc [-r REPO_URL] [-d] [-t] [-l]"
+  echo "Options:"
+  echo "  -d: Downloads the Khiops tutorial repository. Implies -t. See also -r."
+  echo "  -t: Transform the Khiops Jupyter notebooks tutorials into reST."
+  echo "  -r: Set the Khiops tutorial repository. The default is"
+  echo "      '$DEFAULT_KHIOPS_TUTORIAL_REPO_URL'."
+  echo "  -l: Directory of the local copy of the khiops tutorial repository. The default is"
+  echo "      '$DEFAULT_KHIOPS_TUTORIAL_DIR'."
+  echo ""
+}
+
+exit_bad() {
+  usage
+  exit 1
+}
+
+# Read command line arguments
+while getopts "dtr:l:" opt
+do
+  case "$opt" in
+    d ) DOWNLOAD_REPO=true && TRANSFORM_NOTEBOOKS="true" ;;
+    t ) TRANSFORM_NOTEBOOKS="true" ;;
+    r ) KHIOPS_TUTORIAL_REPO_URL="$OPTARG" ;;
+    l ) KHIOPS_TUTORIAL_REPO_DIR="$OPTARG" ;;
+    * ) exit_bad ;;
+  esac
+done
+KHIOPS_TUTORIAL_REPO_URL="${KHIOPS_TUTORIAL_REPO_URL:-$DEFAULT_KHIOPS_TUTORIAL_REPO_URL}"
+KHIOPS_TUTORIAL_REPO_DIR="${KHIOPS_TUTORIAL_REPO_DIR:-$DEFAULT_KHIOPS_TUTORIAL_DIR}"
+
+
+# Add the khiops directory to the Python path
+if [[ -z "${PYTHONPATH+x}" ]]
+then
+  export PYTHONPATH=".."
+else
+  export PYTHONPATH="$PYTHONPATH:.."
+fi
+
+# Check command existence
+command_requirements="tar python make zip"
+if [[ $DOWNLOAD_REPO ]]
+then
+  command_requirements="$command_requirements git"
+fi
+for command_name in $command_requirements
+do
+  if ! command -v "$command_name" &> /dev/null
+  then
+    echo "Required command '$command_name' not found in path, aborting"
+    exit 1
+  fi
+done
+
+# Clone the Khiops tutorial repository
+if [[ $DOWNLOAD_REPO ]]
+then
+  echo "Obtaining khiops-python-tutorial"
+  rm -rf "$KHIOPS_TUTORIAL_REPO_DIR"
+  khiops_python_tutorial_repo_branch="main"
+  git clone --depth 1 --branch="$khiops_python_tutorial_repo_branch" \
+      "$KHIOPS_TUTORIAL_REPO_URL" "$KHIOPS_TUTORIAL_REPO_DIR" \
+      && rm -rf "$KHIOPS_TUTORIAL_REPO_DIR/.git"
+fi
+
+# Convert tutorials to reST
+tutorials_dir="./tutorials"
+mkdir -p "$tutorials_dir"
+if [[ $TRANSFORM_NOTEBOOKS ]]
+then
+  echo "Creating reST tutorial pages"
+  python convert_tutorials.py \
+      --execute-notebooks "$KHIOPS_TUTORIAL_REPO_DIR" "$tutorials_dir"
+fi
+
+
+# Create the coursework materials
+echo "Creating ZIP files"
+(cd "$KHIOPS_TUTORIAL_REPO_DIR" && cp -r data helper_functions.py "../$tutorials_dir")
+cd "$tutorials_dir"
+mkdir -p exercises
+touch exercises/.dummy # Create a dummy so the "exercises" directory is created on unzip
+zip "core_tutorials_solutions.zip" Core*.ipynb helper_functions.py data/*/* exercises/.dummy
+zip "sklearn_tutorials_solutions.zip" Sklearn*.ipynb helper_functions.py data/*/* exercises/.dummy
+cd "$KHIOPS_TUTORIAL_REPO_DIR"
+python create-coursework.py
+cd coursework
+mkdir -p exercises
+touch exercises/.dummy # Create a dummy so the "exercises" directory is created on unzip
+zip "../../$tutorials_dir/core_tutorials.zip" \
+  Core*.ipynb helper_functions.py data/*/* exercises/.dummy
+zip "../../$tutorials_dir/sklearn_tutorials.zip" \
+  Sklearn*.ipynb helper_functions.py data/*/* exercises/.dummy
+cd "../.."
+
+# Create the documentation with Sphinx
+echo "Executing Sphinx"
+make html

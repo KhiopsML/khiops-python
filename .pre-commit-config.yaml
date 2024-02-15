@@ -1,25 +1,42 @@
+---
 repos:
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 23.10.1
     hooks:
       - id: black
         language_version: python3
   - repo: https://github.com/pycqa/pylint
-    rev: v2.17.2
+    rev: v3.0.1
     hooks:
       - id: pylint
         language_version: python3
-        exclude: doc/convert_samples.py|doc/conf.py|versioneer.py|pykhiops/_version.py|setup.py
+        exclude: doc/convert_samples.py|doc/conf.py|versioneer.py|khiops/_version.py|setup.py
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
       - id: isort
         language_version: python3
+  - repo: https://github.com/lyz-code/yamlfix/
+    rev: 1.15.0
+    hooks:
+      - id: yamlfix
+        exclude: packaging/conda/(meta|conda_build_config).yaml
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.27.1
+    hooks:
+      - id: check-github-workflows
+        args: [--verbose]
+      - id: check-github-actions
+        args: [--verbose]
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shellcheck
   - repo: local
     hooks:
       - id: samples-generation
         name: samples-generation
         entry: bash doc/convert-samples-hook
         language: system
-        files: pykhiops/samples/samples.py|pykhiops/samples/samples_sklearn.py
+        files: khiops/samples/samples.py|khiops/samples/samples_sklearn.py
         pass_filenames: false

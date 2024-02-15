@@ -47,6 +47,6 @@ if __name__ == "__main__":
         "file_paths",
         metavar="FILE",
         nargs="+",
-        help="Location of the pykhiops-tutorial directory",
+        help="Location of the khiops-tutorial directory",
     )
     main(parser.parse_args())

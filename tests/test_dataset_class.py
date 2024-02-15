@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2023 Orange. All rights reserved.                                    #
+# Copyright (c) 2024 Orange. All rights reserved.                                    #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -11,26 +11,27 @@ import unittest
 
 import numpy as np
 import pandas as pd
+from numpy.testing import assert_equal
 from pandas.testing import assert_frame_equal
+from sklearn import datasets
 
-from pykhiops.sklearn.tables import Dataset
+from khiops.sklearn.tables import Dataset
 
 
-class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCase):
+class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCase):
     """Test consistency of the created files with the input data
 
-    - The following tests allow to verify that:
-        - The content of the .csv files (created by pykhiops.sklearn) is consistent
-         with the content of the input data.
-        - The content of the dictionaries (created by pykhiops.sklearn) is consistent
-         with the content of the input data.
+    The following tests allow to verify that:
+    - The content of the .csv files (created by khiops.sklearn) is consistent with the
+      content of the input data.
+    - The content of the dictionaries (created by khiops.sklearn) is consistent with the
+      content of the input data.
     - The input data used in the test is variable:
         - a monotable dataset: a dataframe or a file path.
         - a multitable dataset: a dictionary with tables of type dataframe or file
          path that are presented in a random order.
         - Data contained in the datasets is unsorted.
-        - Data contained in the datasets is multi-typed: numeric, categorical and
-        dates.
+        - Data contained in the datasets is multi-typed: numeric, categorical and dates.
         - Two schemas of increasing complexity are considered: star and snowflake.
     """
 
@@ -469,13 +470,13 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         """Test consistency of the created data file with the input dataframe
 
         - This test verifies that the content of the input dataframe is equal
-        to that of the csv file created by pykhiops.sklearn.
+        to that of the csv file created by khiops.sklearn.
         """
         # Create a monotable dataset object from fixture data
-        dataset_spec, label = self.create_fixture_dataset_spec(
+        spec, y = self.create_fixture_dataset_spec(
             output_dir=None, data_type="df", multitable=False, schema=None
         )
-        dataset = Dataset(dataset_spec, label)
+        dataset = Dataset(spec, y=y)
 
         # Create and load the intermediary Khiops file
         created_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
@@ -483,8 +484,8 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
 
         # Cast "Date" columns to datetime as we don't automatically recognize dates
         created_table["Date"] = created_table["Date"].astype("datetime64[ns]")
-        reference_table = dataset_spec["tables"]["Reviews"][0]
-        reference_table["class"] = label
+        reference_table = spec["tables"]["Reviews"][0]
+        reference_table["class"] = y
 
         # Check that the dataframes are equal
         assert_frame_equal(
@@ -492,11 +493,32 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
             reference_table.sort_values(by="User_ID").reset_index(drop=True),
         )
 
+    def test_created_file_from_numpy_array_monotable(self):
+        """Test consistency of the created data file with the input dataframe"""
+        # Create a monotable dahaset from a numpy array
+        iris = datasets.load_iris()
+        spec = {"tables": {"iris": (iris.data, None)}}
+        dataset = Dataset(spec, y=iris.target, categorical_target=True)
+
+        # Create and load the intermediary Khiops file
+        created_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
+        created_table = np.loadtxt(
+            created_table_path, delimiter="\t", skiprows=1, ndmin=2
+        )
+
+        # Check that the arrays are equal
+        assert_equal(
+            created_table,
+            np.concatenate(
+                (iris.data, iris.target.reshape(len(iris.target), 1)), axis=1
+            ),
+        )
+
     def test_created_file_from_data_file_monotable(self):
         """Test consistency of the created data file with the input data file
 
          - This test verifies that the content of the input data file is equal
-        to that of the csv file created by pykhiops.sklearn.
+        to that of the csv file created by khiops.sklearn.
         """
         # Create the test dataset
         dataset_spec, label = self.create_fixture_dataset_spec(
@@ -520,7 +542,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         """Test consistency of the created data files with the input dataframes
 
         - This test verifies that the content of the input dataframes, defined through a
-          dictionary, is equal to that of the csv files created by pykhiops.sklearn. The
+          dictionary, is equal to that of the csv files created by khiops.sklearn. The
           schema of the dataset is "star".
         """
         # Create the test dataset
@@ -565,7 +587,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
 
          - This test verifies that the content of the input data files, defined
         through a dictionary, is equal to that of the csv files created by
-        pykhiops.sklearn. The schema of the dataset is "star".
+        khiops.sklearn. The schema of the dataset is "star".
         """
         dataset_spec, label = self.create_fixture_dataset_spec(
             output_dir=self.output_dir, data_type="file", multitable=True, schema="star"
@@ -608,7 +630,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
 
          - This test verifies that the content of the input dataframes, defined
         through a dictionary, is equal to that of the csv files created by
-        pykhiops.sklearn. The schema of the dataset is "snowflake".
+        khiops.sklearn. The schema of the dataset is "snowflake".
         """
         dataset_spec, label = self.create_fixture_dataset_spec(
             output_dir=None, data_type="df", multitable=True, schema="snowflake"
@@ -651,7 +673,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
 
          - This test verifies that the content of the input data files, defined
         through a dictionary, is equal to that of the csv files created
-        by pykhiops.sklearn. The schema of the dataset is "snowflake".
+        by khiops.sklearn. The schema of the dataset is "snowflake".
         """
         dataset_spec, label = self.create_fixture_dataset_spec(
             output_dir=self.output_dir,
@@ -698,7 +720,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         """Test consistency of the created dictionary with the input dataframe
 
         - This test verifies that the dictionary file (.kdic) created by
-        pykhiops.sklearn contains information that is consistent with the
+        khiops.sklearn contains information that is consistent with the
         input monotable dataset. Data is here provided through a dataframe.
         """
 
@@ -729,7 +751,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         """Test consistency of the created dictionary with the input data file
 
         - This test verifies that the dictionary file (.kdic) created by
-        pykhiops.sklearn contains information that is consistent with the
+        khiops.sklearn contains information that is consistent with the
         input monotable dataset. Data is here provided through a data file.
         """
         dataset_spec, label = self.create_fixture_dataset_spec(
@@ -759,7 +781,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         """Test consistency of the created dictionaries with the input dataframes
 
         - This test verifies that the dictionary file (.kdic) created by
-        pykhiops.sklearn contains information that is consistent with the
+        khiops.sklearn contains information that is consistent with the
         input multitable dataset. Data is here provided through dataframes
         and its schema is "star".
         """
@@ -806,7 +828,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         """Test consistency of the created dictionaries with the input data files
 
         - This test verifies that the dictionary file (.kdic) created by
-        pykhiops.sklearn contains information that is consistent with the
+        khiops.sklearn contains information that is consistent with the
         input multitable dataset. Data is here provided through data files
         and its schema is "star".
         """
@@ -853,7 +875,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
         """Test consistency of the created dictionaries with the input dataframes
 
         - This test verifies that the dictionary file (.kdic) created by
-        pykhiops.sklearn contains information that is consistent with the
+        khiops.sklearn contains information that is consistent with the
         input multitable dataset. Data is here provided through dataframes
         and its schema is "snowflake".
         """
@@ -934,7 +956,7 @@ class PyKhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestC
     def test_created_dictionary_from_data_files_multitable_snowflake(self):
         """Test consistency of the created dictionaries with the input data files
 
-        - This test verifies that the dictionary file created by pykhiops.sklearn
+        - This test verifies that the dictionary file created by khiops.sklearn
         contains information that is consistent with the input multitable dataset.
         Data is here provided through data files and its schema is "snowflake".
         """

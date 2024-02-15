@@ -16,7 +16,7 @@ def create_boilerplate_code(script_name):
             "from math import sqrt\n",
             "from os import path\n",
             "\n",
-            "from pykhiops import core as pk\n",
+            "from khiops import core as kh\n",
             "\n",
         ]
     elif script_name == "samples_sklearn":
@@ -34,8 +34,8 @@ def create_boilerplate_code(script_name):
             "from sklearn.pipeline import Pipeline\n",
             "from sklearn.preprocessing import OneHotEncoder\n",
             "\n",
-            "from pykhiops import core as pk\n",
-            "from pykhiops.sklearn import (\n",
+            "from khiops import core as kh\n",
+            "from khiops.sklearn import (\n",
             "    KhiopsClassifier,\n",
             "    KhiopsCoclustering,\n",
             "    KhiopsEncoder,\n",
@@ -57,11 +57,11 @@ def create_header_cells(script_name):
             "cell_type": "markdown",
             "metadata": {},
             "source": [
-                f"# pyKhiops {script_name}\n",
+                f"# Khiops Python {script_name}\n",
                 f"This is a notebook containing the code in the `{script_name}.py` script\n"
-                "of the Khiops python library `pykhiops`.\n\n"
+                "of the Khiops Python library.\n\n"
                 "Make sure you have already installed the latest version of ",
-                "[Khiops](http://www.khiops.com) before using this this notebook",
+                "[Khiops](https://khiops.org) before using this this notebook",
             ],
         },
         {
@@ -97,13 +97,13 @@ def create_sample_cell(sample_method):
 def create_rest_page_header(script_name):
     boilerplate_code = "".join(create_boilerplate_code(script_name))
     indented_boilerplate_code = textwrap.indent(boilerplate_code, "    ")
-    subtitle = "The samples on this page demonstrate the basic use of the "
+    subtitle = "The code snippets on this page demonstrate the basic use of the "
     if script_name == "samples":
         title = "Samples core"
-        subtitle += "``pykhiops.core`` module."
+        subtitle += ":py:mod:`khiops.core` module."
     else:
         title = "Samples sklearn"
-        subtitle += "``pykhiops.sklearn`` module."
+        subtitle += ":py:mod:`khiops.sklearn` module."
     return (
         ":orphan:\n"
         "\n"
@@ -118,12 +118,27 @@ def create_rest_page_header(script_name):
         "---------------------------\n"
         "The samples in this page are also available as:\n"
         "\n"
-        f"- :download:`Python script <../../pykhiops/samples/{script_name}.py>`\n"
-        f"- :download:`Jupyter notebook <../../pykhiops/samples/{script_name}.ipynb>`\n"
+        f"- :download:`Python script <../../khiops/samples/{script_name}.py>`\n"
+        f"- :download:`Jupyter notebook <../../khiops/samples/{script_name}.ipynb>`\n"
         "\n"
-        "Code Preamble\n"
-        "-------------\n"
-        "The following preamble makes sure all samples in this page run correctly\n"
+        "Setup\n"
+        "-----\n"
+        "First make sure you have installed the sample datasets. In a configured\n"
+        "conda shell (ex. *Anaconda Prompt* in Windows) execute:\n"
+        "\n"
+        ".. code-block:: shell\n"
+        "\n"
+        "    kh-download-datasets\n"
+        "\n"
+        "If that doesn't work open a python console and execute:\n"
+        "\n"
+        ".. code-block:: python\n"
+        "\n"
+        "    from khiops.tools import download_datasets\n"
+        "    download_datasets()\n"
+        "\n"
+        "Before copying any code snippet make sure to precede it with following\n"
+        "preamble:\n"
         "\n"
         ".. code-block:: python\n"
         "\n"
@@ -171,18 +186,18 @@ def main(args):
         print("error: input and output paths are the same")
         sys.exit(1)
 
-    # Add pykhiops root to the python path
-    pykhiops_root_path = os.path.dirname(
+    # Add khiops root to the python path
+    khiops_root_path = os.path.dirname(
         os.path.dirname(os.path.realpath(args.samples_dir))
     )
-    sys.path.append(pykhiops_root_path)
+    sys.path.append(khiops_root_path)
 
     # Import samples as a module
     try:
         if args.sklearn:
-            from pykhiops.samples import samples_sklearn as samples
+            from khiops.samples import samples_sklearn as samples
         else:
-            from pykhiops.samples import samples as samples
+            from khiops.samples import samples as samples
     except ImportError as error:
         print(f"Could not import samples script {script_name}.py:")
         print(error)

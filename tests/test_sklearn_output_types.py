@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2023 Orange. All rights reserved.                                    #
+# Copyright (c) 2024 Orange. All rights reserved.                                    #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -8,9 +8,12 @@
 import unittest
 
 import pandas as pd
+from numpy.testing import assert_array_equal
 from sklearn import datasets
+from sklearn.utils.validation import column_or_1d
 
-from pykhiops.sklearn import KhiopsClassifier, KhiopsRegressor
+from khiops.sklearn.estimators import KhiopsClassifier, KhiopsRegressor
+from tests.test_helper import KhiopsTestHelper
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
@@ -41,8 +44,11 @@ def create_iris_mt():
     return X_iris_df, X_iris_sec_df, y_iris_series
 
 
-class PyKhiopsSklearnOutputTypes(unittest.TestCase):
+class KhiopsSklearnOutputTypes(unittest.TestCase):
     """Tests for checking the output types of predictors"""
+
+    def setUp(self):
+        KhiopsTestHelper.skip_long_test(self)
 
     def test_classifier_output_types(self):
         """Test the KhiopsClassifier output types and classes of predict* methods"""
@@ -71,14 +77,14 @@ class PyKhiopsSklearnOutputTypes(unittest.TestCase):
                 "cat string": pd.api.types.is_string_dtype,
             },
             "expected_classes": {
-                "int": [0, 1, 2],
-                "int binary": [0, 1],
-                "string": ["se", "ve", "vi"],
-                "string binary": ["ve", "vi_or_se"],
-                "int as string": ["10", "8", "9"],
-                "int as string binary": ["10", "89"],
-                "cat int": [0, 1, 2],
-                "cat string": ["se", "ve", "vi"],
+                "int": column_or_1d([0, 1, 2]),
+                "int binary": column_or_1d([0, 1]),
+                "string": column_or_1d(["se", "ve", "vi"]),
+                "string binary": column_or_1d(["ve", "vi_or_se"]),
+                "int as string": column_or_1d(["10", "8", "9"]),
+                "int as string binary": column_or_1d(["10", "89"]),
+                "cat int": column_or_1d([0, 1, 2]),
+                "cat string": column_or_1d(["se", "ve", "vi"]),
             },
             "Xs": {
                 "mono": X,
@@ -103,23 +109,23 @@ class PyKhiopsSklearnOutputTypes(unittest.TestCase):
                     estimator=KhiopsClassifier.__name__,
                 ):
                     # Train the classifier
-                    pkc = KhiopsClassifier(n_trees=0)
-                    pkc.fit(X, y)
+                    khc = KhiopsClassifier(n_trees=0)
+                    khc.fit(X, y)
 
                     # Check the expected classes
-                    self.assertEqual(pkc.classes_, expected_classes)
+                    assert_array_equal(khc.classes_, expected_classes)
 
                     # Check the return type of predict
-                    y_pred = pkc.predict(X)
+                    y_pred = khc.predict(X)
                     self.assertTrue(
                         y_type_check(y_pred),
                         f"Invalid predict return type {y_pred.dtype}.",
                     )
 
                     # Check the dimensions of predict_proba
-                    y_probas = pkc.predict_proba(X)
+                    y_probas = khc.predict_proba(X)
                     self.assertEqual(len(y_probas.shape), 2)
-                    self.assertEqual(y_probas.shape[1], len(pkc.classes_))
+                    self.assertEqual(y_probas.shape[1], len(khc.classes_))
 
     def test_regression_output_types(self):
         """Test the KhiopsRegressor output types of the predict method"""
@@ -148,11 +154,11 @@ class PyKhiopsSklearnOutputTypes(unittest.TestCase):
                     estimator=KhiopsClassifier.__name__,
                 ):
                     # Train the classifier
-                    pkr = KhiopsRegressor()
-                    pkr.fit(X, y)
+                    khr = KhiopsRegressor()
+                    khr.fit(X, y)
 
                     # Check the return type of predict
-                    y_pred = pkr.predict(X)
+                    y_pred = khr.predict(X)
                     self.assertTrue(
                         pd.api.types.is_float_dtype(y_pred),
                         f"Invalid predict return type {y_pred.dtype}.",
