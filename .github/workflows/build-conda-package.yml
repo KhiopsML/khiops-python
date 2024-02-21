@@ -1,5 +1,5 @@
 ---
-name: Conda
+name: Conda Packages
 env:
   DEFAULT_KHIOPS_REVISION: dev
   DEFAULT_SAMPLES_REVISION: main
@@ -23,8 +23,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  build-packages:
-    name: Build Packages
+  build:
     strategy:
       fail-fast: false
       matrix:
@@ -87,8 +86,8 @@ jobs:
           path: ./khiops-conda
           retention-days: 7
   # Test Conda package on brand new environments
-  test-packages:
-    needs: build-packages
+  test:
+    needs: build
     strategy:
       fail-fast: false
       matrix:
@@ -148,9 +147,9 @@ jobs:
           kh-samples sklearn -i khiops_classifier -e
           kh-samples sklearn -i khiops_coclustering -e
   # Build and push Conda package release archive
-  release-packages:
+  release:
     # We need `build-packages` because we use its output
-    needs: [build-packages, test-packages]
+    needs: [build, test]
     runs-on: ubuntu-latest
     permissions:
       contents: write
