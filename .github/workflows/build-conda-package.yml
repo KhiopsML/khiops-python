@@ -15,7 +15,10 @@ on:
   push:
     tags: [v*]
   pull_request:
-    paths: [.github/workflows/build-conda-package.yml]
+    paths:
+      - packaging/conda/**
+      - '!packaging/conda/README.md'
+      - .github/workflows/build-conda-package.yml
 defaults:
   run:
     shell: bash -el {0}
@@ -28,13 +31,19 @@ jobs:
       fail-fast: false
       matrix:
         #  Use the oldest supported Mac OS and Ubuntu versions for GLIBC compatibility
-        os: [ubuntu-20.04, windows-latest, macos-11]
+        include:
+          - os: ubuntu-20.04
+            os-family: linux
+          - os: windows-latest
+            os-family: windows
+          - os: macos-11
+            os-family: macos
     runs-on: ${{ matrix.os }}
     outputs:
       pkg-version: ${{ steps.get-pkg-version.outputs.pkg-version }}
     steps:
       - name: Checkout Sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Checkout the full repository to have the tags so versioneer works properly
           # See issue https://github.com/actions/checkout/issues/701
@@ -50,7 +59,8 @@ jobs:
       - name: Install Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          activate-environment: khiops-python-env
+          miniconda-version: latest
+          python-version: '3.11'
       - name: Install Dependency Requirements for Building Conda Packages
         run: conda install conda-build=3.27.0 conda-verify
       # We need MacOS SDK 10.10 to build on Big Sur
@@ -80,9 +90,9 @@ jobs:
           )
           echo "pkg-version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
       - name: Upload Khiops Conda Package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: khiops-${{ steps.get-pkg-version.outputs.pkg-version }}-conda
+          name: khiops-conda-${{ matrix.os-family }}
           path: ./khiops-conda
           retention-days: 7
   # Test Conda package on brand new environments
@@ -91,16 +101,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-20.04
-          - ubuntu-22.04
-          - windows-2019
-          - windows-2022
-          - macos-11
-          - macos-12
-          - macos-13
+        env:
+          - {os: ubuntu-20.04, os-family: linux}
+          - {os: ubuntu-22.04, os-family: linux}
+          - {os: windows-2019, os-family: windows}
+          - {os: windows-2022, os-family: windows}
+          - {os: macos-11, os-family: macos}
+          - {os: macos-12, os-family: macos}
+          - {os: macos-13, os-family: macos}
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.env.os }}
     env:
       KHIOPS_SAMPLES_DIR: ./khiops-samples-repo
     steps:
@@ -113,7 +123,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
@@ -122,13 +132,12 @@ jobs:
       - name: Install Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: latest  # needed for Mac OS 13
+          miniconda-version: latest  # needed for macOS 13
           python-version: ${{ matrix.python-version }}
-          activate-environment: khiops-python-env
       - name: Download Conda Package Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: khiops-${{ needs.build-packages.outputs.pkg-version }}-conda
+          name: khiops-conda-${{ matrix.env.os-family }}
           path: khiops-conda
       - name: Install the Khiops Conda pagkage (Windows)
         if: runner.os == 'Windows'
@@ -146,17 +155,48 @@ jobs:
           kh-samples core -i train_coclustering -e
           kh-samples sklearn -i khiops_classifier -e
           kh-samples sklearn -i khiops_coclustering -e
-  # Build and push Conda package release archive
+  # Release is only executed on tags
   release:
-    # We need `build-packages` because we use its output
+    if: github.ref_type == 'tag'
+    # We need `build` because we use its output
     needs: [build, test]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: read
     steps:
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          # See the upload-artifact step in the build job for the explanation of this pattern
+          path: ./khiops-conda
+          pattern: khiops-conda-*
+          merge-multiple: true
+      - name: Install Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: latest
+          python-version: '3.11'
+      - name: Reindex the package
+        run: |
+          conda install -y conda-build=3.27.0
+          conda-index ./khiops-conda
+      - name: Create the release zip archive
+        uses: thedoctor0/zip-release@0.7.6
+        with:
+          type: zip
+          path: ./khiops-conda/
+          filename: khiops-${{ needs.build.outputs.pkg-version }}-conda.zip
+      - name: Upload conda package artifacts for all platforms
+        uses: actions/upload-artifact@v4
+        with:
+          name: khiops-conda-all
+          path: ./khiops-${{ needs.build.outputs.pkg-version }}-conda.zip
       - name: Release the zip archive
-        if: github.event_name == 'push'
         uses: ncipollo/release-action@v1
         with:
-          artifacts: khiops-${{ needs.build-packages.outputs.pkg-version }}-conda
+          allowUpdates: true
+          artifacts: ./khiops-${{ needs.build.outputs.pkg-version }}-conda.zip
+          draft: false
+          makeLatest: false
+          prerelease: true
+          updateOnlyUnreleased: true
