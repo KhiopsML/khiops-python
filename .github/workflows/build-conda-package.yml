@@ -1,13 +1,13 @@
 ---
 name: Conda Packages
 env:
-  DEFAULT_KHIOPS_REVISION: dev
+  DEFAULT_KHIOPS_REVISION: main
   DEFAULT_SAMPLES_REVISION: main
 on:
   workflow_dispatch:
     inputs:
       khiops-revision:
-        default: dev
+        default: main
         description: khiops repo revision
       samples-revision:
         default: main
