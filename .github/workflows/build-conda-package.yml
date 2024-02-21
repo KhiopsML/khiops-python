@@ -99,7 +99,7 @@ jobs:
           - macos-11
           - macos-12
           - macos-13
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     runs-on: ${{ matrix.os }}
     env:
       KHIOPS_SAMPLES_DIR: ./khiops-samples-repo
