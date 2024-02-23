@@ -19,6 +19,7 @@ Note: This release marks the open sourcing of Khiops:
   - `khiops-python` is now available with conda `khiops` package. This package bundles
     `khiops-python` and the Khiops binaries so no system-wide Khiops installation is needed. More
     information at the [Khiops website][khiops].
+  - Support for python 3.12.
 - `sklearn`
   - Estimator classes can now be trained from Numpy arrays in single-table mode.
 - `core`
