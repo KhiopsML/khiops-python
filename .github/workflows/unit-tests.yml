@@ -1,5 +1,5 @@
 ---
-name: Run Unit Tests
+name: Unit Tests
 env:
   DEFAULT_SAMPLES_REVISION: main
 on:
@@ -18,8 +18,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  run-unit-tests:
-    runs-on: ubuntu-latest
+  run:
+    runs-on: ubuntu-22.04
     container:
       image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
       credentials:
@@ -32,7 +32,7 @@ jobs:
       packages: read
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -46,7 +46,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
@@ -88,7 +88,7 @@ jobs:
           reporter: java-junit
           path-replace-backslashes: 'true'  # Necessary for windows paths
       - name: Upload Test Reports as Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: |-
@@ -104,7 +104,6 @@ jobs:
             tests/resources/general_options/general_options/*/*._kh
           retention-days: 7
   check-mpiexec-on-linux:
-    needs: run-unit-tests
     strategy:
       fail-fast: false
       matrix:
@@ -122,12 +121,12 @@ jobs:
       packages: read
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
-      - name: Install khiops-python dependencies
+      - name: Install khiops-python dev dependencies
         run: |
           python setup.py egg_info
           pip install `grep -v "^\[" khiops.egg-info/requires.txt`
