@@ -1086,6 +1086,17 @@ class KhiopsLocalRunner(KhiopsRunner):
             )
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
+        # Warn if the khiops version is too far from the khiops-python version
+        compatible_khiops_version = khiops.get_compatible_khiops_version()
+        if self._khiops_version.major > compatible_khiops_version.major:
+            warnings.warn(
+                f"Khiops version '{self._khiops_version}' is ahead "
+                f"from the khiops-python version '{khiops.__version__}'. "
+                "There may be compatibility errors and "
+                "it is recommended to update to the latest khiops-python version.",
+                stacklevel=3,
+            )
+
     def _set_empty_mpi_command_args_and_raise_warning(self):
         self.mpi_command_args = []
         warnings.warn(
@@ -1382,18 +1393,6 @@ class KhiopsLocalRunner(KhiopsRunner):
         assert isinstance(self._khiops_version, KhiopsVersion), type_error_message(
             self._khiops_version, "khiops_version", KhiopsVersion
         )
-        compatible_khiops_version = khiops.get_compatible_khiops_version()
-        if (
-            self._khiops_version.major > compatible_khiops_version.major
-            or self._khiops_version.minor > compatible_khiops_version.minor
-        ):
-            warnings.warn(
-                f"Khiops version '{self._khiops_version}' is very ahead "
-                f"from Khiops Python version '{khiops.__version__}'. "
-                "There may be compatibility errors and "
-                "it is recommended to update to the latest khiops-python version.",
-                stacklevel=3,
-            )
         return self._khiops_version
 
     @property
