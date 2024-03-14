@@ -728,6 +728,8 @@ class DatasetSpecErrorsTests(unittest.TestCase):
 
     def test_dict_spec_target_column_must_be_specified_to_be_accessed(self):
         """Test Dataset raising ValueError when accessing a non specified target col"""
+        # Disable pointless statement because it is necessary for the test
+        # pylint: disable=pointless-statement
         spec, _ = self.create_fixture_dataset_spec(
             output_dir=self.output_dir, data_type="file", multitable=False, schema=None
         )

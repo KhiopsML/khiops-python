@@ -13,7 +13,7 @@ on:
         default: main
         description: khiops-samples repo revision
   push:
-    tags: [v*]
+    tags: ['*']
   pull_request:
     paths:
       - packaging/conda/**
