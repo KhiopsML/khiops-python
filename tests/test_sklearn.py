@@ -12,6 +12,7 @@ import shutil
 import unittest
 import warnings
 
+import pandas as pd
 from sklearn.utils.estimator_checks import check_estimator
 
 import khiops.core as kh
@@ -1779,6 +1780,10 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 custom_kwargs.get("fit", {}) if custom_kwargs is not None else {}
             )
             estimator.fit(X_train_data, y_train_data, **fit_kwargs)
+            # FIXME : find a clever way to avoid executing the estimator method twice
+            if isinstance(y_train_data, pd.Series):
+                y_train_data_dataframe = pd.DataFrame(y_train_data)
+                estimator.fit(X_train_data, y_train_data_dataframe, **fit_kwargs)
 
             # Custom logic for calling additional methods, after `fit`:
             # On a "simplify" test: execute `simplify` on the fitted
