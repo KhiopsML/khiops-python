@@ -704,12 +704,12 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = "Separator must be a single character. Value: ;;"
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
-    def test_dict_spec_y_type_must_be_series_when_x_is_df_spec(self):
+    def test_dict_spec_y_type_must_be_series_or_df_when_x_is_df_spec(self):
         """Test Dataset raising TypeError if X a is df-dict-spec and y isn't a Series"""
         spec, _ = self.create_fixture_dataset_spec(multitable=False, schema=None)
         bad_y = AnotherType()
         expected_msg = (
-            type_error_message("y", bad_y, pd.Series)
+            type_error_message("y", bad_y, pd.Series, pd.DataFrame)
             + " (X's tables are of type pandas.DataFrame)"
         )
         self.assert_dataset_fails(spec, bad_y, TypeError, expected_msg)

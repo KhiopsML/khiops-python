@@ -318,7 +318,7 @@ class KhiopsTestHelper:
         )
 
     @staticmethod
-    def prepare_data(data, target_variable, primary_table=None):
+    def prepare_data(data, target_variable, primary_table=None, y_as_dataframe=False):
         """Prepare training and testing data for automated tests"""
         if primary_table is None:
             data_train, data_test = train_test_split(
@@ -327,6 +327,10 @@ class KhiopsTestHelper:
 
             y_test = data_test[target_variable]
             y_train = data_train[target_variable]
+
+            # Create training labels as single-column dataframe
+            if y_as_dataframe:
+                y_train = pd.DataFrame(y_train, columns=[target_variable])
 
             x_test = data_test.drop([target_variable], axis=1)
             x_train = data_train.drop([target_variable], axis=1)
