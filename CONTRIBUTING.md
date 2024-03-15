@@ -241,16 +241,25 @@ For development dependencies (eg. `black`, `isort`, `sphinx`, `wrapt`, `furo`) w
 carefree while still trying to not add too many dependencies.
 
 ## Versioning
-We follow a non-standard `MAJOR.MINOR.PATCH.INCREMENT[-PRE_RELEASE]` versioning convention. The
+We follow a non-standard `MAJOR.MINOR.PATCH.INCREMENT[PRE_RELEASE]` versioning convention. The
 first three numbers `MAJOR.MINOR.PATCH` are the latest Khiops version that is compatible with the
 package. The number `INCREMENT` indicates the evolution of `khiops-python` followed by an optional
-`[-PRE_RELEASE` version for alpha, beta and release candidate releases (eg. `-b2`).
+`[PRE_RELEASE` version for alpha, beta and release candidate releases (eg. `b2`).
 
 ## Releases
+When tagging a revision the CI will create the packages and upload them to the `khiops-dev` channel.
+Prefer to augment the pre-release revision number to re-create a tag because the CI overwrites
+packages with the same tag in the `khiops-dev` channel. Do not forget to clean any temporary
+pre-releases from `khiops-dev` and the releases github page.
+
+To make a public release, you must execute the `Conda Packages` CI workflow manually on a tag and
+specify the `khiops` anaconda channel for upload. These uploads do not overwrite any packages in
+this channel, so you must correct any mistake manually.
+
+### Git Manipulations upon a Major Release
 The following is the check list to be done upon a major release:
 - Merge the `dev` branch into `main`
 - Tag the merge commit with the release version
 - Rebase the `dev` branch onto `main`
   - This is necessary to include the merge commit into master to calculate intermediary versions
     with versioneer
-- Make a GitHub Release (TBD)
