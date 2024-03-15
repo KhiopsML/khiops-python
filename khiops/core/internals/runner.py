@@ -6,7 +6,6 @@
 ######################################################################################
 """Classes implementing Khiops Python' backend runners"""
 
-import importlib
 import io
 import os
 import platform
@@ -14,12 +13,10 @@ import re
 import shlex
 import shutil
 import subprocess
-import sys
 import tempfile
 import uuid
 import warnings
 from abc import ABC, abstractmethod
-from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import khiops
@@ -1051,88 +1048,71 @@ class KhiopsLocalRunner(KhiopsRunner):
         # so that mpiexec is in the path
         if mpiexec_path is None:
             # If environment modules are installed, then load the MPI module
-            # Procedure inspired from the official documentation
-            # https://modules.readthedocs.io/en/latest/module.html#examples-of-initialization
-            # in a more Pythonic way
-
-            # Initialize subshell environment to get the MODULESHOME environment
-            # variable
-            # Thus, one does not assume khiops-python is launched in a shell
-            # with initialized environment modules
             module_init_script_path = os.path.join(
                 os.path.sep, "etc", "profile.d", "modules.sh"
             )
-            modules_home_path = None
+
+            # List available environment modules
             if os.path.exists(module_init_script_path):
                 shell_command = shlex.split(
-                    f"bash -c 'source {module_init_script_path} && env'"
+                    f"sh -c 'source {module_init_script_path} && module avail'"
                 )
                 with subprocess.Popen(
                     shell_command,
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
                 ) as env_modules_init_process:
-                    stdout, _ = env_modules_init_process.communicate()
-                for env_line in stdout.splitlines():
-                    env_var, _, value = env_line.partition(b"=")
-                    if env_var == b"MODULESHOME":
-                        modules_home_path = value.decode("utf-8")
-                        break
-                else:
-                    self._set_empty_mpi_command_args_and_raise_warning()
+                    stdout, stderr = env_modules_init_process.communicate()
 
-            # If environment modules are available, then initialize them for Python
-            if modules_home_path is not None:
-                # Update sys.path so that the Python module support can be imported
-                sys.path.append(os.path.join(modules_home_path, "init"))
-                # The Python environment modules API module is available only here
-                env_modules_api = importlib.import_module("python")
-
-                module = env_modules_api.module
-                mpich_module = None
-                # Support Python 3.8 which does not parse parenthesized context
-                # managers (introduced in Python 3.9 via PEP 617:
-                # https://peps.python.org/pep-0617/)
-                with io.StringIO() as stdout_buffer:
-                    with io.StringIO() as stderr_buffer:
-                        with redirect_stdout(stdout_buffer):
-                            with redirect_stderr(stderr_buffer):
-                                module_availability_status = module("avail")
-                                stdout = stdout_buffer.getvalue()
-                                stderr = stderr_buffer.getvalue()
-                if module_availability_status:
-                    # module writes to stderr, even though this is not documented
-                    # hence, both stdout and stderr are scanned
-                    # the most recent MPICH version is searched
+                # If environment modules listing worked, look-up the MPI module
+                if env_modules_init_process.returncode == 0:
                     for line in sorted(
-                        re.sub("\\s+", "\\n", stdout + stderr).splitlines(),
+                        re.sub(
+                            "\\s+", "\\n", (stdout + stderr).decode("utf-8")
+                        ).splitlines(),
                         reverse=True,
                     ):
+                        # If MPI environment module is found, attempt to load it
                         if (
                             re.search("mpich-[0-9]", line) is not None
                             and platform.machine() in line
                             or f"mpich-{platform.machine()}" in line
                         ):
                             mpich_module = line
+                            # Use 'type -P' to get the path to executable,
+                            # as 'which' is non-portable
+                            shell_command = shlex.split(
+                                f"sh -c 'source {module_init_script_path} && "
+                                f"module unload mpi && module load {mpich_module} && "
+                                "type -P mpiexec'"
+                            )
+                            with subprocess.Popen(
+                                shell_command,
+                                stdin=subprocess.DEVNULL,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.DEVNULL,
+                            ) as mpi_module_load_process:
+                                stdout, _ = mpi_module_load_process.communicate()
+
+                            # If MPI module is loaded, get the path to mpiexec
+                            if mpi_module_load_process.returncode == 0:
+                                for line in stdout.decode("utf-8").splitlines():
+                                    if "mpiexec" in line:
+                                        mpiexec_path = line
+                                    break
+                                if mpiexec_path is not None:
+                                    self._set_mpi_command_args_with_mpiexec(
+                                        mpiexec_path
+                                    )
                             break
-                if mpich_module is not None:
-                    mpich_loaded = module("load", mpich_module)
-                    # mpiexec is in the PATH after environment module load
-                    if mpich_loaded:
-                        mpiexec_path = shutil.which("mpiexec")
-                        if mpiexec_path is not None:
-                            self._set_mpi_command_args_with_mpiexec(mpiexec_path)
-                        else:
-                            self._set_empty_mpi_command_args_and_raise_warning()
-                    # If for some reason MPI environment module loading fails,
-                    # then just do not use MPI
-                    else:
-                        self._set_empty_mpi_command_args_and_raise_warning()
-            else:
-                self._set_empty_mpi_command_args_and_raise_warning()
-        else:
+
+        # If MPI is found, then set the path to mpiexec accordingly
+        if mpiexec_path is not None:
             self._set_mpi_command_args_with_mpiexec(mpiexec_path)
+        # If MPI is still not found, then do not use MPI and warn the user
+        else:
+            self._set_empty_mpi_command_args_and_raise_warning()
 
     def _set_empty_mpi_command_args_and_raise_warning(self):
         self.mpi_command_args = []
