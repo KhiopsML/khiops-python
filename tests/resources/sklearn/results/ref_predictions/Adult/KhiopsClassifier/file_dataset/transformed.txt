@@ -1,5 +1,0 @@
-Label	Predictedclass
-100	less
-10004	more
-10006	more
-10007	less

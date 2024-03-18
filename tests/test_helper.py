@@ -17,7 +17,7 @@ import wrapt
 from sklearn.model_selection import train_test_split
 
 import khiops.core as kh
-from khiops.core.internals.common import is_iterable
+from khiops.core.internals.common import is_iterable, type_error_message
 from khiops.sklearn.estimators import KhiopsEncoder, KhiopsEstimator
 
 
@@ -260,6 +260,18 @@ class KhiopsTestHelper:
 
     Some of them need to be static so that they can be serialized for multiprocessing.
     """
+
+    @staticmethod
+    def get_with_subkey(dictionary, subkey):
+        values = []
+        for key, value in dictionary.items():
+            if not isinstance(key, tuple):
+                raise TypeError(type_error_message("key", key, tuple))
+            if len(key) < 1:
+                raise ValueError("'key' must be  non-empty")
+            if subkey in key:
+                values.append(value)
+        return values
 
     @staticmethod
     def skip_long_test(test_case):

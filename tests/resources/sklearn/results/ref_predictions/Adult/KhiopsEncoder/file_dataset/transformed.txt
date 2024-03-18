@@ -1,5 +1,0 @@
-IdPage	IdPworkclass	IdPfnlwgt	IdPeducation	IdPeducation_num	IdPmarital_status	IdPoccupation	IdPrelationship	IdPrace	IdPsex	IdPcapital_gain	IdPcapital_loss	IdPhours_per_week	IdPnative_country	IdPTree_1	IdPTree_2	IdPTree_3	IdPTree_4	IdPTree_5	IdPTree_6	IdPTree_7	IdPTree_8	IdPTree_9	IdPTree_10
-I6	I4	I3	I1	I2	I2	I6	I3	I2	I1	I1	I1	I3	I1	I3	I10	I2	I2	I1	I2	I1	I4	I1	I2
-I9	I3	I3	I6	I6	I2	I5	I2	I1	I1	I1	I1	I7	I1	I7	I11	I3	I8	I8	I9	I10	I11	I6	I9
-I9	I1	I2	I5	I4	I1	I4	I1	I1	I1	I1	I1	I6	I1	I7	I6	I6	I8	I12	I7	I9	I9	I13	I8
-I5	I1	I2	I1	I2	I2	I1	I4	I1	I1	I1	I1	I2	I1	I1	I2	I2	I2	I1	I1	I1	I1	I2	I2
