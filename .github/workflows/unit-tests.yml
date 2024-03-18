@@ -20,6 +20,9 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python3-supported-versions: ['3.8', '3.9', '3.10', '3.11', '3.12']
     container:
       image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
       credentials:
@@ -52,19 +55,23 @@ jobs:
           ref: ${{ env.SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
-      - name: Setup and Install Test Requirements
+      - name: Setup and Install Test Requirements for each python3 version
         if: success() || failure()
         run: |
-          mkdir -p -m u+rwx ${{ github.workspace }}/reports
+          mkdir -p -m u+rwx ${{ github.workspace }}/reports/py${{ matrix.python3-supported-versions }}            
+          source /root/miniconda3/bin/activate py${{ matrix.python3-supported-versions }}  # warning : conda activate fails 
           pip install unittest-xml-reporting
           pip install -r test-requirements.txt
-      - name: Install khiops-python dependencies
+        shell: bash
+      - name: Install khiops-python dependencies for each python3 version
         if: success() || failure()
         run: |
+          source /root/miniconda3/bin/activate py${{ matrix.python3-supported-versions }}  # warning : conda activate fails
           python setup.py egg_info
           pip install `grep -v "^\[" khiops.egg-info/requires.txt`
           rm -rf khiops.egg-info
-      - name: Prepare Unit Tests Environment
+        shell: bash
+      - name: Prepare Unit Tests Environment for each python3 version
         if: github.ref != 'dev' && github.ref != 'main' && ! inputs.run-long-tests
         run: echo "UNITTEST_ONLY_SHORT_TESTS=true" >> "$GITHUB_ENV"
       - name: Run Unit Tests
@@ -76,15 +83,17 @@ jobs:
         run: |
           # This is needed so that the Git tag is parsed and the khiops-python
           # version is retrieved
-          git config --global --add safe.directory $(realpath .)
-          coverage run -m xmlrunner -o "reports" -v
+          git config --global --add safe.directory $(realpath .)                      
+          source /root/miniconda3/bin/activate py${{ matrix.python3-supported-versions }}  # warning : conda activate fails
+          coverage run -m xmlrunner -o "reports/py${{ matrix.python3-supported-versions }}" -v
           coverage report -m
-          coverage xml -o "reports/py-coverage.xml"
+          coverage xml -o "reports/py${{ matrix.python3-supported-versions }}/py-coverage.xml"
+        shell: bash
       - name: Display Unit Test Reports
         uses: dorny/test-reporter@v1
         with:
           name: Unit Tests
-          path: reports/TEST-tests.*.*.xml
+          path: reports/*/TEST-tests.*.*.xml
           reporter: java-junit
           path-replace-backslashes: 'true'  # Necessary for windows paths
       - name: Upload Test Reports as Artifacts
@@ -92,8 +101,8 @@ jobs:
         with:
           name: test-reports
           path: |-
-            reports/TEST-tests.*.*.xml
-            reports/py-coverage.xml
+            reports/*/TEST-tests.*.*.xml
+            reports/*/py-coverage.xml
             tests/resources/scenario_generation/*/ref/*._kh
             tests/resources/scenario_generation/*/output/*._kh
             tests/resources/*/output_reports/*.txt
