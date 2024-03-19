@@ -1368,8 +1368,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
               first element of the list is the main table and the following are
               secondary ones joined to the main table using ``key`` estimator parameter.
 
-        y : :external:term:`array-like` of shape (n_samples,)
-            :external:term:`array-like` object containing the target values.
+        y : :external:term:`array-like` of shape (n_samples,) or
+            a `pandas.Dataframe` of shape (n_samples, 1) containing the target values.
 
             **Deprecated input modes** (will be removed in khiops-python 11):
                 - str: A path to a data table file for file-based ``dict`` dataset
@@ -1820,8 +1820,8 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
               first element of the list is the main table and the following are
               secondary ones joined to the main table using ``key`` estimator parameter.
 
-        y : :external:term:`array-like` of shape (n_samples,)
-            :external:term:`array-like` object containing the target values.
+        y : :external:term:`array-like` of shape (n_samples,) or
+            a `pandas.Dataframe` of shape (n_samples, 1) containing the target values
 
             **Deprecated input modes** (will be removed in khiops-python 11):
                 - str: A path to a data table file for file-based ``dict`` dataset
@@ -2147,8 +2147,8 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
               first element of the list is the main table and the following are
               secondary ones joined to the main table using ``key`` estimator parameter.
 
-        y : :external:term:`array-like` of shape (n_samples,)
-            :external:term:`array-like` object containing the target values.
+        y : :external:term:`array-like` of shape (n_samples,) or
+            a `pandas.Dataframe` of shape (n_samples, 1) containing the target values
 
             **Deprecated input modes** (will be removed in khiops-python 11):
                 - str: A path to a data table file for file-based ``dict`` dataset
@@ -2462,8 +2462,8 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
               first element of the list is the main table and the following are
               secondary ones joined to the main table using ``key`` estimator parameter.
 
-        y : :external:term:`array-like` of shape (n_samples,)
-            :external:term:`array-like` object containing the target values.
+        y : :external:term:`array-like` of shape (n_samples,) or
+            a `pandas.Dataframe` of shape (n_samples, 1) containing the target values
 
             **Deprecated input modes** (will be removed in khiops-python 11):
                 - str: A path to a data table file for file-based ``dict`` dataset

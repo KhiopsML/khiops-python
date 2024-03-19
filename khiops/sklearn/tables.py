@@ -691,11 +691,13 @@ class Dataset:
                 main_table_source, _ = list(X["tables"].values())[0]
             else:
                 main_table_source, _ = X["tables"][X["main_table"]]
-            if isinstance(main_table_source, pd.DataFrame) and not isinstance(
-                y, pd.Series
+            if (
+                isinstance(main_table_source, pd.DataFrame)
+                and not isinstance(y, pd.Series)
+                and not isinstance(y, pd.DataFrame)
             ):
                 raise TypeError(
-                    type_error_message("y", y, pd.Series)
+                    type_error_message("y", y, pd.Series, pd.DataFrame)
                     + " (X's tables are of type pandas.DataFrame)"
                 )
             if isinstance(main_table_source, str) and not isinstance(y, str):
@@ -1010,6 +1012,14 @@ class PandasTable(DatasetTable):
                         f"Target series name '{target_column.name}' "
                         f"is already present in dataframe : {list(dataframe.columns)}"
                     )
+            elif isinstance(target_column, pd.DataFrame):
+                number_of_target_columns = len(target_column.columns)
+                if number_of_target_columns != 1:
+                    raise ValueError(
+                        "Target dataframe should contain exactly one column. "
+                        f"It contains {number_of_target_columns}."
+                    )
+                target_column = target_column.iloc[:, 0]
 
         # Initialize the attributes
         self.dataframe = dataframe
