@@ -8,6 +8,7 @@ LABEL description="Container for the development of khiops-python"
 # Reuse KHIOPSDEV_OS from previous stage
 ARG KHIOPSDEV_OS
 ARG KHIOPS_REVISION
+# Install dev tools and miniconda3 (for the unit tests); build and install Khiops; set mpich as the default MPI
 RUN true \
   && useradd -rm -d /home/rocky -s /bin/bash -g root -u 1000 rocky \
   # Install git (for khiops-python version calculation), pandoc and pip \
