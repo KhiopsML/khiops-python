@@ -61,7 +61,7 @@ jobs:
       - name: Install khiops-python dependencies
         if: success() || failure()
         run: |
-          python3 setup.py egg_info
+          python setup.py egg_info
           pip install `grep -v "^\[" khiops.egg-info/requires.txt`
           rm -rf khiops.egg-info
       - name: Prepare Unit Tests Environment
@@ -107,7 +107,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: [ubuntu22.04, rocky9]
+        container: [ubuntu22.04, rocky8, rocky9]
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:latest

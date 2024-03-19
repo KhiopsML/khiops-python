@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        khiopsdev-os: [ubuntu22.04, rocky9]
+        khiopsdev-os: [ubuntu22.04, rocky8, rocky9]
     permissions:
       packages: write  # to write in the Github package registry
     steps:
@@ -73,7 +73,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        khiopsdev-os: [ubuntu22.04, rocky9]
+        khiopsdev-os: [ubuntu22.04, rocky8, rocky9]
     container:
       image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}:latest
     steps:
