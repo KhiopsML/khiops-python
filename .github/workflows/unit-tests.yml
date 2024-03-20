@@ -70,7 +70,9 @@ jobs:
           python setup.py egg_info
           pip install `grep -v "^\[" khiops.egg-info/requires.txt`
           rm -rf khiops.egg-info
-        shell: bash
+        shell: bash -e {0}  # "bash" param value is translated internally into "bash --noprofile --norc -eo pipefail {0}"
+                            # that makes the step fail
+                            # because for an obscure reason "python setup.py egg_info" finds the boggus "python" str as a version
       - name: Prepare Unit Tests Environment for each python3 version
         if: github.ref != 'dev' && github.ref != 'main' && ! inputs.run-long-tests
         run: echo "UNITTEST_ONLY_SHORT_TESTS=true" >> "$GITHUB_ENV"
