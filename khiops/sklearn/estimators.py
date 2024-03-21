@@ -50,7 +50,7 @@ from khiops.core.internals.common import (
     is_list_like,
     type_error_message,
 )
-from khiops.sklearn.tables import Dataset, read_internal_data_table
+from khiops.dataset.dataset import Dataset, read_internal_data_table
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:

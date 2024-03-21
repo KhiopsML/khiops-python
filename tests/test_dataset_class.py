@@ -16,7 +16,7 @@ from numpy.testing import assert_equal
 from pandas.testing import assert_frame_equal
 from sklearn import datasets
 
-from khiops.sklearn.tables import Dataset
+from khiops.dataset.dataset import Dataset
 
 
 class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCase):
