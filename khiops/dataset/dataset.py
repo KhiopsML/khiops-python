@@ -14,6 +14,7 @@ from collections.abc import Mapping, Sequence
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+from sklearn.model_selection import train_test_split
 from sklearn.utils import check_array
 from sklearn.utils.validation import column_or_1d
 
@@ -1585,3 +1586,90 @@ class FileTable(DatasetTable):
             fs.write(output_table_file_path, fs.read(self.path))
 
         return output_table_file_path
+
+
+class HierarchicalDataset(ABC):
+    def __init__(self):
+        self.main_table_name = None
+        self.tables = {}
+        self.relations = []
+        self._table_names = set()
+
+    def add_table(self, name, source, key=None):
+        """Adds a table to the dataset"""
+        if name in self._table_names:
+            raise ValueError(f"There is already a table named '{name}'")
+        if key is not None and not is_list_like(key) and not isinstance(key, str):
+            raise TypeError(type_error_message("key", key, str, Sequence))
+
+    def set_main_table_name(self, name):
+        if isinstance(name, str):
+            raise TypeError(type_error_message("table_name", name, str))
+
+    def add_relation(self, parent_table_name, child_table_name, one_to_one=False):
+        if not parent_table_name in self._table_names:
+            raise ValueError(f"Parent table '{parent_table_name}' not found in dataset")
+        if not child_table_name in self._table_names:
+            raise ValueError(f"Child table '{child_table_name}' not found in dataset")
+        new_relation = TableRelation(
+            parent_table_name, child_table_name, one_to_one=one_to_one
+        )
+        self.relations.append(new_relation)
+
+
+class TableRelation:
+    def __init__(self, parent_table_name, child_table_name, one_to_one=False):
+        self.parent_table_name = parent_table_name
+        self.child_table_name = child_table_name
+        self.one_to_one = one_to_one
+
+    def __repr__(self):
+        return f"{self.parent_table_name} --1:{'1' if self.one_to_one else 'n'}--> {self.child_table_name}"
+
+
+class PandasDataset(HierarchicalDataset):
+    def __init__(self):
+        super().__init__()
+
+    def add_table(self, name, source, key=None):
+        super().add_table(name, source, key=key)
+        new_table = PandasTable(name, source)
+        self._table_names.add(name)
+        self.tables[name] = PandasTable(name, source)
+
+    def train_test_split(self, y=None):
+        main_table = self.tables[self.main_table_name]
+        main_df = main_table.dataframe
+        if y is None:
+            main_df_train, main_df_test = train_test_split(main_df)
+        else:
+            main_df_train, main_df_test, y_train, y_test = train_test_split(
+                main_df, y=y
+            )
+
+        ds_train = PandasDataset()
+        ds_test = PandasDataset()
+        ds_train.add_table(self.main_table_name, main_df_train, key=main_table.key)
+        ds_test.add_table(self.main_table_name, main_df_test, key=main_table.key)
+
+        ds_list = [ds_train, ds_test]
+
+        todo_relations = []
+        for relation in self.relations:
+            if relation.parent_table_name == main_table.name:
+                todo_relations.append(relation)
+
+        while todo_relations:
+            current_relation = todo_relations.pop(0)
+            print(current_relation)
+            for relations in self.relations:
+                if relation.parent_table_name == current_relation.child_table_name:
+                    todo_relations.append(relation)
+            for ds in ds_list:
+                parent_table = ds.tables[current_relation.parent_table_name]
+                parent_df = parent_table.dataframe
+                parent_key_cols_df = parent_df[parent_table.key].to_frame()
+                full_child_df = self.tables[current_relation.child_table_name].dataframe
+                child_table = ds.tables[current_relation.child_table_name]
+                child_df = parent_key_cols_df.merge(full_child_df, on=parent_table.key)
+                ds.add_table(relation.child_table_name, child_df, key=child_table.key)
