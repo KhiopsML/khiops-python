@@ -214,15 +214,15 @@ def _modl_and_mpiexec_executables_exist(bin_dir):
 
 def _infer_env_bin_dir_for_conda_based_installations():
     """Infer reference directory for Conda-based Khiops installations"""
-    reference_file = khiops.__file__
+    reference_file = __file__
     assert reference_file is not None
-    # Windows: Match %CONDA_PREFIX%\Lib\site-packages\khiops\__init__.py
+    # Windows: Match %CONDA_PREFIX%\Lib\site-packages\khiops\core\internals\runner.py
     if platform.platform() == "Windows":
-        conda_env_dir = Path(reference_file).parents[3]
+        conda_env_dir = Path(reference_file).parents[5]
     # Linux/macOS:
-    # Match $CONDA_PREFIX/[Ll]ib/python3.X/site-packages/khiops/__init__.py
+    # Match $CONDA_PREFIX/[Ll]ib/python3.X/site-packages/khiops/core/internals/runner.py
     else:
-        conda_env_dir = Path(reference_file).parents[4]
+        conda_env_dir = Path(reference_file).parents[6]
     env_bin_dir = os.path.join(conda_env_dir.as_posix(), "bin")
     return env_bin_dir
 
