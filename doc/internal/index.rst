@@ -7,7 +7,7 @@ for completeness.
   :nosignatures:
   :toctree: generated
 
-  khiops.sklearn.tables
+  khiops.dataset.dataset
   khiops.core.internals.common
   khiops.core.internals.filesystems
   khiops.core.internals.io
