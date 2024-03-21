@@ -6,7 +6,20 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## 10.2.0.1 - 2023-02-15
+## 10.2.1.0 - 2024-03-26
+
+### Added
+- (`sklearn`) 1:1 relations to multi-table datasets.
+- (`sklearn`) Estimators' `fit` methods now accept single-column pandas dataframes as `y` target.
+
+### Changed
+- (`core`) Improve user error and warning messaging.
+
+### Fixed
+- (General) Reinstate Rocky Linux 8 support.
+
+
+## 10.2.0.0 - 2024-02-15
 Note: This release marks the open sourcing of Khiops:
 - The `khiops-python` replaces the old `pykhiops` package. We recommend to uninstall `pykhiops`
   before installing `khiops-python`. More information at the [Khiops website][khiops].
