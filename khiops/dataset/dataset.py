@@ -7,6 +7,7 @@
 """Classes for handling diverse data tables"""
 import csv
 import io
+import os
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
@@ -386,15 +387,15 @@ class Dataset:
 
         # Case of paths
         if isinstance(main_table_source, str):
-            warnings.warn(
-                deprecation_message(
-                    "File-path dataset input",
-                    "11.0.0",
-                    "dataframe-based dataset or khiops.core API",
-                    quote=False,
-                ),
-                stacklevel=4,
-            )
+            # warnings.warn(
+            # deprecation_message(
+            # "File-path dataset input",
+            # "11.0.0",
+            # "dataframe-based dataset or khiops.core API",
+            # quote=False,
+            # ),
+            # stacklevel=4,
+            # )
             if "format" in X:
                 self.sep, self.header = X["format"]
             else:
@@ -1605,6 +1606,7 @@ class HierarchicalDataset(ABC):
     def set_main_table_name(self, name):
         if isinstance(name, str):
             raise TypeError(type_error_message("table_name", name, str))
+        self.main_table_name = name
 
     def add_relation(self, parent_table_name, child_table_name, one_to_one=False):
         if not parent_table_name in self._table_names:
@@ -1615,6 +1617,28 @@ class HierarchicalDataset(ABC):
             parent_table_name, child_table_name, one_to_one=one_to_one
         )
         self.relations.append(new_relation)
+
+    def spec(self):
+        spec = {}
+        spec["main_table"] = self.main_table_name
+        spec["tables"] = {}
+        for table_name, table in self.tables.items():
+            if isinstance(table, PandasTable):
+                spec["tables"][table_name] = (table.dataframe, table.key)
+            else:
+                spec["tables"][table_name] = (table.path, table.key)
+        spec["relations"] = []
+        for relation in self.relations:
+            spec["relations"].append(
+                (
+                    relation.parent_table_name,
+                    relation.child_table_name,
+                    relation.one_to_one,
+                )
+            )
+        if isinstance(table, FileTable):
+            spec["format"] = (self.sep, self.header)
+        return spec
 
 
 class TableRelation:
@@ -1631,11 +1655,23 @@ class PandasDataset(HierarchicalDataset):
     def __init__(self):
         super().__init__()
 
+    def __repr__(self):
+        repr_str = "Tables\n"
+        for table_name, table in self.tables.items():
+            repr_str += f"  {table_name}\n"
+            repr_str += f"    key: {table.key}\n"
+            repr_str += f"    n_rows: {table.dataframe.shape[0]}\n"
+            repr_str += f"    n_cols: {table.dataframe.shape[1]}\n"
+        repr_str += "Relations\n"
+        for relation in self.relations:
+            repr_str += f"    {relation.__repr__()}\n"
+        return repr_str
+
     def add_table(self, name, source, key=None):
         super().add_table(name, source, key=key)
         new_table = PandasTable(name, source)
         self._table_names.add(name)
-        self.tables[name] = PandasTable(name, source)
+        self.tables[name] = PandasTable(name, source, key=key)
 
     def train_test_split(self, y=None):
         main_table = self.tables[self.main_table_name]
@@ -1643,33 +1679,114 @@ class PandasDataset(HierarchicalDataset):
         if y is None:
             main_df_train, main_df_test = train_test_split(main_df)
         else:
-            main_df_train, main_df_test, y_train, y_test = train_test_split(
-                main_df, y=y
-            )
+            main_df_train, main_df_test, y_train, y_test = train_test_split(main_df, y)
 
         ds_train = PandasDataset()
         ds_test = PandasDataset()
         ds_train.add_table(self.main_table_name, main_df_train, key=main_table.key)
         ds_test.add_table(self.main_table_name, main_df_test, key=main_table.key)
+        ds_train.main_table_name = self.main_table_name
+        ds_test.main_table_name = self.main_table_name
 
-        ds_list = [ds_train, ds_test]
+        ds_split = [ds_train, ds_test]
 
         todo_relations = []
         for relation in self.relations:
             if relation.parent_table_name == main_table.name:
                 todo_relations.append(relation)
 
+        print(self.relations)
+
         while todo_relations:
             current_relation = todo_relations.pop(0)
-            print(current_relation)
-            for relations in self.relations:
+            for relation in self.relations:
                 if relation.parent_table_name == current_relation.child_table_name:
                     todo_relations.append(relation)
-            for ds in ds_list:
+
+            for ds in ds_split:
                 parent_table = ds.tables[current_relation.parent_table_name]
                 parent_df = parent_table.dataframe
-                parent_key_cols_df = parent_df[parent_table.key].to_frame()
-                full_child_df = self.tables[current_relation.child_table_name].dataframe
-                child_table = ds.tables[current_relation.child_table_name]
-                child_df = parent_key_cols_df.merge(full_child_df, on=parent_table.key)
-                ds.add_table(relation.child_table_name, child_df, key=child_table.key)
+                parent_key_cols_df = parent_df[parent_table.key]
+                origin_child_table = self.tables[current_relation.child_table_name]
+                origin_child_df = origin_child_table.dataframe
+                child_df = parent_key_cols_df.merge(
+                    origin_child_df, on=parent_table.key
+                )
+                ds.add_table(
+                    current_relation.child_table_name,
+                    child_df,
+                    key=origin_child_table.key,
+                )
+                ds.add_relation(
+                    current_relation.parent_table_name,
+                    current_relation.child_table_name,
+                    one_to_one=current_relation.one_to_one,
+                )
+
+        if y is None:
+            return ds_train, ds_test
+        else:
+            return ds_train, ds_test, y_train, y_test
+
+
+class FileDataset(HierarchicalDataset):
+    def __init__(self):
+        super().__init__()
+        self.sep = "\t"
+        self.header = True
+
+    def add_table(self, name, source, key=None):
+        super().add_table(name, source, key=key)
+        new_table = FileTable(name, source, sep=self.sep, header=self.header)
+        self._table_names.add(name)
+        self.tables[name] = FileTable(name, source, key=key)
+
+    def __repr__(self):
+        repr_str = "Tables\n"
+        for table_name, table in self.tables.items():
+            repr_str += f"  {table_name}\n"
+            repr_str += f"    path: {table.path}\n"
+            repr_str += f"    key: {table.key}\n"
+            repr_str += f"    n_cols: {len(table.column_ids)}\n"
+        repr_str += "Relations\n"
+        for relation in self.relations:
+            repr_str += f"    {relation.__repr__()}\n"
+        return repr_str
+
+    def set_format(self, sep="\t", header=True):
+        self.sep = sep
+        self.header = header
+
+    def sort(self, output_dir):
+        ds = Dataset(self.spec())
+        ds.create_table_files_for_khiops(output_dir)
+
+        sorted_ds = FileDataset()
+        for table_name, table in self.tables.items():
+            sorted_ds.add_table(
+                table_name,
+                os.path.join(output_dir, f"sorted_{table_name}.txt"),
+                key=table.key,
+            )
+        sorted_ds.main_table_name = self.main_table_name
+        for relation in self.relations:
+            sorted_ds.add_relation(
+                relation.parent_table_name,
+                relation.child_table_name,
+                one_to_one=relation.one_to_one,
+            )
+        return sorted_ds
+
+    def create_khiops_dictionary_domain(self):
+        ds = Dataset(self.spec())
+        return ds.create_khiops_dictionary_domain()
+
+    def create_additional_data_tables_param(self):
+        ds = Dataset(self.spec())
+        domain = ds.create_khiops_dictionary_domain()
+        data_paths = domain.extract_data_paths(self.main_table_name)
+        additional_data_tables = {}
+        for data_path in data_paths:
+            table_name = domain.get_dictionary_at_data_path(data_path).name
+            additional_data_tables[data_path] = self.tables[table_name].path
+        return additional_data_tables
