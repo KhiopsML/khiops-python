@@ -26,11 +26,6 @@ cmake --build --preset $CMAKE_PRESET --parallel --target MODL MODL_Coclustering
 cp "./build/$CMAKE_PRESET/bin/MODL" "$PREFIX/bin"
 cp "./build/$CMAKE_PRESET/bin/MODL_Coclustering" "$PREFIX/bin"
 
-
-# Build the Khiops Python package in the base directory
-cd ..
-$PYTHON -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-isolation -vvv
-
 # Custom rpath relocation and signing executables for macOS in arm64
 #
 # In osx-arm64 executing any binary that is not signed will make appear popups appearing demanding
@@ -56,6 +51,7 @@ $PYTHON -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-
 # - KHIOPS_APPLE_CERTIFICATE_PASSWORD: Password for the certificate file
 # - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD: A temporary password to decrypt the certificate
 #
+cd ..
 if [[ "$(uname)" == "Darwin" && -n "${KHIOPS_APPLE_CERTIFICATE_COMMON_NAME-}" ]]
 then
   # Delete the rpath of each executable

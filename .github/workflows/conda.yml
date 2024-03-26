@@ -1,13 +1,13 @@
 ---
 name: Conda Packages
 env:
-  DEFAULT_KHIOPS_REVISION: main
+  DEFAULT_KHIOPS_REVISION: 10.2.1
   DEFAULT_SAMPLES_REVISION: main
 on:
   workflow_dispatch:
     inputs:
       khiops-revision:
-        default: main
+        default: 10.2.1
         description: khiops repo revision
       samples-revision:
         default: main
@@ -65,18 +65,22 @@ jobs:
         run: |
           KHIOPS_REVISION="${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}"
           echo "KHIOPS_REVISION=$KHIOPS_REVISION" >> "$GITHUB_ENV"
-      - name: Build Khiops Conda Package (Windows)
+      - name: Build conda packages (Windows)
         if: runner.os == 'Windows'
         run: |
           mkdir khiops-conda
-          conda build --output-folder khiops-conda ./packaging/conda
+          conda build --output-folder khiops-conda ./packaging/conda/khiops-core
+          conda build --channel ./khiops-conda --output-folder khiops-conda ./packaging/conda/khiops
       # In Linux/macOS we need the conda-forge channel to install their pinned versions
-      - name: Build Khiops Conda Package (Linux/macOS)
+      - name: Build conda packages (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
           mkdir khiops-conda
-          conda build --channel conda-forge --output-folder khiops-conda ./packaging/conda
-      - name: Upload Khiops Conda Package
+          conda build --channel conda-forge \
+            --output-folder khiops-conda ./packaging/conda/khiops-core
+          conda build --channel conda-forge --channel ./khiops-conda \
+            --output-folder ./khiops-conda ./packaging/conda/khiops
+      - name: Upload conda packages artifact
         uses: actions/upload-artifact@v4
         with:
           name: khiops-conda-${{ matrix.os-family }}

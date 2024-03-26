@@ -1,0 +1,47 @@
+{% set metadata = load_setup_py_data(setup_file='../../../setup.py', from_recipe_dir=True) %}
+package:
+  name: {{ metadata.get('name') }}
+  version: {{ metadata.get('version') }}
+
+source:
+  path: ../../../
+
+build:
+  entry_points:
+    - kh-status = khiops.tools:kh_status_entry_point
+    - kh-samples = khiops.tools:kh_samples_entry_point
+    - kh-download-datasets = khiops.tools:kh_download_datasets_entry_point
+    - pk-status = khiops.tools:pk_status_entry_point   # deprecated
+  number: 0
+
+requirements:
+  build:
+    - python
+    - setuptools
+  host:
+    - python
+  run:
+    - khiops-core >=10.0.0,<11.0.0
+    - python
+    - pandas >=0.25.3
+    - scikit-learn >=0.22.2
+  run_constrained:
+    - boto3 >=1.17.39
+    - google-cloud-storage >=1.37.0
+
+outputs:
+  - name: {{ metadata.get('name') }}
+    test:
+      commands:
+        - kh-status
+      imports:
+        - khiops.core.api
+        - khiops.sklearn.estimators
+
+about:
+  home: https://khiops.org
+  license: BSD+3-clause
+  license_file: LICENSE.md
+  summary: Khiops is an AutoML suite for supervised and unsupervised learning
+  doc_url: https://khiopsml.github.com/khiops-python
+  dev_url: https://github.com/khiopsml/khiops-python
