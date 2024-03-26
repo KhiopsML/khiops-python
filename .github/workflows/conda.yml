@@ -1,14 +1,16 @@
 ---
-name: Conda Packages
+name: Conda Package
 env:
-  DEFAULT_KHIOPS_REVISION: main
   DEFAULT_SAMPLES_REVISION: main
+  # Note: The default Khiops version must never be an alpha release as they are
+  #       ephemeral. To test alpha versions run the workflow manually.
+  DEFAULT_KHIOPS_CORE_VERSION: 10.2.1
 on:
   workflow_dispatch:
     inputs:
-      khiops-revision:
-        default: main
-        description: khiops repo revision
+      khiops-core-version:
+        default: 10.2.1
+        description: khiops-core version for testing
       samples-revision:
         default: main
         description: khiops-samples repo revision
@@ -29,18 +31,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        #  Use the oldest supported Mac OS and Ubuntu versions for GLIBC compatibility
-        include:
-          - os: ubuntu-20.04
-            os-family: linux
-          - os: windows-latest
-            os-family: windows
-          - os: macos-11
-            os-family: macos
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v4
@@ -52,34 +43,19 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: latest
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Install Dependency Requirements for Building Conda Packages
-        run: conda install conda-build=3.27.0 conda-verify
-      # We need MacOS SDK 10.10 to build on Big Sur
-      - name: Install Mac OS SDK 10.10
-        if: runner.os == 'macOS'
+        run: conda install conda-build
+      - name: Build the Conda Package
+        # Note: The "khiops-dev" conda channel is needed to retrieve the "khiops-core" package.
+        #       The "test" part of the conda recipe needs this package.
         run: |
-          wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.10.sdk.tar.xz
-          sudo tar -zxvf MacOSX10.10.sdk.tar.xz -C /opt
-      - name: Set KHIOPS_REVISION build input parameter
-        run: |
-          KHIOPS_REVISION="${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}"
-          echo "KHIOPS_REVISION=$KHIOPS_REVISION" >> "$GITHUB_ENV"
-      - name: Build Khiops Conda Package (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          mkdir khiops-conda
-          conda build --output-folder khiops-conda ./packaging/conda
-      # In Linux/macOS we need the conda-forge channel to install their pinned versions
-      - name: Build Khiops Conda Package (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          mkdir khiops-conda
-          conda build --channel conda-forge --output-folder khiops-conda ./packaging/conda
-      - name: Upload Khiops Conda Package
+          conda build --channel conda-forge --channel khiops-dev \
+            --output-folder ./khiops-conda ./packaging/conda
+      - name: Upload Conda Package Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: khiops-conda-${{ matrix.os-family }}
+          name: khiops-conda
           path: ./khiops-conda
           retention-days: 7
   # Test Conda package on brand new environments
@@ -88,16 +64,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env:
-          - {os: ubuntu-20.04, os-family: linux}
-          - {os: ubuntu-22.04, os-family: linux}
-          - {os: windows-2019, os-family: windows}
-          - {os: windows-2022, os-family: windows}
-          - {os: macos-11, os-family: macos}
-          - {os: macos-12, os-family: macos}
-          - {os: macos-13, os-family: macos}
+        os:
+          - ubuntu-20.04
+          - ubuntu-22.04
+          - windows-2019
+          - windows-2022
+          - macos-11
+          - macos-12
+          - macos-13
+          - macos-14
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    runs-on: ${{ matrix.env.os }}
+    runs-on: ${{ matrix.os }}
     env:
       KHIOPS_SAMPLES_DIR: ./khiops-samples-repo
     steps:
@@ -116,15 +93,23 @@ jobs:
       - name: Download Conda Package Artifact
         uses: actions/download-artifact@v4
         with:
-          name: khiops-conda-${{ matrix.env.os-family }}
-          path: khiops-conda
+          name: khiops-conda
+          path: ./khiops-conda
+      - name: Put the khiops-core Version in the Environment
+        run: |
+          KHIOPS_CORE_VERSION="${{ inputs.khiops-core-version || env.DEFAULT_KHIOPS_CORE_VERSION }}"
+          echo "KHIOPS_CORE_VERSION=$KHIOPS_CORE_VERSION" >> "$GITHUB_ENV"
       - name: Install the Khiops Conda pagkage (Windows)
         if: runner.os == 'Windows'
-        run: conda install -c ./khiops-conda/ khiops
+        run: |
+          conda install --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
+          conda install --channel ./khiops-conda/ khiops
       # In Linux/macOS we need the conda-forge channel to install their pinned versions
       - name: Install the Khiops Conda package (Linux/macOS)
         if: runner.os != 'Windows'
-        run: conda install -c conda-forge -c ./khiops-conda/ khiops
+        run: |
+          conda install --channel conda-forge --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
+          conda install --channel ./khiops-conda/ khiops
       - name: Test Khiops Installation Status
         run: kh-status
       - name: Test Conda Package Installation on Samples
@@ -140,7 +125,7 @@ jobs:
   release:
     if: github.ref_type == 'tag'
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
@@ -148,20 +133,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           # See the upload-artifact step in the build job for the explanation of this pattern
+          name: khiops-conda
           path: ./khiops-conda
-          pattern: khiops-conda-*
-          merge-multiple: true
       - name: Install Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: latest
-          python-version: '3.11'
-      - name: Install requirement packages
-        run: conda install -y anaconda-client conda-build=3.27.0
+          python-version: '3.12'
+      - name: Install Requirement Packages
+        run: conda install -y anaconda-client conda-index
       - name: Reindex the package directory
-        run: conda-index ./khiops-conda
-      - name: Upload the packages to anaconda.org
-        run: |
+        run: python -m conda_index ./khiops-conda
+      - name: Upload the Package to anaconda.org
+        run: |-
           # Set the anaconda.org channel
           ANACONDA_CHANNEL="${{ inputs.release-channel || 'khiops-dev' }}"
 
@@ -169,37 +153,9 @@ jobs:
           if [[ "$ANACONDA_CHANNEL" == "khiops" ]]
           then
             anaconda --token "${{ secrets.KHIOPS_ANACONDA_CHANNEL_TOKEN }}" upload \
-              --user "$ANACONDA_CHANNEL" ./khiops-conda/*/*.tar.bz2
+              --user "$ANACONDA_CHANNEL" ./khiops-conda/noarch/*.tar.bz2
           # For the dev channel: upload with forcing
           else
             anaconda --token "${{ secrets.KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN }}" upload \
-              --user "$ANACONDA_CHANNEL" --force ./khiops-conda/*/*.tar.bz2
+              --user "$ANACONDA_CHANNEL" --force ./khiops-conda/noarch/*.tar.bz2
           fi
-      - name: Extract package version
-        run: |
-          PKG_VERSION=$(\
-              conda search --override-channels --channel ./khiops-conda/ khiops \
-                | awk '!/#|channels/ {print $2}' \
-                | sort -u \
-          )
-          echo "PKG_VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
-      - name: Create the release zip archive
-        uses: thedoctor0/zip-release@0.7.6
-        with:
-          type: zip
-          path: ./khiops-conda/
-          filename: khiops-${{ env.PKG_VERSION }}-conda.zip
-      - name: Upload conda package artifacts for all platforms
-        uses: actions/upload-artifact@v4
-        with:
-          name: khiops-conda-all
-          path: ./khiops-${{ env.PKG_VERSION }}-conda.zip
-      - name: Release the zip archive
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          artifacts: ./khiops-${{ env.PKG_VERSION }}-conda.zip
-          draft: false
-          makeLatest: false
-          prerelease: true
-          updateOnlyUnreleased: true

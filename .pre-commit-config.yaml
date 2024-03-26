@@ -20,7 +20,7 @@ repos:
     rev: 1.15.0
     hooks:
       - id: yamlfix
-        exclude: packaging/conda/(meta|conda_build_config).yaml
+        exclude: packaging/conda/meta.yaml
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.27.1
     hooks:
