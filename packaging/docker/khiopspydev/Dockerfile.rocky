@@ -8,8 +8,7 @@ LABEL description="Container for the development of khiops-python"
 # Reuse KHIOPSDEV_OS from previous stage
 ARG KHIOPSDEV_OS
 ARG KHIOPS_REVISION
-
-# Install dev tools; build and install Khiops; set mpich as the default MPI
+# Install dev tools and miniconda3 (for the unit tests); build and install Khiops; set mpich as the default MPI
 RUN true \
   && useradd -rm -d /home/rocky -s /bin/bash -g root -u 1000 rocky \
   # Install git (for khiops-python version calculation), pandoc and pip \
@@ -18,6 +17,7 @@ RUN true \
   && dnf install --enablerepo=devel -y \
     git \
     pandoc \
+    wget \
   # Install Python 3.11 if on Rocky 8 \
   && if [ "$KHIOPSDEV_OS" = "rocky8" ]; then \
        dnf install -y \
@@ -55,10 +55,22 @@ RUN true \
        alternatives --install /usr/bin/python python /usr/bin/python3 1 \
        && alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 ; \
      fi \
+  # Install conda (miniconda3) to have multiple python3 versions \
+  && mkdir -p /root/miniconda3 \
+  && wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /root/miniconda3/miniconda.sh \
+  && bash /root/miniconda3/miniconda.sh -b -u -p /root/miniconda3 \
+  && rm -rf /root/miniconda3/miniconda.sh \
   # Clean build files \
   && dnf clean all \
   && rm -rf ./khiops \
   && true
+
+# set up all the supported python3 environments (+pip) under conda (for the unit tests)
+# relying on a variable containing all the versions
+ARG PYTHON3_SUPPORTED_VERSIONS
+RUN /root/miniconda3/bin/conda init \
+    && for version in ${PYTHON3_SUPPORTED_VERSIONS}; \
+    do /root/miniconda3/bin/conda create -y -n py${version} python=${version} pip; done
 
 RUN mkdir -p /scripts
 COPY ./run_service.sh /scripts/run_service.sh

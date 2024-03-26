@@ -60,6 +60,7 @@ jobs:
             "KHIOPS_REVISION=${{ env.KHIOPS_REVISION }}"
             "KHIOPSDEV_OS=${{ matrix.khiopsdev-os }}"
             "SERVER_REVISION=${{ env.SERVER_REVISION }}"
+            "PYTHON3_SUPPORTED_VERSIONS=3.8 3.9 3.10 3.11 3.12"
           tags: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}:latest
           # Push only on manual request
           push: ${{ inputs.push || false }}
