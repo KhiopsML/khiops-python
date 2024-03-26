@@ -55,12 +55,6 @@ jobs:
           python-version: '3.11'
       - name: Install Dependency Requirements for Building Conda Packages
         run: conda install conda-build=3.27.0 conda-verify
-      # We need MacOS SDK 10.10 to build on Big Sur
-      - name: Install Mac OS SDK 10.10
-        if: runner.os == 'macOS'
-        run: |
-          wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.10.sdk.tar.xz
-          sudo tar -zxvf MacOSX10.10.sdk.tar.xz -C /opt
       - name: Set KHIOPS_REVISION build input parameter
         run: |
           KHIOPS_REVISION="${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}"
