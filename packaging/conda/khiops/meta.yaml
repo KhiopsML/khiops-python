@@ -7,6 +7,7 @@ source:
   path: ../../../
 
 build:
+  noarch: python
   entry_points:
     - kh-status = khiops.tools:kh_status_entry_point
     - kh-samples = khiops.tools:kh_samples_entry_point
