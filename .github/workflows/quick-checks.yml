@@ -1,5 +1,5 @@
 ---
-name: Run pre-commit checks
+name: Quick Checks
 on:
   pull_request:
   workflow_dispatch:
@@ -7,20 +7,22 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  pre-commit-checks:
+  pre-commit:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install khiops-python dependencies
+      - name: Install khiops-python dev dependencies
         run: |
           # Extract and install package dependency requirements from metadata
           pip install pip-tools
           python -m piptools compile -o requirements.txt
+
+          # Install dev dependencies
           pip install -r requirements.txt
       - name: Run pre-commit checks
-        uses: pre-commit/action@v3.0.0
+        uses: pre-commit/action@v3.0.1

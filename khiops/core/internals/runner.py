@@ -6,7 +6,6 @@
 ######################################################################################
 """Classes implementing Khiops Python' backend runners"""
 
-import importlib
 import io
 import os
 import platform
@@ -14,12 +13,10 @@ import re
 import shlex
 import shutil
 import subprocess
-import sys
 import tempfile
 import uuid
 import warnings
 from abc import ABC, abstractmethod
-from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import khiops
@@ -114,7 +111,10 @@ def _get_system_cpu_cores():
     elif platform.system() == "Darwin":
         cpu_system_info_args = ["sysctl", "-n", "hw.physicalcpu"]
     else:
-        raise KhiopsRuntimeError(f"The '{platform.system()}' is not supported.")
+        raise KhiopsEnvironmentError(
+            f"Unsupported OS {platform.system()}. "
+            "Check the supported OSes at https://khiops.org."
+        )
 
     # Execute the cpu info process
     with subprocess.Popen(
@@ -144,7 +144,10 @@ def _get_system_cpu_cores():
     elif platform.system() == "Darwin":
         cpu_core_count = int(cpu_system_info_output.strip())
     else:
-        raise KhiopsRuntimeError(f"The '{platform.system()}' is not supported.")
+        raise KhiopsEnvironmentError(
+            f"Unsupported OS {platform.system()}. "
+            "Check the supported OSes at https://khiops.org."
+        )
 
     return cpu_core_count
 
@@ -971,59 +974,6 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Initialize Khiops environment
         self._start_khiops_environment_initialization()
 
-    def _finish_khiops_environment_initialization(self):
-        # Initialize Khiops binary directory
-        self._initialize_khiops_bin_dir()
-
-        # Check the tools exist and are executable
-        self._check_tools()
-
-        # Initialize the khiops version
-        self._initialize_khiops_version()
-
-    def _initialize_khiops_bin_dir(self):
-        # Initialize Khiops bin dir, according to the environment
-        installation_method = _infer_khiops_installation_method()
-        if installation_method == "conda":
-            self._khiops_bin_dir = os.path.join(os.environ["CONDA_PREFIX"], "bin")
-        elif installation_method == "conda-based":
-            self._khiops_bin_dir = _infer_env_bin_dir_for_conda_based_installations()
-        # Local environment
-        else:
-            # Warn if both KHIOPS_HOME and KhiopsHome are set
-            if "KHIOPS_HOME" in os.environ and "KhiopsHome" in os.environ:
-                warnings.warn(
-                    "Both KHIOPS_HOME and KhiopsHome environment variables "
-                    "are set. Only the KHIOPS_HOME will be used."
-                )
-            # Windows: KHIOPS_HOME value
-            if platform.system() == "Windows":
-                # KHIOPS_HOME variable by default
-                if "KHIOPS_HOME" in os.environ:
-                    self._khiops_bin_dir = os.path.join(
-                        os.environ["KHIOPS_HOME"], "bin"
-                    )
-                # Look for KhiopsHome to support Khiops 9
-                elif "KhiopsHome" in os.environ:
-                    self._khiops_bin_dir = os.path.join(os.environ["KhiopsHome"], "bin")
-                # Erro if KHIOPS_HOME is not set
-                else:
-                    raise KhiopsEnvironmentError(
-                        "No environment variable named 'KHIOPS_HOME' or "
-                        "'KhiopsHome' found. Verify your Khiops installation."
-                    )
-            # MacOS: /usr/local/bin
-            elif platform.system() == "Darwin":
-                self._khiops_bin_dir = os.path.join(os.path.sep, "usr", "local", "bin")
-            # Linux/Unix: /usr/bin
-            elif platform.system() == "Linux":
-                self._khiops_bin_dir = os.path.join(os.path.sep, "usr", "bin")
-            # Raise an error for unknown platforms
-            else:
-                raise KhiopsEnvironmentError(
-                    f"Unsupported platform {platform.system()}"
-                )
-
     def _start_khiops_environment_initialization(self):
         # Set the Khiops process number according to the `KHIOPS_PROC_NUMBER` env var
         if "KHIOPS_PROC_NUMBER" in os.environ:
@@ -1065,32 +1015,111 @@ class KhiopsLocalRunner(KhiopsRunner):
         self._initialize_default_samples_dir()
         self._check_samples_dir()
 
-    def _initialize_khiops_version(self):
-        # Run khiops with the -v
-        stdout, _, return_code = self.raw_run("khiops", ["-v"], use_mpi=False)
-
-        # On success parse and save the version
-        if return_code == 0:
-            # Skip potential non-version lines (ex: Completed loading of file driver...)
-            for line in stdout.split(os.linesep):
-                if line.startswith("Khiops"):
-                    khiops_version_str = line.rstrip().split(" ")[1]
-                    break
-        # If -v fails it means it is Khiops 9 or lower so we try the old way
-        else:
-            khiops_version_str, _, _, _ = _get_tool_info_khiops9(self, "khiops")
-            warnings.warn(
-                "Khiops version is earlier than 10.0; khiops-python will "
-                f"run in legacy mode. Khiops path: {self._tool_path('khiops')}",
-                stacklevel=3,
+    def _initialize_mpi_command_args(self):
+        """Creates the mpiexec call arguments for each platform"""
+        # Note: Unless enforced by `KHIOPS_MPIEXEC_PATH`, the mpiexec
+        # accessible in the path takes precedence over any other mpiexec install.
+        installation_method = _infer_khiops_installation_method()
+        # In Conda-based, but non-Conda environment, specify mpiexec path
+        if installation_method == "conda-based":
+            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or os.path.join(
+                _infer_env_bin_dir_for_conda_based_installations(), "mpiexec"
             )
-        self._khiops_version = KhiopsVersion(khiops_version_str)
+            if platform.system() == "Windows" and not os.path.splitext(mpiexec_path):
+                mpiexec_path += ".exe"
+                # If mpiexec[.exe] is not in the Conda environment's bin path,
+                # update mpiexec's path to the expected Windows path to mpiexec:
+                # - replace "bin" with "Library/bin" in the binary directory
+                # - re-add mpiexec[.exe] to the path: look it up in the original
+                #   path (so that extension calculation is not repeated)
+                if not os.path.exists(mpiexec_path):
+                    mpiexec_path = (
+                        Path(mpiexec_path)
+                        .parents[1]
+                        .joinpath("Library", "bin", Path(mpiexec_path).parts[-1])
+                        .as_posix()
+                    )
+        # In Conda or local installations, expect mpiexec in the PATH
+        else:
+            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or shutil.which(
+                "mpiexec"
+            )
+        # If mpiexec is not in the path, then try to load MPI environment module
+        # so that mpiexec is in the path
+        if mpiexec_path is None:
+            # If environment modules are installed, then load the MPI module
+            module_init_script_path = os.path.join(
+                os.path.sep, "etc", "profile.d", "modules.sh"
+            )
+
+            # List available environment modules
+            if os.path.exists(module_init_script_path):
+                shell_command = shlex.split(
+                    f"sh -c 'source {module_init_script_path} && module avail'"
+                )
+                with subprocess.Popen(
+                    shell_command,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ) as env_modules_init_process:
+                    stdout, stderr = env_modules_init_process.communicate()
+
+                # If environment modules listing worked, look-up the MPI module
+                if env_modules_init_process.returncode == 0:
+                    for line in sorted(
+                        re.sub(
+                            "\\s+", "\\n", (stdout + stderr).decode("utf-8")
+                        ).splitlines(),
+                        reverse=True,
+                    ):
+                        # If MPI environment module is found, attempt to load it
+                        if (
+                            re.search("mpich-[0-9]", line) is not None
+                            and platform.machine() in line
+                            or f"mpich-{platform.machine()}" in line
+                        ):
+                            mpich_module = line
+                            # Use 'type -P' to get the path to executable,
+                            # as 'which' is non-portable
+                            shell_command = shlex.split(
+                                f"sh -c 'source {module_init_script_path} && "
+                                f"module unload mpi && module load {mpich_module} && "
+                                "type -P mpiexec'"
+                            )
+                            with subprocess.Popen(
+                                shell_command,
+                                stdin=subprocess.DEVNULL,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.DEVNULL,
+                            ) as mpi_module_load_process:
+                                stdout, _ = mpi_module_load_process.communicate()
+
+                            # If MPI module is loaded, get the path to mpiexec
+                            if mpi_module_load_process.returncode == 0:
+                                for line in stdout.decode("utf-8").splitlines():
+                                    if "mpiexec" in line:
+                                        mpiexec_path = line
+                                    break
+                                if mpiexec_path is not None:
+                                    self._set_mpi_command_args_with_mpiexec(
+                                        mpiexec_path
+                                    )
+                            break
+
+        # If MPI is found, then set the path to mpiexec accordingly
+        if mpiexec_path is not None:
+            self._set_mpi_command_args_with_mpiexec(mpiexec_path)
+        # If MPI is still not found, then do not use MPI and warn the user
+        else:
+            self._set_empty_mpi_command_args_and_raise_warning()
 
     def _set_empty_mpi_command_args_and_raise_warning(self):
         self.mpi_command_args = []
         warnings.warn(
             "mpiexec is not in PATH, Khiops will run with just one CPU. "
-            "Check your MPI installation to run Khiops in parallel"
+            "We recommend you to reinstall khiops. "
+            "Go to https://khiops.org for more information."
         )
 
     def _set_mpi_command_args_with_mpiexec(self, mpiexec_path):
@@ -1133,123 +1162,10 @@ class KhiopsLocalRunner(KhiopsRunner):
                 "1",
             ]
         else:
-            raise KhiopsRuntimeError(f"System '{platform.system()}' not supported.")
-
-    def _initialize_mpi_command_args(self):
-        """Creates the mpiexec call arguments for each platform"""
-        # Note: Unless enforced by `KHIOPS_MPIEXEC_PATH`, the mpiexec
-        # accessible in the path takes precedence over any other mpiexec install.
-        installation_method = _infer_khiops_installation_method()
-        # In Conda-based, but non-Conda environment, specify mpiexec path
-        if installation_method == "conda-based":
-            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or os.path.join(
-                _infer_env_bin_dir_for_conda_based_installations(), "mpiexec"
+            raise KhiopsEnvironmentError(
+                f"Unsupported OS {platform.system()}. "
+                "Check the supported OSes at https://khiops.org."
             )
-            if platform.system() == "Windows" and not os.path.splitext(mpiexec_path):
-                mpiexec_path += ".exe"
-                # If mpiexec[.exe] is not in the Conda environment's bin path,
-                # update mpiexec's path to the expected Windows path to mpiexec:
-                # - replace "bin" with "Library/bin" in the binary directory
-                # - re-add mpiexec[.exe] to the path: look it up in the original
-                #   path (so that extension calculation is not repeated)
-                if not os.path.exists(mpiexec_path):
-                    mpiexec_path = (
-                        Path(mpiexec_path)
-                        .parents[1]
-                        .joinpath("Library", "bin", Path(mpiexec_path).parts[-1])
-                        .as_posix()
-                    )
-        # In Conda or local installations, expect mpiexec in the PATH
-        else:
-            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or shutil.which(
-                "mpiexec"
-            )
-        # If mpiexec is not in the path, then try to load MPI environment module
-        # so that mpiexec is in the path
-        if mpiexec_path is None:
-            # If environment modules are installed, then load the MPI module
-            # Procedure inspired from the official documentation
-            # https://modules.readthedocs.io/en/latest/module.html#examples-of-initialization
-            # in a more Pythonic way
-
-            # Initialize subshell environment to get the MODULESHOME environment
-            # variable
-            # Thus, one does not assume khiops-python is launched in a shell
-            # with initialized environment modules
-            module_init_script_path = os.path.join(
-                os.path.sep, "etc", "profile.d", "modules.sh"
-            )
-            modules_home_path = None
-            if os.path.exists(module_init_script_path):
-                shell_command = shlex.split(
-                    f"bash -c 'source {module_init_script_path} && env'"
-                )
-                with subprocess.Popen(
-                    shell_command,
-                    stdin=subprocess.DEVNULL,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.DEVNULL,
-                ) as env_modules_init_process:
-                    stdout, _ = env_modules_init_process.communicate()
-                for env_line in stdout.splitlines():
-                    env_var, _, value = env_line.partition(b"=")
-                    if env_var == b"MODULESHOME":
-                        modules_home_path = value.decode("utf-8")
-                        break
-                else:
-                    self._set_empty_mpi_command_args_and_raise_warning()
-
-            # If environment modules are available, then initialize them for Python
-            if modules_home_path is not None:
-                # Update sys.path so that the Python module support can be imported
-                sys.path.append(os.path.join(modules_home_path, "init"))
-                # The Python environment modules API module is available only here
-                env_modules_api = importlib.import_module("python")
-
-                module = env_modules_api.module
-                mpich_module = None
-                # Support Python 3.8 which does not parse parenthesized context
-                # managers (introduced in Python 3.9 via PEP 617:
-                # https://peps.python.org/pep-0617/)
-                with io.StringIO() as stdout_buffer:
-                    with io.StringIO() as stderr_buffer:
-                        with redirect_stdout(stdout_buffer):
-                            with redirect_stderr(stderr_buffer):
-                                module_availability_status = module("avail")
-                                stdout = stdout_buffer.getvalue()
-                                stderr = stderr_buffer.getvalue()
-                if module_availability_status:
-                    # module writes to stderr, even though this is not documented
-                    # hence, both stdout and stderr are scanned
-                    # the most recent MPICH version is searched
-                    for line in sorted(
-                        re.sub("\\s+", "\\n", stdout + stderr).splitlines(),
-                        reverse=True,
-                    ):
-                        if (
-                            re.search("mpich-[0-9]", line) is not None
-                            and platform.machine() in line
-                            or f"mpich-{platform.machine()}" in line
-                        ):
-                            mpich_module = line
-                            break
-                if mpich_module is not None:
-                    mpich_loaded = module("load", mpich_module)
-                    # mpiexec is in the PATH after environment module load
-                    if mpich_loaded:
-                        mpiexec_path = shutil.which("mpiexec")
-                        if mpiexec_path is not None:
-                            self._set_mpi_command_args_with_mpiexec(mpiexec_path)
-                        else:
-                            self._set_empty_mpi_command_args_and_raise_warning()
-                    # If for some reason MPI environment module loading fails,
-                    # then just do not use MPI
-                    else:
-                        self._set_empty_mpi_command_args_and_raise_warning()
-            else:
-                self._set_empty_mpi_command_args_and_raise_warning()
-        else:
-            self._set_mpi_command_args_with_mpiexec(mpiexec_path)
 
     def _initialize_default_samples_dir(self):
         """See class docstring"""
@@ -1285,37 +1201,6 @@ class KhiopsLocalRunner(KhiopsRunner):
 
         assert self._samples_dir is not None
 
-    def _initialize_default_system_wide_khiops_bin_dir(self):
-        # Warn if both KHIOPS_HOME and KhiopsHome are set
-        if "KHIOPS_HOME" in os.environ and "KhiopsHome" in os.environ:
-            warnings.warn(
-                "Both KHIOPS_HOME and KhiopsHome environment variables "
-                "are set. Only the KHIOPS_HOME will be used."
-            )
-        # Windows: KHIOPS_HOME value
-        if platform.system() == "Windows":
-            # KHIOPS_HOME variable by default
-            if "KHIOPS_HOME" in os.environ:
-                self._khiops_bin_dir = os.path.join(os.environ["KHIOPS_HOME"], "bin")
-            # Look for KhiopsHome to support Khiops 9
-            elif "KhiopsHome" in os.environ:
-                self._khiops_bin_dir = os.path.join(os.environ["KhiopsHome"], "bin")
-            # Erro if KHIOPS_HOME is not set
-            else:
-                raise KhiopsEnvironmentError(
-                    "No environment variable named 'KHIOPS_HOME' or "
-                    "'KhiopsHome' found. Verify your Khiops installation."
-                )
-        # MacOS: /usr/local/bin
-        elif platform.system() == "Darwin":
-            self._khiops_bin_dir = os.path.join(os.path.sep, "usr", "local", "bin")
-        # Linux/Unix: /usr/bin
-        elif platform.system() == "Linux":
-            self._khiops_bin_dir = os.path.join(os.path.sep, "usr", "bin")
-        # Raise an error for unknown platforms
-        else:
-            raise KhiopsEnvironmentError(f"Unsupported platform {platform.system()}")
-
     def _check_samples_dir(self, samples_dir=None):
         # Check the runners samples_dir if samples_dir is not specified
         if samples_dir is None:
@@ -1339,6 +1224,108 @@ class KhiopsLocalRunner(KhiopsRunner):
             warnings.warn(
                 "Sample datasets location is not a directory "
                 f"({samples_dir_to_check}). {download_msg}",
+                stacklevel=3,
+            )
+
+    def _finish_khiops_environment_initialization(self):
+        # Initialize Khiops binary directory
+        self._initialize_khiops_bin_dir()
+
+        # Check the tools exist and are executable
+        self._check_tools()
+
+        # Initialize the khiops version
+        self._initialize_khiops_version()
+
+    def _initialize_khiops_bin_dir(self):
+        # Initialize Khiops bin dir, according to the environment
+        installation_method = _infer_khiops_installation_method()
+
+        # Conda case
+        if installation_method == "conda":
+            self._khiops_bin_dir = os.path.join(os.environ["CONDA_PREFIX"], "bin")
+        # Conda "based" (fallback)
+        elif installation_method == "conda-based":
+            self._khiops_bin_dir = _infer_env_bin_dir_for_conda_based_installations()
+        # System-wide installations
+        else:
+            self._initialize_default_system_wide_khiops_bin_dir()
+
+    def _initialize_default_system_wide_khiops_bin_dir(self):
+        # Warn if both KHIOPS_HOME and KhiopsHome are set
+        if "KHIOPS_HOME" in os.environ and "KhiopsHome" in os.environ:
+            warnings.warn(
+                "Both KHIOPS_HOME and KhiopsHome environment variables "
+                "are set. Only the KHIOPS_HOME will be used."
+            )
+        # Windows: KHIOPS_HOME value
+        if platform.system() == "Windows":
+            # KHIOPS_HOME variable by default
+            if "KHIOPS_HOME" in os.environ:
+                self._khiops_bin_dir = os.path.join(os.environ["KHIOPS_HOME"], "bin")
+            # Look for KhiopsHome to support Khiops 9
+            elif "KhiopsHome" in os.environ:
+                self._khiops_bin_dir = os.path.join(os.environ["KhiopsHome"], "bin")
+            # Raise error if KHIOPS_HOME is not set
+            else:
+                raise KhiopsEnvironmentError(
+                    "No environment variable named 'KHIOPS_HOME' or "
+                    "'KhiopsHome' found. We recommend you to reinstall Khiops. "
+                    "Go to https://khiops.org for more information."
+                )
+        # MacOS: /usr/local/bin
+        elif platform.system() == "Darwin":
+            self._khiops_bin_dir = os.path.join(os.path.sep, "usr", "local", "bin")
+        # Linux/Unix: /usr/bin
+        elif platform.system() == "Linux":
+            self._khiops_bin_dir = os.path.join(os.path.sep, "usr", "bin")
+        # Raise an error for unknown platforms
+        else:
+            raise KhiopsEnvironmentError(
+                f"Unsupported OS {platform.system()}. "
+                "Check the supported OSes at https://khiops.org."
+            )
+
+    def _check_tools(self):
+        """Checks the that the tool binaries exist and are executable"""
+        assert self.khiops_bin_dir is not None
+        for tool_name in ["khiops", "khiops_coclustering"]:
+            if not os.path.exists(self._tool_path(tool_name)):
+                raise KhiopsEnvironmentError(
+                    f"Inexistent Khiops executable path: {self._tool_path(tool_name)}"
+                )
+            _check_executable(self._tool_path(tool_name))
+
+    def _initialize_khiops_version(self):
+        # Run khiops with the -v
+        stdout, _, return_code = self.raw_run("khiops", ["-v"], use_mpi=False)
+
+        # On success parse and save the version
+        if return_code == 0:
+            # Skip potential non-version lines (ex: Completed loading of file driver...)
+            for line in stdout.split(os.linesep):
+                if line.startswith("Khiops"):
+                    khiops_version_str = line.rstrip().split(" ")[1]
+                    break
+        # If -v fails it means it is Khiops 9 or lower so we try the old way
+        else:
+            khiops_version_str, _, _, _ = _get_tool_info_khiops9(self, "khiops")
+            warnings.warn(
+                "Khiops version is earlier than 10.0; khiops-python will "
+                f"run in legacy mode. Khiops path: {self._tool_path('khiops')}",
+                stacklevel=3,
+            )
+        self._khiops_version = KhiopsVersion(khiops_version_str)
+
+        # Warn if the khiops version is too far from the khiops-python version
+        compatible_khiops_version = khiops.get_compatible_khiops_version()
+        if self._khiops_version.major > compatible_khiops_version.major:
+            warnings.warn(
+                f"Khiops version '{self._khiops_version}' is ahead of "
+                f"the khiops-python version '{khiops.__version__}'. "
+                "There may be compatibility errors and "
+                "we recommend you to update to the latest khiops-python version."
+                "Go to https://khiops.org for more information.",
                 stacklevel=3,
             )
 
@@ -1382,18 +1369,6 @@ class KhiopsLocalRunner(KhiopsRunner):
         assert isinstance(self._khiops_version, KhiopsVersion), type_error_message(
             self._khiops_version, "khiops_version", KhiopsVersion
         )
-        compatible_khiops_version = khiops.get_compatible_khiops_version()
-        if (
-            self._khiops_version.major > compatible_khiops_version.major
-            or self._khiops_version.minor > compatible_khiops_version.minor
-        ):
-            warnings.warn(
-                f"Khiops version '{self._khiops_version}' is very ahead "
-                f"from Khiops Python version '{khiops.__version__}'. "
-                "There may be compatibility errors and "
-                "it is recommended to update to the latest khiops-python version.",
-                stacklevel=3,
-            )
         return self._khiops_version
 
     @property
@@ -1448,16 +1423,6 @@ class KhiopsLocalRunner(KhiopsRunner):
             bin_path += ".exe"
 
         return bin_path
-
-    def _check_tools(self):
-        """Checks the that the tool binaries exist and are executable"""
-        assert self.khiops_bin_dir is not None
-        for tool_name in ["khiops", "khiops_coclustering"]:
-            if not os.path.exists(self._tool_path(tool_name)):
-                raise KhiopsEnvironmentError(
-                    f"Inexistent Khiops executable path: {self._tool_path(tool_name)}"
-                )
-            _check_executable(self._tool_path(tool_name))
 
     def _set_samples_dir(self, samples_dir):
         """Checks and sets the samples directory"""

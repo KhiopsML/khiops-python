@@ -5,21 +5,21 @@ FROM ghcr.io/khiopsml/khiops/khiopsdev-${KHIOPSDEV_OS}:latest AS khiopsdev
 LABEL maintainer="khiops.team@orange.com"
 LABEL description="Container for the development of khiops-python"
 
-# Configure CMake
-# Build Khiops; add KNI to make cmake --install happy
-# Set mpich for default MPI
+# Install dev tools; build and install Khiops
 ARG KHIOPS_REVISION
 RUN true \
   # Install git (for khiops-python version calculation) and pip \
   && apt-get -y update \
   && apt-get -y --no-install-recommends install git python3-pip zip pandoc \
-  # Obtain, build and install Khiops \
-  && git clone --depth 1 https://github.com/khiopsml/khiops.git \
+  # Obtain the Khiops sources \
+  && git clone https://github.com/khiopsml/khiops.git \
   && cd khiops \
   && git checkout ${KHIOPS_REVISION} \
-  && cmake --preset linux-gcc-release -DTESTING=OFF -DBUILD_JARS=OFF -DCMAKE_INSTALL_PREFIX= \
+  # Build and install khiops \
+  # Note: We build the JARs and KNI because the `cmake --install` command below doesn't work \
+  && cmake --preset linux-gcc-release -DTESTING=OFF -DBUILD_JARS=ON -DCMAKE_INSTALL_PREFIX= \
   && cmake --build --preset linux-gcc-release --parallel \
-       --target MODL MODL_Coclustering KhiopsNativeInterface \
+       --target MODL MODL_Coclustering KhiopsNativeInterface norm_jar khiops_jar \
   && cmake --install ./build/linux-gcc-release \
   && cd .. \
   # Set python to python3 \

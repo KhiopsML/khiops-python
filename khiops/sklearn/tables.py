@@ -310,7 +310,7 @@ class Dataset:
         # Create a list of relations
         main_table_name = self.main_table.name
         self.relations = [
-            (main_table_name, table.name) for table in self.secondary_tables
+            (main_table_name, table.name, False) for table in self.secondary_tables
         ]
 
     def _check_input_sequence(self, X, y=None, key=None):
@@ -434,15 +434,30 @@ class Dataset:
                 )
             self.secondary_tables = []
 
-        if self.secondary_tables:
-            assert not isinstance(self.main_table, NumpyTable)
-            if "relations" not in X:
-                main_table_name = self.main_table.name
-                self.relations = [
-                    (main_table_name, table.name) for table in self.secondary_tables
-                ]
-            else:
-                self.relations = X["relations"]
+        if "relations" not in X:
+            # the schema is by default 'star'
+            # create a list of relations [(main_table, secondary_table, False), ...]
+            self.relations = [
+                (self.main_table.name, table.name, False)
+                for table in self.secondary_tables
+            ]
+        else:
+            # the schema could be 'star' or 'snowflake'
+            # unify the size of all relation tuples
+            # by adding 'False' to non-entities
+            # check user-specified relations
+            self._check_relations(X)
+            relations = []
+            for relation in X["relations"]:
+                parent, child = relation[:2]
+                relations.append(
+                    (
+                        parent,
+                        child,
+                        relation[2] if len(relation) == 3 else False,
+                    )
+                )
+            self.relations = relations
 
     def _check_cycle_exists(self, relations, main_table_name):
         """Check existence of a cycle into 'relations'"""
@@ -452,7 +467,7 @@ class Dataset:
             current_table = tables_to_visit.pop(0)
             tables_visited.add(current_table)
             for relation in relations:
-                parent_table, child_table = relation
+                parent_table, child_table = relation[:2]
                 if parent_table == current_table:
                     tables_to_visit.append(child_table)
                     if tables_visited.intersection(tables_to_visit):
@@ -491,52 +506,52 @@ class Dataset:
                 f"'{left_table_name}' {left_table_key_msg}"
             )
 
-    def _check_relations(self, X, relations):
+    def _check_relations(self, X):
         """Check relations"""
         main_table_name = X["main_table"]
-        if not is_list_like(relations):
-            raise TypeError(
-                type_error_message(
-                    "Relations at X['tables']['relations']", relations, "list-like"
+        relations = X["relations"]
+        parents_and_children = [relation[:2] for relation in relations]
+        for relation in relations:
+            parent_table, child_table = relation[:2]
+            for table in (parent_table, child_table):
+                if not isinstance(table, str):
+                    raise TypeError(
+                        type_error_message("Table of a relation", table, str)
+                    )
+            if parent_table == child_table:
+                raise ValueError(
+                    f"Tables in relation '({parent_table}, {child_table})' "
+                    f"are the same. They must be different."
                 )
-            )
-        else:
-            for relation in relations:
-                if not isinstance(relation, tuple):
-                    raise TypeError(type_error_message("Relation", relation, tuple))
-                if len(relation) != 2:
-                    raise ValueError(
-                        f"A relation must be of size 2 not {len(relation)}"
-                    )
-                for table in relation:
-                    if not isinstance(table, str):
-                        raise TypeError(
-                            type_error_message("Table of a relation", table, str)
+            if parents_and_children.count(relation[:2]) > 1:
+                raise ValueError(
+                    f"Relation '({parent_table}, {child_table})' occurs "
+                    f"'{parents_and_children.count(relation[:2])}' times. "
+                    f"Each relation must be unique."
+                )
+            if not parent_table in X["tables"].keys():
+                raise ValueError(
+                    f"X['tables'] does not contain a table named '{parent_table}'. "
+                    f"All tables in X['relations'] must be declared in X['tables']"
+                )
+            if not child_table in X["tables"].keys():
+                raise ValueError(
+                    f"X['tables'] does not contain a table named '{child_table}'. "
+                    f"All tables in X['relations'] must be declared in X['tables']."
+                )
+            if len(relation) == 3:
+                is_one_to_one_relation = relation[2]
+                if not isinstance(is_one_to_one_relation, bool):
+                    raise TypeError(
+                        type_error_message(
+                            f"1-1 flag for relation "
+                            f"({parent_table}, {child_table})",
+                            is_one_to_one_relation,
+                            bool,
                         )
-                parent_table, child_table = relation
-                if parent_table == child_table:
-                    raise ValueError(
-                        f"Tables in relation '{relation}' are the same. "
-                        f"They must be different."
                     )
-                if relations.count(relation) != 1:
-                    raise ValueError(
-                        f"Relation '{relation}' occurs "
-                        f"'{relations.count(relation)}' times. "
-                        f"Each relation must be unique."
-                    )
-                if not parent_table in X["tables"].keys():
-                    raise ValueError(
-                        f"X['tables'] does not contain a table named '{parent_table}'. "
-                        f"All tables in X['relations'] must be declared in X['tables']"
-                    )
-                if not child_table in X["tables"].keys():
-                    raise ValueError(
-                        f"X['tables'] does not contain a table named '{child_table}'. "
-                        f"All tables in X['relations'] must be declared in X['tables']."
-                    )
-                self._check_relation_keys(X, parent_table, child_table)
-                self._check_cycle_exists(relations, main_table_name)
+            self._check_relation_keys(X, parent_table, child_table)
+            self._check_cycle_exists(relations, main_table_name)
 
     def _check_input_mapping(self, X, y=None):
         # Check the "tables" field (basic)
@@ -632,23 +647,27 @@ class Dataset:
                         " table keys must be specified in multitable datasets"
                     )
 
-            if "relations" not in X:
-                # the schema is by default 'star'
-                # create a list of relations [(main_table, secondary_table), ...]
-                main_table_name = X["main_table"]
-                table_names = X["tables"].keys()
-                relations = [
-                    (main_table_name, name)
-                    for name in table_names
-                    if name != main_table_name
-                ]
-                # check the created 'relations'
-                self._check_relations(X, relations)
-            else:
+            if "relations" in X:
                 # check the 'relations' field
-                # the schema could be 'star' or 'snowflake'
-                relations = X["relations"]
-                self._check_relations(X, relations)
+                if not is_list_like(X["relations"]):
+                    raise TypeError(
+                        type_error_message(
+                            "Relations at X['tables']['relations']",
+                            X["relations"],
+                            "list-like",
+                        )
+                    )
+                else:
+                    for relation in X["relations"]:
+                        if not isinstance(relation, tuple):
+                            raise TypeError(
+                                type_error_message("Relation", relation, tuple)
+                            )
+                        if len(relation) not in (2, 3):
+                            raise ValueError(
+                                f"A relation must be of size 2 or 3, "
+                                f"not {len(relation)}"
+                            )
 
         # Check the 'format' field
         if "format" in X:
@@ -672,11 +691,13 @@ class Dataset:
                 main_table_source, _ = list(X["tables"].values())[0]
             else:
                 main_table_source, _ = X["tables"][X["main_table"]]
-            if isinstance(main_table_source, pd.DataFrame) and not isinstance(
-                y, pd.Series
+            if (
+                isinstance(main_table_source, pd.DataFrame)
+                and not isinstance(y, pd.Series)
+                and not isinstance(y, pd.DataFrame)
             ):
                 raise TypeError(
-                    type_error_message("y", y, pd.Series)
+                    type_error_message("y", y, pd.Series, pd.DataFrame)
                     + " (X's tables are of type pandas.DataFrame)"
                 )
             if isinstance(main_table_source, str) and not isinstance(y, str):
@@ -759,7 +780,7 @@ class Dataset:
             while tables_to_visit:
                 current_table = tables_to_visit.pop(0)
                 for relation in self.relations:
-                    parent_table, child_table = relation
+                    parent_table, child_table, is_one_to_one_relation = relation
                     if parent_table == current_table:
                         tables_to_visit.append(child_table)
                         parent_table_name = parent_table
@@ -771,11 +792,13 @@ class Dataset:
                         dictionary = table.create_khiops_dictionary()
                         dictionary_domain.add_dictionary(dictionary)
                         table_variable = kh.Variable()
-                        table_variable.type = "Table"
+                        if is_one_to_one_relation:
+                            table_variable.type = "Entity"
+                        else:
+                            table_variable.type = "Table"
                         table_variable.name = table.name
                         table_variable.object_type = table.name
                         parent_table_dictionary.add_variable(table_variable)
-
         return dictionary_domain
 
     def create_table_files_for_khiops(self, target_dir, sort=True):
@@ -989,6 +1012,14 @@ class PandasTable(DatasetTable):
                         f"Target series name '{target_column.name}' "
                         f"is already present in dataframe : {list(dataframe.columns)}"
                     )
+            elif isinstance(target_column, pd.DataFrame):
+                number_of_target_columns = len(target_column.columns)
+                if number_of_target_columns != 1:
+                    raise ValueError(
+                        "Target dataframe should contain exactly one column. "
+                        f"It contains {number_of_target_columns}."
+                    )
+                target_column = target_column.iloc[:, 0]
 
         # Initialize the attributes
         self.dataframe = dataframe

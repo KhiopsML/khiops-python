@@ -12,13 +12,15 @@ on:
       samples-revision:
         default: main
         description: khiops-samples repo revision
+      release-channel:
+        type: choice
+        default: khiops-dev
+        options: [khiops-dev, khiops]
+        description: Anaconda channel to release
   push:
-    tags: [v*]
+    tags: ['*']
   pull_request:
-    paths:
-      - packaging/conda/**
-      - '!packaging/conda/README.md'
-      - .github/workflows/build-conda-package.yml
+    paths: [packaging/conda/**, '!packaging/conda/README.md', .github/workflows/conda.yml]
 defaults:
   run:
     shell: bash -el {0}
@@ -39,8 +41,6 @@ jobs:
           - os: macos-11
             os-family: macos
     runs-on: ${{ matrix.os }}
-    outputs:
-      pkg-version: ${{ steps.get-pkg-version.outputs.pkg-version }}
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v4
@@ -48,14 +48,6 @@ jobs:
           # Checkout the full repository to have the tags so versioneer works properly
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
-      # We move KHIOPS_REVISION to the environment so that we can use
-      # them in both push and workflow_dispatch events
-      - name: Move KHIOPS_REVISION to the environment (push/PR)
-        if: github.event_name == 'push' || github.event_name == 'pull_request'
-        run: echo "KHIOPS_REVISION=${DEFAULT_KHIOPS_REVISION}" >> "$GITHUB_ENV"
-      - name: Move KHIOPS_REVISION to the environment (workflow_dispatch)
-        if: github.event_name == 'workflow_dispatch'
-        run: echo "KHIOPS_REVISION=${{ inputs.khiops-revision }}" >> "$GITHUB_ENV"
       - name: Install Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -69,6 +61,10 @@ jobs:
         run: |
           wget https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.10.sdk.tar.xz
           sudo tar -zxvf MacOSX10.10.sdk.tar.xz -C /opt
+      - name: Set KHIOPS_REVISION build input parameter
+        run: |
+          KHIOPS_REVISION="${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}"
+          echo "KHIOPS_REVISION=$KHIOPS_REVISION" >> "$GITHUB_ENV"
       - name: Build Khiops Conda Package (Windows)
         if: runner.os == 'Windows'
         run: |
@@ -80,15 +76,6 @@ jobs:
         run: |
           mkdir khiops-conda
           conda build --channel conda-forge --output-folder khiops-conda ./packaging/conda
-      - name: Extract Khiops Package Version
-        id: get-pkg-version
-        run: |
-          PKG_VERSION=$(\
-              conda search --override-channels --channel ./khiops-conda/ khiops \
-                | awk '!/#|channels/ {print $2}' \
-                | sort -u \
-          )
-          echo "pkg-version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
       - name: Upload Khiops Conda Package
         uses: actions/upload-artifact@v4
         with:
@@ -114,19 +101,11 @@ jobs:
     env:
       KHIOPS_SAMPLES_DIR: ./khiops-samples-repo
     steps:
-      # We move SAMPLES_REVISION to the environment so that we can use
-      # them in both push and workflow_dispatch events
-      - name: Move SAMPLES_REVISION to the environment (push event)
-        if: github.event_name == 'push'
-        run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
-      - name: Move SAMPLES_REVISION to the environment (workflow_dispatch event)
-        if: github.event_name == 'workflow_dispatch'
-        run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
         uses: actions/checkout@v4
         with:
           repository: khiopsml/khiops-samples
-          ref: ${{ env.SAMPLES_REVISION }}
+          ref: ${{ inputs.samples-revision || env.DEFAULT_SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: ${{ env.KHIOPS_SAMPLES_DIR }}
       - name: Install Miniconda
@@ -156,10 +135,11 @@ jobs:
           kh-samples sklearn -i khiops_classifier -e
           kh-samples sklearn -i khiops_coclustering -e
   # Release is only executed on tags
+  # Note: For this job to work the secrets variables KHIOPS_ANACONDA_CHANNEL_TOKEN and
+  #       KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN must be set with valid anaconda.org access tokens
   release:
     if: github.ref_type == 'tag'
-    # We need `build` because we use its output
-    needs: [build, test]
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -176,26 +156,49 @@ jobs:
         with:
           miniconda-version: latest
           python-version: '3.11'
-      - name: Reindex the package
+      - name: Install requirement packages
+        run: conda install -y anaconda-client conda-build=3.27.0
+      - name: Reindex the package directory
+        run: conda-index ./khiops-conda
+      - name: Upload the packages to anaconda.org
         run: |
-          conda install -y conda-build=3.27.0
-          conda-index ./khiops-conda
+          # Set the anaconda.org channel
+          ANACONDA_CHANNEL="${{ inputs.release-channel || 'khiops-dev' }}"
+
+          # For the release channel: upload without forcing
+          if [[ "$ANACONDA_CHANNEL" == "khiops" ]]
+          then
+            anaconda --token "${{ secrets.KHIOPS_ANACONDA_CHANNEL_TOKEN }}" upload \
+              --user "$ANACONDA_CHANNEL" ./khiops-conda/*/*.tar.bz2
+          # For the dev channel: upload with forcing
+          else
+            anaconda --token "${{ secrets.KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN }}" upload \
+              --user "$ANACONDA_CHANNEL" --force ./khiops-conda/*/*.tar.bz2
+          fi
+      - name: Extract package version
+        run: |
+          PKG_VERSION=$(\
+              conda search --override-channels --channel ./khiops-conda/ khiops \
+                | awk '!/#|channels/ {print $2}' \
+                | sort -u \
+          )
+          echo "PKG_VERSION=$PKG_VERSION" >> "$GITHUB_ENV"
       - name: Create the release zip archive
         uses: thedoctor0/zip-release@0.7.6
         with:
           type: zip
           path: ./khiops-conda/
-          filename: khiops-${{ needs.build.outputs.pkg-version }}-conda.zip
+          filename: khiops-${{ env.PKG_VERSION }}-conda.zip
       - name: Upload conda package artifacts for all platforms
         uses: actions/upload-artifact@v4
         with:
           name: khiops-conda-all
-          path: ./khiops-${{ needs.build.outputs.pkg-version }}-conda.zip
+          path: ./khiops-${{ env.PKG_VERSION }}-conda.zip
       - name: Release the zip archive
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: ./khiops-${{ needs.build.outputs.pkg-version }}-conda.zip
+          artifacts: ./khiops-${{ env.PKG_VERSION }}-conda.zip
           draft: false
           makeLatest: false
           prerelease: true

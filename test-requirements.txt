@@ -1,2 +1,2 @@
 coverage[toml]>=5.5
-wrapt<1.14
+wrapt

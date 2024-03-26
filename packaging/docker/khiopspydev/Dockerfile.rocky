@@ -5,18 +5,32 @@ FROM ghcr.io/khiopsml/khiops/khiopsdev-${KHIOPSDEV_OS}:latest AS khiopsdev
 LABEL maintainer="khiops.team@orange.com"
 LABEL description="Container for the development of khiops-python"
 
-# Configure CMake
-# Build Khiops; add KNI to make cmake --install happy
-# Set mpich for default MPI
+# Reuse KHIOPSDEV_OS from previous stage
+ARG KHIOPSDEV_OS
 ARG KHIOPS_REVISION
-RUN useradd -rm -d /home/rocky -s /bin/bash -g root -u 1000 rocky
+
+# Install dev tools; build and install Khiops; set mpich as the default MPI
 RUN true \
-  # Install git (for khiops-python version calculation) and pip \
-  && yum install -y epel-release \
-  && yum -y update \
-  && yum -y install git python3-pip zip pandoc \
-  # Obtain, build and install Khiops \
-  && git clone --depth 1 https://github.com/khiopsml/khiops.git \
+  && useradd -rm -d /home/rocky -s /bin/bash -g root -u 1000 rocky \
+  # Install git (for khiops-python version calculation), pandoc and pip \
+  && dnf upgrade -y \
+  && dnf search pandoc \
+  && dnf install --enablerepo=devel -y \
+    git \
+    pandoc \
+  # Install Python 3.11 if on Rocky 8 \
+  && if [ "$KHIOPSDEV_OS" = "rocky8" ]; then \
+       dnf install -y \
+       python3.11 \
+       python3.11-pip \
+       python3.11-setuptools ; \
+     else \
+       dnf install -y \
+       python3-setuptools \
+       python3-pip ; \
+     fi \
+  # Obtain the Khiops sources \
+  && git clone https://github.com/khiopsml/khiops.git \
   && cd khiops \
   && git checkout ${KHIOPS_REVISION} \
   # Make sure that MPI is mpich \
@@ -24,16 +38,25 @@ RUN true \
   && module unload mpi \
   # Hard-code MPICH module name \
   && module load mpi/mpich-x86_64 \
-  && cmake --preset linux-gcc-release -DTESTING=OFF -DBUILD_JARS=OFF -DCMAKE_INSTALL_PREFIX= \
+  # Build Khiops \
+  # Note: We build the JARs and KNI because the `cmake --install` command below doesn't work \
+  && cmake --preset linux-gcc-release -DTESTING=OFF -DBUILD_JARS=ON -DCMAKE_INSTALL_PREFIX= \
   && cmake --build --preset linux-gcc-release --parallel \
-       --target MODL${MPI_SUFFIX} MODL_Coclustering${MPI_SUFFIX} KhiopsNativeInterface \
+       --target MODL${MPI_SUFFIX} MODL_Coclustering${MPI_SUFFIX} \
+                KhiopsNativeInterface norm_jar khiops_jar \
   && cmake --install ./build/linux-gcc-release \
   && cd .. \
-  # Set python to python3 \
-  && alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+  # Set python to python3.11 and pip to Pip 3.11 on Rocky 8 \
+  # Set python to python3 on Rocky 9 \
+  && if [ "$KHIOPSDEV_OS" = "rocky8" ]; then \
+       alternatives --set python /usr/bin/python3.11 \
+       && alternatives --install /usr/bin/pip pip /usr/bin/pip3.11 1 ; \
+     else \
+       alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+       && alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 ; \
+     fi \
   # Clean build files \
-  && yum clean all \
-  && rm -fr /var/cache/yum/* \
+  && dnf clean all \
   && rm -rf ./khiops \
   && true
 

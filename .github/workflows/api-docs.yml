@@ -1,9 +1,13 @@
 ---
-name: Build (and deploy) API docs to GH Pages
+name: API Docs
 on:
-  push:
-    tags: [v*]
   workflow_dispatch:
+    inputs:
+      deploy-gh-pages:
+        description: Deploy GH Pages
+        required: true
+        type: boolean
+        default: false
   pull_request:
     paths:
       - doc/**.rst
@@ -11,6 +15,7 @@ on:
       - doc/clean-doc
       - doc/*.py
       - khiops/**.py
+      - .github/workflows/api-docs.yml
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
@@ -24,8 +29,7 @@ concurrency:
   group: pages
   cancel-in-progress: false
 jobs:
-  create-docs:
-    name: Create Sphinx docs
+  build:
     runs-on: ubuntu-22.04
     container:
       image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
@@ -34,11 +38,11 @@ jobs:
       options: --user 1001
     steps:
       - name: Checkout khiops-python
-        uses: actions/checkout@v4.1.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Checkout khiops-python-tutorial
-        uses: actions/checkout@v4.1.0
+        uses: actions/checkout@v4
         with:
           repository: khiopsml/khiops-python-tutorial
           path: doc/khiops-python-tutorial
@@ -54,37 +58,25 @@ jobs:
           # Install the doc python requirements
           cd doc
           pip3 install -U -r requirements.txt
-      - name: Obtain Sphinx dependencies
-        run: |
       - name: Build Sphinx Documentation
         run: |
           cd doc
           ./create-doc -t
       - name: Upload the docs as an artifact
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: khiops-python-docs
           path: doc/_build/html/
-  upload-docs:
-    name: Upload docs to GH pages
-    if: github.event_name == 'push'
+  # Deploy only when the user explicitly (and manually) orders it
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || inputs.deploy-gh-pages == true }}
     runs-on: ubuntu-latest
-    needs: create-docs
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Setup Pages
-        uses: actions/configure-pages@v3
-      - name: Download artifact
-        uses: actions/download-artifact@v3.0.2
-        with:
-          name: khiops-python-docs
-          path: kp-docs
-      - name: Upload docsas pages artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: kp-docs
-      - name: Deploy to GitHub Pages
+        uses: actions/configure-pages@v4
+      - name: Deploy API Docs to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,111 @@
+---
+name: Pip Package
+env:
+  DEFAULT_SAMPLES_REVISION: main
+on:
+  workflow_dispatch:
+    inputs:
+      samples-revision:
+        default: main
+        description: khiops-samples repo revision
+  pull_request:
+  push:
+    tags: ['*']
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      checks: write
+      contents: read
+      id-token: write
+      packages: read
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          # Get Git tags so that versioneer can function correctly
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
+      - name: Build Pip package
+        run: |
+          # This is needed so that the Git tag is parsed and the version is retrieved
+          git config --global --add safe.directory $(realpath .)
+
+          # Build the package
+          python3 setup.py sdist
+      - name: Upload package as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-package
+          path: ./dist/khiops*.tar.gz
+  test:
+    needs: build
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        container: [ubuntu22.04, rocky9]
+    container:
+      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:latest
+    steps:
+      - name: Set parameters as env
+        run: |
+          SAMPLES_REVISION=${{ inputs.samples-revision || env.DEFAULT_SAMPLES_REVISION }}
+          echo "SAMPLES_REVISION=$SAMPLES_REVISION" >> "$GITHUB_ENV"
+      - name: Checkout Khiops samples
+        uses: actions/checkout@v4
+        with:
+          repository: khiopsml/khiops-samples
+          ref: ${{ env.SAMPLES_REVISION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: khiops-samples
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pip-package
+      - name: Install package
+        run: pip install $(ls khiops*.tar.gz)
+      - name: Run tests
+        env:
+          KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
+        run: |-
+          # Make sure MPI support is not loaded through env modules
+          # Note: As the Docker container's shell is non-interactive, environment
+          # modules are currently not initializing the shell anyway
+          if [[ -n "$MODULESHOME" ]]; then module unload mpi; fi
+
+          # Print khiops installation status
+          kh-status
+
+          # Run some simple training tasks
+          kh-samples core -i train_predictor -e
+          kh-samples core -i train_coclustering -e
+          kh-samples sklearn -i khiops_classifier -e
+
+          # Test that the line containing "MPI command" also contains
+          # "mpiexec", which means that `mpiexec` has been found
+          kh-status | grep "MPI command" | grep -wq mpiexec
+  release:
+    if: github.ref_type == 'tag'
+    needs: [build, test]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pip-package
+      - name: Upload Pip package to the release
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          allowUpdates: true
+          artifacts: khiops*.tar.gz
+          body: '**For testing purposes only**'
+          draft: false
+          makeLatest: false
+          prerelease: true
+          updateOnlyUnreleased: true

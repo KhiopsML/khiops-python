@@ -1,0 +1,83 @@
+---
+name: Dev Docker
+env:
+  DEFAULT_KHIOPS_REVISION: main
+  DEFAULT_SERVER_REVISION: main
+on:
+  pull_request:
+    paths: [packaging/docker/khiopspydev/Dockerfile.*, .github/workflows/dev-docker.yml]
+  workflow_dispatch:
+    inputs:
+      khiops-revision:
+        type: string
+        default: main
+        description: Khiops Revision
+      server-revision:
+        type: string
+        default: main
+        description: Khiops Server Revision
+      push:
+        type: boolean
+        default: true
+        description: Push to GH Registry
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-push:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        khiopsdev-os: [ubuntu22.04, rocky8, rocky9]
+    permissions:
+      packages: write  # to write in the Github package registry
+    steps:
+      - name: Set input parameters as env or output
+        id: set-parameters
+        run: |
+          set -x
+          echo "KHIOPS_REVISION=${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}" >> "$GITHUB_ENV"
+          echo "KHIOPSDEV_OS_CODENAME=$(echo '${{ matrix.khiopsdev-os }}' | tr -d '0-9.')" >> "$GITHUB_ENV"
+          echo "SERVER_REVISION=${{ inputs.server-revision || env.DEFAULT_SERVER_REVISION }}" >> "$GITHUB_ENV"
+      - name: Checkout khiops-python sources
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        id: docker-build
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Github Packages
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build image and push it to GitHub Container Registry
+        uses: docker/build-push-action@v5
+        with:
+          context: ./packaging/docker/khiopspydev/
+          file: ./packaging/docker/khiopspydev/Dockerfile.${{ env.KHIOPSDEV_OS_CODENAME }}
+          build-args: |
+            "KHIOPS_REVISION=${{ env.KHIOPS_REVISION }}"
+            "KHIOPSDEV_OS=${{ matrix.khiopsdev-os }}"
+            "SERVER_REVISION=${{ env.SERVER_REVISION }}"
+          tags: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}:latest
+          # Push only on manual request
+          push: ${{ inputs.push || false }}
+      - name: Display the image digest
+        run: echo ${{ steps.docker-build.outputs.digest }}
+  test:
+    # Test only when manually pushed an requested
+    if: ${{ inputs.push || false }}
+    needs: build-push
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        khiopsdev-os: [ubuntu22.04, rocky8, rocky9]
+    container:
+      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}:latest
+    steps:
+      - name: Check Khiops executables
+        run: |-
+          khiops -v
+          khiops_coclustering -v

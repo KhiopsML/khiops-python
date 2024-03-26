@@ -17,7 +17,7 @@ import wrapt
 from sklearn.model_selection import train_test_split
 
 import khiops.core as kh
-from khiops.core.internals.common import is_iterable
+from khiops.core.internals.common import is_iterable, type_error_message
 from khiops.sklearn.estimators import KhiopsEncoder, KhiopsEstimator
 
 
@@ -262,6 +262,18 @@ class KhiopsTestHelper:
     """
 
     @staticmethod
+    def get_with_subkey(dictionary, subkey):
+        values = []
+        for key, value in dictionary.items():
+            if not isinstance(key, tuple):
+                raise TypeError(type_error_message("key", key, tuple))
+            if len(key) < 1:
+                raise ValueError("'key' must be  non-empty")
+            if subkey in key:
+                values.append(value)
+        return values
+
+    @staticmethod
     def skip_long_test(test_case):
         if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
             if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
@@ -318,7 +330,7 @@ class KhiopsTestHelper:
         )
 
     @staticmethod
-    def prepare_data(data, target_variable, primary_table=None):
+    def prepare_data(data, target_variable, primary_table=None, y_as_dataframe=False):
         """Prepare training and testing data for automated tests"""
         if primary_table is None:
             data_train, data_test = train_test_split(
@@ -327,6 +339,10 @@ class KhiopsTestHelper:
 
             y_test = data_test[target_variable]
             y_train = data_train[target_variable]
+
+            # Create training labels as single-column dataframe
+            if y_as_dataframe:
+                y_train = pd.DataFrame(y_train, columns=[target_variable])
 
             x_test = data_test.drop([target_variable], axis=1)
             x_train = data_train.drop([target_variable], axis=1)
