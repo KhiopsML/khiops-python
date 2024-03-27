@@ -7,13 +7,15 @@ source:
   path: ../../../
 
 build:
+  number: 0
   noarch: python
   entry_points:
     - kh-status = khiops.tools:kh_status_entry_point
     - kh-samples = khiops.tools:kh_samples_entry_point
     - kh-download-datasets = khiops.tools:kh_download_datasets_entry_point
     - pk-status = khiops.tools:pk_status_entry_point   # deprecated
-  number: 0
+  script: |
+    {{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-isolation -vvv
 
 requirements:
   build:
@@ -22,8 +24,8 @@ requirements:
   host:
     - python
   run:
-    - khiops-core >=10.0.0,<11.0.0
     - python
+    - khiops-core >=10.0.0,<11.0.0
     - pandas >=0.25.3
     - scikit-learn >=0.22.2
   run_constrained:

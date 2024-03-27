@@ -6,6 +6,7 @@ source:
   path: ../../
 
 build:
+  number: 0
   script_env:
     - KHIOPS_REVISION
     # Variables for signing the MODL executables in osx-arm64.
@@ -18,7 +19,6 @@ build:
     - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD   # [osx]
     {% endif %}
     {% endif %}
-  number: 0
   # Binary relocation of MODL and MODL_Coclustering is done in build.sh script
   # This is to be able to sign it, see the script for more details.
   # Only done when "KHIOPS_APPLE_CERTIFICATE_BASE64" is defined in the environment.
