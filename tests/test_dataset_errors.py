@@ -456,111 +456,29 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = type_error_message("y", bad_y, "array-like")
         self.assert_dataset_fails(dataframe, bad_y, TypeError, expected_msg)
 
-    #########################
-    # Tests for X dict spec #
-    #########################
-
-    def test_dict_spec_relations_must_be_list_like(self):
-        """Test Dataset raising TypeError when dict spec "relations" is a dict-like"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        bad_spec["relations"] = AnotherType()
-        expected_msg = type_error_message(
-            "Relations at X['tables']['relations']",
-            bad_spec["relations"],
-            "list-like",
-        )
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-    def test_dict_spec_relations_must_be_tuple(self):
-        """Test Dataset raising TypeError when a relation is not a tuple"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        bad_spec["relations"][0] = AnotherType()
-        expected_msg = type_error_message("Relation", bad_spec["relations"][0], "tuple")
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-    def test_dict_spec_relations_must_be_of_size_2_or_3(self):
-        """Test Dataset raising ValueError when a relation is not of size 2 or 3"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        for size in [0, 1, 4, 5]:
-            bad_spec["relations"][0] = tuple((f"Table{i}" for i in range(size)))
-            expected_msg = f"A relation must be of size 2 or 3, not {size}"
-            with self.subTest(tuple_size=size):
-                self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
-
-    def test_dict_spec_table_relation_must_be_str(self):
-        """Test Dataset raising TypeError when a relation table is not a str"""
-        # Test the error in the left table
-        bad_spec, y = self.create_fixture_dataset_spec()
-        bad_spec["relations"][0] = (AnotherType(), "BTable")
-        expected_msg = type_error_message(
-            "Table of a relation", bad_spec["relations"][0][0], str
-        )
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-        # Test the error in the right table
-        bad_spec["relations"][0] = ("ATable", AnotherType())
-        expected_msg = type_error_message(
-            "Table of a relation", bad_spec["relations"][0][1], str
-        )
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-    def test_dict_spec_entiy_flag_relation_must_be_bool(self):
-        """Test Dataset raising TypeError when the entity flag is not boolean"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        bad_spec["relations"][0] = ("B", "D", AnotherType())
-        expected_msg = type_error_message(
-            "1-1 flag for relation (B, D)", bad_spec["relations"][0][2], bool
-        )
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-    def test_dict_spec_relation_tables_must_not_be_the_same(self):
-        """Test Dataset raising TypeError when tables of a relation are the same"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        bad_spec["relations"][0] = ("Table", "Table")
-        expected_msg = (
-            "Tables in relation '(Table, Table)' are the same. "
-            "They must be different."
-        )
-        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
-
-    def test_dict_spec_relation_table_must_be_in_table_list(self):
-        """Test Dataset raising ValueError when a rel. table is not in the table list"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        bad_spec["relations"][0] = ("NonExistentTable", "D")
-        expected_msg = (
-            "X['tables'] does not contain a table named 'NonExistentTable'. "
-            "All tables in X['relations'] must be declared in X['tables']"
-        )
-        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
-
-    def test_dict_spec_relation_must_appear_once(self):
-        """Test Dataset raising ValueError if a relation appears more than once"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        bad_spec["relations"].append(("B", "D"))
-        expected_msg = (
-            "Relation '(B, D)' occurs '2' times. Each relation must be unique."
-        )
-        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
+    #####################################
+    # Tests for dictionary dataset spec #
+    #####################################
 
     def test_dict_spec_key_tables_must_be_present(self):
         """Test Dataset raising ValueError if the 'tables' key is missing"""
         bad_spec, y = self.create_fixture_dataset_spec()
         del bad_spec["tables"]
-        expected_msg = "Mandatory key 'tables' missing from dict 'X'"
+        expected_msg = "'tables' entry missing from dataset dict spec"
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
     def test_dict_spec_key_tables_must_be_mapping(self):
         """Test Dataset raising TypeError if the 'tables' key is not a mapping"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["tables"] = AnotherType()
-        expected_msg = type_error_message("X['tables']", bad_spec["tables"], Mapping)
+        expected_msg = type_error_message("'tables' entry", bad_spec["tables"], Mapping)
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
     def test_dict_spec_table_list_cannot_be_empty(self):
         """Test Dataset raising ValueError if the 'tables' key is empty"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["tables"] = {}
-        expected_msg = "X['tables'] cannot be empty"
+        expected_msg = "'tables' dictionary cannot be empty"
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
     def test_dict_spec_table_input_type_must_be_a_tuple(self):
@@ -568,7 +486,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["tables"]["D"] = list(bad_spec["tables"]["D"])
         expected_msg = type_error_message(
-            "Table input at X['tables']['D']", bad_spec["tables"]["D"], tuple
+            "'D' table entry", bad_spec["tables"]["D"], tuple
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
@@ -576,7 +494,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         """Test Dataset raising ValueError when a table entry is a tuple of size != 2"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["tables"]["D"] = (*bad_spec["tables"]["D"], "AnotherT", "YetAnotherT")
-        expected_msg = "Table input tuple at X['tables']['D'] must have size 2 not 4"
+        expected_msg = "'D' table entry must have size 2, not 4"
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
     def test_dict_spec_source_table_type_must_be_adequate(self):
@@ -584,9 +502,10 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["tables"]["D"] = (AnotherType(), bad_spec["tables"]["D"][-1])
         expected_msg = type_error_message(
-            "Table source at X['tables']['D']",
+            "'D' table's source",
             bad_spec["tables"]["D"][0],
-            "array-like or scipy.sparse.spmatrix",
+            "array-like",
+            "scipy.sparse.spmatrix",
             str,
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
@@ -596,7 +515,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["tables"]["D"] = (bad_spec["tables"]["D"][0], AnotherType())
         expected_msg = type_error_message(
-            "Table key at X['tables']['D']",
+            "'D' table's key",
             bad_spec["tables"]["D"][1],
             str,
             Sequence,
@@ -610,15 +529,15 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         bad_key = ["User_ID", AnotherType(), "VAR_2"]
         bad_spec["tables"]["D"] = (dataframe, bad_key)
         expected_msg = type_error_message(
-            "Column name of table key at X['tables']['D']", bad_key[1], str
+            "'D' table's key column name", bad_key[1], str
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
     def test_dict_spec_main_table_must_be_specified_for_multitable_datasets(self):
-        """Test Dataset raising ValueError if 'main_table' is not a key in a MT spec"""
+        """Test Dataset raising ValueError if 'main_table' is not a key in an MT spec"""
         bad_spec, y = self.create_fixture_dataset_spec()
         del bad_spec["main_table"]
-        expected_msg = "'main_table' must be specified for multi-table datasets"
+        expected_msg = "'main_table' entry must be specified for multi-table datasets"
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
     def test_dict_spec_main_table_must_be_str(self):
@@ -626,7 +545,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["main_table"] = 1
         expected_msg = type_error_message(
-            "X['main_table']", bad_spec["main_table"], str
+            "'main_table' entry", bad_spec["main_table"], str
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
@@ -634,35 +553,39 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         """Test Dataset raising ValueError if the main table is not in the table list"""
         bad_spec, y = self.create_fixture_dataset_spec()
         del bad_spec["tables"][bad_spec["main_table"]]
-        expected_msg = "X['main_table'] (A) must be present in X['tables']"
-        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
-
-    def test_dic_spec_main_table_key_must_be_specified(self):
-        """Test Dataset raising ValueError if a MT spec doesn't have a main table key"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        dataframe, _ = bad_spec["tables"][bad_spec["main_table"]]
-        bad_spec["tables"][bad_spec["main_table"]] = (dataframe, None)
-        expected_msg = "key of the root table is 'None'"
-        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
-
-    def test_dict_spec_main_table_key_must_be_non_empty_for_multitable_datasets(self):
-        """Test Dataset raising ValueError if a MT spec have an empty main table key"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        dataframe, _ = bad_spec["tables"][bad_spec["main_table"]]
-        bad_spec["tables"][bad_spec["main_table"]] = (dataframe, [])
         expected_msg = (
-            "key of the root table must be non-empty for multi-table datasets"
+            "A table entry with the main table's name ('A') "
+            "must be present in the 'tables' dictionary"
         )
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
+    def test_dict_spec_main_table_key_must_be_specified(self):
+        """Test Dataset raise ValueError if an MT spec doesn't have a main table key"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        dataframe, _ = bad_spec["tables"][bad_spec["main_table"]]
+        bad_spec["tables"][bad_spec["main_table"]] = (dataframe, None)
+        expected_msg = (
+            "key of main table 'A' is 'None': "
+            "table keys must be specified in multi-table datasets"
+        )
+        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
+
+    def test_dict_spec_table_key_must_be_non_empty_for_multitable_datasets(self):
+        """Test Dataset raising ValueError if an MT spec have an empty table key"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        dataframe, _ = bad_spec["tables"][bad_spec["main_table"]]
+        bad_spec["tables"][bad_spec["main_table"]] = (dataframe, [])
+        expected_msg = f"'{bad_spec['main_table']}' table's key is empty"
+        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
+
     def test_dict_spec_secondary_table_key_must_be_specified(self):
-        """Test Dataset raising ValueError if a MT spec doesn't have a sec. table key"""
+        """Test Dataset raise ValueError if an MT spec doesn't have a sec. table key"""
         bad_spec, y = self.create_fixture_dataset_spec()
         dataframe, _ = bad_spec["tables"]["D"]
         bad_spec["tables"]["D"] = (dataframe, None)
         expected_msg = (
-            "key of the secondary table 'D' is 'None': "
-            "table keys must be specified in multitable datasets"
+            "key of secondary table 'D' is 'None': "
+            "table keys must be specified in multi-table datasets"
         )
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
@@ -670,15 +593,22 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         """Test Dataset raising a TypeError if the format field is not a tuple"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["format"] = AnotherType()
-        expected_msg = type_error_message("X['format']", bad_spec["format"], tuple)
+        expected_msg = type_error_message("'format' entry", bad_spec["format"], tuple)
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
+
+    def test_dict_spec_format_must_have_size_2(self):
+        """Test Dataset raising a ValueError if its 'format' entry is not of size 2"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        bad_spec["format"] = (",", True, AnotherType(), AnotherType(), AnotherType())
+        expected_msg = "'format' entry must be a tuple of size 2, not 5"
+        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
     def test_dict_spec_format_tuple_1st_element_must_be_str(self):
         """Test Dataset raising a TypeError if any of the format fields are not str"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["format"] = (AnotherType(), True)
         expected_msg = type_error_message(
-            "X['format'] 1st element", bad_spec["format"][0], str
+            "'format' tuple's 1st element (separator)", bad_spec["format"][0], str
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
@@ -690,7 +620,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         )
         bad_spec["format"] = (",", AnotherType())
         expected_msg = type_error_message(
-            "X['format'] 2nd element", bad_spec["format"][1], bool
+            "'format' tuple's 2nd element (header)", bad_spec["format"][1], bool
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
@@ -701,7 +631,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
             data_type="file",
         )
         bad_spec["format"] = (";;", True)
-        expected_msg = "Separator must be a single character. Value: ;;"
+        expected_msg = "'format' separator must be a single char, got ';;'"
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
     def test_dict_spec_y_type_must_be_series_or_df_when_x_is_df_spec(self):
@@ -754,7 +684,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = type_error_message("name", AnotherType(), str)
         self.assertEqual(output_error_msg, expected_msg)
 
-    def test_dict_spec_table_name_is_empty_string(self):
+    def test_dict_spec_table_nameis_empty_string(self):
         """Test Dataset raising ValueError when a table name is empty"""
         spec, _ = self.create_fixture_dataset_spec(multitable=False, schema=None)
         with self.assertRaises(ValueError) as context:
@@ -802,6 +732,125 @@ class DatasetSpecErrorsTests(unittest.TestCase):
             )
         output_error_msg = str(context.exception)
         self.assertEqual(output_error_msg, expected_error_msg)
+
+    def test_dict_spec_relations_must_be_list_like(self):
+        """Test Dataset raising TypeError when dict spec "relations" is a dict-like"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        bad_spec["relations"] = AnotherType()
+        expected_msg = type_error_message(
+            "'relations' entry",
+            bad_spec["relations"],
+            "list-like",
+        )
+        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
+
+    def test_dict_spec_relations_must_be_tuple(self):
+        """Test Dataset raising TypeError when a relation is not a tuple"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        bad_spec["relations"][0] = AnotherType()
+        expected_msg = type_error_message("Relation", bad_spec["relations"][0], "tuple")
+        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
+
+    def test_dict_spec_relations_must_be_of_size_2_or_3(self):
+        """Test Dataset raising ValueError when a relation is not of size 2 or 3"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        for size in [0, 1, 4, 5]:
+            bad_spec["relations"][0] = tuple((f"Table{i}" for i in range(size)))
+            expected_msg = f"A relation must be of size 2 or 3, not {size}"
+            with self.subTest(tuple_size=size):
+                self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
+
+    def test_dict_spec_table_relation_must_be_str(self):
+        """Test Dataset raising TypeError when a relation table is not a str"""
+        # Test the error in the left table
+        bad_spec, y = self.create_fixture_dataset_spec()
+        first_relation = bad_spec["relations"][0]
+        bad_spec["relations"][0] = (AnotherType(), "D")
+        expected_msg = type_error_message(
+            "Relation #1's parent table", bad_spec["relations"][0][0], str
+        )
+        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
+
+        # Test the error in the right table
+        bad_spec["relations"][0] = first_relation
+        bad_spec["relations"][1] = ("A", AnotherType())
+        expected_msg = type_error_message(
+            "Relation #2's child table", bad_spec["relations"][1][1], str
+        )
+        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
+
+    def test_dict_spec_entiy_flag_relation_must_be_bool(self):
+        """Test Dataset raising TypeError when the entity flag is not boolean"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        bad_spec["relations"][0] = ("B", "D", AnotherType())
+        expected_msg = type_error_message(
+            "Relation #1 (B, D) 1-1 flag", bad_spec["relations"][0][2], bool
+        )
+        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
+
+    def test_dict_spec_relation_tables_must_not_be_the_same(self):
+        """Test Dataset raising ValueError when tables of a relation are equal"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        bad_spec["relations"][0] = ("Table", "Table")
+        expected_msg = (
+            "Relation #1's tables are equal: (Table, Table). They must be different."
+        )
+        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
+
+    def test_dict_spec_relation_table_must_be_in_table_list(self):
+        """Test Dataset raising ValueError when a rel. table is not in the table list"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        bad_spec["relations"][0] = ("NonExistentTable", "D")
+        expected_msg = (
+            "Relation #1 (NonExistentTable, D) contains "
+            "non-existent table 'NonExistentTable'. "
+            "All relation tables must exist in the 'tables' entry."
+        )
+        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
+
+    def test_dict_spec_relation_must_appear_once(self):
+        """Test Dataset raising ValueError if a relation appears more than once"""
+        bad_spec, y = self.create_fixture_dataset_spec()
+        bad_spec["relations"].append(("B", "D"))
+        expected_msg = (
+            "Relation #1 (B, D) occurs 2 times. Each relation must be unique."
+        )
+        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
+
+    def test_dict_spec_relation_non_hierarchical_key(self):
+        """Test Dataset raising ValueError on non-hierarchical table keys"""
+        ref_spec, y = self.create_fixture_dataset_spec()
+        bad_spec = {
+            "main_table": "B",
+            "tables": {
+                "A": ref_spec["tables"]["A"],
+                "B": ref_spec["tables"]["B"],
+                "C": ref_spec["tables"]["C"],
+            },
+            "relations": [("A", "C"), ("B", "A")],
+        }
+        expected_msg = (
+            "Relation #2 child table 'A' key ([User_ID]) "
+            "does not contain that of parent table 'B' ([User_ID, VAR_1])."
+        )
+        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
+
+    def test_dict_spec_relation_cycle(self):
+        """Test Dataset raising ValueError when there is a relation cycle"""
+        ref_spec, y = self.create_fixture_dataset_spec()
+        bad_spec = {
+            "main_table": "A",
+            "tables": {
+                "A": ref_spec["tables"]["A"],
+                "B": ref_spec["tables"]["B"],
+                "C": ref_spec["tables"]["C"],
+            },
+            "relations": [("A", "C"), ("A", "B"), ("C", "A")],
+        }
+        expected_msg = (
+            "'relations' entry contains a cycle that includes " "the relation (C, A)."
+        )
+        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
     ############################
     # Tests for DatasetTable's #
@@ -917,9 +966,9 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg_prefix = "Cannot overwrite this table's path"
         self.assertIn(expected_msg_prefix, output_error_msg)
 
-    ####################################################
-    # Tests for X tuple and sequence spec (deprecated) #
-    ####################################################
+    ##########################################################
+    # Tests for tuple and sequence dataset spec (deprecated) #
+    ##########################################################
 
     def test_tuple_spec_must_have_length_2(self):
         """Test that `.Dataset` raises `ValueError` when the tuple is not of size 2"""
