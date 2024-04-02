@@ -2249,7 +2249,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
         )
 
 
-class PyKhiopsSklearnEstimatorStandardTests(unittest.TestCase):
+class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
     """Tests to comply with `sklearn.util.estimator_checks.check_estimator`"""
 
     def test_sklearn_check_estimator(self):
