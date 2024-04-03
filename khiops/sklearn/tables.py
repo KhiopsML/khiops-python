@@ -964,7 +964,10 @@ class DatasetTable(ABC):
 
 
 class PandasTable(DatasetTable):
-    """Table encapsulating (X,y) pair with types (pandas.DataFrame, pandas.Series)
+    """Table encapsulating the features dataframe X and the target labels y
+
+    X is of type pandas.DataFrame.
+    y is of type pandas.Series or pandas.DataFrame.
 
     Parameters
     ----------
