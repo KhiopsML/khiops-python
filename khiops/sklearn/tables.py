@@ -13,11 +13,13 @@ from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 from sklearn.utils import check_array
 from sklearn.utils.validation import column_or_1d
 
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
+from khiops.core.dictionary import VariableBlock
 from khiops.core.internals.common import (
     deprecation_message,
     is_dict_like,
@@ -164,6 +166,11 @@ class Dataset:
                 y,
                 categorical_target=categorical_target,
             )
+        # A sparse matrix
+        elif isinstance(X, sp.spmatrix):
+            self._init_tables_from_sparse_matrix(
+                X, y, categorical_target=categorical_target
+            )
         # A tuple spec
         elif isinstance(X, tuple):
             warnings.warn(
@@ -222,6 +229,17 @@ class Dataset:
         if y is not None and not hasattr(y, "__array__"):
             raise TypeError(type_error_message("y", y, "array-like"))
         self.main_table = PandasTable(
+            "main_table", X, target_column=y, categorical_target=categorical_target
+        )
+        self.secondary_tables = []
+
+    def _init_tables_from_sparse_matrix(self, X, y=None, categorical_target=True):
+        """Initializes the dataset from a 'X' of type scipy.sparse.spmatrix"""
+        assert isinstance(X, sp.spmatrix), "'X' must be a scipy.sparse.spmatrix"
+        if y is not None and not hasattr(y, "__array__"):
+            raise TypeError(type_error_message("y", y, "array-like"))
+
+        self.main_table = SparseTable(
             "main_table", X, target_column=y, categorical_target=categorical_target
         )
         self.secondary_tables = []
@@ -710,14 +728,14 @@ class Dataset:
         """Tests whether the dataset is in memory
 
         A dataset is in memory if it is constituted either of only pandas.DataFrame
-        tables or numpy.ndarray tables.
+        tables, numpy.ndarray, or scipy.sparse.spmatrix tables.
 
         Returns
         -------
         bool
             `True` if the dataset is constituted of pandas.DataFrame tables.
         """
-        return isinstance(self.main_table, (PandasTable, NumpyTable))
+        return isinstance(self.main_table, (PandasTable, NumpyTable, SparseTable))
 
     def is_multitable(self):
         """Tests whether the dataset is a multi-table one
@@ -1256,6 +1274,173 @@ class NumpyTable(DatasetTable):
             write_internal_data_table(output_dataframe, output_dataframe_stream)
             fs.write(
                 output_table_path, output_dataframe_stream.getvalue().encode("utf-8")
+            )
+
+        return output_table_path
+
+
+class SparseTable(DatasetTable):
+    """Table encapsulating feature matrix X and target array y
+
+    X is of type scipy.sparse.spmatrix.
+    y is array-like.
+
+    Parameters
+    ----------
+    name : str
+        Name for the table.
+    matrix : `scipy.sparse.spmatrix`
+        The sparse matrix to be encapsulated.
+    key : list-like of str, optional
+        The names of the columns composing the key
+    target_column : :external:term:`array-like`, optional
+        The array containing the target column.
+    categorical_target : bool, default ``True``.
+        ``True`` if the target column is categorical.
+    """
+
+    def __init__(
+        self, name, matrix, key=None, target_column=None, categorical_target=True
+    ):
+        assert key is None, "'key' must be unset for sparse matrix tables"
+        # Call the parent method
+        super().__init__(name, key=key, categorical_target=categorical_target)
+
+        # Check the sparse matrix types
+        if not isinstance(matrix, sp.spmatrix):
+            raise TypeError(
+                type_error_message("matrix", matrix, "scipy.sparse.spmatrix")
+            )
+        if not np.issubdtype(matrix.dtype, np.number):
+            raise TypeError(
+                type_error_message("'matrix' dtype", matrix.dtype, "numeric")
+            )
+
+        # Check the target's types
+        if target_column is not None and not hasattr(target_column, "__array__"):
+            raise TypeError(
+                type_error_message("target_column", target_column, "array-like")
+            )
+
+        # Initialize the members
+        self.matrix = matrix
+        self.column_ids = list(range(self.matrix.shape[1]))
+        self.target_column_id = self.matrix.shape[1]
+        self.target_column = target_column
+        self.categorical_target = categorical_target
+        self.khiops_types = {
+            column_id: get_khiops_type(self.matrix.dtype)
+            for column_id in self.column_ids
+        }
+        self.n_samples = self.matrix.shape[0]
+
+    def __repr__(self):
+        dtype_str = str(self.matrix.dtype)
+        return (
+            f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
+            f"dtype={dtype_str}; target={self.target_column_id}>"
+        )
+
+    def create_khiops_dictionary(self):
+        """Creates a Khiops dictionary representing this sparse table
+
+        Adds metadata to each sparse variable
+
+        Returns
+        -------
+        `.Dictionary`:
+            The Khiops Dictionary object describing this table's schema
+
+        """
+
+        # create dictionary as usual
+        dictionary = super().create_khiops_dictionary()
+
+        # create variable block for containing the sparse variables
+        variable_block = VariableBlock()
+        variable_block.name = "SparseVariables"
+
+        # For each variable, add metadata, named `VarKey`
+        variable_names = [variable.name for variable in dictionary.variables]
+        target_column_variable_name = self.get_khiops_variable_name(
+            self.target_column_id
+        )
+        for i, variable_name in enumerate(variable_names, 1):
+            if variable_name != target_column_variable_name:
+                variable = dictionary.remove_variable(variable_name)
+                variable.meta_data.add_value("VarKey", i)
+                variable_block.add_variable(variable)
+        dictionary.add_variable_block(variable_block)
+
+        return dictionary
+
+    def _get_all_column_ids(self):
+        n_columns = len(self.column_ids)
+        if self.target_column is not None:
+            n_columns += 1
+        return list(range(n_columns))
+
+    def get_khiops_variable_name(self, column_id):
+        """Return the khiops variable name associated to a column id"""
+        assert column_id == self.target_column_id or column_id in self.column_ids
+        if isinstance(column_id, str):
+            variable_name = column_id
+        else:
+            assert isinstance(column_id, (np.int64, int))
+            variable_name = f"Var{column_id}"
+        return variable_name
+
+    def _write_sparse_block(self, row_index, stream, target=None):
+        assert row_index in range(
+            self.matrix.shape[0]
+        ), "'row_index' must be coherent with the shape of the sparse matrix"
+        if target is not None:
+            assert target in self.target_column, "'target' must be in the target column"
+            stream.write(f"{target}\t")
+        row = self.matrix.getrow(row_index)
+        # Empty row in the sparse matrix: use the first variable as missing data
+        # TODO: remove this part once Khiops bug
+        # https://github.com/KhiopsML/khiops/issues/235 is solved
+        if row.data.size == 0:
+            for variable_index in self.column_ids:
+                stream.write(f"{variable_index + 1}: ")
+                break
+        # Non-empty row in the sparse matrix: get non-missing data
+        else:
+            # Variable indices are not always sorted in `row.indices`
+            # Khiops needs variable indices to be sorted
+            sorted_indices = np.sort(row.indices, axis=-1, kind="mergesort")
+            sorted_data = row.data[sorted_indices.argsort()]
+            for variable_index, variable_value in zip(sorted_indices, sorted_data):
+                stream.write(f"{variable_index + 1}:{variable_value} ")
+        stream.write("\n")
+
+    def create_table_file_for_khiops(self, output_dir, sort=True):
+        # Create the output table resource object
+        output_table_path = fs.get_child_path(output_dir, f"{self.name}.txt")
+
+        # Write the sparse matrix to an internal table file
+        with io.StringIO() as output_sparse_matrix_stream:
+            if self.target_column is not None:
+                target_column_name = self.get_khiops_variable_name(
+                    self.target_column_id
+                )
+                output_sparse_matrix_stream.write(
+                    f"{target_column_name}\tSparseVariables\n"
+                )
+                for target, row_index in zip(
+                    self.target_column, range(self.matrix.shape[0])
+                ):
+                    self._write_sparse_block(
+                        row_index, output_sparse_matrix_stream, target=target
+                    )
+            else:
+                output_sparse_matrix_stream.write("SparseVariables\n")
+                for row_index in range(self.matrix.shape[0]):
+                    self._write_sparse_block(row_index, output_sparse_matrix_stream)
+            fs.write(
+                output_table_path,
+                output_sparse_matrix_stream.getvalue().encode("utf-8"),
             )
 
         return output_table_path

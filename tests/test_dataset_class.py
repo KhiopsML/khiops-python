@@ -11,6 +11,7 @@ import unittest
 
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 from numpy.testing import assert_equal
 from pandas.testing import assert_frame_equal
 from sklearn import datasets
@@ -521,8 +522,8 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
         )
 
     def test_created_file_from_numpy_array_monotable(self):
-        """Test consistency of the created data file with the input dataframe"""
-        # Create a monotable dahaset from a numpy array
+        """Test consistency of the created data file with the input numpy array"""
+        # Create a monotable dataset from a numpy array
         iris = datasets.load_iris()
         spec = {"tables": {"iris": (iris.data, None)}}
         dataset = Dataset(spec, y=iris.target, categorical_target=True)
@@ -538,6 +539,74 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
             created_table,
             np.concatenate(
                 (iris.data, iris.target.reshape(len(iris.target), 1)), axis=1
+            ),
+        )
+
+    def _create_test_sparse_matrix_with_target(self):
+        # Create sparse array that also contains missing data-only rows
+        sparse_array = np.eye(N=100, k=2) + np.eye(N=100, k=5)
+
+        # Create scipy sparse (CSR) matrix from the sparse array
+        sparse_matrix = sp.csr_matrix(sparse_array)
+
+        # Create targets: -1 for left-sided values; +1 for right-sided values,
+        # 0 for missing-data-only rows
+        target_array = np.array(50 * [-1] + 45 * [1] + 5 * [0])
+        return sparse_matrix, target_array
+
+    def _load_khiops_sparse_file(self, stream):
+        # skip header
+        next(stream)
+        target_vector = []
+        feature_matrix = []
+        for line in stream:
+            target, features = line.split(b"\t")
+            feature_row = np.zeros(100)
+            for feature in features.strip().split(b" "):
+                feature_index, feature_value = feature.split(b":")
+                try:
+                    feature_value = float(feature_value)
+                # missing value, whence empty string
+                except ValueError:
+                    feature_value = 0.0
+                feature_row[int(feature_index) - 1] = feature_value
+            feature_matrix.append(feature_row)
+            target_vector.append(float(target))
+        target_array = np.array(target_vector)
+        sparse_matrix = sp.csr_matrix(feature_matrix)
+        return sparse_matrix, target_array
+
+    def test_created_file_from_sparse_matrix_monotable(self):
+        """Test consistency of the created data file with the input sparse matrix"""
+
+        # Load input sparse matrix and target array
+        (
+            input_sparse_matrix,
+            input_target,
+        ) = self._create_test_sparse_matrix_with_target()
+
+        # Create monotable dataset from the sparse matrix
+        dataset = Dataset(
+            X=input_sparse_matrix, y=input_target, categorical_target=True
+        )
+        # Create and load the intermediary Khiops file
+        created_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
+        with open(created_table_path, "rb") as created_table_stream:
+            sparse_matrix, target_array = self._load_khiops_sparse_file(
+                created_table_stream
+            )
+
+        # Check that the arrays are equal
+        assert_equal(
+            np.concatenate(
+                (
+                    sparse_matrix.toarray(),
+                    target_array.reshape(-1, 1),
+                ),
+                axis=1,
+            ),
+            np.concatenate(
+                (input_sparse_matrix.toarray(), input_target.reshape(-1, 1)), axis=1
             ),
         )
 

@@ -2271,15 +2271,13 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
             for estimator, check in check_estimator(
                 khiops_estimator, generate_only=True
             ):
-                # Skip:
-                # - sparse data tests (not yet supported)
-                # - some checks for KhiopsEncoder as they yield "empty" deployed tables
-                #   - To be implemented manually
+                # Skip some checks for KhiopsEncoder as they yield "empty"
+                # deployed tables; they need to be implemented manually
                 check_name = check.func.__name__
-                if check_name == "check_estimator_sparse_data" or (
-                    check_name in ["check_fit_score_takes_y", "check_fit_idempotent"]
-                    and isinstance(estimator, KhiopsEncoder)
-                ):
+                if check_name in [
+                    "check_fit_score_takes_y",
+                    "check_fit_idempotent",
+                ] and isinstance(estimator, KhiopsEncoder):
                     continue
                 with self.subTest(
                     sklearn_check_name=check_name, sklearn_check_kwargs=check.keywords
