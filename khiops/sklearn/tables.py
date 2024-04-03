@@ -962,13 +962,6 @@ class DatasetTable(ABC):
     def _get_all_column_ids(self):
         """Returns the column ids including the target"""
 
-    def __repr__(self):
-        dtypes_str = str(self.dtypes).replace("\n", ", ")[:-16].replace("    ", ":")
-        return (
-            f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
-            f"dtypes={dtypes_str}; target={self.target_column_id}>"
-        )
-
 
 class PandasTable(DatasetTable):
     """Table encapsulating (X,y) pair with types (pandas.DataFrame, pandas.Series)
@@ -1066,6 +1059,15 @@ class PandasTable(DatasetTable):
 
         # Check key integrity
         self.check_key()
+
+    def __repr__(self):
+        dtypes_str = (
+            str(self.dataframe.dtypes).replace("\n", ", ")[:-16].replace("    ", ":")
+        )
+        return (
+            f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
+            f"dtypes={dtypes_str}; target={self.target_column_id}>"
+        )
 
     def _get_all_column_ids(self):
         if self.target_column is not None:
@@ -1196,6 +1198,13 @@ class NumpyTable(DatasetTable):
             for column_id in self.column_ids
         }
         self.n_samples = len(self.array)
+
+    def __repr__(self):
+        dtype_str = str(self.array.dtype)
+        return (
+            f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
+            f"dtype={dtype_str}; target={self.target_column_id}>"
+        )
 
     def _get_all_column_ids(self):
         n_columns = len(self.column_ids)
