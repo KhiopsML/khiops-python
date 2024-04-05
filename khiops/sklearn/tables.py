@@ -437,6 +437,16 @@ class Dataset:
                     self.secondary_tables.append(
                         PandasTable(table_name, table_source, key=table_key)
                     )
+        # Case of sparse matrices
+        elif isinstance(main_table_source, sp.spmatrix):
+            self.main_table = SparseTable(
+                main_table_name,
+                main_table_source,
+                key=main_table_key,
+                target_column=y,
+                categorical_target=categorical_target,
+            )
+            self.secondary_tables = []
         # Case of numpyarray
         else:
             self.main_table = NumpyTable(
@@ -596,14 +606,14 @@ class Dataset:
                     f"must have size 2 not {len(table_input)}"
                 )
             table_source, table_key = table_input
-            if not isinstance(table_source, (pd.DataFrame, str)) and not hasattr(
-                table_source, "__array__"
-            ):
+            if not isinstance(
+                table_source, (pd.DataFrame, sp.spmatrix, str)
+            ) and not hasattr(table_source, "__array__"):
                 raise TypeError(
                     type_error_message(
                         f"Table source at X['tables']['{table_name}']",
                         table_source,
-                        "array-like",
+                        "array-like or scipy.sparse.spmatrix",
                         str,
                     )
                 )
@@ -717,6 +727,15 @@ class Dataset:
                 raise TypeError(
                     type_error_message("y", y, pd.Series, pd.DataFrame)
                     + " (X's tables are of type pandas.DataFrame)"
+                )
+            if (
+                isinstance(main_table_source, sp.spmatrix)
+                or hasattr(main_table_source, "__array__")
+            ) and not hasattr(y, "__array__"):
+                raise TypeError(
+                    type_error_message("y", y, "array-like")
+                    + " (X's tables are of type numpy.ndarray"
+                    + " or scipy.sparse.spmatrix)"
                 )
             if isinstance(main_table_source, str) and not isinstance(y, str):
                 raise TypeError(

@@ -610,6 +610,40 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
             ),
         )
 
+    def test_created_file_from_sparse_matrix_monotable_specification(self):
+        """Test consistency of the created data file with the input sparse matrix"""
+
+        # Load input sparse matrix and target array
+        (
+            input_sparse_matrix,
+            input_target,
+        ) = self._create_test_sparse_matrix_with_target()
+
+        # Create monotable dataset from input mapping with the sparse matrix
+        spec = {"tables": {"example_sparse_matrix": (input_sparse_matrix, None)}}
+        dataset = Dataset(spec, y=input_target, categorical_target=True)
+
+        # Create and load the intermediary Khiops file
+        created_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
+        with open(created_table_path, "rb") as created_table_stream:
+            sparse_matrix, target_array = self._load_khiops_sparse_file(
+                created_table_stream
+            )
+
+        # Check that the arrays are equal
+        assert_equal(
+            np.concatenate(
+                (
+                    sparse_matrix.toarray(),
+                    target_array.reshape(-1, 1),
+                ),
+                axis=1,
+            ),
+            np.concatenate(
+                (input_sparse_matrix.toarray(), input_target.reshape(-1, 1)), axis=1
+            ),
+        )
+
     def test_created_file_from_data_file_monotable(self):
         """Test consistency of the created data file with the input data file
 
