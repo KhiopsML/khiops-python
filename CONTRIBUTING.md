@@ -227,8 +227,8 @@ git stash pop       # only when you have non-committed changes
 ### Package dependencies
 We should strive to minimize external package dependencies to minimize installation problems. The
 current dependency policy is:
-- `pykhiops.core` should only depend on python built-in modules.
-- `pykhiops.sklearn` should only depend on python built-in modules and the following mainstream
+- `khiops.core` should only depend on python built-in modules.
+- `khiops.sklearn` should only depend on python built-in modules and the following mainstream
 data-science packages:
   - [Scikit-learn](https://scikit-learn.org/stable/)
   - [Pandas](https://pandas.pydata.org/)
@@ -244,22 +244,53 @@ carefree while still trying to not add too many dependencies.
 We follow a non-standard `MAJOR.MINOR.PATCH.INCREMENT[PRE_RELEASE]` versioning convention. The
 first three numbers `MAJOR.MINOR.PATCH` are the latest Khiops version that is compatible with the
 package. The number `INCREMENT` indicates the evolution of `khiops-python` followed by an optional
-`[PRE_RELEASE` version for alpha, beta and release candidate releases (eg. `b2`).
+`[PRE_RELEASE]` version for alpha, beta and release candidate releases (eg. `b2`).
 
 ## Releases
+
+## Pre-releases
 When tagging a revision the CI will create the packages and upload them to the `khiops-dev` channel.
 Prefer to augment the pre-release revision number to re-create a tag because the CI overwrites
 packages with the same tag in the `khiops-dev` channel. Do not forget to clean any temporary
-pre-releases from `khiops-dev` and the releases github page.
+pre-releases from `khiops-dev` and the releases GitHub page.
 
-To make a public release, you must execute the `Conda Packages` CI workflow manually on a tag and
+
+## Public Releases
+Checklist:
+- Release issue and its related PR
+  - Update the API Docs if necessary
+  - Update `CHANGELOG.md`
+  - Update the default `khiops-core` version in [.github/workflows/conda.yml]
+- Git manipulations
+  - Update your local repo and save your work:
+    - `git stash # if necessary`
+    - `git fetch --tags --prune --prune-tags`
+    - `git switch dev`
+    - `git pull`
+    - `git switch main`
+    - `git pull`
+  - Merge the `dev` branch into `main`
+    - `git switch main`
+    - `git merge dev`
+  - Tag the merge commit with the release version (see Versioning above)
+    - `git switch main`
+    - `git tag 10.3.0.1 # Just an example`
+  - Make `dev` point to the merge commit just created in `main`
+    - This is necessary to include the merge commit into master to calculate intermediary versions
+      with Versioneer.
+    - Steps:
+      - `git switch dev`
+      - `git reset --hard main`
+      - `git push dev` (you need to remove the protections of `dev` for this step)
+- Workflows
+  - Execute the `Conda Package` workflow specifying:
+    - The release tag
+    - `khiops` as the release channel
+  - Execute the `API Docs` workflow specifying "Deploy GH Pages".
+
+To make a public release, you must execute the `Conda Package` CI workflow manually on a tag and
 specify the `khiops` anaconda channel for upload. These uploads do not overwrite any packages in
 this channel, so you must correct any mistake manually.
 
 ### Git Manipulations upon a Major Release
 The following is the check list to be done upon a major release:
-- Merge the `dev` branch into `main`
-- Tag the merge commit with the release version
-- Rebase the `dev` branch onto `main`
-  - This is necessary to include the merge commit into master to calculate intermediary versions
-    with versioneer
