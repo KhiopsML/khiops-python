@@ -1,7 +1,7 @@
 ---
 name: Conda Package
 env:
-  DEFAULT_SAMPLES_REVISION: main
+  DEFAULT_SAMPLES_VERSION: 10.2.0
   # Note: The default Khiops version must never be an alpha release as they are
   #       ephemeral. To test alpha versions run the workflow manually.
   DEFAULT_KHIOPS_CORE_VERSION: 10.2.1
@@ -11,9 +11,9 @@ on:
       khiops-core-version:
         default: 10.2.1
         description: khiops-core version for testing
-      samples-revision:
-        default: main
-        description: khiops-samples repo revision
+      khiops-samples-version:
+        default: 10.2.0
+        description: khiops-samples version
       release-channel:
         type: choice
         default: khiops-dev
@@ -64,27 +64,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-20.04
-          - ubuntu-22.04
-          - windows-2019
-          - windows-2022
-          - macos-11
-          - macos-12
-          - macos-13
-          - macos-14
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    runs-on: ${{ matrix.os }}
-    env:
-      KHIOPS_SAMPLES_DIR: ./khiops-samples-repo
+        env:
+          - {os: ubuntu-20.04, json-image: '{"image": null}'}
+          - {os: ubuntu-22.04, json-image: '{"image": null}'}
+          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:8"}'}
+          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
+          - {os: windows-2019, json-image: '{"image": null}'}
+          - {os: windows-2022, json-image: '{"image": null}'}
+          - {os: macos-11, json-image: '{"image": null}'}
+          - {os: macos-12, json-image: '{"image": null}'}
+          - {os: macos-13, json-image: '{"image": null}'}
+          - {os: macos-14, json-image: '{"image": null}'}
+    runs-on: ${{ matrix.env.os }}
+    container: ${{ fromJSON(matrix.env.json-image) }}
     steps:
-      - name: Checkout Khiops samples
-        uses: actions/checkout@v4
-        with:
-          repository: khiopsml/khiops-samples
-          ref: ${{ inputs.samples-revision || env.DEFAULT_SAMPLES_REVISION }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          path: ${{ env.KHIOPS_SAMPLES_DIR }}
       - name: Install Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -99,7 +93,7 @@ jobs:
         run: |
           KHIOPS_CORE_VERSION="${{ inputs.khiops-core-version || env.DEFAULT_KHIOPS_CORE_VERSION }}"
           echo "KHIOPS_CORE_VERSION=$KHIOPS_CORE_VERSION" >> "$GITHUB_ENV"
-      - name: Install the Khiops Conda pagkage (Windows)
+      - name: Install the Khiops Conda package (Windows)
         if: runner.os == 'Windows'
         run: |
           conda install --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
@@ -112,6 +106,10 @@ jobs:
           conda install --channel ./khiops-conda/ khiops
       - name: Test Khiops Installation Status
         run: kh-status
+      - name: Download Sample Datasets
+        run: |
+          kh-download-datasets \
+            --version ${{ inputs.khiops-core-version || env.DEFAULT_SAMPLES_VERSION }}
       - name: Test Conda Package Installation on Samples
         run: |
           kh-samples core -i train_predictor -e
