@@ -404,20 +404,30 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         bytes(f"{dataset}Deployed.csv", encoding="ascii"),
                     ],
                     "kwargs": {
-                        "additional_data_tables": {
-                            bytes(key, encoding="ascii"): bytes(value, encoding="ascii")
-                            for key, value in additional_data_tables[dataset].items()
-                        }
-                        if additional_data_tables[dataset] is not None
-                        else None,
-                        "output_additional_data_tables": {
-                            bytes(key, encoding="ascii"): bytes(value, encoding="ascii")
-                            for key, value in output_additional_data_tables[
-                                dataset
-                            ].items()
-                        }
-                        if output_additional_data_tables[dataset] is not None
-                        else None,
+                        "additional_data_tables": (
+                            {
+                                bytes(key, encoding="ascii"): bytes(
+                                    value, encoding="ascii"
+                                )
+                                for key, value in additional_data_tables[
+                                    dataset
+                                ].items()
+                            }
+                            if additional_data_tables[dataset] is not None
+                            else None
+                        ),
+                        "output_additional_data_tables": (
+                            {
+                                bytes(key, encoding="ascii"): bytes(
+                                    value, encoding="ascii"
+                                )
+                                for key, value in output_additional_data_tables[
+                                    dataset
+                                ].items()
+                            }
+                            if output_additional_data_tables[dataset] is not None
+                            else None
+                        ),
                     },
                 }
                 for dataset in datasets
