@@ -44,6 +44,8 @@ preamble:
     from sklearn.compose import ColumnTransformer
     from sklearn.experimental import enable_hist_gradient_boosting
     from sklearn.ensemble import HistGradientBoostingClassifier
+    from sklearn.datasets import fetch_20newsgroups
+    from sklearn.feature_extraction.text import HashingVectorizer
     from sklearn.model_selection import train_test_split
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import OneHotEncoder
@@ -102,6 +104,56 @@ Samples
         # Evaluate accuracy and auc metrics on the test dataset
         test_accuracy = metrics.accuracy_score(y_test, y_test_pred)
         test_auc = metrics.roc_auc_score(y_test, y_test_probas[:, 1])
+        print(f"Test accuracy = {test_accuracy}")
+        print(f"Test auc      = {test_auc}")
+
+.. autofunction:: khiops_classifier_sparse
+.. code-block:: python
+
+    def khiops_classifier_sparse():
+
+        # Load 3 classes of the 20newsgroups dataset
+        categories = ["comp.graphics", "sci.space", "misc.forsale"]
+        data_train, y_train = fetch_20newsgroups(
+            subset="train",
+            categories=categories,
+            return_X_y=True,
+        )
+        data_test, y_test = fetch_20newsgroups(
+            subset="test",
+            categories=categories,
+            return_X_y=True,
+        )
+
+        # Extract features from the training data using a sparse vectorizer
+        vectorizer = HashingVectorizer(n_features=2**10, stop_words="english")
+        X_train = vectorizer.fit_transform(data_train)
+
+        # Extract features from the test data using the same vectorizer
+        X_test = vectorizer.transform(data_test)
+
+        # Create the classifier object
+        khc = KhiopsClassifier()
+
+        # Train the classifier
+        khc.fit(X_train, y_train)
+
+        # Predict the classes on the test dataset
+        y_test_pred = khc.predict(X_test)
+        print("Predicted classes (first 10):")
+        print(y_test_pred[0:10])
+        print("---")
+
+        # Predict the class probabilities on the test dataset
+        y_test_probas = khc.predict_proba(X_test)
+        print(f"Class order: {khc.classes_}")
+        print("Predicted class probabilities (first 10):")
+        print(y_test_probas[0:10])
+        print("---")
+
+        # Evaluate accuracy and auc metrics on the test dataset
+        test_accuracy = metrics.accuracy_score(y_test, y_test_pred)
+        test_auc = metrics.roc_auc_score(y_test, y_test_probas, multi_class="ovr")
         print(f"Test accuracy = {test_accuracy}")
         print(f"Test auc      = {test_auc}")
 
