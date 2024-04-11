@@ -128,15 +128,17 @@ def _run_task(task_name, task_args):
     # Create a command line options object
     command_line_options = CommandLineOptions(
         batch_mode=task_args["batch_mode"] if "batch_mode" in task_args else True,
-        log_file_path=task_args["log_file_path"]
-        if "log_file_path" in task_args
-        else "",
-        output_scenario_path=task_args["output_scenario_path"]
-        if "output_scenario_path" in task_args
-        else "",
-        task_file_path=task_args["task_file_path"]
-        if "task_file_path" in task_args
-        else "",
+        log_file_path=(
+            task_args["log_file_path"] if "log_file_path" in task_args else ""
+        ),
+        output_scenario_path=(
+            task_args["output_scenario_path"]
+            if "output_scenario_path" in task_args
+            else ""
+        ),
+        task_file_path=(
+            task_args["task_file_path"] if "task_file_path" in task_args else ""
+        ),
     )
 
     # Clean the task_args to leave only the task arguments

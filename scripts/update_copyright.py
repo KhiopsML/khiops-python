@@ -1,4 +1,5 @@
 """Updates the copyright notice of the input files"""
+
 import argparse
 from datetime import datetime
 

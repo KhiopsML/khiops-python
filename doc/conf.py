@@ -1,4 +1,5 @@
 """Khiops Python Sphinx configuration file"""
+
 import os
 import sys
 from datetime import datetime

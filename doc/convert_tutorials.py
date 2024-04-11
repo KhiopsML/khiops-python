@@ -1,4 +1,5 @@
 """Converts the Jupyter notebooks of the Khiops Python tutorial to reST"""
+
 import argparse
 import glob
 import os

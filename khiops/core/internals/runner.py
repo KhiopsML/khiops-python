@@ -833,9 +833,11 @@ class KhiopsRunner(ABC):
                 writer,
                 task,
                 task_args,
-                general_options
-                if general_options is not None
-                else self.general_options,
+                (
+                    general_options
+                    if general_options is not None
+                    else self.general_options
+                ),
             )
             fs.write(scenario_path, scenario_stream.getvalue())
 
