@@ -70,6 +70,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "IrisMAPLegacy",
             "IrisR",
             "IrisU",
+            "IrisU2D",
             "LargeSpiral",
             "Latin",
             "LatinGreek",

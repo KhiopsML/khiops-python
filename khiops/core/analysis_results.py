@@ -2178,9 +2178,9 @@ class DataGridDimension:
         # Numerical partition
         if self.partition_type == "Intervals":
             # Check the length of the partition
-            if len(json_partition) < 2:
+            if len(json_partition) < 1:
                 raise KhiopsJSONError(
-                    "'partition' for interval must have length at least 2"
+                    "'partition' for interval must have length at least 1"
                 )
 
             # Initialize intervals
