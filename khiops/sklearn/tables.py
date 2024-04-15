@@ -642,15 +642,6 @@ class Dataset:
 
         # Initialize a file dataset
         if isinstance(main_table_source, str):
-            warnings.warn(
-                deprecation_message(
-                    "File-path dataset input",
-                    "11.0.0",
-                    "dataframe-based dataset or khiops.core API",
-                    quote=False,
-                ),
-                stacklevel=4,
-            )
             # Obtain the file format parameters
             if "format" in X:
                 self.sep, self.header = X["format"]
