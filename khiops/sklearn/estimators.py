@@ -525,7 +525,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     def _transform_check_dataset(self, dataset):
         """Checks the dataset before deploying a model on them"""
-        if not dataset.is_in_memory() and self.output_dir is None:
+        if not dataset.is_in_memory() or self.output_dir is None:
             raise ValueError("'output_dir' is not set but dataset is file-based")
 
     def _transform_deployment_post_process(
