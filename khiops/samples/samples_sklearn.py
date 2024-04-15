@@ -92,10 +92,15 @@ def khiops_classifier():
 
 
 def khiops_classifier_sparse():
-    """Trains a `.KhiopsClassifier` on a monotable sparse matrix"""
+    """Trains a `.KhiopsClassifier` on a monotable sparse matrix
 
+    .. note::
+        No intermediary dense data is used by Khiops because it supports sparse data
+        natively.
+
+    """
     # Load 3 classes of the 20newsgroups dataset
-    categories = ["comp.graphics", "sci.space", "misc.forsale"]
+    categories = ["comp.graphics", "sci.space", "misc.forsale", "alt.atheism"]
     data_train, y_train = fetch_20newsgroups(
         subset="train",
         categories=categories,
@@ -107,15 +112,18 @@ def khiops_classifier_sparse():
         return_X_y=True,
     )
 
-    # Extract features from the training data using a sparse vectorizer
-    vectorizer = HashingVectorizer(n_features=2**10, stop_words="english")
+    # Extract features from the train and test data using a sparse vectorizer
+    vectorizer = HashingVectorizer(n_features=2048, stop_words="english")
     X_train = vectorizer.fit_transform(data_train)
-
-    # Extract features from the test data using the same vectorizer
     X_test = vectorizer.transform(data_test)
 
-    # Create the classifier object
-    khc = KhiopsClassifier()
+    # Print density of the intermediary datasets
+    print(f"X_train density: {X_train.size/(X_train.shape[0]*X_train.shape[1])}")
+    print(f"X_test density : {X_test.size/(X_test.shape[0]*X_test.shape[1])}")
+    print("---")
+
+    # Create the classifier object (no trees)
+    khc = KhiopsClassifier(n_trees=0)
 
     # Train the classifier
     khc.fit(X_train, y_train)
