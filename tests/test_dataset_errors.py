@@ -14,12 +14,12 @@ import numpy as np
 import pandas as pd
 
 from khiops.core.internals.common import type_error_message
-from khiops.sklearn.tables import Dataset, FileTable, PandasTable
+from khiops.utils.dataset import Dataset, FileTable, PandasTable
 
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
-#   pylint --disable=all --enable=invalid-names estimators.py
+#   pylint --disable=all --enable=invalid-names test_dataset_errors.py
 # pylint: disable=invalid-name
 class AnotherType(object):
     """A placeholder class that is not of any basic type to test TypeError's"""
