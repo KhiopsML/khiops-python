@@ -1033,9 +1033,23 @@ class KhiopsLocalRunner(KhiopsRunner):
         if "KHIOPS_TMP_DIR" in os.environ:
             self.khiops_temp_dir = os.environ["KHIOPS_TMP_DIR"]
         else:
-            self.khiops_temp_dir = ""
+            # We set the temporary directory to /tmp/:
+            # - This is because the default macOS tmp directory paths are very long and
+            # provoke a bug in openmpi: https://github.com/open-mpi/ompi/issues/7393
+            # - The final slash is necessary due to a bug in Khiops
+            #   https://github.com/KhiopsML/khiops/issues/244
+            if platform.system() == "Darwin":
+                self.khiops_temp_dir = "/tmp/"
+                os.environ["TMPDIR"] = "/tmp/"
+            else:
+                self.khiops_temp_dir = ""
 
-        # Initialize the default samples dir
+        # Set the OpenMPI variable OMPI_MCA_plm_rsh_agent to the empty string if not set
+        # This avoids errors on systems without ssh (eg. simple Docker containers)
+        if "OMPI_MCA_plm_rsh_agent" not in os.environ:
+            os.environ["OMPI_MCA_plm_rsh_agent"] = ""
+
+        # Initialize and check the default samples dir
         self._initialize_default_samples_dir()
 
     def _initialize_mpi_command_args(self):
@@ -1152,6 +1166,7 @@ class KhiopsLocalRunner(KhiopsRunner):
             self.mpi_command_args += shlex.split(mpi_command_args)
         elif platform.system() == "Linux":
             self.mpi_command_args += [
+                "--oversubscribe",
                 "-bind-to",
                 "hwthread",
                 "-map-by",
@@ -1164,14 +1179,14 @@ class KhiopsLocalRunner(KhiopsRunner):
             #       may be removed when mpich > 4.1.2 is released
             if platform.processor() == "arm":
                 self.mpi_command_args += [
-                    "-host",
-                    "localhost",
+                    "--oversubscribe",
                     "-n",
                     str(self.max_cores + 1),
                 ]
             else:
                 self.mpi_command_args = [
                     mpiexec_path,
+                    "--oversubscribe",
                     "-n",
                     str(self.max_cores + 1),
                 ]
