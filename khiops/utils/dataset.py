@@ -6,6 +6,7 @@
 ######################################################################################
 """Classes for handling diverse data tables"""
 import csv
+import functools
 import io
 import json
 import os
@@ -32,7 +33,7 @@ from khiops.core.internals.common import (
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
-#   pylint --disable=all --enable=invalid-names tables.py
+#   pylint --disable=all --enable=invalid-names dataset.py
 # pylint: disable=invalid-name
 
 
@@ -289,7 +290,7 @@ def check_format_entry(format_spec):
 
 
 def get_khiops_type(numpy_type):
-    """Translates a numpy type to a Khiops dictionary type
+    """Translates a numpy dtype to a Khiops dictionary type
 
     Parameters
     ----------
@@ -399,7 +400,7 @@ class Dataset:
         ``False`` it is considered as numeric. Ignored if ``y`` is ``None``.
     key : str
         The name of the key column for all tables.
-        **Deprecated:** Will be removed in pyKhiops 11.
+        **Deprecated:** Will be removed in khiops-python 11.
     """
 
     def __init__(self, X, y=None, categorical_target=True, key=None):
@@ -481,7 +482,7 @@ class Dataset:
                 self._init_tables_from_sequence(X, y, key=key)
         # A dict specification
         elif is_dict_like(X):
-            self._init_tables_from_mapping(X, y)
+            self._init_tables_from_mapping(X, y, categorical_target=categorical_target)
         # Fail if X is not recognized
         else:
             raise TypeError(
@@ -780,17 +781,27 @@ class Dataset:
                 )
 
     def is_in_memory(self):
-        """Tests whether the dataset is in memory
+        """Tests whether the dataset is in-memory
 
-        A dataset is in memory if it is constituted either of only pandas.DataFrame
+        A dataset is in-memory if it is constituted either of only pandas.DataFrame
         tables, numpy.ndarray, or scipy.sparse.spmatrix tables.
+        """
+
+        return isinstance(self.main_table, (PandasTable, NumpyTable, SparseTable))
+
+    def table_type(self):
+        """Returns the table type of the dataset tables
 
         Returns
         -------
-        bool
-            `True` if the dataset is constituted of pandas.DataFrame tables.
+        type
+            The type of the tables in the dataset. Possible values:
+            - `PandasTable`
+            - `NumpyTable`
+            - `SparseTable`
+            - `FileTable`
         """
-        return isinstance(self.main_table, (PandasTable, NumpyTable, SparseTable))
+        return type(self.main_table)
 
     def is_multitable(self):
         """Tests whether the dataset is a multi-table one
@@ -802,30 +813,32 @@ class Dataset:
         """
         return self.secondary_tables is not None and len(self.secondary_tables) > 0
 
-    def copy(self):
-        """Creates a copy of the dataset
-
-        Referenced dataframes in tables are copied as references
-        """
+    def to_spec(self):
+        """Returns a dictionary specification of this dataset"""
         ds_spec = {}
         ds_spec["main_table"] = self.main_table.name
         ds_spec["tables"] = {}
-        if self.is_in_memory():
-            ds_spec["tables"][self.main_table.name] = (
-                self.main_table.dataframe,
-                self.main_table.key,
-            )
-            for table in self.secondary_tables:
-                ds_spec["tables"][table.name] = (table.dataframe, table.key)
-        else:
-            ds_spec["tables"][self.main_table.name] = (
-                self.main_table.path,
-                self.main_table.key,
-            )
-            for table in self.secondary_tables:
-                ds_spec["tables"][table.name] = (table.path, table.key)
+        ds_spec["tables"][self.main_table.name] = (
+            self.main_table.data_source,
+            self.main_table.key,
+        )
+        for table in self.secondary_tables:
+            ds_spec["tables"][table.name] = (table.data_source, table.key)
+        if self.relations:
+            ds_spec["relations"] = []
+            ds_spec["relations"].extend(self.relations)
+        if self.table_type() == FileTable:
             ds_spec["format"] = (self.sep, self.header)
-        return Dataset(ds_spec)
+
+        return ds_spec
+
+    def copy(self):
+        """Creates a copy of the dataset
+
+        Referenced pandas.DataFrame's, numpy.nparray's and scipy.sparse.spmatrix's in
+        tables are copied as references.
+        """
+        return Dataset(self.to_spec())
 
     def create_khiops_dictionary_domain(self):
         """Creates a Khiops dictionary domain representing this dataset
@@ -944,6 +957,7 @@ class DatasetTable(ABC):
 
         # Initialization (must be completed by concrete sub-classes)
         self.name = name
+        self.data_source = None
         self.categorical_target = categorical_target
         if is_list_like(key) or key is None:
             self.key = key
@@ -1084,11 +1098,11 @@ class PandasTable(DatasetTable):
                 target_column = target_column.iloc[:, 0]
 
         # Initialize the attributes
-        self.dataframe = dataframe
-        self.n_samples = len(self.dataframe)
+        self.data_source = dataframe
+        self.n_samples = len(self.data_source)
 
         # Initialize feature columns and verify their types
-        self.column_ids = self.dataframe.columns.values
+        self.column_ids = self.data_source.columns.values
         if not np.issubdtype(self.column_ids.dtype, np.integer):
             if np.issubdtype(self.column_ids.dtype, object):
                 for i, column_id in enumerate(self.column_ids):
@@ -1107,7 +1121,7 @@ class PandasTable(DatasetTable):
 
         # Initialize Khiops types
         self.khiops_types = {
-            column_id: get_khiops_type(self.dataframe.dtypes[column_id])
+            column_id: get_khiops_type(self.data_source.dtypes[column_id])
             for column_id in self.column_ids
         }
 
@@ -1131,7 +1145,7 @@ class PandasTable(DatasetTable):
 
     def __repr__(self):
         dtypes_str = (
-            str(self.dataframe.dtypes).replace("\n", ", ")[:-16].replace("    ", ":")
+            str(self.data_source.dtypes).replace("\n", ", ")[:-16].replace("    ", ":")
         )
         return (
             f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
@@ -1187,7 +1201,7 @@ class PandasTable(DatasetTable):
         return output_table_path
 
     def _create_dataframe_copy(self):
-        """Creates an in memory copy of the dataframe with the target column"""
+        """Creates an in-memory copy of the dataframe with the target column"""
         # Create a copy of the dataframe and add a copy of the target column (if any)
         if self.target_column is not None:
             if (
@@ -1200,11 +1214,11 @@ class PandasTable(DatasetTable):
                     self.target_column, name=self.target_column_id
                 )
             output_dataframe = pd.concat(
-                [self.dataframe.reset_index(drop=True), output_target_column],
+                [self.data_source.reset_index(drop=True), output_target_column],
                 axis=1,
             )
         else:
-            output_dataframe = self.dataframe.copy()
+            output_dataframe = self.data_source.copy()
 
         # Rename the columns
         output_dataframe_column_names = {}
@@ -1261,22 +1275,22 @@ class NumpyTable(DatasetTable):
             checked_target_column = column_or_1d(target_column, warn=True)
 
         # Initialize the members
-        self.array = checked_array
-        self.column_ids = list(range(self.array.shape[1]))
-        self.target_column_id = self.array.shape[1]
+        self.data_source = checked_array
+        self.column_ids = list(range(self.data_source.shape[1]))
+        self.target_column_id = self.data_source.shape[1]
         if target_column is not None:
             self.target_column = checked_target_column
         else:
             self.target_column = None
         self.categorical_target = categorical_target
         self.khiops_types = {
-            column_id: get_khiops_type(self.array.dtype)
+            column_id: get_khiops_type(self.data_source.dtype)
             for column_id in self.column_ids
         }
-        self.n_samples = len(self.array)
+        self.n_samples = len(self.data_source)
 
     def __repr__(self):
-        dtype_str = str(self.array.dtype)
+        dtype_str = str(self.data_source.dtype)
         return (
             f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
             f"dtype={dtype_str}; target={self.target_column_id}>"
@@ -1309,7 +1323,8 @@ class NumpyTable(DatasetTable):
         output_table_path = fs.get_child_path(output_dir, f"{self.name}.txt")
 
         # Write the output dataframe
-        output_dataframe = pd.DataFrame(self.array.copy())
+        # Note: This is not optimized for memory.
+        output_dataframe = pd.DataFrame(self.data_source.copy())
         output_dataframe.columns = [f"Var{column_id}" for column_id in self.column_ids]
         if self.target_column is not None:
             output_dataframe[f"Var{self.target_column_id}"] = self.target_column
@@ -1385,19 +1400,19 @@ class SparseTable(DatasetTable):
             )
 
         # Initialize the members
-        self.matrix = matrix
-        self.column_ids = list(range(self.matrix.shape[1]))
-        self.target_column_id = self.matrix.shape[1]
+        self.data_source = matrix
+        self.column_ids = list(range(self.data_source.shape[1]))
+        self.target_column_id = self.data_source.shape[1]
         self.target_column = target_column
         self.categorical_target = categorical_target
         self.khiops_types = {
-            column_id: get_khiops_type(self.matrix.dtype)
+            column_id: get_khiops_type(self.data_source.dtype)
             for column_id in self.column_ids
         }
-        self.n_samples = self.matrix.shape[0]
+        self.n_samples = self.data_source.shape[0]
 
     def __repr__(self):
-        dtype_str = str(self.matrix.dtype)
+        dtype_str = str(self.data_source.dtype)
         return (
             f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
             f"dtype={dtype_str}; target={self.target_column_id}>"
@@ -1462,12 +1477,12 @@ class SparseTable(DatasetTable):
 
     def _write_sparse_block(self, row_index, stream, target=None):
         assert row_index in range(
-            self.matrix.shape[0]
+            self.data_source.shape[0]
         ), "'row_index' must be coherent with the shape of the sparse matrix"
         if target is not None:
             assert target in self.target_column, "'target' must be in the target column"
             stream.write(f"{target}\t")
-        row = self.matrix.getrow(row_index)
+        row = self.data_source.getrow(row_index)
         # Variable indices are not always sorted in `row.indices`
         # Khiops needs variable indices to be sorted
         sorted_indices = np.sort(row.nonzero()[1], axis=-1, kind="mergesort")
@@ -1476,7 +1491,7 @@ class SparseTable(DatasetTable):
         # is not homogeneous with other sparse matrices: it stores
         # opaque Python lists as elements
         # Thus:
-        # - if isinstance(self.matrix, sp.lil_matrix) and Python 3.8, then
+        # - if isinstance(self.data_source, sp.lil_matrix) and Python 3.8, then
         # row.data is np.array([list([...])])
         # - else, row.data is np.array([...])
         # TODO: remove this flattening once Python 3.8 support is dropped
@@ -1501,14 +1516,14 @@ class SparseTable(DatasetTable):
                     f"{target_column_name}\tSparseVariables\n"
                 )
                 for target, row_index in zip(
-                    self.target_column, range(self.matrix.shape[0])
+                    self.target_column, range(self.data_source.shape[0])
                 ):
                     self._write_sparse_block(
                         row_index, output_sparse_matrix_stream, target=target
                     )
             else:
                 output_sparse_matrix_stream.write("SparseVariables\n")
-                for row_index in range(self.matrix.shape[0]):
+                for row_index in range(self.data_source.shape[0]):
                     self._write_sparse_block(row_index, output_sparse_matrix_stream)
             fs.write(
                 output_table_path,
