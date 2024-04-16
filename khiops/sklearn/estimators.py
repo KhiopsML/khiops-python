@@ -1310,6 +1310,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         n_features=100,
         n_pairs=0,
         n_trees=10,
+        n_evaluated_variables=0,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1326,6 +1327,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self.n_features = n_features
         self.n_pairs = n_pairs
         self.n_trees = n_trees
+        self.n_evaluated_variables = n_evaluated_variables
         self._predicted_target_meta_data_tag = None
 
         # Deprecation message for 'key' constructor parameter
@@ -1482,6 +1484,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Rename parameters to be compatible with khiops.core
         kwargs["max_constructed_variables"] = kwargs.pop("n_features")
+        kwargs["max_evaluated_variables"] = kwargs.pop("n_evaluated_variables")
         kwargs["max_pairs"] = kwargs.pop("n_pairs")
         kwargs["max_trees"] = kwargs.pop("n_trees")
 
@@ -1598,6 +1601,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         n_features=100,
         n_pairs=0,
         n_trees=10,
+        n_evaluated_variables=0,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1608,6 +1612,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             n_features=n_features,
             n_pairs=n_pairs,
             n_trees=n_trees,
+            n_evaluated_variables=n_evaluated_variables,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -1696,6 +1701,9 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         combine other features, either native or constructed. These features usually
         improve the classifier's performance at the cost of interpretability of the
         model.
+    n_evaluated_variables : int, default 0
+        Maximum number of variables to be evaluated in the SNB predictor training. If
+        equal to 0 it evaluates all informative variables.
     verbose : bool, default ``False``
         If ``True`` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
@@ -1759,6 +1767,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         n_features=100,
         n_pairs=0,
         n_trees=10,
+        n_evaluated_variables=0,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1769,6 +1778,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             n_features=n_features,
             n_pairs=n_pairs,
             n_trees=n_trees,
+            n_evaluated_variables=n_evaluated_variables,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
