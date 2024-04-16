@@ -50,7 +50,7 @@ from khiops.core.internals.common import (
     is_list_like,
     type_error_message,
 )
-from khiops.sklearn.tables import Dataset, read_internal_data_table
+from khiops.utils.dataset import Dataset, read_internal_data_table
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
@@ -555,7 +555,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             #     - Because transformed data table file is sorted by key
             # - Drop the key columns if specified
             if deployment_dataset.is_multitable():
-                key_df = deployment_dataset.main_table.dataframe[
+                key_df = deployment_dataset.main_table.data_source[
                     deployment_dataset.main_table.key
                 ]
                 output_table_df_or_path = key_df.merge(
@@ -1247,7 +1247,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             # Extract the keys from the main table
             keys_table_dataframe = pd.DataFrame(
                 {
-                    self.model_id_column: dataset.main_table.dataframe[
+                    self.model_id_column: dataset.main_table.data_source[
                         self.model_id_column
                     ].unique()
                 }
@@ -1259,7 +1259,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                 self.model_id_column,
             )
             deploy_dataset_spec["tables"][dataset.main_table.name] = (
-                dataset.main_table.dataframe,
+                dataset.main_table.data_source,
                 self.model_id_column,
             )
         else:
@@ -1291,7 +1291,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                 self.model_id_column,
             )
             deploy_dataset_spec["tables"][dataset.main_table.name] = (
-                dataset.main_table.path,
+                dataset.main_table.data_source,
                 self.model_id_column,
             )
             deploy_dataset_spec["format"] = (dataset.sep, dataset.header)
