@@ -9,7 +9,7 @@ import csv
 import io
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -1409,6 +1409,14 @@ class SparseTable(DatasetTable):
             variable_name = f"Var{column_id}"
         return variable_name
 
+    def _flatten(self, iterable):
+        if isinstance(iterable, Iterable):
+            for iterand in iterable:
+                if isinstance(iterand, Iterable):
+                    yield from self._flatten(iterand)
+                else:
+                    yield iterand
+
     def _write_sparse_block(self, row_index, stream, target=None):
         assert row_index in range(
             self.matrix.shape[0]
@@ -1420,7 +1428,7 @@ class SparseTable(DatasetTable):
         # Empty row in the sparse matrix: use the first variable as missing data
         # TODO: remove this part once Khiops bug
         # https://github.com/KhiopsML/khiops/issues/235 is solved
-        if row.data.size == 0:
+        if row.size == 0:
             for variable_index in self.column_ids:
                 stream.write(f"{variable_index + 1}: ")
                 break
@@ -1428,8 +1436,19 @@ class SparseTable(DatasetTable):
         else:
             # Variable indices are not always sorted in `row.indices`
             # Khiops needs variable indices to be sorted
-            sorted_indices = np.sort(row.indices, axis=-1, kind="mergesort")
-            sorted_data = row.data[sorted_indices.argsort()]
+            sorted_indices = np.sort(row.nonzero()[1], axis=-1, kind="mergesort")
+
+            # Flatten row for Python < 3.9 scipy.sparse.lil_matrix whose API
+            # is not homogeneous with other sparse matrices: it stores
+            # opaque Python lists as elements
+            # Thus:
+            # - if isinstance(self.matrix, sp.lil_matrix) and Python 3.8, then
+            # row.data is np.array([list([...])])
+            # - else, row.data is np.array([...])
+            # TODO: remove this flattening once Python 3.8 support is dropped
+            sorted_data = np.fromiter(self._flatten(row.data), row.data.dtype)[
+                sorted_indices.argsort()
+            ]
             for variable_index, variable_value in zip(sorted_indices, sorted_data):
                 stream.write(f"{variable_index + 1}:{variable_value} ")
         stream.write("\n")

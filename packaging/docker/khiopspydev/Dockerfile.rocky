@@ -8,8 +8,9 @@ LABEL description="Container for the development of khiops-python"
 # Reuse KHIOPSDEV_OS from previous stage
 ARG KHIOPSDEV_OS
 ARG KHIOPS_REVISION
-
-# Install dev tools; build and install Khiops; set mpich as the default MPI
+# - Install dev tools and miniconda3 (for the unit tests)
+# - Build and install Khiops
+# - Set mpich as the default MPI
 RUN true \
   && useradd -rm -d /home/rocky -s /bin/bash -g root -u 1000 rocky \
   # Install git (for khiops-python version calculation), pandoc and pip \
@@ -18,6 +19,7 @@ RUN true \
   && dnf install --enablerepo=devel -y \
     git \
     pandoc \
+    wget \
   # Install Python 3.11 if on Rocky 8 \
   && if [ "$KHIOPSDEV_OS" = "rocky8" ]; then \
        dnf install -y \
@@ -55,10 +57,22 @@ RUN true \
        alternatives --install /usr/bin/python python /usr/bin/python3 1 \
        && alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 ; \
      fi \
+    # Install miniconda3 to have multiple Python versions via Conda \
+    && mkdir -p /root/miniconda3 && cd /root/miniconda3 \
+    && wget https://repo.anaconda.com/miniconda/Miniconda3-py312_24.1.2-0-Linux-x86_64.sh -O ./Miniconda3-py312_24.1.2-0-Linux-x86_64.sh \
+    && echo "b978856ec3c826eb495b60e3fffe621f670c101150ebcbdeede4f961f22dc438 Miniconda3-py312_24.1.2-0-Linux-x86_64.sh" | sha256sum --check \
+    && bash ./Miniconda3-py312_24.1.2-0-Linux-x86_64.sh -b -u -p /root/miniconda3 \
+    && rm -rf /root/miniconda3/Miniconda3-py312_24.1.2-0-Linux-x86_64.sh \
   # Clean build files \
   && dnf clean all \
   && rm -rf ./khiops \
   && true
+
+# set up all the supported Python environments under conda (for the unit tests)
+# relying on a variable containing all the versions
+ARG PYTHON_VERSIONS
+RUN for version in ${PYTHON_VERSIONS}; \
+    do /root/miniconda3/bin/conda create -y -n py${version} python=${version}; done
 
 RUN mkdir -p /scripts
 COPY ./run_service.sh /scripts/run_service.sh

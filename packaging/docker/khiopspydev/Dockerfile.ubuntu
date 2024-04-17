@@ -5,12 +5,12 @@ FROM ghcr.io/khiopsml/khiops/khiopsdev-${KHIOPSDEV_OS}:latest AS khiopsdev
 LABEL maintainer="khiops.team@orange.com"
 LABEL description="Container for the development of khiops-python"
 
-# Install dev tools; build and install Khiops
+# Install dev tools and miniconda3 (for the unit tests); build and install Khiops
 ARG KHIOPS_REVISION
 RUN true \
   # Install git (for khiops-python version calculation) and pip \
   && apt-get -y update \
-  && apt-get -y --no-install-recommends install git python3-pip zip pandoc \
+  && apt-get -y --no-install-recommends install git python3-pip zip pandoc wget \
   # Obtain the Khiops sources \
   && git clone https://github.com/khiopsml/khiops.git \
   && cd khiops \
@@ -24,6 +24,12 @@ RUN true \
   && cd .. \
   # Set python to python3 \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+  # Install miniconda3 to have multiple Python versions via Conda \
+  && mkdir -p /root/miniconda3 && cd /root/miniconda3 \
+  && wget https://repo.anaconda.com/miniconda/Miniconda3-py312_24.1.2-0-Linux-x86_64.sh -O ./Miniconda3-py312_24.1.2-0-Linux-x86_64.sh \
+  && echo "b978856ec3c826eb495b60e3fffe621f670c101150ebcbdeede4f961f22dc438 Miniconda3-py312_24.1.2-0-Linux-x86_64.sh" | sha256sum --check \
+  && bash ./Miniconda3-py312_24.1.2-0-Linux-x86_64.sh -b -u -p /root/miniconda3 \
+  && rm -rf /root/miniconda3/Miniconda3-py312_24.1.2-0-Linux-x86_64.sh \
   # Make sure that MPI is mpich \
   && update-alternatives --set mpirun /usr/bin/mpirun.mpich \
   # Clean build files \
@@ -31,6 +37,12 @@ RUN true \
   && apt-get clean \
   && rm -rf ./khiops \
   && true
+
+# set up all the supported Python environments under conda (for the unit tests)
+# relying on a variable containing all the versions
+ARG PYTHON_VERSIONS
+RUN for version in ${PYTHON_VERSIONS}; \
+    do /root/miniconda3/bin/conda create -y -n py${version} python=${version}; done
 
 RUN mkdir -p /scripts
 COPY ./run_service.sh /scripts/run_service.sh
