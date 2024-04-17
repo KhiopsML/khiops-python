@@ -109,7 +109,7 @@ jobs:
       - name: Download Sample Datasets
         run: |
           kh-download-datasets \
-            --version ${{ inputs.khiops-core-version || env.DEFAULT_SAMPLES_VERSION }}
+            --version ${{ inputs.khiops-samples-version || env.DEFAULT_SAMPLES_VERSION }}
       - name: Test Conda Package Installation on Samples
         run: |
           kh-samples core -i train_predictor -e
