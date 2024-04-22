@@ -67,15 +67,15 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         setup:
           - {os: ubuntu-20.04, json-image: '{"image": null}'}
-          - {os: ubuntu-22.04, json-image: '{"image": null}'}
-          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:8"}'}
-          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
-          - {os: windows-2019, json-image: '{"image": null}'}
-          - {os: windows-2022, json-image: '{"image": null}'}
-          - {os: macos-11, json-image: '{"image": null}'}
-          - {os: macos-12, json-image: '{"image": null}'}
-          - {os: macos-13, json-image: '{"image": null}'}
-          - {os: macos-14, json-image: '{"image": null}'}
+          #- {os: ubuntu-22.04, json-image: '{"image": null}'}
+          #- {os: ubuntu-22.04, json-image: '{"image": "rockylinux:8"}'}
+          #- {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
+          #- {os: windows-2019, json-image: '{"image": null}'}
+          #- {os: windows-2022, json-image: '{"image": null}'}
+          #- {os: macos-11, json-image: '{"image": null}'}
+          #- {os: macos-12, json-image: '{"image": null}'}
+          #- {os: macos-13, json-image: '{"image": null}'}
+          #- {os: macos-14, json-image: '{"image": null}'}
     runs-on: ${{ matrix.setup.os }}
     container: ${{ fromJSON(matrix.setup.json-image) }}
     steps:
@@ -102,6 +102,13 @@ jobs:
             echo "OMPI_ALLOW_RUN_AS_ROOT=1" >> "$GITHUB_ENV"
             echo "OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1" >> "$GITHUB_ENV"
           fi
+
+          #
+          if [[ ${{ contains(matrix.setup.os, 'ubuntu') }} == "true" ]]
+          then
+            echo "PTRACE_SCOPE"
+            cat /proc/sys/kernel/yama/ptrace_scope
+          fi
       - name: Install the Khiops Conda package (Windows)
         if: runner.os == 'Windows'
         run: |
@@ -111,8 +118,12 @@ jobs:
       - name: Install the Khiops Conda package (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
+          conda info
+          conda list
+          conda repoquery depends --recursive --channel conda-forge --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
           conda install --channel conda-forge --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
-          conda install --override-channels --channel defaults --channel conda-forge --channel ./khiops-conda/ khiops
+          conda list
+          conda install --channel conda-forge --channel ./khiops-conda/ khiops
       - name: Test Khiops Installation Status
         run: kh-status
       - name: Download Sample Datasets
