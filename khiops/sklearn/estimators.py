@@ -122,34 +122,44 @@ def _check_dictionary_compatibility(
             )
 
 
-def _check_categorical_target_type(dataset):
-    assert (
-        dataset.main_table.target_column_id is not None
-    ), "Target column not specified in dataset."
-    if not (
-        isinstance(dataset.target_column_type, pd.CategoricalDtype)
-        or pd.api.types.is_string_dtype(dataset.target_column_type)
-        or pd.api.types.is_integer_dtype(dataset.target_column_type)
-        or pd.api.types.is_float_dtype(dataset.target_column_type)
+def _check_categorical_target_type(ds):
+    if ds.target_column_type is None:
+        raise ValueError("Target vector is not specified.")
+
+    if ds.is_in_memory() and not (
+        isinstance(ds.target_column_type, pd.CategoricalDtype)
+        or pd.api.types.is_string_dtype(ds.target_column_type)
+        or pd.api.types.is_integer_dtype(ds.target_column_type)
+        or pd.api.types.is_float_dtype(ds.target_column_type)
     ):
         raise ValueError(
-            f"'y' has invalid type '{dataset.target_column_type}'. "
+            f"'y' has invalid type '{ds.target_column_type}'. "
             "Only string, integer, float and categorical types "
             "are accepted for the target."
         )
-
-
-def _check_numerical_target_type(dataset):
-    assert (
-        dataset.main_table.target_column_id is not None
-    ), "Target column not specified in dataset."
-    if not pd.api.types.is_numeric_dtype(dataset.target_column_type):
+    elif not ds.is_in_memory() and ds.target_column_type != "Categorical":
         raise ValueError(
-            f"Unknown label type '{dataset.target_column_type}'. "
-            "Expected a numerical type."
+            f"Target column has invalid type '{ds.target_column_type}'. "
+            "Only Categorical types are accepted for file datasets."
         )
-    if dataset.is_in_memory() and dataset.main_table.target_column is not None:
-        assert_all_finite(dataset.main_table.target_column)
+
+
+def _check_numerical_target_type(ds):
+    if ds.target_column_type is None:
+        raise ValueError("Target vector is not specified.")
+    if ds.is_in_memory():
+        if not pd.api.types.is_numeric_dtype(ds.target_column_type):
+            raise ValueError(
+                f"Unknown label type '{ds.target_column_type}'. "
+                "Expected a numerical type."
+            )
+        if ds.main_table.target_column is not None:
+            assert_all_finite(ds.main_table.target_column)
+    elif not ds.is_in_memory() and ds.target_column_type != "Numerical":
+        raise ValueError(
+            f"Target column has invalid type '{ds.target_column_type}'. "
+            "Only Numerical types are accepted for file datasets."
+        )
 
 
 def _cleanup_dir(target_dir):
