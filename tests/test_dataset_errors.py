@@ -589,6 +589,19 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         )
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
+    def test_dict_spec_secondary_tables_must_have_the_same_type_as_the_main_table(self):
+        """Test Dataset raising ValueError if main and sec. table's types don't match"""
+        bad_spec, _ = self.create_fixture_dataset_spec()
+        alt_spec, _ = self.create_fixture_dataset_spec(
+            data_type="file", output_dir=self.output_dir
+        )
+        bad_spec["tables"]["D"] = alt_spec["tables"]["D"]
+        expected_msg = (
+            "Secondary table 'D' has type 'str' which is different "
+            "from the main table's type 'DataFrame'."
+        )
+        self.assert_dataset_fails(bad_spec, None, ValueError, expected_msg)
+
     def test_dict_spec_format_must_be_tuple(self):
         """Test Dataset raising a TypeError if the format field is not a tuple"""
         bad_spec, y = self.create_fixture_dataset_spec()
@@ -655,20 +668,6 @@ class DatasetSpecErrorsTests(unittest.TestCase):
             + " (X's tables are of type str [file paths])"
         )
         self.assert_dataset_fails(spec, bad_y, TypeError, expected_msg)
-
-    def test_dict_spec_target_column_must_be_specified_to_be_accessed(self):
-        """Test Dataset raising ValueError when accessing a non specified target col"""
-        # Disable pointless statement because it is necessary for the test
-        # pylint: disable=pointless-statement
-        spec, _ = self.create_fixture_dataset_spec(
-            output_dir=self.output_dir, data_type="file", multitable=False, schema=None
-        )
-        dataset = Dataset(spec, None)
-        with self.assertRaises(ValueError) as context:
-            dataset.target_column_type
-        output_error_msg = str(context.exception)
-        expected_error_msg = "Target column is not set"
-        self.assertEqual(output_error_msg, expected_error_msg)
 
     def test_dict_spec_table_name_must_be_str(self):
         """Test Dataset raising TypeError when a table name is not a str"""
@@ -935,15 +934,15 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = "Non-existent data table file: Review.csv"
         self.assertEqual(output_error_msg, expected_msg)
 
-    def test_file_table_fails_with_empty_table_file(self):
-        """Test FileTable failing if it is created with an empty table"""
-        table_path = os.path.join(self.output_dir, "empty_table.csv")
-        table = pd.DataFrame(columns=["a", "b"])
+    def test_file_table_fails_if_table_does_not_contain_the_target_column(self):
+        """Test FileTable failing if the table does not contain the target column"""
+        table_path = os.path.join(self.output_dir, "table.csv")
+        table = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
         table.to_csv(table_path, sep="\t", index=False)
         with self.assertRaises(ValueError) as context:
-            FileTable("empty_table", table_path, target_column_id="class")
+            table = FileTable("table", table_path, target_column_id="class")
         output_error_msg = str(context.exception)
-        expected_msg_prefix = "Empty data table file"
+        expected_msg_prefix = "Target column"
         self.assertIn(expected_msg_prefix, output_error_msg)
 
     def test_file_table_internal_file_creation_fails_on_an_existing_path(self):
