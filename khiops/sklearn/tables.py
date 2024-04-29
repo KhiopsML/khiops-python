@@ -7,6 +7,8 @@
 """Classes for handling diverse data tables"""
 import csv
 import io
+import json
+import os
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, Sequence
@@ -20,6 +22,7 @@ from sklearn.utils.validation import column_or_1d
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import VariableBlock
+from khiops.core.exceptions import KhiopsRuntimeError
 from khiops.core.internals.common import (
     deprecation_message,
     is_dict_like,
@@ -290,14 +293,16 @@ def get_khiops_type(numpy_type):
     lower_numpy_type = str(numpy_type).lower()
 
     # timedelta64 and datetime64 types
-    if "time" in lower_numpy_type:
-        return "Timestamp"
+    if "datetime64" in lower_numpy_type or "timedelta64" in lower_numpy_type:
+        khiops_type = "Timestamp"
     # float<x>, int<x>, uint<x> types
     elif "int" in lower_numpy_type or "float" in lower_numpy_type:
-        return "Numerical"
+        khiops_type = "Numerical"
     # bool_ and object, character, bytes_, str_, void, record and other types
     else:
-        return "Categorical"
+        khiops_type = "Categorical"
+
+    return khiops_type
 
 
 def read_internal_data_table(file_path_or_stream):
@@ -898,14 +903,7 @@ class Dataset:
     @property
     def target_column_type(self):
         """The target column's type"""
-        if self.main_table.target_column_id is None:
-            raise ValueError("Target column is not set")
-        if self.is_in_memory():
-            return self.main_table.target_column.dtype
-        else:
-            return self.main_table.table_sample_df.dtypes[
-                self.main_table.target_column_id
-            ]
+        return self.main_table.target_column_type
 
     def __repr__(self):
         return str(self.create_khiops_dictionary_domain())
@@ -1209,6 +1207,13 @@ class PandasTable(DatasetTable):
 
         return output_dataframe
 
+    @property
+    def target_column_type(self):
+        target_column_type = None
+        if self.target_column is not None:
+            target_column_type = self.target_column.dtype
+        return target_column_type
+
 
 class NumpyTable(DatasetTable):
     """Table encapsulating (X,y) pair with types (ndarray, ndarray)
@@ -1316,6 +1321,13 @@ class NumpyTable(DatasetTable):
             )
 
         return output_table_path
+
+    @property
+    def target_column_type(self):
+        target_column_type = None
+        if self.target_column is not None:
+            target_column_type = self.target_column.dtype
+        return target_column_type
 
 
 class SparseTable(DatasetTable):
@@ -1494,6 +1506,13 @@ class SparseTable(DatasetTable):
 
         return output_table_path
 
+    @property
+    def target_column_type(self):
+        target_column_type = None
+        if self.target_column is not None:
+            target_column_type = self.target_column.dtype
+        return target_column_type
+
 
 class FileTable(DatasetTable):
     """A table representing a delimited text file
@@ -1529,39 +1548,67 @@ class FileTable(DatasetTable):
         # Initialize parameters
         super().__init__(name=name, categorical_target=categorical_target, key=key)
 
-        # Check inputs specific to this sub-class
+        # Check the parameters specific to this sub-class
         if not isinstance(path, str):
             raise TypeError(type_error_message("path", path, str))
         if not fs.exists(path):
             raise ValueError(f"Non-existent data table file: {path}")
 
         # Initialize members specific to this sub-class
-        self.path = path
+        self.data_source = path
         self.sep = sep
         self.header = header
         self.target_column_id = target_column_id
 
-        # Obtain the columns and their types from a sample of the data table
-        # We build the sample by reading the first 100 rows / 4MB of the file
-        table_file_head_contents = fs.read(self.path, size=4096 * 1024 - 1)
-        with io.BytesIO(table_file_head_contents) as table_file_head_contents_stream:
-            self.table_sample_df = pd.read_csv(
-                table_file_head_contents_stream,
-                nrows=100,
-                sep=self.sep,
-                header=0 if self.header else None,
+        # Build a dictionary file from the input data table
+        # Note: We use export_dictionary_as_json instead of read_dictionary_file
+        #       because it makes fail the sklearn mocked tests (this is technical debt)
+        try:
+            tmp_kdic_path = kh.get_runner().create_temp_file("file_table_", ".kdic")
+            tmp_kdicj_path = kh.get_runner().create_temp_file("file_table_", ".kdicj")
+            kh.build_dictionary_from_data_table(
+                self.data_source,
+                self.name,
+                tmp_kdic_path,
+                field_separator=self.sep,
+                header_line=header,
+            )
+            kh.export_dictionary_as_json(tmp_kdic_path, tmp_kdicj_path)
+            with open(tmp_kdicj_path, encoding="utf8") as tmp_kdicj:
+                json_domain = json.load(tmp_kdicj)
+        finally:
+            os.remove(tmp_kdic_path)
+            os.remove(tmp_kdicj_path)
+
+        # Alert the user if the parsing failed
+        if len(json_domain["dictionaries"]) == 0:
+            raise KhiopsRuntimeError(
+                f"Failed to build a dictionary "
+                f"from data table file: {self.data_source}"
             )
 
-            # Raise error if there is no data in the table
-            if self.table_sample_df.shape[0] == 0:
-                raise ValueError(f"Empty data table file: {self.path}")
+        # Set the column names and types
+        assert json_domain["dictionaries"][0]["name"] == self.name
+        variables = json_domain["dictionaries"][0]["variables"]
+        self.column_ids = [var["name"] for var in variables]
+        self.khiops_types = {var["name"]: var["type"] for var in variables}
 
-            # Save the columns and their types
-            self.column_ids = self.table_sample_df.columns.values
-            self.khiops_types = {
-                column_id: get_khiops_type(data_type)
-                for column_id, data_type in self.table_sample_df.dtypes.items()
-            }
+        # Check the target column exists
+        if (
+            self.target_column_id is not None
+            and target_column_id not in self.column_ids
+        ):
+            raise ValueError(
+                f"Target column '{target_column_id}'"
+                f"not present in columns '{self.column_ids}'"
+            )
+
+        # Force the target column type from the parameters
+        if self.target_column_id is not None:
+            if categorical_target:
+                self.khiops_types[target_column_id] = "Categorical"
+            else:
+                self.khiops_types[target_column_id] = "Numerical"
 
         # Check key integrity
         self.check_key()
@@ -1587,8 +1634,8 @@ class FileTable(DatasetTable):
             )
 
         # Fail if they have the same path
-        if output_table_file_path == self.path:
-            raise ValueError(f"Cannot overwrite this table's path: {self.path}")
+        if output_table_file_path == self.data_source:
+            raise ValueError(f"Cannot overwrite this table's path: {self.data_source}")
 
         # Create a sorted copy if requested
         if sort:
@@ -1601,7 +1648,7 @@ class FileTable(DatasetTable):
             kh.sort_data_table(
                 sort_dictionary_domain,
                 self.name,
-                self.path,
+                self.data_source,
                 output_table_file_path,
                 self.key,
                 field_separator=self.sep,
@@ -1612,6 +1659,15 @@ class FileTable(DatasetTable):
 
         # Otherwise copy the contents to the output file
         else:
-            fs.write(output_table_file_path, fs.read(self.path))
+            fs.write(output_table_file_path, fs.read(self.data_source))
 
         return output_table_file_path
+
+    @property
+    def target_column_type(self):
+        target_column_type = None
+        if self.target_column_id is not None:
+            target_column_type = (
+                "Categorical" if self.categorical_target else "Numerical"
+            )
+        return target_column_type
