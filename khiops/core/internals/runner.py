@@ -44,6 +44,55 @@ def _isdir_without_all_perms(dir_path):
     )
 
 
+def get_dir_status(a_dir):
+    """Returns the status of a local or remote directory
+
+    Against a local directory a real check is performed. A remote directory is detected
+    but not checked.
+    """
+    if fs.is_local_resource(a_dir):
+        # Remove initial slash on windows systems
+        # urllib's url2pathname does not work properly
+        a_dir_res = fs.create_resource(os.path.normpath(a_dir))
+        a_dir_path = a_dir_res.uri_info.path
+        if platform.system() == "Windows":
+            if a_dir_path.startswith("/"):
+                a_dir_path = a_dir_path[1:]
+
+        if not os.path.exists(a_dir_path):
+            status = "non-existent"
+        elif not os.path.isdir(a_dir_path):
+            status = "not-a-dir"
+        else:
+            status = "ok"
+    else:
+        status = "remote-path"
+
+    assert status in ["non-existent", "not-a-dir", "ok", "remote-path"]
+    return status
+
+
+def check_samples_dir(samples_dir):
+    # Warn if there are problems with the samples_dir
+    samples_dir_status = get_dir_status(samples_dir)
+    download_msg = (
+        "Execute the kh-download-datasets script or "
+        "the khiops.tools.download_datasets function to download them."
+    )
+    if samples_dir_status == "non-existent":
+        warnings.warn(
+            "Sample datasets location does not exist "
+            f"({samples_dir}). {download_msg}",
+            stacklevel=3,
+        )
+    elif samples_dir_status == "not-a-dir":
+        warnings.warn(
+            "Sample datasets location is not a directory "
+            f"({samples_dir}). {download_msg}",
+            stacklevel=3,
+        )
+
+
 def _extract_path_from_uri(uri):
     res = fs.create_resource(uri)
     if platform.system() == "Windows":
@@ -67,30 +116,6 @@ def _extract_path_from_uri(uri):
     else:
         path = res.uri_info.path
     return path
-
-
-def _dir_status(a_dir):
-    """Returns the status of a local or remote directory"""
-    if fs.is_local_resource(a_dir):
-        # Remove initial slash on windows systems
-        # urllib's url2pathname does not work properly
-        a_dir_res = fs.create_resource(os.path.normpath(a_dir))
-        a_dir_path = a_dir_res.uri_info.path
-        if platform.system() == "Windows":
-            if a_dir_path.startswith("/"):
-                a_dir_path = a_dir_path[1:]
-
-        if not os.path.exists(a_dir_path):
-            status = "non-existent"
-        elif not os.path.isdir(a_dir_path):
-            status = "not-a-dir"
-        else:
-            status = "ok"
-    else:
-        status = "remote-path"
-
-    assert status in ["non-existent", "not-a-dir", "ok", "remote-path"]
-    return status
 
 
 def _get_system_cpu_cores():
@@ -969,6 +994,7 @@ class KhiopsLocalRunner(KhiopsRunner):
         self._khiops_bin_dir = None
         self._khiops_version = None
         self._samples_dir = None
+        self._samples_dir_checked = False
 
         # Call parent constructor
         super().__init__()
@@ -1013,9 +1039,8 @@ class KhiopsLocalRunner(KhiopsRunner):
         else:
             self.khiops_temp_dir = ""
 
-        # Initialize and check the default samples dir
+        # Initialize the default samples dir
         self._initialize_default_samples_dir()
-        self._check_samples_dir()
 
     def _initialize_mpi_command_args(self):
         """Creates the mpiexec call arguments for each platform"""
@@ -1188,10 +1213,12 @@ class KhiopsLocalRunner(KhiopsRunner):
                 )
             else:
                 public_samples_dir = None
-            if public_samples_dir is not None and _dir_status(public_samples_dir) in [
-                "ok",
-                "remote",
-            ]:
+
+            ok_statuses = ["ok", "remote"]
+            if (
+                public_samples_dir is not None
+                and get_dir_status(public_samples_dir) in ok_statuses
+            ):
                 self._samples_dir = public_samples_dir
             else:
                 self._samples_dir = str(home_samples_dir)
@@ -1202,32 +1229,6 @@ class KhiopsLocalRunner(KhiopsRunner):
             self._samples_dir = str(home_samples_dir)
 
         assert self._samples_dir is not None
-
-    def _check_samples_dir(self, samples_dir=None):
-        # Check the runners samples_dir if samples_dir is not specified
-        if samples_dir is None:
-            samples_dir_to_check = self._samples_dir
-        else:
-            samples_dir_to_check = samples_dir
-
-        # Warn if there are problems with the samples_dir
-        samples_dir_status = _dir_status(samples_dir_to_check)
-        download_msg = (
-            "Execute the kh-download-datasets script or "
-            "the khiops.tools.download_datasets function to download them."
-        )
-        if samples_dir_status == "non-existent":
-            warnings.warn(
-                "Sample datasets location does not exist "
-                f"({samples_dir_to_check}). {download_msg}",
-                stacklevel=3,
-            )
-        elif samples_dir_status == "not-a-dir":
-            warnings.warn(
-                "Sample datasets location is not a directory "
-                f"({samples_dir_to_check}). {download_msg}",
-                stacklevel=3,
-            )
 
     def _finish_khiops_environment_initialization(self):
         # Initialize Khiops binary directory
@@ -1428,10 +1429,14 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _set_samples_dir(self, samples_dir):
         """Checks and sets the samples directory"""
-        self._check_samples_dir(samples_dir)
+        check_samples_dir(samples_dir)
         super()._set_samples_dir(samples_dir)
 
     def _get_samples_dir(self):
+        # Check the samples dir once (the check emmits only warnings)
+        if not self._samples_dir_checked:
+            check_samples_dir(self._samples_dir)
+            self._samples_dir_checked = True
         return self._samples_dir
 
     def raw_run(self, tool_name, command_line_args=None, use_mpi=True, trace=False):
