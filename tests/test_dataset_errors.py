@@ -13,6 +13,7 @@ from collections.abc import Mapping, Sequence
 import numpy as np
 import pandas as pd
 
+from khiops.core.exceptions import KhiopsRuntimeError
 from khiops.core.internals.common import type_error_message
 from khiops.sklearn.tables import Dataset, FileTable, PandasTable
 
@@ -656,20 +657,6 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         )
         self.assert_dataset_fails(spec, bad_y, TypeError, expected_msg)
 
-    def test_dict_spec_target_column_must_be_specified_to_be_accessed(self):
-        """Test Dataset raising ValueError when accessing a non specified target col"""
-        # Disable pointless statement because it is necessary for the test
-        # pylint: disable=pointless-statement
-        spec, _ = self.create_fixture_dataset_spec(
-            output_dir=self.output_dir, data_type="file", multitable=False, schema=None
-        )
-        dataset = Dataset(spec, None)
-        with self.assertRaises(ValueError) as context:
-            dataset.target_column_type
-        output_error_msg = str(context.exception)
-        expected_error_msg = "Target column is not set"
-        self.assertEqual(output_error_msg, expected_error_msg)
-
     def test_dict_spec_table_name_must_be_str(self):
         """Test Dataset raising TypeError when a table name is not a str"""
         spec, y = self.create_fixture_dataset_spec(multitable=False, schema=None)
@@ -935,15 +922,15 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = "Non-existent data table file: Review.csv"
         self.assertEqual(output_error_msg, expected_msg)
 
-    def test_file_table_fails_with_empty_table_file(self):
-        """Test FileTable failing if it is created with an empty table"""
-        table_path = os.path.join(self.output_dir, "empty_table.csv")
-        table = pd.DataFrame(columns=["a", "b"])
+    def test_file_table_fails_if_table_does_not_contain_the_target_column(self):
+        """Test FileTable failing if the table does not contain the target column"""
+        table_path = os.path.join(self.output_dir, "table.csv")
+        table = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
         table.to_csv(table_path, sep="\t", index=False)
         with self.assertRaises(ValueError) as context:
-            FileTable("empty_table", table_path, target_column_id="class")
+            table = FileTable("table", table_path, target_column_id="class")
         output_error_msg = str(context.exception)
-        expected_msg_prefix = "Empty data table file"
+        expected_msg_prefix = "Target column"
         self.assertIn(expected_msg_prefix, output_error_msg)
 
     def test_file_table_internal_file_creation_fails_on_an_existing_path(self):

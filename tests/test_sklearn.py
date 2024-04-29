@@ -68,12 +68,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Prepare datasets for tests"""
-        # Disable file-path warnings
-        warnings.filterwarnings(
-            "ignore",
-            message="File-path dataset input is deprecated and will be removed",
-        )
-
         # Grab output_dir for subsequent deletion
         cls.output_dir = os.path.join(
             "resources", "tmp", "test_sklearn_parameter_transfer"
@@ -1372,7 +1366,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
         expected_additional_data_table_names=(),
     ):
         """Check assertions on dictionary domains"""
-        self.assertIsInstance(dictionary_domain, kh.dictionary.DictionaryDomain)
+        self.assertIsInstance(dictionary_domain, kh.DictionaryDomain)
         if expected_n_dictionaries is not None:
             self.assertEqual(
                 len(dictionary_domain.dictionaries), expected_n_dictionaries
