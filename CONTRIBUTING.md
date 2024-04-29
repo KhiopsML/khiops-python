@@ -261,6 +261,7 @@ Checklist:
   - Update the API Docs if necessary
   - Update `CHANGELOG.md`
   - Update the default `khiops-core` version in [.github/workflows/conda.yml]
+  - Update the default value for `version` in the `download_datasets` function in [khiops/tools.py]
 - Git manipulations
   - Update your local repo and save your work:
     - `git stash # if necessary`
