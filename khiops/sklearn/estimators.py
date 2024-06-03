@@ -1527,6 +1527,20 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         )
         model_main_dictionary.remove_variable(self.model_target_variable_name_)
 
+        # Extract, from the preparation report, the number of evaluated features,
+        # their names and their levels
+        preparation_report = self.model_report_.preparation_report
+        self.n_features_evaluated_ = preparation_report.evaluated_variable_number
+        self.feature_evaluated_names_ = column_or_1d(
+            preparation_report.get_variable_names()
+        )
+        self.feature_evaluated_importances_ = np.array(
+            [
+                [preparation_report.get_variable_statistics(var).level]
+                for var in self.feature_evaluated_names_
+            ]
+        )
+
     def _transform_check_dataset(self, dataset):
         assert isinstance(dataset, Dataset), "'dataset' is not 'Dataset'"
 
@@ -1728,6 +1742,12 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
     classes_ : `numpy.ndarray`
         The list of classes seen in training. Depending on the traning target the
         contents are ``int`` or ``str``.
+    n_classes_ : int
+        The number of classes seen in training.
+    n_features_evaluated_:
+        The number of features evaluated by the classifier.
+    feature_evaluated_names_: `numpy.ndarray`
+        Names of the features evaluated by the classifier.
     is_fitted_ : bool
         ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
@@ -1880,6 +1900,9 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             self.classes_.sort()
         self.classes_ = column_or_1d(self.classes_)
 
+        # Count number of classes
+        self.n_classes_ = len(self.classes_)
+
         # Warn when there are no informative variables
         if self.model_report_.preparation_report.informative_variable_number == 0:
             warnings.warn(
@@ -1889,11 +1912,28 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             )
 
         # Set the target class probabilites as used
-        # (only the predicted classes is obtained without this step prior to Khiops 10)
+        # (only the predicted classes are obtained without this step prior to Khiops 10)
         for variable in self._get_main_dictionary().variables:
             for key in variable.meta_data.keys:
                 if key.startswith("TargetProb"):
                     variable.used = True
+
+        # Extract, from the modeling report, the number of selected evaluated features,
+        # their names and their levels, weights and importances
+        modeling_report = self.model_report_.modeling_report
+        self.feature_used_importances_ = np.array(
+            [
+                [var.weight, var.importance, var.level]
+                for var in modeling_report.get_snb_predictor().selected_variables
+            ]
+        )
+        self.feature_used_names_ = np.array(
+            [
+                [var.name]
+                for var in modeling_report.get_snb_predictor().selected_variables
+            ]
+        )
+        self.n_feature_used_ = len(self.feature_used_names_)
 
     def predict(self, X):
         """Predicts the most probable class for the test dataset X
@@ -2029,6 +2069,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                     variable.used = True
                 else:
                     variable.used = False
+
         return model_copy
 
 
@@ -2192,6 +2233,21 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
                 variables_to_eliminate.append(variable.name)
         for variable_name in variables_to_eliminate:
             self._get_main_dictionary().remove_variable(variable_name)
+
+        modeling_report = self.model_report_.modeling_report
+        self.feature_used_importances_ = np.array(
+            [
+                [var.weight, var.importance, var.level]
+                for var in modeling_report.get_snb_predictor().selected_variables
+            ]
+        )
+        self.feature_used_names_ = np.array(
+            [
+                [var.name]
+                for var in modeling_report.get_snb_predictor().selected_variables
+            ]
+        )
+        self.n_feature_used_ = len(self.feature_used_names_)
 
     def _check_target_type(self, dataset):
         _check_numerical_target_type(dataset)
