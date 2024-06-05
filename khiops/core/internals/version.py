@@ -36,12 +36,12 @@ class KhiopsVersion:
         self._version_str = version_str
 
         # Remove the "v" prefix if present
-        raw_parts = re.sub("^v", "", self._version_str).split(".")
+        raw_parts = re.sub("^v", "", self._version_str).split(".", maxsplit=2)
 
         # Check the Khiops version format: MAJOR.MINOR.PATCH[-PRE_RELEASE]
-        if len(raw_parts) != 3:
+        if len(raw_parts) < 3:
             self._raise_init_error(
-                "Version must have the format " "MAJOR.MINOR.PATCH[-PRE_RELEASE]",
+                "Version must have the format MAJOR.MINOR.PATCH[-PRE_RELEASE]",
                 version_str,
             )
         self._major, self._minor, patch_and_pre_release = raw_parts
@@ -73,6 +73,11 @@ class KhiopsVersion:
                     "PATCH-PRE_RELEASE version part must contain a single '-'",
                     version_str,
                 )
+            if patch_and_pre_release.count(".") > 1:
+                self._raise_init_error(
+                    "PATCH-PRE_RELEASE version part must contain at most a single '.'",
+                    version_str,
+                )
             self._patch, _pre_release = patch_and_pre_release.split("-")
 
             # Store only the patch version part if there are only digits
@@ -93,7 +98,11 @@ class KhiopsVersion:
                 )
 
             # Store the rest of the prelease (if any) and check it is a number
-            self._pre_release_increment = _pre_release.replace(self._pre_release_id, "")
+            # We accept not having a "." in the pre-release increment for backward
+            # compatibility.
+            self._pre_release_increment = _pre_release.replace(
+                self._pre_release_id, ""
+            ).replace(".", "")
             if _is_simple_number(self._pre_release_increment):
                 self._pre_release_increment = int(self._pre_release_increment)
             else:
@@ -102,7 +111,7 @@ class KhiopsVersion:
                 )
 
     def _raise_init_error(self, msg, version_str):
-        raise ValueError(f"{msg}. Version string: {version_str}.")
+        raise ValueError(f"{msg}. Version string: '{version_str}'.")
 
     @property
     def major(self):
@@ -123,12 +132,12 @@ class KhiopsVersion:
     def pre_release(self):
         """str : The version's pre-release tag
 
-        Returns: either 'a', 'b' or 'rc' followed by a number or None.
+        Returns: either 'a', 'b' or 'rc' followed by '.' and a number or None.
         """
         if self._pre_release_id is None:
             return None
         else:
-            return f"{self._pre_release_id}{self._pre_release_increment}"
+            return f"{self._pre_release_id}.{self._pre_release_increment}"
 
     def __repr__(self):
         return self._version_str
