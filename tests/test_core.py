@@ -2160,6 +2160,7 @@ class KhiopsCoreVariousTests(unittest.TestCase):
             "9.0.1",
             "9.5.1-a1",
             "9.5.1-a2",
+            "9.5.1-a.3",
             "9.5.1",
             "10.0.0",
             "10.0.1",
@@ -2193,11 +2194,16 @@ class KhiopsCoreVariousTests(unittest.TestCase):
     def test_invalid_versions(self):
         """Test invalid versions"""
         for version in [
+            "a.b.c-4",
+            "...",
+            ".0.4",
             "ver10.0.0",
             "10",
             "10.0",
-            "10i.4.0",
+            "10.4.0-5.4," "10i.4.0",
             "10.4b.3",
+            "10.4.1-b..2",
+            "10.4.1.-b.",
             "10.2.@",
             "10.@.2",
             "10.1.2b",

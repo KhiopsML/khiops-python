@@ -741,74 +741,60 @@ class KhiopsRunner(ABC):
     ):
         """Reports the exit status of a Khiops execution"""
         # Note:
-        #   We report stdout and stderr in both branches below because we use a log file
-        #   and thus normally Khiops doesn't write anything to these streams. In
-        #   practice MPI and the remote filesystems plugins may write to them to report
-        #   anomalies.
+        #   We report stdout and stderr below because we use a log file and thus
+        #   normally Khiops doesn't write anything to these streams. In practice MPI and
+        #   the remote filesystems plugins may write to them to report anomalies.
 
-        # If the execution was correct, warn and report:
-        # - the stdout if it was not empty
-        # - the stderr if it was not empty
-        # - any warnings found in the log
-        if return_code == 0:
-            # Add Khiops log warnings to the warning message if any
-            warning_msg = ""
-            _, _, warning_messages = self._collect_errors(log_file_path)
-            if warning_messages:
-                warning_msg += "Warnings in log:\n" + "".join(warning_messages)
-
-            # Add stdout to the warning message if non empty
-            if stdout:
-                if warning_msg:
-                    warning_msg += "\n"
-                warning_msg += f"Contents of stdout:\n{stdout}"
-
-            # Add stderr to the warning message if non empty
-            if stderr:
-                if warning_msg:
-                    warning_msg += "\n"
-                warning_msg += f"Contents of stderr:\n{stderr}"
-
-            # Report the message if there were any
-            if warning_msg:
-                warning_msg = (
-                    "Khiops ended correctly but there were minor issues: " + warning_msg
-                )
-                warnings.warn(warning_msg.rstrip(), stacklevel=4)
-        # If the execution was incorrect raise an exception reporting:
+        # Report messages:
         # - The warnings in the log
         # - The errors and/or fatal errors in the log
         # - The stdout if not empty
         # - The stderr if not empty
-        else:
-            # Collect errors and warnings
-            errors, fatal_errors, warning_messages = self._collect_errors(log_file_path)
+        #
+        # If there were any errors (fatal or not) or the return code is non-zero the
+        # reporting is via an exception. Otherwise we show the message as a warning.
+        #
 
-            # Create the message reporting the errors
-            error_msg = ""
-            if warning_messages:
-                error_msg += "Warnings in log:\n" + "".join(warning_messages)
-            if errors:
-                if error_msg:
-                    error_msg += "\n"
-                error_msg += "Errors in log:\n" + "".join(errors)
-            if fatal_errors:
-                if error_msg:
-                    error_msg += "\n"
-                error_msg += "Fatal errors in log:\n" + "".join(fatal_errors)
-            if stdout:
-                if error_msg:
-                    error_msg += "\n"
-                error_msg += f"Contents of stdout:\n{stdout}"
-            if stderr:
-                if error_msg:
-                    error_msg += "\n"
-                error_msg += f"Contents of stderr:\n{stderr}"
+        # Create the message reporting the errors and warnings
+        error_msg = ""
+        errors, fatal_errors, warning_messages = self._collect_errors(log_file_path)
+        if warning_messages:
+            error_msg += "Warnings in log:\n" + "".join(warning_messages)
+        if errors:
+            if error_msg:
+                error_msg += "\n"
+            error_msg += "Errors in log:\n" + "".join(errors)
+        if fatal_errors:
+            if error_msg:
+                error_msg += "\n"
+            error_msg += "Fatal errors in log:\n" + "".join(fatal_errors)
 
-            # Raise an exception with the errors
-            raise KhiopsRuntimeError(
-                f"{tool_name} ended with return code {return_code}\n{error_msg}"
-            )
+        # Add stdout to the warning message if non empty
+        if stdout:
+            if error_msg:
+                error_msg += "\n"
+            error_msg += f"Contents of stdout:\n{stdout}"
+
+        # Add stderr to the warning message if non empty
+        if stderr:
+            if error_msg:
+                error_msg += "\n"
+            error_msg += f"Contents of stderr:\n{stderr}"
+
+        # Report the message to the user if there were any
+        if error_msg:
+            # Raise an exception if there were errors
+            if errors or fatal_errors or return_code != 0:
+                raise KhiopsRuntimeError(
+                    f"{tool_name} execution had errors (return code {return_code}):\n"
+                    f"{error_msg}"
+                )
+            # Otherwise show the message as a warning
+            else:
+                error_msg = (
+                    f"Khiops ended correctly but there were minor issues:\n{error_msg}"
+                )
+                warnings.warn(error_msg.rstrip())
 
     def _collect_errors(self, log_file_path):
         # Collect errors any errors found in the log

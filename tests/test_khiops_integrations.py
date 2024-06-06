@@ -138,38 +138,46 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         # Get default runner
         default_runner = kh.get_runner()
 
-        # Create a fresh local runner and initialize its default Khiops binary dir
-        runner = KhiopsLocalRunner()
-        runner._initialize_khiops_bin_dir()
+        # Test in a try block to restore the runner if there are unexpected errors
+        try:
+            # Create a fresh local runner and initialize its default Khiops binary dir
+            runner = KhiopsLocalRunner()
+            runner._initialize_khiops_bin_dir()
 
-        # Get runner's default Khiops binary directory
-        default_bin_dir = runner.khiops_bin_dir
+            # Get runner's default Khiops binary directory
+            default_bin_dir = runner.khiops_bin_dir
 
-        # Create temporary directory
-        with tempfile.TemporaryDirectory() as tmp_khiops_bin_dir:
-            # Copy Khiops binaries into the temporary directory
-            for binary_file in os.listdir(default_bin_dir):
-                if binary_file.startswith("MODL"):
-                    shutil.copy(
-                        os.path.join(default_bin_dir, binary_file),
-                        os.path.join(tmp_khiops_bin_dir, binary_file),
-                    )
+            # Create temporary directory
+            with tempfile.TemporaryDirectory() as tmp_khiops_bin_dir:
+                # Copy Khiops binaries into the temporary directory
+                for binary_file in os.listdir(default_bin_dir):
+                    if binary_file.startswith("MODL"):
+                        shutil.copy(
+                            os.path.join(default_bin_dir, binary_file),
+                            os.path.join(tmp_khiops_bin_dir, binary_file),
+                        )
 
-            # Change runner's Khiops binary directory to the temporary directory
-            runner.khiops_bin_dir = tmp_khiops_bin_dir
+                # Change runner's Khiops binary directory to the temporary directory
+                runner.khiops_bin_dir = tmp_khiops_bin_dir
 
-            # Set current runner to the fresh runner
-            kh.set_runner(runner)
+                # Set current runner to the fresh runner
+                kh.set_runner(runner)
 
-            # Test the core API works
-            # Call check_database (could be any other method)
-            with self.assertRaises(kh.KhiopsRuntimeError) as cm:
-                kh.check_database("a.kdic", "dict_name", "data.txt")
-            # Test that MODL executable can be found and launched
-            self.assertIn("khiops ended with return code 2", str(cm.exception))
+                # Test the core API works
+                # Call check_database (could be any other method)
+                with self.assertRaises(kh.KhiopsRuntimeError) as cm:
+                    kh.check_database("a.kdic", "dict_name", "data.txt")
 
-        # Set current runner to the default runner
-        kh.set_runner(default_runner)
+                # Test that MODL executable can be found and launched
+                # Note: The return code is not specified to support older khiops
+                # versions that returned 2 instead of 0 in this case.
+                self.assertIn(
+                    "khiops execution had errors (return code ", str(cm.exception)
+                )
+
+        # Always set back to the default runner
+        finally:
+            kh.set_runner(default_runner)
 
 
 class KhiopsMultitableFitTests(unittest.TestCase):
