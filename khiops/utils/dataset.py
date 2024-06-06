@@ -6,7 +6,6 @@
 ######################################################################################
 """Classes for handling diverse data tables"""
 import csv
-import functools
 import io
 import json
 import os

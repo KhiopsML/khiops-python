@@ -50,7 +50,7 @@ from khiops.core.internals.common import (
     is_list_like,
     type_error_message,
 )
-from khiops.utils.dataset import Dataset, read_internal_data_table
+from khiops.utils.dataset import Dataset, FileTable, read_internal_data_table
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
@@ -86,15 +86,15 @@ def _extract_basic_dictionary(dictionary):
 
 def _check_dictionary_compatibility(
     model_dictionary,
-    dataset_dictionary,
+    ds_dictionary,
     estimator_class_name,
 ):
     # Prefix for all error messages
-    error_msg_prefix = f"X contains incompatible table '{dataset_dictionary.name}'"
+    error_msg_prefix = f"X contains incompatible table '{ds_dictionary.name}'"
 
     # Save variable arrays and their size
     model_variables = model_dictionary.variables
-    dataset_variables = dataset_dictionary.variables
+    dataset_variables = ds_dictionary.variables
 
     # Error if different number of variables
     if len(model_variables) != len(dataset_variables):
@@ -333,12 +333,12 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         return self
 
-    def _fit(self, dataset, computation_dir, **kwargs):
+    def _fit(self, ds, computation_dir, **kwargs):
         """Template pattern of a fit method
 
         Parameters
         ----------
-        dataset : `Dataset`
+        ds : `Dataset`
             The learning dataset.
         computation_dir : str
             Path or URI where the Khiops computation results will be stored.
@@ -346,25 +346,25 @@ class KhiopsEstimator(ABC, BaseEstimator):
         The called methods are reimplemented in concrete sub-classes
         """
         # Check model parameters
-        self._fit_check_params(dataset, **kwargs)
+        self._fit_check_params(ds, **kwargs)
 
         # Check the dataset
-        self._fit_check_dataset(dataset)
+        self._fit_check_dataset(ds)
 
         # Train the model
-        self._fit_train_model(dataset, computation_dir, **kwargs)
-        self.n_features_in_ = dataset.main_table.n_features()
+        self._fit_train_model(ds, computation_dir, **kwargs)
+        self.n_features_in_ = ds.main_table.n_features()
 
         # If the main attributes are of the proper type finish the fitting
         # Otherwise it means there was an abort (early return) of the previous steps
         if isinstance(self.model_, kh.DictionaryDomain) and isinstance(
             self.model_report_, kh.KhiopsJSONObject
         ):
-            self._fit_training_post_process(dataset)
+            self._fit_training_post_process(ds)
             self.is_fitted_ = True
-            self.is_multitable_model_ = dataset.is_multitable()
+            self.is_multitable_model_ = ds.is_multitable()
 
-    def _fit_check_params(self, dataset, **_):
+    def _fit_check_params(self, ds, **_):
         """Check the model parameters including those data dependent (in kwargs)"""
         if (
             self.key is not None
@@ -373,33 +373,30 @@ class KhiopsEstimator(ABC, BaseEstimator):
         ):
             raise TypeError(type_error_message("key", self.key, str, "list-like"))
 
-        if not dataset.is_in_memory() and self.output_dir is None:
+        if not ds.is_in_memory() and self.output_dir is None:
             raise ValueError("'output_dir' is not set but dataset is file-based")
 
-    def _fit_check_dataset(self, dataset):
+    def _fit_check_dataset(self, ds):
         """Checks the pre-conditions of the tables to build the model"""
-        if (
-            dataset.main_table.n_samples is not None
-            and dataset.main_table.n_samples <= 1
-        ):
+        if ds.main_table.n_samples is not None and ds.main_table.n_samples <= 1:
             raise ValueError(
                 "Table contains one sample or less. It must contain at least 2."
             )
 
     @abstractmethod
-    def _fit_train_model(self, dataset, computation_dir, **kwargs):
+    def _fit_train_model(self, ds, computation_dir, **kwargs):
         """Builds the model with one or more calls to khiops.core.api
 
         It must return the path of the ``.kdic`` Khiops model file and the JSON report.
         """
 
     @abstractmethod
-    def _fit_training_post_process(self, dataset):
+    def _fit_training_post_process(self, ds):
         """Loads the model's data from Khiops files into the object"""
 
     def _transform(
         self,
-        dataset,
+        ds,
         computation_dir,
         _transform_create_deployment_model_fun,
         drop_key,
@@ -410,20 +407,18 @@ class KhiopsEstimator(ABC, BaseEstimator):
         check_is_fitted(self)
 
         # Check if the dataset is consistent with the model
-        self._transform_check_dataset(dataset)
+        self._transform_check_dataset(ds)
 
         # Create a deployment dataset
         # Note: The input dataset is not necessarily ready to be deployed
-        deployment_dataset = self._transform_create_deployment_dataset(
-            dataset, computation_dir
-        )
+        deployment_ds = self._transform_create_deployment_dataset(ds, computation_dir)
 
         # Create a deployment dictionary
         deployment_dictionary_domain = _transform_create_deployment_model_fun()
 
         # Deploy the model
         output_table_path = self._transform_deploy_model(
-            deployment_dataset,
+            deployment_ds,
             deployment_dictionary_domain,
             self.model_main_dictionary_name_,
             computation_dir,
@@ -432,19 +427,19 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         # Post-process to return the correct output type
         return self._transform_deployment_post_process(
-            deployment_dataset, output_table_path, drop_key
+            deployment_ds, output_table_path, drop_key
         )
 
-    def _transform_create_deployment_dataset(self, dataset, _):
+    def _transform_create_deployment_dataset(self, ds, _):
         """Creates if necessary a new dataset to execute the model deployment
 
         The default behavior is to return the same dataset.
         """
-        return dataset
+        return ds
 
     def _transform_deploy_model(
         self,
-        deployment_dataset,
+        deployment_ds,
         model_dictionary_domain,
         model_dictionary_name,
         computation_dir,
@@ -482,7 +477,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         (
             main_table_path,
             secondary_table_paths,
-        ) = deployment_dataset.create_table_files_for_khiops(
+        ) = deployment_ds.create_table_files_for_khiops(
             computation_dir, sort=self.auto_sort
         )
 
@@ -511,12 +506,12 @@ class KhiopsEstimator(ABC, BaseEstimator):
         output_data_table_path = fs.get_child_path(output_dir, transformed_file_name)
 
         # Set the format parameters depending on the type of dataset
-        if deployment_dataset.is_in_memory():
+        if deployment_ds.is_in_memory():
             field_separator = "\t"
             header_line = True
         else:
-            field_separator = deployment_dataset.main_table.sep
-            header_line = deployment_dataset.main_table.header
+            field_separator = deployment_ds.main_table.sep
+            header_line = deployment_ds.main_table.header
 
         # Call to core function deploy_model
         kh.deploy_model(
@@ -536,16 +531,16 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         return output_data_table_path
 
-    def _transform_check_dataset(self, dataset):
+    def _transform_check_dataset(self, ds):
         """Checks the dataset before deploying a model on them"""
-        if not dataset.is_in_memory() or self.output_dir is None:
+        if ds.table_type == FileTable and self.output_dir is None:
             raise ValueError("'output_dir' is not set but dataset is file-based")
 
     def _transform_deployment_post_process(
-        self, deployment_dataset, output_table_path, drop_key
+        self, deployment_ds, output_table_path, drop_key
     ):
         # Return a dataframe for dataframe based datasets
-        if deployment_dataset.is_in_memory():
+        if deployment_ds.is_in_memory():
             # Read the transformed table with the internal table settings
             with io.BytesIO(fs.read(output_table_path)) as output_table_stream:
                 output_table_df = read_internal_data_table(output_table_stream)
@@ -554,16 +549,16 @@ class KhiopsEstimator(ABC, BaseEstimator):
             # - Reorder the table to the original table order
             #     - Because transformed data table file is sorted by key
             # - Drop the key columns if specified
-            if deployment_dataset.is_multitable():
-                key_df = deployment_dataset.main_table.data_source[
-                    deployment_dataset.main_table.key
+            if deployment_ds.is_multitable():
+                key_df = deployment_ds.main_table.data_source[
+                    deployment_ds.main_table.key
                 ]
                 output_table_df_or_path = key_df.merge(
-                    output_table_df, on=deployment_dataset.main_table.key
+                    output_table_df, on=deployment_ds.main_table.key
                 )
                 if drop_key:
                     output_table_df_or_path.drop(
-                        deployment_dataset.main_table.key, axis=1, inplace=True
+                        deployment_ds.main_table.key, axis=1, inplace=True
                     )
             # On mono-table: Return the read dataframe as-is
             else:
@@ -752,7 +747,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         """
         return super().fit(X, y=y, **kwargs)
 
-    def _fit_check_params(self, dataset, **kwargs):
+    def _fit_check_params(self, ds, **kwargs):
         # Check that at least one of the build methods parameters is set
         if not (
             self.build_name_var or self.build_distance_vars or self.build_frequency_vars
@@ -775,7 +770,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                         raise TypeError(
                             type_error_message(f"columns[{i}]", column_id, str)
                         )
-                    if column_id not in dataset.main_table.column_ids:
+                    if column_id not in ds.main_table.column_ids:
                         raise ValueError(f"columns[{i}] ('{column_id}') not found in X")
 
         # Check that 'id_column':
@@ -787,7 +782,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             raise ValueError("'id_column' is a mandatory parameter")
         if not isinstance(id_column, str):
             raise TypeError(type_error_message("key_columns", id_column, str))
-        if id_column not in dataset.main_table.column_ids:
+        if id_column not in ds.main_table.column_ids:
             raise ValueError(f"id column '{id_column}' not found in X")
 
         # Deprecate the 'max_part_numbers' parameter
@@ -802,11 +797,11 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                 )
             )
 
-    def _fit_train_model(self, dataset, computation_dir, **kwargs):
-        assert not dataset.is_multitable(), "Coclustering not available in multitable"
+    def _fit_train_model(self, ds, computation_dir, **kwargs):
+        assert not ds.is_multitable(), "Coclustering not available in multitable"
 
         # Prepare the table files and dictionary for Khiops
-        main_table_path, _ = dataset.create_table_files_for_khiops(
+        main_table_path, _ = ds.create_table_files_for_khiops(
             computation_dir, sort=self.auto_sort
         )
 
@@ -820,12 +815,12 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         elif self.variables is not None:
             variables = self.variables
         else:
-            variables = list(dataset.main_table.column_ids)
+            variables = list(ds.main_table.column_ids)
 
         # Train the coclustering model
         coclustering_file_path = kh.train_coclustering(
-            dataset.create_khiops_dictionary_domain(),
-            dataset.main_table.name,
+            ds.create_khiops_dictionary_domain(),
+            ds.main_table.name,
             main_table_path,
             variables,
             output_dir,
@@ -867,18 +862,16 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
 
         # Create a multi-table dictionary from the schema of the table
         # The root table contains the key of the table and points to the main table
-        tmp_domain = dataset.create_khiops_dictionary_domain()
-        main_table_dictionary = tmp_domain.get_dictionary(dataset.main_table.name)
+        tmp_domain = ds.create_khiops_dictionary_domain()
+        main_table_dictionary = tmp_domain.get_dictionary(ds.main_table.name)
         if not main_table_dictionary.key:
             main_table_dictionary.key = [self.model_id_column]
-        main_table_dictionary.name = (
-            f"{self._khiops_model_prefix}{dataset.main_table.name}"
-        )
+        main_table_dictionary.name = f"{self._khiops_model_prefix}{ds.main_table.name}"
         self.model_main_dictionary_name_ = (
-            f"{self._khiops_model_prefix}Keys_{dataset.main_table.name}"
+            f"{self._khiops_model_prefix}Keys_{ds.main_table.name}"
         )
         self.model_secondary_table_variable_name = (
-            f"{self._khiops_model_prefix}{dataset.main_table.name}"
+            f"{self._khiops_model_prefix}{ds.main_table.name}"
         )
         self._create_coclustering_model_domain(
             tmp_domain, coclustering_file_path, output_dir
@@ -901,7 +894,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             self.model_report_ = simplified_cc.model_report_
             self.model_report_raw_ = self.model_report_.json_data
 
-    def _fit_training_post_process(self, dataset):
+    def _fit_training_post_process(self, ds):
         assert (
             len(self.model_.dictionaries) == 2
         ), "'model_' does not have exactly 2 dictionaries"
@@ -1059,16 +1052,16 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             )
 
             # Get dataset dictionary from model; it should not be root
-            dataset_dictionary = self.model_.get_dictionary(
+            ds_dictionary = self.model_.get_dictionary(
                 self.model_secondary_table_variable_name
             )
             assert (
-                not dataset_dictionary.root
+                not ds_dictionary.root
             ), "Dataset dictionary in the coclustering model should not be root"
-            if not dataset_dictionary.key:
-                dataset_dictionary.key = self.model_id_column
+            if not ds_dictionary.key:
+                ds_dictionary.key = self.model_id_column
             domain = DictionaryDomain()
-            domain.add_dictionary(dataset_dictionary)
+            domain.add_dictionary(ds_dictionary)
             simplified_coclustering_file_path = fs.get_child_path(
                 output_dir, "Coclustering.khcj"
             )
@@ -1185,12 +1178,12 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         kh.get_runner().root_temp_dir = computation_dir
 
         # Create the input dataset
-        dataset = Dataset(X)
+        ds = Dataset(X)
 
         # Call the template transform method
         try:
             y_pred = super()._transform(
-                dataset,
+                ds,
                 computation_dir,
                 self._transform_prepare_deployment_model_for_predict,
                 False,
@@ -1202,25 +1195,25 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             kh.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # Transform to numpy.array for in-memory inputs
-        if dataset.is_in_memory():
+        if ds.is_in_memory():
             y_pred = y_pred.to_numpy()
 
         return y_pred
 
-    def _transform_check_dataset(self, dataset):
+    def _transform_check_dataset(self, ds):
         """Checks the tables before deploying a model on them"""
         assert (
             len(self.model_.dictionaries) == 2
         ), "'model' does not have exactly 2 dictionaries"
 
         # Call the parent method
-        super()._transform_check_dataset(dataset)
+        super()._transform_check_dataset(ds)
 
         # Coclustering models are special:
         # - They are mono-table only
         # - They are deployed with a multitable model whose main table contain
         #   the keys of the input table and the secondary table is the input table
-        if dataset.is_multitable():
+        if ds.is_multitable():
             raise ValueError("Coclustering models not available in multi-table mode")
 
         # The "model dictionary domain" in the coclustering case it is just composed
@@ -1231,23 +1224,23 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             if dictionary.name != self.model_main_dictionary_name_:
                 _check_dictionary_compatibility(
                     dictionary,
-                    dataset.main_table.create_khiops_dictionary(),
+                    ds.main_table.create_khiops_dictionary(),
                     self.__class__.__name__,
                 )
 
-    def _transform_create_deployment_dataset(self, dataset, computation_dir):
-        assert not dataset.is_multitable(), "'dataset' is multitable"
+    def _transform_create_deployment_dataset(self, ds, computation_dir):
+        assert not ds.is_multitable(), "'dataset' is multitable"
 
         # Build the multitable deployment dataset
-        keys_table_name = f"keys_{dataset.main_table.name}"
+        keys_table_name = f"keys_{ds.main_table.name}"
         deploy_dataset_spec = {}
         deploy_dataset_spec["main_table"] = keys_table_name
         deploy_dataset_spec["tables"] = {}
-        if dataset.is_in_memory():
+        if ds.is_in_memory():
             # Extract the keys from the main table
             keys_table_dataframe = pd.DataFrame(
                 {
-                    self.model_id_column: dataset.main_table.data_source[
+                    self.model_id_column: ds.main_table.data_source[
                         self.model_id_column
                     ].unique()
                 }
@@ -1258,20 +1251,20 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                 keys_table_dataframe,
                 self.model_id_column,
             )
-            deploy_dataset_spec["tables"][dataset.main_table.name] = (
-                dataset.main_table.data_source,
+            deploy_dataset_spec["tables"][ds.main_table.name] = (
+                ds.main_table.data_source,
                 self.model_id_column,
             )
         else:
             # Create the table to extract the keys (sorted)
-            keyed_dataset = dataset.copy()
+            keyed_dataset = ds.copy()
             keyed_dataset.main_table.key = [self.model_id_column]
             main_table_path = keyed_dataset.main_table.create_table_file_for_khiops(
                 computation_dir, sort=self.auto_sort
             )
 
             # Create a table storing the main table keys
-            keys_table_name = f"keys_{dataset.main_table.name}"
+            keys_table_name = f"keys_{ds.main_table.name}"
             keys_table_file_path = fs.get_child_path(
                 computation_dir, f"raw_{keys_table_name}.txt"
             )
@@ -1280,21 +1273,21 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                 keyed_dataset.main_table.name,
                 main_table_path,
                 keys_table_file_path,
-                header_line=dataset.header,
-                field_separator=dataset.sep,
-                output_header_line=dataset.header,
-                output_field_separator=dataset.sep,
+                header_line=ds.header,
+                field_separator=ds.sep,
+                output_header_line=ds.header,
+                output_field_separator=ds.sep,
                 trace=self.verbose,
             )
             deploy_dataset_spec["tables"][keys_table_name] = (
                 keys_table_file_path,
                 self.model_id_column,
             )
-            deploy_dataset_spec["tables"][dataset.main_table.name] = (
-                dataset.main_table.data_source,
+            deploy_dataset_spec["tables"][ds.main_table.name] = (
+                ds.main_table.data_source,
                 self.model_id_column,
             )
-            deploy_dataset_spec["format"] = (dataset.sep, dataset.header)
+            deploy_dataset_spec["format"] = (ds.sep, ds.header)
 
         return Dataset(deploy_dataset_spec)
 
@@ -1302,11 +1295,11 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         return self.model_
 
     def _transform_deployment_post_process(
-        self, deployment_dataset, output_table_path, drop_key
+        self, deployment_ds, output_table_path, drop_key
     ):
-        assert deployment_dataset.is_multitable()
+        assert deployment_ds.is_multitable()
         return super()._transform_deployment_post_process(
-            deployment_dataset, output_table_path, drop_key
+            deployment_ds, output_table_path, drop_key
         )
 
     def fit_predict(self, X, y=None, **kwargs):
@@ -1360,12 +1353,12 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def _more_tags(self):
         return {"require_y": True}
 
-    def _fit_check_dataset(self, dataset):
-        super()._fit_check_dataset(dataset)
-        self._check_target_type(dataset)
+    def _fit_check_dataset(self, ds):
+        super()._fit_check_dataset(ds)
+        self._check_target_type(ds)
 
     @abstractmethod
-    def _check_target_type(self, dataset):
+    def _check_target_type(self, ds):
         """Checks that the target type has the correct type for the estimator"""
 
     def fit(self, X, y=None, **kwargs):
@@ -1406,9 +1399,9 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         super().fit(X, y=y, **kwargs)
         return self
 
-    def _fit_check_params(self, dataset, **kwargs):
+    def _fit_check_params(self, ds, **kwargs):
         # Call parent method
-        super()._fit_check_params(dataset, **kwargs)
+        super()._fit_check_params(ds, **kwargs)
 
         # Check supervised estimator parameters
         if not isinstance(self.n_features, int):
@@ -1450,10 +1443,10 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                     if not isinstance(rule, str):
                         raise TypeError(type_error_message(rule, rule, str))
 
-    def _fit_train_model(self, dataset, computation_dir, **kwargs):
+    def _fit_train_model(self, ds, computation_dir, **kwargs):
         # Train the model with Khiops
         train_args, train_kwargs = self._fit_prepare_training_function_inputs(
-            dataset, computation_dir
+            ds, computation_dir
         )
         report_file_path, model_kdic_file_path = self._fit_core_training_function(
             *train_args, **train_kwargs
@@ -1475,33 +1468,29 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def _fit_core_training_function(self, *args, **kwargs):
         """A wrapper to the khiops.core training function for the estimator"""
 
-    def _fit_prepare_training_function_inputs(self, dataset, computation_dir):
+    def _fit_prepare_training_function_inputs(self, ds, computation_dir):
         # Set output path files
         output_dir = self._get_output_dir(computation_dir)
         log_file_path = fs.get_child_path(output_dir, "khiops.log")
 
-        main_table_path, secondary_table_paths = dataset.create_table_files_for_khiops(
+        main_table_path, secondary_table_paths = ds.create_table_files_for_khiops(
             computation_dir, sort=self.auto_sort
         )
 
         # Build the 'additional_data_tables' argument
-        dataset_domain = dataset.create_khiops_dictionary_domain()
-        secondary_data_paths = dataset_domain.extract_data_paths(
-            dataset.main_table.name
-        )
+        ds_domain = ds.create_khiops_dictionary_domain()
+        secondary_data_paths = ds_domain.extract_data_paths(ds.main_table.name)
         additional_data_tables = {}
         for data_path in secondary_data_paths:
-            dictionary = dataset_domain.get_dictionary_at_data_path(data_path)
+            dictionary = ds_domain.get_dictionary_at_data_path(data_path)
             additional_data_tables[data_path] = secondary_table_paths[dictionary.name]
 
         # Build the mandatory arguments
         args = [
-            dataset.create_khiops_dictionary_domain(),
-            dataset.main_table.name,
+            ds.create_khiops_dictionary_domain(),
+            ds.main_table.name,
             main_table_path,
-            dataset.main_table.get_khiops_variable_name(
-                dataset.main_table.target_column_id
-            ),
+            ds.main_table.get_khiops_variable_name(ds.main_table.target_column_id),
             output_dir,
         ]
 
@@ -1519,12 +1508,12 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Set the format parameters depending on the type of dataset
         kwargs["detect_format"] = False
-        if dataset.is_in_memory():
+        if ds.is_in_memory():
             kwargs["field_separator"] = "\t"
             kwargs["header_line"] = True
         else:
-            kwargs["field_separator"] = dataset.main_table.sep
-            kwargs["header_line"] = dataset.main_table.header
+            kwargs["field_separator"] = ds.main_table.sep
+            kwargs["header_line"] = ds.main_table.header
 
         # Rename parameters to be compatible with khiops.core
         kwargs["max_constructed_variables"] = kwargs.pop("n_features")
@@ -1541,13 +1530,13 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         return args, kwargs
 
-    def _fit_training_post_process(self, dataset):
+    def _fit_training_post_process(self, ds):
         # Call parent method
-        super()._fit_training_post_process(dataset)
+        super()._fit_training_post_process(ds)
 
         # Set the target variable name
-        self.model_target_variable_name_ = dataset.main_table.get_khiops_variable_name(
-            dataset.main_table.target_column_id
+        self.model_target_variable_name_ = ds.main_table.get_khiops_variable_name(
+            ds.main_table.target_column_id
         )
 
         # Verify it has at least one dictionary and a root dictionary in multi-table
@@ -1562,7 +1551,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                 initial_dictionary_name = dictionary.name.replace(
                     self._khiops_model_prefix, "", 1
                 )
-                if initial_dictionary_name == dataset.main_table.name:
+                if initial_dictionary_name == ds.main_table.name:
                     self.model_main_dictionary_name_ = dictionary.name
         if self.model_main_dictionary_name_ is None:
             raise ValueError("No model dictionary after Khiops call")
@@ -1630,29 +1619,29 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self.feature_evaluated_importances_ = np.array([x[1] for x in combined])
         self.n_features_evaluated_ = len(combined)
 
-    def _transform_check_dataset(self, dataset):
-        assert isinstance(dataset, Dataset), "'dataset' is not 'Dataset'"
+    def _transform_check_dataset(self, ds):
+        assert isinstance(ds, Dataset), "'ds' is not 'Dataset'"
 
         # Call the parent method
-        super()._transform_check_dataset(dataset)
+        super()._transform_check_dataset(ds)
 
         # Check the coherence between thi input table and the model
-        if self.is_multitable_model_ and not dataset.is_multitable():
+        if self.is_multitable_model_ and not ds.is_multitable():
             raise ValueError(
                 "You are trying to apply on single-table inputs a model which has "
                 "been trained on multi-table data."
             )
-        if not self.is_multitable_model_ and dataset.is_multitable():
+        if not self.is_multitable_model_ and ds.is_multitable():
             raise ValueError(
                 "You are trying to apply on multi-table inputs a model which has "
                 "been trained on single-table data."
             )
 
         # Error if different number of dictionaries
-        dataset_domain = dataset.create_khiops_dictionary_domain()
-        if len(self.model_.dictionaries) != len(dataset_domain.dictionaries):
+        ds_domain = ds.create_khiops_dictionary_domain()
+        if len(self.model_.dictionaries) != len(ds_domain.dictionaries):
             raise ValueError(
-                f"X has {len(dataset_domain.dictionaries)} table(s), "
+                f"X has {len(ds_domain.dictionaries)} table(s), "
                 f"but {self.__class__.__name__} is expecting "
                 f"{len(self.model_.dictionaries)}"
             )
@@ -1661,13 +1650,13 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         # Note: Name checking is omitted for the main table
         _check_dictionary_compatibility(
             _extract_basic_dictionary(self._get_main_dictionary()),
-            dataset.main_table.create_khiops_dictionary(),
+            ds.main_table.create_khiops_dictionary(),
             self.__class__.__name__,
         )
 
         # Multi-table model: Check name and dictionary coherence of secondary tables
         dataset_secondary_tables_by_name = {
-            table.name: table for table in dataset.secondary_tables
+            table.name: table for table in ds.secondary_tables
         }
         for dictionary in self.model_.dictionaries:
             assert dictionary.name.startswith(self._khiops_model_prefix), (
@@ -1742,11 +1731,11 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
 
         try:
             # Create the input dataset
-            dataset = Dataset(X, key=self.key)
+            ds = Dataset(X, key=self.key)
 
             # Call the template transform method
             y_pred = super()._transform(
-                dataset,
+                ds,
                 computation_dir,
                 self._transform_prepare_deployment_model_for_predict,
                 True,
@@ -1764,10 +1753,10 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         assert isinstance(y_pred, (str, pd.DataFrame)), "Expected str or DataFrame"
         return y_pred
 
-    def _fit_prepare_training_function_inputs(self, dataset, computation_dir):
+    def _fit_prepare_training_function_inputs(self, ds, computation_dir):
         # Call the parent method
         args, kwargs = super()._fit_prepare_training_function_inputs(
-            dataset, computation_dir
+            ds, computation_dir
         )
 
         # Rename parameters to be compatible with khiops.core
@@ -1813,9 +1802,9 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             feature_used_importances_ = np.array([])
         return feature_used_names_, feature_used_importances_
 
-    def _fit_check_params(self, dataset, **kwargs):
+    def _fit_check_params(self, ds, **kwargs):
         # Call parent method
-        super()._fit_check_params(dataset, **kwargs)
+        super()._fit_check_params(ds, **kwargs)
 
         # Check estimator parameters
         if self.n_evaluated_features < 0:
@@ -2020,9 +2009,9 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
 
         return sorted_prob_variable_names
 
-    def _fit_check_params(self, dataset, **kwargs):
+    def _fit_check_params(self, ds, **kwargs):
         # Call parent method
-        super()._fit_check_params(dataset, **kwargs)
+        super()._fit_check_params(ds, **kwargs)
 
         # Check 'group_target_value' parameter
         if not isinstance(self.group_target_value, bool):
@@ -2060,26 +2049,23 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         kwargs["categorical_target"] = True
         return super().fit(X, y, **kwargs)
 
-    def _check_target_type(self, dataset):
-        _check_categorical_target_type(dataset)
+    def _check_target_type(self, ds):
+        _check_categorical_target_type(ds)
 
-    def _fit_check_dataset(self, dataset):
+    def _fit_check_dataset(self, ds):
         # Call the parent method
-        super()._fit_check_dataset(dataset)
+        super()._fit_check_dataset(ds)
 
         # Check that the target is for classification in in_memory_tables
-        if dataset.is_in_memory():
-            current_type_of_target = type_of_target(dataset.main_table.target_column)
+        if ds.is_in_memory():
+            current_type_of_target = type_of_target(ds.main_table.target_column)
             if current_type_of_target not in ["binary", "multiclass"]:
                 raise ValueError(
                     f"Unknown label type: '{current_type_of_target}' "
                     "for classification. Maybe you passed a floating point target?"
                 )
         # Check if the target has more than 1 class
-        if (
-            dataset.is_in_memory()
-            and len(np.unique(dataset.main_table.target_column)) == 1
-        ):
+        if ds.is_in_memory() and len(np.unique(ds.main_table.target_column)) == 1:
             raise ValueError(
                 f"{self.__class__.__name__} can't train when only one class is present."
             )
@@ -2087,12 +2073,12 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
     def _fit_core_training_function(self, *args, **kwargs):
         return kh.train_predictor(*args, **kwargs)
 
-    def _fit_training_post_process(self, dataset):
+    def _fit_training_post_process(self, ds):
         # Call the parent's method
-        super()._fit_training_post_process(dataset)
+        super()._fit_training_post_process(ds)
 
         # Save the target datatype
-        self._original_target_type = dataset.target_column_type
+        self._original_target_type = ds.target_column_type
 
         # Save class values in the order of deployment
         self.classes_ = []
@@ -2228,9 +2214,9 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
 
         # Call the generic transfrom method
         try:
-            dataset = Dataset(X, key=self.key)
+            ds = Dataset(X, key=self.key)
             y_probas = self._transform(
-                dataset,
+                ds,
                 computation_dir,
                 self._transform_prepare_deployment_model_for_predict_proba,
                 True,
@@ -2244,7 +2230,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         # For in-memory datasets:
         # - Reorder the columns to that of self.classes_
         # - Transform to np.ndarray
-        if dataset.is_in_memory():
+        if ds.is_in_memory():
             assert isinstance(
                 y_probas, (pd.DataFrame, np.ndarray)
             ), "y_probas is not a Pandas DataFrame nor Numpy array"
@@ -2459,9 +2445,9 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
     def _fit_core_training_function(self, *args, **kwargs):
         return kh.train_predictor(*args, **kwargs)
 
-    def _fit_train_model(self, dataset, computation_dir, **kwargs):
+    def _fit_train_model(self, ds, computation_dir, **kwargs):
         # Call the parent method
-        super()._fit_train_model(dataset, computation_dir, **kwargs)
+        super()._fit_train_model(ds, computation_dir, **kwargs)
 
         # Warn when there are no informative variables
         if self.model_report_.preparation_report.informative_variable_number == 0:
@@ -2470,9 +2456,9 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
                 "The fitted model is the mean regressor."
             )
 
-    def _fit_training_post_process(self, dataset):
+    def _fit_training_post_process(self, ds):
         # Call parent method
-        super()._fit_training_post_process(dataset)
+        super()._fit_training_post_process(ds)
 
         # Remove variables depending on the target
         variables_to_eliminate = []
@@ -2496,8 +2482,8 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
             self.feature_used_importances_ = feature_used_importances_
             self.n_features_used_ = len(self.feature_used_names_)
 
-    def _check_target_type(self, dataset):
-        _check_numerical_target_type(dataset)
+    def _check_target_type(self, ds):
+        _check_numerical_target_type(ds)
 
     # Deactivate useless super delegation because the method have different docstring
     # pylint: disable=useless-super-delegation
@@ -2762,9 +2748,9 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             )
         return _transform_types[self.transform_pairs]
 
-    def _fit_check_params(self, dataset, **kwargs):
+    def _fit_check_params(self, ds, **kwargs):
         # Call parent method
-        super()._fit_check_params(dataset, **kwargs)
+        super()._fit_check_params(ds, **kwargs)
 
         # Check 'transform_type_categorical' parameter
         if not isinstance(self.transform_type_categorical, str):
@@ -2815,11 +2801,11 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
                 type_error_message("group_target_value", self.group_target_value, bool)
             )
 
-    def _check_target_type(self, dataset):
+    def _check_target_type(self, ds):
         if self.categorical_target:
-            _check_categorical_target_type(dataset)
+            _check_categorical_target_type(ds)
         else:
-            _check_numerical_target_type(dataset)
+            _check_numerical_target_type(ds)
 
     def _fit_core_training_function(self, *args, **kwargs):
         return kh.train_recoder(*args, **kwargs)
@@ -2859,10 +2845,10 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
 
     # pylint: enable=useless-super-delegation
 
-    def _fit_prepare_training_function_inputs(self, dataset, computation_dir):
+    def _fit_prepare_training_function_inputs(self, ds, computation_dir):
         # Call the parent method
         args, kwargs = super()._fit_prepare_training_function_inputs(
-            dataset, computation_dir
+            ds, computation_dir
         )
         # Rename encoder parameters, delete unused ones
         # to be compatible with khiops.core
@@ -2882,9 +2868,9 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
 
         return args, kwargs
 
-    def _fit_training_post_process(self, dataset):
+    def _fit_training_post_process(self, ds):
         # Call parent method
-        super()._fit_training_post_process(dataset)
+        super()._fit_training_post_process(ds)
 
         # Eliminate the target variable from the main dictionary
         self._get_main_dictionary()
@@ -2935,9 +2921,9 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
 
         # Create and transform the dataset
         try:
-            dataset = Dataset(X, key=self.key)
+            ds = Dataset(X, key=self.key)
             X_transformed = super()._transform(
-                dataset,
+                ds,
                 computation_dir,
                 self.model_.copy,
                 True,
@@ -2947,7 +2933,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         finally:
             self._cleanup_computation_dir(computation_dir)
             kh.get_runner().root_temp_dir = initial_runner_temp_dir
-        if dataset.is_in_memory():
+        if ds.is_in_memory():
             return X_transformed.to_numpy(copy=False)
         return X_transformed
 
