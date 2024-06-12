@@ -80,10 +80,10 @@ def check_table_entry(table_name, table_spec):
                 str,
             )
         )
-    _check_table_key(table_name, key)
+    check_table_key(table_name, key)
 
 
-def _check_table_key(table_name, key):
+def check_table_key(table_name, key):
     if key is not None:
         if not is_list_like(key) and not isinstance(key, str):
             raise TypeError(
@@ -316,6 +316,16 @@ def get_khiops_type(numpy_type):
     return khiops_type
 
 
+def get_khiops_variable_name(column_id):
+    """Return the khiops variable name associated to a column id"""
+    if isinstance(column_id, str):
+        variable_name = column_id
+    else:
+        assert isinstance(column_id, np.int64)
+        variable_name = f"Var{column_id}"
+    return variable_name
+
+
 def read_internal_data_table(file_path_or_stream):
     """Reads into a DataFrame a data table file with the internal format settings
 
@@ -407,27 +417,27 @@ class Dataset:
         self.main_table = None
         self.secondary_tables = None
         self.relations = None
+        self.categorical_target = categorical_target
+        self.target_column = None
+        self.target_column_id = None
+        self.target_column_type = None
+        self.target_column_dtype = None  # Only for in_memory datasets
         self.sep = None
         self.header = None
 
         # Initialization from different types of input "X"
         # A single pandas dataframe
         if isinstance(X, pd.DataFrame):
-            self._init_tables_from_dataframe(
-                X, y, categorical_target=categorical_target
-            )
+            self.main_table = PandasTable("main_table", X)
+            self.secondary_tables = []
         # A single numpy array (or compatible object)
         elif hasattr(X, "__array__"):
-            self._init_tables_from_numpy_array(
-                X,
-                y,
-                categorical_target=categorical_target,
-            )
+            self.main_table = NumpyTable("main_table", X)
+            self.secondary_tables = []
         # A scipy.sparse.spmatrix
         elif isinstance(X, sp.spmatrix):
-            self._init_tables_from_sparse_matrix(
-                X, y, categorical_target=categorical_target
-            )
+            self.main_table = SparseTable("main_table", X)
+            self.secondary_tables = []
         # Special rejection for scipy.sparse.sparray (to pass the sklearn tests)
         # Note: We don't use scipy.sparse.sparray because it is not implemented in scipy
         # 1.10 which is the latest supporting py3.8
@@ -455,8 +465,17 @@ class Dataset:
                 ),
                 stacklevel=3,
             )
-            self._init_tables_from_tuple(X, y, categorical_target=categorical_target)
-        # A sequence
+            # Check the input tuple
+            self._check_input_tuple(X)
+
+            # Obtain path and separator
+            path, sep = X
+
+            # Initialization
+            self.main_table = FileTable("main_table", path=path, sep=sep)
+            self.secondary_tables = []
+
+        # A dataset sequence spec
         # We try first for compatible python arrays then the deprecated sequences spec
         elif is_list_like(X):
             # Try to transform to a numerical array with sklearn's check_array
@@ -465,9 +484,8 @@ class Dataset:
             # this branch's code
             try:
                 X_checked = check_array(X, ensure_2d=True, force_all_finite=False)
-                self._init_tables_from_numpy_array(
-                    X_checked, y, categorical_target=categorical_target
-                )
+                self.main_table = NumpyTable("main_table", X_checked)
+                self.secondary_tables = []
             except ValueError:
                 warnings.warn(
                     deprecation_message(
@@ -478,16 +496,21 @@ class Dataset:
                     ),
                     stacklevel=3,
                 )
-                self._init_tables_from_sequence(X, y, key=key)
-        # A dict specification
+                self._init_tables_from_sequence(X, key=key)
+        # A a dataset dict spec
         elif is_dict_like(X):
-            self._init_tables_from_mapping(X, y, categorical_target=categorical_target)
+            self._init_tables_from_mapping(X)
         # Fail if X is not recognized
         else:
             raise TypeError(
                 type_error_message("X", X, "array-like", tuple, Sequence, Mapping)
             )
 
+        # Initialization of the target column if any
+        if y is not None:
+            self._init_target_column(y)
+
+        # Post-conditions
         assert self.main_table is not None, "'main_table' is 'None' after init"
         assert isinstance(
             self.secondary_tables, list
@@ -495,116 +518,48 @@ class Dataset:
         assert not self.is_multitable() or len(
             self.secondary_tables
         ), "'secondary_tables' is empty in a multi-table dataset"
+        assert (
+            y is None or self.target_column is not None
+        ), "'y' is set but 'target_column' is None"
 
-    def _init_tables_from_dataframe(self, X, y=None, categorical_target=True):
-        """Initializes the dataset from a 'X' of type pandas.DataFrame"""
-        assert isinstance(X, pd.DataFrame), "'X' must be a pandas.DataFrame"
-        if y is not None and not hasattr(y, "__array__"):
-            raise TypeError(type_error_message("y", y, "array-like"))
-        self.main_table = PandasTable(
-            "main_table", X, target_column=y, categorical_target=categorical_target
-        )
-        self.secondary_tables = []
-
-    def _init_tables_from_sparse_matrix(self, X, y=None, categorical_target=True):
-        """Initializes the dataset from a 'X' of type scipy.sparse.spmatrix"""
-        assert isinstance(X, sp.spmatrix), "'X' must be a scipy.sparse.spmatrix"
-        if y is not None and not hasattr(y, "__array__"):
-            raise TypeError(type_error_message("y", y, "array-like"))
-
-        self.main_table = SparseTable(
-            "main_table", X, target_column=y, categorical_target=categorical_target
-        )
-        self.secondary_tables = []
-
-    def _init_tables_from_numpy_array(self, X, y=None, categorical_target=True):
-        assert hasattr(
-            X, "__array__"
-        ), "'X' must be a numpy.ndarray or implement __array__"
-
-        if y is not None:
-            y_checked = column_or_1d(y, warn=True)
-        else:
-            y_checked = None
-        self.main_table = NumpyTable(
-            "main_table",
-            X,
-            target_column=y_checked,
-            categorical_target=categorical_target,
-        )
-        self.secondary_tables = []
-
-    def _init_tables_from_tuple(self, X, y=None, categorical_target=True):
-        """Initializes the spec from a 'X' of type tuple"""
-        assert isinstance(X, tuple), "'X' must be a tuple"
-
-        # Check the input tuple
-        self._check_input_tuple(X, y)
-
-        # Obtain path and separator
-        path, sep = X
-
-        # Initialization
-        self.main_table = FileTable(
-            "main_table",
-            categorical_target=categorical_target,
-            target_column_id=y,
-            path=path,
-            sep=sep,
-        )
-        self.secondary_tables = []
-
-    def _check_input_tuple(self, X, y=None):
+    def _check_input_tuple(self, X):
         if len(X) != 2:
             raise ValueError(f"'X' tuple input must have length 2 not {len(X)}")
         if not isinstance(X[0], str):
             raise TypeError(type_error_message("X[0]", X[0], str))
         if not isinstance(X[1], str):
             raise TypeError(type_error_message("X[1]", X[1], str))
-        if y is not None and not isinstance(y, str):
-            raise TypeError(type_error_message("y", y, str))
 
-    def _init_tables_from_sequence(self, X, y=None, categorical_target=True, key=None):
+    def _init_tables_from_sequence(self, X, key=None):
         """Initializes the spec from a list-like 'X'"""
         assert is_list_like(X), "'X' must be a list-like"
 
         # Check the input sequence
-        self._check_input_sequence(X, y, key=key)
+        self._check_input_sequence(X, key=key)
 
         # Initialize the tables
         if isinstance(X[0], pd.DataFrame):
-            self.main_table = PandasTable(
-                "main_table",
-                X[0],
-                target_column=y,
-                categorical_target=categorical_target,
-                key=key,
-            )
+            self.main_table = PandasTable("main_table", X[0], key=key)
             self.secondary_tables = []
             for index, dataframe in enumerate(X[1:], start=1):
                 self.secondary_tables.append(
                     PandasTable(f"secondary_table_{index:02d}", dataframe, key=key)
                 )
         else:
-            self.main_table = FileTable(
-                "main_table",
-                X[0],
-                target_column_id=y,
-                categorical_target=categorical_target,
-                key=key,
-            )
+            self.main_table = FileTable("main_table", X[0], key=key)
             self.secondary_tables = []
             for index, table_path in enumerate(X[1:], start=1):
                 self.secondary_tables.append(
                     FileTable(f"secondary_table_{index:02d}", table_path, key=key)
                 )
+
         # Create a list of relations
         main_table_name = self.main_table.name
         self.relations = [
             (main_table_name, table.name, False) for table in self.secondary_tables
         ]
 
-    def _check_input_sequence(self, X, y=None, key=None):
+    def _check_input_sequence(self, X, key=None):
         # Check the first table
         if len(X) == 0:
             raise ValueError("'X' must be a non-empty sequence")
@@ -616,35 +571,19 @@ class Dataset:
         for i, secondary_X in enumerate(X[1:], start=1):
             if not isinstance(secondary_X, main_table_type):
                 raise TypeError(
-                    type_error_message(f"X[{i}]", X[i], main_table_type)
+                    type_error_message(f"Table at index {i}", X[i], main_table_type)
                     + " as the first table in X"
                 )
 
-        # Check the type of y
-        if y is not None:
-            if isinstance(X[0], str) and not isinstance(y, str):
-                raise TypeError(type_error_message("y", y, str))
-            elif isinstance(X[0], pd.DataFrame) and not isinstance(y, pd.Series):
-                raise TypeError(type_error_message("y", y, pd.Series))
+        # Check the key for the main_table (it is the same for the others)
+        check_table_key("main_table", key)
 
-        # Check the type of key
-        if not is_list_like(key) and not isinstance(key, str):
-            raise TypeError(type_error_message("key", key, "list-like", str))
-        if is_list_like(key):
-            for column_index, column_name in enumerate(key):
-                if not isinstance(column_name, str):
-                    raise TypeError(
-                        type_error_message(
-                            f"key[{column_index}]", key[column_index], str
-                        )
-                    )
-
-    def _init_tables_from_mapping(self, X, y=None, categorical_target=True):
+    def _init_tables_from_mapping(self, X):
         """Initializes the table spec from a dict-like 'X'"""
         assert is_dict_like(X), "'X' must be dict-like"
 
         # Check the input mapping
-        self._check_input_mapping(X, y)
+        check_dataset_spec(X)
 
         # Initialize tables objects
         if len(X["tables"]) == 1:
@@ -669,8 +608,6 @@ class Dataset:
             self.main_table = FileTable(
                 main_table_name,
                 main_table_source,
-                target_column_id=y,
-                categorical_target=categorical_target,
                 key=main_table_key,
                 sep=self.sep,
                 header=self.header,
@@ -695,8 +632,6 @@ class Dataset:
                 main_table_name,
                 main_table_source,
                 key=main_table_key,
-                target_column=y,
-                categorical_target=categorical_target,
             )
             self.secondary_tables = []
             for table_name, (table_source, table_key) in X["tables"].items():
@@ -710,8 +645,6 @@ class Dataset:
                 main_table_name,
                 main_table_source,
                 key=main_table_key,
-                target_column=y,
-                categorical_target=categorical_target,
             )
             self.secondary_tables = []
         # Initialize a numpyarray dataset (monotable)
@@ -719,8 +652,6 @@ class Dataset:
             self.main_table = NumpyTable(
                 main_table_name,
                 main_table_source,
-                target_column=y,
-                categorical_target=categorical_target,
             )
             if len(X["tables"]) > 1:
                 raise ValueError(
@@ -745,39 +676,93 @@ class Dataset:
                 )
             self.relations = relations
 
-    def _check_input_mapping(self, X, y=None):
-        # Check the dataset spec for X
-        check_dataset_spec(X)
+    def _init_target_column(self, y):
+        assert self.main_table is not None
+        assert self.secondary_tables is not None
+        # Check y's type
+        # For in memory target columns:
+        # - column_or_1d checks *and transforms* to a numpy.array if successful
+        # - warn=True in column_or_1d is necessary to pass sklearn checks
+        if isinstance(y, str):
+            y_checked = y
+        else:
+            y_checked = column_or_1d(y, warn=True)
 
-        # Check the target coherence with X's tables
-        if y is not None:
-            if len(X["tables"]) == 1:
-                main_table_source, _ = list(X["tables"].values())[0]
+        # Check the target type coherence with those of X's tables
+        if isinstance(
+            self.main_table, (PandasTable, SparseTable, NumpyTable)
+        ) and isinstance(y_checked, str):
+            if isinstance(self.main_table, PandasTable):
+                type_message = "pandas.DataFrame"
+            elif isinstance(self.main_table, SparseTable):
+                type_message = "scipy.sparse.spmatrix"
             else:
-                main_table_source, _ = X["tables"][X["main_table"]]
-            if (
-                isinstance(main_table_source, pd.DataFrame)
-                and not isinstance(y, pd.Series)
-                and not isinstance(y, pd.DataFrame)
-            ):
-                raise TypeError(
-                    type_error_message("y", y, pd.Series, pd.DataFrame)
-                    + " (X's tables are of type pandas.DataFrame)"
+                type_message = "numpy.ndarray"
+            raise TypeError(
+                type_error_message("y", y, "array-like")
+                + f" (X's tables are of type {type_message})"
+            )
+        if isinstance(self.main_table, (SparseTable, NumpyTable)) and isinstance(
+            y_checked, str
+        ):
+            raise TypeError(
+                type_error_message("y", y, "array-like")
+                + " (X's tables are of type numpy.ndarray"
+                + " or scipy.sparse.spmatrix)"
+            )
+        if isinstance(self.main_table.data_source, str) and not isinstance(
+            y_checked, str
+        ):
+            raise TypeError(
+                type_error_message("y", y, str)
+                + " (X's tables are of type str [file paths])"
+            )
+
+        # Initialize the members related to the target
+        # Case when y is a memory array
+        if hasattr(y_checked, "__array__"):
+            self.target_column = y_checked
+            self.target_column_dtype = self.target_column.dtype
+
+            # Initialize the id of the target column
+            if isinstance(y, pd.Series) and y.name is not None:
+                self.target_column_id = y.name
+            elif isinstance(y, pd.DataFrame):
+                self.target_column_id = y.columns[0]
+            else:
+                if pd.api.types.is_integer_dtype(self.main_table.column_ids):
+                    self.target_column_id = self.main_table.column_ids[-1] + 1
+                else:
+                    assert pd.api.types.is_string_dtype(self.main_table.column_ids)
+                    self.target_column_id = "UnknownTargetColumn"
+
+            # Fail if there is a column in the main_table with the target column's name
+            if self.target_column_id in self.main_table.column_ids:
+                raise ValueError(
+                    f"Target column name '{self.target_column_id}' "
+                    f"is already present in the main table. "
+                    f"Column names: {list(self.main_table.column_ids)}"
                 )
-            if (
-                isinstance(main_table_source, sp.spmatrix)
-                or hasattr(main_table_source, "__array__")
-            ) and not hasattr(y, "__array__"):
-                raise TypeError(
-                    type_error_message("y", y, "array-like")
-                    + " (X's tables are of type numpy.ndarray"
-                    + " or scipy.sparse.spmatrix)"
+        # Case when y is column id: Set both the column and the id to it
+        else:
+            assert isinstance(y, str), type_error_message("y", y, str)
+            self.target_column = y
+            self.target_column_id = y
+
+            # Check the target column exists in the main table
+            if self.target_column_id not in self.main_table.column_ids:
+                raise ValueError(
+                    f"Target column '{self.target_column}' not present in main table. "
+                    f"Column names: {list(self.main_table.column_ids)}'"
                 )
-            if isinstance(main_table_source, str) and not isinstance(y, str):
-                raise TypeError(
-                    type_error_message("y", y, str)
-                    + " (X's tables are of type str [file paths])"
-                )
+
+            # Force the target column type from the parameters
+            if self.categorical_target:
+                self.main_table.khiops_types[self.target_column] = "Categorical"
+                self.target_column_type = "Categorical"
+            else:
+                self.main_table.khiops_types[self.target_column] = "Numerical"
+                self.target_column_type = "Numerical"
 
     def is_in_memory(self):
         """Tests whether the dataset is in-memory
@@ -851,15 +836,25 @@ class Dataset:
 
         # Create root dictionary and add it to the domain
         dictionary_domain = kh.DictionaryDomain()
-        root_dictionary = self.main_table.create_khiops_dictionary()
-        dictionary_domain.add_dictionary(root_dictionary)
+        main_dictionary = self.main_table.create_khiops_dictionary()
+        dictionary_domain.add_dictionary(main_dictionary)
+
+        # For in-memory datasets: Add the target variable if available
+        if self.is_in_memory() and self.target_column is not None:
+            variable = kh.Variable()
+            variable.name = get_khiops_variable_name(self.target_column_id)
+            if self.categorical_target:
+                variable.type = "Categorical"
+            else:
+                variable.type = "Numerical"
+            main_dictionary.add_variable(variable)
 
         # Create the dictionaries for each secondary table and the table variables in
         # root dictionary that point to each secondary table
         # This is performed using a breadth-first-search over the graph of relations
         # Note: In general 'name' and 'object_type' fields of Variable can be different
         if self.secondary_tables:
-            root_dictionary.root = True
+            main_dictionary.root = True
             table_names = [table.name for table in self.secondary_tables]
             tables_to_visit = [self.main_table.name]
             while tables_to_visit:
@@ -884,17 +879,18 @@ class Dataset:
                         table_variable.name = table.name
                         table_variable.object_type = table.name
                         parent_table_dictionary.add_variable(table_variable)
+
         return dictionary_domain
 
-    def create_table_files_for_khiops(self, target_dir, sort=True):
+    def create_table_files_for_khiops(self, out_dir, sort=True):
         """Prepares the tables of the dataset to be used by Khiops
 
         If this is a multi-table dataset it will create sorted copies the tables.
 
         Parameters
         ----------
-        target_dir : str
-            The directory where the sorted tables will be created
+        out_dir : str
+            The directory where the sorted tables will be created.
 
         Returns
         -------
@@ -911,22 +907,27 @@ class Dataset:
         sort_main_table = sort and (
             self.is_multitable() or self.main_table.key is not None
         )
-        main_table_path = self.main_table.create_table_file_for_khiops(
-            target_dir, sort=sort_main_table
-        )
+        if self.is_in_memory():
+            main_table_path = self.main_table.create_table_file_for_khiops(
+                out_dir,
+                sort=sort_main_table,
+                target_column=self.target_column,
+                target_column_id=self.target_column_id,
+            )
+        else:
+            main_table_path = self.main_table.create_table_file_for_khiops(
+                out_dir,
+                sort=sort_main_table,
+            )
 
         # Create a copy of each secondary table
         secondary_table_paths = {}
         for table in self.secondary_tables:
             secondary_table_paths[table.name] = table.create_table_file_for_khiops(
-                target_dir, sort=sort
+                out_dir, sort=sort
             )
-        return main_table_path, secondary_table_paths
 
-    @property
-    def target_column_type(self):
-        """The target column's type"""
-        return self.main_table.target_column_type
+        return main_table_path, secondary_table_paths
 
     def __repr__(self):
         return str(self.create_khiops_dictionary_domain())
@@ -935,7 +936,7 @@ class Dataset:
 class DatasetTable(ABC):
     """A generic dataset table"""
 
-    def __init__(self, name, categorical_target=True, key=None):
+    def __init__(self, name, key=None):
         # Check input
         if not isinstance(name, str):
             raise TypeError(type_error_message("name", name, str))
@@ -957,12 +958,10 @@ class DatasetTable(ABC):
         # Initialization (must be completed by concrete sub-classes)
         self.name = name
         self.data_source = None
-        self.categorical_target = categorical_target
         if is_list_like(key) or key is None:
             self.key = key
         else:
             self.key = [key]
-        self.target_column_id = None
         self.column_ids = None
         self.khiops_types = None
         self.n_samples = None
@@ -1010,43 +1009,25 @@ class DatasetTable(ABC):
             dictionary.key = list(self.key)
 
         # For each column add a Khiops variable to the dictionary
-        for column_id in self._get_all_column_ids():
+        for column_id in self.column_ids:
             variable = kh.Variable()
-
-            # Set the variable name for string and integer column indexes
-            if isinstance(column_id, str):
-                variable.name = str(column_id)
-            else:
-                assert isinstance(column_id, (np.int64, int))
-                variable.name = f"Var{column_id}"
+            variable.name = get_khiops_variable_name(column_id)
 
             # Set the type of the column/variable
             # Case of a column in the key : Set to categorical
             if self.key is not None and column_id in self.key:
                 variable.type = "Categorical"
-            # Case of the target column: Set to specified type
-            elif column_id == self.target_column_id:
-                assert self.target_column_id is not None
-                if self.categorical_target:
-                    variable.type = "Categorical"
-                else:
-                    variable.type = "Numerical"
             # The rest of columns: Obtain the type from dtypes
             else:
                 variable.type = self.khiops_types[column_id]
             dictionary.add_variable(variable)
         return dictionary
 
-    @abstractmethod
-    def _get_all_column_ids(self):
-        """Returns the column ids including the target"""
-
 
 class PandasTable(DatasetTable):
     """Table encapsulating the features dataframe X and the target labels y
 
-    X is of type pandas.DataFrame.
-    y is of type pandas.Series or pandas.DataFrame.
+    X is of type pandas.DataFrame. y is array-like.
 
     Parameters
     ----------
@@ -1056,45 +1037,17 @@ class PandasTable(DatasetTable):
         The data frame to be encapsulated.
     key : list-like of str, optional
         The names of the columns composing the key
-    target_column : :external:term:`array-like`, optional
-        The array containing the target column.
-    categorical_target : bool, default ``True``.
-        ``True`` if the target column is categorical.
     """
 
-    def __init__(
-        self, name, dataframe, key=None, target_column=None, categorical_target=True
-    ):
+    def __init__(self, name, dataframe, key=None):
         # Call the parent method
-        super().__init__(name, categorical_target=categorical_target, key=key)
+        super().__init__(name, key=key)
 
         # Check inputs specific to this sub-class
         if not isinstance(dataframe, pd.DataFrame):
             raise TypeError(type_error_message("dataframe", dataframe, pd.DataFrame))
         if dataframe.shape[0] == 0:
             raise ValueError("'dataframe' is empty")
-        if target_column is not None:
-            if not hasattr(target_column, "__array__"):
-                raise TypeError(
-                    type_error_message("target_column", target_column, "array-like")
-                )
-            if isinstance(target_column, pd.Series):
-                if (
-                    target_column.name is not None
-                    and target_column.name in dataframe.columns
-                ):
-                    raise ValueError(
-                        f"Target series name '{target_column.name}' "
-                        f"is already present in dataframe : {list(dataframe.columns)}"
-                    )
-            elif isinstance(target_column, pd.DataFrame):
-                number_of_target_columns = len(target_column.columns)
-                if number_of_target_columns != 1:
-                    raise ValueError(
-                        "Target dataframe should contain exactly one column. "
-                        f"It contains {number_of_target_columns}."
-                    )
-                target_column = target_column.iloc[:, 0]
 
         # Initialize the attributes
         self.data_source = dataframe
@@ -1124,21 +1077,6 @@ class PandasTable(DatasetTable):
             for column_id in self.column_ids
         }
 
-        # Initialize target column (if any)
-        self.target_column = target_column
-        if self.target_column is not None:
-            if (
-                isinstance(self.target_column, pd.Series)
-                and self.target_column.name is not None
-            ):
-                self.target_column_id = target_column.name
-            else:
-                if pd.api.types.is_integer_dtype(self.column_ids):
-                    self.target_column_id = self.column_ids[-1] + 1
-                else:
-                    assert pd.api.types.is_string_dtype(self.column_ids)
-                    self.target_column_id = "UnknownTargetColumn"
-
         # Check key integrity
         self.check_key()
 
@@ -1151,35 +1089,31 @@ class PandasTable(DatasetTable):
             f"dtypes={dtypes_str}; target={self.target_column_id}>"
         )
 
-    def _get_all_column_ids(self):
-        if self.target_column is not None:
-            all_column_ids = list(self.column_ids) + [self.target_column_id]
-        else:
-            all_column_ids = list(self.column_ids)
-        return all_column_ids
-
-    def get_khiops_variable_name(self, column_id):
-        """Return the khiops variable name associated to a column id"""
-        assert column_id == self.target_column_id or column_id in self.column_ids
-        if isinstance(column_id, str):
-            variable_name = column_id
-        else:
-            assert isinstance(column_id, np.int64)
-            variable_name = f"Var{column_id}"
-        return variable_name
-
-    def create_table_file_for_khiops(self, output_dir, sort=True):
+    def create_table_file_for_khiops(
+        self, output_dir, sort=True, target_column=None, target_column_id=None
+    ):
         assert not sort or self.key is not None, "Cannot sort table without a key"
         assert not sort or is_list_like(
             self.key
         ), "Cannot sort table with a key is that is not list-like"
         assert not sort or len(self.key) > 0, "Cannot sort table with an empty key"
+        assert target_column is not None or target_column_id is None
+        assert target_column_id is not None or target_column is None
 
         # Create the output table resource object
         output_table_path = fs.get_child_path(output_dir, f"{self.name}.txt")
 
         # Write the output dataframe
         output_dataframe = self._create_dataframe_copy()
+        output_names = {
+            column_id: get_khiops_variable_name(column_id)
+            for column_id in self.column_ids
+        }
+        output_dataframe.rename(columns=output_names, inplace=True)
+        if target_column is not None:
+            output_dataframe[get_khiops_variable_name(target_column_id)] = (
+                target_column.copy()
+            )
 
         # Sort by key if requested (as string)
         if sort:
@@ -1200,43 +1134,8 @@ class PandasTable(DatasetTable):
         return output_table_path
 
     def _create_dataframe_copy(self):
-        """Creates an in-memory copy of the dataframe with the target column"""
-        # Create a copy of the dataframe and add a copy of the target column (if any)
-        if self.target_column is not None:
-            if (
-                isinstance(self.target_column, pd.Series)
-                and self.target_column.name is not None
-            ):
-                output_target_column = self.target_column.reset_index(drop=True)
-            else:
-                output_target_column = pd.Series(
-                    self.target_column, name=self.target_column_id
-                )
-            output_dataframe = pd.concat(
-                [self.data_source.reset_index(drop=True), output_target_column],
-                axis=1,
-            )
-        else:
-            output_dataframe = self.data_source.copy()
-
-        # Rename the columns
-        output_dataframe_column_names = {}
-        for column_id in self._get_all_column_ids():
-            output_dataframe_column_names[column_id] = self.get_khiops_variable_name(
-                column_id
-            )
-        output_dataframe.rename(
-            output_dataframe_column_names, axis="columns", inplace=True
-        )
-
-        return output_dataframe
-
-    @property
-    def target_column_type(self):
-        target_column_type = None
-        if self.target_column is not None:
-            target_column_type = self.target_column.dtype
-        return target_column_type
+        """Creates an in memory copy of the dataframe"""
+        return self.data_source.copy()
 
 
 class NumpyTable(DatasetTable):
@@ -1250,38 +1149,19 @@ class NumpyTable(DatasetTable):
         The data frame to be encapsulated.
     key : :external:term`array-like` of int, optional
         The names of the columns composing the key
-    target_column : :external:term:`array-like` of shape (n_samples,) , optional
-        The series representing the target column.
-    categorical_target : bool, default ``True``.
-        ``True`` if the target column is categorical.
     """
 
-    def __init__(
-        self, name, array, key=None, target_column=None, categorical_target=True
-    ):
+    def __init__(self, name, array, key=None):
         # Call the parent method
-        super().__init__(name, key=key, categorical_target=categorical_target)
+        super().__init__(name, key=key)
 
         # Check the array's types and shape
         if not hasattr(array, "__array__"):
             raise TypeError(type_error_message("array", array, np.ndarray))
 
-        # Check (and potentially transform with a copy) the array's data
-        checked_array = check_array(array, ensure_2d=True, force_all_finite=False)
-
-        # Check the target's types and shape
-        if target_column is not None:
-            checked_target_column = column_or_1d(target_column, warn=True)
-
         # Initialize the members
-        self.data_source = checked_array
-        self.column_ids = list(range(self.data_source.shape[1]))
-        self.target_column_id = self.data_source.shape[1]
-        if target_column is not None:
-            self.target_column = checked_target_column
-        else:
-            self.target_column = None
-        self.categorical_target = categorical_target
+        self.data_source = check_array(array, ensure_2d=True, force_all_finite=False)
+        self.column_ids = column_or_1d(range(self.data_source.shape[1]))
         self.khiops_types = {
             column_id: get_khiops_type(self.data_source.dtype)
             for column_id in self.column_ids
@@ -1295,23 +1175,9 @@ class NumpyTable(DatasetTable):
             f"dtype={dtype_str}; target={self.target_column_id}>"
         )
 
-    def _get_all_column_ids(self):
-        n_columns = len(self.column_ids)
-        if self.target_column is not None:
-            n_columns += 1
-        return list(range(n_columns))
-
-    def get_khiops_variable_name(self, column_id):
-        """Return the khiops variable name associated to a column id"""
-        assert column_id == self.target_column_id or column_id in self.column_ids
-        if isinstance(column_id, str):
-            variable_name = column_id
-        else:
-            assert isinstance(column_id, (np.int64, int))
-            variable_name = f"Var{column_id}"
-        return variable_name
-
-    def create_table_file_for_khiops(self, output_dir, sort=True):
+    def create_table_file_for_khiops(
+        self, output_dir, sort=True, target_column=None, target_column_id=None
+    ):
         assert not sort or self.key is not None, "Cannot sort table without a key"
         assert not sort or is_list_like(
             self.key
@@ -1324,9 +1190,13 @@ class NumpyTable(DatasetTable):
         # Write the output dataframe
         # Note: This is not optimized for memory.
         output_dataframe = pd.DataFrame(self.data_source.copy())
-        output_dataframe.columns = [f"Var{column_id}" for column_id in self.column_ids]
-        if self.target_column is not None:
-            output_dataframe[f"Var{self.target_column_id}"] = self.target_column
+        output_dataframe.columns = [
+            get_khiops_variable_name(column_id) for column_id in self.column_ids
+        ]
+        if target_column is not None:
+            output_dataframe[get_khiops_variable_name(target_column_id)] = (
+                target_column.copy()
+            )
 
         # Sort by key if requested (as string)
         if sort:
@@ -1347,13 +1217,6 @@ class NumpyTable(DatasetTable):
 
         return output_table_path
 
-    @property
-    def target_column_type(self):
-        target_column_type = None
-        if self.target_column is not None:
-            target_column_type = self.target_column.dtype
-        return target_column_type
-
 
 class SparseTable(DatasetTable):
     """Table encapsulating feature matrix X and target array y
@@ -1369,18 +1232,12 @@ class SparseTable(DatasetTable):
         The sparse matrix to be encapsulated.
     key : list-like of str, optional
         The names of the columns composing the key
-    target_column : :external:term:`array-like`, optional
-        The array containing the target column.
-    categorical_target : bool, default ``True``.
-        ``True`` if the target column is categorical.
     """
 
-    def __init__(
-        self, name, matrix, key=None, target_column=None, categorical_target=True
-    ):
+    def __init__(self, name, matrix, key=None):
         assert key is None, "'key' must be unset for sparse matrix tables"
         # Call the parent method
-        super().__init__(name, key=key, categorical_target=categorical_target)
+        super().__init__(name, key=key)
 
         # Check the sparse matrix types
         if not isinstance(matrix, sp.spmatrix):
@@ -1392,21 +1249,11 @@ class SparseTable(DatasetTable):
                 type_error_message("'matrix' dtype", matrix.dtype, "numeric")
             )
 
-        # Check the target's types
-        if target_column is not None and not hasattr(target_column, "__array__"):
-            raise TypeError(
-                type_error_message("target_column", target_column, "array-like")
-            )
-
         # Initialize the members
         self.data_source = matrix
-        self.column_ids = list(range(self.data_source.shape[1]))
-        self.target_column_id = self.data_source.shape[1]
-        self.target_column = target_column
-        self.categorical_target = categorical_target
+        self.column_ids = column_or_1d(range(matrix.shape[1]))
         self.khiops_types = {
-            column_id: get_khiops_type(self.data_source.dtype)
-            for column_id in self.column_ids
+            column_id: get_khiops_type(matrix.dtype) for column_id in self.column_ids
         }
         self.n_samples = self.data_source.shape[0]
 
@@ -1414,7 +1261,7 @@ class SparseTable(DatasetTable):
         dtype_str = str(self.data_source.dtype)
         return (
             f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
-            f"dtype={dtype_str}; target={self.target_column_id}>"
+            f"dtype={dtype_str}>"
         )
 
     def create_khiops_dictionary(self):
@@ -1438,33 +1285,13 @@ class SparseTable(DatasetTable):
 
         # For each variable, add metadata, named `VarKey`
         variable_names = [variable.name for variable in dictionary.variables]
-        target_column_variable_name = self.get_khiops_variable_name(
-            self.target_column_id
-        )
         for i, variable_name in enumerate(variable_names, 1):
-            if variable_name != target_column_variable_name:
-                variable = dictionary.remove_variable(variable_name)
-                variable.meta_data.add_value("VarKey", i)
-                variable_block.add_variable(variable)
+            variable = dictionary.remove_variable(variable_name)
+            variable.meta_data.add_value("VarKey", i)
+            variable_block.add_variable(variable)
         dictionary.add_variable_block(variable_block)
 
         return dictionary
-
-    def _get_all_column_ids(self):
-        n_columns = len(self.column_ids)
-        if self.target_column is not None:
-            n_columns += 1
-        return list(range(n_columns))
-
-    def get_khiops_variable_name(self, column_id):
-        """Return the khiops variable name associated to a column id"""
-        assert column_id == self.target_column_id or column_id in self.column_ids
-        if isinstance(column_id, str):
-            variable_name = column_id
-        else:
-            assert isinstance(column_id, (np.int64, int))
-            variable_name = f"Var{column_id}"
-        return variable_name
 
     def _flatten(self, iterable):
         if isinstance(iterable, Iterable):
@@ -1474,13 +1301,9 @@ class SparseTable(DatasetTable):
                 else:
                     yield iterand
 
-    def _write_sparse_block(self, row_index, stream, target=None):
-        assert row_index in range(
-            self.data_source.shape[0]
-        ), "'row_index' must be coherent with the shape of the sparse matrix"
-        if target is not None:
-            assert target in self.target_column, "'target' must be in the target column"
-            stream.write(f"{target}\t")
+    def _write_sparse_block(self, row_index, stream, target_value=None):
+
+        # Access the sparse row
         row = self.data_source.getrow(row_index)
         # Variable indices are not always sorted in `row.indices`
         # Khiops needs variable indices to be sorted
@@ -1499,26 +1322,35 @@ class SparseTable(DatasetTable):
         ]
         for variable_index, variable_value in zip(sorted_indices, sorted_data):
             stream.write(f"{variable_index + 1}:{variable_value} ")
-        stream.write("\n")
 
-    def create_table_file_for_khiops(self, output_dir, sort=True):
+        # Write the target value at the end of the record if available
+        if target_value is not None:
+            stream.write(f"\t{target_value}\n")
+        else:
+            stream.write("\n")
+
+    def create_table_file_for_khiops(
+        self, output_dir, sort=True, target_column=None, target_column_id=None
+    ):
+        assert target_column is not None or target_column_id is None
+        assert target_column_id is not None or target_column is None
+
         # Create the output table resource object
         output_table_path = fs.get_child_path(output_dir, f"{self.name}.txt")
 
         # Write the sparse matrix to an internal table file
         with io.StringIO() as output_sparse_matrix_stream:
-            if self.target_column is not None:
-                target_column_name = self.get_khiops_variable_name(
-                    self.target_column_id
-                )
+            if target_column is not None:
                 output_sparse_matrix_stream.write(
-                    f"{target_column_name}\tSparseVariables\n"
+                    f"SparseVariables\t{get_khiops_variable_name(target_column_id)}\n"
                 )
-                for target, row_index in zip(
-                    self.target_column, range(self.data_source.shape[0])
+                for target_value, row_index in zip(
+                    target_column, range(self.data_source.shape[0])
                 ):
                     self._write_sparse_block(
-                        row_index, output_sparse_matrix_stream, target=target
+                        row_index,
+                        output_sparse_matrix_stream,
+                        target_value=target_value,
                     )
             else:
                 output_sparse_matrix_stream.write("SparseVariables\n")
@@ -1530,13 +1362,6 @@ class SparseTable(DatasetTable):
             )
 
         return output_table_path
-
-    @property
-    def target_column_type(self):
-        target_column_type = None
-        if self.target_column is not None:
-            target_column_type = self.target_column.dtype
-        return target_column_type
 
 
 class FileTable(DatasetTable):
@@ -1554,24 +1379,18 @@ class FileTable(DatasetTable):
         Indicates if the table
     key : list-like of str, optional
         The names of the columns composing the key
-    target_column_id : str, optional
-        Name of the target variable column.
-    categorical_target : bool, default ``True``.
-        ``True`` if the target column is categorical.
     """
 
     def __init__(
         self,
         name,
         path,
-        target_column_id=None,
-        categorical_target=True,
         key=None,
         sep="\t",
         header=True,
     ):
         # Initialize parameters
-        super().__init__(name=name, categorical_target=categorical_target, key=key)
+        super().__init__(name=name, key=key)
 
         # Check the parameters specific to this sub-class
         if not isinstance(path, str):
@@ -1583,7 +1402,6 @@ class FileTable(DatasetTable):
         self.data_source = path
         self.sep = sep
         self.header = header
-        self.target_column_id = target_column_id
 
         # Build a dictionary file from the input data table
         # Note: We use export_dictionary_as_json instead of read_dictionary_file
@@ -1618,32 +1436,8 @@ class FileTable(DatasetTable):
         self.column_ids = [var["name"] for var in variables]
         self.khiops_types = {var["name"]: var["type"] for var in variables}
 
-        # Check the target column exists
-        if (
-            self.target_column_id is not None
-            and target_column_id not in self.column_ids
-        ):
-            raise ValueError(
-                f"Target column '{target_column_id}'"
-                f"not present in columns '{self.column_ids}'"
-            )
-
-        # Force the target column type from the parameters
-        if self.target_column_id is not None:
-            if categorical_target:
-                self.khiops_types[target_column_id] = "Categorical"
-            else:
-                self.khiops_types[target_column_id] = "Numerical"
-
         # Check key integrity
         self.check_key()
-
-    def _get_all_column_ids(self):
-        return list(self.column_ids)
-
-    def get_khiops_variable_name(self, column_id):
-        assert column_id in self._get_all_column_ids()
-        return column_id
 
     def create_table_file_for_khiops(self, output_dir, sort=True):
         assert not sort or self.key is not None, "key is 'None'"
@@ -1687,12 +1481,3 @@ class FileTable(DatasetTable):
             fs.write(output_table_file_path, fs.read(self.data_source))
 
         return output_table_file_path
-
-    @property
-    def target_column_type(self):
-        target_column_type = None
-        if self.target_column_id is not None:
-            target_column_type = (
-                "Categorical" if self.categorical_target else "Numerical"
-            )
-        return target_column_type

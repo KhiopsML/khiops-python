@@ -50,7 +50,12 @@ from khiops.core.internals.common import (
     is_list_like,
     type_error_message,
 )
-from khiops.utils.dataset import Dataset, FileTable, read_internal_data_table
+from khiops.utils.dataset import (
+    Dataset,
+    FileTable,
+    get_khiops_variable_name,
+    read_internal_data_table,
+)
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
@@ -123,14 +128,14 @@ def _check_dictionary_compatibility(
 
 
 def _check_categorical_target_type(ds):
-    if ds.target_column_type is None:
+    if ds.target_column is None:
         raise ValueError("Target vector is not specified.")
 
     if ds.is_in_memory() and not (
-        isinstance(ds.target_column_type, pd.CategoricalDtype)
-        or pd.api.types.is_string_dtype(ds.target_column_type)
-        or pd.api.types.is_integer_dtype(ds.target_column_type)
-        or pd.api.types.is_float_dtype(ds.target_column_type)
+        isinstance(ds.target_column_dtype, pd.CategoricalDtype)
+        or pd.api.types.is_string_dtype(ds.target_column_dtype)
+        or pd.api.types.is_integer_dtype(ds.target_column_dtype)
+        or pd.api.types.is_float_dtype(ds.target_column_dtype)
     ):
         raise ValueError(
             f"'y' has invalid type '{ds.target_column_type}'. "
@@ -145,16 +150,16 @@ def _check_categorical_target_type(ds):
 
 
 def _check_numerical_target_type(ds):
-    if ds.target_column_type is None:
+    if ds.target_column is None:
         raise ValueError("Target vector is not specified.")
     if ds.is_in_memory():
-        if not pd.api.types.is_numeric_dtype(ds.target_column_type):
+        if not pd.api.types.is_numeric_dtype(ds.target_column_dtype):
             raise ValueError(
                 f"Unknown label type '{ds.target_column_type}'. "
                 "Expected a numerical type."
             )
-        if ds.main_table.target_column is not None:
-            assert_all_finite(ds.main_table.target_column)
+        if ds.target_column is not None:
+            assert_all_finite(ds.target_column)
     elif not ds.is_in_memory() and ds.target_column_type != "Numerical":
         raise ValueError(
             f"Target column has invalid type '{ds.target_column_type}'. "
@@ -1458,7 +1463,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             ds.create_khiops_dictionary_domain(),
             ds.main_table.name,
             main_table_path,
-            ds.main_table.get_khiops_variable_name(ds.main_table.target_column_id),
+            get_khiops_variable_name(ds.target_column_id),
             output_dir,
         ]
 
@@ -1503,9 +1508,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         super()._fit_training_post_process(ds)
 
         # Set the target variable name
-        self.model_target_variable_name_ = ds.main_table.get_khiops_variable_name(
-            ds.main_table.target_column_id
-        )
+        self.model_target_variable_name_ = get_khiops_variable_name(ds.target_column_id)
 
         # Verify it has at least one dictionary and a root dictionary in multi-table
         if len(self.model_.dictionaries) == 1:
@@ -1888,10 +1891,10 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         self._predicted_target_meta_data_tag = "Prediction"
 
     def _is_real_target_dtype_integer(self):
-        assert self._original_target_type is not None, "Original target type not set"
-        return pd.api.types.is_integer_dtype(self._original_target_type) or (
-            isinstance(self._original_target_type, pd.CategoricalDtype)
-            and pd.api.types.is_integer_dtype(self._original_target_type.categories)
+        assert self._original_target_dtype is not None, "Original target type not set"
+        return pd.api.types.is_integer_dtype(self._original_target_dtype) or (
+            isinstance(self._original_target_dtype, pd.CategoricalDtype)
+            and pd.api.types.is_integer_dtype(self._original_target_dtype.categories)
         )
 
     def _sorted_prob_variable_names(self):
@@ -1953,14 +1956,14 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
 
         # Check that the target is for classification in in_memory_tables
         if ds.is_in_memory():
-            current_type_of_target = type_of_target(ds.main_table.target_column)
+            current_type_of_target = type_of_target(ds.target_column)
             if current_type_of_target not in ["binary", "multiclass"]:
                 raise ValueError(
                     f"Unknown label type: '{current_type_of_target}' "
                     "for classification. Maybe you passed a floating point target?"
                 )
         # Check if the target has more than 1 class
-        if ds.is_in_memory() and len(np.unique(ds.main_table.target_column)) == 1:
+        if ds.is_in_memory() and len(np.unique(ds.target_column)) == 1:
             raise ValueError(
                 f"{self.__class__.__name__} can't train when only one class is present."
             )
@@ -1973,7 +1976,10 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         super()._fit_training_post_process(ds)
 
         # Save the target datatype
-        self._original_target_type = ds.target_column_type
+        if ds.is_in_memory():
+            self._original_target_dtype = ds.target_column_dtype
+        else:
+            self._original_target_dtype = np.dtype("object")
 
         # Save class values in the order of deployment
         self.classes_ = []
@@ -2052,18 +2058,25 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             y_pred = y_pred.to_numpy(copy=False).ravel()
 
             # If integer and string just transform
-            if pd.api.types.is_integer_dtype(self._original_target_type):
-                y_pred = y_pred.astype(self._original_target_type)
-            elif pd.api.types.is_string_dtype(self._original_target_type):
+            if pd.api.types.is_integer_dtype(self._original_target_dtype):
+                y_pred = y_pred.astype(self._original_target_dtype)
+            # If str transform to str
+            # Note: If the original type is None then it was learned with a file dataset
+            elif self._original_target_dtype is None or pd.api.types.is_string_dtype(
+                self._original_target_dtype
+            ):
                 y_pred = y_pred.astype(str, copy=False)
             # If category first coerce the type to the categories' type
             else:
-                assert pd.api.types.is_categorical_dtype(self._original_target_type)
+                assert pd.api.types.is_categorical_dtype(self._original_target_dtype), (
+                    "_original_target_dtype is not categorical"
+                    f", it is '{self._original_target_dtype}'"
+                )
                 if pd.api.types.is_integer_dtype(
-                    self._original_target_type.categories.dtype
+                    self._original_target_dtype.categories.dtype
                 ):
                     y_pred = y_pred.astype(
-                        self._original_target_type.categories.dtype, copy=False
+                        self._original_target_dtype.categories.dtype, copy=False
                     )
                 else:
                     y_pred = y_pred.astype(str, copy=False)
