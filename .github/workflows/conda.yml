@@ -4,12 +4,12 @@ env:
   DEFAULT_SAMPLES_VERSION: 10.2.0
   # Note: The default Khiops version must never be an alpha release as they are
   #       ephemeral. To test alpha versions run the workflow manually.
-  DEFAULT_KHIOPS_CORE_VERSION: 10.2.1
+  DEFAULT_KHIOPS_CORE_VERSION: 10.2.2b.3
 on:
   workflow_dispatch:
     inputs:
       khiops-core-version:
-        default: 10.2.1
+        default: 10.2.2b.3
         description: khiops-core version for testing
       khiops-samples-version:
         default: 10.2.0
@@ -45,7 +45,7 @@ jobs:
           miniconda-version: latest
           python-version: '3.12'
       - name: Install Dependency Requirements for Building Conda Packages
-        run: conda install conda-build
+        run: conda install -y conda-build
       - name: Build the Conda Package
         # Note: The "khiops-dev" conda channel is needed to retrieve the "khiops-core" package.
         #       The "test" part of the conda recipe needs this package.
