@@ -524,8 +524,8 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
 
         # Check that the dataframes are equal
         assert_frame_equal(
-            out_table,
             ref_table.sort_values(by="User_ID").reset_index(drop=True),
+            out_table,
         )
 
     def test_out_file_from_numpy_array_monotable(self):
@@ -560,12 +560,14 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         return sparse_matrix, target_array
 
     def _load_khiops_sparse_file(self, stream):
-        # skip header
+        # Skip header
         next(stream)
+
+        # Read the sparse file
         target_vector = []
         feature_matrix = []
         for line in stream:
-            target, features = line.split(b"\t")
+            features, target_value = line.split(b"\t")
             feature_row = np.zeros(100)
             for feature in features.strip().split(b" "):
                 indexed_feature = feature.split(b":")
@@ -578,7 +580,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                 feature_index, feature_value = indexed_feature
                 feature_row[int(feature_index) - 1] = float(feature_value)
             feature_matrix.append(feature_row)
-            target_vector.append(float(target))
+            target_vector.append(float(target_value))
         target_array = np.array(target_vector)
         sparse_matrix = sp.csr_matrix(feature_matrix)
         return sparse_matrix, target_array
