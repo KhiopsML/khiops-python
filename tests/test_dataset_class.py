@@ -485,7 +485,7 @@ class DatasetInputOutputConsistency(unittest.TestCase):
         self.assertEqual(dataset.main_table.name, "A")
         self.assertEqual(len(dataset.secondary_tables), 4)
         dataset_secondary_table_names = set(
-            [secondary_table.name for secondary_table in dataset.secondary_tables]
+            secondary_table.name for secondary_table in dataset.secondary_tables
         )
         self.assertEqual(dataset_secondary_table_names, {"B", "C", "D", "E"})
         self.assertEqual(len(dataset.relations), 4)
@@ -521,8 +521,8 @@ class DatasetInputOutputConsistency(unittest.TestCase):
 
         # Check that the dataframes are equal
         assert_frame_equal(
-            out_table,
             ref_table.sort_values(by="User_ID").reset_index(drop=True),
+            out_table,
         )
 
     def test_out_file_from_numpy_array_monotable(self):
@@ -557,12 +557,14 @@ class DatasetInputOutputConsistency(unittest.TestCase):
         return sparse_matrix, target_array
 
     def _load_khiops_sparse_file(self, stream):
-        # skip header
+        # Skip header
         next(stream)
+
+        # Read the sparse file
         target_vector = []
         feature_matrix = []
         for line in stream:
-            target, features = line.split(b"\t")
+            features, target_value = line.split(b"\t")
             feature_row = np.zeros(100)
             for feature in features.strip().split(b" "):
                 feature_index, feature_value = feature.split(b":")
@@ -573,7 +575,7 @@ class DatasetInputOutputConsistency(unittest.TestCase):
                     feature_value = 0.0
                 feature_row[int(feature_index) - 1] = feature_value
             feature_matrix.append(feature_row)
-            target_vector.append(float(target))
+            target_vector.append(float(target_value))
         target_array = np.array(target_vector)
         sparse_matrix = sp.csr_matrix(feature_matrix)
         return sparse_matrix, target_array
