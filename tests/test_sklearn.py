@@ -2271,20 +2271,37 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
             KhiopsEncoder(n_trees=0, transform_type_numerical="0-1_normalization"),
         ]
 
-        # Execute sklearn's estimator test battery
-        for khiops_estimator in khiops_estimators:
-            for estimator, check in check_estimator(
-                khiops_estimator, generate_only=True
-            ):
-                # Skip some checks for KhiopsEncoder as they yield "empty"
-                # deployed tables; they need to be implemented manually
-                check_name = check.func.__name__
-                if check_name in [
-                    "check_fit_score_takes_y",
-                    "check_fit_idempotent",
-                ] and isinstance(estimator, KhiopsEncoder):
-                    continue
-                with self.subTest(
-                    sklearn_check_name=check_name, sklearn_check_kwargs=check.keywords
+        # Ignore the "No informative variables" warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", message=r"[\S\n\t\v ]+no informative variables"
+            )
+            warnings.filterwarnings(
+                "ignore", message=r"[\S\n\t\v ]+No informative input variable"
+            )
+
+            # Execute sklearn's estimator test battery
+            print("")
+            for khiops_estimator in khiops_estimators:
+                for estimator, check in check_estimator(
+                    khiops_estimator, generate_only=True
                 ):
-                    check(estimator)
+                    # Skip some checks for KhiopsEncoder as they yield "empty"
+                    # deployed tables; they need to be implemented manually
+                    check_name = check.func.__name__
+                    if check_name in [
+                        "check_fit_score_takes_y",
+                        "check_fit_idempotent",
+                    ] and isinstance(estimator, KhiopsEncoder):
+                        continue
+                    print(
+                        f">>> Executing {check_name} on "
+                        f"{estimator.__class__.__name__}... ",
+                        end="",
+                    )
+                    with self.subTest(
+                        sklearn_check_name=check_name,
+                        sklearn_check_kwargs=check.keywords,
+                    ):
+                        check(estimator)
+                    print("Done")
