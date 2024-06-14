@@ -1740,14 +1740,22 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
     Attributes
     ----------
     classes_ : `numpy.ndarray`
-        The list of classes seen in training. Depending on the traning target the
+        The list of classes seen in training. Depending on the training target, the
         contents are ``int`` or ``str``.
     n_classes_ : int
         The number of classes seen in training.
-    n_features_evaluated_:
+    n_features_evaluated_: int
         The number of features evaluated by the classifier.
     feature_evaluated_names_: `numpy.ndarray`
         Names of the features evaluated by the classifier.
+    feature_evaluated_importances_: `numpy.ndarray`
+        Level of the features evaluated by the classifier.
+    n_features_used_: int
+        The number of features used by the classifier.
+    feature_used_names_: `numpy.ndarray`
+        Names of the features used by the classifier.
+    feature_used_importances_: `numpy.ndarray`
+        Level, Weight and Importance of the features used by the classifier.
     is_fitted_ : bool
         ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
@@ -1911,7 +1919,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                 stacklevel=6,
             )
 
-        # Set the target class probabilites as used
+        # Set the target class probabilities as used
         # (only the predicted classes are obtained without this step prior to Khiops 10)
         for variable in self._get_main_dictionary().variables:
             for key in variable.meta_data.keys:
@@ -1920,20 +1928,18 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
 
         # Extract, from the modeling report, the number of selected evaluated features,
         # their names and their levels, weights and importances
-        modeling_report = self.model_report_.modeling_report
-        self.feature_used_importances_ = np.array(
-            [
-                [var.weight, var.importance, var.level]
-                for var in modeling_report.get_snb_predictor().selected_variables
-            ]
-        )
-        self.feature_used_names_ = np.array(
-            [
-                [var.name]
-                for var in modeling_report.get_snb_predictor().selected_variables
-            ]
-        )
-        self.n_feature_used_ = len(self.feature_used_names_)
+        modeling_report = self.model_report_.modeling_report.get_snb_predictor()
+        if modeling_report.selected_variables is not None:
+            self.feature_used_names_ = np.array(
+                [[var.name] for var in modeling_report.selected_variables]
+            )
+            self.n_feature_used_ = len(self.feature_used_names_)
+            self.feature_used_importances_ = np.array(
+                [
+                    [var.weight, var.importance, var.level]
+                    for var in modeling_report.selected_variables
+                ]
+            )
 
     def predict(self, X):
         """Predicts the most probable class for the test dataset X
@@ -2124,6 +2130,18 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
 
     Attributes
     ----------
+    n_features_evaluated_: int
+        The number of features evaluated by the regressor.
+    feature_evaluated_names_: `numpy.ndarray`
+        Names of the features evaluated by the regressor.
+    feature_evaluated_importances_: `numpy.ndarray`
+        Level of the features evaluated by the regressor.
+    n_features_used_: int
+        The number of features used by the regressor.
+    feature_used_names_: `numpy.ndarray`
+        Names of the features used by the regressor.
+    feature_used_importances_: `numpy.ndarray`
+        Level, Weight and Importance of the features used by the regressor.
     is_fitted_ : bool
         ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
@@ -2234,20 +2252,20 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         for variable_name in variables_to_eliminate:
             self._get_main_dictionary().remove_variable(variable_name)
 
-        modeling_report = self.model_report_.modeling_report
-        self.feature_used_importances_ = np.array(
-            [
-                [var.weight, var.importance, var.level]
-                for var in modeling_report.get_snb_predictor().selected_variables
-            ]
-        )
-        self.feature_used_names_ = np.array(
-            [
-                [var.name]
-                for var in modeling_report.get_snb_predictor().selected_variables
-            ]
-        )
-        self.n_feature_used_ = len(self.feature_used_names_)
+        # Extract, from the modeling report, the number of selected evaluated features,
+        # their names and their levels, weights and importances
+        modeling_report = self.model_report_.modeling_report.get_snb_predictor()
+        if modeling_report.selected_variables is not None:
+            self.feature_used_names_ = np.array(
+                [[var.name] for var in modeling_report.selected_variables]
+            )
+            self.n_feature_used_ = len(self.feature_used_names_)
+            self.feature_used_importances_ = np.array(
+                [
+                    [var.weight, var.importance, var.level]
+                    for var in modeling_report.selected_variables
+                ]
+            )
 
     def _check_target_type(self, dataset):
         _check_numerical_target_type(dataset)
@@ -2367,6 +2385,12 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
 
     Attributes
     ----------
+    n_features_evaluated_: int
+        The number of features evaluated by the encoder.
+    feature_evaluated_names_: `numpy.ndarray`
+        Names of the features evaluated by the encoder.
+    feature_evaluated_importances_: `numpy.ndarray`
+        Level of the features evaluated by the encoder.
     is_fitted_ : bool
         ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
