@@ -97,7 +97,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           conda install --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
-          conda install --channel ./khiops-conda/ khiops
+          conda install --override-channels --channel conda-forge --channel ./khiops-conda/ khiops
       # In Linux/macOS we need the conda-forge channel to install their pinned versions
       - name: Install the Khiops Conda package (Linux/macOS)
         if: runner.os != 'Windows'
