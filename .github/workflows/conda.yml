@@ -114,6 +114,9 @@ jobs:
         env:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
+          # This is needed so that OpenMPI's mpiexec can be run as root
+          OMPI_ALLOW_RUN_AS_ROOT: 1
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
           # Oversubscribe for MPI 4.x
           rmaps_base_oversubscribe: true
           # Oversubscribe for MPI > 4.x

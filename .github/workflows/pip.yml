@@ -71,6 +71,9 @@ jobs:
       - name: Run tests
         env:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
+          # This is needed so that OpenMPI's mpiexec can be run as root
+          OMPI_ALLOW_RUN_AS_ROOT: 1
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
           # Oversubscribe for MPI 4.x
@@ -82,7 +85,7 @@ jobs:
           # Make sure MPI support is not loaded through env modules
           # Note: As the Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway
-          if [[ -n "$MODULESHOME" ]]; then module unload mpi; fi
+          if [ -n "$MODULESHOME" ]; then module unload mpi; fi
 
           # Print khiops installation status
           kh-status
