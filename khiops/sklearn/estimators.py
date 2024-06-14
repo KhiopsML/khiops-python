@@ -93,38 +93,55 @@ def _check_dictionary_compatibility(
     model_dictionary,
     ds_dictionary,
     estimator_class_name,
+    target_variable_name=None,
 ):
     # Prefix for all error messages
-    error_msg_prefix = f"X contains incompatible table '{ds_dictionary.name}'"
+    error_msg_prefix = (
+        f"Model {estimator_class_name} incompatible with "
+        f"table '{ds_dictionary.name}'"
+    )
 
-    # Save variable arrays and their size
-    model_variables = model_dictionary.variables
-    dataset_variables = ds_dictionary.variables
+    # Put the variable names in sets
+    model_variable_names = {var.name for var in model_dictionary.variables}
+    ds_variable_names = {var.name for var in ds_dictionary.variables}
 
-    # Error if different number of variables
-    if len(model_variables) != len(dataset_variables):
+    # The only feature that may be missing of the dataset is the target
+    model_var_names_not_in_ds = model_variable_names - ds_variable_names
+    if len(model_var_names_not_in_ds) > 0:
+        if target_variable_name is None:
+            effective_model_var_names_not_in_ds = model_var_names_not_in_ds
+        else:
+            effective_model_var_names_not_in_ds = model_var_names_not_in_ds - {
+                target_variable_name
+            }
+        if len(effective_model_var_names_not_in_ds) > 0:
+            raise ValueError(
+                f"{error_msg_prefix}: Missing features: "
+                f"{effective_model_var_names_not_in_ds}."
+            )
+
+    # Raise an error if there are extra features in the input
+    ds_var_names_not_in_model = ds_variable_names - model_variable_names
+    if len(ds_var_names_not_in_model) > 0:
         raise ValueError(
-            f"{error_msg_prefix}: It has "
-            f"{len(dataset_variables)} feature(s) but {estimator_class_name} "
-            f"is expecting {len(model_variables)}. Reshape your data."
+            f"{error_msg_prefix}: Features not in model: {ds_var_names_not_in_model}."
         )
 
-    # Check variables: Must have same name and type
-    for var_index, (model_variable, dataset_variable) in enumerate(
-        zip(model_variables, dataset_variables)
-    ):
-        if model_variable.name != dataset_variable.name:
-            raise ValueError(
-                f"{error_msg_prefix}: Feature #{var_index} should be named "
-                f"'{model_variable.name}' "
-                f"instead of '{dataset_variable.name}'"
-            )
-        if model_variable.type != dataset_variable.type:
-            raise ValueError(
-                f"{error_msg_prefix}: Feature #{var_index} should convertible to "
-                f"'{model_variable.type}' "
-                f"instead of '{dataset_variable.type}'"
-            )
+    # Check the type
+    for ds_var in ds_dictionary.variables:
+        model_var = model_dictionary.get_variable(ds_var.name)
+        if ds_var.type != model_var.type:
+            if model_var.type == "Categorical":
+                warnings.warn(
+                    f"X contains variable '{ds_var.name}' which was deemed "
+                    "numerical. It will be coerced to categorical."
+                )
+            else:
+                raise ValueError(
+                    f"{error_msg_prefix}: Khiops type for variable "
+                    f"'{ds_var.name}' should be '{model_var.type}' "
+                    f"not '{ds_var.type}'"
+                )
 
 
 def _check_categorical_target_type(ds):
@@ -419,7 +436,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         deployment_ds = self._transform_create_deployment_dataset(ds, computation_dir)
 
         # Create a deployment dictionary
-        deployment_dictionary_domain = _transform_create_deployment_model_fun()
+        deployment_dictionary_domain = _transform_create_deployment_model_fun(ds)
 
         # Deploy the model
         output_table_path = self._transform_deploy_model(
@@ -1296,8 +1313,8 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
 
         return Dataset(deploy_dataset_spec)
 
-    def _transform_prepare_deployment_model_for_predict(self):
-        return self.model_
+    def _transform_prepare_deployment_model_for_predict(self, _):
+        return self.model_.copy()
 
     def _transform_deployment_post_process(
         self, deployment_ds, output_table_path, drop_key
@@ -1559,12 +1576,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         if self.model_main_dictionary_name_ is None:
             raise ValueError("No model dictionary after Khiops call")
 
-        # Remove the target variable in the model dictionary
-        model_main_dictionary = self.model_.get_dictionary(
-            self.model_main_dictionary_name_
-        )
-        model_main_dictionary.remove_variable(self.model_target_variable_name_)
-
         # Extract, from the preparation reports, the number of evaluated features,
         # their names and their levels
         univariate_preparation_report = self.model_report_.preparation_report
@@ -1655,6 +1666,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             _extract_basic_dictionary(self._get_main_dictionary()),
             ds.main_table.create_khiops_dictionary(),
             self.__class__.__name__,
+            target_variable_name=self.model_target_variable_name_,
         )
 
         # Multi-table model: Check name and dictionary coherence of secondary tables
@@ -1768,10 +1780,13 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
 
         return args, kwargs
 
-    def _transform_prepare_deployment_model_for_predict(self):
+    def _transform_prepare_deployment_model_for_predict(self, ds):
         assert (
             self._predicted_target_meta_data_tag is not None
         ), "Predicted target metadata tag is not set"
+        assert hasattr(
+            self, "model_main_dictionary_name_"
+        ), "Model main dictionary name has not been set"
 
         # Create a copy of the model dictionary using only the predicted target
         # Also activate the key to reorder the output in the multitable case
@@ -1784,6 +1799,12 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
                 variable.used = True
             else:
                 variable.used = False
+
+        # Remove the target variable if it is not present in the input dataset
+        # Note: We use `list` to avoid a warning of numpy about the `in` operator
+        if self.model_target_variable_name_ not in list(ds.main_table.column_ids):
+            model_dictionary.remove_variable(self.model_target_variable_name_)
+
         return model_copy
 
     def get_feature_used_statistics(self, modeling_report):
@@ -2173,7 +2194,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                 y_pred = y_pred.astype(str, copy=False)
             # If category first coerce the type to the categories' type
             else:
-                assert pd.api.types.is_categorical_dtype(self._original_target_dtype), (
+                assert isinstance(self._original_target_dtype, pd.CategoricalDtype), (
                     "_original_target_dtype is not categorical"
                     f", it is '{self._original_target_dtype}'"
                 )
@@ -2254,7 +2275,11 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         assert isinstance(y_probas, (str, np.ndarray)), "Expected str or np.ndarray"
         return y_probas
 
-    def _transform_prepare_deployment_model_for_predict_proba(self):
+    def _transform_prepare_deployment_model_for_predict_proba(self, ds):
+        assert hasattr(
+            self, "model_target_variable_name_"
+        ), "Target variable name has not been set"
+
         # Create a copy of the model dictionary with only the probabilities used
         # We also activate the key to reorder the output in the multitable case
         model_copy = self.model_.copy()
@@ -2267,6 +2292,11 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                     variable.used = True
                 else:
                     variable.used = False
+
+        # Remove the target variable if it is not present in the input dataset
+        # Note: We use `list` to avoid a warning of numpy about the `in` operator
+        if self.model_target_variable_name_ not in list(ds.main_table.column_ids):
+            model_dictionary.remove_variable(self.model_target_variable_name_)
 
         return model_copy
 
@@ -2891,7 +2921,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         # Save the encoded feature names
         self.feature_names_out_ = []
         for variable in self._get_main_dictionary().variables:
-            if variable.used:
+            if variable.used and variable.name != ds.target_column_id:
                 self.feature_names_out_.append(variable.name)
 
         # Activate the key columns in multitable
@@ -2938,7 +2968,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             X_transformed = super()._transform(
                 ds,
                 computation_dir,
-                self.model_.copy,
+                self._transform_prepare_deployment_model,
                 True,
                 "transform.txt",
             )
@@ -2949,6 +2979,21 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         if ds.is_in_memory():
             return X_transformed.to_numpy(copy=False)
         return X_transformed
+
+    def _transform_prepare_deployment_model(self, ds):
+        assert hasattr(
+            self, "model_target_variable_name_"
+        ), "Target variable name has not been set"
+
+        # Create a copy of the model dictionary domain with the target variable
+        # if it is not present in the input dataset
+        # Note: We use `list` to avoid a warning of numpy about the `in` operator
+        model_copy = self.model_.copy()
+        model_dictionary = model_copy.get_dictionary(self.model_main_dictionary_name_)
+        if self.model_target_variable_name_ not in list(ds.main_table.column_ids):
+            model_dictionary.remove_variable(self.model_target_variable_name_)
+
+        return model_copy
 
     def fit_transform(self, X, y=None, **kwargs):
         """Fit and transforms its inputs

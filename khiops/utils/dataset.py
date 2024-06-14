@@ -510,6 +510,11 @@ class Dataset:
         if y is not None:
             self._init_target_column(y)
 
+        # Index the tables by name
+        self._tables_by_name = {
+            table.name: table for table in [self.main_table] + self.secondary_tables
+        }
+
         # Post-conditions
         assert self.main_table is not None, "'main_table' is 'None' after init"
         assert isinstance(
@@ -824,6 +829,26 @@ class Dataset:
         """
         return Dataset(self.to_spec())
 
+    def get_table(self, table_name):
+        """Returns a table by its name
+
+        Parameters
+        ----------
+        table_name: str
+            The name of the table to be retrieved.
+
+        Returns
+        -------
+        `DatasetTable`
+            The table object for the specified name.
+
+        Raises
+        ------
+        `KeyError`
+            If there is no table with the specified name.
+        """
+        return self._tables_by_name[table_name]
+
     def create_khiops_dictionary_domain(self):
         """Creates a Khiops dictionary domain representing this dataset
 
@@ -1086,7 +1111,7 @@ class PandasTable(DatasetTable):
         )
         return (
             f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
-            f"dtypes={dtypes_str}; target={self.target_column_id}>"
+            f"dtypes={dtypes_str}>"
         )
 
     def create_table_file_for_khiops(
