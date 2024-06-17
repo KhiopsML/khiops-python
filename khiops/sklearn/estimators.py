@@ -405,6 +405,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         computation_dir,
         _transform_create_deployment_model_fun,
         drop_key,
+        transformed_file_name,
     ):
         """Generic template method to implement transform, predict and predict_proba"""
         # Check if the model is fitted
@@ -428,6 +429,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             deployment_dictionary_domain,
             self.model_main_dictionary_name_,
             computation_dir,
+            transformed_file_name,
         )
 
         # Post-process to return the correct output type
@@ -448,6 +450,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         model_dictionary_domain,
         model_dictionary_name,
         computation_dir,
+        transformed_file_name,
     ):
         """Deploys a generic Khiops transformation model
 
@@ -507,7 +510,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # Set output path files
         output_dir = self._get_output_dir(computation_dir)
         log_file_path = fs.get_child_path(output_dir, "khiops.log")
-        output_data_table_path = fs.get_child_path(output_dir, "transformed.txt")
+        output_data_table_path = fs.get_child_path(output_dir, transformed_file_name)
 
         # Set the format parameters depending on the type of dataset
         if deployment_dataset.is_in_memory():
@@ -1193,6 +1196,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                 computation_dir,
                 self._transform_prepare_deployment_model_for_predict,
                 False,
+                "predict.txt",
             )
         # Cleanup and restore the runner's temporary dir
         finally:
@@ -1647,6 +1651,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
                 computation_dir,
                 self._transform_prepare_deployment_model_for_predict,
                 True,
+                "predict.txt",
             )
         # Cleanup and restore the runner's temporary dir
         finally:
@@ -2006,6 +2011,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                 computation_dir,
                 self._transform_prepare_deployment_model_for_predict_proba,
                 True,
+                "predict_proba.txt",
             )
         # Cleanup and restore the runner's temporary dir
         finally:
@@ -2567,6 +2573,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
                 computation_dir,
                 self.model_.copy,
                 True,
+                "transform.txt",
             )
         # Cleanup and restore the runner's temporary dir
         finally:
