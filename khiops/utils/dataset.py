@@ -907,7 +907,7 @@ class Dataset:
 
         return dictionary_domain
 
-    def create_table_files_for_khiops(self, out_dir, sort=True):
+    def create_table_files_for_khiops(self, output_dir, sort=True):
         """Prepares the tables of the dataset to be used by Khiops
 
         If this is a multi-table dataset it will create sorted copies the tables.
@@ -934,14 +934,14 @@ class Dataset:
         )
         if self.is_in_memory():
             main_table_path = self.main_table.create_table_file_for_khiops(
-                out_dir,
+                output_dir,
                 sort=sort_main_table,
                 target_column=self.target_column,
                 target_column_id=self.target_column_id,
             )
         else:
             main_table_path = self.main_table.create_table_file_for_khiops(
-                out_dir,
+                output_dir,
                 sort=sort_main_table,
             )
 
@@ -949,7 +949,7 @@ class Dataset:
         secondary_table_paths = {}
         for table in self.secondary_tables:
             secondary_table_paths[table.name] = table.create_table_file_for_khiops(
-                out_dir, sort=sort
+                output_dir, sort=sort
             )
 
         return main_table_path, secondary_table_paths
