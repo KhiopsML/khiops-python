@@ -1812,7 +1812,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
     ):
         return self.datasets[schema_type][source_type][estimation_process]
 
-    def _define_resources(self, dataset, estimator_type):
+    def _define_resources(self, dataset, estimator_type, estimator_method):
         # Set the resources directory for the arguments
         head_dir = os.path.join(
             KhiopsTestHelper.get_resources_dir(), "sklearn", "results"
@@ -1842,7 +1842,18 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
         report_path = os.path.join(ref_reports_dir, report_name)
         model_kdic_path = os.path.join(ref_models_dir, f"{kdic_name}.kdic")
         model_kdicj_path = os.path.join(ref_models_dir, f"{kdic_name}.kdicj")
-        prediction_table_path = os.path.join(ref_predictions_dir, "transformed.txt")
+        if estimator_type in (KhiopsCoclustering, KhiopsEncoder):
+            prediction_table_path = os.path.join(ref_predictions_dir, "transform.txt")
+        else:
+            if estimator_method == "predict":
+                prediction_table_path = os.path.join(ref_predictions_dir, "predict.txt")
+            elif estimator_method == "predict_proba":
+                prediction_table_path = os.path.join(
+                    ref_predictions_dir, "predict_proba.txt"
+                )
+            else:
+                assert estimator_method == "fit", f"Real: {estimator_method}"
+                prediction_table_path = ""
 
         # Buld the resources
         resources = {
@@ -1968,7 +1979,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 X_test_data = data["test"]
         dataset = self.dataset_of_schema_type[schema_type]
 
-        resources = self._define_resources(dataset, estimator_type)
+        resources = self._define_resources(dataset, estimator_type, estimator_method)
 
         estimator_type_key = (
             KhiopsPredictor
