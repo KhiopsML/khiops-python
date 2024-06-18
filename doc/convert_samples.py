@@ -67,7 +67,7 @@ def create_rest_page_header(script_name):
         subtitle += ":py:mod:`khiops.core` module."
     else:
         title = "Samples sklearn"
-        subtitle += ":py:mod:`khiops.sklearn` module."
+        subtitle += ":py:mod:`khiops.sklearn <khiops.sklearn.estimators>` module."
     return (
         ":orphan:\n"
         "\n"
