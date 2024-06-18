@@ -91,6 +91,9 @@ jobs:
           KHIOPS_DOCKER_RUNNER_URL: https://localhost:11000
           KHIOPS_DOCKER_RUNNER_SHARED_DIR: /tmp/sandbox
           KHIOPS_RUNNER_SERVICE_PATH: /scripts/run_service.sh
+          # This is needed so that OpenMPI's mpiexec can be run as root
+          OMPI_ALLOW_RUN_AS_ROOT: 1
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
         run: |
           # This is needed so that the Git tag is parsed and the khiops-python
           # version is retrieved
@@ -170,5 +173,5 @@ jobs:
           # Make sure MPI support is not loaded through env modules
           # Note: As Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway
-          if [[ -n "$MODULESHOME" ]]; then module unload mpi; fi
+          if [ -n "$MODULESHOME" ]; then module unload mpi; fi
           python -m unittest -v tests.test_khiops_integrations.KhiopsRunnerEnvironmentTests.test_runner_has_mpiexec_on_linux
