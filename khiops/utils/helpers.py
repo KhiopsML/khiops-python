@@ -20,10 +20,10 @@ def sort_dataset(ds_spec, output_dir=None):
     Parameters
     ----------
     ds_spec: dict
-        The dataset dictionary specification. The tables must be either
-        `pandas.DataFrame` or file path references.
+        A dataset spec. The tables must be either `pandas.DataFrame` or file path
+        references.
     output_dir: str, optional
-        _Only for file datasets:_ The output directory for the sorted files.
+        *Only for file datasets:* The output directory for the sorted files.
 
 
     Notes
@@ -32,6 +32,10 @@ def sort_dataset(ds_spec, output_dir=None):
     The sorting algorithm is mergesort, which ensures sort stability. The sorting engine
     for dataframes is Pandas and for file-based datasets is Khiops.
 
+    Examples
+    --------
+    See the following functions of the ``samples.py`` documentation script:
+        - `samples.sort_data_tables_mt()`
     """
     # Check the types
     if not is_dict_like(ds_spec):
@@ -92,9 +96,38 @@ def _sort_file_table(table, sep, header, output_dir):
     return out_data_source
 
 
+# Note: We build the splits with lists and itertools.chain avoid pylint warning about
+# unbalanced-tuple-unpacking. See issue https://github.com/pylint-dev/pylint/issues/5671
+
+
 def train_test_split_dataset(
     ds_spec, target_column=None, test_size=0.25, output_dir=None, **kwargs
 ):
+    """Splits a dataset spec into train and test
+
+    Parameters
+    ----------
+    ds_spec : ``dict``
+        A dataset spec. The tables must be either `pandas.DataFrame` or file path
+        references.
+    target_column : :external:term:`array-like`, optional
+        The target values.
+    test_size : float, default 0.25
+        The proportion of the dataset (between 0.0 and 1.0) to be included in the test
+        split.
+    output_dir : str, optional
+        *Only for file datasets:* The output directory for the split data files.
+    ... :
+        Other optional parameters for `sklearn.model_selection.train_test_split`
+
+
+    Examples
+    --------
+    See the following functions of the ``samples_sklearn.py`` documentation script:
+        - `samples_sklearn.khiops_classifier_multitable_star`
+        - `samples_sklearn.khiops_classifier_multitable_star_file`
+        - `samples_sklearn.khiops_classifier_multitable_snowflake`
+    """
     # Check the types
     if not is_dict_like(ds_spec):
         raise TypeError(type_error_message("ds_spec", ds_spec, "dict-like"))
@@ -218,13 +251,13 @@ def _train_test_split_in_memory_dataset(
     #     users would be warned. To remove when the following issue is fixed:
     #     https://github.com/pylint-dev/pylint/issues/5671
     if target_column is None:
-        return_tuple = itertools.chain((train_ds, test_ds))
+        split = itertools.chain((train_ds, test_ds))
     else:
-        return_tuple = itertools.chain(
+        split = itertools.chain(
             (train_ds, test_ds, train_target_column, test_target_column)
         )
 
-    return return_tuple
+    return split
 
 
 def _train_test_split_file_dataset(ds, test_size, output_dir):
@@ -291,4 +324,4 @@ def _train_test_split_file_dataset(ds, test_size, output_dir):
     #     unbalanced-tuple-unpacking. This warning appears when calling the function so
     #     users would be warned. To remove when the following issue is fixed:
     #     https://github.com/pylint-dev/pylint/issues/5671
-    return itertools.chain((split_dss["train"], split_dss["test"]))
+    return itertools.chain(split_dss.values())
