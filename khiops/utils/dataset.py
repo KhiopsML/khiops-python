@@ -37,6 +37,21 @@ from khiops.core.internals.common import (
 
 
 def check_dataset_spec(ds_spec):
+    """Checks that a dataset spec is valid
+
+    Parameters
+    ----------
+    ds_spec : dict
+        A specification of a multi-table dataset (see :doc:`/multi_table_primer`).
+
+    Raises
+    ------
+    TypeError
+        If there are objects of the spec with invalid type.
+    ValueError
+        If there are objects of the spec with invalid values.
+    """
+
     # Check the "tables" field
     if "tables" not in ds_spec:
         raise ValueError("'tables' entry missing from dataset dict spec")
@@ -47,18 +62,18 @@ def check_dataset_spec(ds_spec):
     if len(ds_spec["tables"]) == 0:
         raise ValueError("'tables' dictionary cannot be empty")
     for table_name, table_entry in ds_spec["tables"].items():
-        check_table_entry(table_name, table_entry)
+        _check_table_entry(table_name, table_entry)
 
     # Multi-table specific table checks
     if len(ds_spec["tables"]) > 1:
-        check_multitable_spec(ds_spec)
+        _check_multitable_spec(ds_spec)
 
     # Check the 'format' field
     if "format" in ds_spec:
-        check_format_entry(ds_spec["format"])
+        _check_format_entry(ds_spec["format"])
 
 
-def check_table_entry(table_name, table_spec):
+def _check_table_entry(table_name, table_spec):
     if not isinstance(table_spec, tuple):
         raise TypeError(
             type_error_message(f"'{table_name}' table entry", table_spec, tuple)
@@ -80,10 +95,10 @@ def check_table_entry(table_name, table_spec):
                 str,
             )
         )
-    check_table_key(table_name, key)
+    _check_table_key(table_name, key)
 
 
-def check_table_key(table_name, key):
+def _check_table_key(table_name, key):
     if key is not None:
         if not is_list_like(key) and not isinstance(key, str):
             raise TypeError(
@@ -102,7 +117,7 @@ def check_table_key(table_name, key):
                 )
 
 
-def check_multitable_spec(ds_spec):
+def _check_multitable_spec(ds_spec):
     assert len(ds_spec) > 1
     # Check the main table
     if "main_table" not in ds_spec:
@@ -149,10 +164,10 @@ def check_multitable_spec(ds_spec):
             for table in ds_spec["tables"].keys()
             if table != ds_spec["main_table"]
         ]
-    check_relations_entry(ds_spec["main_table"], ds_spec["tables"], relations_spec)
+    _check_relations_entry(ds_spec["main_table"], ds_spec["tables"], relations_spec)
 
 
-def check_relations_entry(main_table_name, tables_spec, relations_spec):
+def _check_relations_entry(main_table_name, tables_spec, relations_spec):
     # Check the types and size of the relation entries
     if not is_list_like(relations_spec):
         raise TypeError(
@@ -208,7 +223,7 @@ def check_relations_entry(main_table_name, tables_spec, relations_spec):
             )
 
         # Check hierachical keys
-        check_hierarchical_keys(
+        _check_hierarchical_keys(
             i,
             parent_table,
             tables_spec[parent_table][1],
@@ -217,10 +232,10 @@ def check_relations_entry(main_table_name, tables_spec, relations_spec):
         )
 
     # Check there are no cycles
-    check_no_cycles(relations_spec, main_table_name)
+    _check_no_cycles(relations_spec, main_table_name)
 
 
-def check_hierarchical_keys(
+def _check_hierarchical_keys(
     relation_id, parent_table, parent_table_key, child_table, child_table_key
 ):
     """Check that the parent table's key is contained in the child table's key"""
@@ -250,7 +265,7 @@ def check_hierarchical_keys(
         )
 
 
-def check_no_cycles(relations_spec, main_table_name):
+def _check_no_cycles(relations_spec, main_table_name):
     """Check that there are no cycles in the 'relations' entry"""
     tables_to_visit = [main_table_name]
     tables_visited = set()
@@ -268,7 +283,7 @@ def check_no_cycles(relations_spec, main_table_name):
                     )
 
 
-def check_format_entry(format_spec):
+def _check_format_entry(format_spec):
     if not isinstance(format_spec, tuple):
         raise TypeError(type_error_message("'format' entry", format_spec, tuple))
     if len(format_spec) != 2:
@@ -581,7 +596,7 @@ class Dataset:
                 )
 
         # Check the key for the main_table (it is the same for the others)
-        check_table_key("main_table", key)
+        _check_table_key("main_table", key)
 
     def _init_tables_from_mapping(self, X):
         """Initializes the table spec from a dict-like 'X'"""
@@ -914,7 +929,7 @@ class Dataset:
 
         Parameters
         ----------
-        out_dir : str
+        output_dir : str
             The directory where the sorted tables will be created.
 
         Returns

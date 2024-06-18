@@ -3,17 +3,23 @@ Internals
 These are internal modules with no "data science" functionality. Their documentation is available
 for completeness.
 
+.. currentmodule:: khiops.utils
 .. autosummary::
   :nosignatures:
   :toctree: generated
 
-  khiops.utils.dataset
-  khiops.core.internals.common
-  khiops.core.internals.filesystems
-  khiops.core.internals.io
-  khiops.core.internals.runner
-  khiops.core.internals.scenario
-  khiops.core.internals.task
-  khiops.core.internals.types
-  khiops.core.internals.version
+  dataset
 
+.. currentmodule:: khiops.core.internals
+.. autosummary::
+  :nosignatures:
+  :toctree: generated
+
+  common
+  filesystems
+  io
+  runner
+  scenario
+  task
+  types
+  version
