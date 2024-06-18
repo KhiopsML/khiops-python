@@ -61,8 +61,13 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and directories to
 # ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_templates", "_build", "Thumbs.db", ".DS_Store"]
-
+exclude_patterns = [
+    "_templates",
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "**.ipynb_checkpoints",
+]
 # HTML Theme
 # Theme colors and fonts come from https://brand.orange.com
 html_theme = "furo"
@@ -70,6 +75,7 @@ html_theme_options = {
     "light_css_variables": {
         "color-brand-primary": "#FF7900",
         "color-brand-content": "#F16E00",
+        "color-brand-visited": "#FF7900",
         "color-sidebar-background": "#FFFFFF",
         "color-highlighted-background": "#FFD200",
         "color-admonition-title--note": "#FF7900",
@@ -79,6 +85,7 @@ html_theme_options = {
     "dark_css_variables": {
         "color-brand-primary": "#FF7900",
         "color-brand-content": "#F16E00",
+        "color-brand-visited": "#FF7900",
         "color-sidebar-background": "#000000",
         "color-highlighted-background": "#FFD200",
         "color-admonition-title--note": "#FF7900",
