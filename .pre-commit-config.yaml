@@ -33,13 +33,16 @@ repos:
     rev: 0.29.2
     hooks:
       - id: check-github-workflows
+        name: gh-workflows
         args: [--verbose]
       - id: check-github-actions
+        name: gh-actions
         args: [--verbose]
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
     rev: 3.0.0
     hooks:
       - id: shellcheck
+        name: shellcheck
   - repo: local
     hooks:
       - id: samples-generation

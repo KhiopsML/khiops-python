@@ -90,21 +90,18 @@ fi
 
 # Create the coursework materials
 echo "Creating ZIP files"
-(cd "$KHIOPS_TUTORIAL_REPO_DIR" && cp -r data helper_functions.py "../$tutorials_dir")
 cd "$tutorials_dir"
 mkdir -p exercises
 touch exercises/.dummy # Create a dummy so the "exercises" directory is created on unzip
-zip "core_tutorials_solutions.zip" Core*.ipynb helper_functions.py data/*/* exercises/.dummy
-zip "sklearn_tutorials_solutions.zip" Sklearn*.ipynb helper_functions.py data/*/* exercises/.dummy
+zip "core_tutorials_solutions.zip" Core*.ipynb data/*/* exercises/.dummy
+zip "sklearn_tutorials_solutions.zip" Sklearn*.ipynb data/*/* exercises/.dummy
 cd "$KHIOPS_TUTORIAL_REPO_DIR"
 python create-coursework.py
 cd coursework
 mkdir -p exercises
 touch exercises/.dummy # Create a dummy so the "exercises" directory is created on unzip
-zip "../../$tutorials_dir/core_tutorials.zip" \
-  Core*.ipynb helper_functions.py data/*/* exercises/.dummy
-zip "../../$tutorials_dir/sklearn_tutorials.zip" \
-  Sklearn*.ipynb helper_functions.py data/*/* exercises/.dummy
+zip "../../$tutorials_dir/core_tutorials.zip" Core*.ipynb data/*/* exercises/.dummy
+zip "../../$tutorials_dir/sklearn_tutorials.zip" Sklearn*.ipynb data/*/* exercises/.dummy
 cd "../.."
 
 # Create the documentation with Sphinx

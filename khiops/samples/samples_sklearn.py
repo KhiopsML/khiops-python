@@ -16,7 +16,7 @@ from khiops import core as kh
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
-#   pylint --disable=all --enable=invalid-names estimators.py
+#   pylint --disable=all --enable=invalid-names samples_sklearn.py
 # pylint: disable=invalid-name
 
 # For ease of use the functions in this module contain (repeated) import statements
@@ -145,55 +145,34 @@ def khiops_classifier_multitable_star():
     import pandas as pd
     from khiops import core as kh
     from khiops.sklearn import KhiopsClassifier
+    from khiops.utils.helpers import train_test_split_dataset
     from sklearn import metrics
-    from sklearn.model_selection import train_test_split
 
-    # Load the root table of the dataset into a pandas dataframe
-    accidents_dataset_path = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    # Load the dataset into pandas dataframes
+    accidents_data_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
     accidents_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Accidents.txt"),
+        os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
         encoding="latin1",
     )
-
-    # Split the root dataframe into train and test
-    accidents_train_df, accidents_test_df = train_test_split(
-        accidents_df, test_size=0.3, random_state=1
-    )
-
-    # Obtain the main X feature table and the y target vector ("Class" column)
-    y_train = accidents_train_df["Gravity"]
-    y_test = accidents_test_df["Gravity"]
-    X_train_main = accidents_train_df.drop("Gravity", axis=1)
-    X_test_main = accidents_test_df.drop("Gravity", axis=1)
-
-    # Load the secondary table of the dataset into a pandas dataframe
     vehicles_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
+        os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
-    X_train_ids = X_train_main["AccidentId"].to_frame()
-    X_test_ids = X_test_main["AccidentId"].to_frame()
-    X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
-    X_test_secondary = X_test_ids.merge(vehicles_df, on="AccidentId")
+    # Create the dataset spec and the target
+    X = {
+        "main_table": "Accidents",
+        "tables": {
+            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+            "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
+        },
+    }
+    y = accidents_df["Gravity"]
 
-    # Create the dataset multitable specification for the train/test split
-    # We specify each table with a name and a tuple (dataframe, key_columns)
-    X_train = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (X_train_main, "AccidentId"),
-            "Vehicles": (X_train_secondary, ["AccidentId", "VehicleId"]),
-        },
-    }
-    X_test = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (X_test_main, "AccidentId"),
-            "Vehicles": (X_test_secondary, ["AccidentId", "VehicleId"]),
-        },
-    }
+    # Split the dataset into train and test
+    X_train, X_test, y_train, y_test = train_test_split_dataset(
+        X, y, test_size=0.3, random_state=1
+    )
 
     # Train the classifier (by default it analyzes 100 multi-table features)
     khc = KhiopsClassifier()
@@ -219,42 +198,106 @@ def khiops_classifier_multitable_star():
     print(f"Test auc      = {test_auc}")
 
 
-def khiops_classifier_multitable_snowflake():
-    """Trains a `.KhiopsClassifier` on a snowflake multi-table dataset
-
-    .. note::
-        For simplicity we train from the whole dataset. To assess the performance one
-        usually splits the dataset into train and test subsets.
-
-    """
+def khiops_classifier_multitable_star_file():
+    """Trains a `.KhiopsClassifier` with a file dataset"""
     # Imports
     import os
     import pandas as pd
     from khiops import core as kh
     from khiops.sklearn import KhiopsClassifier
+    from khiops.utils.helpers import train_test_split_dataset
+    from sklearn import metrics
+
+    # Create output directory
+    results_dir = os.path.join("kh_samples", "khiops_classifier_multitable_star_file")
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Create the dataset spec
+    accidents_data_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    X = {
+        "main_table": "Accidents",
+        "tables": {
+            "Accidents": (
+                os.path.join(accidents_data_dir, "Accidents.txt"),
+                "AccidentId",
+            ),
+            "Vehicles": (
+                os.path.join(accidents_data_dir, "Vehicles.txt"),
+                ["AccidentId", "VehicleId"],
+            ),
+        },
+        "format": ("\t", True),
+    }
+
+    # Split the dataset into train and test
+    X_train, X_test = train_test_split_dataset(
+        X, output_dir=os.path.join(results_dir, "split"), test_size=0.3
+    )
+
+    # Create the classifier and fit it
+    khc = KhiopsClassifier(output_dir=results_dir)
+    khc.fit(X_train, y="Gravity")
+
+    # Predict the class in addition to the class probabilities on the test dataset
+    y_test_pred_path = khc.predict(X_test)
+    y_test_pred = pd.read_csv(y_test_pred_path, sep="\t")
+    print("Predicted classes (first 10):")
+    print(y_test_pred["PredictedGravity"].head(10))
+    print("---")
+
+    y_test_probas_path = khc.predict_proba(X_test)
+    y_test_probas = pd.read_csv(y_test_probas_path, sep="\t")
+    proba_columns = [col for col in y_test_probas if col.startswith("Prob")]
+    print("Predicted class probabilities (first 10):")
+    print(y_test_probas[proba_columns].head(10))
+    print("---")
+
+    # Evaluate accuracy and auc metrics on the test dataset
+    # Note: For roc_auc_score we have to use the "greatest" label which is "NonLethal"
+    y_test = pd.read_csv(
+        X_test["tables"]["Accidents"][0],
+        usecols=["Gravity"],
+        sep="\t",
+        encoding="latin1",
+    )
+    test_accuracy = metrics.accuracy_score(y_test, y_test_pred["PredictedGravity"])
+    test_auc = metrics.roc_auc_score(y_test, y_test_probas["ProbGravityNonLethal"])
+    print(f"Test accuracy = {test_accuracy}")
+    print(f"Test auc      = {test_auc}")
+
+
+def khiops_classifier_multitable_snowflake():
+    """Trains a `.KhiopsClassifier` on a snowflake multi-table dataset"""
+    # Imports
+    import os
+    import pandas as pd
+    from khiops import core as kh
+    from khiops.sklearn import KhiopsClassifier
+    from khiops.utils.helpers import train_test_split_dataset
     from sklearn import metrics
 
     # Load the dataset tables into dataframes
-    accidents_dataset_path = os.path.join(kh.get_samples_dir(), "Accidents")
+    accidents_data_dir = os.path.join(kh.get_samples_dir(), "Accidents")
     accidents_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Accidents.txt"),
+        os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
         encoding="latin1",
     )
     users_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Users.txt"), sep="\t", encoding="latin1"
+        os.path.join(accidents_data_dir, "Users.txt"), sep="\t", encoding="latin1"
     )
     vehicles_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Vehicles.txt"),
+        os.path.join(accidents_data_dir, "Vehicles.txt"),
         sep="\t",
         encoding="latin1",
     )
     places_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Places.txt"), sep="\t", encoding="latin1"
+        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", encoding="latin1"
     )
-    # Build the multitable input X
-    # Note: We discard the "Gravity" field from the "Users" table as it was used to
-    # build the target column
+
+    # Create the dataset spec
+    # Note: We discard the "Gravity" column from the "Users" table to avoid a target
+    # leak. This is because the column was used to build the target.
     X = {
         "main_table": "Accidents",
         "tables": {
@@ -270,16 +313,22 @@ def khiops_classifier_multitable_snowflake():
         ],
     }
 
-    # Load the target variable from the AccidentsSummary dataset
+    # Load the target variable "Gravity" from the "AccidentsSummary" dataset
     y = pd.read_csv(
         os.path.join(kh.get_samples_dir(), "AccidentsSummary", "Accidents.txt"),
+        usecols=["Gravity"],
         sep="\t",
         encoding="latin1",
-    )["Gravity"]
+    ).squeeze(
+        "columns"
+    )  # squeeze to ensure pandas.Series
+
+    # Split into train and test datasets
+    X_train, X_test, y_train, y_test = train_test_split_dataset(X, y)
 
     # Train the classifier (by default it creates 1000 multi-table features)
     khc = KhiopsClassifier(n_trees=0)
-    khc.fit(X, y)
+    khc.fit(X_train, y_train)
 
     # Show the feature importance info
     print(f"Features evaluated: {khc.n_features_evaluated_}")
@@ -290,23 +339,23 @@ def khiops_classifier_multitable_snowflake():
     print("---")
 
     # Predict the class on the test dataset
-    y_pred = khc.predict(X)
+    y_test_pred = khc.predict(X_test)
     print("Predicted classes (first 10):")
-    print(y_pred[:10])
+    print(y_test_pred[:10])
     print("---")
 
-    # Predict the class probability on the train dataset
-    y_probas = khc.predict_proba(X)
+    # Predict the class probability on the test dataset
+    y_test_probas = khc.predict_proba(X_test)
     print(f"Class order: {khc.classes_}")
     print("Predicted class probabilities (first 10):")
-    print(y_probas[:10])
+    print(y_test_probas[:10])
     print("---")
 
-    # Evaluate accuracy and auc metrics on the train dataset
-    train_accuracy = metrics.accuracy_score(y_pred, y)
-    train_auc = metrics.roc_auc_score(y, y_probas[:, 1])
-    print(f"Train accuracy = {train_accuracy}")
-    print(f"Train auc      = {train_auc}")
+    # Evaluate accuracy and auc metrics on the test dataset
+    test_accuracy = metrics.accuracy_score(y_test_pred, y_test)
+    test_auc = metrics.roc_auc_score(y_test, y_test_probas[:, 1])
+    print(f"Test accuracy = {test_accuracy}")
+    print(f"Test auc      = {test_auc}")
 
 
 def khiops_classifier_sparse():
@@ -369,18 +418,7 @@ def khiops_classifier_pickle():
     import os
     import pandas as pd
     import pickle
-    from khiops import core as kh
     from khiops.sklearn import KhiopsClassifier
-
-    # Load the dataset into a pandas dataframe
-    iris_path = os.path.join(kh.get_samples_dir(), "Iris", "Iris.txt")
-    iris_df = pd.read_csv(iris_path, sep="\t")
-
-    # Train the model with the whole dataset
-    X = iris_df.drop(["Class"], axis=1)
-    y = iris_df["Class"]
-    khc = KhiopsClassifier()
-    khc.fit(X, y)
 
     # Create/clean the output directory
     results_dir = os.path.join("kh_samples", "khiops_classifier_pickle")
@@ -390,9 +428,19 @@ def khiops_classifier_pickle():
     else:
         os.makedirs(results_dir, exist_ok=True)
 
+    # Load the "Iris" dataset
+    iris_path = os.path.join(kh.get_samples_dir(), "Iris", "Iris.txt")
+    iris_df = pd.read_csv(iris_path, sep="\t")
+    X = iris_df.drop("Class", axis=1)
+    y = iris_df["Class"]
+
+    # Train the model with the Iris dataset
+    khc = KhiopsClassifier()
+    khc.fit(X, y)
+
     # Pickle its content to a file
-    with open(khc_pickle_path, "wb") as khc_pickle_write_file:
-        pickle.dump(khc, khc_pickle_write_file)
+    with open(khc_pickle_path, "wb") as khc_pickle_output_file:
+        pickle.dump(khc, khc_pickle_output_file)
 
     # Unpickle it
     with open(khc_pickle_path, "rb") as khc_pickle_file:
@@ -508,22 +556,16 @@ def khiops_regressor():
     from sklearn import metrics
     from sklearn.model_selection import train_test_split
 
-    # Load the dataset into a pandas dataframe
+    # Load the "Adult" dataset and set the target to the "age" column
     adult_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
     adult_df = pd.read_csv(adult_path, sep="\t")
+    X = adult_df.drop("age", axis=1)
+    y = adult_df["age"]
 
     # Split the whole dataframe into train and test (40%-60% for speed)
-    adult_train_df, adult_test_df = train_test_split(
-        adult_df, test_size=0.6, random_state=1
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.1, random_state=1
     )
-
-    # Split the dataset into:
-    # - the X feature table
-    # - the y target vector ("age" column)
-    X_train = adult_train_df.drop("age", axis=1)
-    X_test = adult_test_df.drop("age", axis=1)
-    y_train = adult_train_df["age"]
-    y_test = adult_test_df["age"]
 
     # Create the regressor object
     khr = KhiopsRegressor()
@@ -564,21 +606,17 @@ def khiops_encoder():
         usually splits the dataset into train and test subsets.
     """
     # Imports
-    import os
     import pandas as pd
-    from khiops import core as kh
     from khiops.sklearn import KhiopsEncoder
 
-    # Load the dataset into a pandas dataframe
+    # Load the dataset
     iris_path = os.path.join(kh.get_samples_dir(), "Iris", "Iris.txt")
     iris_df = pd.read_csv(iris_path, sep="\t")
-
-    # Train the model with the whole dataset
     X = iris_df.drop("Class", axis=1)
     y = iris_df["Class"]
 
     # Create the encoder object
-    khe = KhiopsEncoder()
+    khe = KhiopsEncoder(transform_type_numerical="part_label")
     khe.fit(X, y)
 
     # Transform the training dataset
@@ -586,7 +624,7 @@ def khiops_encoder():
 
     # Print both the original and transformed features
     print("Original:")
-    print(X.head(10))
+    print(X[:10])
     print("---")
     print("Encoded feature names:")
     print(khe.feature_names_out_)
@@ -603,51 +641,40 @@ def khiops_encoder_multitable_star():
     from khiops import core as kh
     from khiops.sklearn import KhiopsEncoder
 
-    # Load the root table of the dataset into a pandas dataframe
-    accidents_dataset_path = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    # Load the dataset tables into dataframe
+    accidents_data_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
     accidents_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Accidents.txt"),
+        os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
         encoding="latin1",
     )
-
-    # Obtain the root X feature table and the y target vector ("Class" column)
-    X_main = accidents_df.drop("Gravity", axis=1)
-    y = accidents_df["Gravity"]
-
-    # Load the secondary table of the dataset into a pandas dataframe
-    X_secondary = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
+    vehicles_df = pd.read_csv(
+        os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
 
-    # Create the dataset multitable specification for the train/test split
-    # We specify each table with a name and a tuple (dataframe, key_columns)
-    X_dataset = {
+    # Build the multi-table spec and the target
+    X = {
         "main_table": "Accidents",
         "tables": {
-            "Accidents": (X_main, "AccidentId"),
-            "Vehicles": (X_secondary, ["AccidentId", "VehicleId"]),
+            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+            "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
         },
     }
+    y = accidents_df["Gravity"]
 
-    # Create the KhiopsEncoder with 10 additional multitable features and fit it
+    # Create the KhiopsEncoder with 5 multitable features and fit it
     khe = KhiopsEncoder(n_features=10)
-    khe.fit(X_dataset, y)
+    khe.fit(X, y)
 
     # Transform the train dataset
     print("Encoded feature names:")
     print(khe.feature_names_out_)
     print("Encoded data:")
-    print(khe.transform(X_dataset)[:10])
+    print(khe.transform(X)[:10])
 
 
 def khiops_encoder_multitable_snowflake():
-    """Trains a `.KhiopsEncoder` on a snowflake multi-table dataset
-
-    .. note::
-        For simplicity we train from the whole dataset. To assess the performance
-        one usually splits the dataset into train and test subsets.
-    """
+    """Trains a `.KhiopsEncoder` on a snowflake multi-table dataset"""
     # Imports
     import os
     import pandas as pd
@@ -655,33 +682,38 @@ def khiops_encoder_multitable_snowflake():
     from khiops.sklearn import KhiopsEncoder
 
     # Load the tables into dataframes
-    accidents_dataset_path = os.path.join(kh.get_samples_dir(), "Accidents")
+    accidents_data_dir = os.path.join(kh.get_samples_dir(), "Accidents")
     accidents_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Accidents.txt"),
+        os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
         encoding="latin1",
     )
+    places_df = pd.read_csv(
+        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", encoding="latin1"
+    )
     users_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Users.txt"), sep="\t", encoding="latin1"
+        os.path.join(accidents_data_dir, "Users.txt"), sep="\t", encoding="latin1"
     )
     vehicles_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Vehicles.txt"),
+        os.path.join(accidents_data_dir, "Vehicles.txt"),
         sep="\t",
         encoding="latin1",
     )
 
-    # Build the multitable input X
+    # Build the multi-table spec
     # Note: We discard the "Gravity" field from the "Users" table as it was used to
     # build the target column
     X = {
         "main_table": "Accidents",
         "tables": {
             "Accidents": (accidents_df, "AccidentId"),
+            "Places": (places_df, "AccidentId"),
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
             "Users": (users_df.drop("Gravity", axis=1), ["AccidentId", "VehicleId"]),
         },
         "relations": [
             ("Accidents", "Vehicles"),
+            ("Accidents", "Places", True),
             ("Vehicles", "Users"),
         ],
     }
@@ -689,9 +721,12 @@ def khiops_encoder_multitable_snowflake():
     # Load the target variable from the AccidentsSummary dataset
     y = pd.read_csv(
         os.path.join(kh.get_samples_dir(), "AccidentsSummary", "Accidents.txt"),
+        usecols=["Gravity"],
         sep="\t",
         encoding="latin1",
-    )["Gravity"]
+    ).squeeze(
+        "columns"
+    )  # squeeze to ensure pandas.Series
 
     # Create the KhiopsEncoder with 10 additional multitable features and fit it
     khe = KhiopsEncoder(n_features=10)
@@ -714,7 +749,7 @@ def khiops_encoder_multitable_snowflake():
 # Disable line too long just to have a title linking the sklearn documentation
 # pylint: disable=line-too-long
 def khiops_encoder_pipeline_with_hgbc():
-    """Chains a `.KhiopsEncoder` with a `~sklearn.ensemble.HistGradientBoostingClassifier`"""
+    """Uses a `.KhiopsEncoder` with a `~sklearn.ensemble.HistGradientBoostingClassifier`"""
     # Imports
     import os
     import pandas as pd
@@ -727,22 +762,16 @@ def khiops_encoder_pipeline_with_hgbc():
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import OneHotEncoder
 
-    # Load the dataset into a pandas dataframe
+    # Load the dataset into dataframes
     adult_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
     adult_df = pd.read_csv(adult_path, sep="\t")
+    X = adult_df.drop("class", axis=1)
+    y = adult_df["class"]
 
-    # Split the whole dataframe into train and test (70%-30%)
-    adult_train_df, adult_test_df = train_test_split(
-        adult_df, test_size=0.3, random_state=1
+    # Split the dataset into train and test (70%-30%)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=1
     )
-
-    # Split the dataset into:
-    # - the X feature table
-    # - the y target vector ("class" column)
-    X_train = adult_train_df.drop("class", axis=1)
-    X_test = adult_test_df.drop("class", axis=1)
-    y_train = adult_train_df["class"]
-    y_test = adult_test_df["class"]
 
     # Create the pipeline and fit it. Steps:
     # - The khiops supervised column encoder, generates a full-categorical table
@@ -753,8 +782,6 @@ def khiops_encoder_pipeline_with_hgbc():
         (
             "onehot_enc",
             ColumnTransformer([], remainder=OneHotEncoder(sparse_output=False)),
-            # For sklearn < 1.2, use
-            # ColumnTransformer([], remainder=OneHotEncoder(sparse=False)),
         ),
         ("hgb_clf", HistGradientBoostingClassifier()),
     ]
@@ -854,13 +881,13 @@ def khiops_coclustering():
     from sklearn.model_selection import train_test_split
 
     # Load the secondary table of the dataset into a pandas dataframe
-    splice_dataset_path = os.path.join(kh.get_samples_dir(), "SpliceJunction")
-    splice_dna_X = pd.read_csv(
-        os.path.join(splice_dataset_path, "SpliceJunctionDNA.txt"), sep="\t"
+    splice_data_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
+    splice_dna_df = pd.read_csv(
+        os.path.join(splice_data_dir, "SpliceJunctionDNA.txt"), sep="\t"
     )
 
     # Train with only 70% of data (for speed in this example)
-    X, _ = train_test_split(splice_dna_X, test_size=0.3, random_state=1)
+    X, _ = train_test_split(splice_dna_df, test_size=0.3, random_state=1)
 
     # Create the KhiopsCoclustering instance
     khcc = KhiopsCoclustering()
@@ -885,9 +912,9 @@ def khiops_coclustering_simplify():
     from sklearn.model_selection import train_test_split
 
     # Load the secondary table of the dataset into a pandas dataframe
-    splice_dataset_path = os.path.join(kh.get_samples_dir(), "SpliceJunction")
+    splice_data_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
     splice_dna_X = pd.read_csv(
-        os.path.join(splice_dataset_path, "SpliceJunctionDNA.txt"), sep="\t"
+        os.path.join(splice_data_dir, "SpliceJunctionDNA.txt"), sep="\t"
     )
 
     # Train with only 70% of data (for speed in this example)
@@ -929,32 +956,28 @@ def khiops_classifier_multitable_list():
     from sklearn.model_selection import train_test_split
 
     # Load the root table of the dataset into a pandas dataframe
-    accidents_dataset_path = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    accidents_data_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
     accidents_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Accidents.txt"),
+        os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
         encoding="latin1",
     )
+    X = accidents_df.drop("Gravity", axis=1)
+    y = accidents_df["Gravity"]
 
-    # Split the root dataframe into train and test
-    accidents_train_df, accidents_test_df = train_test_split(
-        accidents_df, test_size=0.3, random_state=1
+    # Split the dataset into train and test
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=1
     )
-
-    # Obtain the main X feature table and the y target vector ("Class" column)
-    y_train = accidents_train_df["Gravity"]
-    y_test = accidents_test_df["Gravity"]
-    X_train_main = accidents_train_df.drop("Gravity", axis=1)
-    X_test_main = accidents_test_df.drop("Gravity", axis=1)
 
     # Load the secondary table of the dataset into a pandas dataframe
     vehicles_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
+        os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
 
     # Split the secondary dataframe with the keys of the splitted root dataframe
-    X_train_ids = X_train_main["AccidentId"].to_frame()
-    X_test_ids = X_test_main["AccidentId"].to_frame()
+    X_train_ids = X_train["AccidentId"].to_frame()
+    X_test_ids = X_test["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
     X_test_secondary = X_test_ids.merge(vehicles_df, on="AccidentId")
 
@@ -962,16 +985,16 @@ def khiops_classifier_multitable_list():
     khc = KhiopsClassifier(key="AccidentId")
 
     # Train the classifier
-    khc.fit([X_train_main, X_train_secondary], y_train)
+    khc.fit([X_train, X_train_secondary], y_train)
 
     # Predict the class on the test dataset
-    y_test_pred = khc.predict([X_test_main, X_test_secondary])
+    y_test_pred = khc.predict([X_test, X_test_secondary])
     print("Predicted classes (first 10):")
     print(y_test_pred[:10])
     print("---")
 
     # Predict the class probability on the test dataset
-    y_test_probas = khc.predict_proba([X_test_main, X_test_secondary])
+    y_test_probas = khc.predict_proba([X_test, X_test_secondary])
     print("Predicted class probabilities (first 10):")
     print(y_test_probas[:10])
     print("---")
@@ -983,117 +1006,11 @@ def khiops_classifier_multitable_list():
     print(f"Test auc      = {test_auc}")
 
 
-def khiops_classifier_multitable_star_file():
-    """Trains a `.KhiopsClassifier` with a file path based dataset
-
-    .. warning::
-        This dataset input method is **Deprecated** and will be removed in Khiops 11.
-        If you need to handle large datasets that do not easily fit into memory then you
-        may use the `~.khiops.core` API directly, which allows to specify file paths
-        directly.
-    """
-    # Imports
-    import os
-    import pandas as pd
-    from khiops import core as kh
-    from khiops.sklearn import KhiopsClassifier
-    from sklearn import metrics
-    from sklearn.model_selection import train_test_split
-
-    # Create output directory
-    results_dir = os.path.join("kh_samples", "khiops_classifier_multitable_file")
-    if not os.path.exists("kh_samples"):
-        os.mkdir("kh_samples")
-        os.mkdir(results_dir)
-    else:
-        if not os.path.exists(results_dir):
-            os.mkdir(results_dir)
-
-    # Load the root table of the dataset into a pandas dataframe
-    accidents_dataset_path = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
-    accidents_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Accidents.txt"),
-        sep="\t",
-        encoding="latin1",
-    )
-
-    # Split the root dataframe into train and test
-    X_train_main, X_test_main = train_test_split(
-        accidents_df, test_size=0.3, random_state=1
-    )
-
-    # Load the secondary table of the dataset into a pandas dataframe
-    vehicles_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
-    )
-
-    # Split the secondary dataframe with the keys of the splitted root dataframe
-    X_train_ids = X_train_main["AccidentId"].to_frame()
-    X_test_ids = X_test_main["AccidentId"].to_frame()
-    X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
-    X_test_secondary = X_test_ids.merge(vehicles_df, on="AccidentId")
-
-    # Write the train and test dataset sets to disk
-    # For the test file we remove the target column from the main table
-    X_train_main_path = os.path.join(results_dir, "X_train_main.txt")
-    X_train_main.to_csv(X_train_main_path, sep="\t", header=True, index=False)
-    X_train_secondary_path = os.path.join(results_dir, "X_train_secondary.txt")
-    X_train_secondary.to_csv(X_train_secondary_path, sep="\t", header=True, index=False)
-    X_test_main_path = os.path.join(results_dir, "X_test_main.txt")
-    y_test = X_test_main.sort_values("AccidentId")["Gravity"]
-    X_test_main.drop(columns="Gravity").to_csv(
-        X_test_main_path, sep="\t", header=True, index=False
-    )
-    X_test_secondary_path = os.path.join(results_dir, "X_test_secondary.txt")
-    X_test_secondary.to_csv(X_test_secondary_path, sep="\t", header=True, index=False)
-
-    # Define the dictionary of train
-    X_train_dataset = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (X_train_main_path, "AccidentId"),
-            "Vehicles": (X_train_secondary_path, ["AccidentId", "VehicleId"]),
-        },
-        "format": ("\t", True),
-    }
-    X_test_dataset = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (X_test_main_path, "AccidentId"),
-            "Vehicles": (X_test_secondary_path, ["AccidentId", "VehicleId"]),
-        },
-        "format": ("\t", True),
-    }
-
-    # Create the classifier and fit it
-    khc = KhiopsClassifier(output_dir=results_dir)
-    khc.fit(X_train_dataset, y="Gravity")
-
-    # Predict the class in addition to the class probabilities on the test dataset
-    y_test_pred_path = khc.predict(X_test_dataset)
-    y_test_pred = pd.read_csv(y_test_pred_path, sep="\t")
-    print("Predicted classes (first 10):")
-    print(y_test_pred["PredictedGravity"].head(10))
-    print("---")
-
-    y_test_probas_path = khc.predict_proba(X_test_dataset)
-    y_test_probas = pd.read_csv(y_test_probas_path, sep="\t")
-    proba_columns = [col for col in y_test_probas if col.startswith("Prob")]
-    print("Predicted class probabilities (first 10):")
-    print(y_test_probas[proba_columns].head(10))
-    print("---")
-
-    # Evaluate accuracy and auc metrics on the test dataset
-    test_accuracy = metrics.accuracy_score(y_test, y_test_pred["PredictedGravity"])
-    test_auc = metrics.roc_auc_score(y_test, y_test_probas["ProbGravityLethal"])
-    print(f"Test accuracy = {test_accuracy}")
-    print(f"Test auc      = {test_auc}")
-
-
 exported_samples = [
     khiops_classifier,
     khiops_classifier_multiclass,
     khiops_classifier_multitable_star,
+    khiops_classifier_multitable_star_file,
     khiops_classifier_multitable_snowflake,
     khiops_classifier_sparse,
     khiops_classifier_pickle,
@@ -1107,15 +1024,13 @@ exported_samples = [
     khiops_coclustering,
     khiops_coclustering_simplify,
     khiops_classifier_multitable_list,
-    khiops_classifier_multitable_star_file,
 ]
 
 
 def execute_samples(args):
     """Executes all non-interactive samples"""
     # Create the results directory if it does not exist
-    if not os.path.isdir("./kh_samples"):
-        os.mkdir("./kh_samples")
+    os.makedirs("./kh_samples", exist_ok=True)
 
     # Set the user-defined samples dir if any
     if args.samples_dir is not None:
@@ -1136,7 +1051,7 @@ def execute_samples(args):
         print(f"{len(execution_samples)} sample(s) to execute\n")
 
         for sample in execution_samples:
-            print(">>> Executing samples_sklearn." + sample.__name__)
+            print(f">>> Executing samples_sklearn.{sample.__name__}")
             sample.__call__()
             print("> Done\n")
 
