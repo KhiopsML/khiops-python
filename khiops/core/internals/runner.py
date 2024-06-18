@@ -230,6 +230,33 @@ def _infer_env_bin_dir_for_conda_based_installations():
     return env_bin_dir
 
 
+def _check_conda_env_bin_dir(conda_env_bin_dir):
+    """Check inferred Conda environment binary directory really is one
+
+    A real Conda environment binary directory:
+    - should exist
+    - should not be directly under the root directory
+    - should coexist with `conda-meta` directory under the same parent
+    """
+    conda_env_bin_dir_path = Path(conda_env_bin_dir)
+
+    # Conda env bin dir should end with `/bin`
+    assert conda_env_bin_dir_path.parts[-1] == "bin"
+
+    is_conda_env_bin_dir = False
+
+    # Conda env dir is not equal to its root dir
+    # Conda env bin dir exists, along with the `conda-meta` dir
+    conda_env_dir_path = conda_env_bin_dir_path.parent
+    if (
+        conda_env_dir_path != conda_env_dir_path.root
+        and conda_env_bin_dir_path.is_dir()
+        and conda_env_dir_path.joinpath("conda-meta").is_dir()
+    ):
+        is_conda_env_bin_dir = True
+    return is_conda_env_bin_dir
+
+
 def _infer_khiops_installation_method(trace=False):
     """Return the Khiops installation method"""
     # We are in a conda environment if
@@ -249,7 +276,9 @@ def _infer_khiops_installation_method(trace=False):
         env_bin_dir = _infer_env_bin_dir_for_conda_based_installations()
         if trace:
             print(f"Environment binary dir: '{env_bin_dir}'")
-        if _modl_and_mpiexec_executables_exist(env_bin_dir):
+        if _check_conda_env_bin_dir(
+            env_bin_dir
+        ) and _modl_and_mpiexec_executables_exist(env_bin_dir):
             installation_method = "conda-based"
         else:
             installation_method = "binary+pip"
