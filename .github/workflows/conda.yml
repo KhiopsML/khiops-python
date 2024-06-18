@@ -111,6 +111,14 @@ jobs:
           kh-download-datasets \
             --version ${{ inputs.khiops-samples-version || env.DEFAULT_SAMPLES_VERSION }}
       - name: Test Conda Package Installation on Samples
+        env:
+          # Force > 2 CPU cores to launch mpiexec
+          KHIOPS_PROC_NUMBER: 4
+          # Oversubscribe for MPI 4.x
+          rmaps_base_oversubscribe: true
+          # Oversubscribe for MPI > 4.x
+          OMPI_MCA_rmaps_base_oversubscribe: true
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |
           kh-samples core -i train_predictor -e
           kh-samples core -i train_predictor_error_handling -e
