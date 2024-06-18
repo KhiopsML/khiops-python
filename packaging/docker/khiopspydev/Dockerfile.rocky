@@ -8,6 +8,10 @@ LABEL description="Container for the development of khiops-python"
 # Reuse KHIOPSDEV_OS from previous stage
 ARG KHIOPSDEV_OS
 ARG KHIOPS_REVISION
+
+# Mitigate issue https://github.com/KhiopsML/khiops/issues/307
+ENV PSM3_MULTI_EP=1
+
 # - Install dev tools and miniconda3 (for the unit tests)
 # - Build and install Khiops
 # - Set mpich as the default MPI
