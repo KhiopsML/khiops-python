@@ -4,12 +4,12 @@ env:
   DEFAULT_SAMPLES_VERSION: 10.2.0
   # Note: The default Khiops version must never be an alpha release as they are
   #       ephemeral. To test alpha versions run the workflow manually.
-  DEFAULT_KHIOPS_CORE_VERSION: 10.2.1
+  DEFAULT_KHIOPS_CORE_VERSION: 10.2.2b.3
 on:
   workflow_dispatch:
     inputs:
       khiops-core-version:
-        default: 10.2.1
+        default: 10.2.2b.3
         description: khiops-core version for testing
       khiops-samples-version:
         default: 10.2.0
@@ -45,7 +45,7 @@ jobs:
           miniconda-version: latest
           python-version: '3.12'
       - name: Install Dependency Requirements for Building Conda Packages
-        run: conda install conda-build
+        run: conda install -y conda-build
       - name: Build the Conda Package
         # Note: The "khiops-dev" conda channel is needed to retrieve the "khiops-core" package.
         #       The "test" part of the conda recipe needs this package.
@@ -72,7 +72,6 @@ jobs:
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
           - {os: windows-2019, json-image: '{"image": null}'}
           - {os: windows-2022, json-image: '{"image": null}'}
-          - {os: macos-11, json-image: '{"image": null}'}
           - {os: macos-12, json-image: '{"image": null}'}
           - {os: macos-13, json-image: '{"image": null}'}
           - {os: macos-14, json-image: '{"image": null}'}
@@ -97,7 +96,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           conda install --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
-          conda install --channel ./khiops-conda/ khiops
+          conda install --override-channels --channel conda-forge --channel ./khiops-conda/ khiops
       # In Linux/macOS we need the conda-forge channel to install their pinned versions
       - name: Install the Khiops Conda package (Linux/macOS)
         if: runner.os != 'Windows'
@@ -111,6 +110,17 @@ jobs:
           kh-download-datasets \
             --version ${{ inputs.khiops-samples-version || env.DEFAULT_SAMPLES_VERSION }}
       - name: Test Conda Package Installation on Samples
+        env:
+          # Force > 2 CPU cores to launch mpiexec
+          KHIOPS_PROC_NUMBER: 4
+          # This is needed so that OpenMPI's mpiexec can be run as root
+          OMPI_ALLOW_RUN_AS_ROOT: 1
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+          # Oversubscribe for MPI 4.x
+          rmaps_base_oversubscribe: true
+          # Oversubscribe for MPI > 4.x
+          OMPI_MCA_rmaps_base_oversubscribe: true
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |
           kh-samples core -i train_predictor -e
           kh-samples core -i train_predictor_error_handling -e

@@ -60,9 +60,14 @@ jobs:
         if: success() || failure()
         run: |
           mkdir -p -m u+rwx reports/py${{ matrix.python-version }}            
-          # install within the conda environment without activating it 
+          mkdir -p -m u+rwx reports/py${{ matrix.python-version }}_conda
+          # install within the conda environments without activating them
+          # Native Khiops-based Conda environment
           /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }} -c conda-forge unittest-xml-reporting
           /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }} --file test-requirements.txt
+          # `khiops-core`-based Conda environment
+          /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }}_conda -c conda-forge unittest-xml-reporting
+          /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }}_conda --file test-requirements.txt
       - name: Install khiops-python dependencies
         if: success() || failure()
         run: |
@@ -70,8 +75,12 @@ jobs:
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(realpath .)        
+          # Native Khiops-based Conda environment
           /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }} python setup.py egg_info
           /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }} `grep -v "^\[" khiops.egg-info/requires.txt`
+          # `khiops-core`-based Conda environment
+          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }}_conda python setup.py egg_info
+          /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }}_conda `grep -v "^\[" khiops.egg-info/requires.txt`
           rm -rf khiops.egg-info
       - name: Prepare Unit Tests Environment
         if: github.ref != 'dev' && github.ref != 'main' && ! inputs.run-long-tests
@@ -82,18 +91,35 @@ jobs:
           KHIOPS_DOCKER_RUNNER_URL: https://localhost:11000
           KHIOPS_DOCKER_RUNNER_SHARED_DIR: /tmp/sandbox
           KHIOPS_RUNNER_SERVICE_PATH: /scripts/run_service.sh
+          # This is needed so that OpenMPI's mpiexec can be run as root
+          OMPI_ALLOW_RUN_AS_ROOT: 1
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+          # Force > 2 CPU cores to launch mpiexec
+          KHIOPS_PROC_NUMBER: 4
+          # Oversubscribe for MPI 4.x
+          rmaps_base_oversubscribe: true
+          # Oversubscribe for MPI > 4.x
+          OMPI_MCA_rmaps_base_oversubscribe: true
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |
           # This is needed so that the Git tag is parsed and the khiops-python
           # version is retrieved
           git config --global --add safe.directory $(realpath .)
+          # Native Khiops-based Conda environments
           /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }} coverage run -m xmlrunner -o "reports/py${{ matrix.python-version }}" -v
           /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }} coverage report -m
           /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }} coverage xml -o "reports/py${{ matrix.python-version }}/py-coverage.xml"
+          # `khiops-core`-based Conda environments
+          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }}_conda coverage run -m xmlrunner -o "reports/py${{ matrix.python-version }}_conda" -v
+          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }}_conda coverage report -m
+          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }}_conda coverage xml -o "reports/py${{ matrix.python-version }}_conda/py-coverage.xml"
       - name: Display Unit Test Reports
         uses: dorny/test-reporter@v1
         with:
           name: Unit Tests ${{ matrix.python-version }}
-          path: reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml
+          path: >-
+            reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml,
+            reports/py${{ matrix.python-version }}_conda/TEST-tests.*.*.xml
           reporter: java-junit
           path-replace-backslashes: 'true'  # Necessary for windows paths
       - name: Upload Test Reports as Artifacts
@@ -103,6 +129,8 @@ jobs:
           path: |-
             reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml
             reports/py${{ matrix.python-version }}/py-coverage.xml
+            reports/py${{ matrix.python-version }}_conda/TEST-tests.*.*.xml
+            reports/py${{ matrix.python-version }}_conda/py-coverage.xml
             tests/resources/scenario_generation/*/ref/*._kh
             tests/resources/scenario_generation/*/output/*._kh
             tests/resources/*/output_reports/*.txt
@@ -148,9 +176,12 @@ jobs:
         run: |
           pip install -r test-requirements.txt
       - name: Launch proper MPI awareness test
+        env:
+          # Force > 2 CPU cores to launch mpiexec
+          KHIOPS_PROC_NUMBER: 4
         run: |-
           # Make sure MPI support is not loaded through env modules
           # Note: As Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway
-          if [[ -n "$MODULESHOME" ]]; then module unload mpi; fi
+          if [ -n "$MODULESHOME" ]; then module unload mpi; fi
           python -m unittest -v tests.test_khiops_integrations.KhiopsRunnerEnvironmentTests.test_runner_has_mpiexec_on_linux

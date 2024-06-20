@@ -181,12 +181,9 @@ def _compute_max_cores_from_proc_number(proc_number):
     # if KHIOPS_PROC_NUMBER is 0 we set max_cores to the system's core number
     if proc_number == 0:
         max_cores = _get_system_cpu_cores()
-    # if KHIOPS_PROC_NUMBER is 1 we just set max_cores to 1 (no MPI)
-    elif proc_number == 1:
-        max_cores = 1
-    # Otherwise we set max_cores to KHIOPS_PROC_NUMBER - 1
+    # Otherwise we set max_cores to KHIOPS_PROC_NUMBER
     else:
-        max_cores = proc_number - 1
+        max_cores = proc_number
 
     return max_cores
 
@@ -230,6 +227,33 @@ def _infer_env_bin_dir_for_conda_based_installations():
     return env_bin_dir
 
 
+def _check_conda_env_bin_dir(conda_env_bin_dir):
+    """Check inferred Conda environment binary directory really is one
+
+    A real Conda environment binary directory:
+    - should exist
+    - should not be directly under the root directory
+    - should coexist with `conda-meta` directory under the same parent
+    """
+    conda_env_bin_dir_path = Path(conda_env_bin_dir)
+
+    # Conda env bin dir should end with `/bin`
+    assert conda_env_bin_dir_path.parts[-1] == "bin"
+
+    is_conda_env_bin_dir = False
+
+    # Conda env dir is not equal to its root dir
+    # Conda env bin dir exists, along with the `conda-meta` dir
+    conda_env_dir_path = conda_env_bin_dir_path.parent
+    if (
+        conda_env_dir_path != conda_env_dir_path.root
+        and conda_env_bin_dir_path.is_dir()
+        and conda_env_dir_path.joinpath("conda-meta").is_dir()
+    ):
+        is_conda_env_bin_dir = True
+    return is_conda_env_bin_dir
+
+
 def _infer_khiops_installation_method(trace=False):
     """Return the Khiops installation method"""
     # We are in a conda environment if
@@ -249,7 +273,9 @@ def _infer_khiops_installation_method(trace=False):
         env_bin_dir = _infer_env_bin_dir_for_conda_based_installations()
         if trace:
             print(f"Environment binary dir: '{env_bin_dir}'")
-        if _modl_and_mpiexec_executables_exist(env_bin_dir):
+        if _check_conda_env_bin_dir(
+            env_bin_dir
+        ) and _modl_and_mpiexec_executables_exist(env_bin_dir):
             installation_method = "conda-based"
         else:
             installation_method = "binary+pip"
@@ -443,6 +469,9 @@ class KhiopsRunner(ABC):
 
     @max_cores.setter
     def max_cores(self, core_number):
+        self._set_max_cores(core_number)
+
+    def _set_max_cores(self, core_number):
         self.general_options.max_cores = core_number
         self.general_options.check()
 
@@ -988,16 +1017,20 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Initialize Khiops environment
         self._start_khiops_environment_initialization()
 
+    def _set_max_cores(self, core_number):
+        super()._set_max_cores(core_number)
+        self._initialize_mpi_command_args()
+
     def _start_khiops_environment_initialization(self):
         # Set the Khiops process number according to the `KHIOPS_PROC_NUMBER` env var
         if "KHIOPS_PROC_NUMBER" in os.environ:
             self.max_cores = _compute_max_cores_from_proc_number(
                 int(os.environ["KHIOPS_PROC_NUMBER"])
             )
-        # If not defined, set it to the number of system cores + 1
+        # If not defined, set it to the number of system cores
         else:
             self.max_cores = _get_system_cpu_cores()
-            os.environ["KHIOPS_PROC_NUMBER"] = str(self.max_cores + 1)
+            os.environ["KHIOPS_PROC_NUMBER"] = str(self.max_cores)
 
         # Set the Khiops memory limit
         if "KHIOPS_MEMORY_LIMIT" in os.environ:
@@ -1024,6 +1057,16 @@ class KhiopsLocalRunner(KhiopsRunner):
             self.khiops_temp_dir = os.environ["KHIOPS_TMP_DIR"]
         else:
             self.khiops_temp_dir = ""
+
+        # Set the OpenMPI variable OMPI_MCA_plm_rsh_agent to the empty string if not set
+        # This avoids errors on systems without ssh (eg. simple Docker containers)
+        installation_method = _infer_khiops_installation_method()
+        if (
+            platform.system() == "Linux"
+            and installation_method == "binary+pip"
+            and "OMPI_MCA_plm_rsh_agent" not in os.environ
+        ):
+            os.environ["OMPI_MCA_plm_rsh_agent"] = ""
 
         # Initialize the default samples dir
         self._initialize_default_samples_dir()
@@ -1125,60 +1168,61 @@ class KhiopsLocalRunner(KhiopsRunner):
             self._set_mpi_command_args_with_mpiexec(mpiexec_path)
         # If MPI is still not found, then do not use MPI and warn the user
         else:
-            self._set_empty_mpi_command_args_and_raise_warning()
-
-    def _set_empty_mpi_command_args_and_raise_warning(self):
-        self.mpi_command_args = []
-        warnings.warn(
-            "mpiexec is not in PATH, Khiops will run with just one CPU. "
-            "We recommend you to reinstall khiops. "
-            "Go to https://khiops.org for more information."
-        )
+            self.mpi_command_args = []
+            warnings.warn(
+                "mpiexec is not in PATH, Khiops will run with just one CPU. "
+                "We recommend you to reinstall khiops. "
+                "Go to https://khiops.org for more information."
+            )
 
     def _set_mpi_command_args_with_mpiexec(self, mpiexec_path):
-        self.mpi_command_args = [mpiexec_path]
-        mpi_command_args = os.environ.get("KHIOPS_MPI_COMMAND_ARGS")
-        if mpi_command_args is not None:
-            self.mpi_command_args += shlex.split(mpi_command_args)
-        elif platform.system() == "Linux":
-            self.mpi_command_args += [
-                "-bind-to",
-                "hwthread",
-                "-map-by",
-                "core",
-                "-n",
-                str(self.max_cores + 1),
-            ]
-        elif platform.system() == "Darwin":
-            # Note: The '-host localhost' arguments for arm64
-            #       may be removed when mpich > 4.1.2 is released
-            if platform.processor() == "arm":
+        assert mpiexec_path is not None
+        # User-specified MPI command args take precendence over automatic setting
+        if "KHIOPS_MPI_COMMAND_ARGS" in os.environ:
+            self.mpi_command_args = [mpiexec_path] + shlex.split(
+                os.environ["KHIOPS_MPI_COMMAND_ARGS"]
+            )
+        # With only 1 or 2 processes run sequentially (without MPI)
+        elif self.max_cores in (1, 2):
+            self.mpi_command_args = []
+            warnings.warn(
+                f"Too few cores: {self.max_cores}. "
+                "To efficiently run Khiops in parallel at least 3 processes "
+                "are needed. Khiops will run in a single process."
+            )
+        # Otherwise, build the mpiexec command arguments
+        else:
+            self.mpi_command_args = [mpiexec_path]
+            if platform.system() == "Windows":
+                self.mpi_command_args += [
+                    "-al",
+                    "spr:P",
+                    "-n",
+                    str(self.max_cores),
+                    "/priority",
+                    "1",
+                ]
+            elif platform.system() == "Linux":
+                self.mpi_command_args += [
+                    "-bind-to",
+                    "hwthread",
+                    "-map-by",
+                    "core",
+                    "-n",
+                    str(self.max_cores),
+                ]
+            elif platform.system() == "Darwin":
                 self.mpi_command_args += [
                     "-host",
                     "localhost",
                     "-n",
-                    str(self.max_cores + 1),
+                    str(self.max_cores),
                 ]
             else:
-                self.mpi_command_args = [
-                    mpiexec_path,
-                    "-n",
-                    str(self.max_cores + 1),
-                ]
-        elif platform.system() == "Windows":
-            self.mpi_command_args += [
-                "-al",
-                "spr:P",
-                "-n",
-                str(self.max_cores + 1),
-                "/priority",
-                "1",
-            ]
-        else:
-            raise KhiopsEnvironmentError(
-                f"Unsupported OS {platform.system()}. "
-                "Check the supported OSes at https://khiops.org."
-            )
+                raise KhiopsEnvironmentError(
+                    f"Unsupported OS {platform.system()}. "
+                    "Check the supported OSes at https://khiops.org."
+                )
 
     def _initialize_default_samples_dir(self):
         """See class docstring"""
@@ -1239,6 +1283,7 @@ class KhiopsLocalRunner(KhiopsRunner):
         # System-wide installations
         else:
             self._initialize_default_system_wide_khiops_bin_dir()
+        assert self.khiops_bin_dir is not None
 
     def _initialize_default_system_wide_khiops_bin_dir(self):
         # Warn if both KHIOPS_HOME and KhiopsHome are set
