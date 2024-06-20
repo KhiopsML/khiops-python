@@ -1100,9 +1100,9 @@ class KhiopsLocalRunner(KhiopsRunner):
             mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or shutil.which(
                 "mpiexec"
             )
-        # If mpiexec is not in the path, then try to load MPI environment module
-        # so that mpiexec is in the path
-        if mpiexec_path is None:
+        # If mpiexec is not in the path, and the installation method is local,
+        # then try to load MPI environment module so that mpiexec is in the path
+        if mpiexec_path is None and installation_method == "binary+pip":
             # If environment modules are installed, then load the MPI module
             module_init_script_path = os.path.join(
                 os.path.sep, "etc", "profile.d", "modules.sh"
@@ -1130,17 +1130,13 @@ class KhiopsLocalRunner(KhiopsRunner):
                         reverse=True,
                     ):
                         # If MPI environment module is found, attempt to load it
-                        if (
-                            re.search("mpich-[0-9]", line) is not None
-                            and platform.machine() in line
-                            or f"mpich-{platform.machine()}" in line
-                        ):
-                            mpich_module = line
+                        if f"openmpi-{platform.machine()}" in line:
+                            mpi_module = line
                             # Use 'type -P' to get the path to executable,
                             # as 'which' is non-portable
                             shell_command = shlex.split(
                                 f"sh -c 'source {module_init_script_path} && "
-                                f"module unload mpi && module load {mpich_module} && "
+                                f"module unload mpi && module load {mpi_module} && "
                                 "type -P mpiexec'"
                             )
                             with subprocess.Popen(
