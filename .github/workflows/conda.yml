@@ -45,13 +45,13 @@ jobs:
           miniconda-version: latest
           python-version: '3.12'
       - name: Install Dependency Requirements for Building Conda Packages
-        run: conda install -y conda-build
+        run: conda install --override-channels --channel conda-forge -y conda-build
       - name: Build the Conda Package
         # Note: The "khiops-dev" conda channel is needed to retrieve the "khiops-core" package.
         #       The "test" part of the conda recipe needs this package.
         run: |
-          conda build --channel conda-forge --channel khiops-dev \
-            --output-folder ./khiops-conda ./packaging/conda
+          conda build --override-channels --channel conda-forge \
+            --channel khiops-dev --output-folder ./khiops-conda ./packaging/conda
       - name: Upload Conda Package Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -92,17 +92,10 @@ jobs:
         run: |
           KHIOPS_CORE_VERSION="${{ inputs.khiops-core-version || env.DEFAULT_KHIOPS_CORE_VERSION }}"
           echo "KHIOPS_CORE_VERSION=$KHIOPS_CORE_VERSION" >> "$GITHUB_ENV"
-      - name: Install the Khiops Conda package (Windows)
-        if: runner.os == 'Windows'
+      - name: Install the Khiops Conda package
         run: |
-          conda install --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
+          conda install --override-channels --channel conda-forge --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
           conda install --override-channels --channel conda-forge --channel ./khiops-conda/ khiops
-      # In Linux/macOS we need the conda-forge channel to install their pinned versions
-      - name: Install the Khiops Conda package (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          conda install --channel conda-forge --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
-          conda install --channel ./khiops-conda/ khiops
       - name: Test Khiops Installation Status
         run: kh-status
       - name: Download Sample Datasets
@@ -149,7 +142,7 @@ jobs:
           miniconda-version: latest
           python-version: '3.12'
       - name: Install Requirement Packages
-        run: conda install -y anaconda-client conda-index
+        run: conda install --override-channels --channel conda-forge -y anaconda-client conda-index
       - name: Reindex the package directory
         run: python -m conda_index ./khiops-conda
       - name: Upload the Package to anaconda.org
