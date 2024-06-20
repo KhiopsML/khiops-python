@@ -71,9 +71,9 @@ RUN true \
 ARG PYTHON_VERSIONS
 RUN /bin/bash -c 'for version in ${PYTHON_VERSIONS}; \
 do \
-    /root/miniconda3/bin/conda create -y -n py${version} python=${version}; \
-    /root/miniconda3/bin/conda create -y -n py${version}_conda python=${version}; \
-    /root/miniconda3/bin/conda install -y -n py${version}_conda -c conda-forge -c khiops-dev khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
+    /root/miniconda3/bin/conda create --override-channels --channel conda-forge -y -n py${version} python=${version}; \
+    /root/miniconda3/bin/conda create --override-channels --channel conda-forge -y -n py${version}_conda python=${version}; \
+    /root/miniconda3/bin/conda install --override-channels --channel conda-forge -y -n py${version}_conda --channel khiops-dev khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
 done'
 
 RUN mkdir -p /scripts
