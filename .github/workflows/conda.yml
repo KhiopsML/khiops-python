@@ -72,7 +72,6 @@ jobs:
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
           - {os: windows-2019, json-image: '{"image": null}'}
           - {os: windows-2022, json-image: '{"image": null}'}
-          - {os: macos-11, json-image: '{"image": null}'}
           - {os: macos-12, json-image: '{"image": null}'}
           - {os: macos-13, json-image: '{"image": null}'}
           - {os: macos-14, json-image: '{"image": null}'}
