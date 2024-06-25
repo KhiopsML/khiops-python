@@ -8,51 +8,11 @@ import os
 import sys
 import textwrap
 
-
-def create_boilerplate_code(script_name):
-    if script_name == "samples":
-        boilerplate_code = [
-            "import os\n",
-            "from math import sqrt\n",
-            "from os import path\n",
-            "\n",
-            "from khiops import core as kh\n",
-            "\n",
-        ]
-    elif script_name == "samples_sklearn":
-        boilerplate_code = [
-            "import os\n",
-            "import pickle\n",
-            "from os import path\n",
-            "\n",
-            "import pandas as pd\n",
-            "from sklearn import metrics\n",
-            "from sklearn.compose import ColumnTransformer\n",
-            "from sklearn.experimental import enable_hist_gradient_boosting\n",
-            "from sklearn.ensemble import HistGradientBoostingClassifier\n",
-            "from sklearn.datasets import fetch_20newsgroups\n",
-            "from sklearn.feature_extraction.text import HashingVectorizer\n",
-            "from sklearn.model_selection import train_test_split\n",
-            "from sklearn.pipeline import Pipeline\n",
-            "from sklearn.preprocessing import OneHotEncoder\n",
-            "\n",
-            "from khiops import core as kh\n",
-            "from khiops.sklearn import (\n",
-            "    KhiopsClassifier,\n",
-            "    KhiopsCoclustering,\n",
-            "    KhiopsEncoder,\n",
-            "    KhiopsRegressor,\n",
-            ")\n",
-        ]
-    else:
-        raise ValueError(f"Invalid samples script name '{script_name}'")
-    return boilerplate_code
+import black
 
 
 def create_header_cells(script_name):
     """Creates the header cells for the notebook"""
-    boilerplate_code = create_boilerplate_code(script_name)
-
     # Create the boilerplate cells
     cells = [
         {
@@ -66,39 +26,41 @@ def create_header_cells(script_name):
                 "[Khiops](https://khiops.org) before using this this notebook",
             ],
         },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {"collapsed": True},
-            "outputs": [],
-            "source": boilerplate_code,
-        },
     ]
     return cells
 
 
-def create_sample_cell(sample_method):
+def create_sample_cells(sample_method):
     """Creates a code cell and an execution cell for the specified method"""
 
+    # Create the code block
+    code, docstring = split_docstring(inspect.getsource(sample_method))
+    code = textwrap.dedent(code)
+    code = black.format_str(code, mode=black.Mode())
+
     # Create the cell source as a list of lines
-    sample_method_source = inspect.getsource(sample_method)
-    sample_source_list = [line + "\n" for line in sample_method_source.split("\n")]
-    sample_source_list += ["#Run sample\n", sample_method.__name__ + "()"]
+    code_list = [line + "\n" for line in code.rstrip().split("\n")]
+    code_list[-1] = code_list[-1].rstrip()
 
-    sample_execution_cell = {
-        "cell_type": "code",
-        "execution_count": None,
-        "metadata": {},
-        "outputs": [],
-        "source": sample_source_list,
-    }
+    sample_execution_cells = [
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [f"### `{sample_method.__name__}()`\n\n", f"{docstring}\n"],
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": code_list,
+        },
+    ]
 
-    return sample_execution_cell
+    return sample_execution_cells
 
 
 def create_rest_page_header(script_name):
-    boilerplate_code = "".join(create_boilerplate_code(script_name))
-    indented_boilerplate_code = textwrap.indent(boilerplate_code, "    ")
     subtitle = "The code snippets on this page demonstrate the basic use of the "
     if script_name == "samples":
         title = "Samples core"
@@ -139,38 +101,37 @@ def create_rest_page_header(script_name):
         "    from khiops.tools import download_datasets\n"
         "    download_datasets()\n"
         "\n"
-        "Before copying any code snippet make sure to precede it with following\n"
-        "preamble:\n"
-        "\n"
-        ".. code-block:: python\n"
-        "\n"
-        f"{indented_boilerplate_code}"
         "\n"
         "Samples\n"
         "-------\n"
     )
 
 
-def remove_docstring(source):
-    docstring_open = source.find('"""')
-    if docstring_open == -1:
+def split_docstring(source):
+    docstring_open_quote = source.find('"""')
+    if docstring_open_quote == -1:
         source_without_docstring = sample_source
+        docstring = ""
     else:
-        docstring_close = source[docstring_open + 3 :].find('"""')
-        source_without_docstring = source[docstring_open + 3 + docstring_close + 4 :]
-    return source_without_docstring
+        docstring_close_quote = (
+            docstring_open_quote + 3 + source[docstring_open_quote + 3 :].find('"""')
+        )
+        source_without_docstring = source[docstring_close_quote + 4 :]
+        docstring = source[docstring_open_quote + 3 : docstring_close_quote]
+    return source_without_docstring, docstring
 
 
 def create_rest_page_section(sample_function):
-    code = f"def {sample_function.__name__}():\n" + remove_docstring(
-        inspect.getsource(sample_function)
-    )
-    indented_code = textwrap.indent(code, "    ")
+    code, _ = split_docstring(inspect.getsource(sample_function))
+    code = textwrap.dedent(code)
+    code = black.format_str(code, mode=black.Mode())
+    code = textwrap.indent(code, "    ")
+    code = code.rstrip()
     return (
         f".. autofunction:: {sample_function.__name__}\n"
         ".. code-block:: python\n"
         "\n"
-        f"{indented_code}"
+        f"{code}"
     )
 
 
@@ -184,6 +145,7 @@ def main(args):
 
     # Sanity check
     script_path = os.path.join(args.samples_dir, f"{script_name}.py")
+    print(f"Converting to format '{args.format}' samples script at {script_path}")
     if os.path.abspath(script_path) == os.path.abspath(args.output_path):
         print("error: input and output paths are the same")
         sys.exit(1)
@@ -210,7 +172,7 @@ def main(args):
         notebook_objects = {}
         notebook_objects["cells"] = create_header_cells(script_name)
         for sample_method in samples.exported_samples:
-            notebook_objects["cells"].append(create_sample_cell(sample_method))
+            notebook_objects["cells"].extend(create_sample_cells(sample_method))
         notebook_objects["metadata"] = {}
         notebook_objects["nbformat"] = 4
         notebook_objects["nbformat_minor"] = 2

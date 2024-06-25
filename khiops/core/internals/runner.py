@@ -72,7 +72,7 @@ def get_dir_status(a_dir):
     return status
 
 
-def check_samples_dir(samples_dir):
+def _check_samples_dir(samples_dir):
     # Warn if there are problems with the samples_dir
     samples_dir_status = get_dir_status(samples_dir)
     download_msg = (
@@ -1460,13 +1460,13 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _set_samples_dir(self, samples_dir):
         """Checks and sets the samples directory"""
-        check_samples_dir(samples_dir)
+        _check_samples_dir(samples_dir)
         super()._set_samples_dir(samples_dir)
 
     def _get_samples_dir(self):
         # Check the samples dir once (the check emmits only warnings)
         if not self._samples_dir_checked:
-            check_samples_dir(self._samples_dir)
+            _check_samples_dir(self._samples_dir)
             self._samples_dir_checked = True
         return self._samples_dir
 
