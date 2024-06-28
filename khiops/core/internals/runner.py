@@ -1155,13 +1155,13 @@ class KhiopsLocalRunner(KhiopsRunner):
                                     break
                                 if mpiexec_path is not None:
                                     self._set_mpi_command_args_with_mpiexec(
-                                        mpiexec_path
+                                        mpiexec_path, installation_method
                                     )
                             break
 
         # If MPI is found, then set the path to mpiexec accordingly
         if mpiexec_path is not None:
-            self._set_mpi_command_args_with_mpiexec(mpiexec_path)
+            self._set_mpi_command_args_with_mpiexec(mpiexec_path, installation_method)
         # If MPI is still not found, then do not use MPI and warn the user
         else:
             self.mpi_command_args = []
@@ -1171,7 +1171,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                 "Go to https://khiops.org for more information."
             )
 
-    def _set_mpi_command_args_with_mpiexec(self, mpiexec_path):
+    def _set_mpi_command_args_with_mpiexec(self, mpiexec_path, installation_method):
         assert mpiexec_path is not None
         # User-specified MPI command args take precendence over automatic setting
         if "KHIOPS_MPI_COMMAND_ARGS" in os.environ:
@@ -1199,11 +1199,10 @@ class KhiopsLocalRunner(KhiopsRunner):
                     "1",
                 ]
             elif platform.system() == "Linux":
+                # For Linux native installations we use OpenMPI
+                if installation_method == "binary+pip":
+                    self.mpi_command_args.append("--quiet")
                 self.mpi_command_args += [
-                    "-bind-to",
-                    "hwthread",
-                    "-map-by",
-                    "core",
                     "-n",
                     str(self.max_cores),
                 ]
