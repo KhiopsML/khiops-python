@@ -981,6 +981,12 @@ class KhiopsLocalRunner(KhiopsRunner):
       them:
 
       - ``KHIOPS_MPI_COMMAND_ARGS``: arguments to the ``mpiexec`` command
+      - ``KHIOPS_MPI_VERBOSE``: verbosity of the MPI command; if different from "true",
+        then it adds the `--quiet` option; else, it does nothing. Only works if:
+
+        - The OS is Linux, and
+        - the installation is Khiops system-wide + ``khiops-python`` ``pip``, and
+        - the environment variable `KHIOPS_MPI_COMMAND_ARGS` is not set
       - ``KHIOPS_MPIEXEC_PATH``: path to the ``mpiexec`` command
       - ``KHIOPS_MPI_LIB``: *Linux and MacOS only* path to the MPI library; added to
         the beginning of ``LD_LIBRARY_PATH``
@@ -1200,7 +1206,11 @@ class KhiopsLocalRunner(KhiopsRunner):
                 ]
             elif platform.system() == "Linux":
                 # For Linux native installations we use OpenMPI
-                if installation_method == "binary+pip":
+                # Also honor `KHIOPS_MPI_VERBOSE`
+                if (
+                    installation_method == "binary+pip"
+                    and os.environ.get("KHIOPS_MPI_VERBOSE") != "true"
+                ):
                     self.mpi_command_args.append("--quiet")
                 self.mpi_command_args += [
                     "-n",

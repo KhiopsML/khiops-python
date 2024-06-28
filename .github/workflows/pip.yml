@@ -71,6 +71,8 @@ jobs:
       - name: Run tests
         env:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
+          # Do not add `--quiet` to OpenMPI
+          KHIOPS_MPI_VERBOSE: true
           # This is needed so that OpenMPI's mpiexec can be run as root
           OMPI_ALLOW_RUN_AS_ROOT: 1
           OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1

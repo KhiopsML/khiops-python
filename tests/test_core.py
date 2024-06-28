@@ -8,6 +8,7 @@
 import glob
 import io
 import os
+import platform
 import shlex
 import shutil
 import sys
@@ -2660,6 +2661,52 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                     del os.environ[fixture["variable"]]
                 else:
                     os.environ[fixture["variable"]] = old_value
+
+    @unittest.skipIf(
+        platform.system() != "Linux", "Skipping test for non-Linux platform"
+    )
+    def test_mpi_command_verbosity_control(self):
+        """Test MPI command verbosity control via KHIOPS_MPI_VERBOSE"""
+        # Get previous MPI command verbosity status
+        khiops_mpi_verbose = os.environ.get("KHIOPS_MPI_VERBOSE")
+
+        # Set MPI command to non-verbose
+        os.environ["KHIOPS_MPI_VERBOSE"] = "false"
+
+        # Create a fresh runner and initialize its env
+        with MockedRunnerContext(create_mocked_raw_run(False, False, 0)) as runner:
+            pass
+
+        # Look-up installation method from the runner's status message
+        install_method = None
+        for status_line in runner._build_status_message()[0].splitlines():
+            if status_line.startswith("install type"):
+                install_method = status_line.split(":")[1].strip()
+                break
+
+        # By default, "--quiet" is an OpenMPI command argument
+        if install_method == "binary+pip":
+            try:
+                self.assertIn("--quiet", runner.mpi_command_args)
+            # Restore original MPI command verbosity
+            finally:
+                if khiops_mpi_verbose is not None:
+                    os.environ["KHIOPS_MPI_VERBOSE"] = khiops_mpi_verbose
+
+        # Set MPI command to verbose
+        os.environ["KHIOPS_MPI_VERBOSE"] = "true"
+
+        # Create a fresh runner and initialize its env
+        with MockedRunnerContext(create_mocked_raw_run(False, False, 0)) as runner:
+            pass
+
+        # Now, "--quiet" is not an MPI command argument anymore
+        try:
+            self.assertNotIn("--quiet", runner.mpi_command_args)
+        # Restore original MPI command verbosity
+        finally:
+            if khiops_mpi_verbose is not None:
+                os.environ["KHIOPS_MPI_VERBOSE"] = khiops_mpi_verbose
 
     def test_mpi_command_is_updated_on_max_cores_update(self):
         """Test MPI command is updated on max_cores update"""
