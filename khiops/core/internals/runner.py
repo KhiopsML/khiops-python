@@ -294,6 +294,62 @@ def _check_executable(bin_path):
         )
 
 
+def get_linux_distribution_name():
+    """Detect Linux distribution name
+
+    Parses the `NAME` variable defined in the  `/etc/os-release` or
+    `/usr/lib/os-release` files and converts it to lowercase.
+
+    Returns
+    -------
+    str
+        Name of the Linux distribution, converted to lowecase
+
+    Raises
+    ------
+    OSError
+        If neither `/etc/os-release` nor `/usr/lib/os-release` are found
+    """
+
+    def get_linux_distribution_from_os_release_file(os_release_file_path):
+        # The `NAME` variable is always defined according to the freedesktop.org
+        # standard:
+        # https://www.freedesktop.org/software/systemd/man/latest/os-release.html
+        with open(os_release_file_path, encoding="ascii") as os_release_info_file:
+            for entry in os_release_info_file:
+                if entry.startswith("NAME"):
+                    linux_distribution = entry.split("=")[-1].strip('"\n')
+                    break
+        return linux_distribution
+
+    assert platform.system() == "Linux"
+
+    # If Python version >= 3.10, use standard library support; see
+    # https://docs.python.org/3/library/platform.html#platform.freedesktop_os_release
+    python_ver_major, python_ver_minor, _ = platform.python_version_tuple()
+    if int(python_ver_major) >= 3 and int(python_ver_minor) >= 10:
+        linux_distribution = platform.freedesktop_os_release()["NAME"]
+
+    # If Python version < 3.10, determine the Linux distribution manually,
+    # but mimic the behavior of Python >= 3.10 standard library support
+    else:
+        # First try to parse /etc/os-release
+        try:
+            linux_distribution = get_linux_distribution_from_os_release_file(
+                os.path.join(os.sep, "etc", "os-release")
+            )
+        except FileNotFoundError:
+            # Fallback on parsing /usr/lib/os-release
+            try:
+                linux_distribution = get_linux_distribution_from_os_release_file(
+                    os.path.join(os.sep, "usr", "lib", "os-release")
+                )
+            # Mimic `platform.freedesktop_os_release` function behavior
+            except FileNotFoundError as error:
+                raise OSError from error
+    return linux_distribution.lower()
+
+
 class KhiopsRunner(ABC):
     """Abstract Khiops Python runner to be re-implemented"""
 
@@ -1058,15 +1114,27 @@ class KhiopsLocalRunner(KhiopsRunner):
         else:
             self.khiops_temp_dir = ""
 
-        # Set the OpenMPI variable OMPI_MCA_plm_rsh_agent to the empty string if not set
-        # This avoids errors on systems without ssh (eg. simple Docker containers)
         installation_method = _infer_khiops_installation_method()
-        if (
-            platform.system() == "Linux"
-            and installation_method == "binary+pip"
-            and "OMPI_MCA_plm_rsh_agent" not in os.environ
-        ):
-            os.environ["OMPI_MCA_plm_rsh_agent"] = ""
+        if platform.system() == "Linux" and installation_method == "binary+pip":
+            # Set the OpenMPI variable OMPI_MCA_plm_rsh_agent to the empty string
+            # if not set
+            # This avoids errors on systems without ssh (eg. simple Docker containers)
+            if "OMPI_MCA_plm_rsh_agent" not in os.environ:
+                os.environ["OMPI_MCA_plm_rsh_agent"] = ""
+
+            # Set the OpenMPI variable OMPI_MCA_btl_vader_single_copy_mechanism
+            # to the "none" string value to remove the mpi message
+            # "Read -1, expected 65536, errno = 1" that appears on Docker
+            if "OMPI_MCA_btl_vader_single_copy_mechanism" not in os.environ:
+                os.environ["OMPI_MCA_btl_vader_single_copy_mechanism"] = "none"
+
+            # Set the OpenMPI variable PSM3_DEVICES to the "self" string value to
+            # fix issue https://github.com/KhiopsML/khiops/issues/307 on Rocky
+            if (
+                get_linux_distribution_name() == "rocky linux"
+                and "PSM3_DEVICES" not in os.environ
+            ):
+                os.environ["PSM3_DEVICES"] = "self"
 
         # Initialize the default samples dir
         self._initialize_default_samples_dir()

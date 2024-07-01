@@ -15,7 +15,7 @@ import unittest
 
 import khiops.core as kh
 from khiops.core.exceptions import KhiopsEnvironmentError
-from khiops.core.internals.runner import KhiopsLocalRunner
+from khiops.core.internals.runner import KhiopsLocalRunner, get_linux_distribution_name
 from khiops.extras.docker import KhiopsDockerRunner
 from khiops.sklearn.estimators import KhiopsClassifier
 from tests.test_helper import KhiopsTestHelper
@@ -34,7 +34,7 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         """Test that local runner has executable mpiexec on Linux if MPI is installed"""
         # Check package is installed on supported platform:
         # Check /etc/os-release for Linux version
-        linux_distribution = None
+        linux_distribution = get_linux_distribution_name()
         openmpi_found = None
         with open(
             os.path.join(os.sep, "etc", "os-release"), encoding="ascii"
