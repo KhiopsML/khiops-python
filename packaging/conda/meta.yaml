@@ -1,7 +1,8 @@
 {% set metadata = load_setup_py_data(setup_file='../../setup.py', from_recipe_dir=True) %}
 package:
   name: {{ metadata.get('name') }}
-  version: {{ metadata.get('version') }}
+  # The Conda version cannot contain the '-' character, so we eliminate it
+  version: {{ metadata.get('version') | replace('-', '') }}
 
 source:
   path: ../../
