@@ -30,6 +30,8 @@ def create_boilerplate_code(script_name):
             "from sklearn.compose import ColumnTransformer\n",
             "from sklearn.experimental import enable_hist_gradient_boosting\n",
             "from sklearn.ensemble import HistGradientBoostingClassifier\n",
+            "from sklearn.datasets import fetch_20newsgroups\n",
+            "from sklearn.feature_extraction.text import HashingVectorizer\n",
             "from sklearn.model_selection import train_test_split\n",
             "from sklearn.pipeline import Pipeline\n",
             "from sklearn.preprocessing import OneHotEncoder\n",

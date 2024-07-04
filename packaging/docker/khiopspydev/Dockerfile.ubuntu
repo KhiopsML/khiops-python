@@ -5,32 +5,46 @@ FROM ghcr.io/khiopsml/khiops/khiopsdev-${KHIOPSDEV_OS}:latest AS khiopsdev
 LABEL maintainer="khiops.team@orange.com"
 LABEL description="Container for the development of khiops-python"
 
-# Install dev tools; build and install Khiops
+# Install dev tools and miniconda3 (for the unit tests); build and install Khiops
 ARG KHIOPS_REVISION
 RUN true \
   # Install git (for khiops-python version calculation) and pip \
   && apt-get -y update \
-  && apt-get -y --no-install-recommends install git python3-pip zip pandoc \
-  # Obtain the Khiops sources \
-  && git clone https://github.com/khiopsml/khiops.git \
-  && cd khiops \
-  && git checkout ${KHIOPS_REVISION} \
-  # Build and install khiops \
-  # Note: We build the JARs and KNI because the `cmake --install` command below doesn't work \
-  && cmake --preset linux-gcc-release -DTESTING=OFF -DBUILD_JARS=ON -DCMAKE_INSTALL_PREFIX= \
-  && cmake --build --preset linux-gcc-release --parallel \
-       --target MODL MODL_Coclustering KhiopsNativeInterface norm_jar khiops_jar \
-  && cmake --install ./build/linux-gcc-release \
-  && cd .. \
+  && apt-get -y --no-install-recommends install git python3-pip zip pandoc wget \
+  # Get Linux distribution codename \
+  && if [ -f /etc/os-release ]; then . /etc/os-release; fi \
+  # Obtain the Khiops native package \
+  && KHIOPS_PKG_FILE=$KHIOPS_REVISION/khiops-core-openmpi_$KHIOPS_REVISION-1-$VERSION_CODENAME.amd64.deb \
+  && wget -O KHIOPS_CORE.deb "https://github.com/KhiopsML/khiops/releases/download/${KHIOPS_PKG_FILE}" \
+  # Install the Khiops native package \
+  && dpkg -i --force-all KHIOPS_CORE.deb \
+  && apt-get -f -y install \
+  && rm -f KHIOPS_CORE.deb \
   # Set python to python3 \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
-  # Make sure that MPI is mpich \
-  && update-alternatives --set mpirun /usr/bin/mpirun.mpich \
+  # Install miniconda3 to have multiple Python versions via Conda \
+  && mkdir -p /root/miniconda3 && cd /root/miniconda3 \
+  && wget https://repo.anaconda.com/miniconda/Miniconda3-py312_24.1.2-0-Linux-x86_64.sh -O ./Miniconda3-py312_24.1.2-0-Linux-x86_64.sh \
+  && echo "b978856ec3c826eb495b60e3fffe621f670c101150ebcbdeede4f961f22dc438 Miniconda3-py312_24.1.2-0-Linux-x86_64.sh" | sha256sum --check \
+  && bash ./Miniconda3-py312_24.1.2-0-Linux-x86_64.sh -b -u -p /root/miniconda3 \
+  && rm -rf /root/miniconda3/Miniconda3-py312_24.1.2-0-Linux-x86_64.sh \
+  # Make sure that MPI is openmpi \
+  && update-alternatives --set mpirun /usr/bin/mpirun.openmpi \
   # Clean build files \
   && rm -fr /var/lib/apt/lists/* \
   && apt-get clean \
   && rm -rf ./khiops \
   && true
+
+# set up all the supported Python environments under conda (for the unit tests)
+# relying on a variable containing all the versions
+ARG PYTHON_VERSIONS
+RUN /bin/bash -c 'for version in ${PYTHON_VERSIONS}; \
+do \
+    /root/miniconda3/bin/conda create -y -n py${version} python=${version}; \
+    /root/miniconda3/bin/conda create -y -n py${version}_conda python=${version}; \
+    /root/miniconda3/bin/conda install -y -n py${version}_conda -c conda-forge -c khiops-dev khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
+done'
 
 RUN mkdir -p /scripts
 COPY ./run_service.sh /scripts/run_service.sh

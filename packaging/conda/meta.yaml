@@ -1,74 +1,33 @@
 {% set metadata = load_setup_py_data(setup_file='../../setup.py', from_recipe_dir=True) %}
 package:
   name: {{ metadata.get('name') }}
-  version: {{ metadata.get('version') }}
+  # The Conda version cannot contain the '-' character, so we eliminate it
+  version: {{ metadata.get('version') | replace('-', '') }}
 
 source:
   path: ../../
 
 build:
-  script_env:
-    - KHIOPS_REVISION
-    # Variables for signing the MODL executables in osx-arm64.
-    {% if "KHIOPS_APPLE_CERTIFICATE_COMMON_NAME" in os.environ %}
-    - KHIOPS_APPLE_CERTIFICATE_COMMON_NAME # [osx]
-    # Only available when "KHIOPS_APPLE_CERTIFICATE_BASE64" is defined in the environment.
-    {% if "KHIOPS_APPLE_CERTIFICATE_BASE64" in os.environ %}
-    - KHIOPS_APPLE_CERTIFICATE_BASE64      # [osx]
-    - KHIOPS_APPLE_CERTIFICATE_PASSWORD    # [osx]
-    - KHIOPS_APPLE_TMP_KEYCHAIN_PASSWORD   # [osx]
-    {% endif %}
-    {% endif %}
+  number: 0
+  noarch: python
   entry_points:
     - kh-status = khiops.tools:kh_status_entry_point
     - kh-samples = khiops.tools:kh_samples_entry_point
     - kh-download-datasets = khiops.tools:kh_download_datasets_entry_point
     - pk-status = khiops.tools:pk_status_entry_point   # deprecated
-  number: 0
-  # Binary relocation of MODL and MODL_Coclustering is done in build.sh script
-  # This is to be able to sign it, see the script for more details.
-  # Only done when "KHIOPS_APPLE_CERTIFICATE_BASE64" is defined in the environment.
-  {% if "KHIOPS_APPLE_CERTIFICATE_COMMON_NAME" in os.environ %}
-  binary_relocation:                     # [osx]
-    - bin/kh-status                      # [osx]
-    - bin/kh-samples                     # [osx]
-    - bin/kh-download-datasets           # [osx]
-    - bin/pk-status                      # [osx]
-  detect_binary_files_with_prefix: false # [osx]
-  {% endif %}
+  script: |
+    {{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-isolation -vvv
 
-# Note on version pinning:
-# OSX:
-# - mpich=3.4.3 because 4.* is still unstable
-# - requires conda-forge
-# Linux:
-# - mpich=4.0.3 because of bugs of the 3.* series
-# - requires conda-forge
 requirements:
   build:
-    - mpich 4.0.3        # [linux]
-    - mpich-mpicxx 4.0.3 # [linux]
-    - mpich 3.4.3        # [osx]
-    - mpich-mpicxx 3.4.3 # [osx]
-    - msmpi              # [win]
-    - cmake
-    - ninja
     - python
     - setuptools
-    - {{ compiler('cxx') }}
   host:
-    - mpich 4.0.3        # [linux]
-    - mpich-mpicxx 4.0.3 # [linux]
-    - mpich 3.4.3        # [osx]
-    - mpich-mpicxx 3.4.3 # [osx]
-    - msmpi                # [win]
     - python
   run:
-    - mpich 4.0.3   # [linux]
-    - mpich 3.4.3   # [osx]
-    - msmpi         # [win]
-    - pandas >=0.25.3
     - python
+    - khiops-core >=10.2.2b.3,<11.0.0
+    - pandas >=0.25.3
     - scikit-learn >=0.22.2
   run_constrained:
     - boto3 >=1.17.39
@@ -78,8 +37,6 @@ outputs:
   - name: {{ metadata.get('name') }}
     test:
       commands:
-        - MODL -v
-        - MODL_Coclustering -v
         - kh-status
       imports:
         - khiops.core.api

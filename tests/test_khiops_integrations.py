@@ -15,7 +15,7 @@ import unittest
 
 import khiops.core as kh
 from khiops.core.exceptions import KhiopsEnvironmentError
-from khiops.core.internals.runner import KhiopsLocalRunner
+from khiops.core.internals.runner import KhiopsLocalRunner, get_linux_distribution_name
 from khiops.extras.docker import KhiopsDockerRunner
 from khiops.sklearn.estimators import KhiopsClassifier
 from tests.test_helper import KhiopsTestHelper
@@ -34,8 +34,8 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         """Test that local runner has executable mpiexec on Linux if MPI is installed"""
         # Check package is installed on supported platform:
         # Check /etc/os-release for Linux version
-        linux_distribution = None
-        mpich_found = None
+        linux_distribution = get_linux_distribution_name()
+        openmpi_found = None
         with open(
             os.path.join(os.sep, "etc", "os-release"), encoding="ascii"
         ) as os_release_info:
@@ -44,48 +44,48 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
                     linux_distribution = entry.split("=")[-1].strip('"\n').lower()
                     break
 
-        # Check if MPICH is installed on the Debian Linux OS
+        # Check if OpenMPI is installed on the Debian Linux OS
         if linux_distribution == "ubuntu":
             with subprocess.Popen(
-                ["dpkg", "-l", "mpich"],
+                ["dpkg", "-l", "openmpi-bin"],
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 universal_newlines=True,
-            ) as mpich_query:
-                stdout, _ = mpich_query.communicate()
-                if mpich_query.returncode != 0:
-                    mpich_found = False
+            ) as openmpi_query:
+                stdout, _ = openmpi_query.communicate()
+                if openmpi_query.returncode != 0:
+                    openmpi_found = False
                 for line in stdout.splitlines():
-                    if all(field in line for field in ("ii", "mpich")):
-                        # MPICH installed
-                        mpich_found = True
+                    # openmpi installed
+                    if all(field in line for field in ("ii", "openmpi")):
+                        openmpi_found = True
                         break
                 else:
-                    mpich_found = False
+                    openmpi_found = False
 
-        # Check if MPICH is installed on the CentOS / Rocky Linux OS
+        # Check if openmpi is installed on the CentOS / Rocky Linux OS
         elif linux_distribution == "rocky linux":
             with subprocess.Popen(
-                ["yum", "list", "installed", "mpich"],
+                ["yum", "list", "installed", "openmpi"],
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 universal_newlines=True,
-            ) as mpich_query:
-                stdout, _ = mpich_query.communicate()
-                if mpich_query.returncode != 0:
-                    mpich_found = False
+            ) as openmpi_query:
+                stdout, _ = openmpi_query.communicate()
+                if openmpi_query.returncode != 0:
+                    openmpi_found = False
                 for line in stdout.splitlines():
-                    if line.startswith("mpich"):
-                        # MPICH installed
-                        mpich_found = True
+                    # openmpi installed
+                    if line.startswith("openmpi"):
+                        openmpi_found = True
                         break
                 else:
-                    mpich_found = False
+                    openmpi_found = False
         else:
             self.skipTest("Skipping test: platform not Ubuntu or Rocky Linux")
-        if mpich_found:
+        if openmpi_found:
             runner = kh.get_runner()
             if not runner.mpi_command_args:
                 self.fail("MPI support found, but MPI command args not set")
@@ -138,38 +138,46 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         # Get default runner
         default_runner = kh.get_runner()
 
-        # Create a fresh local runner and initialize its default Khiops binary dir
-        runner = KhiopsLocalRunner()
-        runner._initialize_khiops_bin_dir()
+        # Test in a try block to restore the runner if there are unexpected errors
+        try:
+            # Create a fresh local runner and initialize its default Khiops binary dir
+            runner = KhiopsLocalRunner()
+            runner._initialize_khiops_bin_dir()
 
-        # Get runner's default Khiops binary directory
-        default_bin_dir = runner.khiops_bin_dir
+            # Get runner's default Khiops binary directory
+            default_bin_dir = runner.khiops_bin_dir
 
-        # Create temporary directory
-        with tempfile.TemporaryDirectory() as tmp_khiops_bin_dir:
-            # Copy Khiops binaries into the temporary directory
-            for binary_file in os.listdir(default_bin_dir):
-                if binary_file.startswith("MODL"):
-                    shutil.copy(
-                        os.path.join(default_bin_dir, binary_file),
-                        os.path.join(tmp_khiops_bin_dir, binary_file),
-                    )
+            # Create temporary directory
+            with tempfile.TemporaryDirectory() as tmp_khiops_bin_dir:
+                # Copy Khiops binaries into the temporary directory
+                for binary_file in os.listdir(default_bin_dir):
+                    if binary_file.startswith("MODL"):
+                        shutil.copy(
+                            os.path.join(default_bin_dir, binary_file),
+                            os.path.join(tmp_khiops_bin_dir, binary_file),
+                        )
 
-            # Change runner's Khiops binary directory to the temporary directory
-            runner.khiops_bin_dir = tmp_khiops_bin_dir
+                # Change runner's Khiops binary directory to the temporary directory
+                runner.khiops_bin_dir = tmp_khiops_bin_dir
 
-            # Set current runner to the fresh runner
-            kh.set_runner(runner)
+                # Set current runner to the fresh runner
+                kh.set_runner(runner)
 
-            # Test the core API works
-            # Call check_database (could be any other method)
-            with self.assertRaises(kh.KhiopsRuntimeError) as cm:
-                kh.check_database("a.kdic", "dict_name", "data.txt")
-            # Test that MODL executable can be found and launched
-            self.assertIn("khiops ended with return code 2", str(cm.exception))
+                # Test the core API works
+                # Call check_database (could be any other method)
+                with self.assertRaises(kh.KhiopsRuntimeError) as cm:
+                    kh.check_database("a.kdic", "dict_name", "data.txt")
 
-        # Set current runner to the default runner
-        kh.set_runner(default_runner)
+                # Test that MODL executable can be found and launched
+                # Note: The return code is not specified to support older khiops
+                # versions that returned 2 instead of 0 in this case.
+                self.assertIn(
+                    "khiops execution had errors (return code ", str(cm.exception)
+                )
+
+        # Always set back to the default runner
+        finally:
+            kh.set_runner(default_runner)
 
 
 class KhiopsMultitableFitTests(unittest.TestCase):

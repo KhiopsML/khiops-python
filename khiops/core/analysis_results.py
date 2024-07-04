@@ -2178,9 +2178,9 @@ class DataGridDimension:
         # Numerical partition
         if self.partition_type == "Intervals":
             # Check the length of the partition
-            if len(json_partition) < 2:
+            if len(json_partition) < 1:
                 raise KhiopsJSONError(
-                    "'partition' for interval must have length at least 2"
+                    "'partition' for interval must have length at least 1"
                 )
 
             # Initialize intervals
@@ -2841,14 +2841,13 @@ class PredictorPerformance:
         """
         # Search the lower cased metric name in the list, report error if not found
         lowercase_metric_name = metric_name.lower()
-        metric = None
-        for name in self.get_metric_names():
-            if lowercase_metric_name == name:
-                metric = getattr(self, lowercase_metric_name)
-        if metric is None:
+        metric_found = lowercase_metric_name in self.get_metric_names()
+        if metric_found:
+            metric = getattr(self, lowercase_metric_name)
+        else:
             metric_list_msg = ",".join(self.get_metric_names())
             raise ValueError(
-                f"Invalid metric: '{metric_name}'. Choose among {metric_list_msg}"
+                f"Invalid metric: '{metric_name}'. Choose among {metric_list_msg}."
             )
         return metric
 

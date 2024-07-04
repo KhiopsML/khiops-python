@@ -304,10 +304,10 @@ class KhiopsTask:
             and args["output_additional_data_tables"] is not None
         ):
             for data_path in args["output_additional_data_tables"].keys():
-                args["output_additional_data_tables"][
-                    data_path
-                ] = create_unambiguous_khiops_path(
-                    args["output_additional_data_tables"][data_path]
+                args["output_additional_data_tables"][data_path] = (
+                    create_unambiguous_khiops_path(
+                        args["output_additional_data_tables"][data_path]
+                    )
                 )
 
         # Transform to string-like parameters

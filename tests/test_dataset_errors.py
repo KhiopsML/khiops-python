@@ -579,14 +579,14 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = "Table input tuple at X['tables']['D'] must have size 2 not 4"
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
-    def test_dict_spec_source_table_type_must_be_array_like_or_str(self):
+    def test_dict_spec_source_table_type_must_be_adequate(self):
         """Test Dataset raising TypeError when a table entry is not str nor DataFrame"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["tables"]["D"] = (AnotherType(), bad_spec["tables"]["D"][-1])
         expected_msg = type_error_message(
             "Table source at X['tables']['D']",
             bad_spec["tables"]["D"][0],
-            "array-like",
+            "array-like or scipy.sparse.spmatrix",
             str,
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)

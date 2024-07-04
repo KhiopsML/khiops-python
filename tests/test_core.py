@@ -70,6 +70,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "IrisMAPLegacy",
             "IrisR",
             "IrisU",
+            "IrisU2D",
             "LargeSpiral",
             "Latin",
             "LatinGreek",
@@ -404,20 +405,30 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         bytes(f"{dataset}Deployed.csv", encoding="ascii"),
                     ],
                     "kwargs": {
-                        "additional_data_tables": {
-                            bytes(key, encoding="ascii"): bytes(value, encoding="ascii")
-                            for key, value in additional_data_tables[dataset].items()
-                        }
-                        if additional_data_tables[dataset] is not None
-                        else None,
-                        "output_additional_data_tables": {
-                            bytes(key, encoding="ascii"): bytes(value, encoding="ascii")
-                            for key, value in output_additional_data_tables[
-                                dataset
-                            ].items()
-                        }
-                        if output_additional_data_tables[dataset] is not None
-                        else None,
+                        "additional_data_tables": (
+                            {
+                                bytes(key, encoding="ascii"): bytes(
+                                    value, encoding="ascii"
+                                )
+                                for key, value in additional_data_tables[
+                                    dataset
+                                ].items()
+                            }
+                            if additional_data_tables[dataset] is not None
+                            else None
+                        ),
+                        "output_additional_data_tables": (
+                            {
+                                bytes(key, encoding="ascii"): bytes(
+                                    value, encoding="ascii"
+                                )
+                                for key, value in output_additional_data_tables[
+                                    dataset
+                                ].items()
+                            }
+                            if output_additional_data_tables[dataset] is not None
+                            else None
+                        ),
                     },
                 }
                 for dataset in datasets
@@ -2149,6 +2160,7 @@ class KhiopsCoreVariousTests(unittest.TestCase):
             "9.0.1",
             "9.5.1-a1",
             "9.5.1-a2",
+            "9.5.1-a.3",
             "9.5.1",
             "10.0.0",
             "10.0.1",
@@ -2182,11 +2194,16 @@ class KhiopsCoreVariousTests(unittest.TestCase):
     def test_invalid_versions(self):
         """Test invalid versions"""
         for version in [
+            "a.b.c-4",
+            "...",
+            ".0.4",
             "ver10.0.0",
             "10",
             "10.0",
-            "10i.4.0",
+            "10.4.0-5.4," "10i.4.0",
             "10.4b.3",
+            "10.4.1-b..2",
+            "10.4.1.-b.",
             "10.2.@",
             "10.@.2",
             "10.1.2b",
@@ -2582,7 +2599,7 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                 "variable": "KHIOPS_PROC_NUMBER",
                 "value": 2,
                 "runner_field": "max_cores",
-                "expected_field_value": 1,
+                "expected_field_value": 2,
             },
             {
                 "variable": "KHIOPS_PROC_NUMBER",
@@ -2644,6 +2661,24 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                 else:
                     os.environ[fixture["variable"]] = old_value
 
+    def test_mpi_command_is_updated_on_max_cores_update(self):
+        """Test MPI command is updated on max_cores update"""
+        # Create a fresh runner and initialize its env
+        with MockedRunnerContext(create_mocked_raw_run(False, False, 0)) as runner:
+            pass
+
+        # Update max_cores
+        max_cores_updated_value = 100
+        runner.max_cores = max_cores_updated_value
+
+        # Check MPI command arguments contain the updated max_cores
+        # The number of cores in the MPI command is the value after '-n'
+        mpi_command_args = runner.mpi_command_args
+        max_cores_in_mpi_command = int(
+            mpi_command_args[mpi_command_args.index("-n") + 1]
+        )
+        self.assertEqual(max_cores_in_mpi_command, max_cores_updated_value)
+
     def test_undefined_khiops_proc_number_env_var(self):
         """Test default value for KHIOPS_PROC_NUMBER env var
 
@@ -2660,8 +2695,8 @@ class KhiopsCoreVariousTests(unittest.TestCase):
             pass
         # Define default `KHIOPS_PROC_NUMBER` and check the `maxcores` attribute
         # is set accordingly
-        default_khiops_proc_number = _get_system_cpu_cores() + 1
-        self.assertEqual(runner.max_cores, default_khiops_proc_number - 1)
+        default_khiops_proc_number = _get_system_cpu_cores()
+        self.assertEqual(runner.max_cores, default_khiops_proc_number)
 
         # Check default environment variable value is added
         self.assertTrue("KHIOPS_PROC_NUMBER" in os.environ)

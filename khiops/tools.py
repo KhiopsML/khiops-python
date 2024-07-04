@@ -117,7 +117,7 @@ def kh_download_datasets_entry_point():
 
 
 def download_datasets(
-    force_overwrite=False, version="10.1.1", _called_from_shell=False
+    force_overwrite=False, version="10.2.0", _called_from_shell=False
 ):
     """Downloads the Khiops sample datasets for a given version
 
@@ -129,7 +129,7 @@ def download_datasets(
     ==========
     force_overwrite : bool, default ``False``
         If ``True`` it always overwrites the local samples directory even if it exists.
-    version : str, default "10.1.1"
+    version : str, default "10.2.0"
         The version of the samples datasets.
     """
     # Note: The hidden parameter _called_from_shell is just to change the user messages.
@@ -159,6 +159,7 @@ def download_datasets(
         )
 
         # Download the sample zip file and extracted to the home dataset dir
+        print(f"Downloading samples from {samples_zip_url}")
         with tempfile.NamedTemporaryFile() as temp_zip_file, urllib.request.urlopen(
             samples_zip_url
         ) as zip_request:

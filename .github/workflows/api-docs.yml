@@ -68,7 +68,7 @@ jobs:
           path: doc/_build/html/
   # Deploy only when the user explicitly (and manually) orders it
   deploy:
-    if: ${{ github.event_name == 'workflow_dispatch' || inputs.deploy-gh-pages == true }}
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy-gh-pages == true
     runs-on: ubuntu-latest
     needs: build
     environment:

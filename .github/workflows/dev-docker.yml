@@ -1,8 +1,9 @@
 ---
 name: Dev Docker
 env:
-  DEFAULT_KHIOPS_REVISION: main
+  DEFAULT_KHIOPS_REVISION: 10.2.2
   DEFAULT_SERVER_REVISION: main
+  DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12
 on:
   pull_request:
     paths: [packaging/docker/khiopspydev/Dockerfile.*, .github/workflows/dev-docker.yml]
@@ -20,6 +21,10 @@ on:
         type: boolean
         default: true
         description: Push to GH Registry
+      python-versions:
+        type: string
+        default: 3.8 3.9 3.10 3.11 3.12
+        description: Python versions supported by khiops-python
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -60,6 +65,7 @@ jobs:
             "KHIOPS_REVISION=${{ env.KHIOPS_REVISION }}"
             "KHIOPSDEV_OS=${{ matrix.khiopsdev-os }}"
             "SERVER_REVISION=${{ env.SERVER_REVISION }}"
+            "PYTHON_VERSIONS=${{ inputs.python-versions || env.DEFAULT_PYTHON_VERSIONS }}"
           tags: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}:latest
           # Push only on manual request
           push: ${{ inputs.push || false }}
