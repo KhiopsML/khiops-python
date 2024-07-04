@@ -6,6 +6,12 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.2.2.1 - 2024-07-05
+
+### Changed
+- *Internals*:
+  - The OpenMPI backend now executes with the `--allow-run-as-root` option.
+
 ## 10.2.2.0 - 2024-07-03
 
 ### Added
