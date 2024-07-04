@@ -91,9 +91,6 @@ jobs:
           KHIOPS_DOCKER_RUNNER_URL: https://localhost:11000
           KHIOPS_DOCKER_RUNNER_SHARED_DIR: /tmp/sandbox
           KHIOPS_RUNNER_SERVICE_PATH: /scripts/run_service.sh
-          # This is needed so that OpenMPI's mpiexec can be run as root
-          OMPI_ALLOW_RUN_AS_ROOT: 1
-          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
           # Oversubscribe for MPI 4.x
