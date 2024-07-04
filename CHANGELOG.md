@@ -6,6 +6,19 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.2.2.0 - 2024-07-03
+
+### Added
+- (`sklearn`) Support for sparse arrays in sklearn estimators.
+
+### Changed
+- *Internals*:
+  - MPI backend from MPICH to OpenMPI for native + Pip-based Linux installations.
+
+### Fixed
+- `core`
+  - Metric name search in estimator analyis report.
+
 ## 10.2.1.0 - 2024-03-26
 
 ### Added
