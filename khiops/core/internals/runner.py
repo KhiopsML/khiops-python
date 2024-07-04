@@ -1269,7 +1269,7 @@ class KhiopsLocalRunner(KhiopsRunner):
             elif platform.system() == "Linux":
                 # For Linux native installations we use OpenMPI
                 if installation_method == "binary+pip":
-                    self.mpi_command_args.append("--quiet")
+                    self.mpi_command_args += ["--allow-run-as-root", "--quiet"]
                 self.mpi_command_args += [
                     "-n",
                     str(self.max_cores),
