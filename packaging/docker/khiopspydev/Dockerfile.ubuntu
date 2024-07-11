@@ -10,14 +10,15 @@ ARG KHIOPS_REVISION
 RUN true \
   # Install git (for khiops-python version calculation) and pip \
   && apt-get -y update \
-  && apt-get -y --no-install-recommends install git python3-pip zip pandoc wget \
+  && apt-get -y --no-install-recommends install git python3-pip zip pandoc wget ruby-dev \
   # Get Linux distribution codename \
   && if [ -f /etc/os-release ]; then . /etc/os-release; fi \
   # Obtain the Khiops native package \
   && KHIOPS_PKG_FILE=$KHIOPS_REVISION/khiops-core-openmpi_$KHIOPS_REVISION-1-$VERSION_CODENAME.amd64.deb \
   && wget -O KHIOPS_CORE.deb "https://github.com/KhiopsML/khiops/releases/download/${KHIOPS_PKG_FILE}" \
-  # Install the Khiops native package \
-  && dpkg -i --force-all KHIOPS_CORE.deb \
+  # Install the Khiops native package : make it always succeed. \
+  # If dpkg fails it is due to missing dependencies which will be installed by apt in the next line \
+  && (dpkg -i --force-all KHIOPS_CORE.deb || true) \
   && apt-get -f -y install \
   && rm -f KHIOPS_CORE.deb \
   # Set python to python3 \
@@ -53,10 +54,36 @@ RUN true \
   && true
 
 RUN mkdir -p /scripts
-COPY ./run_service.sh /scripts/run_service.sh
-RUN chmod +x /scripts/run_service.sh && \
+COPY ./run_service.sh ./run_fake_remote_file_servers.sh /scripts/
+RUN chmod +x /scripts/run_service.sh /scripts/run_fake_remote_file_servers.sh && \
   useradd -rm -d /home/ubuntu -s /bin/bash -g root -u 1000 ubuntu
 
+# new gcs & s3 drivers (written in C++)
+ARG KHIOPS_GCS_DRIVER_REVISION
+ARG KHIOPS_S3_DRIVER_REVISION
+RUN true \
+    && wget -O khiops-gcs.deb https://github.com/KhiopsML/khiopsdriver-gcs/releases/download/${KHIOPS_GCS_DRIVER_REVISION}/khiops-gcs_${KHIOPS_GCS_DRIVER_REVISION}.deb \
+    && wget -O khiops-s3.deb https://github.com/KhiopsML/khiopsdriver-s3/releases/download/${KHIOPS_S3_DRIVER_REVISION}/khiops-s3_${KHIOPS_S3_DRIVER_REVISION}.deb \
+    && (dpkg -i --force-all khiops-gcs.deb khiops-s3.deb || true) \
+    && apt-get -f -y install \
+    && rm -f khiops-gcs.deb khiops-s3.deb \
+    && true
+
 FROM ghcr.io/khiopsml/khiops-server:${SERVER_REVISION} AS server
+
 FROM khiopsdev AS base
 COPY --from=server /service /usr/bin/service
+
+# S3 fake file server (only in the ubuntu container)
+# Do not use the latest fakes3 version because starting from 1.3 a licence is required
+# if fakes3 is no longer compatible think about switching to an alternative and fully compatible server
+# (https://github.com/jamhall/s3rver:v3.7.1 is not yet for example)
+RUN gem install fakes3:1.2.1 sorted_set
+# Avoid resolving a fake s3-bucket.localhost hostname
+# Alternate builders (buildx via moby buildkit) mount /etc/hosts read-only, the following command will fail
+# echo "127.0.0.1 s3-bucket.localhost" >> /etc/hosts
+# You will have to add the `add-hosts` input instead (https://github.com/docker/build-push-action/#inputs)
+
+# Port on which fakes3 is listening
+EXPOSE 4569
+
