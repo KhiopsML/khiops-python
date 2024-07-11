@@ -27,6 +27,11 @@ from tests.test_helper import KhiopsTestHelper
 
 
 def s3_config_exists():
+    # The alternate env vars...
+    # (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL`)
+    # plus the bucket name in `S3_BUCKET_NAME`
+    # are also usable instead of the credentials and config files
+    # but are regarded unsecure
     return (
         "AWS_SHARED_CREDENTIALS_FILE" in os.environ
         and "AWS_CONFIG_FILE" in os.environ
@@ -53,6 +58,27 @@ class KhiopsRemoteAccessTestsContainer:
 
     class KhiopsRemoteAccessTests(unittest.TestCase, KhiopsTestHelper):
         """Generic class to test remote filesystems and Khiops runners"""
+
+        @classmethod
+        def init_remote_bucket(cls, bucket_name=None, proto=None):
+            # create remote root_temp_dir
+            remote_resource = fs.create_resource(
+                f"{proto}://{bucket_name}/khiops-cicd/tmp"
+            )
+            remote_resource.make_dir()
+
+            # copy to /samples each file
+            for file in (
+                "Iris/Iris.txt",
+                "Iris/Iris.kdic",
+                "SpliceJunction/SpliceJunction.txt",
+                "SpliceJunction/SpliceJunctionDNA.txt",
+                "SpliceJunction/SpliceJunction.kdic",
+            ):
+                fs.copy_from_local(
+                    f"{proto}://{bucket_name}/khiops-cicd/samples/" + file,
+                    os.path.join(kh.get_samples_dir(), file),
+                )
 
         def results_dir_root(self):
             """To be overridden by descendants if needed
@@ -88,8 +114,11 @@ class KhiopsRemoteAccessTestsContainer:
             iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
             output_dir = fs.get_child_path(
                 self.results_dir_root(),
-                f"test_{self.remote_access_test_case()}_remote_files",
+                f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
             )
+
+            # by default the log file will be
+            # in the runner `root_temp_dir` folder that can be remote
             kh.train_predictor(
                 fs.get_child_path(iris_data_dir, "Iris.kdic"),
                 dictionary_name="Iris",
@@ -111,6 +140,10 @@ class KhiopsRemoteAccessTestsContainer:
         def test_khiops_classifier_with_remote_access(self):
             """Test the training of a khiops_classifier with remote resources"""
             # Setup paths
+            # note : the current implementation forces the khiops.log file
+            # to be created in the output_dir (thus local)
+            # (any attempt to override it as an arg
+            # for the fit method will be ignored)
             output_dir = (
                 self._khiops_temp_dir + f"/KhiopsClassifier_output_dir_{uuid.uuid4()}/"
             )
@@ -145,6 +178,10 @@ class KhiopsRemoteAccessTestsContainer:
             KhiopsTestHelper.skip_long_test(self)
 
             # Setup paths
+            # note : the current implementation forces the khiops.log file
+            # to be created in the output_dir (thus local)
+            # (any attempt to override it as an arg
+            # for the fit method will be ignored)
             output_dir = (
                 self._khiops_temp_dir
                 + f"/KhiopsCoclustering_output_dir_{uuid.uuid4()}/"
@@ -177,6 +214,12 @@ class KhiopsRemoteAccessTestsContainer:
             log_file_path = fs.get_child_path(
                 self._khiops_temp_dir, f"khiops_log_{uuid.uuid4()}.log"
             )
+
+            output_dir = fs.get_child_path(
+                self.results_dir_root(),
+                f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
+            )
+
             iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
             with self.assertRaises(kh.KhiopsRuntimeError):
                 kh.train_predictor(
@@ -184,10 +227,7 @@ class KhiopsRemoteAccessTestsContainer:
                     dictionary_name="Iris",
                     data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
                     target_variable="Class",
-                    results_dir=fs.get_child_path(
-                        self.results_dir_root(),
-                        f"test_{self.remote_access_test_case()}_remote_files",
-                    ),
+                    results_dir=output_dir,
                     log_file_path=log_file_path,
                 )
             # Check and remove log file
@@ -204,9 +244,16 @@ class KhiopsS3RemoteFileTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAcces
         if s3_config_exists():
             runner = kh.get_runner()
             bucket_name = os.environ["S3_BUCKET_NAME"]
-            runner.samples_dir = f"s3://{bucket_name}/project/khiops-cicd/samples"
-            cls._khiops_temp_dir = f"s3://{bucket_name}/project/khiops-cicd/tmp"
-            runner.root_temp_dir = f"s3://{bucket_name}/project/khiops-cicd/tmp"
+
+            cls.init_remote_bucket(bucket_name=bucket_name, proto="s3")
+
+            runner.samples_dir = f"s3://{bucket_name}/khiops-cicd/samples"
+            resources_directory = KhiopsTestHelper.get_resources_dir()
+            # WARNING : khiops temp files cannot be remote
+            cls._khiops_temp_dir = f"{resources_directory}/tmp/khiops-cicd"
+            # whereas root_temp_dir (where the log file is saved by default)
+            # can be remote
+            runner.root_temp_dir = f"s3://{bucket_name}/khiops-cicd/tmp"
 
     @classmethod
     def tearDownClass(cls):
@@ -232,8 +279,16 @@ class KhiopsGCSRemoteFileTests(
         if gcs_config_exists():
             runner = kh.get_runner()
             bucket_name = os.environ["GCS_BUCKET_NAME"]
+
+            cls.init_remote_bucket(bucket_name=bucket_name, proto="gs")
+
             runner.samples_dir = f"gs://{bucket_name}/khiops-cicd/samples"
-            cls._khiops_temp_dir = f"gs://{bucket_name}/khiops-cicd/tmp"
+            resources_directory = KhiopsTestHelper.get_resources_dir()
+            resources_directory = KhiopsTestHelper.get_resources_dir()
+            # WARNING : khiops temp files cannot be remote
+            cls._khiops_temp_dir = f"{resources_directory}/tmp/khiops-cicd"
+            # whereas root_temp_dir (where the log file is saved by default)
+            # can be remote
             runner.root_temp_dir = f"gs://{bucket_name}/khiops-cicd/tmp"
 
     @classmethod
