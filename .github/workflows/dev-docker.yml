@@ -5,6 +5,8 @@ env:
   DEFAULT_IMAGE_INCREMENT: 0
   DEFAULT_SERVER_REVISION: main
   DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12 3.13
+  DEFAULT_KHIOPS_GCS_DRIVER_REVISION: 0.0.10
+  DEFAULT_KHIOPS_S3_DRIVER_REVISION: 0.0.12
 on:
   pull_request:
     paths: [packaging/docker/khiopspydev/Dockerfile.*, .github/workflows/dev-docker.yml]
@@ -34,6 +36,14 @@ on:
         type: string
         default: main
         description: Khiops Server Revision
+      khiops-gcs-driver-revision:
+        type: string
+        default: 0.0.10
+        description: Driver version for Google Cloud Storage remote files
+      khiops-s3-driver-revision:
+        type: string
+        default: 0.0.12
+        description: Driver version for AWS-S3 remote files
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -55,6 +65,8 @@ jobs:
           echo "KHIOPSDEV_OS_CODENAME=$(echo '${{ matrix.khiopsdev-os }}' | tr -d '0-9.')" >> "$GITHUB_ENV"
           echo "SERVER_REVISION=${{ inputs.server-revision || env.DEFAULT_SERVER_REVISION }}" >> "$GITHUB_ENV"
           echo "IMAGE_URL=ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}" >> "$GITHUB_ENV"
+          echo "KHIOPS_GCS_DRIVER_REVISION=${{ inputs.khiops-gcs-driver-revision || env.DEFAULT_KHIOPS_GCS_DRIVER_REVISION }}" >> "$GITHUB_ENV"
+          echo "KHIOPS_S3_DRIVER_REVISION=${{ inputs.khiops-s3-driver-revision || env.DEFAULT_KHIOPS_S3_DRIVER_REVISION }}" >> "$GITHUB_ENV"
       - name: Checkout khiops-python sources
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
@@ -81,6 +93,9 @@ jobs:
       - name: Build image and push it to GitHub Container Registry
         uses: docker/build-push-action@v5
         with:
+          # Special hostname used by the integration tests for remote file access
+          # added using inputs because /etc/hosts is read-only for alternate builders (buildx via moby buildkit)
+          add-hosts: s3-bucket.localhost:127.0.0.1
           context: ./packaging/docker/khiopspydev/
           file: ./packaging/docker/khiopspydev/Dockerfile.${{ env.KHIOPSDEV_OS_CODENAME }}
           build-args: |
@@ -88,6 +103,8 @@ jobs:
             "KHIOPSDEV_OS=${{ matrix.khiopsdev-os }}"
             "SERVER_REVISION=${{ env.SERVER_REVISION }}"
             "PYTHON_VERSIONS=${{ inputs.python-versions || env.DEFAULT_PYTHON_VERSIONS }}"
+            "KHIOPS_GCS_DRIVER_REVISION=${{ env.KHIOPS_GCS_DRIVER_REVISION }}"
+            "KHIOPS_S3_DRIVER_REVISION=${{ env.KHIOPS_S3_DRIVER_REVISION }}"
           tags: ${{ env.DOCKER_IMAGE_TAGS }}
           # Push only on manual request
           push: ${{ inputs.push || false }}

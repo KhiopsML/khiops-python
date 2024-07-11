@@ -1,5 +1,5 @@
 ---
-name: Unit Tests
+name: Tests
 env:
   DEFAULT_SAMPLES_REVISION: 10.2.4
   DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.4
@@ -43,7 +43,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.4.0.s3-gcs-remote-files' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -112,7 +112,30 @@ jobs:
       - name: Prepare Unit Tests Environment
         if: github.ref != 'dev' && github.ref != 'main' && ! inputs.run-long-tests
         run: echo "UNITTEST_ONLY_SHORT_TESTS=true" >> "$GITHUB_ENV"
-      - name: Run Unit Tests
+      - name: Prepare Integration Tests on remote files
+        env:
+          AWS_ENDPOINT_URL: http://localhost:4569
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        shell: bash
+        run: |
+          # Prepare AWS-S3 credentials and configuration          
+          mkdir -p ${GITHUB_WORKSPACE}/.aws/
+          cat << EOF > ${GITHUB_WORKSPACE}/.aws/credentials
+          [default]
+          aws_access_key_id=KEY
+          aws_secret_access_key=SECRET           
+          EOF
+          cat << EOF > ${GITHUB_WORKSPACE}/.aws/configuration
+          [default]
+          endpoint_url=${AWS_ENDPOINT_URL}
+          region=eu-north-1          
+          EOF
+          echo "Generated AWS credentials..."
+          cat  ${GITHUB_WORKSPACE}/.aws/credentials
+          echo "Generated AWS configuration..."
+          cat  ${GITHUB_WORKSPACE}/.aws/configuration
+          /scripts/run_fake_remote_file_servers.sh .  # launch the servers in the background
+      - name: Run Unit & Integration Tests
         env:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
           KHIOPS_DOCKER_RUNNER_URL: https://localhost:11000
@@ -124,6 +147,20 @@ jobs:
           rmaps_base_oversubscribe: true
           # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
+          # for the tests with GCS
+          GCS_BUCKET_NAME: gcs-bucket
+          GOOGLE_APPLICATION_CREDENTIALS: XXX
+          # we take advantage of the built-in `STORAGE_EMULATOR_HOST` env variable
+          # that every GCS client can read and lets us use a local fake file server
+          STORAGE_EMULATOR_HOST: http://localhost:4443
+          GCS_DRIVER_LOGLEVEL: info  # set to debug for diagnosis
+          S3_DRIVER_LOGLEVEL: info  # set to debug for diagnosis
+          # for the tests with S3
+          S3_BUCKET_NAME: s3-bucket
+          AWS_SHARED_CREDENTIALS_FILE: ${{ github.workspace }}/.aws/credentials
+          AWS_CONFIG_FILE: ${{ github.workspace }}/.aws/configuration
+          # common var for tests with GCS & S3
+          no_proxy: localhost
         run: |
           # This is needed so that the Git tag is parsed and the khiops-python
           # version is retrieved
@@ -138,10 +175,10 @@ jobs:
             $CONDA run --no-capture-output -n "$CONDA_ENV" coverage report -m
             $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
           done
-      - name: Display Unit Test Reports
+      - name: Display Test Reports
         uses: dorny/test-reporter@v1
         with:
-          name: Unit Tests ${{ matrix.python-version }}
+          name: Run Tests ${{ matrix.python-version }}
           path: >-
             reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml,
             reports/py${{ matrix.python-version }}_conda/TEST-tests.*.*.xml
