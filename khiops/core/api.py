@@ -199,7 +199,7 @@ def _preprocess_task_arguments(task_args):
         else:
             if not task_args["target_variable"] and task_args[
                 "discretization_method"
-            ] not in ("EqualWidth", "EqualLenght", "None"):
+            ] not in ("EqualWidth", "EqualFrequency", "None"):
                 raise ValueError(
                     "'discretization_method' must be either "
                     "'EqualWidth', 'EqualFrequency' or 'None'."
