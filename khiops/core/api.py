@@ -679,8 +679,8 @@ def train_predictor(
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of variable names. If a given tuple
-        contains only one non-empty string generated within the maximum limit
-        ``max_pairs``.
+        contains only one non-empty variable name, then it generates all the pairs
+        containing it (within the limit ``max_pairs``).
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
         The pairs and variables given in ``specific_pairs`` have priority.
@@ -989,8 +989,8 @@ def train_recoder(
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of variable names. If a given tuple
-        contains only one non-empty string generated within the maximum limit
-        ``max_pairs``.
+        contains only one non-empty variable name, then it generates all the pairs
+        containing it (within the limit ``max_pairs``).
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
         The pairs and variables given in ``specific_pairs`` have priority.
