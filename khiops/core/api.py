@@ -199,7 +199,7 @@ def _preprocess_task_arguments(task_args):
         else:
             if not task_args["target_variable"] and task_args[
                 "discretization_method"
-            ] not in ("EqualWidth", "EqualLenght", "None"):
+            ] not in ("EqualWidth", "EqualFrequency", "None"):
                 raise ValueError(
                     "'discretization_method' must be either "
                     "'EqualWidth', 'EqualFrequency' or 'None'."
@@ -260,6 +260,44 @@ def _preprocess_task_arguments(task_args):
     if "selection_value" in task_args:
         if isinstance(task_args["selection_value"], (int, float)):
             task_args["selection_value"] = str(task_args["selection_value"])
+
+    # Warn the simple deprecations for Khiops 11
+    simple_khiops_11_deprecations = [
+        ("max_groups", "the upcoming 'max_parts' parameter", 0),
+        ("max_intervals", "the upcoming 'max_parts' parameter", 0),
+        ("min_group_frequency", None, 0),
+        ("min_interval_frequency", None, 0),
+        ("results_prefix", None, ""),
+        ("snb_predictor", None, True),
+        ("univariate_predictor_number", None, 0),
+    ]
+    for param, replacement_param, param_default_value in simple_khiops_11_deprecations:
+        if param in task_args and task_args[param] != param_default_value:
+            warnings.warn(
+                deprecation_message(
+                    f"'{param}'", "11.0.0", replacement=replacement_param, quote=False
+                )
+            )
+
+    # Warn the grouping/interval supervised method deprecation values for Khiops 11
+    if "target_variable" in task_args and task_args["target_variable"] != "":
+        if "grouping_method" in task_args and task_args["grouping_method"] != "MODL":
+            warnings.warn(
+                deprecation_message(
+                    "'grouping_method' on supervised learning", "11.0.0", quote=False
+                )
+            )
+        if (
+            "discretization_method" in task_args
+            and task_args["discretization_method"] != "MODL"
+        ):
+            warnings.warn(
+                deprecation_message(
+                    f"'discretization_method' on supervised learning",
+                    "11.0.0",
+                    quote=False,
+                )
+            )
 
     return task_called_with_domain
 
@@ -679,8 +717,8 @@ def train_predictor(
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of variable names. If a given tuple
-        contains only one non-empty string generated within the maximum limit
-        ``max_pairs``.
+        contains only one non-empty variable name, then it generates all the pairs
+        containing it (within the limit ``max_pairs``).
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
         The pairs and variables given in ``specific_pairs`` have priority.
@@ -989,8 +1027,8 @@ def train_recoder(
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of variable names. If a given tuple
-        contains only one non-empty string generated within the maximum limit
-        ``max_pairs``.
+        contains only one non-empty variable name, then it generates all the pairs
+        containing it (within the limit ``max_pairs``).
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
         The pairs and variables given in ``specific_pairs`` have priority.
