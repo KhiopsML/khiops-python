@@ -668,8 +668,9 @@ class KhiopsTaskRegistry:
         """`.KhiopsVersion` : Latest introduction version overall tasks"""
         latest_intro_version = KhiopsVersion("1.0")
         for task_family in self.task_families:
-            if task_family.latest_intro_version > latest_intro_version:
-                latest_intro_version = task_family.latest_intro_version
+            latest_intro_version = max(
+                task_family.latest_intro_version, latest_intro_version
+            )
         return latest_intro_version
 
     @property
