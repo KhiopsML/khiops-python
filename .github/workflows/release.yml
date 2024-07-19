@@ -1,0 +1,35 @@
+---
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version of the release
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          # Get Git tags so that versioneer can function correctly
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
+      - name: Update "main" branch
+        run: |-
+          # Merge dev into main, tag the merge commit
+          git merge --no-ff -m'Merge branch 'dev' for release ${{ inputs.version }}' dev
+          git tag ${{ inputs.version }}
+
+          # Make dev point to main
+          git switch dev
+          git reset --hard main
+
+          # Update remotes
+          git switch dev
+          git push
+          git switch main
+          git push
