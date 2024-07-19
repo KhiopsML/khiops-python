@@ -6,6 +6,24 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.2.2.2 - 2024-07-19
+
+### Fixed
+- (`core`) Documentation of the `specific_pairs` parameter for the `train_predictor` and
+  `train_recoder` core API functions.
+
+### Deprecated
+- (`core`) The following parameters of the `train_predictor` core API functions:
+  - `max_groups`
+  - `max_intervals`
+  - `min_group_frequency`
+  - `min_interval_frequency`
+  - `results_prefix`
+  - `snb_predictor`
+  - `univariate_predictor_number`
+  - `discretization_method` for supervised learning
+  - `grouping_method` for supervised learning
+
 ## 10.2.2.1 - 2024-07-05
 
 ### Changed
