@@ -1743,6 +1743,9 @@ def _get_tool_info_khiops9(runner, tool_name):
 
     # If tool executed successfully:
     if return_code == 0:
+        # Since pylint 3.2.5 an used before assignment error appears with no reason
+        # This code is going to be eliminated in Khiops 11 so no need to fix it
+        # pylint: disable=used-before-assignment,possibly-used-before-assignment
         # Parse the contents of the log file
         tmp_log_file_contents = io.BytesIO(fs.read(tmp_log_file_path))
         with io.TextIOWrapper(tmp_log_file_contents, encoding="ascii") as tmp_log_file:
