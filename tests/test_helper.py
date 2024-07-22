@@ -215,11 +215,9 @@ class CoreApiFunctionMock:
                 log_file_path = self.fixture["extra_file_paths"]["log_file_path"]
                 shutil.copyfile(log_file_path, kwargs["log_file_path"])
 
-            # No output: return None
-            if self.return_value_number == 0:
-                mocked_return_value = None
             # Build mocked output
-            elif self.return_value_number >= 1:
+            mocked_return_value = None
+            if self.return_value_number >= 1:
                 # Build the return values list
                 mocked_return_values = []
                 for return_value, is_mocked_file in self.fixture["return_values"]:

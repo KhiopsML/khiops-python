@@ -265,7 +265,8 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
                     "tables": {"Reviews": (features, "User_ID")},
                 }
                 label = reference_table["class"]
-            elif data_type == "file":
+            else:
+                assert data_type == "file"
                 reference_table_path = os.path.join(output_dir, "Reviews.csv")
                 self.create_monotable_data_file(reference_table_path)
                 dataset_spec = {
@@ -274,7 +275,6 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
                     "format": ("\t", True),
                 }
                 label = "class"
-
         elif schema == "star":
             if data_type == "df":
                 (
@@ -292,7 +292,8 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
                     },
                 }
                 label = reference_main_table["class"]
-            elif data_type == "file":
+            else:
+                assert data_type == "file"
                 reference_main_table_path = os.path.join(output_dir, "id_class.csv")
                 reference_secondary_table_path = os.path.join(output_dir, "logs.csv")
                 self.create_multitable_star_data_files(
@@ -307,8 +308,8 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
                     "format": ("\t", True),
                 }
                 label = "class"
-
-        else:  # schema == "snowflake":
+        else:
+            assert schema == "snowflake"
             if data_type == "df":
                 (
                     reference_main_table,
@@ -344,7 +345,8 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
                     ],
                 }
                 label = reference_main_table["class"]
-            elif data_type == "file":
+            else:
+                assert data_type == "file"
                 reference_main_table_path = os.path.join(output_dir, "A.csv")
                 reference_secondary_table_path_1 = os.path.join(output_dir, "B.csv")
                 reference_secondary_table_path_2 = os.path.join(output_dir, "C.csv")
@@ -481,7 +483,7 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
         self.assertEqual(dataset.main_table.name, "A")
         self.assertEqual(len(dataset.secondary_tables), 4)
         dataset_secondary_table_names = set(
-            [secondary_table.name for secondary_table in dataset.secondary_tables]
+            secondary_table.name for secondary_table in dataset.secondary_tables
         )
         self.assertEqual(dataset_secondary_table_names, {"B", "C", "D", "E"})
         self.assertEqual(len(dataset.relations), 4)

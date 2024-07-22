@@ -293,7 +293,7 @@ def _preprocess_task_arguments(task_args):
         ):
             warnings.warn(
                 deprecation_message(
-                    f"'discretization_method' on supervised learning",
+                    "'discretization_method' on supervised learning",
                     "11.0.0",
                     quote=False,
                 )
