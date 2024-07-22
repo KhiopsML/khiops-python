@@ -20,6 +20,15 @@ jobs:
           fetch-depth: 0
       - name: Update "main" branch
         run: |-
+          # Set the git user
+          git config --global user.name "${{ github.triggering_actor }}"
+          git config --global user.email "khiops.team@orange.com"
+
+          # Fetch the dev branch
+          git fetch origin dev
+          git switch dev  # To activate the local copy
+          git switch main
+
           # Merge dev into main, tag the merge commit
           git merge --no-ff -m'Merge branch 'dev' for release ${{ inputs.version }}' dev
           git tag ${{ inputs.version }}
