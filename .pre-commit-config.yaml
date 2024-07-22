@@ -16,6 +16,13 @@ repos:
     hooks:
       - id: isort
         language_version: python3
+        exclude: khiops/samples/samples.py|khiops/samples/samples_sklearn.py
+      - id: isort
+        alias: isort-samples
+        name: isort-samples
+        language_version: python3
+        files: khiops/samples/samples.py|khiops/samples/samples_sklearn.py
+        args: [--no-sections]
   - repo: https://github.com/lyz-code/yamlfix/
     rev: 1.16.0
     hooks:

@@ -11,15 +11,16 @@ This script is fully compatible with the latest Khiops version. If you are using
 older version some samples may fail.
 """
 import argparse
-import os
-from math import sqrt
-from os import path
-
 import khiops
+import os
 from khiops import core as kh
 
 # Disable open files without encoding because samples are simple code snippets
 # pylint: disable=unspecified-encoding
+
+# For ease of use the functions in this module contain (repeated) import statements
+# We disable all pylint warnings related to imports
+# pylint: disable=import-outside-toplevel,redefined-outer-name,reimported
 
 
 def get_khiops_version():
@@ -29,9 +30,13 @@ def get_khiops_version():
 
 def export_dictionary_as_json():
     """Exports a dictionary file ('.kdic') in JSON format ('.kdicj')"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    json_dictionary_file_path = path.join(
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    json_dictionary_file_path = os.path.join(
         "kh_samples",
         "export_dictionary_as_json",
         "Adult.kdicj",
@@ -43,10 +48,14 @@ def export_dictionary_as_json():
 
 def build_dictionary_from_data_table():
     """Automatically creates a dictionary file from a data table"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
     dictionary_name = "AutoAdult"
-    dictionary_file_path = path.join(
+    dictionary_file_path = os.path.join(
         "kh_samples", "build_dictionary_from_data_table", "AutoAdult.kdic"
     )
 
@@ -62,14 +71,20 @@ def detect_data_table_format():
     The user may provide a dictionary file or dictionary domain object specifying the
     table schema. The detection heuristic is more accurate with this information.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    results_dir = path.join("kh_samples", "detect_data_table_format")
-    transformed_data_table_path = path.join(results_dir, "AdultWithAnotherFormat.txt")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    results_dir = os.path.join("kh_samples", "detect_data_table_format")
+    transformed_data_table_path = os.path.join(
+        results_dir, "AdultWithAnotherFormat.txt"
+    )
 
     # Create the output directory
-    if not path.isdir(results_dir):
+    if not os.path.isdir(results_dir):
         os.mkdir(results_dir)
 
     # Detect the format of the table
@@ -105,10 +120,14 @@ def check_database():
 
     The results are stored in the specified log file with at most 50 error messages.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    log_file = path.join("kh_samples", "check_database", "check_database.log")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    log_file = os.path.join("kh_samples", "check_database", "check_database.log")
 
     # Check the database
     kh.check_database(
@@ -122,12 +141,18 @@ def check_database():
 
 def export_dictionary_files():
     """Exports a customized dictionary to ".kdic" and to ".kdicj" (JSON)"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    results_dir = path.join("kh_samples", "export_dictionary_file")
-    output_dictionary_file_path = path.join(results_dir, "ModifiedAdult.kdic")
-    output_dictionary_json_path = path.join(results_dir, "ModifiedAdult.kdicj")
-    alt_output_dictionary_json_path = path.join(results_dir, "AltModifiedAdult.kdicj")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    results_dir = os.path.join("kh_samples", "export_dictionary_file")
+    output_dictionary_file_path = os.path.join(results_dir, "ModifiedAdult.kdic")
+    output_dictionary_json_path = os.path.join(results_dir, "ModifiedAdult.kdicj")
+    alt_output_dictionary_json_path = os.path.join(
+        results_dir, "AltModifiedAdult.kdicj"
+    )
 
     # Load the dictionary domain from initial dictionary file
     # Then obtain the "Adult" dictionary within
@@ -141,11 +166,11 @@ def export_dictionary_files():
     label_variable.used = False
 
     # Create output directory if necessary
-    if not path.exists("kh_samples"):
+    if not os.path.exists("kh_samples"):
         os.mkdir("kh_samples")
         os.mkdir(results_dir)
     else:
-        if not path.exists(results_dir):
+        if not os.path.exists(results_dir):
             os.mkdir(results_dir)
 
     # Export to kdic
@@ -161,10 +186,14 @@ def export_dictionary_files():
 
 def train_predictor():
     """Trains a predictor with a minimal setup"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "train_predictor")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor")
 
     # Train the predictor
     kh.train_predictor(
@@ -179,10 +208,14 @@ def train_predictor():
 
 def train_predictor_file_paths():
     """Trains a predictor and stores the return value of the function"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "train_predictor_file_paths")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_file_paths")
 
     # Train the predictor
     report_file_path, modeling_dictionary_file_path = kh.train_predictor(
@@ -211,12 +244,16 @@ def train_predictor_error_handling():
     keyword argument is available in all functions of the `khiops.core.api`
     submodule).
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths with a nonexistent dictionary file
     dictionary_file_path = "NONEXISTENT_DICTIONARY_FILE.kdic"
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "train_predictor_error_handling")
-    log_file_path = path.join(results_dir, "khiops.log")
-    scenario_path = path.join(results_dir, "scenario._kh")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_error_handling")
+    log_file_path = os.path.join(results_dir, "khiops.log")
+    scenario_path = os.path.join(results_dir, "scenario._kh")
 
     # Train the predictor and handle the error
     try:
@@ -253,12 +290,16 @@ def train_predictor_mt():
     It is a call to `~.api.train_predictor` with additional parameters to handle
     multi-table learning
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    accidents_dir = path.join(kh.get_samples_dir(), "AccidentsSummary")
-    dictionary_file_path = path.join(accidents_dir, "Accidents.kdic")
-    accidents_table_path = path.join(accidents_dir, "Accidents.txt")
-    vehicles_table_path = path.join(accidents_dir, "Vehicles.txt")
-    results_dir = path.join("kh_samples", "train_predictor_mt")
+    accidents_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
+    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_mt")
 
     # Train the predictor. Besides the mandatory parameters, we specify:
     # - A python dictionary linking data paths to file paths for non-root tables
@@ -282,12 +323,16 @@ def train_predictor_mt_with_specific_rules():
     variable construction rules. The list of available rules is found in the field
     ``kh.all_construction_rules``
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    accidents_dir = path.join(kh.get_samples_dir(), "AccidentsSummary")
-    dictionary_file_path = path.join(accidents_dir, "Accidents.kdic")
-    accidents_table_path = path.join(accidents_dir, "Accidents.txt")
-    vehicles_table_path = path.join(accidents_dir, "Vehicles.txt")
-    results_dir = path.join("kh_samples", "train_predictor_mt_with_specific_rules")
+    accidents_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
+    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_mt_with_specific_rules")
 
     # Train the predictor. Besides the mandatory parameters, it is specified:
     # - A python dictionary linking data paths to file paths for non-root tables
@@ -309,15 +354,18 @@ def train_predictor_mt_with_specific_rules():
 
 def train_predictor_mt_snowflake():
     """Trains a multi-table predictor for a dataset with a snowflake schema"""
+    # Imports
+    import os
+    from khiops import core as kh
 
     # Set the file paths
-    accidents_dir = path.join(kh.get_samples_dir(), "Accidents")
-    dictionary_file_path = path.join(accidents_dir, "Accidents.kdic")
-    accidents_table_path = path.join(accidents_dir, "Accidents.txt")
-    vehicles_table_path = path.join(accidents_dir, "Vehicles.txt")
-    users_table_path = path.join(accidents_dir, "Users.txt")
-    places_table_path = path.join(accidents_dir, "Places.txt")
-    results_dir = path.join("kh_samples", "train_predictor_mt_snowflake")
+    accidents_dir = os.path.join(kh.get_samples_dir(), "Accidents")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
+    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
+    users_table_path = os.path.join(accidents_dir, "Users.txt")
+    places_table_path = os.path.join(accidents_dir, "Places.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_mt_snowflake")
 
     # Train the predictor. Besides the mandatory parameters, we specify:
     # - A python dictionary linking data paths to file paths for non-root tables
@@ -343,10 +391,14 @@ def train_predictor_with_train_percentage():
 
     Note: The default is a 70%-30% split
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "train_predictor_with_train_percentage")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_with_train_percentage")
 
     # Train the predictor. Besides the mandatory parameters, it is specified:
     # - A 90% sampling rate for the training dataset
@@ -367,10 +419,14 @@ def train_predictor_with_train_percentage():
 
 def train_predictor_with_trees():
     """Trains a predictor based on 15 trees with a 80%-20% train-test split"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Letter", "Letter.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Letter", "Letter.txt")
-    results_dir = path.join("kh_samples", "train_predictor_with_trees")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Letter", "Letter.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Letter", "Letter.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_with_trees")
 
     # Train the predictor with at most 15 trees (default 10)
     kh.train_predictor(
@@ -388,10 +444,14 @@ def train_predictor_with_trees():
 
 def train_predictor_with_pairs():
     """Trains a predictor with user specified pairs of variables"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "train_predictor_with_pairs")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_with_pairs")
 
     # Train the predictor with at most 10 pairs as follows:
     # - Include pairs age-race and capital_gain-capital_loss
@@ -429,12 +489,16 @@ def train_predictor_with_multiple_parameters():
     Additionally the Khiops runner is set such that the learning is executed with only
     1000 MB of memory.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "train_predictor_with_multiple_parameters")
-    output_script_path = path.join(results_dir, "output_scenario._kh")
-    log_path = path.join(results_dir, "log.txt")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_with_multiple_parameters")
+    output_script_path = os.path.join(results_dir, "output_scenario._kh")
+    log_path = os.path.join(results_dir, "log.txt")
 
     # Set memory limit to 1000 Mb and train with Khiops
     kh.get_runner().max_memory_mb = 1000
@@ -462,11 +526,15 @@ def train_predictor_with_multiple_parameters():
 
 def train_predictor_detect_format():
     """Trains a predictor without specifying the table format"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Iris", "Iris.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Iris", "Iris.txt")
-    results_dir = path.join("kh_samples", "train_predictor_detect_format")
-    transformed_data_table_path = path.join(results_dir, "TransformedIris.txt")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Iris", "Iris.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Iris", "Iris.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_detect_format")
+    transformed_data_table_path = os.path.join(results_dir, "TransformedIris.txt")
 
     # Transform the database format from header_line=True and field_separator=TAB
     # to header_line=False and field_separator=","
@@ -510,14 +578,19 @@ def train_predictor_detect_format():
 
 def train_predictor_with_cross_validation():
     """Trains a predictor with a 5-fold cross-validation"""
+    # Imports
+    import math
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "train_predictor_with_cross_validation")
-    fold_dictionary_file_path = path.join(results_dir, "AdultWithFolding.kdic")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "train_predictor_with_cross_validation")
+    fold_dictionary_file_path = os.path.join(results_dir, "AdultWithFolding.kdic")
 
     # Create the output directory
-    if not path.isdir(results_dir):
+    if not os.path.isdir(results_dir):
         os.mkdir(results_dir)
 
     # Load the learning dictionary object
@@ -598,11 +671,11 @@ def train_predictor_with_cross_validation():
     # Print the mean +- error aucs for both train and test
     mean_train_auc = sum(train_aucs) / fold_number
     squared_error_train_aucs = [(auc - mean_train_auc) ** 2 for auc in train_aucs]
-    sd_train_auc = sqrt(sum(squared_error_train_aucs) / (fold_number - 1))
+    sd_train_auc = math.sqrt(sum(squared_error_train_aucs) / (fold_number - 1))
 
     mean_test_auc = sum(test_aucs) / fold_number
     squared_error_test_aucs = [(auc - mean_test_auc) ** 2 for auc in test_aucs]
-    sd_test_auc = sqrt(sum(squared_error_test_aucs) / (fold_number - 1))
+    sd_test_auc = math.sqrt(sum(squared_error_test_aucs) / (fold_number - 1))
 
     print("final auc")
     print("train auc: " + str(mean_train_auc) + " +- " + str(sd_train_auc))
@@ -616,6 +689,9 @@ def multiple_train_predictor():
     reading dictionary files) and `.AnalysisResults` (for reading training/evaluation
     results from JSON)
     """
+    # Imports
+    import os
+    from khiops import core as kh
 
     def display_test_results(json_result_file_path):
         """Display some of the training results"""
@@ -632,9 +708,9 @@ def multiple_train_predictor():
         )
 
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "multiple_train_predictor")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "multiple_train_predictor")
 
     # Read the dictionary file to obtain an instance of class Dictionary
     dictionary_domain = kh.read_dictionary_file(dictionary_file_path)
@@ -691,11 +767,15 @@ def evaluate_predictor():
 
     It calls `~.api.evaluate_predictor` with only its mandatory parameters.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "evaluate_predictor")
-    model_dictionary_file_path = path.join(results_dir, "Modeling.kdic")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "evaluate_predictor")
+    model_dictionary_file_path = os.path.join(results_dir, "Modeling.kdic")
 
     # Train the predictor
     kh.train_predictor(
@@ -720,11 +800,15 @@ def access_predictor_evaluation_report():
     See `evaluate_predictor` or `train_predictor_with_train_percentage` to see examples
     on how to evaluate a model.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "access_predictor_evaluation_report")
-    evaluation_report_path = path.join(results_dir, "AllReports.khj")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "access_predictor_evaluation_report")
+    evaluation_report_path = os.path.join(results_dir, "AllReports.khj")
 
     # Train the SNB predictor and some univariate predictors
     # Note: Evaluation in test is 30% by default
@@ -793,10 +877,14 @@ def train_recoder():
 
     It is a call to `~.api.train_recoder` with only its mandatory parameters.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "train_recoder")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "train_recoder")
 
     # Train the recoder model
     kh.train_recoder(
@@ -809,10 +897,14 @@ def train_recoder_with_multiple_parameters():
 
     It also creates 10 pair features.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "train_recoder_with_multiple_parameters")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "train_recoder_with_multiple_parameters")
 
     # Train the recoder model
     kh.train_recoder(
@@ -832,12 +924,16 @@ def train_recoder_mt_flatten():
 
     The constructed variables are all kept and no recoding is performed on their values
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    accidents_dir = path.join(kh.get_samples_dir(), "AccidentsSummary")
-    dictionary_file_path = path.join(accidents_dir, "Accidents.kdic")
-    accidents_table_path = path.join(accidents_dir, "Accidents.txt")
-    vehicles_table_path = path.join(accidents_dir, "Vehicles.txt")
-    results_dir = path.join("kh_samples", "train_recoder_mt_flatten")
+    accidents_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
+    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
+    results_dir = os.path.join("kh_samples", "train_recoder_mt_flatten")
 
     # Train the recoder. Besides the mandatory parameters, it is specified:
     # - A python dictionary linking data paths to file paths for non-root tables
@@ -869,12 +965,16 @@ def deploy_model():
     associated dictionary to the input database. The model predictions are written to
     the output database.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "deploy_model")
-    model_dictionary_file_path = path.join(results_dir, "Modeling.kdic")
-    output_data_table_path = path.join(results_dir, "ScoresAdult.txt")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "deploy_model")
+    model_dictionary_file_path = os.path.join(results_dir, "Modeling.kdic")
+    output_data_table_path = os.path.join(results_dir, "ScoresAdult.txt")
 
     # Train the predictor
     kh.train_predictor(
@@ -903,14 +1003,18 @@ def deploy_model_mt():
     associated dictionary to the input database. The model predictions are written to
     the output database.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    accidents_dir = path.join(kh.get_samples_dir(), "AccidentsSummary")
-    dictionary_file_path = path.join(accidents_dir, "Accidents.kdic")
-    accidents_table_path = path.join(accidents_dir, "Accidents.txt")
-    vehicles_table_path = path.join(accidents_dir, "Vehicles.txt")
-    results_dir = path.join("kh_samples", "deploy_model_mt")
-    model_dictionary_file_path = path.join(results_dir, "Modeling.kdic")
-    output_data_table_path = path.join(results_dir, "TransferredAccidents.txt")
+    accidents_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
+    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
+    results_dir = os.path.join("kh_samples", "deploy_model_mt")
+    model_dictionary_file_path = os.path.join(results_dir, "Modeling.kdic")
+    output_data_table_path = os.path.join(results_dir, "TransferredAccidents.txt")
 
     # Train the predictor (see train_predictor_mt for details)
     kh.train_predictor(
@@ -937,16 +1041,20 @@ def deploy_model_mt():
 
 def deploy_model_mt_snowflake():
     """Deploys a classifier model on a dataset with a snowflake schema"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    accidents_dir = path.join(kh.get_samples_dir(), "Accidents")
-    dictionary_file_path = path.join(accidents_dir, "Accidents.kdic")
-    accidents_table_path = path.join(accidents_dir, "Accidents.txt")
-    vehicles_table_path = path.join(accidents_dir, "Vehicles.txt")
-    users_table_path = path.join(accidents_dir, "Users.txt")
-    places_table_path = path.join(accidents_dir, "Places.txt")
-    results_dir = path.join("kh_samples", "deploy_model_mt_snowflake")
-    model_dictionary_file_path = path.join(results_dir, "Modeling.kdic")
-    output_data_table_path = path.join(results_dir, "TransferredAccidents.txt")
+    accidents_dir = os.path.join(kh.get_samples_dir(), "Accidents")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
+    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
+    users_table_path = os.path.join(accidents_dir, "Users.txt")
+    places_table_path = os.path.join(accidents_dir, "Places.txt")
+    results_dir = os.path.join("kh_samples", "deploy_model_mt_snowflake")
+    model_dictionary_file_path = os.path.join(results_dir, "Modeling.kdic")
+    output_data_table_path = os.path.join(results_dir, "TransferredAccidents.txt")
 
     # Train the predictor. Besides the mandatory parameters, we specify:
     # - A python dictionary linking data paths to file paths for non-root tables
@@ -994,12 +1102,16 @@ def deploy_model_expert():
     The "expert" part of this example is the use of the khiops dictionary interface
     and the `.DictionaryDomain` class
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "deploy_model_expert")
-    model_dictionary_file_path = path.join(results_dir, "Modeling.kdic")
-    output_data_table_path = path.join(results_dir, "ScoresAdult.txt")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "deploy_model_expert")
+    model_dictionary_file_path = os.path.join(results_dir, "Modeling.kdic")
+    output_data_table_path = os.path.join(results_dir, "ScoresAdult.txt")
 
     # Train the predictor
     kh.train_predictor(
@@ -1032,11 +1144,15 @@ def deploy_model_expert():
 
 def deploy_classifier_for_metrics():
     """Constructs a small precision-recall curve for a classifier"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "deploy_classifier_for_metrics")
-    output_data_table_path = path.join(results_dir, "ScoresAdult.txt")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "deploy_classifier_for_metrics")
+    output_data_table_path = os.path.join(results_dir, "ScoresAdult.txt")
 
     # Train the classifier for the target "class"
     _, modeling_dictionary_file_path = kh.train_predictor(
@@ -1096,11 +1212,15 @@ def deploy_classifier_for_metrics():
 
 def deploy_regressor_for_metrics():
     """Estimates the R2 coefficient of a regressor"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "deploy_regressor_for_metrics")
-    output_data_table_path = path.join(results_dir, "TrueAndPredictedAges.txt")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "deploy_regressor_for_metrics")
+    output_data_table_path = os.path.join(results_dir, "TrueAndPredictedAges.txt")
 
     # Train the regressor for the target "age" (with 20% train to be quick)
     _, modeling_dictionary_file_path = kh.train_predictor(
@@ -1160,11 +1280,15 @@ def sort_data_table():
     sorts a data table by its default key variable (specified in the table's
     dictionary).
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    accidents_dir = path.join(kh.get_samples_dir(), "AccidentsSummary")
-    dictionary_file_path = path.join(accidents_dir, "Accidents.kdic")
-    accidents_table_path = path.join(accidents_dir, "Accidents.txt")
-    output_data_table_path = path.join(
+    accidents_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
+    output_data_table_path = os.path.join(
         "kh_samples",
         "sort_data_table",
         "SortedAccidents.txt",
@@ -1182,11 +1306,15 @@ def sort_data_table_expert():
     It is a call to `~.api.sort_data_table` with additional parameters to specify the
     sorting fields.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    accidents_dir = path.join(kh.get_samples_dir(), "AccidentsSummary")
-    dictionary_file_path = path.join(accidents_dir, "Accidents.kdic")
-    vehicles_table_path = path.join(accidents_dir, "Vehicles.txt")
-    output_data_table_path = path.join(
+    accidents_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
+    output_data_table_path = os.path.join(
         "kh_samples", "sort_data_table_expert", "SortedVehicles.txt"
     )
 
@@ -1209,11 +1337,15 @@ def extract_keys_from_data_table():
 
     Pre-requisite: the database must be sorted by its key.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    splice_dir = path.join(kh.get_samples_dir(), "SpliceJunction")
-    dictionary_file_path = path.join(splice_dir, "SpliceJunction.kdic")
-    data_table_path = path.join(splice_dir, "SpliceJunctionDNA.txt")
-    output_data_table_path = path.join(
+    splice_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
+    dictionary_file_path = os.path.join(splice_dir, "SpliceJunction.kdic")
+    data_table_path = os.path.join(splice_dir, "SpliceJunctionDNA.txt")
+    output_data_table_path = os.path.join(
         "kh_samples",
         "extract_keys_from_data_table",
         "KeysSpliceJunction.txt",
@@ -1233,11 +1365,15 @@ def train_coclustering():
 
     It is a call to `~.api.train_coclustering` with only its mandatory parameters.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    splice_dir = path.join(kh.get_samples_dir(), "SpliceJunction")
-    dictionary_file_path = path.join(splice_dir, "SpliceJunction.kdic")
-    data_table_path = path.join(splice_dir, "SpliceJunctionDNA.txt")
-    results_dir = path.join("kh_samples", "train_coclustering")
+    splice_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
+    dictionary_file_path = os.path.join(splice_dir, "SpliceJunction.kdic")
+    data_table_path = os.path.join(splice_dir, "SpliceJunctionDNA.txt")
+    results_dir = os.path.join("kh_samples", "train_coclustering")
 
     # Train a coclustering model for variables "SampleId" and "Char"
     coclustering_file_path = kh.train_coclustering(
@@ -1252,12 +1388,16 @@ def train_coclustering():
 
 def simplify_coclustering():
     """Simplifies a coclustering model while preserving 80% of its information"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    splice_dir = path.join(kh.get_samples_dir(), "SpliceJunction")
-    dictionary_file_path = path.join(splice_dir, "SpliceJunction.kdic")
-    data_table_path = path.join(splice_dir, "SpliceJunctionDNA.txt")
-    results_dir = path.join("kh_samples", "simplify_coclustering")
-    coclustering_file_path = path.join(results_dir, "Coclustering.khc")
+    splice_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
+    dictionary_file_path = os.path.join(splice_dir, "SpliceJunction.kdic")
+    data_table_path = os.path.join(splice_dir, "SpliceJunctionDNA.txt")
+    results_dir = os.path.join("kh_samples", "simplify_coclustering")
+    coclustering_file_path = os.path.join(results_dir, "Coclustering.khc")
     simplified_coclustering_file_name = "simplified_coclustering.khc"
 
     # Train coclustering model for variables "SampleId" and "Char"
@@ -1284,12 +1424,12 @@ def simplify_coclustering():
 def extract_clusters():
     """Extract the clusters' id, members, frequencies and typicalities into a file"""
     # Set the file paths
-    splice_dir = path.join(kh.get_samples_dir(), "SpliceJunction")
-    dictionary_file_path = path.join(splice_dir, "SpliceJunction.kdic")
-    data_table_path = path.join(splice_dir, "SpliceJunctionDNA.txt")
-    results_dir = path.join("kh_samples", "extract_clusters")
-    coclustering_file_path = path.join(results_dir, "Coclustering.khc")
-    clusters_file_path = path.join(results_dir, "extracted_clusters.txt")
+    splice_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
+    dictionary_file_path = os.path.join(splice_dir, "SpliceJunction.kdic")
+    data_table_path = os.path.join(splice_dir, "SpliceJunctionDNA.txt")
+    results_dir = os.path.join("kh_samples", "extract_clusters")
+    coclustering_file_path = os.path.join(results_dir, "Coclustering.khc")
+    clusters_file_path = os.path.join(results_dir, "extracted_clusters.txt")
 
     # Train a coclustering model for variables "SampleId" and "Char"
     kh.train_coclustering(
@@ -1306,12 +1446,16 @@ def extract_clusters():
 
 def deploy_coclustering():
     """Deploys an "individual-variable" coclustering"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the initial file paths
-    splice_dir = path.join(kh.get_samples_dir(), "SpliceJunction")
-    data_table_path = path.join(splice_dir, "SpliceJunctionDNA.txt")
-    dictionary_file_path = path.join(splice_dir, "SpliceJunction.kdic")
-    results_dir = path.join("kh_samples", "deploy_coclustering")
-    coclustering_file_path = path.join(results_dir, "Coclustering.khc")
+    splice_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
+    data_table_path = os.path.join(splice_dir, "SpliceJunctionDNA.txt")
+    dictionary_file_path = os.path.join(splice_dir, "SpliceJunction.kdic")
+    results_dir = os.path.join("kh_samples", "deploy_coclustering")
+    coclustering_file_path = os.path.join(results_dir, "Coclustering.khc")
 
     # Train a coclustering model for variables "SampleId" and "Char"
     kh.train_coclustering(
@@ -1344,13 +1488,17 @@ def deploy_coclustering_expert():
 
     This is one of the most complex workflows of the Khiops suite.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the initial file paths
-    splice_dir = path.join(kh.get_samples_dir(), "SpliceJunction")
-    dictionary_file_path = path.join(splice_dir, "SpliceJunction.kdic")
-    data_table_path = path.join(splice_dir, "SpliceJunction.txt")
-    secondary_data_table_path = path.join(splice_dir, "SpliceJunctionDNA.txt")
-    results_dir = path.join("kh_samples", "deploy_coclustering_expert")
-    coclustering_file_path = path.join(results_dir, "Coclustering.khc")
+    splice_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
+    dictionary_file_path = os.path.join(splice_dir, "SpliceJunction.kdic")
+    data_table_path = os.path.join(splice_dir, "SpliceJunction.txt")
+    secondary_data_table_path = os.path.join(splice_dir, "SpliceJunctionDNA.txt")
+    results_dir = os.path.join("kh_samples", "deploy_coclustering_expert")
+    coclustering_file_path = os.path.join(results_dir, "Coclustering.khc")
 
     # Train a coclustering model for variables "SampleId" and "Char"
     print("train coclustering on SpliceJunctionDNA")
@@ -1372,7 +1520,7 @@ def deploy_coclustering_expert():
         "SampleId",
         results_dir,
     )
-    augmented_dictionary_file_path = path.join(results_dir, "Coclustering.kdic")
+    augmented_dictionary_file_path = os.path.join(results_dir, "Coclustering.kdic")
 
     print("prepare_coclustering_deployment with at most two clusters")
     # Extend the already extended dictionary with the new variables from a simplified CC
@@ -1388,10 +1536,10 @@ def deploy_coclustering_expert():
         max_part_numbers={"SampleId": 2},
     )
 
-    reaugmented_dictionary_file_path = path.join(
+    reaugmented_dictionary_file_path = os.path.join(
         results_dir, "ReaugmentedCoclustering.kdic"
     )
-    output_data_table_path = path.join(results_dir, "TransferredSpliceJunction.txt")
+    output_data_table_path = os.path.join(results_dir, "TransferredSpliceJunction.txt")
 
     # Deploy the coclustering with the extended dictionary
     print("deploy_model with the new coclustering based variables")
@@ -1403,7 +1551,7 @@ def deploy_coclustering_expert():
         additional_data_tables={"SpliceJunction`DNA": secondary_data_table_path},
     )
 
-    deployed_dictionary_file_path = path.join(
+    deployed_dictionary_file_path = os.path.join(
         results_dir, "Transferred_Coclustering.kdic"
     )
     print("build_deployed_dictionary to get the new dictionary")
@@ -1420,10 +1568,14 @@ def scenario_prologue():
     .. note::
         This is an **advanced** feature.
     """
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
-    results_dir = path.join("kh_samples", "scenario_prologue")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    results_dir = os.path.join("kh_samples", "scenario_prologue")
 
     # Set the maximum memory "by hand" with an scenario prologue
     kh.get_runner().scenario_prologue = """
@@ -1444,11 +1596,15 @@ def scenario_prologue():
 
 def build_deployed_dictionary():
     """Builds a dictionary file to read the output table of a deployed model"""
+    # Imports
+    import os
+    from khiops import core as kh
+
     # Set the file paths
-    dictionary_file_path = path.join(kh.get_samples_dir(), "Iris", "Iris.kdic")
-    data_table_path = path.join(kh.get_samples_dir(), "Iris", "Iris.txt")
-    results_dir = path.join("kh_samples", "build_deployed_dictionary")
-    deployed_dictionary_file_path = path.join(results_dir, "SNB_Iris_deployed.kdic")
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Iris", "Iris.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Iris", "Iris.txt")
+    results_dir = os.path.join("kh_samples", "build_deployed_dictionary")
+    deployed_dictionary_file_path = os.path.join(results_dir, "SNB_Iris_deployed.kdic")
 
     # Train the predictor
     _, modeling_dictionary_file_path = kh.train_predictor(
@@ -1520,7 +1676,7 @@ exported_samples = [
 def execute_samples(args):
     """Executes all non-interactive samples"""
     # Create the results directory if it does not exist
-    if not path.isdir("./kh_samples"):
+    if not os.path.isdir("./kh_samples"):
         os.mkdir("./kh_samples")
 
     # Set the user-defined samples dir if any
@@ -1537,7 +1693,7 @@ def execute_samples(args):
 
     # Print the execution title
     if execution_samples:
-        print(f"Khiops Python {khiops.__version__} running on Khiops ", end="")
+        print(f"khiops-python {khiops.__version__} running on Khiops ", end="")
         print(f"{kh.get_khiops_version()}\n")
         print(f"Sample datasets location: {kh.get_samples_dir()}")
         print(f"{len(execution_samples)} sample(s) to execute\n")
