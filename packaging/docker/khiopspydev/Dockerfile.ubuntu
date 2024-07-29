@@ -16,9 +16,8 @@ RUN true \
   # Obtain the Khiops native package \
   && KHIOPS_PKG_FILE=$KHIOPS_REVISION/khiops-core-openmpi_$KHIOPS_REVISION-1-$VERSION_CODENAME.amd64.deb \
   && wget -O KHIOPS_CORE.deb "https://github.com/KhiopsML/khiops/releases/download/${KHIOPS_PKG_FILE}" \
-  # Install the Khiops native package \
-  && dpkg -i --force-all KHIOPS_CORE.deb \
-  && apt-get -f -y install \
+  # Install the Khiops native package : do not break immediately if dpkg fails because apt will install the missing dependencies \
+  && (dpkg -i --force-all KHIOPS_CORE.deb || apt-get -f -y install) \
   && rm -f KHIOPS_CORE.deb \
   # Set python to python3 \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
@@ -34,6 +33,18 @@ RUN true \
   && rm -fr /var/lib/apt/lists/* \
   && apt-get clean \
   && rm -rf ./khiops \
+  # Install docker within the image to be able to launch the fake remote file servers for S3 & GCS.
+  # Please note that the container based on the current image must be ran with the --privileged flag
+  # otherwise docker would not start
+  && apt-get update \
+  && apt-get install -y ca-certificates curl \
+  && mkdir -p /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc \
+  && chmod a+r /etc/apt/keyrings/docker.asc \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+            $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+  && apt-get update \
+  && apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
+  && sed -i 's/ulimit -Hn/# ulimit -Hn/g' /etc/init.d/docker \
   && true
 
 # set up all the supported Python environments under conda (for the unit tests)
@@ -48,7 +59,8 @@ done'
 
 RUN mkdir -p /scripts
 COPY ./run_service.sh /scripts/run_service.sh
-RUN chmod +x /scripts/run_service.sh && \
+COPY ./run_fake_remote_file_servers.sh /scripts/run_fake_remote_file_servers.sh
+RUN chmod +x /scripts/*.sh && \
   useradd -rm -d /home/ubuntu -s /bin/bash -g root -u 1000 ubuntu
 
 FROM ghcr.io/khiopsml/khiops-server:${SERVER_REVISION} AS server

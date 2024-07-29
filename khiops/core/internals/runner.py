@@ -1165,8 +1165,15 @@ class KhiopsLocalRunner(KhiopsRunner):
                     )
         # In Conda or local installations, expect mpiexec in the PATH
         else:
-            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or shutil.which(
-                "mpiexec"
+            link_to_mpiexec = shutil.which("mpiexec")
+            # on Arch/Ubuntu systems /bin symlinks to /usr/bin,
+            # therefore we must follow the link to find the executable
+            # otherwise openmpi will raise the error :
+            # "A prefix was supplied to mpiexec that only contained slashes."
+            mpiexec_path = (
+                os.environ.get("KHIOPS_MPIEXEC_PATH")
+                or link_to_mpiexec
+                and os.readlink(link_to_mpiexec)
             )
         # If mpiexec is not in the path, and the installation method is local,
         # then try to load MPI environment module so that mpiexec is in the path
@@ -1592,6 +1599,11 @@ class KhiopsLocalRunner(KhiopsRunner):
             encoding="utf8",
             errors="replace",
             universal_newlines=True,
+            # the environment variables must be passed to khiops
+            # (especially the ones used by the drivers for the remote files,
+            # e.g `STORAGE_EMULATOR_HOST` for GCS, `AWS_*` for S3
+            # )
+            env=os.environ.copy(),
         ) as khiops_process:
             stdout, stderr = khiops_process.communicate()
 
