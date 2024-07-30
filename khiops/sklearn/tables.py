@@ -166,11 +166,27 @@ class Dataset:
                 y,
                 categorical_target=categorical_target,
             )
-        # A sparse matrix
+        # A scipy.sparse.spmatrix
         elif isinstance(X, sp.spmatrix):
             self._init_tables_from_sparse_matrix(
                 X, y, categorical_target=categorical_target
             )
+        # Special rejection for scipy.sparse.sparray (to pass the sklearn tests)
+        # Note: We don't use scipy.sparse.sparray because it is not implemented in scipy
+        # 1.10 which is the latest supporting py3.8
+        elif isinstance(
+            X,
+            (
+                sp.bsr_array,
+                sp.coo_array,
+                sp.csc_array,
+                sp.csr_array,
+                sp.dia_array,
+                sp.dok_array,
+                sp.lil_array,
+            ),
+        ):
+            check_array(X, accept_sparse=False)
         # A tuple spec
         elif isinstance(X, tuple):
             warnings.warn(
