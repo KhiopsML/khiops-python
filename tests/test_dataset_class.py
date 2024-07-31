@@ -565,13 +565,15 @@ class KhiopsConsistensyOfFilesAndDictionariesWithInputDataTests(unittest.TestCas
             target, features = line.split(b"\t")
             feature_row = np.zeros(100)
             for feature in features.strip().split(b" "):
-                feature_index, feature_value = feature.split(b":")
-                try:
-                    feature_value = float(feature_value)
-                # missing value, whence empty string
-                except ValueError:
-                    feature_value = 0.0
-                feature_row[int(feature_index) - 1] = feature_value
+                indexed_feature = feature.split(b":")
+
+                # Skip missing feature
+                if len(indexed_feature) < 2:
+                    continue
+
+                # Set feature value in row at the specified index
+                feature_index, feature_value = indexed_feature
+                feature_row[int(feature_index) - 1] = float(feature_value)
             feature_matrix.append(feature_row)
             target_vector.append(float(target))
         target_array = np.array(target_vector)

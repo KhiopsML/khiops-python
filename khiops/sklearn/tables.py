@@ -1441,32 +1441,23 @@ class SparseTable(DatasetTable):
             assert target in self.target_column, "'target' must be in the target column"
             stream.write(f"{target}\t")
         row = self.matrix.getrow(row_index)
-        # Empty row in the sparse matrix: use the first variable as missing data
-        # TODO: remove this part once Khiops bug
-        # https://github.com/KhiopsML/khiops/issues/235 is solved
-        if row.size == 0:
-            for variable_index in self.column_ids:
-                stream.write(f"{variable_index + 1}: ")
-                break
-        # Non-empty row in the sparse matrix: get non-missing data
-        else:
-            # Variable indices are not always sorted in `row.indices`
-            # Khiops needs variable indices to be sorted
-            sorted_indices = np.sort(row.nonzero()[1], axis=-1, kind="mergesort")
+        # Variable indices are not always sorted in `row.indices`
+        # Khiops needs variable indices to be sorted
+        sorted_indices = np.sort(row.nonzero()[1], axis=-1, kind="mergesort")
 
-            # Flatten row for Python < 3.9 scipy.sparse.lil_matrix whose API
-            # is not homogeneous with other sparse matrices: it stores
-            # opaque Python lists as elements
-            # Thus:
-            # - if isinstance(self.matrix, sp.lil_matrix) and Python 3.8, then
-            # row.data is np.array([list([...])])
-            # - else, row.data is np.array([...])
-            # TODO: remove this flattening once Python 3.8 support is dropped
-            sorted_data = np.fromiter(self._flatten(row.data), row.data.dtype)[
-                sorted_indices.argsort()
-            ]
-            for variable_index, variable_value in zip(sorted_indices, sorted_data):
-                stream.write(f"{variable_index + 1}:{variable_value} ")
+        # Flatten row for Python < 3.9 scipy.sparse.lil_matrix whose API
+        # is not homogeneous with other sparse matrices: it stores
+        # opaque Python lists as elements
+        # Thus:
+        # - if isinstance(self.matrix, sp.lil_matrix) and Python 3.8, then
+        # row.data is np.array([list([...])])
+        # - else, row.data is np.array([...])
+        # TODO: remove this flattening once Python 3.8 support is dropped
+        sorted_data = np.fromiter(self._flatten(row.data), row.data.dtype)[
+            sorted_indices.argsort()
+        ]
+        for variable_index, variable_value in zip(sorted_indices, sorted_data):
+            stream.write(f"{variable_index + 1}:{variable_value} ")
         stream.write("\n")
 
     def create_table_file_for_khiops(self, output_dir, sort=True):
