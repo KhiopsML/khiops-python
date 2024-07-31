@@ -1464,9 +1464,11 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         # Build the optional parameters from a copy of the estimator parameters
         kwargs = self.get_params()
 
-        # Remove 'key' and 'output_dir'
+        # Remove non core.api params
         del kwargs["key"]
         del kwargs["output_dir"]
+        del kwargs["auto_sort"]
+        del kwargs["internal_sort"]
 
         # Set the sampling percentage to a 100%
         kwargs["sample_percentage"] = 100
