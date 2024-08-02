@@ -148,38 +148,51 @@ def _check_categorical_target_type(ds):
     if ds.target_column is None:
         raise ValueError("Target vector is not specified.")
 
-    if ds.is_in_memory() and not (
-        isinstance(ds.target_column_dtype, pd.CategoricalDtype)
-        or pd.api.types.is_string_dtype(ds.target_column_dtype)
-        or pd.api.types.is_integer_dtype(ds.target_column_dtype)
-        or pd.api.types.is_float_dtype(ds.target_column_dtype)
+    if ds.is_in_memory and not (
+        isinstance(ds.target_column.dtype, pd.CategoricalDtype)
+        or pd.api.types.is_string_dtype(ds.target_column.dtype)
+        or pd.api.types.is_integer_dtype(ds.target_column.dtype)
+        or pd.api.types.is_float_dtype(ds.target_column.dtype)
     ):
         raise ValueError(
             f"'y' has invalid type '{ds.target_column_type}'. "
             "Only string, integer, float and categorical types "
             "are accepted for the target."
         )
-    elif not ds.is_in_memory() and ds.target_column_type != "Categorical":
+    elif (
+        not ds.is_in_memory
+        and ds.main_table.khiops_types[ds.target_column_id] != "Categorical"
+    ):
         raise ValueError(
-            f"Target column has invalid type '{ds.target_column_type}'. "
+            "Target column has invalid type "
+            f"'{ds.main_table.khiops_types[ds.target_column_id]}'. "
             "Only Categorical types are accepted for file datasets."
         )
 
 
 def _check_numerical_target_type(ds):
+    # Check that the target column is specified
     if ds.target_column is None:
         raise ValueError("Target vector is not specified.")
-    if ds.is_in_memory():
-        if not pd.api.types.is_numeric_dtype(ds.target_column_dtype):
+
+    # If in-memory: Check that the column is numerical and that the values are finite
+    # The latter is required by sklearn
+    if ds.is_in_memory:
+        if not pd.api.types.is_numeric_dtype(ds.target_column.dtype):
             raise ValueError(
-                f"Unknown label type '{ds.target_column_type}'. "
+                f"Unknown label type '{ds.target_column.dtype}'. "
                 "Expected a numerical type."
             )
         if ds.target_column is not None:
             assert_all_finite(ds.target_column)
-    elif not ds.is_in_memory() and ds.target_column_type != "Numerical":
+    # Otherwise: Check the the Khiops type
+    elif (
+        not ds.is_in_memory
+        and ds.main_table.khiops_types[ds.target_column_id] != "Numerical"
+    ):
         raise ValueError(
-            f"Target column has invalid type '{ds.target_column_type}'. "
+            "Target column has invalid type "
+            f"'{ds.main_table.khiops_types[ds.target_column_id]}'. "
             "Only Numerical types are accepted for file datasets."
         )
 
@@ -384,7 +397,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         ):
             self._fit_training_post_process(ds)
             self.is_fitted_ = True
-            self.is_multitable_model_ = ds.is_multitable()
+            self.is_multitable_model_ = ds.is_multitable
 
     def _fit_check_params(self, ds, **_):
         """Check the model parameters including those data dependent (in kwargs)"""
@@ -395,7 +408,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         ):
             raise TypeError(type_error_message("key", self.key, str, "list-like"))
 
-        if not ds.is_in_memory() and self.output_dir is None:
+        if not ds.is_in_memory and self.output_dir is None:
             raise ValueError("'output_dir' is not set but dataset is file-based")
 
     def _fit_check_dataset(self, ds):
@@ -529,7 +542,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         output_data_table_path = fs.get_child_path(output_dir, transformed_file_name)
 
         # Set the format parameters depending on the type of dataset
-        if deployment_ds.is_in_memory():
+        if deployment_ds.is_in_memory:
             field_separator = "\t"
             header_line = True
         else:
@@ -563,7 +576,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         self, deployment_ds, output_table_path, drop_key
     ):
         # Return a dataframe for dataframe based datasets
-        if deployment_ds.is_in_memory():
+        if deployment_ds.is_in_memory:
             # Read the transformed table with the internal table settings
             with io.BytesIO(fs.read(output_table_path)) as output_table_stream:
                 output_table_df = read_internal_data_table(output_table_stream)
@@ -572,7 +585,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             # - Reorder the table to the original table order
             #     - Because transformed data table file is sorted by key
             # - Drop the key columns if specified
-            if deployment_ds.is_multitable():
+            if deployment_ds.is_multitable:
                 key_df = deployment_ds.main_table.data_source[
                     deployment_ds.main_table.key
                 ]
@@ -822,7 +835,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             )
 
     def _fit_train_model(self, ds, computation_dir, **kwargs):
-        assert not ds.is_multitable(), "Coclustering not available in multitable"
+        assert not ds.is_multitable, "Coclustering not available in multitable"
 
         # Prepare the table files and dictionary for Khiops
         main_table_path, _ = ds.create_table_files_for_khiops(
@@ -1217,7 +1230,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             kh.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # Transform to numpy.array for in-memory inputs
-        if ds.is_in_memory():
+        if ds.is_in_memory:
             y_pred = y_pred.to_numpy()
 
         return y_pred
@@ -1235,7 +1248,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         # - They are mono-table only
         # - They are deployed with a multitable model whose main table contain
         #   the keys of the input table and the secondary table is the input table
-        if ds.is_multitable():
+        if ds.is_multitable:
             raise ValueError("Coclustering models not available in multi-table mode")
 
         # The "model dictionary domain" in the coclustering case it is just composed
@@ -1251,14 +1264,14 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                 )
 
     def _transform_create_deployment_dataset(self, ds, computation_dir):
-        assert not ds.is_multitable(), "'dataset' is multitable"
+        assert not ds.is_multitable, "'dataset' is multitable"
 
         # Build the multitable deployment dataset
         keys_table_name = f"keys_{ds.main_table.name}"
         deploy_dataset_spec = {}
         deploy_dataset_spec["main_table"] = keys_table_name
         deploy_dataset_spec["tables"] = {}
-        if ds.is_in_memory():
+        if ds.is_in_memory:
             # Extract the keys from the main table
             keys_table_dataframe = pd.DataFrame(
                 {
@@ -1319,7 +1332,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
     def _transform_deployment_post_process(
         self, deployment_ds, output_table_path, drop_key
     ):
-        assert deployment_ds.is_multitable()
+        assert deployment_ds.is_multitable
         return super()._transform_deployment_post_process(
             deployment_ds, output_table_path, drop_key
         )
@@ -1500,7 +1513,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Set the format parameters depending on the type of dataset
         kwargs["detect_format"] = False
-        if ds.is_in_memory():
+        if ds.is_in_memory:
             kwargs["field_separator"] = "\t"
             kwargs["header_line"] = True
         else:
@@ -1610,12 +1623,12 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         super()._transform_check_dataset(ds)
 
         # Check the coherence between thi input table and the model
-        if self.is_multitable_model_ and not ds.is_multitable():
+        if self.is_multitable_model_ and not ds.is_multitable:
             raise ValueError(
                 "You are trying to apply on single-table inputs a model which has "
                 "been trained on multi-table data."
             )
-        if not self.is_multitable_model_ and ds.is_multitable():
+        if not self.is_multitable_model_ and ds.is_multitable:
             raise ValueError(
                 "You are trying to apply on multi-table inputs a model which has "
                 "been trained on single-table data."
@@ -1914,10 +1927,14 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         self._predicted_target_meta_data_tag = "Prediction"
 
     def _is_real_target_dtype_integer(self):
-        assert self._original_target_dtype is not None, "Original target type not set"
-        return pd.api.types.is_integer_dtype(self._original_target_dtype) or (
-            isinstance(self._original_target_dtype, pd.CategoricalDtype)
-            and pd.api.types.is_integer_dtype(self._original_target_dtype.categories)
+        return self._original_target_dtype is not None and (
+            pd.api.types.is_integer_dtype(self._original_target_dtype)
+            or (
+                isinstance(self._original_target_dtype, pd.CategoricalDtype)
+                and pd.api.types.is_integer_dtype(
+                    self._original_target_dtype.categories
+                )
+            )
         )
 
     def _sorted_prob_variable_names(self):
@@ -1980,7 +1997,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         super()._fit_check_dataset(ds)
 
         # Check that the target is for classification in in_memory_tables
-        if ds.is_in_memory():
+        if ds.is_in_memory:
             current_type_of_target = type_of_target(ds.target_column)
             if current_type_of_target not in ["binary", "multiclass"]:
                 raise ValueError(
@@ -1988,7 +2005,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                     "for classification. Maybe you passed a floating point target?"
                 )
         # Check if the target has more than 1 class
-        if ds.is_in_memory() and len(np.unique(ds.target_column)) == 1:
+        if ds.is_in_memory and len(np.unique(ds.target_column)) == 1:
             raise ValueError(
                 f"{self.__class__.__name__} can't train when only one class is present."
             )
@@ -2001,10 +2018,10 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         super()._fit_training_post_process(ds)
 
         # Save the target datatype
-        if ds.is_in_memory():
-            self._original_target_dtype = ds.target_column_dtype
+        if ds.is_in_memory:
+            self._original_target_dtype = ds.target_column.dtype
         else:
-            self._original_target_dtype = np.dtype("object")
+            self._original_target_dtype = None
 
         # Save class values in the order of deployment
         self.classes_ = []
@@ -2012,7 +2029,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             for key in variable.meta_data.keys:
                 if key.startswith("TargetProb"):
                     self.classes_.append(variable.meta_data.get_value(key))
-        if self._is_real_target_dtype_integer():
+        if ds.is_in_memory and self._is_real_target_dtype_integer():
             self.classes_ = [int(class_value) for class_value in self.classes_]
             self.classes_.sort()
         self.classes_ = column_or_1d(self.classes_)
@@ -2165,7 +2182,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         # For in-memory datasets:
         # - Reorder the columns to that of self.classes_
         # - Transform to np.ndarray
-        if ds.is_in_memory():
+        if ds.is_in_memory:
             assert isinstance(
                 y_probas, (pd.DataFrame, np.ndarray)
             ), "y_probas is not a Pandas DataFrame nor Numpy array"
@@ -2786,7 +2803,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         finally:
             self._cleanup_computation_dir(computation_dir)
             kh.get_runner().root_temp_dir = initial_runner_temp_dir
-        if ds.is_in_memory():
+        if ds.is_in_memory:
             return X_transformed.to_numpy(copy=False)
         return X_transformed
 

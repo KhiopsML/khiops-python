@@ -45,7 +45,7 @@ def sort_dataset(ds_spec, output_dir=None):
     ds = Dataset(ds_spec)
 
     # Check special arguments in function of the dataset
-    if ds.table_type() == FileTable and output_dir is None:
+    if ds.table_type == FileTable and output_dir is None:
         raise ValueError("'output_dir' must be specified for file based datasets")
 
     # Make a copy of the dataset (note: data sources are just reference)
@@ -136,7 +136,7 @@ def train_test_split_dataset(
     ds = Dataset(ds_spec)
 
     # Check the parameter coherence
-    if not ds.is_in_memory():
+    if not ds.is_in_memory:
         if target_column is not None:
             raise ValueError("'target_column' cannot be used with file path datasets")
         if output_dir is None:
@@ -145,7 +145,7 @@ def train_test_split_dataset(
             raise TypeError(type_error_message("output_dir", output_dir, str))
 
     # Perform the split for each type of dataset
-    if ds.is_in_memory():
+    if ds.is_in_memory:
         # Obtain the keys for the other test_train_split function
         sklearn_split_params = {}
         for param in ("train_size", "random_state", "shuffle", "stratify"):
