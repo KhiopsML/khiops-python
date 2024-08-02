@@ -99,6 +99,9 @@ jobs:
           OMPI_MCA_rmaps_base_oversubscribe: true
           PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |
+          # Make sure '/bin' is before '/usr/bin' in PATH
+          PATH=$(echo "/bin:"$PATH | sed 's#:/bin##')
+
           # This is needed so that the Git tag is parsed and the khiops-python
           # version is retrieved
           git config --global --add safe.directory $(realpath .)
@@ -177,6 +180,9 @@ jobs:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
         run: |-
+          # Make sure '/bin' is before '/usr/bin' in PATH
+          PATH=$(echo "/bin:"$PATH | sed 's#:/bin##')
+
           # Make sure MPI support is not loaded through env modules
           # Note: As Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway

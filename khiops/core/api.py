@@ -299,6 +299,11 @@ def _preprocess_task_arguments(task_args):
                 )
             )
 
+    # Flatten kwargs
+    if "kwargs" in task_args:
+        task_args.update(task_args["kwargs"])
+        del task_args["kwargs"]
+
     return task_called_with_domain
 
 
@@ -336,10 +341,10 @@ def _preprocess_format_spec(detect_format, header_line, field_separator):
 def _clean_task_args(task_args):
     """Cleans the task arguments
 
-    More precisely:
-        - It removes command line arguments (they already are in another object).
-        - It removes parameters removed from the API and warns about it.
-        - It removes renamed API parameters and warns about it.
+    More precisely it removes:
+        - Command line arguments (they already are in another object).
+        - Parameters removed from the API and warns about it.
+        - Renamed API parameters and warns about it.
     """
     # Remove non-task parameters
     command_line_arg_names = [
@@ -353,7 +358,6 @@ def _clean_task_args(task_args):
         "trace",
         "stdout_file_path",
         "stderr_file_path",
-        "kwargs",
     ]
     for arg_name in command_line_arg_names + other_arg_names:
         if arg_name in task_args:

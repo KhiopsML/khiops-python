@@ -1146,8 +1146,12 @@ class KhiopsLocalRunner(KhiopsRunner):
         installation_method = _infer_khiops_installation_method()
         # In Conda-based, but non-Conda environment, specify mpiexec path
         if installation_method == "conda-based":
-            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or os.path.join(
-                _infer_env_bin_dir_for_conda_based_installations(), "mpiexec"
+            # Python `os.path.realpath` resolves symlinks recursively, like GNU
+            # `readlink -f`; Python `os.readlink` does not
+            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or os.path.realpath(
+                os.path.join(
+                    _infer_env_bin_dir_for_conda_based_installations(), "mpiexec"
+                )
             )
             if platform.system() == "Windows" and not os.path.splitext(mpiexec_path):
                 mpiexec_path += ".exe"
@@ -1165,8 +1169,11 @@ class KhiopsLocalRunner(KhiopsRunner):
                     )
         # In Conda or local installations, expect mpiexec in the PATH
         else:
-            mpiexec_path = os.environ.get("KHIOPS_MPIEXEC_PATH") or shutil.which(
-                "mpiexec"
+            link_to_mpiexec = shutil.which("mpiexec")
+            mpiexec_path = (
+                os.environ.get("KHIOPS_MPIEXEC_PATH")
+                or link_to_mpiexec
+                and os.path.realpath(link_to_mpiexec)
             )
         # If mpiexec is not in the path, and the installation method is local,
         # then try to load MPI environment module so that mpiexec is in the path
