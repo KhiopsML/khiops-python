@@ -171,7 +171,10 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         secondary_table.to_csv(secondary_table_path, sep="\t", index=False)
 
     def create_multitable_snowflake_dataframes(self):
+        # Set the random seed for reproducibility
         np.random.seed(31416)
+
+        # Create the main table
         main_table_data = {
             "User_ID": [
                 "60B2Xk_3Fw",
@@ -189,6 +192,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         }
         main_table = pd.DataFrame(main_table_data)
 
+        # Create the secondary tables
         secondary_table_data_1 = {
             "User_ID": np.random.choice(main_table["User_ID"], 20),
             "VAR_1": np.random.choice(["a", "b", "c", "d"], 20),
@@ -197,7 +201,6 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             "VAR_4": np.round(np.random.rand(20).tolist(), 2),
         }
         secondary_table_1 = pd.DataFrame(secondary_table_data_1)
-
         secondary_table_data_2 = {
             "User_ID": np.random.choice(
                 main_table["User_ID"], len(main_table), replace=False
@@ -210,7 +213,6 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             "VAR_4": np.round(np.random.rand(len(main_table)).tolist(), 2),
         }
         secondary_table_2 = pd.DataFrame(secondary_table_data_2)
-
         tertiary_table_data = {
             "User_ID": np.random.choice(main_table["User_ID"], 100),
             "VAR_1": np.random.choice(["a", "b", "c", "d"], 100),
@@ -218,7 +220,6 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             "VAR_3": np.round(np.random.rand(100).tolist(), 2),
         }
         tertiary_table = pd.DataFrame(tertiary_table_data)
-
         quaternary_table_data = {
             "User_ID": np.random.choice(main_table["User_ID"], 50),
             "VAR_1": np.random.choice(["a", "b", "c", "d"], 50),
