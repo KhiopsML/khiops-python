@@ -428,8 +428,6 @@ class Dataset:
         self.categorical_target = categorical_target
         self.target_column = None
         self.target_column_id = None
-        self.target_column_type = None
-        self.target_column_dtype = None  # Only for in_memory datasets
         self.sep = None
         self.header = None
 
@@ -528,7 +526,7 @@ class Dataset:
         assert isinstance(
             self.secondary_tables, list
         ), "'secondary_tables' is not a list after init"
-        assert not self.is_multitable() or len(
+        assert not self.is_multitable or len(
             self.secondary_tables
         ), "'secondary_tables' is empty in a multi-table dataset"
         assert (
@@ -727,7 +725,6 @@ class Dataset:
         # Case when y is a memory array
         if hasattr(y_checked, "__array__"):
             self.target_column = y_checked
-            self.target_column_dtype = self.target_column.dtype
 
             # Initialize the id of the target column
             if isinstance(y, pd.Series) and y.name is not None:
@@ -763,14 +760,13 @@ class Dataset:
 
             # Force the target column type from the parameters
             if self.categorical_target:
-                self.main_table.khiops_types[self.target_column] = "Categorical"
-                self.target_column_type = "Categorical"
+                self.main_table.khiops_types[self.target_column_id] = "Categorical"
             else:
-                self.main_table.khiops_types[self.target_column] = "Numerical"
-                self.target_column_type = "Numerical"
+                self.main_table.khiops_types[self.target_column_id] = "Numerical"
 
+    @property
     def is_in_memory(self):
-        """Tests whether the dataset is in memory
+        """bool : ``True`` if the dataset is in-memory
 
         A dataset is in memory if it is constituted either of only pandas.DataFrame
         tables, numpy.ndarray, or scipy.sparse.spmatrix tables.
@@ -778,28 +774,22 @@ class Dataset:
 
         return isinstance(self.main_table, (PandasTable, NumpyTable, SparseTable))
 
+    @property
     def table_type(self):
-        """Returns the table type of the dataset tables
+        """type : The table type of this dataset's tables
 
-        Returns
-        -------
-        type
-            The type of the tables in the dataset. Possible values:
-            - `PandasTable`
-            - `NumpyTable`
-            - `SparseTable`
-            - `FileTable`
+        Possible values:
+
+        - `PandasTable`
+        - `NumpyTable`
+        - `SparseTable`
+        - `FileTable`
         """
         return type(self.main_table)
 
+    @property
     def is_multitable(self):
-        """Tests whether the dataset is a multi-table one
-
-        Returns
-        -------
-        bool
-            ``True`` if the dataset is multi-table.
-        """
+        """bool : ``True`` if the dataset is multitable"""
         return self.secondary_tables is not None and len(self.secondary_tables) > 0
 
     def to_spec(self):
@@ -816,7 +806,7 @@ class Dataset:
         if self.relations:
             ds_spec["relations"] = []
             ds_spec["relations"].extend(self.relations)
-        if self.table_type() == FileTable:
+        if self.table_type == FileTable:
             ds_spec["format"] = (self.sep, self.header)
 
         return ds_spec
@@ -865,7 +855,7 @@ class Dataset:
         dictionary_domain.add_dictionary(main_dictionary)
 
         # For in-memory datasets: Add the target variable if available
-        if self.is_in_memory() and self.target_column is not None:
+        if self.is_in_memory and self.target_column is not None:
             variable = kh.Variable()
             variable.name = get_khiops_variable_name(self.target_column_id)
             if self.categorical_target:
@@ -930,9 +920,9 @@ class Dataset:
         # - The caller specifies not to do it (sort = False)
         # - The dataset is mono-table and the main table has no key
         sort_main_table = sort and (
-            self.is_multitable() or self.main_table.key is not None
+            self.is_multitable or self.main_table.key is not None
         )
-        if self.is_in_memory():
+        if self.is_in_memory:
             main_table_path = self.main_table.create_table_file_for_khiops(
                 out_dir,
                 sort=sort_main_table,
