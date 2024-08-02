@@ -6,6 +6,14 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.2.2.3 - 2024-08-02
+
+### Fixed
+- (`core`) API functions handling of unknown parameters: they now fail.
+- *Internals*:
+  - Detection of the path to the MPI command: the real path to the executable is
+    now used.
+
 ## 10.2.2.2 - 2024-07-19
 
 ### Fixed
