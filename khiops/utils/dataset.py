@@ -51,6 +51,9 @@ def check_dataset_spec(ds_spec):
     ValueError
         If there are objects of the spec with invalid values.
     """
+    # Check the spec type
+    if not is_dict_like(ds_spec):
+        raise TypeError(type_error_message("ds_spec", ds_spec, Mapping))
 
     # Check the "tables" field
     if "tables" not in ds_spec:
@@ -118,7 +121,6 @@ def _check_table_key(table_name, key):
 
 
 def _check_multitable_spec(ds_spec):
-    assert len(ds_spec) > 1
     # Check the main table
     if "main_table" not in ds_spec:
         raise ValueError(
@@ -137,9 +139,9 @@ def _check_multitable_spec(ds_spec):
     # Check that all tables have non-None keys
     for table_name, (_, table_key) in ds_spec["tables"].items():
         if table_key is None:
-            table_type = "main" if ds_spec["main_table"] == table_name else "secondary"
+            table_kind = "main" if ds_spec["main_table"] == table_name else "secondary"
             raise ValueError(
-                f"key of {table_type} table '{table_name}' is 'None': "
+                f"key of {table_kind} table '{table_name}' is 'None': "
                 "table keys must be specified in multi-table datasets"
             )
 
@@ -239,17 +241,21 @@ def _check_hierarchical_keys(
     relation_id, parent_table, parent_table_key, child_table, child_table_key
 ):
     """Check that the parent table's key is contained in the child table's key"""
-    table_key_error = False
+    # Perform the check and save the error status
+    error_found = False
     if isinstance(parent_table_key, str) and isinstance(child_table_key, str):
-        table_key_error = child_table_key != parent_table_key
+        error_found = child_table_key != parent_table_key
     elif isinstance(parent_table_key, str) and is_list_like(child_table_key):
-        table_key_error = parent_table_key not in child_table_key
+        error_found = parent_table_key not in child_table_key
     elif is_list_like(parent_table_key) and is_list_like(child_table_key):
-        table_key_error = not set(parent_table_key).issubset(set(child_table_key))
+        error_found = not set(parent_table_key).issubset(child_table_key)
     elif is_list_like(parent_table_key) and isinstance(child_table_key, str):
-        table_key_error = True
+        error_found = (
+            len(parent_table_key) != 1 or child_table_key not in parent_table_key
+        )
 
-    if table_key_error:
+    # Report any error found
+    if error_found:
         if isinstance(child_table_key, str):
             child_table_key_msg = f"[{child_table_key}]"
         else:
@@ -435,8 +441,6 @@ class Dataset:
         self.categorical_target = categorical_target
         self.target_column = None
         self.target_column_id = None
-        self.target_column_type = None
-        self.target_column_dtype = None  # Only for in_memory datasets
         self.sep = None
         self.header = None
 
@@ -535,7 +539,7 @@ class Dataset:
         assert isinstance(
             self.secondary_tables, list
         ), "'secondary_tables' is not a list after init"
-        assert not self.is_multitable() or len(
+        assert not self.is_multitable or len(
             self.secondary_tables
         ), "'secondary_tables' is empty in a multi-table dataset"
         assert (
@@ -699,6 +703,7 @@ class Dataset:
     def _init_target_column(self, y):
         assert self.main_table is not None
         assert self.secondary_tables is not None
+
         # Check y's type
         # For in memory target columns:
         # - column_or_1d checks *and transforms* to a numpy.array if successful
@@ -722,14 +727,6 @@ class Dataset:
                 type_error_message("y", y, "array-like")
                 + f" (X's tables are of type {type_message})"
             )
-        if isinstance(self.main_table, (SparseTable, NumpyTable)) and isinstance(
-            y_checked, str
-        ):
-            raise TypeError(
-                type_error_message("y", y, "array-like")
-                + " (X's tables are of type numpy.ndarray"
-                + " or scipy.sparse.spmatrix)"
-            )
         if isinstance(self.main_table.data_source, str) and not isinstance(
             y_checked, str
         ):
@@ -742,7 +739,6 @@ class Dataset:
         # Case when y is a memory array
         if hasattr(y_checked, "__array__"):
             self.target_column = y_checked
-            self.target_column_dtype = self.target_column.dtype
 
             # Initialize the id of the target column
             if isinstance(y, pd.Series) and y.name is not None:
@@ -778,14 +774,13 @@ class Dataset:
 
             # Force the target column type from the parameters
             if self.categorical_target:
-                self.main_table.khiops_types[self.target_column] = "Categorical"
-                self.target_column_type = "Categorical"
+                self.main_table.khiops_types[self.target_column_id] = "Categorical"
             else:
-                self.main_table.khiops_types[self.target_column] = "Numerical"
-                self.target_column_type = "Numerical"
+                self.main_table.khiops_types[self.target_column_id] = "Numerical"
 
+    @property
     def is_in_memory(self):
-        """Tests whether the dataset is in-memory
+        """bool : ``True`` if the dataset is in-memory
 
         A dataset is in-memory if it is constituted either of only pandas.DataFrame
         tables, numpy.ndarray, or scipy.sparse.spmatrix tables.
@@ -793,28 +788,22 @@ class Dataset:
 
         return isinstance(self.main_table, (PandasTable, NumpyTable, SparseTable))
 
+    @property
     def table_type(self):
-        """Returns the table type of the dataset tables
+        """type : The table type of this dataset's tables
 
-        Returns
-        -------
-        type
-            The type of the tables in the dataset. Possible values:
-            - `PandasTable`
-            - `NumpyTable`
-            - `SparseTable`
-            - `FileTable`
+        Possible values:
+
+        - `PandasTable`
+        - `NumpyTable`
+        - `SparseTable`
+        - `FileTable`
         """
         return type(self.main_table)
 
+    @property
     def is_multitable(self):
-        """Tests whether the dataset is a multi-table one
-
-        Returns
-        -------
-        bool
-            ``True`` if the dataset is multi-table.
-        """
+        """bool : ``True`` if the dataset is multitable"""
         return self.secondary_tables is not None and len(self.secondary_tables) > 0
 
     def to_spec(self):
@@ -831,7 +820,7 @@ class Dataset:
         if self.relations:
             ds_spec["relations"] = []
             ds_spec["relations"].extend(self.relations)
-        if self.table_type() == FileTable:
+        if self.table_type == FileTable:
             ds_spec["format"] = (self.sep, self.header)
 
         return ds_spec
@@ -880,7 +869,7 @@ class Dataset:
         dictionary_domain.add_dictionary(main_dictionary)
 
         # For in-memory datasets: Add the target variable if available
-        if self.is_in_memory() and self.target_column is not None:
+        if self.is_in_memory and self.target_column is not None:
             variable = kh.Variable()
             variable.name = get_khiops_variable_name(self.target_column_id)
             if self.categorical_target:
@@ -945,15 +934,18 @@ class Dataset:
         # - The caller specifies not to do it (sort = False)
         # - The dataset is mono-table and the main table has no key
         sort_main_table = sort and (
-            self.is_multitable() or self.main_table.key is not None
+            self.is_multitable or self.main_table.key is not None
         )
-        if self.is_in_memory():
+
+        # In-memory dataset: Create the table files and add the target column
+        if self.is_in_memory:
             main_table_path = self.main_table.create_table_file_for_khiops(
                 output_dir,
                 sort=sort_main_table,
                 target_column=self.target_column,
                 target_column_id=self.target_column_id,
             )
+        # File dataset: Create the table files (the target column is in the file)
         else:
             main_table_path = self.main_table.create_table_file_for_khiops(
                 output_dir,
@@ -971,6 +963,9 @@ class Dataset:
 
     def __repr__(self):
         return str(self.create_khiops_dictionary_domain())
+
+
+# pylint: enable=invalid-name
 
 
 class DatasetTable(ABC):
@@ -1046,7 +1041,7 @@ class DatasetTable(ABC):
         dictionary = kh.Dictionary()
         dictionary.name = self.name
         if self.key is not None:
-            dictionary.key = list(self.key)
+            dictionary.key = self.key
 
         # For each column add a Khiops variable to the dictionary
         for column_id in self.column_ids:
@@ -1065,18 +1060,16 @@ class DatasetTable(ABC):
 
 
 class PandasTable(DatasetTable):
-    """Table encapsulating the features dataframe X and the target labels y
-
-    X is of type pandas.DataFrame. y is array-like.
+    """DatasetTable encapsulating a pandas dataframe
 
     Parameters
     ----------
     name : str
         Name for the table.
     dataframe : `pandas.DataFrame`
-        The data frame to be encapsulated.
-    key : list-like of str, optional
-        The names of the columns composing the key
+        The data frame to be encapsulated. It must be non-empty.
+    key : list of str, optional
+        The names of the columns composing the key.
     """
 
     def __init__(self, name, dataframe, key=None):
@@ -1144,7 +1137,7 @@ class PandasTable(DatasetTable):
         output_table_path = fs.get_child_path(output_dir, f"{self.name}.txt")
 
         # Write the output dataframe
-        output_dataframe = self._create_dataframe_copy()
+        output_dataframe = self.data_source.copy()
         output_names = {
             column_id: get_khiops_variable_name(column_id)
             for column_id in self.column_ids
@@ -1173,22 +1166,18 @@ class PandasTable(DatasetTable):
 
         return output_table_path
 
-    def _create_dataframe_copy(self):
-        """Creates an in memory copy of the dataframe"""
-        return self.data_source.copy()
-
 
 class NumpyTable(DatasetTable):
-    """Table encapsulating (X,y) pair with types (ndarray, ndarray)
+    """DatasetTable encapsulating a NumPy array
 
     Parameters
     ----------
     name : str
         Name for the table.
-    array : :external:term:`array-like` of shape (n_samples, n_features_in)
+    array : `numpy.ndarray` of shape (n_samples, n_features_in)
         The data frame to be encapsulated.
     key : :external:term`array-like` of int, optional
-        The names of the columns composing the key
+        The names of the columns composing the key.
     """
 
     def __init__(self, name, array, key=None):
@@ -1259,10 +1248,7 @@ class NumpyTable(DatasetTable):
 
 
 class SparseTable(DatasetTable):
-    """Table encapsulating feature matrix X and target array y
-
-    X is of type scipy.sparse.spmatrix.
-    y is array-like.
+    """DatasetTable encapsulating a SciPy sparse matrix
 
     Parameters
     ----------
@@ -1270,8 +1256,8 @@ class SparseTable(DatasetTable):
         Name for the table.
     matrix : `scipy.sparse.spmatrix`
         The sparse matrix to be encapsulated.
-    key : list-like of str, optional
-        The names of the columns composing the key
+    key : list of str, optional
+        The names of the columns composing the key.
     """
 
     def __init__(self, name, matrix, key=None):
@@ -1405,7 +1391,7 @@ class SparseTable(DatasetTable):
 
 
 class FileTable(DatasetTable):
-    """A table representing a delimited text file
+    """DatasetTable encapsulating a delimited text data file
 
     Parameters
     ----------
@@ -1413,12 +1399,12 @@ class FileTable(DatasetTable):
         Name for the table.
     path : str
         Path of the file containing the table.
+    key : list-like of str, optional
+        The names of the columns composing the key.
     sep : str, optional
         Field separator character. If not specified it will be inferred from the file.
     header : bool, optional
-        Indicates if the table
-    key : list-like of str, optional
-        The names of the columns composing the key
+        Indicates if the table.
     """
 
     def __init__(
@@ -1471,7 +1457,6 @@ class FileTable(DatasetTable):
             )
 
         # Set the column names and types
-        assert json_domain["dictionaries"][0]["name"] == self.name
         variables = json_domain["dictionaries"][0]["variables"]
         self.column_ids = [var["name"] for var in variables]
         self.khiops_types = {var["name"]: var["type"] for var in variables}
