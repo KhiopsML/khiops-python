@@ -1161,7 +1161,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
 
         Returns
         -------
-        `numpy.ndarray`
+        `ndarray <numpy.ndarray>`
             An array containing the encoded columns. A first column containing key
             column ids is added in multi-table mode.
 
@@ -1529,6 +1529,63 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         )
         model_main_dictionary.remove_variable(self.model_target_variable_name_)
 
+        # Extract, from the preparation reports, the number of evaluated features,
+        # their names and their levels
+        univariate_preparation_report = self.model_report_.preparation_report
+        if self.model_report_.bivariate_preparation_report is not None:
+            bivariate_preparation_report = (
+                self.model_report_.bivariate_preparation_report
+            )
+            pair_feature_evaluated_names_ = (
+                bivariate_preparation_report.get_variable_pair_names()
+            )
+            pair_feature_evaluated_levels_ = [
+                bivariate_preparation_report.get_variable_pair_statistics(*var).level
+                for var in bivariate_preparation_report.get_variable_pair_names()
+            ]
+        else:
+            pair_feature_evaluated_names_ = []
+            pair_feature_evaluated_levels_ = []
+        if "treePreparationReport" in self.model_report_raw_:
+            tree_preparation_report = self.model_report_raw_["treePreparationReport"][
+                "variablesStatistics"
+            ]
+            tree_feature_evaluated_names_ = [
+                tree_preparation_report[i]["name"]
+                for i in range(0, len(tree_preparation_report))
+            ]
+            tree_feature_evaluated_levels_ = [
+                tree_preparation_report[i]["level"]
+                for i in range(0, len(tree_preparation_report))
+            ]
+        else:
+            tree_feature_evaluated_names_ = []
+            tree_feature_evaluated_levels_ = []
+        feature_evaluated_names_ = (
+            univariate_preparation_report.get_variable_names()
+            + pair_feature_evaluated_names_
+            + tree_feature_evaluated_names_
+        )
+        feature_evaluated_importances_ = np.array(
+            [
+                univariate_preparation_report.get_variable_statistics(var).level
+                for var in univariate_preparation_report.get_variable_names()
+            ]
+            + pair_feature_evaluated_levels_
+            + tree_feature_evaluated_levels_
+        )
+
+        # Sort the features by level
+        combined = list(zip(feature_evaluated_names_, feature_evaluated_importances_))
+        combined.sort(key=lambda x: x[1], reverse=True)
+
+        # Set the sklearn attributes
+        self.feature_evaluated_names_ = np.array(
+            [x[0] for x in combined], dtype=np.dtype("object")
+        )
+        self.feature_evaluated_importances_ = np.array([x[1] for x in combined])
+        self.n_features_evaluated_ = len(combined)
+
     def _transform_check_dataset(self, dataset):
         assert isinstance(dataset, Dataset), "'dataset' is not 'Dataset'"
 
@@ -1670,9 +1727,30 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
                 variable.used = False
         return model_copy
 
+    def get_feature_used_statistics(self, modeling_report):
+        # Extract, from the modeling report, names, levels, weights and importances
+        # of the selected features.
+        if modeling_report.selected_variables is not None:
+            feature_used_names_ = np.array(
+                [var.name for var in modeling_report.selected_variables]
+            )
+            feature_used_importances_ = np.array(
+                [
+                    [var.level, var.weight, var.importance]
+                    for var in modeling_report.selected_variables
+                ]
+            )
+        # Return empty arrays if not selected_variables is available
+        else:
+            feature_used_names_ = np.array([], dtype=np.dtype("<U1"))
+            feature_used_importances_ = np.array([])
+        return feature_used_names_, feature_used_importances_
+
 
 class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
-    """Khiops Selective Naive Bayes Classifier
+    # Disable line too long as this docstring *needs* to have lines longer than 88c
+    # pylint: disable=line-too-long
+    r"""Khiops Selective Naive Bayes Classifier
 
     This classifier supports automatic feature engineering on multi-table datasets. See
     :doc:`/multi_table_primer` for more details.
@@ -1727,9 +1805,35 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
 
     Attributes
     ----------
-    classes_ : `numpy.ndarray`
-        The list of classes seen in training. Depending on the traning target the
+    n_classes_ : int
+        The number of classes seen in training.
+    classes_ : `ndarray <numpy.ndarray>` of shape (n_classes\_,)
+        The list of classes seen in training. Depending on the training target, the
         contents are ``int`` or ``str``.
+    n_features_evaluated_ : int
+        The number of features evaluated by the classifier.
+    feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
+        Names of the features evaluated by the classifier.
+    feature_evaluated_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
+        Level of the features evaluated by the classifier.
+        See below for a definition of the level.
+    n_features_used_ : int
+        The number of features used by the classifier.
+    feature_used_names_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, )
+        Names of the features used by the classifier.
+    feature_used_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, 3)
+        Level, Weight and Importance of the features used by the classifier:
+
+        - Level: A measure of the predictive importance of the feature taken
+          individually. It ranges between 0 (no predictive interest) and 1 (optimal
+          predictive importance).
+
+        - Weight: A measure of the predictive importance of the feature taken relative
+          to all features selected by the classifier. It ranges between 0 (little
+          contribution to the model) and 1 (large contribution to the model).
+
+        - Importance: The geometric mean between the Level and the Weight.
+
     is_fitted_ : bool
         ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
@@ -1755,6 +1859,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         - `samples_sklearn.khiops_classifier_pickle()`
         - `samples_sklearn.khiops_classifier_multitable_star_file()`
     """
+    # pylint: enable=line-too-long
 
     def __init__(
         self,
@@ -1882,6 +1987,9 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             self.classes_.sort()
         self.classes_ = column_or_1d(self.classes_)
 
+        # Count number of classes
+        self.n_classes_ = len(self.classes_)
+
         # Warn when there are no informative variables
         if self.model_report_.preparation_report.informative_variable_number == 0:
             warnings.warn(
@@ -1890,12 +1998,22 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                 stacklevel=6,
             )
 
-        # Set the target class probabilites as used
-        # (only the predicted classes is obtained without this step prior to Khiops 10)
+        # Set the target class probabilities as used
+        # (only the predicted classes are obtained without this step prior to Khiops 10)
         for variable in self._get_main_dictionary().variables:
             for key in variable.meta_data.keys:
                 if key.startswith("TargetProb"):
                     variable.used = True
+
+        # Extract statistics, about the selected features, from the modeling report
+        modeling_report = self.model_report_.modeling_report.get_snb_predictor()
+        if modeling_report.selected_variables is not None:
+            feature_used_names_, feature_used_importances_ = (
+                self.get_feature_used_statistics(modeling_report)
+            )
+            self.feature_used_names_ = feature_used_names_
+            self.feature_used_importances_ = feature_used_importances_
+            self.n_features_used_ = len(self.feature_used_names_)
 
     def predict(self, X):
         """Predicts the most probable class for the test dataset X
@@ -1917,7 +2035,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
 
         Returns
         -------
-        `numpy.ndarray`
+        `ndarray <numpy.ndarray>`
             An array containing the encoded columns. A first column containing key
             column ids is added in multi-table mode. The `numpy.dtype` of the array is
             integer if the classifier was learned with an integer ``y``. Otherwise it
@@ -2031,11 +2149,14 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                     variable.used = True
                 else:
                     variable.used = False
+
         return model_copy
 
 
 class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
-    """Khiops Selective Naive Bayes Regressor
+    # Disable line too long as this docstring *needs* to have lines longer than 88c
+    # pylint: disable=line-too-long
+    r"""Khiops Selective Naive Bayes Regressor
 
     This regressor supports automatic feature engineering on multi-table datasets. See
     :doc:`/multi_table_primer` for more details.
@@ -2085,6 +2206,30 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
 
     Attributes
     ----------
+    n_features_evaluated_ : int
+        The number of features evaluated by the classifier.
+    feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
+        Names of the features evaluated by the classifier.
+    feature_evaluated_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
+        Level of the features evaluated by the classifier.
+        See below for a definition of the level.
+    n_features_used_ : int
+        The number of features used by the classifier.
+    feature_used_names_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, )
+        Names of the features used by the classifier.
+    feature_used_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, 3)
+        Level, Weight and Importance of the features used by the classifier:
+
+        - Level: A measure of the predictive importance of the feature taken
+          individually. It ranges between 0 (no predictive interest) and 1 (optimal
+          predictive importance).
+
+        - Weight: A measure of the predictive importance of the feature taken relative
+          to all features selected by the classifier. It ranges between 0 (little
+          contribution to the model) and 1 (large contribution to the model).
+
+        - Importance: The geometric mean between the Level and the Weight.
+
     is_fitted_ : bool
         ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
@@ -2105,6 +2250,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
     See the following functions of the ``samples_sklearn.py`` documentation script:
         - `samples_sklearn.khiops_regressor()`
     """
+    # pylint: enable=line-too-long
 
     def __init__(
         self,
@@ -2195,6 +2341,16 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         for variable_name in variables_to_eliminate:
             self._get_main_dictionary().remove_variable(variable_name)
 
+        # Extract statistics, about the selected features, from the modeling report
+        modeling_report = self.model_report_.modeling_report.get_snb_predictor()
+        if modeling_report.selected_variables is not None:
+            feature_used_names_, feature_used_importances_ = (
+                self.get_feature_used_statistics(modeling_report)
+            )
+            self.feature_used_names_ = feature_used_names_
+            self.feature_used_importances_ = feature_used_importances_
+            self.n_features_used_ = len(self.feature_used_names_)
+
     def _check_target_type(self, dataset):
         _check_numerical_target_type(dataset)
 
@@ -2221,7 +2377,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
 
         Returns
         -------
-        `numpy.ndarray`
+        `ndarray <numpy.ndarray>`
             An array containing the encoded columns. A first column containing key
             column ids is added in multi-table mode. The key columns are added for
             multi-table tasks.
@@ -2244,7 +2400,9 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
 
 
 class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
-    """Khiops supervised discretization/grouping encoder
+    # Disable line too long as this docstring *needs* to have lines longer than 88c
+    # pylint: disable=line-too-long
+    r"""Khiops supervised discretization/grouping encoder
 
     Parameters
     ----------
@@ -2313,6 +2471,14 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
 
     Attributes
     ----------
+    n_features_evaluated_ : int
+        The number of features evaluated by the classifier.
+    feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
+        Names of the features evaluated by the classifier.
+    feature_evaluated_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
+        Level of the features evaluated by the classifier. The Level is  measure of the
+        predictive importance of the feature taken individually. It ranges between 0 (no
+        predictive interest) and 1 (optimal predictive importance).
     is_fitted_ : bool
         ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
@@ -2539,7 +2705,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
 
         Returns
         -------
-        `numpy.ndarray`
+        `ndarray <numpy.ndarray>`
             An array containing the encoded columns. A first column containing key
             column ids is added in multi-table mode.
 
