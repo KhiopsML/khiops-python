@@ -132,7 +132,8 @@ class KhiopsRemoteAccessTestsContainer:
                 iris_df = pd.read_csv(iris_data_file, sep="\t")
                 iris_df.pop("Class")
             classifier.predict(iris_df)
-            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "transformed.txt")))
+            predict_path = fs.get_child_path(output_dir, "predict.txt")
+            self.assertTrue(fs.exists(predict_path), msg=f"Path: {predict_path}")
 
             # Cleanup
             for filename in fs.list_dir(output_dir):
@@ -190,7 +191,7 @@ class KhiopsRemoteAccessTestsContainer:
                     log_file_path=log_file_path,
                 )
             # Check and remove log file
-            self.assertTrue(fs.exists(log_file_path))
+            self.assertTrue(fs.exists(log_file_path), f"Path: {log_file_path}")
             fs.remove(log_file_path)
 
 

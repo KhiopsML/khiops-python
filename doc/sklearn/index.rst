@@ -8,13 +8,13 @@ khiops.sklearn
     from khiops.sklearn import KhiopsClassifier
     clf = KhiopsClassifier()
 
-.. currentmodule:: khiops
+.. currentmodule:: khiops.sklearn
 .. autosummary::
   :toctree: generated
   :recursive:
   :nosignatures:
 
-  khiops.sklearn.estimators
+  estimators
 
 Related Docs
 ------------

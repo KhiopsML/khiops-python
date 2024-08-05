@@ -72,7 +72,7 @@ def get_dir_status(a_dir):
     return status
 
 
-def check_samples_dir(samples_dir):
+def _check_samples_dir(samples_dir):
     # Warn if there are problems with the samples_dir
     samples_dir_status = get_dir_status(samples_dir)
     download_msg = (
@@ -295,20 +295,15 @@ def _check_executable(bin_path):
 
 
 def get_linux_distribution_name():
-    """Detect Linux distribution name
+    """Detect the Linux distribution name
 
-    Parses the `NAME` variable defined in the  `/etc/os-release` or
-    `/usr/lib/os-release` files and converts it to lowercase.
+    Parses the ``NAME`` variable defined in the  ``/etc/os-release`` or
+    ``/usr/lib/os-release`` files and converts it to lowercase.
 
     Returns
     -------
     str
         Name of the Linux distribution, converted to lowecase
-
-    Raises
-    ------
-    OSError
-        If neither `/etc/os-release` nor `/usr/lib/os-release` are found
     """
 
     def get_linux_distribution_from_os_release_file(os_release_file_path):
@@ -1530,13 +1525,13 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _set_samples_dir(self, samples_dir):
         """Checks and sets the samples directory"""
-        check_samples_dir(samples_dir)
+        _check_samples_dir(samples_dir)
         super()._set_samples_dir(samples_dir)
 
     def _get_samples_dir(self):
         # Check the samples dir once (the check emmits only warnings)
         if not self._samples_dir_checked:
-            check_samples_dir(self._samples_dir)
+            _check_samples_dir(self._samples_dir)
             self._samples_dir_checked = True
         return self._samples_dir
 
