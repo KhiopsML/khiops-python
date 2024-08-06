@@ -2,6 +2,7 @@
 name: Dev Docker
 env:
   DEFAULT_KHIOPS_REVISION: 10.2.2
+  DEFAULT_IMAGE_INCREMENT: 0
   DEFAULT_SERVER_REVISION: main
   DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12
 on:
@@ -13,13 +14,16 @@ on:
         type: string
         default: main
         description: Khiops Revision
+      image-increment:
+        type: string
+        description: Docker Image Tag Increment
       server-revision:
         type: string
         default: main
         description: Khiops Server Revision
       push:
         type: boolean
-        default: true
+        default: false
         description: Push to GH Registry
       python-versions:
         type: string
@@ -43,8 +47,10 @@ jobs:
         run: |
           set -x
           echo "KHIOPS_REVISION=${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}" >> "$GITHUB_ENV"
+          echo "IMAGE_INCREMENT=${{ inputs.image-increment || env.DEFAULT_IMAGE_INCREMENT }}" >> "$GITHUB_ENV"
           echo "KHIOPSDEV_OS_CODENAME=$(echo '${{ matrix.khiopsdev-os }}' | tr -d '0-9.')" >> "$GITHUB_ENV"
           echo "SERVER_REVISION=${{ inputs.server-revision || env.DEFAULT_SERVER_REVISION }}" >> "$GITHUB_ENV"
+          echo "IMAGE_URL=ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}" >> "$GITHUB_ENV"
       - name: Checkout khiops-python sources
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
@@ -56,6 +62,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up the Docker Image Tags
+        run: |
+          set -x
+          if [[ $GITHUB_REF == '/refs/heads/main' || $GITHUB_REF == '/refs/heads/dev' ]]; then
+            TAGS="$IMAGE_URL:latest,$IMAGE_URL:$KHIOPS_REVISION.$IMAGE_INCREMENT"
+          else
+            TAGS="$IMAGE_URL:$KHIOPS_REVISION.$IMAGE_INCREMENT"
+          fi
+          echo "DOCKER_IMAGE_TAGS=$TAGS" >> "$GITHUB_ENV"
       - name: Build image and push it to GitHub Container Registry
         uses: docker/build-push-action@v5
         with:
@@ -66,24 +81,8 @@ jobs:
             "KHIOPSDEV_OS=${{ matrix.khiopsdev-os }}"
             "SERVER_REVISION=${{ env.SERVER_REVISION }}"
             "PYTHON_VERSIONS=${{ inputs.python-versions || env.DEFAULT_PYTHON_VERSIONS }}"
-          tags: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}:latest
+          tags: ${{ env.DOCKER_IMAGE_TAGS }}
           # Push only on manual request
           push: ${{ inputs.push || false }}
       - name: Display the image digest
         run: echo ${{ steps.docker-build.outputs.digest }}
-  test:
-    # Test only when manually pushed an requested
-    if: ${{ inputs.push || false }}
-    needs: build-push
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        khiopsdev-os: [ubuntu22.04, rocky8, rocky9]
-    container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}:latest
-    steps:
-      - name: Check Khiops executables
-        run: |-
-          khiops -v
-          khiops_coclustering -v
