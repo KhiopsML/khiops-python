@@ -8,6 +8,9 @@ on:
       samples-revision:
         default: main
         description: Git tag, branch or commit for the khiops-samples repository
+      image-tag:
+        default: latest
+        description: Development Docker Image Tag
       run-long-tests:
         type: boolean
         required: false
@@ -25,7 +28,11 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
+      # 'latest' default image tag cannot be set as an environment variable,
+      # because the `env` context is only accessible at the step level;
+      # hence, it is hard-coded
+      image: |-
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -147,7 +154,11 @@ jobs:
         container: [ubuntu22.04, rocky8, rocky9]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:latest
+      # 'latest' default image tag cannot be set as an environment variable,
+      # because the `env` context is only accessible at the step level;
+      # hence, it is hard-coded
+      image: |-
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
