@@ -2,12 +2,16 @@
 name: Unit Tests
 env:
   DEFAULT_SAMPLES_REVISION: main
+  DEFAULT_IMAGE_REVISION: latest
 on:
   workflow_dispatch:
     inputs:
       samples-revision:
         default: main
         description: Git tag, branch or commit for the khiops-samples repository
+      image-revision:
+        default: latest
+        description: Development Docker image revision
       run-long-tests:
         type: boolean
         required: false
@@ -18,14 +22,24 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  set-image-tag:
+    runs-on: ubuntu-22.04
+    outputs:
+      image-tag: ${{ inputs.image-revision || env.DEFAULT_IMAGE_REVISION }}
+    steps:
+      - name: Set Docker image tag
+        run: |
+          echo "Setting development Docker image tag"
   run:
+    needs: set-image-tag
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
+      image: |-
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ needs.set-image-tag.outputs.image-tag }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -141,13 +155,15 @@ jobs:
             tests/resources/general_options/general_options/*/*._kh
           retention-days: 7
   check-mpiexec-on-linux:
+    needs: set-image-tag
     strategy:
       fail-fast: false
       matrix:
         container: [ubuntu22.04, rocky8, rocky9]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:latest
+      image: |-
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ needs.set-image-tag.outputs.image-tag }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}

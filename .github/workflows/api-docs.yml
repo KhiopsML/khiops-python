@@ -1,5 +1,7 @@
 ---
 name: API Docs
+env:
+  DEFAULT_IMAGE_REVISION: latest
 on:
   workflow_dispatch:
     inputs:
@@ -8,6 +10,9 @@ on:
         required: true
         type: boolean
         default: false
+      image-revision:
+        default: latest
+        description: Development Docker image revision
   pull_request:
     paths:
       - doc/**.rst
@@ -29,10 +34,20 @@ concurrency:
   group: pages
   cancel-in-progress: false
 jobs:
+  set-image-tag:
+    runs-on: ubuntu-22.04
+    outputs:
+      image-tag: ${{ inputs.image-revision || env.DEFAULT_IMAGE_REVISION }}
+    steps:
+      - name: Set Docker image tag
+        run: |
+          echo "Setting development Docker image tag"
   build:
+    needs: set-image-tag
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
+      image: |-
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ needs.set-image-tag.outputs.image-tag }}
       # Use the 'runner' user (1001) from github so checkout actions work properly
       # https://github.com/actions/runner/issues/2033#issuecomment-1598547465
       options: --user 1001
