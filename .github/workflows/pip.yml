@@ -2,12 +2,16 @@
 name: Pip Package
 env:
   DEFAULT_SAMPLES_REVISION: main
+  DEFAULT_IMAGE_REVISION: latest
 on:
   workflow_dispatch:
     inputs:
       samples-revision:
         default: main
         description: khiops-samples repo revision
+      image-revision:
+        default: latest
+        description: Development Docker image revision
   pull_request:
   push:
     tags: ['*']
@@ -17,6 +21,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    outputs:
+      image-tag: ${{ inputs.image-revision || env.DEFAULT_IMAGE_REVISION }}
     permissions:
       checks: write
       contents: read
@@ -49,7 +55,8 @@ jobs:
       matrix:
         container: [ubuntu22.04, rocky9]
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:latest
+      image: |-
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ needs.build.outputs.image-tag }}
     steps:
       - name: Set parameters as env
         run: |
