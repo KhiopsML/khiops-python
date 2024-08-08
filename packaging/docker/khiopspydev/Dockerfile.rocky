@@ -8,7 +8,7 @@ LABEL description="Container for the development of khiops-python"
 # Reuse KHIOPSDEV_OS from previous stage
 ARG KHIOPSDEV_OS
 ARG KHIOPS_REVISION
-# - Install dev tools and miniconda3 (for the unit tests)
+# - Install dev tools and miniforge (for the unit tests)
 # - Build and install Khiops
 # - Set mpich as the default MPI
 RUN true \
@@ -55,12 +55,12 @@ RUN true \
        alternatives --install /usr/bin/python python /usr/bin/python3 1 \
        && alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 ; \
      fi \
-    # Install miniconda3 to have multiple Python versions via Conda \
-    && mkdir -p /root/miniconda3 && cd /root/miniconda3 \
-    && wget https://repo.anaconda.com/miniconda/Miniconda3-py312_24.1.2-0-Linux-x86_64.sh -O ./Miniconda3-py312_24.1.2-0-Linux-x86_64.sh \
-    && echo "b978856ec3c826eb495b60e3fffe621f670c101150ebcbdeede4f961f22dc438 Miniconda3-py312_24.1.2-0-Linux-x86_64.sh" | sha256sum --check \
-    && bash ./Miniconda3-py312_24.1.2-0-Linux-x86_64.sh -b -u -p /root/miniconda3 \
-    && rm -rf /root/miniconda3/Miniconda3-py312_24.1.2-0-Linux-x86_64.sh \
+  # Install miniforge to have multiple Python versions via Conda \
+  && mkdir -p /root/miniforge3 && cd /root/miniforge3 \
+  && wget https://github.com/conda-forge/miniforge/releases/download/24.1.2-0/Miniforge3-24.1.2-0-Linux-x86_64.sh -O ./Miniforge3_24.1.2-0-Linux-x86_64.sh \
+  && echo "dbadb808edf4da00af35d888d3eeebbfdce71972b60bf4b16dbacaee2ab57f28 Miniforge3_24.1.2-0-Linux-x86_64.sh" | sha256sum --check \
+  && bash ./Miniforge3_24.1.2-0-Linux-x86_64.sh -b -u -p /root/miniforge3 \
+  && rm -rf /root/miniforge3/Miniforge3_24.1.2-0-Linux-x86_64.sh \
   # Clean build files \
   && dnf clean all \
   && rm -rf ./khiops \
@@ -71,9 +71,9 @@ RUN true \
 ARG PYTHON_VERSIONS
 RUN /bin/bash -c 'for version in ${PYTHON_VERSIONS}; \
 do \
-    /root/miniconda3/bin/conda create -y -n py${version} python=${version}; \
-    /root/miniconda3/bin/conda create -y -n py${version}_conda python=${version}; \
-    /root/miniconda3/bin/conda install -y -n py${version}_conda -c conda-forge -c khiops-dev khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
+    /root/miniforge3/bin/conda create -y -n py${version} python=${version}; \
+    /root/miniforge3/bin/conda create -y -n py${version}_conda python=${version}; \
+    /root/miniforge3/bin/conda install -y -n py${version}_conda -c khiops-dev khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
 done'
 
 RUN mkdir -p /scripts

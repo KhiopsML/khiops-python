@@ -19,7 +19,7 @@ on:
         description: Khiops Server Revision
       push:
         type: boolean
-        default: true
+        default: false
         description: Push to GH Registry
       python-versions:
         type: string
