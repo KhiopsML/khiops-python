@@ -237,13 +237,15 @@ def _preprocess_task_arguments(task_args):
         del task_args["use_complement_as_test"]
 
     # Preprocess the database format parameters
-    if "detect_format" in task_args:
-        assert "header_line" in task_args
-        assert "field_separator" in task_args
+    if (
+        task_args.get("detect_format")
+        or task_args.get("header_line")
+        or task_args.get("field_separator")
+    ):
         detect_format, header_line, field_separator = _preprocess_format_spec(
-            task_args["detect_format"],
-            task_args["header_line"],
-            task_args["field_separator"],
+            task_args.get("detect_format"),
+            task_args.get("header_line"),
+            task_args.get("field_separator"),
         )
         task_args["detect_format"] = detect_format
         task_args["header_line"] = header_line
@@ -317,15 +319,17 @@ def _preprocess_format_spec(detect_format, header_line, field_separator):
           their default values
         - It transforms the field separator "\t" to the empty string ""
     """
-    # Ignore detect_format if header_line or field_separator are set
-    if header_line is not None or field_separator is not None:
-        detect_format = False
 
     # Set the default values of header_line and field_separator
     if header_line is None:
-        header_line = True
+        header_line = False
     if field_separator is None:
         field_separator = ""
+
+    # Precedence rules :
+    # Ignore detect_format if header_line or field_separator is set to a non-empty value
+    if header_line or field_separator:
+        detect_format = False
 
     # Fail on separators with more than one char
     if len(field_separator) > 1:
@@ -510,12 +514,12 @@ def build_dictionary_from_data_table(
         Path of the output dictionary file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        its field separator.
+        It's set to ``False`` if ``header_line`` or ``field_separator`` are set.
+    header_line : bool, optional (default ``False``)
         If ``True`` it uses the first line of the data as column names. Overrides
         ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
+    field_separator : str, optional (default ``""``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     ... :
@@ -563,12 +567,12 @@ def check_database(
         Path of the data table file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        its field separator.
+        It's set to ``False`` if ``header_line`` or ``field_separator`` are set.
+    header_line : bool, optional (default ``False``)
         If ``True`` it uses the first line of the data as column names. Overrides
         ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
+    field_separator : str, optional (default ``""``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     sample_percentage : float, default 100.0
@@ -664,12 +668,12 @@ def train_predictor(
         Path of the results directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        its field separator.
+        It's set to ``False`` if ``header_line`` or ``field_separator`` are set.
+    header_line : bool, optional (default ``False``)
         If ``True`` it uses the first line of the data as column names. Overrides
         ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
+    field_separator : str, optional (default ``""``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     sample_percentage : float, default 70.0
@@ -849,12 +853,12 @@ def evaluate_predictor(
         Path of the results directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        its field separator.
+        It's set to ``False`` if ``header_line`` or ``field_separator`` are set.
+    header_line : bool, optional (default ``False``)
         If ``True`` it uses the first line of the data as column names. Overrides
         ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
+    field_separator : str, optional (default ``""``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     sample_percentage : float, default 100.0
@@ -997,12 +1001,12 @@ def train_recoder(
         Path of the results directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        its field separator.
+        It's set to ``False`` if ``header_line`` or ``field_separator`` are set.
+    header_line : bool, optional (default ``False``)
         If ``True`` it uses the first line of the data as column names. Overrides
         ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
+    field_separator : str, optional (default ``""``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     sample_percentage : float, default 100.0
@@ -1175,12 +1179,12 @@ def deploy_model(
         Path of the output data file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        its field separator.
+        It's set to ``False`` if ``header_line`` or ``field_separator`` are set.
+    header_line : bool, optional (default ``False``)
         If ``True`` it uses the first line of the data as column names. Overrides
         ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
+    field_separator : str, optional (default ``""``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     sample_percentage : float, default 100.0
@@ -1312,15 +1316,15 @@ def sort_data_table(
         The names of the variables to sort. If not set sorts the table by its key.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        its field separator.
+        It's set to ``False`` if ``header_line`` or ``field_separator`` are set.
+    header_line : bool, optional (default ``False``)
         If ``True`` it uses the first line of the data as column names. Overrides
         ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
+    field_separator : str, optional (default ``""``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
-    output_header_line : bool, default ``True``
+    output_header_line : bool, default ``False``
         If ``True`` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
@@ -1380,11 +1384,12 @@ def extract_keys_from_data_table(
         Path of the output data file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. Ignored if ``header_line`` or ``field_separator`` are set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        its field separator.
+        It's set to ``False`` if ``header_line`` or ``field_separator`` are set.
+    header_line : bool, optional (default ``False``)
         If ``True`` it uses the first line of the data as column names. Overrides
         ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
+    field_separator : str, optional (default ``""``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     output_header_line : bool, default ``True``
@@ -1454,12 +1459,12 @@ def train_coclustering(
         Path of the results directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        its field separator.
+        It's set to ``False`` if ``header_line`` or ``field_separator`` are set.
+    header_line : bool, optional (default ``False``)
         If ``True`` it uses the first line of the data as column names. Overrides
         ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
+    field_separator : str, optional (default ``""``)
         A field separator character, overrides ``detect_format`` if set ("" counts
         as "\\t").
     sample_percentage : float, default 100.0

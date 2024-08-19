@@ -2818,6 +2818,74 @@ class KhiopsCoreVariousTests(unittest.TestCase):
         else:
             del os.environ["KHIOPS_MPI_COMMAND_ARGS"]
 
+    def test_precedence_rules_for_format_spec(self):
+        """
+        Ensures the directives written in the generated scenarios
+        follow the precedence rules for the format specifications
+        (`detect_format`, 'header_line` and `field_separator`)
+        """
+
+        # array of pair (name, additional kwargs to pass to the function)
+        test_matrix = [
+            # no input ->
+            # 'detect_format': True, 'header_line': False, 'field_separator': ''
+            ("no_input", {}),
+            # 'header_line': True ->
+            # 'detect_format': False, 'header_line': True, 'field_separator': ''
+            ("header_line", {"header_line": True}),
+            # 'field_separator': ',' ->
+            # 'detect_format': False, 'header_line': False, 'field_separator': ','
+            ("field_separator", {"field_separator": ","}),
+            # detect_format: True ->
+            # 'header_line': False, 'field_separator': '', detect_format: True
+            ("detect_format", {"detect_format": True}),
+            # detect_format: True, 'field_separator': ','
+            #     -> 'header_line': False, 'field_separator': '', detect_format: False
+            ("mixed", {"detect_format": True, "field_separator": ","}),
+        ]
+
+        test_resources_dir = os.path.join(resources_dir(), "scenario_generation")
+
+        # Use the test runner that only compares the scenarios
+        default_runner = kh.get_runner()
+        test_runner = ScenarioWriterRunner(self, test_resources_dir)
+        kh.set_runner(test_runner)
+        test_runner.test_name = "format_spec"
+        cleanup_dir(test_runner.output_scenario_dir, "*/output/*._kh", verbose=True)
+
+        for test in test_matrix:
+            test_runner.subtest_name = test[0]
+            # FIXME : when the support of python3.8 is no more needed,
+            # use the | operator to merge two dictionaries
+            merged_kwargs = {
+                **{
+                    "additional_data_tables": {
+                        "Accident`Vehicles": "/tmp/Vehicules.txt"
+                    },
+                    "max_trees": 0,
+                },
+                **test[1],
+            }
+            # Execute the method
+            kh.train_predictor(
+                "/tmp/dictionary.kdic",
+                "Accident",
+                "/tmp/Accidents.txt",
+                "Gravity",
+                "/tmp/results_dir/",
+                **merged_kwargs,
+            )
+            # Compare the reference with the output
+            assert_files_equal(
+                self,
+                test_runner.ref_scenario_path,
+                test_runner.output_scenario_path,
+                line_comparator=scenario_line_comparator,
+            )
+
+        # Restore the default runner
+        kh.set_runner(default_runner)
+
 
 if __name__ == "__main__":
     unittest.main()
