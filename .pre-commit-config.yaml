@@ -28,6 +28,8 @@ repos:
     hooks:
       - id: yamlfix
         exclude: packaging/conda/meta.yaml
+        language: python
+        additional_dependencies: [maison<2.0.0]
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.29.0
     hooks:
