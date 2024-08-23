@@ -609,7 +609,7 @@ def khiops_encoder_multitable_snowflake():
     print(f"Features evaluated: {khe.n_features_evaluated_}")
     print("Top 3 evaluated features")
     for i, feature in enumerate(khe.feature_evaluated_names_[:3]):
-        print(f"{feature} - Level: {khe.feature_evaluated_importances_[i][0]}")
+        print(f"{feature} - Level: {khe.feature_evaluated_importances_[i]}")
     print("---")
 
     # Transform the train dataset
