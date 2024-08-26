@@ -6,9 +6,17 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.2.2.5 - Unreleased
+
+### Added
+
+- (General) `train_test_split_dataset` helper function to ease the splitting in train/test for
+  multi-table datasets.
+- (General) `sort_dataset` helper function to ease the sorting by key of multi-table datasets.
+
 ## 10.2.2.4 - 2024-08-05
 
-## Added
+### Added
 - (`sklearn`) Sklearn's attributes for supervised estimators.
 
 ## 10.2.2.3 - 2024-08-02
