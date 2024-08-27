@@ -1,6 +1,6 @@
-# Khiops Python
+# Khiops Python Library
 
-**Khiops Python** is a Python library for the [Khiops AutoML suite][khiops].
+This is the repository of the **Khiops Python Library** for the [Khiops AutoML suite][khiops].
 
 ## Description
 Khiops is a robust AutoML suite for constructing supervised models (classifiers, regressors and
@@ -31,7 +31,8 @@ Other install method are documented at the [Khiops website][khiops-install].
 [sklearn]: https://scikit-learn.org/stable
 
 ## Documentation
-The main documentation of the Khiops Python library is available [here][khiops-python-doc].
+The API Docs for the Khiops Python library are available [here][khiops-api-docs]. Other
+documentation (algorithms, installation, etc) may be found in the [Khiops site][khiops].
 
 The library itself is documented with docstrings: for example to obtain help on the
 `train_predictor` function you can use:
@@ -54,7 +55,7 @@ Team: khiops.team@orange.com .
 
 [khiops]: https://khiops.org
 [khiops-install]: https://khiops.org/setup
-[khiops-python-doc]: https://khiopsml.github.io/khiops-python
+[khiops-api-docs]: https://khiopsml.github.io/khiops-python
 [python]: https://www.python.org
 [pandas]: https://pandas.pydata.org
 [sklearn]: https://scikit-learn.org/stable

@@ -78,7 +78,9 @@ def kh_samples_entry_point():  # pragma: no cover
 
         argument_parser = samples_module.build_argument_parser(
             prog="kh-samples [core|sklearn]",
-            description="Executes the sample code snippets of khiops-python",
+            description=(
+                "Executes the sample code snippets of the Khiops Python library"
+            ),
         )
         samples_module.execute_samples(argument_parser.parse_args(args))
     except kh.KhiopsRuntimeError as error:

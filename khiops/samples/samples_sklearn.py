@@ -975,7 +975,7 @@ def execute_samples(args):
 
     # Print the execution title
     if execution_samples:
-        print(f"khiops-python {khiops.__version__} running on Khiops ", end="")
+        print(f"Khiops Python library {khiops.__version__} running on Khiops ", end="")
         print(f"{kh.get_khiops_version()}\n")
         print(f"Sample datasets location: {kh.get_samples_dir()}")
         print(f"{len(execution_samples)} sample(s) to execute\n")
