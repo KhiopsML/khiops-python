@@ -360,7 +360,7 @@ class KhiopsRunner(ABC):
         self._khiops_version = None
         self._samples_dir = None
 
-        # Whether to write the khiops-python version of the scenarios
+        # Whether to write the Khiops Python library version of the scenarios
         # For development uses only
         self._write_version = True
 
@@ -393,7 +393,7 @@ class KhiopsRunner(ABC):
         r"""str: The runner's temporary directory
 
         The temporary scenarios/templates and dictionary files created by
-        khiops-python are stored here.
+        the Khiops Python library are stored here.
 
         Default value:
             - Windows: ``%TEMP%\khiops\python``
@@ -619,7 +619,7 @@ class KhiopsRunner(ABC):
         if caught_warnings is not None:
             warning_list += caught_warnings
 
-        status_msg = "khiops-python settings\n"
+        status_msg = "Khiops Python library settings\n"
         status_msg += f"version             : {khiops.__version__}\n"
         status_msg += f"runner class        : {self.__class__.__name__}\n"
         status_msg += f"max cores           : {self.max_cores}"
@@ -641,14 +641,14 @@ class KhiopsRunner(ABC):
         try:
             status_msg, warning_list = self._build_status_message()
         except (KhiopsEnvironmentError, KhiopsRuntimeError) as error:
-            print(f"khiops-python status KO: {error}")
+            print(f"Khiops Python library status KO: {error}")
             return 1
 
         # Print status details
         print(status_msg, end="")
 
         # Print status
-        print("khiops-python status OK", end="")
+        print("Khiops Python library status OK", end="")
         if warning_list:
             print(", with warnings:")
             for warning in warning_list:
@@ -1415,21 +1415,21 @@ class KhiopsLocalRunner(KhiopsRunner):
         else:
             khiops_version_str, _, _, _ = _get_tool_info_khiops9(self, "khiops")
             warnings.warn(
-                "Khiops version is earlier than 10.0; khiops-python will "
+                "Khiops version is earlier than 10.0; the Khiops Python library will "
                 f"run in legacy mode. Khiops path: {self._tool_path('khiops')}",
                 stacklevel=3,
             )
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
-        # Warn if the khiops version is too far from the khiops-python version
+        # Warn if the khiops version is too far from the Khiops Python library version
         compatible_khiops_version = khiops.get_compatible_khiops_version()
         if self._khiops_version.major > compatible_khiops_version.major:
             warnings.warn(
                 f"Khiops version '{self._khiops_version}' is ahead of "
-                f"the khiops-python version '{khiops.__version__}'. "
+                f"the Khiops Python library version '{khiops.__version__}'. "
                 "There may be compatibility errors and "
-                "we recommend you to update to the latest khiops-python version."
-                "Go to https://khiops.org for more information.",
+                "we recommend you to update to the latest Khiops Python "
+                "library version. See https://khiops.org for more information.",
                 stacklevel=3,
             )
 

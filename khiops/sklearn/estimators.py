@@ -184,11 +184,11 @@ class KhiopsEstimator(ABC, BaseEstimator):
         parameter.
     key : str, optional
         The name of the column to be used as key.
-        **Deprecated** will be removed in khiops-python 11.
+        **Deprecated** will be removed in Khiops 11.
     internal_sort : bool, optional
         *Advanced.*: See concrete estimator classes for information about this
         parameter.
-        **Deprecated** will be removed in khiops-python 11. Use the ``auto_sort``
+        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
         estimator parameter instead.
     """
 
@@ -277,9 +277,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         if not self.verbose:
             _cleanup_dir(computation_dir)
         else:
-            print(
-                "khiops-python sklearn temporary files located at: " + computation_dir
-            )
+            print("khiops sklearn temporary files located at: " + computation_dir)
 
     def fit(self, X, y=None, **kwargs):
         """Fit the estimator
@@ -449,7 +447,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -606,7 +604,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         key-value pair of this dictionary represents the column name and its respective
         maximum number of clusters. If not specified there is no maximun number of
         clusters is imposed on any column.
-        **Deprecated** will be removed in khiops-python 11. Use the ``max_part_number``
+        **Deprecated** will be removed in Khiops 11. Use the ``max_part_number``
         parameter of the `fit` method.
     variables : list of str, optional
         A list of column names/indexes to use in the coclustering.
@@ -623,7 +621,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         to speed up the processing. This affects the `predict` method.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-        **Deprecated** will be removed in khiops-python 11. Use the ``auto_sort``
+        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
         parameter of the estimator instead.
 
     Attributes
@@ -641,7 +639,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         The Khiops report object.
     model_report_raw_ : dict
         JSON object of the Khiops report.
-        **Deprecated** will be removed in khiops-python 11. Use the ``json_data``
+        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
         attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
@@ -715,7 +713,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -731,7 +729,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             Specifically, a key-value pair of this dictionary represents the column name
             and its respective maximum number of clusters. If not specified, then no
             maximum number of clusters is imposed on any column.
-            **Deprecated** (will be removed in khiops-python 11). Use the ``simplify``
+            **Deprecated** (will be removed in Khiops 11). Use the ``simplify``
             method instead.
 
         Returns
@@ -1152,7 +1150,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -1165,7 +1163,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             An array containing the encoded columns. A first column containing key
             column ids is added in multi-table mode.
 
-            *Deprecated return values* (will be removed in khiops-python 11): str for
+            *Deprecated return values* (will be removed in Khiops 11): str for
             file based dataset specification.
         """
         # Create temporary directory
@@ -1361,7 +1359,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -1371,7 +1369,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         y : :external:term:`array-like` of shape (n_samples,) or
             a `pandas.Dataframe` of shape (n_samples, 1) containing the target values.
 
-            **Deprecated input modes** (will be removed in khiops-python 11):
+            **Deprecated input modes** (will be removed in Khiops 11):
                 - str: A path to a data table file for file-based ``dict`` dataset
                   specifications.
 
@@ -1791,7 +1789,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         lexicographic manner.
     key : str, optional
         *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in khiops-python 11. Use ``dict`` dataset
+        **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
         specifications in ``fit``, ``fit_predict``, ``predict`` and ``predict_proba``.
     internal_sort : bool, optional
         *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
@@ -1800,7 +1798,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         affects the `fit`, `predict` and `predict_proba` methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-        **Deprecated** will be removed in khiops-python 11. Use the ``auto_sort``
+        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
         estimator parameter instead.
 
     Attributes
@@ -1846,7 +1844,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         The Khiops report object.
     model_report_raw_ : dict
         JSON object of the Khiops report.
-        **Deprecated** will be removed in khiops-python 11. Use the ``json_data``
+        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
         attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
@@ -1920,7 +1918,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -1930,7 +1928,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         y : :external:term:`array-like` of shape (n_samples,) or
             a `pandas.Dataframe` of shape (n_samples, 1) containing the target values
 
-            **Deprecated input modes** (will be removed in khiops-python 11):
+            **Deprecated input modes** (will be removed in Khiops 11):
                 - str: A path to a data table file for file-based ``dict`` dataset
                   specifications.
 
@@ -2026,7 +2024,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -2080,7 +2078,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -2192,7 +2190,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         lexicographic manner.
     key : str, optional
         *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in khiops-python 11. Use ``dict`` dataset
+        **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
         specifications in ``fit``, ``fit_predict``  and ``predict``.
     internal_sort : bool, optional
         *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
@@ -2201,7 +2199,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         affects the `fit` and `predict` methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-        **Deprecated** will be removed in khiops-python 11. Use the ``auto_sort``
+        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
         estimator parameter instead.
 
     Attributes
@@ -2242,7 +2240,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         The Khiops report object.
     model_report_raw_ : dict
         JSON object of the Khiops report.
-        **Deprecated** will be removed in khiops-python 11. Use the ``json_data``
+        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
         attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
@@ -2288,7 +2286,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -2298,7 +2296,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         y : :external:term:`array-like` of shape (n_samples,) or
             a `pandas.Dataframe` of shape (n_samples, 1) containing the target values
 
-            **Deprecated input modes** (will be removed in khiops-python 11):
+            **Deprecated input modes** (will be removed in Khiops 11):
                 - str: A path to a data table file for file-based ``dict`` dataset
                   specifications.
         Returns
@@ -2368,7 +2366,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -2382,7 +2380,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
             column ids is added in multi-table mode. The key columns are added for
             multi-table tasks.
 
-            *Deprecated return values* (will be removed in khiops-python 11): str for
+            *Deprecated return values* (will be removed in Khiops 11): str for
             file based dataset specification.
 
         """
@@ -2457,7 +2455,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         lexicographic manner.
     key : str, optional
         *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in khiops-python 11. Use ``dict`` dataset
+        **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
         specifications in ``fit`` and ``transform``.
     internal_sort : bool, optional
         *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
@@ -2466,7 +2464,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         affects the `fit` and `transform` methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-        **Deprecated** will be removed in khiops-python 11. Use the ``auto_sort``
+        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
         estimator parameter instead.
 
     Attributes
@@ -2491,7 +2489,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         The Khiops report object.
     model_report_raw_ : dict
         JSON object of the Khiops report.
-        **Deprecated** will be removed in khiops-python 11. Use the ``json_data``
+        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
         attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
@@ -2623,7 +2621,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -2633,7 +2631,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         y : :external:term:`array-like` of shape (n_samples,) or
             a `pandas.Dataframe` of shape (n_samples, 1) containing the target values
 
-            **Deprecated input modes** (will be removed in khiops-python 11):
+            **Deprecated input modes** (will be removed in Khiops 11):
                 - str: A path to a data table file for file-based ``dict`` dataset
                   specifications.
 
@@ -2696,7 +2694,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -2709,7 +2707,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             An array containing the encoded columns. A first column containing key
             column ids is added in multi-table mode.
 
-            *Deprecated return values* (will be removed in khiops-python 11): str for
+            *Deprecated return values* (will be removed in Khiops 11): str for
             file based dataset specification.
         """
         # Create temporary directory
@@ -2742,7 +2740,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-            *Deprecated input modes* (will be removed in khiops-python 11):
+            *Deprecated input modes* (will be removed in Khiops 11):
 
             - tuple: A pair (``path_to_file``, ``separator``).
             - list: A sequence of dataframes or paths, or pairs path-separator. The
@@ -2752,7 +2750,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         y : :external:term:`array-like` of shape (n_samples,)
             :external:term:`array-like` object containing the target values.
 
-            **Deprecated input modes** (will be removed in khiops-python 11):
+            **Deprecated input modes** (will be removed in Khiops 11):
                 - str: A path to a data table file for file-based ``dict`` dataset
                   specifications.
 

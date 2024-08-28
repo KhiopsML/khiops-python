@@ -1,8 +1,8 @@
-# khiops-python Coding Guidelines
+# Khiops Python Library Coding Guidelines
 
 ## Quick Start
 ```bash
-# Make sure you are a member of the pyKhiops GitHub project and that you have set up the SSH keys
+# Make sure you are a member of the khiops-python GitHub project and that you have set up the SSH keys
 # for Git
 
 # Clone the repo
@@ -28,11 +28,11 @@ python -m unittest tests.test_sklearn.KhiopsSklearnParameterPassingTests
 ## Coding Style
 
 ### Language
-`khiops-python` is coded in English (comments included).
+We code in English (comments included).
 
 ### Style Enforcement: Tools & Git Hooks
-The coding style of pyKhiops is almost PEP8 compliant. To enforce these guidelines we use three
-tools:
+The coding style of the Khiops Python library is almost PEP8 compliant. To enforce these guidelines
+we use three tools:
 - [Black](https://github.com/psf/black)
 - [isort](https://pycqa.github.io/isort/)
 - [Pylint](https://www.pylint.org/)
@@ -151,7 +151,7 @@ rebase before the last merge commit.
 A usual application of history rewriting is to eliminate commits named "Fix previous commit". In
 this case use `rebase` to rewrite the history as follows:
 ```bash
-git rebase -i <REF-TO-FIX> # Usually REF-TO-FIX is either "develop", "HEAD~2" or a specific hash
+git rebase -i <ROOT-REF> # Usually ROOT-REF is either "dev", "HEAD~2" or a specific hash
 ```
 to interactively move and squash fix commits with the `fixup` or `squash` operator. Usually this
 operation will make your feature branch diverge from `origin` (GitHub repo), so a `git push --force`
@@ -241,10 +241,16 @@ For development dependencies (eg. `black`, `isort`, `sphinx`, `wrapt`, `furo`) w
 carefree while still trying to not add too many dependencies.
 
 ## Versioning
-We follow a non-standard `MAJOR.MINOR.PATCH.INCREMENT[PRE_RELEASE]` versioning convention. The
+We follow a non-standard `MAJOR.MINOR.PATCH.INCREMENT[-PRE_RELEASE]` versioning convention. The
 first three numbers `MAJOR.MINOR.PATCH` are the latest Khiops version that is compatible with the
-package. The number `INCREMENT` indicates the evolution of `khiops-python` followed by an optional
-`[PRE_RELEASE]` version for alpha, beta and release candidate releases (eg. `b2`).
+package. The number `INCREMENT` indicates the evolution of the Khiops Python library followed by an
+optional `[-PRE_RELEASE]` version for alpha, beta and release candidate releases (eg. `b.2`).
+
+**Important Note:** For the versions of packages we remove the dash `-` before the `PRE_RELEASE`
+atom to be compatible with the [Python version specifiers][python-version-spec], which is required
+by `pip` and `conda`.
+
+[python-version-spec]: https://packaging.python.org/en/latest/specifications/version-specifiers/#version-specifiers
 
 ## Releases
 
@@ -292,6 +298,3 @@ Checklist:
 To make a public release, you must execute the `Conda Package` CI workflow manually on a tag and
 specify the `khiops` anaconda channel for upload. These uploads do not overwrite any packages in
 this channel, so you must correct any mistake manually.
-
-### Git Manipulations upon a Major Release
-The following is the check list to be done upon a major release:
