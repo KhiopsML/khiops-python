@@ -88,6 +88,10 @@ def kh_samples_entry_point():  # pragma: no cover
         sys.exit(1)
 
 
+# Samples version: To be updated when khiops-samples does
+DEFAULT_SAMPLES_VERSION = "10.2.0"
+
+
 def kh_download_datasets_entry_point():
     """Entry point for the download samples helper script"""
     samples_dir = pathlib.Path.home() / "khiops_data" / "samples"
@@ -96,7 +100,10 @@ def kh_download_datasets_entry_point():
         description=f"Downloads the Khiops samples dataset to {samples_dir}.",
     )
     arg_parser.add_argument(
-        "-v", "--version", default="10.1.1", help="Sample datasets version"
+        "-v",
+        "--version",
+        default=DEFAULT_SAMPLES_VERSION,
+        help="Sample datasets version",
     )
     arg_parser.add_argument(
         "-f",
@@ -119,7 +126,7 @@ def kh_download_datasets_entry_point():
 
 
 def download_datasets(
-    force_overwrite=False, version="10.2.0", _called_from_shell=False
+    force_overwrite=False, version=DEFAULT_SAMPLES_VERSION, _called_from_shell=False
 ):
     """Downloads the Khiops sample datasets for a given version
 
@@ -155,9 +162,9 @@ def download_datasets(
 
         # Set the sample dataset zip URL
         samples_repo_url = "https://github.com/KhiopsML/khiops-samples"
-        samples_zip_file = f"khiops-samples-v{version}.zip"
+        samples_zip_file = f"khiops-samples-{version}.zip"
         samples_zip_url = (
-            f"{samples_repo_url}/releases/download/v{version}/{samples_zip_file}"
+            f"{samples_repo_url}/releases/download/{version}/{samples_zip_file}"
         )
 
         # Download the sample zip file and extracted to the home dataset dir
