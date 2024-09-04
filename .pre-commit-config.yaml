@@ -24,12 +24,11 @@ repos:
         files: khiops/samples/samples.py|khiops/samples/samples_sklearn.py
         args: [--no-sections]
   - repo: https://github.com/lyz-code/yamlfix/
-    rev: 1.16.0
+    rev: 1.17.0
     hooks:
       - id: yamlfix
         exclude: packaging/conda/meta.yaml
         language: python
-        additional_dependencies: [maison<2.0.0]
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.29.0
     hooks:
