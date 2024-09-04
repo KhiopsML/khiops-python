@@ -107,7 +107,6 @@ def value_count(values):
         # If the value count exists: update it
         if value in counts:
             counts[value] += 1
-
         # Otherwise create a new count of 1
         else:
            counts[value] = 1
@@ -239,6 +238,15 @@ thoroughly the pros and cons of any new external package dependency before addin
 ### Development/Build dependencies
 For development dependencies (eg. `black`, `isort`, `sphinx`, `wrapt`, `furo`) we can be more
 carefree while still trying to not add too many dependencies.
+
+### Python Support Policy
+Our Python support policy is the following:
+- We start supporting a new Python version **within 3 months** of its official release.
+- We support an old Python version **up to 6 months** from its official end of
+  support by the Python developers.
+
+By _supporting a Python version_ we mean that we pass all our test batteries in the specified
+version.
 
 ## Versioning
 We follow a non-standard `MAJOR.MINOR.PATCH.INCREMENT[-PRE_RELEASE]` versioning convention. The
