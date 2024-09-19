@@ -4,6 +4,12 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
+
+# Important note:
+#  To detect the installation environment, this module makes use of the path in
+#  `__file__`. If you move to another place make sure you properly update any line using
+#  Path(__file__).
+
 """Classes implementing Khiops Python' backend runners"""
 
 import io
@@ -214,16 +220,21 @@ def _modl_and_mpiexec_executables_exist(bin_dir):
 
 def _infer_env_bin_dir_for_conda_based_installations():
     """Infer reference directory for Conda-based Khiops installations"""
-    reference_file = khiops.__file__
-    assert reference_file is not None
-    # Windows: Match %CONDA_PREFIX%\Lib\site-packages\khiops\__init__.py
+    assert os.path.basename(Path(__file__).parents[2]) == "khiops", (
+        f"The {os.path.basename(__file__)} file has been moved. "
+        "Please fix the `Path.parents` in this method "
+        "so it finds the conda environment directory of this module"
+    )
+
+    # Windows: Match %CONDA_PREFIX%\Lib\site-packages\khiops\core\internals\runner.py
     if platform.platform() == "Windows":
-        conda_env_dir = Path(reference_file).parents[3]
+        conda_env_dir = Path(__file__).parents[5]
     # Linux/macOS:
-    # Match $CONDA_PREFIX/[Ll]ib/python3.X/site-packages/khiops/__init__.py
+    # Match $CONDA_PREFIX/[Ll]ib/python3.X/site-packages/khiops/core/internals/runner.py
     else:
-        conda_env_dir = Path(reference_file).parents[4]
+        conda_env_dir = Path(__file__).parents[6]
     env_bin_dir = os.path.join(conda_env_dir.as_posix(), "bin")
+
     return env_bin_dir
 
 
@@ -632,7 +643,7 @@ class KhiopsRunner(ABC):
         status_msg += "\n"
         status_msg += f"temp dir            : {self.root_temp_dir}\n"
         status_msg += f"sample datasets dir : {samples_dir_path}\n"
-        status_msg += f"package dir         : {os.path.dirname(khiops.__file__)}\n"
+        status_msg += f"package dir         : {Path(__file__).parents[2]}\n"
         return status_msg, warning_list
 
     def print_status(self):
