@@ -6,6 +6,8 @@
 ######################################################################################
 """Helper functions for specific and/or advanced treatments"""
 import os
+import platform
+import subprocess
 
 import khiops.core.internals.filesystems as fs
 from khiops.core import api
@@ -444,3 +446,54 @@ def deploy_predictor_for_metrics(
 
 
 # pylint: enable=protected-access
+
+
+def visualize_report(report_path):
+    """Opens a Khiops or Khiops Coclustering report with the desktop visualization app
+
+    Before using this function, make sure you have installed the Khiops Visualization
+    app and/or the Khiops Co-Visualization app. More info at
+    `<https://khiops.org/setup/visualization/>`_
+
+    Parameters
+    ----------
+    report_path : str
+        The path of the report file to be open. It must have extension '.khj' (Khiops
+        report) or '.khcj' (Khiops Coclustering report).
+
+    Raises
+    ------
+    `ValueError`
+        If the report file path does not have extension '.khj' or '.khcj'.
+    `FileNotFoundError`
+        If the report file does not exist.
+    `RuntimeError`
+        If the report file is executable.
+    """
+    # Check that the report path:
+    # - has a valid file extension
+    # - exists
+    # - is not executable
+    #   - Skip this check on Windows because generated reports are executable
+    _, ext = os.path.splitext(report_path)
+    if ext not in [".khj", ".khcj"]:
+        raise ValueError(
+            "'report_path' must have extension '.khj' or '.khcj'. "
+            f"Path: {report_path}"
+        )
+    if not os.path.exists(report_path):
+        raise FileNotFoundError(report_path)
+    if platform.system() != "Windows" and os.access(report_path, os.X_OK):
+        raise RuntimeError(f"Report file cannot be executable. Path: {report_path}")
+
+    # Open it with the associated application
+    try:
+        if platform.system() == "Windows":
+            subprocess.call(["explorer", report_path])
+        elif platform.system() == "Darwin":
+            subprocess.call(["open", report_path])
+        else:
+            subprocess.call(["xdg-open", report_path])
+    # On failure we just print the error to not break the execution
+    except OSError as error:
+        print(f"Could not open report file: {error}. Path: {report_path}")

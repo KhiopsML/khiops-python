@@ -94,6 +94,10 @@ Samples
     test_auc = metrics.roc_auc_score(y_test, y_test_probas[:, 1])
     print(f"Test accuracy = {test_accuracy}")
     print(f"Test auc      = {test_auc}")
+
+    # If you have Khiops Visualization installed you may open the report as follows
+    # khc.export_report_file("report.khj")
+    # kh.visualize_report("report.khj")
 .. autofunction:: khiops_classifier_multiclass
 .. code-block:: python
 
@@ -520,6 +524,10 @@ Samples
     test_mae = metrics.mean_absolute_error(y_test, y_test_pred)
     print(f"Test R2  = {test_r2}")
     print(f"Test MAE = {test_mae}")
+
+    # If you have Khiops Visualization installed you may open the report as follows
+    # khr.export_report_file("report.khj")
+    # kh.visualize_report("report.khj")
 .. autofunction:: khiops_encoder
 .. code-block:: python
 
@@ -549,6 +557,10 @@ Samples
     print("Encoded data:")
     print(X_transformed[:10])
     print("---")
+
+    # If you have Khiops Visualization installed you may open the report as follows
+    # khe.export_report_file("report.khj")
+    # kh.visualize_report("report.khj")
 .. autofunction:: khiops_encoder_multitable_star
 .. code-block:: python
 
@@ -802,6 +814,10 @@ Samples
     print("Predicted clusters (first 10)")
     print(X_clusters[:10])
     print("---")
+
+    # If you have Khiops Co-Visualization installed you may open the report as follows
+    # khcc.export_report_file("report.khcj")
+    # kh.visualize_report("report.khcj")
 .. autofunction:: khiops_coclustering_simplify
 .. code-block:: python
 
