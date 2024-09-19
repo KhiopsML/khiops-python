@@ -25,6 +25,9 @@ The diagram below describes the relationships in this module::
            +- KhiopsEncoder(TransformerMixin)
 """
 import io
+import subprocess
+import sys
+import tempfile
 import warnings
 from abc import ABC, abstractmethod
 
@@ -51,6 +54,7 @@ from khiops.core.internals.common import (
     type_error_message,
 )
 from khiops.sklearn.tables import Dataset, read_internal_data_table
+from khiops.utils.helpers import os_open
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
@@ -202,6 +206,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
     ):
         # Set the estimator parameters and internal variables
         self._khiops_model_prefix = None
+        self._khiops_report_file_ext = None
         self.key = key
         self.output_dir = output_dir
         self.verbose = verbose
@@ -255,6 +260,46 @@ class KhiopsEstimator(ABC, BaseEstimator):
         if self.model_report_ is None:
             raise ValueError("Report not available (imported model?).")
         self.model_report_.write_khiops_json_file(report_file_path)
+
+    def visualize_report(self):
+        """Visualizes the training report with one of the Khiops visualization apps
+
+        This method requires a fitted estimator.
+        """
+        # Disable consider-using-with because we don't need a context manager for Popen
+        # pylint: disable=consider-using-with
+        assert self._khiops_report_file_ext is not None, (
+            f"{self.__class__.__name__} has not defined "
+            "a report extension (self._khiops_report_file_ext)."
+        )
+
+        # Write the report to a temporary file and the open it
+        # Note that os_open is non blocking
+        if not self.is_fitted_:
+            raise ValueError(f"{self.__class__.__name__} not fitted yet")
+
+        _, temp_file_path = tempfile.mkstemp(
+            suffix=self._khiops_report_file_ext, prefix=f"{self.__class__.__name__}_"
+        )
+        self.export_report_file(temp_file_path)
+        os_open(temp_file_path)
+        print(temp_file_path)
+
+        # Asynchronously remove the temporary file 60 seconds after
+        # This is to give the visualization app time to load it
+        # Note:
+        #   This is very sketchy, but it is the simplest way to execute it
+        #   asynchronously without blocking the current program even on closing.
+        #   Other methods:
+        #   - threading: blocks the program on exit until the file is removed
+        #   - multiprocessing: needs a complex setup
+        #                      https://stackoverflow.com/q/18204782
+        #   - async: Not clear about how to do with it
+        #   - subprocess calling `rm` or `del`: Not viable because we need to wait first
+        remove_file_one_liner = (
+            f"import os; import time; time.sleep(60); os.remove('{temp_file_path}')"
+        )
+        subprocess.Popen([sys.executable, "-c", remove_file_one_liner])
 
     def export_dictionary_file(self, dictionary_file_path):
         """Export the model's Khiops dictionary file (.kdic)"""
@@ -669,6 +714,7 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
             internal_sort=internal_sort,
         )
         self._khiops_model_prefix = "CC_"
+        self._khiops_report_file_ext = ".khcj"
         self.build_name_var = build_name_var
         self.build_distance_vars = build_distance_vars
         self.build_frequency_vars = build_frequency_vars
@@ -1321,6 +1367,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             auto_sort=auto_sort,
             internal_sort=internal_sort,
         )
+        self._khiops_report_file_ext = ".khj"
         self.n_features = n_features
         self.n_pairs = n_pairs
         self.n_trees = n_trees
