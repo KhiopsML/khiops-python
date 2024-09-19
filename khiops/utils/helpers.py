@@ -1,6 +1,9 @@
 """General helper functions"""
 
 import itertools
+import os
+import platform
+import subprocess
 
 from sklearn.model_selection import train_test_split
 
@@ -142,3 +145,33 @@ def _train_test_split_in_memory_dataset(ds, y, test_size, sklearn_split_params=N
             )
 
     return train_ds, test_ds, train_target_column, test_target_column
+
+
+def visualize_report(report_path):
+    """Opens a Khiops or Khiops Coclustering with the visualiation app
+
+    Parameters
+    ----------
+    report_path : str
+        The path of the report file to be open. It must have extension '.khj' (Khiops
+        report) or '.khcj' (Khiops Coclustering report).
+    """
+    # Check that the report path has a valid file extension
+    _, ext = os.path.splitext(report_path)
+    if ext not in [".khj", ".khjc"]:
+        raise ValueError(
+            "'report_path' must has extension '.khj' or '.khcj'. "
+            f"Path: {report_path}"
+        )
+
+    # Open it with the associated application
+    try:
+        if platform.system() == "Windows":
+            os.startfile(report_path)
+        elif platform.system() == "Darwin":
+            subprocess.call(["open", report_path])
+        else:
+            subprocess.call(["xdg-open", report_path])
+    # On failure we just print the error to not break the execution
+    except OSError as error:
+        print(f"Could not open report file: {error}. Path: {report_path}")
