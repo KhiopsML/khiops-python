@@ -1276,7 +1276,7 @@ class KhiopsLocalRunner(KhiopsRunner):
             elif platform.system() == "Linux":
                 # For Linux native installations we use OpenMPI
                 if installation_method == "binary+pip":
-                    self.mpi_command_args += ["--allow-run-as-root", "--quiet"]
+                    self.mpi_command_args += ["--allow-run-as-root"]
                 self.mpi_command_args += [
                     "-n",
                     str(self.max_cores),
@@ -1590,6 +1590,8 @@ class KhiopsLocalRunner(KhiopsRunner):
                     khiops_call += f" {quote}{arg}{quote}"
             print(f"Khiops execution call: {khiops_call}")
 
+        print("BEFORE subprocess.Popen")
+
         # Execute the process
         with subprocess.Popen(
             khiops_process_args,
@@ -1601,6 +1603,10 @@ class KhiopsLocalRunner(KhiopsRunner):
             universal_newlines=True,
         ) as khiops_process:
             stdout, stderr = khiops_process.communicate()
+
+        print("AFTER subprocess.Popen")
+        print(f"force printf STDOUT: {stdout}")
+        print(f"force printf STDERR: {stderr}")
 
         return stdout, stderr, khiops_process.returncode
 
