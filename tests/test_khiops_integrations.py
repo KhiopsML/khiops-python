@@ -14,7 +14,8 @@ import tempfile
 import unittest
 
 import khiops.core as kh
-from khiops.core.exceptions import KhiopsEnvironmentError
+import khiops.core.internals.filesystems as fs
+from khiops.core.exceptions import KhiopsEnvironmentError, KhiopsRuntimeError
 from khiops.core.internals.runner import KhiopsLocalRunner, get_linux_distribution_name
 from khiops.extras.docker import KhiopsDockerRunner
 from khiops.sklearn.estimators import KhiopsClassifier
@@ -174,6 +175,40 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
                 self.assertIn(
                     "khiops execution had errors (return code ", str(cm.exception)
                 )
+
+        # Always set back to the default runner
+        finally:
+            kh.set_runner(default_runner)
+
+    def test_train_predictor_with_unsupported_proc_number(self):
+        """Test train_predictor with excessive proc number"""
+
+        # Get default runner
+        default_runner = kh.get_runner()
+
+        # Test in a try block to restore the runner if there are unexpected errors
+        try:
+            # Create a fresh local runner and initialize its default Khiops binary dir
+            runner = KhiopsLocalRunner()
+            runner.max_cores = 999  # i.e `KHIOPS_PROC_NUMBER` env variable
+            kh.set_runner(runner)
+            iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
+            output_dir = fs.get_child_path(
+                kh.get_runner().khiops_temp_dir,
+                "test_KhiopsLocalRunner_unsupported_proc_number",
+            )
+
+            with self.assertRaises(KhiopsRuntimeError):
+                kh.train_predictor(
+                    fs.get_child_path(iris_data_dir, "Iris.kdic"),
+                    dictionary_name="Iris",
+                    data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
+                    target_variable="Class",
+                    results_dir=output_dir,
+                    trace=True,
+                )
+            self.assertFalse(fs.exists(fs.get_child_path(output_dir, "AllReports.khj")))
+            self.assertFalse(fs.exists(fs.get_child_path(output_dir, "Modeling.kdic")))
 
         # Always set back to the default runner
         finally:

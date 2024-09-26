@@ -891,6 +891,13 @@ class KhiopsRunner(ABC):
                     f"Khiops ended correctly but there were minor issues:\n{error_msg}"
                 )
                 warnings.warn(error_msg.rstrip())
+        else:
+            # no message available, an error must be raised though
+            if return_code != 0:
+                raise KhiopsRuntimeError(
+                    f"{tool_name} execution had errors (return code {return_code}) "
+                    "but no message is available\n"
+                )
 
     def _collect_errors(self, log_file_path):
         # Collect errors any errors found in the log
