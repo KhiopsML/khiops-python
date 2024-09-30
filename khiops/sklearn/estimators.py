@@ -1311,7 +1311,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         specific_pairs=None,
         all_possible_pairs=True,
         construction_rules=None,
-        group_target_value=False,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1331,7 +1330,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self.specific_pairs = specific_pairs
         self.all_possible_pairs = all_possible_pairs
         self.construction_rules = construction_rules
-        self.group_target_value = group_target_value
         self._predicted_target_meta_data_tag = None
 
         # Deprecation message for 'key' constructor parameter
@@ -1435,10 +1433,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                 for rule in self.construction_rules:
                     if not isinstance(rule, str):
                         raise TypeError(type_error_message(rule, rule, str))
-        if not isinstance(self.group_target_value, bool):
-            raise TypeError(
-                type_error_message("group_target_value", self.group_target_value, bool)
-            )
 
     def _fit_train_model(self, dataset, computation_dir, **kwargs):
         # Train the model with Khiops
@@ -1521,7 +1515,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         kwargs["specific_pairs"] = kwargs.pop("specific_pairs")
         kwargs["all_possible_pairs"] = kwargs.pop("all_possible_pairs")
         kwargs["construction_rules"] = kwargs.pop("construction_rules")
-        kwargs["group_target_value"] = kwargs.pop("group_target_value")
         kwargs["max_pairs"] = kwargs.pop("n_pairs")
         kwargs["max_trees"] = kwargs.pop("n_trees")
 
@@ -1700,7 +1693,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         specific_pairs=None,
         all_possible_pairs=True,
         construction_rules=None,
-        group_target_value=False,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1714,7 +1706,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             specific_pairs=specific_pairs,
             all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
-            group_target_value=group_target_value,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -1765,7 +1756,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             dataset, computation_dir
         )
 
-        # Rename encoder parameters, delete unused ones
+        # Rename parameters to be compatible with khiops.core
         kwargs["max_evaluated_variables"] = kwargs.pop("n_evaluated_features")
         kwargs["max_selected_variables"] = kwargs.pop("n_selected_features")
 
@@ -1978,13 +1969,13 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             specific_pairs=specific_pairs,
             all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
-            group_target_value=group_target_value,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
             key=key,
             internal_sort=internal_sort,
         )
+        self.group_target_value = group_target_value
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Prediction"
 
@@ -2014,6 +2005,16 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                     sorted_prob_variable_names.append(variable.name)
 
         return sorted_prob_variable_names
+
+    def _fit_check_params(self, dataset, **kwargs):
+        # Call parent method
+        super()._fit_check_params(dataset, **kwargs)
+
+        # Check 'group_target_value' parameter
+        if not isinstance(self.group_target_value, bool):
+            raise TypeError(
+                type_error_message("group_target_value", self.group_target_value, bool)
+            )
 
     def fit(self, X, y, **kwargs):
         """Fits a Selective Naive Bayes classifier according to X, y
@@ -2068,6 +2069,16 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             raise ValueError(
                 f"{self.__class__.__name__} can't train when only one class is present."
             )
+
+    def _fit_prepare_training_function_inputs(self, dataset, computation_dir):
+        # Call the parent method
+        args, kwargs = super()._fit_prepare_training_function_inputs(
+            dataset, computation_dir
+        )
+        # Rename classifier parameters to be compatible with khiops.core
+        kwargs["group_target_value"] = kwargs.pop("group_target_value")
+
+        return args, kwargs
 
     def _fit_core_training_function(self, *args, **kwargs):
         return kh.train_predictor(*args, **kwargs)
@@ -2296,9 +2307,6 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, it uses all
          possible rules.
-    group_target_value : bool, default ``False``
-        Allows grouping of the target values in classification. It can substantially
-        increase the training time.
     verbose : bool, default ``False``
         If ``True`` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
@@ -2384,7 +2392,6 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         specific_pairs=None,
         all_possible_pairs=True,
         construction_rules=None,
-        group_target_value=False,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -2400,7 +2407,6 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
             specific_pairs=specific_pairs,
             all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
-            group_target_value=group_target_value,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -2686,7 +2692,6 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             specific_pairs=specific_pairs,
             all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
-            group_target_value=group_target_value,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -2694,6 +2699,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             internal_sort=internal_sort,
         )
         self.categorical_target = categorical_target
+        self.group_target_value = group_target_value
         self.transform_type_categorical = transform_type_categorical
         self.transform_type_numerical = transform_type_numerical
         self.transform_pairs = transform_pairs
@@ -2799,6 +2805,11 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
                     "informative_features_only", self.informative_features_only, bool
                 )
             )
+        # Check 'group_target_value' parameter
+        if not isinstance(self.group_target_value, bool):
+            raise TypeError(
+                type_error_message("group_target_value", self.group_target_value, bool)
+            )
 
     def _check_target_type(self, dataset):
         if self.categorical_target:
@@ -2850,6 +2861,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             dataset, computation_dir
         )
         # Rename encoder parameters, delete unused ones
+        # to be compatible with khiops.core
         kwargs["keep_initial_categorical_variables"] = kwargs["keep_initial_variables"]
         kwargs["keep_initial_numerical_variables"] = kwargs.pop(
             "keep_initial_variables"
@@ -2858,6 +2870,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         kwargs["numerical_recoding_method"] = self._numerical_transform_method()
         kwargs["pairs_recoding_method"] = self._pairs_transform_method()
         kwargs["informative_variables_only"] = kwargs.pop("informative_features_only")
+        kwargs["group_target_value"] = kwargs.pop("group_target_value")
 
         del kwargs["transform_type_categorical"]
         del kwargs["transform_type_numerical"]
