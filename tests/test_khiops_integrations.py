@@ -10,18 +10,74 @@ import os
 import platform
 import shutil
 import subprocess
-import tempfile
 import unittest
 
 import khiops.core as kh
 from khiops.core.exceptions import KhiopsEnvironmentError
-from khiops.core.internals.runner import KhiopsLocalRunner, get_linux_distribution_name
+from khiops.core.internals.runner import KhiopsLocalRunner
 from khiops.extras.docker import KhiopsDockerRunner
 from khiops.sklearn.estimators import KhiopsClassifier
 from tests.test_helper import KhiopsTestHelper
 
 # Eliminate protected-access check from these tests
 # pylint: disable=protected-access
+
+
+def _get_linux_distribution_from_os_release_file(os_release_file_path):
+    # The `NAME` variable is always defined according to the freedesktop.org
+    # standard:
+    # https://www.freedesktop.org/software/systemd/man/latest/os-release.html
+    with open(os_release_file_path, encoding="ascii") as os_release_info_file:
+        for entry in os_release_info_file:
+            if entry.startswith("NAME"):
+                linux_distribution = entry.split("=")[-1].strip('"\n')
+                break
+    return linux_distribution
+
+
+def _get_linux_distribution_name():
+    """Detect Linux distribution name
+
+    Parses the `NAME` variable defined in the  `/etc/os-release` or
+    `/usr/lib/os-release` files and converts it to lowercase.
+
+    Returns
+    -------
+    str
+        Name of the Linux distribution, converted to lowecase
+
+    Raises
+    ------
+    OSError
+        If neither `/etc/os-release` nor `/usr/lib/os-release` are found
+    """
+
+    assert platform.system() == "Linux"
+
+    # If Python version >= 3.10, use standard library support; see
+    # https://docs.python.org/3/library/platform.html#platform.freedesktop_os_release
+    python_ver_major, python_ver_minor, _ = platform.python_version_tuple()
+    if int(python_ver_major) >= 3 and int(python_ver_minor) >= 10:
+        linux_distribution = platform.freedesktop_os_release()["NAME"]
+
+    # If Python version < 3.10, determine the Linux distribution manually,
+    # but mimic the behavior of Python >= 3.10 standard library support
+    else:
+        # First try to parse /etc/os-release
+        try:
+            linux_distribution = _get_linux_distribution_from_os_release_file(
+                os.path.join(os.sep, "etc", "os-release")
+            )
+        except FileNotFoundError:
+            # Fallback on parsing /usr/lib/os-release
+            try:
+                linux_distribution = _get_linux_distribution_from_os_release_file(
+                    os.path.join(os.sep, "usr", "lib", "os-release")
+                )
+            # Mimic `platform.freedesktop_os_release` function behavior
+            except FileNotFoundError as error:
+                raise OSError from error
+    return linux_distribution.lower()
 
 
 class KhiopsRunnerEnvironmentTests(unittest.TestCase):
@@ -34,7 +90,7 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         """Test that local runner has executable mpiexec on Linux if MPI is installed"""
         # Check package is installed on supported platform:
         # Check /etc/os-release for Linux version
-        linux_distribution = get_linux_distribution_name()
+        linux_distribution = _get_linux_distribution_name()
         openmpi_found = None
         with open(
             os.path.join(os.sep, "etc", "os-release"), encoding="ascii"
@@ -89,7 +145,7 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             runner = kh.get_runner()
             if not runner.mpi_command_args:
                 self.fail("MPI support found, but MPI command args not set")
-            mpiexec_path = runner.mpi_command_args[0]
+            mpiexec_path = shutil.which(runner.mpi_command_args[0])
             self.assertTrue(os.path.exists(mpiexec_path))
             self.assertTrue(os.path.isfile(mpiexec_path))
             self.assertTrue(os.access(mpiexec_path, os.X_OK))
@@ -110,74 +166,22 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         if "CONDA_PREFIX" in os.environ:
             del os.environ["CONDA_PREFIX"]
 
-        # Create a fresh local runner and initialize its default Khiops binary dir
+        # Create a fresh local runner
         runner = KhiopsLocalRunner()
-        runner._initialize_khiops_bin_dir()
 
-        # Get runner's default Khiops binary directory
-        default_bin_dir = runner.khiops_bin_dir
-
-        # Check that MODL* are indeed in the runner's Khiops binary directory
-        self.assertTrue(
-            all(
-                binary_file in os.listdir(default_bin_dir)
-                for binary_file in ("MODL", "MODL_Coclustering")
-            )
-        )
+        # Check that MODL* files as set in the runner exist and are executable
+        self.assertTrue(os.path.isfile(runner.khiops_path))
+        self.assertTrue(os.access(runner.khiops_path, os.X_OK))
+        self.assertTrue(os.path.isfile(runner.khiops_coclustering_path))
+        self.assertTrue(os.access(runner.khiops_coclustering_path, os.X_OK))
 
         # Check that mpiexec is set correctly in the runner:
         mpi_command_args = runner.mpi_command_args
         self.assertTrue(len(mpi_command_args) > 0)
-        mpiexec_path = runner.mpi_command_args[0]
+        mpiexec_path = shutil.which(runner.mpi_command_args[0])
         self.assertTrue(os.path.exists(mpiexec_path))
         self.assertTrue(os.path.isfile(mpiexec_path))
         self.assertTrue(os.access(mpiexec_path, os.X_OK))
-
-    def test_runner_with_custom_khiops_binary_directory(self):
-        """Test that local runner works with custom Khiops binary directory"""
-        # Get default runner
-        default_runner = kh.get_runner()
-
-        # Test in a try block to restore the runner if there are unexpected errors
-        try:
-            # Create a fresh local runner and initialize its default Khiops binary dir
-            runner = KhiopsLocalRunner()
-            runner._initialize_khiops_bin_dir()
-
-            # Get runner's default Khiops binary directory
-            default_bin_dir = runner.khiops_bin_dir
-
-            # Create temporary directory
-            with tempfile.TemporaryDirectory() as tmp_khiops_bin_dir:
-                # Copy Khiops binaries into the temporary directory
-                for binary_file in os.listdir(default_bin_dir):
-                    if binary_file.startswith("MODL"):
-                        shutil.copy(
-                            os.path.join(default_bin_dir, binary_file),
-                            os.path.join(tmp_khiops_bin_dir, binary_file),
-                        )
-
-                # Change runner's Khiops binary directory to the temporary directory
-                runner.khiops_bin_dir = tmp_khiops_bin_dir
-
-                # Set current runner to the fresh runner
-                kh.set_runner(runner)
-
-                # Test the core API works
-                # Call check_database (could be any other method)
-                with self.assertRaises(kh.KhiopsRuntimeError) as cm:
-                    kh.check_database("a.kdic", "dict_name", "data.txt")
-
-                # Test that MODL executable can be found and launched
-                # Note: The return code is not specified to support older khiops
-                # versions that returned 2 instead of 0 in this case.
-                self.assertIn(
-                    "khiops execution had errors (return code ", str(cm.exception)
-                )
-
-        # Always set back to the default runner
-        finally:
-            kh.set_runner(default_runner)
 
 
 class KhiopsMultitableFitTests(unittest.TestCase):

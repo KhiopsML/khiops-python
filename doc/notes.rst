@@ -46,29 +46,14 @@ Environment Variables
 ---------------------
 
 The default Khiops local runner used by the `khiops.core.api` functions can be customized via the
-environment variables listed below. They can be split into three groups:
-
-- part of the Khiops API:
-
-  - ``KHIOPS_PROC_NUMBER``: number of processes launched by Khiops
-  - ``KHIOPS_MEMORY_LIMIT``: memory limit of the Khiops executables in megabytes;
-    ignored if set above the system memory limit
-  - ``KHIOPS_TMP_DIR``: path to Khiops' temporary directory
-
-- other environment variables:
-
-  - ``KHIOPS_HOME``: *Windows only* path to the Khiops installation directory
-  - ``KHIOPS_SAMPLES_DIR``: path to the Khiops sample datasets directory
-
-- advanced configuration variables. Most of the time the user does not need modify
-  them:
-
-  - ``KHIOPS_MPI_COMMAND_ARGS``: arguments to the ``mpiexec`` command
-  - ``KHIOPS_MPIEXEC_PATH``: path to the ``mpiexec`` command
-  - ``KHIOPS_MPI_LIB``: *Linux and MacOS only* path to the MPI library; added to
-    the beginning of ``LD_LIBRARY_PATH``
+environment variables listed below:
 
 
+- ``KHIOPS_PROC_NUMBER``: number of processes launched by Khiops
+- ``KHIOPS_MEMORY_LIMIT``: memory limit of the Khiops executables in megabytes;
+  ignored if set above the system memory limit
+- ``KHIOPS_TMP_DIR``: path to Khiops' temporary directory
+- ``KHIOPS_SAMPLES_DIR``: path to the Khiops sample datasets directory (only for the Khiops Python library)
 
 .. _core-api-input-types:
 
