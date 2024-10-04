@@ -100,11 +100,8 @@ jobs:
           kh-samples sklearn -i khiops_classifier -e
 
           # Test that the line containing "MPI command" also contains
-          # an executable name under a /bin directory
-          # Note: this executable name can be different, depending on the MPI
-          # backend and OS; for instance, "orterun" for OpenMPI on Ubuntu Linux, but
-          # "mpiexec" for OpenMPI on Rocky Linux
-          kh-status | grep "MPI command" | grep -Ewq "(/.+?)/bin/.+"
+          # an executable named "mpiexec"
+          kh-status | grep "MPI command" | grep -wq "mpiexec"
   release:
     if: github.ref_type == 'tag'
     needs: [build, test]
