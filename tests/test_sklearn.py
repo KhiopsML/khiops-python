@@ -2277,6 +2277,8 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
                 if check_name in [
                     "check_fit_score_takes_y",
                     "check_fit_idempotent",
+                    # yields "empty" deployed table as of sklearn >= 1.5:
+                    "check_estimators_dtypes",
                 ] and isinstance(estimator, KhiopsEncoder):
                     continue
                 with self.subTest(
