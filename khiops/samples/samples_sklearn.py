@@ -406,7 +406,7 @@ def khiops_classifier_pickle():
     print("---")
 
 
-def khiops_classifier_advanced():
+def khiops_classifier_with_hyperparameters():
     """Trains a `.KhiopsClassifier` on a star multi-table dataset
     (advanced version with more hyperparameters)
     """
@@ -780,7 +780,7 @@ def khiops_encoder_pipeline_with_hgbc():
     print(f"Test auc      = {test_auc}")
 
 
-def khiops_encoder_advanced():
+def khiops_encoder_with_hyperparameters():
     """Trains a `.KhiopsEncoder` on a star multi-table dataset
     (advanced version with more hyperparameters)
     """
@@ -1097,13 +1097,13 @@ exported_samples = [
     khiops_classifier_multitable_snowflake,
     khiops_classifier_sparse,
     khiops_classifier_pickle,
-    khiops_classifier_advanced,
+    khiops_classifier_with_hyperparameters,
     khiops_regressor,
     khiops_encoder,
     khiops_encoder_multitable_star,
     khiops_encoder_multitable_snowflake,
     khiops_encoder_pipeline_with_hgbc,
-    khiops_encoder_advanced,
+    khiops_encoder_with_hyperparameters,
     khiops_coclustering,
     khiops_coclustering_simplify,
     khiops_classifier_multitable_list,

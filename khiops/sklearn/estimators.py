@@ -1410,9 +1410,11 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         if self.n_pairs < 0:
             raise ValueError("'n_pairs' must be positive")
         if self.specific_pairs is not None:
-            if not isinstance(self.specific_pairs, list):
+            if not is_list_like(self.specific_pairs):
                 raise TypeError(
-                    type_error_message("specific_pairs", self.specific_pairs, list)
+                    type_error_message(
+                        "specific_pairs", self.specific_pairs, "list-like"
+                    )
                 )
             else:
                 for pair in self.specific_pairs:
@@ -1423,10 +1425,10 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                 type_error_message("all_possible_pairs", self.all_possible_pairs, bool)
             )
         if self.construction_rules is not None:
-            if not isinstance(self.construction_rules, list):
+            if not is_list_like(self.construction_rules):
                 raise TypeError(
                     type_error_message(
-                        "construction_rules", self.construction_rules, list
+                        "construction_rules", self.construction_rules, "list-like"
                     )
                 )
             else:
@@ -1512,9 +1514,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Rename parameters to be compatible with khiops.core
         kwargs["max_constructed_variables"] = kwargs.pop("n_features")
-        kwargs["specific_pairs"] = kwargs.pop("specific_pairs")
-        kwargs["all_possible_pairs"] = kwargs.pop("all_possible_pairs")
-        kwargs["construction_rules"] = kwargs.pop("construction_rules")
         kwargs["max_pairs"] = kwargs.pop("n_pairs")
         kwargs["max_trees"] = kwargs.pop("n_trees")
 
@@ -1839,7 +1838,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         combine other features, either native or constructed. These features usually
         improve the classifier's performance at the cost of interpretability of the
         model.
-    n_selected_features: int, default 0
+    n_selected_features : int, default 0
         Maximum number of features to be selected in the SNB predictor. If equal to
         0 it selects all the features kept in the training.
     n_evaluated_features : int, default 0
@@ -2070,16 +2069,6 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                 f"{self.__class__.__name__} can't train when only one class is present."
             )
 
-    def _fit_prepare_training_function_inputs(self, dataset, computation_dir):
-        # Call the parent method
-        args, kwargs = super()._fit_prepare_training_function_inputs(
-            dataset, computation_dir
-        )
-        # Rename classifier parameters to be compatible with khiops.core
-        kwargs["group_target_value"] = kwargs.pop("group_target_value")
-
-        return args, kwargs
-
     def _fit_core_training_function(self, *args, **kwargs):
         return kh.train_predictor(*args, **kwargs)
 
@@ -2291,7 +2280,7 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         that the cells are the purest possible with respect to the target. Only pairs
         which jointly are more informative that its univariate components may be taken
         into account in the regressor.
-    n_selected_features: int, default 0
+    n_selected_features : int, default 0
         Maximum number of features to be selected in the SNB predictor. If equal to
         0 it selects all the features kept in the training.
     n_evaluated_features : int, default 0
@@ -2576,7 +2565,6 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         increase the training time.
     keep_initial_variables : bool, default ``False``
         If ``True`` the original columns are kept in the transformed data.
-        **Deprecated** will be removed in Khiops 11.
     transform_type_categorical : str, default "part_id"
         Type of transformation for categorical features. Valid values:
             - "part_id"
@@ -2870,7 +2858,6 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         kwargs["numerical_recoding_method"] = self._numerical_transform_method()
         kwargs["pairs_recoding_method"] = self._pairs_transform_method()
         kwargs["informative_variables_only"] = kwargs.pop("informative_features_only")
-        kwargs["group_target_value"] = kwargs.pop("group_target_value")
 
         del kwargs["transform_type_categorical"]
         del kwargs["transform_type_numerical"]

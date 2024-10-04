@@ -2108,6 +2108,16 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="monotable",
             source_type="dataframe",
+            extra_estimator_kwargs={
+                "n_pairs": 1,
+                "n_trees": 5,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [("age", "race")],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "group_target_value": False,
+            },
         )
 
     def test_parameter_transfer_classifier_fit_from_monotable_dataframe_with_df_y(
@@ -2119,6 +2129,16 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="monotable",
             source_type="dataframe_xy",
+            extra_estimator_kwargs={
+                "n_pairs": 1,
+                "n_trees": 5,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [("age", "race")],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "group_target_value": False,
+            },
         )
 
     def test_parameter_transfer_classifier_fit_from_monotable_file_dataset(self):
@@ -2128,6 +2148,16 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="monotable",
             source_type="file_dataset",
+            extra_estimator_kwargs={
+                "n_pairs": 1,
+                "n_trees": 5,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [("age", "race")],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "group_target_value": False,
+            },
         )
 
     def test_parameter_transfer_classifier_fit_from_multitable_dataframe(self):
@@ -2137,6 +2167,17 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="multitable",
             source_type="dataframe",
+            extra_estimator_kwargs={
+                "n_features": 10,
+                "n_pairs": 1,
+                "n_trees": 5,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "group_target_value": False,
+            },
         )
 
     def test_parameter_transfer_classifier_fit_from_multitable_file_dataset(self):
@@ -2146,6 +2187,17 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="multitable",
             source_type="file_dataset",
+            extra_estimator_kwargs={
+                "n_features": 10,
+                "n_pairs": 1,
+                "n_trees": 5,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "group_target_value": False,
+            },
         )
 
     def test_parameter_transfer_classifier_predict_from_monotable_dataframe(self):
@@ -2195,6 +2247,19 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="monotable",
             source_type="dataframe",
+            extra_estimator_kwargs={
+                "n_pairs": 1,
+                "n_trees": 5,
+                "specific_pairs": [("age", "race")],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "informative_features_only": True,
+                "group_target_value": False,
+                "keep_initial_variables": False,
+                "transform_type_categorical": "part_id",
+                "transform_type_numerical": "part_id",
+                "transform_pairs": "part_id",
+            },
         )
 
     def test_parameter_transfer_encoder_fit_from_monotable_dataframe_with_df_y(
@@ -2206,6 +2271,19 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="monotable",
             source_type="dataframe_xy",
+            extra_estimator_kwargs={
+                "n_pairs": 1,
+                "n_trees": 5,
+                "specific_pairs": [("age", "race")],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "informative_features_only": True,
+                "group_target_value": False,
+                "keep_initial_variables": False,
+                "transform_type_categorical": "part_id",
+                "transform_type_numerical": "part_id",
+                "transform_pairs": "part_id",
+            },
         )
 
     def test_parameter_transfer_encoder_fit_from_monotable_file_dataset(self):
@@ -2215,6 +2293,19 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="monotable",
             source_type="file_dataset",
+            extra_estimator_kwargs={
+                "n_pairs": 1,
+                "n_trees": 5,
+                "specific_pairs": [("age", "race")],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "informative_features_only": True,
+                "group_target_value": False,
+                "keep_initial_variables": False,
+                "transform_type_categorical": "part_id",
+                "transform_type_numerical": "part_id",
+                "transform_pairs": "part_id",
+            },
         )
 
     def test_parameter_transfer_encoder_fit_from_multitable_dataframe(self):
@@ -2224,6 +2315,20 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="multitable",
             source_type="dataframe",
+            extra_estimator_kwargs={
+                "n_features": 10,
+                "n_pairs": 1,
+                "n_trees": 5,
+                "specific_pairs": [],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "informative_features_only": True,
+                "group_target_value": False,
+                "keep_initial_variables": False,
+                "transform_type_categorical": "part_id",
+                "transform_type_numerical": "part_id",
+                "transform_pairs": "part_id",
+            },
         )
 
     def test_parameter_transfer_encoder_fit_from_multitable_file_dataset(self):
@@ -2233,6 +2338,20 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="multitable",
             source_type="file_dataset",
+            extra_estimator_kwargs={
+                "n_features": 10,
+                "n_pairs": 1,
+                "n_trees": 5,
+                "specific_pairs": [],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+                "informative_features_only": True,
+                "group_target_value": False,
+                "keep_initial_variables": False,
+                "transform_type_categorical": "part_id",
+                "transform_type_numerical": "part_id",
+                "transform_pairs": "part_id",
+            },
         )
 
     def test_parameter_transfer_encoder_predict_from_monotable_dataframe(self):
@@ -2278,6 +2397,14 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="monotable",
             source_type="dataframe",
+            extra_estimator_kwargs={
+                "n_pairs": 1,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [("age", "race")],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+            },
         )
 
     def test_parameter_transfer_regressor_fit_from_monotable_dataframe_with_df_y(
@@ -2289,6 +2416,14 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="monotable",
             source_type="dataframe_xy",
+            extra_estimator_kwargs={
+                "n_pairs": 1,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [("age", "race")],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+            },
         )
 
     def test_parameter_transfer_regressor_fit_from_monotable_file_dataset(self):
@@ -2298,6 +2433,14 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="monotable",
             source_type="file_dataset",
+            extra_estimator_kwargs={
+                "n_pairs": 1,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [("age", "race")],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+            },
         )
 
     def test_parameter_transfer_regressor_fit_from_multitable_dataframe(self):
@@ -2307,6 +2450,16 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="multitable",
             source_type="dataframe",
+            extra_estimator_kwargs={
+                "n_features": 10,
+                "n_pairs": 1,
+                "n_trees": 0,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+            },
         )
 
     def test_parameter_transfer_regressor_fit_from_multitable_file_dataset(self):
@@ -2316,6 +2469,16 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="multitable",
             source_type="file_dataset",
+            extra_estimator_kwargs={
+                "n_features": 10,
+                "n_pairs": 1,
+                "n_trees": 0,
+                "n_selected_features": 1,
+                "n_evaluated_features": 3,
+                "specific_pairs": [],
+                "all_possible_pairs": False,
+                "construction_rules": ["TableMode", "TableSelection"],
+            },
         )
 
     def test_parameter_transfer_regressor_predict_from_monotable_dataframe(self):

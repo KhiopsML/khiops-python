@@ -402,7 +402,7 @@ Samples
     print("Predicted classes (first 10):")
     print(y_predicted[:10])
     print("---")
-.. autofunction:: khiops_classifier_advanced
+.. autofunction:: khiops_classifier_with_hyperparameters
 .. code-block:: python
 
     # Imports
@@ -752,7 +752,7 @@ Samples
     test_auc = metrics.roc_auc_score(y_test, y_test_probas[:, 1])
     print(f"Test accuracy = {test_accuracy}")
     print(f"Test auc      = {test_auc}")
-.. autofunction:: khiops_encoder_advanced
+.. autofunction:: khiops_encoder_with_hyperparameters
 .. code-block:: python
 
     # Imports
