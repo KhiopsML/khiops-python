@@ -534,6 +534,17 @@ class Dataset:
             table.name: table for table in [self.main_table] + self.secondary_tables
         }
 
+        # Deprecation warning for file-based datasets
+        if isinstance(self.main_table, FileTable):
+            warnings.warn(
+                deprecation_message(
+                    "File-based dataset spec",
+                    "11.0.0",
+                    "dataframe-based dataset or khiops.core API",
+                    quote=False,
+                ),
+            )
+
         # Post-conditions
         assert self.main_table is not None, "'main_table' is 'None' after init"
         assert isinstance(
