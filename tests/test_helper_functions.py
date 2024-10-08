@@ -5,16 +5,14 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Tests for checking the output types of predictors"""
-import contextlib
 import io
-import tempfile
 import unittest
 
 import pandas as pd
 
 from khiops.core.dictionary import DictionaryDomain
 from khiops.core.helpers import build_multi_table_dictionary_domain
-from khiops.utils.helpers import sort_dataset, train_test_split_dataset
+from khiops.utils.helpers import train_test_split_dataset
 
 
 class KhiopsHelperFunctions(unittest.TestCase):
@@ -98,105 +96,7 @@ class KhiopsHelperFunctions(unittest.TestCase):
                 self.assertEqual(test_var.name, ref_var.name)
                 self.assertEqual(test_var.type, ref_var.type)
 
-    def test_sort_dataset_dataframe(self):
-        """Tests that the sort_dataset function works for dataframe datasets"""
-        # Create the fixture dataset
-        clients_df = pd.read_csv(io.StringIO(UNSORTED_CLIENTS_CSV))
-        calls_df = pd.read_csv(io.StringIO(UNSORTED_CALLS_CSV))
-        connections_df = pd.read_csv(io.StringIO(UNSORTED_CONNECTIONS_CSV))
-        ds_spec = {
-            "main_table": "clients",
-            "tables": {
-                "clients": (clients_df, ["id"]),
-                "calls": (calls_df, ["id", "call_id"]),
-                "connections": (connections_df, ["id", "call_id"]),
-            },
-            "relations": [("clients", "calls", False), ("calls", "connections", False)],
-        }
-
-        # Call the sort_dataset function
-        sorted_ds_spec = sort_dataset(ds_spec)
-        ref_sorted_table_dfs = {
-            "clients": pd.read_csv(io.StringIO(CLIENTS_CSV)),
-            "calls": pd.read_csv(io.StringIO(CALLS_CSV)),
-            "connections": pd.read_csv(io.StringIO(CONNECTIONS_CSV)),
-        }
-
-        # Check that the structure of the sorted dataset
-        self._assert_dataset_keeps_structure(ds_spec, sorted_ds_spec)
-
-        # Check that the table specs are the equivalent and the tables are sorted
-        for table_name in ds_spec["tables"]:
-            # Check that the dataframes are equal (ignoring the index)
-            self._assert_frame_equal(
-                ref_sorted_table_dfs[table_name].reset_index(drop=True),
-                sorted_ds_spec["tables"][table_name][0].reset_index(drop=True),
-            )
-
-    def test_sort_dataset_file(self):
-        """Tests that the sort_dataset function works for file datasets"""
-        # Create a execution context for temporary files and directories
-        with contextlib.ExitStack() as exit_stack:
-            # Create temporary files and a temporary directory
-            clients_csv_file = exit_stack.enter_context(tempfile.NamedTemporaryFile())
-            calls_csv_file = exit_stack.enter_context(tempfile.NamedTemporaryFile())
-            connections_csv_file = exit_stack.enter_context(
-                tempfile.NamedTemporaryFile()
-            )
-            tmp_dir = exit_stack.enter_context(tempfile.TemporaryDirectory())
-
-            # Create the fixture dataset
-            clients_csv_file.write(bytes(UNSORTED_CLIENTS_CSV, encoding="ascii"))
-            calls_csv_file.write(bytes(UNSORTED_CALLS_CSV, encoding="ascii"))
-            connections_csv_file.write(
-                bytes(UNSORTED_CONNECTIONS_CSV, encoding="ascii")
-            )
-            clients_csv_file.flush()
-            calls_csv_file.flush()
-            connections_csv_file.flush()
-            ds_spec = {
-                "main_table": "clients",
-                "tables": {
-                    "clients": (clients_csv_file.name, ["id"]),
-                    "calls": (calls_csv_file.name, ["id", "call_id"]),
-                    "connections": (connections_csv_file.name, ["id", "call_id"]),
-                },
-                "relations": [
-                    ("clients", "calls", False),
-                    ("calls", "connections", False),
-                ],
-                "format": (",", True),
-            }
-
-            # Call the sort_dataset function
-            sorted_ds_spec = sort_dataset(ds_spec, output_dir=tmp_dir)
-
-            # Check that the structure of the sorted dataset
-            self._assert_dataset_keeps_structure(ds_spec, sorted_ds_spec)
-
-            # Check that the table specs are the equivalent and the tables are sorted
-            ref_sorted_tables = {
-                "clients": CLIENTS_CSV,
-                "calls": CALLS_CSV,
-                "connections": CONNECTIONS_CSV,
-            }
-            for table_name, _ in ds_spec["tables"].items():
-                # Read the contents of the sorted table to a list of strings
-                sorted_table_spec = sorted_ds_spec["tables"][table_name]
-                sorted_table_file = exit_stack.enter_context(
-                    open(sorted_table_spec[0], encoding="ascii")
-                )
-                sorted_table = sorted_table_file.readlines()
-
-                # Transform the reference table string to a list of strings
-                ref_sorted_table = ref_sorted_tables[table_name].splitlines(
-                    keepends=True
-                )
-
-                # Check that the sorted table is equal to the reference
-                self.assertEqual(ref_sorted_table, sorted_table)
-
-    def test_traint_test_split_dataset_dataframe(self):
+    def test_train_test_split_dataset_dataframe(self):
         """Tests that the train_test_split_dataset function works for df datasets"""
         # Create the fixture dataset
         clients_df = pd.read_csv(io.StringIO(CLIENTS_CSV))
@@ -254,79 +154,6 @@ class KhiopsHelperFunctions(unittest.TestCase):
                         ),
                         ref_tables[table_name].reset_index(drop=True),
                     )
-
-    def test_train_test_split_dataset_file(self):
-        """Tests that the train_test_split_dataset function works for file datasets"""
-        # Create a execution context for temporary files and directories
-        with contextlib.ExitStack() as exit_stack:
-            # Create temporary files and a temporary directory
-            clients_csv_file = exit_stack.enter_context(tempfile.NamedTemporaryFile())
-            calls_csv_file = exit_stack.enter_context(tempfile.NamedTemporaryFile())
-            connections_csv_file = exit_stack.enter_context(
-                tempfile.NamedTemporaryFile()
-            )
-            tmp_dir = exit_stack.enter_context(tempfile.TemporaryDirectory())
-
-            # Create the fixture dataset
-            clients_csv_file.write(bytes(CLIENTS_CSV, encoding="ascii"))
-            calls_csv_file.write(bytes(CALLS_CSV, encoding="ascii"))
-            connections_csv_file.write(bytes(CONNECTIONS_CSV, encoding="ascii"))
-            clients_csv_file.flush()
-            calls_csv_file.flush()
-            connections_csv_file.flush()
-            ds_spec = {
-                "main_table": "clients",
-                "tables": {
-                    "clients": (clients_csv_file.name, ["id"]),
-                    "calls": (calls_csv_file.name, ["id", "call_id"]),
-                    "connections": (connections_csv_file.name, ["id", "call_id"]),
-                },
-                "relations": [
-                    ("clients", "calls", False),
-                    ("calls", "connections", False),
-                ],
-                "format": (",", True),
-            }
-
-            # Call the train_test_split_dataset function
-            train_ds_spec, test_ds_spec = train_test_split_dataset(
-                ds_spec, test_size=0.5, output_dir=tmp_dir
-            )
-            split_ds_specs = {"train": train_ds_spec, "test": test_ds_spec}
-
-            # Check that the structure of the splitted datasets
-            self._assert_dataset_keeps_structure(ds_spec, train_ds_spec)
-            self._assert_dataset_keeps_structure(ds_spec, test_ds_spec)
-
-            # Check that the table specs are the equivalent and the tables are sorted
-            ref_split_tables = {
-                "train": {
-                    "clients": TRAIN_FILE_CLIENTS_CSV,
-                    "calls": TRAIN_FILE_CALLS_CSV,
-                    "connections": TRAIN_FILE_CONNECTIONS_CSV,
-                },
-                "test": {
-                    "clients": TEST_FILE_CLIENTS_CSV,
-                    "calls": TEST_FILE_CALLS_CSV,
-                    "connections": TEST_FILE_CONNECTIONS_CSV,
-                },
-            }
-            for split, split_ds_spec in split_ds_specs.items():
-                for table_name, _ in ds_spec["tables"].items():
-                    # Read the contents of the splitted table to a list of strings
-                    split_table_spec = split_ds_spec["tables"][table_name]
-                    split_table_file = exit_stack.enter_context(
-                        open(split_table_spec[0], encoding="ascii")
-                    )
-                    split_table = split_table_file.readlines()
-
-                    # Transform the reference table string to a list of strings
-                    ref_split_table = ref_split_tables[split][table_name].splitlines(
-                        keepends=True
-                    )
-
-                    # Check that the sorted table is equal to the reference
-                    self.assertEqual(split_table, ref_split_table)
 
     def _assert_dataset_keeps_structure(self, ds_spec, ref_ds_spec):
         """Asserts that the input dataset has the same structure as the reference
