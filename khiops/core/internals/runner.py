@@ -1059,13 +1059,6 @@ class KhiopsLocalRunner(KhiopsRunner):
 
         assert self._samples_dir is not None
 
-    def _finish_khiops_environment_initialization(self):
-        # Check the tools exist and are executable
-        self._check_tools()
-
-        # Initialize the khiops version
-        self._initialize_khiops_version()
-
     def _check_tools(self):
         """Checks the that the tool binaries exist and are executable"""
         for tool_name in ["khiops", "khiops_coclustering"]:
@@ -1105,14 +1098,8 @@ class KhiopsLocalRunner(KhiopsRunner):
             )
 
     def _build_status_message(self):
-        # Initialize if necessary
-        with warnings.catch_warnings(record=True) as warning_list:
-            if self._khiops_version is None:
-                self._finish_khiops_environment_initialization()
-
         # Call the parent's method
-        status_msg, parent_warning_list = super()._build_status_message()
-        warning_list += parent_warning_list
+        status_msg, warning_list = super()._build_status_message()
 
         # Build the messages for temp_dir, install type and mpi
         if self.khiops_temp_dir:
@@ -1141,7 +1128,7 @@ class KhiopsLocalRunner(KhiopsRunner):
     def _get_khiops_version(self):
         # Initialize the first time it is called
         if self._khiops_version is None:
-            self._finish_khiops_environment_initialization()
+            self._initialize_khiops_version()
         assert isinstance(self._khiops_version, KhiopsVersion), type_error_message(
             self._khiops_version, "khiops_version", KhiopsVersion
         )
@@ -1297,10 +1284,6 @@ class KhiopsLocalRunner(KhiopsRunner):
         command_line_options,
         trace,
     ):
-        # Initialize if necessary (lazy initialization)
-        if self._khiops_version is None:
-            self._finish_khiops_environment_initialization()
-
         # Execute the tool
         khiops_args = command_line_options.build_command_line_options(scenario_path)
         stdout, stderr, return_code = self.raw_run(
@@ -1317,8 +1300,8 @@ class KhiopsLocalRunner(KhiopsRunner):
 # Disable pylint UPPER_CASE convention: _khiops_runner is non-constant
 # pylint: disable=invalid-name
 
-# Runner (backend) of Khiops Python, by default one for a local Khiops installation
-_khiops_runner = KhiopsLocalRunner()
+# Runner (backend) of Khiops Python, by default None for lazy initialization
+_khiops_runner = None
 
 
 def set_runner(runner):
@@ -1337,6 +1320,10 @@ def get_runner():
     `.KhiopsRunner`
         The current Khiops Python runner of the module.
     """
+    #  Define and initialize a runner for a local Khiops installation
+    global _khiops_runner
+    if _khiops_runner is None:
+        _khiops_runner = KhiopsLocalRunner()
     return _khiops_runner
 
 
