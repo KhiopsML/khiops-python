@@ -15,20 +15,25 @@ on:
         default: main
         description: Khiops Revision
       image-increment:
-        type: string
-        description: Docker Image Tag Increment
-      server-revision:
-        type: string
-        default: main
-        description: Khiops Server Revision
+        type: number
+        default: 0
+        description: Image Tag Increment
       push:
         type: boolean
         default: false
         description: Push to GH Registry
+      set-latest:
+        type: boolean
+        default: false
+        description: Set as 'latest'
       python-versions:
         type: string
         default: 3.8 3.9 3.10 3.11 3.12
-        description: Python versions supported by khiops-python
+        description: Python versions to support
+      server-revision:
+        type: string
+        default: main
+        description: Khiops Server Revision
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -43,7 +48,6 @@ jobs:
       packages: write  # to write in the Github package registry
     steps:
       - name: Set input parameters as env or output
-        id: set-parameters
         run: |
           set -x
           echo "KHIOPS_REVISION=${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}" >> "$GITHUB_ENV"
@@ -63,15 +67,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up the Docker Image Tags
-        run: |-
+        run: |
           set -x
-          if [[ "$GITHUB_REF" == "refs/heads/main" || "$GITHUB_REF" == "refs/heads/dev" ]]
+          # Set latest only if requested and on "dev" or "main" branch
+          if [[ "${{ inputs.set-latest }}" == "true" &&
+                ("$GITHUB_REF_NAME" == "dev" || "$GITHUB_REF_NAME" == "main") ]]
           then
-            TAGS="$IMAGE_URL:latest,$IMAGE_URL:$KHIOPS_REVISION.$IMAGE_INCREMENT"
+            DOCKER_IMAGE_TAGS="$IMAGE_URL:latest,$IMAGE_URL:$KHIOPS_REVISION.$IMAGE_INCREMENT"
           else
-            TAGS="$IMAGE_URL:$KHIOPS_REVISION.$IMAGE_INCREMENT"
+            DOCKER_IMAGE_TAGS="$IMAGE_URL:$KHIOPS_REVISION.$IMAGE_INCREMENT"
           fi
-          echo "DOCKER_IMAGE_TAGS=$TAGS" >> "$GITHUB_ENV"
+          echo "DOCKER_IMAGE_TAGS=$DOCKER_IMAGE_TAGS" >> "$GITHUB_ENV"
       - name: Build image and push it to GitHub Container Registry
         uses: docker/build-push-action@v5
         with:
