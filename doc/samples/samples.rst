@@ -1185,34 +1185,6 @@ Samples
         output_data_table_path,
         sort_variables=["AccidentId", "VehicleId"],
     )
-.. autofunction:: sort_data_tables_mt
-.. code-block:: python
-
-    # Imports
-    import os
-    from khiops.utils.helpers import sort_dataset
-
-    # Set the file paths
-    accidents_dir = os.path.join(kh.get_samples_dir(), "Accidents")
-    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
-    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
-    users_table_path = os.path.join(accidents_dir, "Users.txt")
-    places_table_path = os.path.join(accidents_dir, "Places.txt")
-    results_dir = os.path.join("kh_samples", "sort_data_tables_mt")
-
-    # Build the dataset spec
-    ds_spec = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_table_path, "AccidentId"),
-            "Vehicles": (vehicles_table_path, ["AccidentId", "VehicleId"]),
-            "Users": (users_table_path, ["AccidentId", "VehicleId"]),
-            "Places": (places_table_path, "AccidentId"),
-        },
-    }
-
-    # Sort the dataset
-    sort_dataset(ds_spec, output_dir=results_dir)
 .. autofunction:: extract_keys_from_data_table
 .. code-block:: python
 
