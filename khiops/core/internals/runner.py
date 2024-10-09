@@ -930,16 +930,29 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _initialize_khiops_environment(self):
         # Check the `khiops_env` script
-        # khiops_env is always in path for a proper installation
-        khiops_env_path = shutil.which("khiops_env")
-        if khiops_env_path is not None:
-            if platform.system() == "Windows":
-                command = f"cmd /C call {khiops_env_path} --env"
+        # On Windows native installations, rely on the `KHIOPS_HOME` environment
+        # variable set by the Khiops Desktop Application installer
+        installation_method = _infer_khiops_installation_method()
+        if platform.system() == "Windows" and installation_method == "binary+pip":
+            # KHIOPS_HOME variable by default
+            if "KHIOPS_HOME" in os.environ:
+                khiops_env_path = os.path.join(
+                    os.environ["KHIOPS_HOME"], "bin", "khiops_env.cmd"
+                )
+            # Raise error if KHIOPS_HOME is not set
             else:
-                command = shlex.split(f"bash -c '{khiops_env_path} --env'")
+                raise KhiopsEnvironmentError(
+                    "No environment variable named 'KHIOPS_HOME' found. "
+                    "Make sure you have installed Khiops >= 10.2.3. "
+                    "Go to https://khiops.org for more information."
+                )
+        # On UNIX or Conda, khiops_env is always in path for a proper installation
+        else:
+            khiops_env_path = shutil.which("khiops_env")
 
+        if khiops_env_path is not None:
             with subprocess.Popen(
-                command,
+                [khiops_env_path, "--env"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
@@ -997,13 +1010,12 @@ class KhiopsLocalRunner(KhiopsRunner):
         else:
             raise KhiopsEnvironmentError(
                 "The 'khiops_env' script not found. Make sure you have "
-                "installed khiops >= 10.2.3."
+                "installed khiops >= 10.2.3. "
+                "Go to https://khiops.org for more information."
             )
 
         # Check the tools exist and are executable
         self._check_tools()
-
-        installation_method = _infer_khiops_installation_method()
 
         # Switch to sequential mode if 0 < max_cores < 3
         if self.max_cores in (1, 2):
