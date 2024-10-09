@@ -196,6 +196,8 @@ jobs:
       - name: Setup and Install Test Requirements
         run: pip install -r test-requirements.txt
       - name: Test Khiops Integration
+        env:
+          KHIOPS_PROC_NUMBER: 4
         shell: pwsh
         run: |
           # Refresh environment variables by using the Chocolatey tool
