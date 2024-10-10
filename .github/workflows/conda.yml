@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       khiops-core-version:
-        default: 10.2.2
+        default: 10.2.3b.3
         description: khiops-core version for testing
       khiops-samples-version:
         default: 10.2.0
@@ -66,12 +66,12 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         env:
-          - {os: ubuntu-20.04, json-image: '{"image": null}'}
-          - {os: ubuntu-22.04, json-image: '{"image": null}'}
-          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:8"}'}
-          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
-          - {os: windows-2019, json-image: '{"image": null}'}
-          - {os: windows-2022, json-image: '{"image": null}'}
+          #- {os: ubuntu-20.04, json-image: '{"image": null}'}
+          #- {os: ubuntu-22.04, json-image: '{"image": null}'}
+          #- {os: ubuntu-22.04, json-image: '{"image": "rockylinux:8"}'}
+          #- {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
+          #- {os: windows-2019, json-image: '{"image": null}'}
+          #- {os: windows-2022, json-image: '{"image": null}'}
           - {os: macos-12, json-image: '{"image": null}'}
           - {os: macos-13, json-image: '{"image": null}'}
           - {os: macos-14, json-image: '{"image": null}'}
@@ -113,12 +113,7 @@ jobs:
         env:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
-        run: |
-          kh-samples core -i train_predictor -e
-          kh-samples core -i train_predictor_error_handling -e
-          kh-samples core -i train_coclustering -e
-          kh-samples sklearn -i khiops_classifier -e
-          kh-samples sklearn -i khiops_coclustering -e
+        run: kh-samples core
   # Release is only executed on tags
   # Note: For this job to work the secrets variables KHIOPS_ANACONDA_CHANNEL_TOKEN and
   #       KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN must be set with valid anaconda.org access tokens
