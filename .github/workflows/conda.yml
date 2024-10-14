@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       khiops-core-version:
-        default: 10.2.3b.3
+        default: 10.2.3b.4
         description: khiops-core version for testing
       khiops-samples-version:
         default: 10.2.0
