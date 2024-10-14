@@ -1133,6 +1133,18 @@ class KhiopsLocalRunner(KhiopsRunner):
         status_msg += f"temp dir            : {khiops_temp_dir_msg}\n"
         status_msg += f"install type        : {install_type_msg}\n"
         status_msg += f"MPI command         : {mpi_command_args_msg}\n"
+
+        # Add output of khiops -s which gives the MODL_* binary status
+        status_msg += "\n\n"
+        khiops_executable = os.path.join(os.path.dirname(self.khiops_path), "khiops")
+        status_msg += f"Khiops executable status (output of '{khiops_executable} -s')\n"
+        stdout, stderr, return_code = self.raw_run("khiops", ["-s"], use_mpi=True)
+
+        # On success retrieve the status and added to the message
+        if return_code == 0:
+            status_msg += stdout
+        else:
+            warning_list.append(stderr)
         status_msg += "\n"
 
         return status_msg, warning_list
