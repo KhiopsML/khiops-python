@@ -39,7 +39,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.3-b.4.with_native_10.2.3-b.4' }}
       # Use the 'runner' user (1001) from github so checkout actions work properly
       # https://github.com/actions/runner/issues/2033#issuecomment-1598547465
       options: --user 1001

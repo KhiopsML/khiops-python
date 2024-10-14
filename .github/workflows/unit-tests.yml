@@ -2,6 +2,7 @@
 name: Unit Tests
 env:
   DEFAULT_SAMPLES_REVISION: main
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.3-b.3
 on:
   workflow_dispatch:
     inputs:
@@ -11,6 +12,9 @@ on:
       image-tag:
         default: latest
         description: Development Docker Image Tag
+      khiops-desktop-revision:
+        default: 10.2.3-b.3
+        description: Khiops Windows Desktop Application Version
       run-long-tests:
         type: boolean
         required: false
@@ -32,7 +36,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.3-b.4.with_native_10.2.3-b.4' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -106,9 +110,6 @@ jobs:
           OMPI_MCA_rmaps_base_oversubscribe: true
           PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |
-          # Make sure '/bin' is before '/usr/bin' in PATH
-          PATH=$(echo "/bin:"$PATH | sed 's#:/bin##')
-
           # This is needed so that the Git tag is parsed and the khiops-python
           # version is retrieved
           git config --global --add safe.directory $(realpath .)
@@ -147,6 +148,64 @@ jobs:
             tests/resources/dictionary/copy_output_kdic/*.kdic
             tests/resources/general_options/general_options/*/*._kh
           retention-days: 7
+  check-khiops-integration-on-windows:
+    runs-on: windows-2019
+    steps:
+      - name: Download the Khiops Desktop NSIS Installer
+        shell: pwsh
+        run: |
+          $KHIOPS_DESKTOP_REVISION = '${{ inputs.khiops-desktop-revision || env.DEFAULT_KHIOPS_DESKTOP_REVISION }}'
+          $KHIOPS_DOWNLOAD_URL = "https://github.com/KhiopsML/khiops/releases/download/${KHIOPS_DESKTOP_REVISION}/khiops-${KHIOPS_DESKTOP_REVISION}-setup.exe"
+          Invoke-WebRequest "${KHIOPS_DOWNLOAD_URL}" `
+            -OutFile .\khiops-setup.exe `
+            -UseBasicParsing; `
+          Unblock-File .\khiops-setup.exe
+      - name: Install the Khiops Desktop Application
+        shell: pwsh
+        run: |
+          # Execute the installer
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+          Start-Process `
+            -FilePath .\khiops-setup.exe `
+            -ArgumentList '/S' `
+            -Wait
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          # Get Git tags so that versioneer can function correctly
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install khiops-python dev dependencies
+        shell: pwsh
+        run: |
+          # The following git command is required, 
+          # as the Git repository is in a directory the current user does not own,
+          # Python versioneer fails to compute the current version correctly otherwise
+          git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()}); `
+          python setup.py egg_info; `
+          Get-Content .\khiops.egg-info\requires.txt `
+            | Select-String -Pattern '^\[' -NotMatch `
+            | % {$_.Line} `
+            | ForEach-Object {pip install $_.toString()}; `
+          Remove-Item -r -force khiops.egg-info
+      - name: Setup and Install Test Requirements
+        run: pip install -r test-requirements.txt
+      - name: Test Khiops Integration
+        env:
+          KHIOPS_PROC_NUMBER: 4
+        shell: pwsh
+        run: |
+          # Refresh environment variables by using the Chocolatey tool
+          # Otherwise, the env vars set in the registry by the Khiops installer do not get updated
+          # See also https://github.com/actions/runner-images/discussions/6065#discussioncomment-3517318
+          Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
+          refreshenv
+          python -c "import khiops.core as kh; kh.get_runner().print_status()"
   check-mpiexec-on-linux:
     strategy:
       fail-fast: false
@@ -158,7 +217,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3-b.4.with_native_10.2.3-b.4' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -191,9 +250,6 @@ jobs:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
         run: |-
-          # Make sure '/bin' is before '/usr/bin' in PATH
-          PATH=$(echo "/bin:"$PATH | sed 's#:/bin##')
-
           # Make sure MPI support is not loaded through env modules
           # Note: As Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway

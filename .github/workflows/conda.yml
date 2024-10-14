@@ -4,7 +4,7 @@ env:
   DEFAULT_SAMPLES_VERSION: 10.2.0
   # Note: The default Khiops version must never be an alpha release as they are
   #       ephemeral. To test alpha versions run the workflow manually.
-  DEFAULT_KHIOPS_CORE_VERSION: 10.2.2
+  DEFAULT_KHIOPS_CORE_VERSION: 10.2.3b.4
 on:
   workflow_dispatch:
     inputs:
@@ -95,7 +95,7 @@ jobs:
       - name: Install the Khiops Conda package (Windows)
         if: runner.os == 'Windows'
         run: |
-          conda install --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
+          conda install --channel conda-forge --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
           conda install --override-channels --channel conda-forge --channel ./khiops-conda/ khiops
       # In Linux/macOS we need the conda-forge channel to install their pinned versions
       - name: Install the Khiops Conda package (Linux/macOS)
