@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       khiops-core-version:
-        default: 10.2.2
+        default: 10.2.3b.4
         description: khiops-core version for testing
       khiops-samples-version:
         default: 10.2.0
@@ -39,10 +39,10 @@ jobs:
           # Checkout the full repository to have the tags so versioneer works properly
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
-      - name: Install Miniconda
+      - name: Install Miniforge
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: latest
+          miniforge-version: latest
           python-version: '3.12'
       - name: Install Dependency Requirements for Building Conda Packages
         run: conda install -y conda-build
@@ -50,8 +50,7 @@ jobs:
         # Note: The "khiops-dev" conda channel is needed to retrieve the "khiops-core" package.
         #       The "test" part of the conda recipe needs this package.
         run: |
-          conda build --channel conda-forge --channel khiops-dev \
-            --output-folder ./khiops-conda ./packaging/conda
+          conda build --channel khiops-dev --output-folder ./khiops-conda ./packaging/conda
       - name: Upload Conda Package Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -78,10 +77,10 @@ jobs:
     runs-on: ${{ matrix.env.os }}
     container: ${{ fromJSON(matrix.env.json-image) }}
     steps:
-      - name: Install Miniconda
+      - name: Install Miniforge
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: latest  # needed for macOS 13
+          miniforge-version: latest  # needed for macOS 13
           python-version: ${{ matrix.python-version }}
       - name: Download Conda Package Artifact
         uses: actions/download-artifact@v4
@@ -92,16 +91,9 @@ jobs:
         run: |
           KHIOPS_CORE_VERSION="${{ inputs.khiops-core-version || env.DEFAULT_KHIOPS_CORE_VERSION }}"
           echo "KHIOPS_CORE_VERSION=$KHIOPS_CORE_VERSION" >> "$GITHUB_ENV"
-      - name: Install the Khiops Conda package (Windows)
-        if: runner.os == 'Windows'
+      - name: Install the Khiops Conda package
         run: |
-          conda install --channel conda-forge --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
-          conda install --override-channels --channel conda-forge --channel ./khiops-conda/ khiops
-      # In Linux/macOS we need the conda-forge channel to install their pinned versions
-      - name: Install the Khiops Conda package (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          conda install --channel conda-forge --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
+          conda install --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
           conda install --channel ./khiops-conda/ khiops
       - name: Test Khiops Installation Status
         run: kh-status
@@ -135,10 +127,10 @@ jobs:
           # See the upload-artifact step in the build job for the explanation of this pattern
           name: khiops-conda
           path: ./khiops-conda
-      - name: Install Miniconda
+      - name: Install Miniforge
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: latest
+          miniforge-version: latest
           python-version: '3.12'
       - name: Install Requirement Packages
         run: conda install -y anaconda-client conda-index
