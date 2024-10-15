@@ -122,27 +122,7 @@ def _run_task(task_name, task_args):
     stdout_file_path = task_args["stdout_file_path"]
     stderr_file_path = task_args["stderr_file_path"]
 
-    # Execute the preprocess of common task arguments
-    task_called_with_domain = _preprocess_task_arguments(task_args)
-
-    # Create a command line options object
-    command_line_options = CommandLineOptions(
-        batch_mode=task_args["batch_mode"] if "batch_mode" in task_args else True,
-        log_file_path=(
-            task_args["log_file_path"] if "log_file_path" in task_args else ""
-        ),
-        output_scenario_path=(
-            task_args["output_scenario_path"]
-            if "output_scenario_path" in task_args
-            else ""
-        ),
-        task_file_path=(
-            task_args["task_file_path"] if "task_file_path" in task_args else ""
-        ),
-    )
-
-    # Clean the task_args to leave only the task arguments
-    _clean_task_args(task_args)
+    command_line_options, task_called_with_domain = _preprocess_arguments(task_args)
 
     # Obtain the api function from the registry
     task = get_task_registry().get_task(task_name, get_khiops_version())
@@ -160,6 +140,43 @@ def _run_task(task_name, task_args):
     finally:
         if task_called_with_domain and not trace:
             fs.remove(task_args["dictionary_file_path"])
+
+
+def _preprocess_arguments(args):
+    """Preprocessing of Khiops arguments
+
+    Parameters
+    ----------
+    args : dict
+        The Khiops arguments.
+
+    Returns
+    -------
+    tuple
+        A 2-tuple containing:
+        - A `~.CommandLineOptions` instance
+        - A `bool` that is ``True`` if the value of the `dictionary_file_or_domain`
+          `args` key is a `~.DictionaryDomain` instance.
+
+    .. note:: This function *mutates* the input `args` dictionary.
+    """
+    # Execute the preprocess of common task arguments
+    task_is_called_with_domain = _preprocess_task_arguments(args)
+
+    # Create a command line options object
+    command_line_options = CommandLineOptions(
+        batch_mode=args["batch_mode"] if "batch_mode" in args else True,
+        log_file_path=(args["log_file_path"] if "log_file_path" in args else ""),
+        output_scenario_path=(
+            args["output_scenario_path"] if "output_scenario_path" in args else ""
+        ),
+        task_file_path=(args["task_file_path"] if "task_file_path" in args else ""),
+    )
+
+    # Clean the args to leave only the task arguments
+    _clean_task_args(args)
+
+    return command_line_options, task_is_called_with_domain
 
 
 def _preprocess_task_arguments(task_args):
