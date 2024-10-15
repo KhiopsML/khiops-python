@@ -199,16 +199,18 @@ jobs:
           python setup.py egg_info; `
           Get-Content .\khiops.egg-info\requires.txt `
             | Select-String -Pattern '^\[' -NotMatch `
+            | Select-String -Pattern '^$' -NotMatch `
             | % {$_.Line} `
-            | ForEach-Object {pip install $_.toString()}; `
+            | ForEach-Object {python -m pip install $_.toString()}; `
           Remove-Item -r -force khiops.egg-info
       - name: Setup and Install Test Requirements
-        run: pip install -r test-requirements.txt
+        run: python -m pip install -r test-requirements.txt
       - name: Test Khiops Integration
         env:
           KHIOPS_PROC_NUMBER: 4
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           # Refresh environment variables by using the Chocolatey tool
           # Otherwise, the env vars set in the registry by the Khiops installer do not get updated
           # See also https://github.com/actions/runner-images/discussions/6065#discussioncomment-3517318
