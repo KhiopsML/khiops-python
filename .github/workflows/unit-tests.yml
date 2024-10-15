@@ -166,7 +166,7 @@ jobs:
           $KHIOPS_DOWNLOAD_URL = "https://github.com/KhiopsML/khiops/releases/download/${KHIOPS_DESKTOP_REVISION}/khiops-${KHIOPS_DESKTOP_REVISION}-setup.exe"
           Invoke-WebRequest "${KHIOPS_DOWNLOAD_URL}" `
             -OutFile .\khiops-setup.exe `
-            -UseBasicParsing; `
+            -UseBasicParsing
           Unblock-File .\khiops-setup.exe
       - name: Install the Khiops Desktop Application
         shell: pwsh
@@ -192,7 +192,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
       - name: Setup Python
-        uses: actions/setup-python@v4
+        id: setup-python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install khiops-python dev dependencies
@@ -201,13 +202,15 @@ jobs:
           # The following git command is required, 
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
-          git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()}); `
-          python setup.py egg_info; `
+          git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()})
+          python setup.py egg_info
+
+          # Install the Pyrhon requirements
           Get-Content .\khiops.egg-info\requires.txt `
             | Select-String -Pattern '^\[' -NotMatch `
             | Select-String -Pattern '^$' -NotMatch `
             | % {$_.Line} `
-            | ForEach-Object {python -m pip install $_.toString()}; `
+            | ForEach-Object {python -m pip install $_.toString()}
           Remove-Item -r -force khiops.egg-info
       - name: Setup and Install Test Requirements
         run: python -m pip install -r test-requirements.txt
@@ -219,21 +222,30 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+
           # Refresh environment variables by using the Chocolatey tool
           # Otherwise, the env vars set in the registry by the Khiops installer do not get updated
           # See also https://github.com/actions/runner-images/discussions/6065#discussioncomment-3517318
           Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
           refreshenv
 
+          # Invoke the Python version set-up by the `setup-python` step / action
+          # Otherwise invoking `python` directly invokes the system-cached Python on the runner
+          # This is a side-effect of refreshing the environment
+          $Python = "${{ steps.setup-python.outputs.python-path }}"
+
           # Print status
-          python -c "import khiops.core as kh; kh.get_runner().print_status()"
+          Invoke-Expression -Command "$Python -c 'import khiops.core as kh; kh.get_runner().print_status()'"
 
-          # Execute complete Khiops sample (train and deploy model)
-          python -m khiops.samples.samples -i deploy_model -e
+          # Run integration tests on Ubuntu and Rocky
+          Invoke-Expression -Command "$Python -m unittest -v tests.test_khiops_integrations"
 
-          # Execute complete Khiops Coclustering sample (train and deploy model)
-          python -m khiops.samples.samples -i deploy_coclustering -e
-  check-mpiexec-on-linux:
+          # Execute Khiops sample (train and deploy model)
+          Invoke-Expression -Command "$Python -m khiops.samples.samples -i deploy_model -e"
+
+          # Execute Khiops Coclustering sample (train and deploy model)
+          Invoke-Expression -Command "$Python -m khiops.samples.samples -i deploy_coclustering -e"
+  check-khiops-integration-on-linux:
     strategy:
       fail-fast: false
       matrix:
@@ -294,11 +306,11 @@ jobs:
           # modules are currently not initializing the shell anyway
           if [ -n "$MODULESHOME" ]; then module unload mpi; fi
 
-          # Run mpiexec detection test
-          python -m unittest -v tests.test_khiops_integrations.KhiopsRunnerEnvironmentTests.test_runner_has_mpiexec_on_linux
-
           # Print status
           python -c "import khiops.core as kh; kh.get_runner().print_status()"
 
-          # Execute complete Khiops sample (train and deploy model), which uses MPI
+          # Run integration tests on Ubuntu and Rocky
+          python -m unittest -v tests.test_khiops_integrations
+
+          # Execute Khiops sample (train and deploy model), which uses MPI
           python -m khiops.samples.samples -i deploy_model -e
