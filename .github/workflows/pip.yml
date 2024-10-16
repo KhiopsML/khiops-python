@@ -84,7 +84,6 @@ jobs:
           rmaps_base_oversubscribe: true
           # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
-          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |-
           # Make sure MPI support is not loaded through env modules
           # Note: As the Docker container's shell is non-interactive, environment
