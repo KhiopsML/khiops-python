@@ -406,6 +406,98 @@ def khiops_classifier_pickle():
     print("---")
 
 
+def khiops_classifier_advanced():
+    """Trains a `.KhiopsClassifier` on a star multi-table dataset
+    (advanced version with more hyperparameters)
+    """
+    # Imports
+    import os
+    import pandas as pd
+    from khiops import core as kh
+    from khiops.sklearn import KhiopsClassifier
+    from sklearn import metrics
+    from sklearn.model_selection import train_test_split
+
+    # Load the root table of the dataset into a pandas dataframe
+    accidents_dataset_path = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    accidents_df = pd.read_csv(
+        os.path.join(accidents_dataset_path, "Accidents.txt"),
+        sep="\t",
+        encoding="latin1",
+    )
+
+    # Split the root dataframe into train and test
+    accidents_train_df, accidents_test_df = train_test_split(
+        accidents_df, test_size=0.3, random_state=1
+    )
+
+    # Obtain the main X feature table and the y target vector ("Class" column)
+    y_train = accidents_train_df["Gravity"]
+    y_test = accidents_test_df["Gravity"]
+    X_train_main = accidents_train_df.drop("Gravity", axis=1)
+    X_test_main = accidents_test_df.drop("Gravity", axis=1)
+
+    # Load the secondary table of the dataset into a pandas dataframe
+    vehicles_df = pd.read_csv(
+        os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
+    )
+
+    # Split the secondary dataframe with the keys of the splitted root dataframe
+    X_train_ids = X_train_main["AccidentId"].to_frame()
+    X_test_ids = X_test_main["AccidentId"].to_frame()
+    X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
+    X_test_secondary = X_test_ids.merge(vehicles_df, on="AccidentId")
+
+    # Create the dataset multitable specification for the train/test split
+    # We specify each table with a name and a tuple (dataframe, key_columns)
+    X_train = {
+        "main_table": "Accidents",
+        "tables": {
+            "Accidents": (X_train_main, "AccidentId"),
+            "Vehicles": (X_train_secondary, ["AccidentId", "VehicleId"]),
+        },
+    }
+    X_test = {
+        "main_table": "Accidents",
+        "tables": {
+            "Accidents": (X_test_main, "AccidentId"),
+            "Vehicles": (X_test_secondary, ["AccidentId", "VehicleId"]),
+        },
+    }
+    # Train the classifier (by default it analyzes 100 multi-table features)
+    khc = KhiopsClassifier(
+        n_features=20,
+        n_pairs=5,
+        n_trees=5,
+        n_selected_features=10,
+        n_evaluated_features=15,
+        specific_pairs=[("Light", "Weather"), ("Light", "IntersectionType")],
+        all_possible_pairs=True,
+        construction_rules=["TableMode", "TableSelection"],
+        group_target_value=False,
+    )
+    khc.fit(X_train, y_train)
+
+    # Predict the class on the test dataset
+    y_test_pred = khc.predict(X_test)
+    print("Predicted classes (first 10):")
+    print(y_test_pred[:10])
+    print("---")
+
+    # Predict the class probability on the test dataset
+    y_test_probas = khc.predict_proba(X_test)
+    print(f"Class order: {khc.classes_}")
+    print("Predicted class probabilities (first 10):")
+    print(y_test_probas[:10])
+    print("---")
+
+    # Evaluate accuracy and auc metrics on the test dataset
+    test_accuracy = metrics.accuracy_score(y_test, y_test_pred)
+    test_auc = metrics.roc_auc_score(y_test, y_test_probas[:, 1])
+    print(f"Test accuracy = {test_accuracy}")
+    print(f"Test auc      = {test_auc}")
+
+
 def khiops_regressor():
     """Trains a `.KhiopsRegressor` on a monotable dataframe"""
     # Imports
@@ -688,6 +780,67 @@ def khiops_encoder_pipeline_with_hgbc():
     print(f"Test auc      = {test_auc}")
 
 
+def khiops_encoder_advanced():
+    """Trains a `.KhiopsEncoder` on a star multi-table dataset
+    (advanced version with more hyperparameters)
+    """
+    # Imports
+    import os
+    import pandas as pd
+    from khiops import core as kh
+    from khiops.sklearn import KhiopsEncoder
+
+    # Load the root table of the dataset into a pandas dataframe
+    accidents_dataset_path = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    accidents_df = pd.read_csv(
+        os.path.join(accidents_dataset_path, "Accidents.txt"),
+        sep="\t",
+        encoding="latin1",
+    )
+
+    # Obtain the root X feature table and the y target vector ("Class" column)
+    X_main = accidents_df.drop("Gravity", axis=1)
+    y = accidents_df["Gravity"]
+
+    # Load the secondary table of the dataset into a pandas dataframe
+    X_secondary = pd.read_csv(
+        os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
+    )
+
+    # Create the dataset multitable specification for the train/test split
+    # We specify each table with a name and a tuple (dataframe, key_columns)
+    X_dataset = {
+        "main_table": "Accidents",
+        "tables": {
+            "Accidents": (X_main, "AccidentId"),
+            "Vehicles": (X_secondary, ["AccidentId", "VehicleId"]),
+        },
+    }
+
+    # Create the KhiopsEncoder with 10 additional multitable features and fit it
+    khe = KhiopsEncoder(
+        n_features=20,
+        n_pairs=5,
+        n_trees=5,
+        specific_pairs=[("Light", "Weather"), ("Light", "IntersectionType")],
+        all_possible_pairs=True,
+        construction_rules=["TableMode", "TableSelection"],
+        group_target_value=False,
+        informative_features_only=True,
+        keep_initial_variables=True,
+        transform_type_categorical="part_id",
+        transform_type_numerical="part_id",
+        transform_pairs="part_id",
+    )
+    khe.fit(X_dataset, y)
+
+    # Transform the train dataset
+    print("Encoded feature names:")
+    print(khe.feature_names_out_)
+    print("Encoded data:")
+    print(khe.transform(X_dataset)[:10])
+
+
 # pylint: enable=line-too-long
 
 
@@ -944,11 +1097,13 @@ exported_samples = [
     khiops_classifier_multitable_snowflake,
     khiops_classifier_sparse,
     khiops_classifier_pickle,
+    khiops_classifier_advanced,
     khiops_regressor,
     khiops_encoder,
     khiops_encoder_multitable_star,
     khiops_encoder_multitable_snowflake,
     khiops_encoder_pipeline_with_hgbc,
+    khiops_encoder_advanced,
     khiops_coclustering,
     khiops_coclustering_simplify,
     khiops_classifier_multitable_list,
