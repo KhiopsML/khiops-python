@@ -1025,13 +1025,6 @@ class KhiopsLocalRunner(KhiopsRunner):
                 "are needed. Khiops will run in a single process."
             )
 
-        if platform.system() == "Linux" and installation_method == "binary+pip":
-            # Set the OpenMPI variable OMPI_MCA_plm_rsh_agent to the empty string
-            # if not set
-            # This avoids errors on systems without ssh (eg. simple Docker containers)
-            if "OMPI_MCA_plm_rsh_agent" not in os.environ:
-                os.environ["OMPI_MCA_plm_rsh_agent"] = ""
-
         # Initialize the default samples dir
         self._initialize_default_samples_dir()
 
