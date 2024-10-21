@@ -153,6 +153,7 @@ def _check_categorical_target_type(ds):
         or pd.api.types.is_string_dtype(ds.target_column.dtype)
         or pd.api.types.is_integer_dtype(ds.target_column.dtype)
         or pd.api.types.is_float_dtype(ds.target_column.dtype)
+        or pd.api.types.is_bool_dtype(ds.target_column.dtype)
     ):
         raise ValueError(
             f"'y' has invalid type '{ds.target_column_type}'. "
@@ -2093,6 +2094,24 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             )
         )
 
+    def _is_real_target_dtype_float(self):
+        return self._original_target_dtype is not None and (
+            pd.api.types.is_float_dtype(self._original_target_dtype)
+            or (
+                isinstance(self._original_target_dtype, pd.CategoricalDtype)
+                and pd.api.types.is_float_dtype(self._original_target_dtype.categories)
+            )
+        )
+
+    def _is_real_target_dtype_bool(self):
+        return self._original_target_dtype is not None and (
+            pd.api.types.is_bool_dtype(self._original_target_dtype)
+            or (
+                isinstance(self._original_target_dtype, pd.CategoricalDtype)
+                and pd.api.types.is_bool_dtype(self._original_target_dtype.categories)
+            )
+        )
+
     def _sorted_prob_variable_names(self):
         """Returns the model probability variable names in the order of self.classes_"""
         assert self.is_fitted_, "Model not fit yet"
@@ -2195,11 +2214,15 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             for key in variable.meta_data.keys:
                 if key.startswith("TargetProb"):
                     self.classes_.append(variable.meta_data.get_value(key))
-        if ds.is_in_memory and self._is_real_target_dtype_integer():
-            self.classes_ = [int(class_value) for class_value in self.classes_]
+        if ds.is_in_memory:
+            if self._is_real_target_dtype_integer():
+                self.classes_ = [int(class_value) for class_value in self.classes_]
+            elif self._is_real_target_dtype_float():
+                self.classes_ = [float(class_value) for class_value in self.classes_]
+            elif self._is_real_target_dtype_bool():
+                self.classes_ = [class_value == "True" for class_value in self.classes_]
             self.classes_.sort()
         self.classes_ = column_or_1d(self.classes_)
-
         # Count number of classes
         self.n_classes_ = len(self.classes_)
 
@@ -2259,13 +2282,11 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         """
         # Call the parent's method
         y_pred = super().predict(X)
-
         # Adjust the data type according to the original target type
         # Note: String is coerced explictly because astype does not work as expected
         if isinstance(y_pred, pd.DataFrame):
             # Transform to numpy.ndarray
             y_pred = y_pred.to_numpy(copy=False).ravel()
-
             # If integer and string just transform
             if pd.api.types.is_integer_dtype(self._original_target_dtype):
                 y_pred = y_pred.astype(self._original_target_dtype)
@@ -2275,6 +2296,10 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
                 self._original_target_dtype
             ):
                 y_pred = y_pred.astype(str, copy=False)
+            elif pd.api.types.is_float_dtype(self._original_target_dtype):
+                y_pred = y_pred.astype(float, copy=False)
+            elif pd.api.types.is_bool_dtype(self._original_target_dtype):
+                y_pred = y_pred.astype(bool, copy=False)
             # If category first coerce the type to the categories' type
             else:
                 assert isinstance(self._original_target_dtype, pd.CategoricalDtype), (
