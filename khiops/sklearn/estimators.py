@@ -1308,6 +1308,9 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         n_features=100,
         n_pairs=0,
         n_trees=10,
+        specific_pairs=None,
+        all_possible_pairs=True,
+        construction_rules=None,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1324,6 +1327,9 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self.n_features = n_features
         self.n_pairs = n_pairs
         self.n_trees = n_trees
+        self.specific_pairs = specific_pairs
+        self.all_possible_pairs = all_possible_pairs
+        self.construction_rules = construction_rules
         self._predicted_target_meta_data_tag = None
 
         # Deprecation message for 'key' constructor parameter
@@ -1403,6 +1409,32 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             raise TypeError(type_error_message("n_pairs", self.n_pairs, int))
         if self.n_pairs < 0:
             raise ValueError("'n_pairs' must be positive")
+        if self.specific_pairs is not None:
+            if not is_list_like(self.specific_pairs):
+                raise TypeError(
+                    type_error_message(
+                        "specific_pairs", self.specific_pairs, "list-like"
+                    )
+                )
+            else:
+                for pair in self.specific_pairs:
+                    if not isinstance(pair, tuple):
+                        raise TypeError(type_error_message(pair, pair, tuple))
+        if not isinstance(self.all_possible_pairs, bool):
+            raise TypeError(
+                type_error_message("all_possible_pairs", self.all_possible_pairs, bool)
+            )
+        if self.construction_rules is not None:
+            if not is_list_like(self.construction_rules):
+                raise TypeError(
+                    type_error_message(
+                        "construction_rules", self.construction_rules, "list-like"
+                    )
+                )
+            else:
+                for rule in self.construction_rules:
+                    if not isinstance(rule, str):
+                        raise TypeError(type_error_message(rule, rule, str))
 
     def _fit_train_model(self, dataset, computation_dir, **kwargs):
         # Train the model with Khiops
@@ -1655,6 +1687,11 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         n_features=100,
         n_pairs=0,
         n_trees=10,
+        n_selected_features=0,
+        n_evaluated_features=0,
+        specific_pairs=None,
+        all_possible_pairs=True,
+        construction_rules=None,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1665,6 +1702,9 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             n_features=n_features,
             n_pairs=n_pairs,
             n_trees=n_trees,
+            specific_pairs=specific_pairs,
+            all_possible_pairs=all_possible_pairs,
+            construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -1673,6 +1713,8 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         )
         # Data to be specified by inherited classes
         self._predicted_target_meta_data_tag = None
+        self.n_evaluated_features = n_evaluated_features
+        self.n_selected_features = n_selected_features
 
     def predict(self, X):
         """Predicts the target variable for the test dataset X
@@ -1706,6 +1748,18 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         # Return pd.Series in the monotable + pandas case
         assert isinstance(y_pred, (str, pd.DataFrame)), "Expected str or DataFrame"
         return y_pred
+
+    def _fit_prepare_training_function_inputs(self, dataset, computation_dir):
+        # Call the parent method
+        args, kwargs = super()._fit_prepare_training_function_inputs(
+            dataset, computation_dir
+        )
+
+        # Rename parameters to be compatible with khiops.core
+        kwargs["max_evaluated_variables"] = kwargs.pop("n_evaluated_features")
+        kwargs["max_selected_variables"] = kwargs.pop("n_selected_features")
+
+        return args, kwargs
 
     def _transform_prepare_deployment_model_for_predict(self):
         assert (
@@ -1744,6 +1798,16 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             feature_used_importances_ = np.array([])
         return feature_used_names_, feature_used_importances_
 
+    def _fit_check_params(self, dataset, **kwargs):
+        # Call parent method
+        super()._fit_check_params(dataset, **kwargs)
+
+        # Check estimator parameters
+        if self.n_evaluated_features < 0:
+            raise ValueError("'n_evaluated_features' must be positive")
+        if self.n_selected_features < 0:
+            raise ValueError("'n_selected_features' must be positive")
+
 
 class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
     # Disable line too long as this docstring *needs* to have lines longer than 88c
@@ -1765,7 +1829,7 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features represent a 2D grid
-        partition of the domain of a pair of variables in which is optimized in a way
+        partition of the domain of a pair of features in which is optimized in a way
         that the cells are the purest possible with respect to the target. Only pairs
         which jointly are more informative that its univariate components may be taken
         into account in the classifier.
@@ -1774,6 +1838,25 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         combine other features, either native or constructed. These features usually
         improve the classifier's performance at the cost of interpretability of the
         model.
+    n_selected_features : int, default 0
+        Maximum number of features to be selected in the SNB predictor. If equal to
+        0 it selects all the features kept in the training.
+    n_evaluated_features : int, default 0
+        Maximum number of features to be evaluated in the SNB predictor training. If
+        equal to 0 it evaluates all informative features.
+    specific_pairs : list of tuple, optional
+        User-specified pairs as a list of 2-tuples of feature names. If a given tuple
+        contains only one non-empty feature name, then it generates all the pairs
+        containing it (within the maximum limit n_pairs).
+    all_possible_pairs : bool, default True
+        If True tries to create all possible pairs within the limit max_pairs.
+        The pairs and features given in specific_pairs have priority.
+    construction_rules : list of str, optional
+        Allowed rules for the automatic feature construction. If not set, it uses all
+         possible rules.
+    group_target_value : bool, default ``False``
+        Allows grouping of the target values in classification. It can substantially
+        increase the training time.
     verbose : bool, default ``False``
         If ``True`` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
@@ -1864,6 +1947,12 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         n_features=100,
         n_pairs=0,
         n_trees=10,
+        n_selected_features=0,
+        n_evaluated_features=0,
+        specific_pairs=None,
+        all_possible_pairs=True,
+        construction_rules=None,
+        group_target_value=False,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1874,12 +1963,18 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
             n_features=n_features,
             n_pairs=n_pairs,
             n_trees=n_trees,
+            n_selected_features=n_selected_features,
+            n_evaluated_features=n_evaluated_features,
+            specific_pairs=specific_pairs,
+            all_possible_pairs=all_possible_pairs,
+            construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
             key=key,
             internal_sort=internal_sort,
         )
+        self.group_target_value = group_target_value
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Prediction"
 
@@ -1909,6 +2004,16 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
                     sorted_prob_variable_names.append(variable.name)
 
         return sorted_prob_variable_names
+
+    def _fit_check_params(self, dataset, **kwargs):
+        # Call parent method
+        super()._fit_check_params(dataset, **kwargs)
+
+        # Check 'group_target_value' parameter
+        if not isinstance(self.group_target_value, bool):
+            raise TypeError(
+                type_error_message("group_target_value", self.group_target_value, bool)
+            )
 
     def fit(self, X, y, **kwargs):
         """Fits a Selective Naive Bayes classifier according to X, y
@@ -2171,10 +2276,26 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features represent a 2D grid
-        partition of the domain of a pair of variables in which is optimized in a way
+        partition of the domain of a pair of features in which is optimized in a way
         that the cells are the purest possible with respect to the target. Only pairs
         which jointly are more informative that its univariate components may be taken
         into account in the regressor.
+    n_selected_features : int, default 0
+        Maximum number of features to be selected in the SNB predictor. If equal to
+        0 it selects all the features kept in the training.
+    n_evaluated_features : int, default 0
+        Maximum number of features to be evaluated in the SNB predictor training. If
+        equal to 0 it evaluates all informative features.
+    specific_pairs : list of tuple, optional
+        User-specified pairs as a list of 2-tuples of feature names. If a given tuple
+        contains only one non-empty feature name, then it generates all the pairs
+        containing it (within the maximum limit n_pairs).
+    all_possible_pairs : bool, default True
+        If True tries to create all possible pairs within the limit max_pairs.
+        The pairs and features given in specific_pairs have priority.
+    construction_rules : list of str, optional
+        Allowed rules for the automatic feature construction. If not set, it uses all
+         possible rules.
     verbose : bool, default ``False``
         If ``True`` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
@@ -2255,6 +2376,11 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
         n_features=100,
         n_pairs=0,
         n_trees=0,
+        n_selected_features=0,
+        n_evaluated_features=0,
+        specific_pairs=None,
+        all_possible_pairs=True,
+        construction_rules=None,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -2265,6 +2391,11 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
             n_features=n_features,
             n_pairs=n_pairs,
             n_trees=n_trees,
+            n_selected_features=n_selected_features,
+            n_evaluated_features=n_evaluated_features,
+            specific_pairs=specific_pairs,
+            all_possible_pairs=all_possible_pairs,
+            construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -2411,16 +2542,31 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features represent a 2D grid
-        partition of the domain of a pair of variables in which is optimized in a way
+        partition of the domain of a pair of features in which is optimized in a way
         that the cells are the purest possible with respect to the target.
     n_trees : int, default 10
         Maximum number of decision tree features to construct. The constructed trees
         combine other features, either native or constructed. These features usually
         improve a predictor's performance at the cost of interpretability of the model.
+    specific_pairs : list of tuple, optional
+        User-specified pairs as a list of 2-tuples of feature names. If a given tuple
+        contains only one non-empty feature name, then it generates all the pairs
+        containing it (within the maximum limit n_pairs).
+    all_possible_pairs : bool, default True
+        If True tries to create all possible pairs within the limit max_pairs.
+        The pairs and features given in specific_pairs have priority.
+    construction_rules : list of str, optional
+        Allowed rules for the automatic feature construction. If not set, it uses all
+         possible rules.
+    informative_features_only : bool, default ``True``
+        If ``True`` keeps only informative features.
+    group_target_value : bool, default ``False``
+        Allows grouping of the target values in classification. It can substantially
+        increase the training time.
     keep_initial_variables : bool, default ``False``
         If ``True`` the original columns are kept in the transformed data.
     transform_type_categorical : str, default "part_id"
-        Type of transformation for categorical variables. Valid values:
+        Type of transformation for categorical features. Valid values:
             - "part_id"
             - "part_label"
             - "dummies"
@@ -2440,6 +2586,12 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
 
         See the documentation for the ``numerical_recoding_method`` parameter of the
         `~.api.train_recoder` function for more details.
+    transform_pairs: str, default "part_id"
+        Type of transformation for bivariate features. Valid values:
+            - "part_id"
+            - "part_label"
+            - "dummies"
+            - "conditional_info"
     verbose : bool, default ``False``
         If ``True`` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
@@ -2506,9 +2658,15 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         n_features=100,
         n_pairs=0,
         n_trees=0,
+        specific_pairs=None,
+        all_possible_pairs=True,
+        construction_rules=None,
+        informative_features_only=True,
+        group_target_value=False,
+        keep_initial_variables=False,
         transform_type_categorical="part_id",
         transform_type_numerical="part_id",
-        keep_initial_variables=False,
+        transform_pairs="part_id",
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -2519,6 +2677,9 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             n_features=n_features,
             n_pairs=n_pairs,
             n_trees=n_trees,
+            specific_pairs=specific_pairs,
+            all_possible_pairs=all_possible_pairs,
+            construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -2526,8 +2687,11 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             internal_sort=internal_sort,
         )
         self.categorical_target = categorical_target
+        self.group_target_value = group_target_value
         self.transform_type_categorical = transform_type_categorical
         self.transform_type_numerical = transform_type_numerical
+        self.transform_pairs = transform_pairs
+        self.informative_features_only = informative_features_only
         self.keep_initial_variables = keep_initial_variables
         self._khiops_model_prefix = "R_"
 
@@ -2567,6 +2731,21 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             )
         return _transform_types_numerical[self.transform_type_numerical]
 
+    def _pairs_transform_method(self):
+        _transform_types = {
+            "part_id": "part Id",
+            "part_label": "part label",
+            "dummies": "0-1 binarization",
+            "conditional_info": "conditional info",
+            None: "none",
+        }
+        if self.transform_pairs not in _transform_types:
+            raise ValueError(
+                "'transform_pairs' must be one of the following:"
+                ",".join(_transform_types.keys)
+            )
+        return _transform_types[self.transform_pairs]
+
     def _fit_check_params(self, dataset, **kwargs):
         # Call parent method
         super()._fit_check_params(dataset, **kwargs)
@@ -2599,6 +2778,25 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
             raise ValueError(
                 "transform_type_categorical and transform_type_numerical "
                 "cannot be both None with n_trees == 0."
+            )
+        # Check 'transform_pairs' parameter
+        if not isinstance(self.transform_pairs, str):
+            raise TypeError(
+                type_error_message("transform_pairs", self.transform_pairs, str)
+            )
+        self._pairs_transform_method()  # Raises ValueError if invalid
+
+        # Check 'informative_features_only' parameter
+        if not isinstance(self.informative_features_only, bool):
+            raise TypeError(
+                type_error_message(
+                    "informative_features_only", self.informative_features_only, bool
+                )
+            )
+        # Check 'group_target_value' parameter
+        if not isinstance(self.group_target_value, bool):
+            raise TypeError(
+                type_error_message("group_target_value", self.group_target_value, bool)
             )
 
     def _check_target_type(self, dataset):
@@ -2650,16 +2848,20 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         args, kwargs = super()._fit_prepare_training_function_inputs(
             dataset, computation_dir
         )
-
         # Rename encoder parameters, delete unused ones
+        # to be compatible with khiops.core
         kwargs["keep_initial_categorical_variables"] = kwargs["keep_initial_variables"]
         kwargs["keep_initial_numerical_variables"] = kwargs.pop(
             "keep_initial_variables"
         )
         kwargs["categorical_recoding_method"] = self._categorical_transform_method()
         kwargs["numerical_recoding_method"] = self._numerical_transform_method()
+        kwargs["pairs_recoding_method"] = self._pairs_transform_method()
+        kwargs["informative_variables_only"] = kwargs.pop("informative_features_only")
+
         del kwargs["transform_type_categorical"]
         del kwargs["transform_type_numerical"]
+        del kwargs["transform_pairs"]
         del kwargs["categorical_target"]
 
         return args, kwargs
@@ -2686,7 +2888,7 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         """Transforms X with a fitted Khiops supervised encoder
 
         .. note::
-            Numerical variables are encoded to categorical ones. See the
+            Numerical features are encoded to categorical ones. See the
             ``transform_type_numerical`` parameter for details.
 
         Parameters
