@@ -20,9 +20,9 @@ Main Modules
   :recursive:
   :nosignatures:
 
-  khiops.core.api
-  khiops.core.dictionary
-  khiops.core.analysis_results
-  khiops.core.coclustering_results
-  khiops.core.exceptions
-  khiops.core.helpers
+  api
+  dictionary
+  analysis_results
+  coclustering_results
+  exceptions
+  helpers

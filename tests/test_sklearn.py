@@ -68,12 +68,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Prepare datasets for tests"""
-        # Disable file-path warnings
-        warnings.filterwarnings(
-            "ignore",
-            message="File-path dataset input is deprecated and will be removed",
-        )
-
         # Grab output_dir for subsequent deletion
         cls.output_dir = os.path.join(
             "resources", "tmp", "test_sklearn_parameter_transfer"
@@ -1565,7 +1559,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
         expected_additional_data_table_names=(),
     ):
         """Check assertions on dictionary domains"""
-        self.assertIsInstance(dictionary_domain, kh.dictionary.DictionaryDomain)
+        self.assertIsInstance(dictionary_domain, kh.DictionaryDomain)
         if expected_n_dictionaries is not None:
             self.assertEqual(
                 len(dictionary_domain.dictionaries), expected_n_dictionaries
@@ -1818,7 +1812,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
     ):
         return self.datasets[schema_type][source_type][estimation_process]
 
-    def _define_resources(self, dataset, estimator_type):
+    def _define_resources(self, dataset, estimator_type, estimator_method):
         # Set the resources directory for the arguments
         head_dir = os.path.join(
             KhiopsTestHelper.get_resources_dir(), "sklearn", "results"
@@ -1848,7 +1842,18 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
         report_path = os.path.join(ref_reports_dir, report_name)
         model_kdic_path = os.path.join(ref_models_dir, f"{kdic_name}.kdic")
         model_kdicj_path = os.path.join(ref_models_dir, f"{kdic_name}.kdicj")
-        prediction_table_path = os.path.join(ref_predictions_dir, "transformed.txt")
+        if estimator_type in (KhiopsCoclustering, KhiopsEncoder):
+            prediction_table_path = os.path.join(ref_predictions_dir, "transform.txt")
+        else:
+            if estimator_method == "predict":
+                prediction_table_path = os.path.join(ref_predictions_dir, "predict.txt")
+            elif estimator_method == "predict_proba":
+                prediction_table_path = os.path.join(
+                    ref_predictions_dir, "predict_proba.txt"
+                )
+            else:
+                assert estimator_method == "fit", f"Real: {estimator_method}"
+                prediction_table_path = ""
 
         # Buld the resources
         resources = {
@@ -1974,7 +1979,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 X_test_data = data["test"]
         dataset = self.dataset_of_schema_type[schema_type]
 
-        resources = self._define_resources(dataset, estimator_type)
+        resources = self._define_resources(dataset, estimator_type, estimator_method)
 
         estimator_type_key = (
             KhiopsPredictor
@@ -2627,22 +2632,39 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
             KhiopsEncoder(n_trees=0, transform_type_numerical="0-1_normalization"),
         ]
 
-        # Execute sklearn's estimator test battery
-        for khiops_estimator in khiops_estimators:
-            for estimator, check in check_estimator(
-                khiops_estimator, generate_only=True
-            ):
-                # Skip some checks for KhiopsEncoder as they yield "empty"
-                # deployed tables; they need to be implemented manually
-                check_name = check.func.__name__
-                if check_name in [
-                    "check_fit_score_takes_y",
-                    "check_fit_idempotent",
-                    # yields "empty" deployed table as of sklearn >= 1.5:
-                    "check_estimators_dtypes",
-                ] and isinstance(estimator, KhiopsEncoder):
-                    continue
-                with self.subTest(
-                    sklearn_check_name=check_name, sklearn_check_kwargs=check.keywords
+        # Ignore the "No informative variables" warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", message=r"[\S\n\t\v ]+no informative variables"
+            )
+            warnings.filterwarnings(
+                "ignore", message=r"[\S\n\t\v ]+No informative input variable"
+            )
+
+            # Execute sklearn's estimator test battery
+            print("")
+            for khiops_estimator in khiops_estimators:
+                for estimator, check in check_estimator(
+                    khiops_estimator, generate_only=True
                 ):
-                    check(estimator)
+                    # Skip some checks for KhiopsEncoder as they yield "empty"
+                    # deployed tables; they need to be implemented manually
+                    check_name = check.func.__name__
+                    if check_name in [
+                        "check_fit_score_takes_y",
+                        "check_fit_idempotent",
+                        # yields "empty" deployed table as of sklearn >= 1.5:
+                        "check_estimators_dtypes",
+                    ] and isinstance(estimator, KhiopsEncoder):
+                        continue
+                    print(
+                        f">>> Executing {check_name} on "
+                        f"{estimator.__class__.__name__}... ",
+                        end="",
+                    )
+                    with self.subTest(
+                        sklearn_check_name=check_name,
+                        sklearn_check_kwargs=check.keywords,
+                    ):
+                        check(estimator)
+                    print("Done")
