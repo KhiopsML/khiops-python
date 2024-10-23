@@ -10,10 +10,10 @@ on:
         default: main
         description: Git tag, branch or commit for the khiops-samples repository
       image-tag:
-        default: latest
+        default: 10.2.3-b.5.0
         description: Development Docker Image Tag
       khiops-desktop-revision:
-        default: 10.2.3-b.4
+        default: 10.2.3-b.5
         description: Khiops Windows Desktop Application Version
       run-long-tests:
         type: boolean
@@ -36,7 +36,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.3-b.4.with_conda-forge_10.2.3-b.4' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.3-b.5.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -256,7 +256,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3-b.4.with_conda-forge_10.2.3-b.4' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3-b.5.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}

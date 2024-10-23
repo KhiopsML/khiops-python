@@ -122,27 +122,7 @@ def _run_task(task_name, task_args):
     stdout_file_path = task_args["stdout_file_path"]
     stderr_file_path = task_args["stderr_file_path"]
 
-    # Execute the preprocess of common task arguments
-    task_called_with_domain = _preprocess_task_arguments(task_args)
-
-    # Create a command line options object
-    command_line_options = CommandLineOptions(
-        batch_mode=task_args["batch_mode"] if "batch_mode" in task_args else True,
-        log_file_path=(
-            task_args["log_file_path"] if "log_file_path" in task_args else ""
-        ),
-        output_scenario_path=(
-            task_args["output_scenario_path"]
-            if "output_scenario_path" in task_args
-            else ""
-        ),
-        task_file_path=(
-            task_args["task_file_path"] if "task_file_path" in task_args else ""
-        ),
-    )
-
-    # Clean the task_args to leave only the task arguments
-    _clean_task_args(task_args)
+    command_line_options, task_called_with_domain = _preprocess_arguments(task_args)
 
     # Obtain the api function from the registry
     task = get_task_registry().get_task(task_name, get_khiops_version())
@@ -160,6 +140,43 @@ def _run_task(task_name, task_args):
     finally:
         if task_called_with_domain and not trace:
             fs.remove(task_args["dictionary_file_path"])
+
+
+def _preprocess_arguments(args):
+    """Preprocessing of Khiops arguments
+
+    Parameters
+    ----------
+    args : dict
+        The Khiops arguments.
+
+    Returns
+    -------
+    tuple
+        A 2-tuple containing:
+        - A `~.CommandLineOptions` instance
+        - A `bool` that is ``True`` if the value of the `dictionary_file_or_domain`
+          `args` key is a `~.DictionaryDomain` instance.
+
+    .. note:: This function *mutates* the input `args` dictionary.
+    """
+    # Execute the preprocess of common task arguments
+    task_is_called_with_domain = _preprocess_task_arguments(args)
+
+    # Create a command line options object
+    command_line_options = CommandLineOptions(
+        batch_mode=args["batch_mode"] if "batch_mode" in args else True,
+        log_file_path=(args["log_file_path"] if "log_file_path" in args else ""),
+        output_scenario_path=(
+            args["output_scenario_path"] if "output_scenario_path" in args else ""
+        ),
+        task_file_path=(args["task_file_path"] if "task_file_path" in args else ""),
+    )
+
+    # Clean the args to leave only the task arguments
+    _clean_task_args(args)
+
+    return command_line_options, task_is_called_with_domain
 
 
 def _preprocess_task_arguments(task_args):
@@ -311,11 +328,11 @@ def _preprocess_format_spec(detect_format, header_line, field_separator):
     r"""Preprocess the user format spec to be used in a task
 
     More precisely:
-        - Disables ``detect_format`` if either ``header_line`` or ```field_separator``
-          are set
-        - If either ``header_line`` or ``field_separator`` is None then they are set to
-          their default values
-        - It transforms the field separator "\t" to the empty string ""
+        - Sets ``detect_format`` to ``False`` if either ``header_line`` or
+          ``field_separator`` are set
+        - If either ``header_line`` or ``field_separator`` is ``None``, then they are
+          set to their default values
+        - It transforms the field separator "\\t" to the empty string ""
     """
     # Ignore detect_format if header_line or field_separator are set
     if header_line is not None or field_separator is not None:
@@ -510,14 +527,16 @@ def build_dictionary_from_data_table(
         Path of the output dictionary file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
-        If ``True`` it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
-        as "\\t").
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
     ... :
         See :ref:`core-api-common-params`.
     """
@@ -563,14 +582,16 @@ def check_database(
         Path of the data table file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
-        If ``True`` it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
-        as "\\t").
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
     sample_percentage : float, default 100.0
         See the ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
@@ -664,14 +685,16 @@ def train_predictor(
         Path of the results directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
-        If ``True`` it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
-        as "\\t").
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
     sample_percentage : float, default 70.0
         See the ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
@@ -849,14 +872,16 @@ def evaluate_predictor(
         Path of the results directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
-        If ``True`` it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
-        as "\\t").
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
     sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
@@ -997,14 +1022,16 @@ def train_recoder(
         Path of the results directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
-        If ``True`` it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
-        as "\\t").
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
     sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
@@ -1175,14 +1202,16 @@ def deploy_model(
         Path of the output data file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
-        If ``True`` it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
-        as "\\t").
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
     sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
@@ -1312,14 +1341,16 @@ def sort_data_table(
         The names of the variables to sort. If not set sorts the table by its key.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
-        If ``True`` it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
-        as "\\t").
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
     output_header_line : bool, default ``True``
         If ``True`` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
@@ -1380,13 +1411,16 @@ def extract_keys_from_data_table(
         Path of the output data file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. Ignored if ``header_line`` or ``field_separator`` are set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
-        If ``True`` it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
-        as "\\t").
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
     output_header_line : bool, default ``True``
         If ``True`` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
@@ -1454,14 +1488,16 @@ def train_coclustering(
         Path of the results directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It's ignored if ``header_line`` or ``field_separator`` are
-        set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
-        If ``True`` it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
-        as "\\t").
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
     sample_percentage : float, default 100.0
         See ``sampling_mode`` option below.
     sampling_mode : "Include sample" or "Exclude sample"
