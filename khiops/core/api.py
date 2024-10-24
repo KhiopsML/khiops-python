@@ -32,11 +32,7 @@ from khiops.core.internals.common import (
     type_error_message,
 )
 from khiops.core.internals.io import KhiopsOutputWriter
-from khiops.core.internals.runner import (
-    _get_tool_info_khiops9,
-    _get_tool_info_khiops10,
-    get_runner,
-)
+from khiops.core.internals.runner import get_runner
 from khiops.core.internals.task import get_task_registry
 from khiops.core.internals.version import KhiopsVersion
 
@@ -1939,55 +1935,3 @@ def build_multi_table_dictionary(
 
 
 # pylint: enable=unused-argument
-
-
-def get_khiops_info():
-    """Returns the Khiops license information
-
-    .. warning::
-        This method is *deprecated* since Khiops 10.1 and will be removed in Khiops
-        11. Use `get_khiops_version` to obtain the Khiops version of your system.
-
-    Returns
-    -------
-    tuple
-        A 4-tuple containing:
-
-        - The tool version
-        - The name of the machine
-        - The ID of the machine
-        - The number of remaining days for the license
-    """
-    warnings.warn(deprecation_message("get_khiops_info", "11.0.0"))
-    if get_runner().khiops_version >= KhiopsVersion("10.1.0"):
-        return get_khiops_version(), None, None, None
-    elif get_runner().khiops_version >= KhiopsVersion("10.0.0"):
-        return _get_tool_info_khiops10(get_runner(), "khiops")
-    else:
-        return _get_tool_info_khiops9(get_runner(), "khiops")
-
-
-def get_khiops_coclustering_info():
-    """Returns the Khiops Coclustering license information
-
-    .. warning::
-        This method is *deprecated* since Khiops 10.1 and will be removed in Khiops
-        11. Use `get_khiops_version` to obtain the Khiops version of your system.
-
-    Returns
-    -------
-    tuple
-        A 4-tuple containing:
-
-        - The tool version
-        - The name of the machine
-        - The ID of the machine
-        - The number of remaining days for the license
-    """
-    warnings.warn(deprecation_message("get_khiops_coclustering_info", "11.0.0"))
-    if get_runner().khiops_version >= KhiopsVersion("10.1.0"):
-        return get_khiops_version(), None, None, None
-    elif get_runner().khiops_version >= KhiopsVersion("10.0.0"):
-        return _get_tool_info_khiops10(get_runner(), "khiops_coclustering")
-    else:
-        return _get_tool_info_khiops9(get_runner(), "khiops_coclustering")

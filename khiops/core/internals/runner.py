@@ -1091,7 +1091,7 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _initialize_khiops_version(self):
         # Run khiops with the -v
-        stdout, _, return_code = self.raw_run("khiops", ["-v"], use_mpi=False)
+        stdout, stderr, return_code = self.raw_run("khiops", ["-v"], use_mpi=False)
 
         # On success parse and save the version
         if return_code == 0:
@@ -1100,14 +1100,13 @@ class KhiopsLocalRunner(KhiopsRunner):
                 if line.startswith("Khiops"):
                     khiops_version_str = line.rstrip().split(" ")[1]
                     break
-        # If -v fails it means it is Khiops 9 or lower so we try the old way
+        # If -v fails the environment is KO: raise an error
         else:
-            khiops_version_str, _, _, _ = _get_tool_info_khiops9(self, "khiops")
-            warnings.warn(
-                "Khiops version is earlier than 10.0; the Khiops Python library will "
-                f"run in legacy mode. Khiops path: {self._tool_path('khiops')}",
-                stacklevel=3,
-            )
+            error_msg = f"Could not execute 'khiops -v': return code {return_code}."
+            error_msg += f"\nstdout: {stdout}" if stdout else ""
+            error_msg += f"\nstderr: {stderr}" if stderr else ""
+            raise KhiopsEnvironmentError(error_msg)
+
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
         # Warn if the khiops version is too far from the Khiops Python library version
@@ -1369,129 +1368,6 @@ def get_runner():
 ##################################
 # Deprecated Methods and Classes #
 ##################################
-
-
-def _get_tool_info_khiops10(runner, tool_name):
-    """Returns a Khiops tool (version 10) license information
-
-    *This method is deprecated and kept only for backwards compatibility*
-
-    Parameters
-    ----------
-    runner : `.KhiopsLocalRunner`
-        A Khiops Python local runner instance.
-    tool_name : "khiops" or "khiops_coclustering"
-        Name of the tool.
-
-    Returns
-    -------
-    tuple
-        A 4-tuple containing:
-
-        - The tool version
-        - The name of the machine
-        - The ID of the machine
-        - The number of remaining days for the license
-
-    Raises
-    ------
-    `.KhiopsEnvironmentError`
-        If the current khiops runner is not of class `.KhiopsLocalRunner`.
-    """
-    # Get the version
-    stdout, _, _ = runner.raw_run(tool_name, ["-v"], use_mpi=False)
-    version = stdout.rstrip().split(" ")[1]
-
-    # Get the license information
-    stdout, _, _ = runner.raw_run(tool_name, ["-l"], use_mpi=False)
-    lines = stdout.split("\n")
-    computer_name = lines[1].split("\t")[1]
-    machine_id = lines[2].split("\t")[1]
-    remaining_days = int(lines[3].split("\t")[1])
-
-    return version, computer_name, machine_id, remaining_days
-
-
-def _get_tool_info_khiops9(runner, tool_name):
-    """Returns a Khiops tool (version 9) license information
-
-    *This method is deprecated and kept only for backwards compatibility*
-
-    Parameters
-    ----------
-    runner : `.KhiopsLocalRunner`
-        A Khiops Python local runner instance.
-    tool_name : "khiops" or "khiops_coclustering"
-        Name of the tool.
-
-    Returns
-    -------
-    tuple
-        A 4-tuple containing:
-
-        - The tool version
-        - The name of the machine
-        - The ID of the machine
-        - The number of remaining days for the license
-
-    Raises
-    ------
-    `.KhiopsEnvironmentError`
-        If the current khiops runner is not of class `.KhiopsLocalRunner`.
-    """
-    # Create a temporary file for the log
-    tmp_log_file_path = runner.create_temp_file("_get_tool_info", ".log")
-    tmp_scenario_path = runner.create_temp_file("_get_tool_info", "._kh")
-    with open(tmp_scenario_path, "w", encoding="ascii") as tmp_scenario:
-        tmp_scenario.write("// Show license information\n")
-        tmp_scenario.write(
-            "LearningTools.LicenseManager.ActionShowLicenseFullInformation\n\n"
-        )
-        tmp_scenario.write("// Exit\n")
-        tmp_scenario.write("Exit\n")
-        tmp_scenario.write("OK\n")
-
-    # Run Khiops tool
-    _, stderr, return_code = runner.raw_run(
-        tool_name,
-        ["-i", tmp_scenario_path, "-e", tmp_log_file_path, "-b"],
-        use_mpi=False,
-    )
-
-    # If tool executed successfully:
-    if return_code == 0:
-        # Since pylint 3.2.5 an used before assignment error appears with no reason
-        # This code is going to be eliminated in Khiops 11 so no need to fix it
-        # pylint: disable=used-before-assignment,possibly-used-before-assignment
-        # Parse the contents of the log file
-        tmp_log_file_contents = io.BytesIO(fs.read(tmp_log_file_path))
-        with io.TextIOWrapper(tmp_log_file_contents, encoding="ascii") as tmp_log_file:
-            for line in tmp_log_file:
-                if line.startswith("Khiops"):
-                    fields = line.strip().split(" ")
-                    if fields[1] == "Coclustering":
-                        version = fields[2]
-                    else:
-                        version = fields[1]
-                else:
-                    fields = line.strip().split("\t")
-                    if len(fields) == 2:
-                        if fields[0] == "Computer name":
-                            computer_name = fields[1]
-                        if fields[0] == "Machine ID":
-                            machine_id = fields[1]
-                    else:
-                        if "Perpetual license" in line:
-                            remaining_days = float("inf")
-                        elif "License expire at " in line:
-                            fields = line.split(" ")
-                            remaining_days = int(fields[-2])
-        # Clean temporary file
-        fs.remove(tmp_log_file_path)
-
-        return version, computer_name, machine_id, remaining_days
-    # else, raise KhiopsRuntimeError, as Khiops failed for another reason
-    raise KhiopsRuntimeError(stderr)
 
 
 class PyKhiopsRunner(KhiopsRunner):
