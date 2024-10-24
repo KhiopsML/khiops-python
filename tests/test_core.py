@@ -18,6 +18,7 @@ from unittest import mock
 
 import khiops
 import khiops.core as kh
+from khiops.core import KhiopsRuntimeError
 from khiops.core.internals.common import create_unambiguous_khiops_path
 from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import KhiopsLocalRunner, KhiopsRunner
@@ -2690,6 +2691,29 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                     del os.environ[fixture["variable"]]
                 else:
                     os.environ[fixture["variable"]] = old_value
+
+    def test_raise_exception_on_error_case_without_a_message(self):
+        with self.assertRaises(KhiopsRuntimeError) as context:
+            with MockedRunnerContext(
+                create_mocked_raw_run(
+                    stdout=False,  # ask for an empty stdout
+                    stderr=False,  # ask for an empty stderr
+                    return_code=9,  # non-zero error code
+                )
+            ):
+                kh.train_predictor(
+                    "/tmp/Iris.kdic",
+                    dictionary_name="Iris",
+                    data_table_path="/tmp/Iris.txt",
+                    target_variable="Class",
+                    results_dir="/tmp",
+                    trace=True,
+                )
+        expected_msg = (
+            "khiops execution had errors (return code 9) but no message is available"
+        )
+        output_msg = str(context.exception)
+        self.assertEqual(output_msg, expected_msg)
 
 
 if __name__ == "__main__":
