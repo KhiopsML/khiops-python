@@ -33,8 +33,6 @@ from khiops.core.internals.common import (
     deprecation_message,
     invalid_keys_message,
     is_string_like,
-    removal_message,
-    renaming_message,
     type_error_message,
 )
 from khiops.core.internals.io import KhiopsOutputWriter
@@ -587,36 +585,6 @@ class KhiopsRunner(ABC):
             - Invalid type of a keyword argument
             - When the search/replace pairs are not strings
         """
-        # Handle renamed parameters
-        if "batch" in kwargs:
-            warnings.warn(
-                renaming_message("batch", "batch_mode", "10.0.0"), stacklevel=3
-            )
-            del kwargs["batch"]
-        if "output_script" in kwargs:
-            warnings.warn(
-                renaming_message("output_script", "output_scenario_path", "10.0.0"),
-                stacklevel=3,
-            )
-            del kwargs["output_script"]
-        if "log" in kwargs:
-            warnings.warn(
-                renaming_message("log", "log_file_path", "10.0.0"), stacklevel=3
-            )
-            del kwargs["log"]
-        if "task" in kwargs:
-            warnings.warn(
-                renaming_message("task", "task_file_path", "10.0.0"), stacklevel=3
-            )
-            del kwargs["task"]
-
-        # Handle removed parameters
-        if "search_replace" in kwargs:
-            warnings.warn(
-                removal_message("search_replace", "10.1.2", None), stacklevel=3
-            )
-            del kwargs["search_replace"]
-
         # Warn if there are still kwargs: At this point any keyword argument is invalid
         if kwargs:
             warnings.warn(invalid_keys_message(kwargs), stacklevel=3)

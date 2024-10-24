@@ -27,8 +27,6 @@ from khiops.core.internals.common import (
     create_unambiguous_khiops_path,
     deprecation_message,
     is_string_like,
-    removal_message,
-    renaming_message,
     type_error_message,
 )
 from khiops.core.internals.io import KhiopsOutputWriter
@@ -375,52 +373,6 @@ def _clean_task_args(task_args):
     for arg_name in command_line_arg_names + other_arg_names:
         if arg_name in task_args:
             del task_args[arg_name]
-
-    # Remove removed parameters
-    removed_parameters = [
-        ("dictionary_domain", "dictionary_file_path_or_domain", "10"),
-        ("fill_test_database_settings", "use_complement_as_test", "10"),
-        ("map_predictor", None, "10"),
-        ("nb_predictor", None, "10"),
-        ("only_pairs_with", "specific_pairs", "10"),
-    ]
-    for arg_name, replacement_arg_name, removal_version in removed_parameters:
-        if arg_name in task_args and get_runner().khiops_version >= KhiopsVersion(
-            removal_version
-        ):
-            del task_args[arg_name]
-            warnings.warn(
-                removal_message(
-                    arg_name,
-                    removal_version,
-                    replacement=replacement_arg_name,
-                ),
-                stacklevel=4,
-            )
-    # Remove renamed parameters
-    renamed_parameters = [
-        ("max_evaluated_variable_number", "max_evaluated_variables", "10"),
-        ("max_selected_variable_number", "max_selected_variables", "10"),
-        ("constructed_number", "max_constructed_variables", "10"),
-        ("tree_number", "max_trees", "10"),
-        ("pair_number", "max_pairs", "10"),
-        ("max_interval_number", "max_intervals", "10"),
-        ("max_group_number", "max_groups", "10"),
-        ("max_variable_number", "max_variables", "10"),
-        ("recode_categorical_variables", "categorical_recoding_method", "10"),
-        ("recode_numerical_variables", "numerical_recoding_method", "10"),
-        ("recode_bivariate_variables", "pairs_recoding_method", "10"),
-        ("max_cell_number", "max_cells", "10"),
-    ]
-    for arg_name, new_arg_name, rename_version in renamed_parameters:
-        if arg_name in task_args and get_runner().khiops_version >= KhiopsVersion(
-            rename_version
-        ):
-            del task_args[arg_name]
-            warnings.warn(
-                renaming_message(arg_name, new_arg_name, rename_version),
-                stacklevel=4,
-            )
 
 
 #########
