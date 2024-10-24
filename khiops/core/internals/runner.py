@@ -820,16 +820,9 @@ class KhiopsRunner(ABC):
             writer.writeln("")
 
     def _write_scenario_exit_statement(self, writer):
-        # Set the exit statement depending on the version
-        if self.khiops_version >= KhiopsVersion("10.0.0"):
-            exit_statement = "ClassManagement.Quit"
-        else:
-            exit_statement = "Exit"
-
-        # Write the scenario exit code
         writer.writeln("")
         writer.writeln("// Exit Khiops")
-        writer.writeln(exit_statement)
+        writer.writeln("ClassManagement.Quit")
         writer.writeln("OK")
 
     @abstractmethod
