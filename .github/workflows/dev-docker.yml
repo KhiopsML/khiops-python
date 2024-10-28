@@ -4,7 +4,7 @@ env:
   DEFAULT_KHIOPS_REVISION: 10.2.3
   DEFAULT_IMAGE_INCREMENT: 0
   DEFAULT_SERVER_REVISION: main
-  DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12
+  DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12 3.13
 on:
   pull_request:
     paths: [packaging/docker/khiopspydev/Dockerfile.*, .github/workflows/dev-docker.yml]
@@ -28,7 +28,7 @@ on:
         description: Set as 'latest'
       python-versions:
         type: string
-        default: 3.8 3.9 3.10 3.11 3.12
+        default: 3.8 3.9 3.10 3.11 3.12 3.13
         description: Python versions to support
       server-revision:
         type: string
