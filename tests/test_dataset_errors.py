@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from khiops.core.internals.common import type_error_message
-from khiops.utils.dataset import Dataset, FileTable, PandasTable
+from khiops.sklearn.dataset import Dataset, FileTable, PandasTable
 
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions

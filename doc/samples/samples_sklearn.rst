@@ -155,8 +155,7 @@ Samples
     import os
     import pandas as pd
     from khiops import core as kh
-    from khiops.sklearn import KhiopsClassifier
-    from khiops.utils.helpers import train_test_split_dataset
+    from khiops.sklearn import KhiopsClassifier, train_test_split_dataset
     from sklearn import metrics
 
     # Load the dataset into pandas dataframes
@@ -211,8 +210,7 @@ Samples
     import os
     import pandas as pd
     from khiops import core as kh
-    from khiops.sklearn import KhiopsClassifier
-    from khiops.utils.helpers import train_test_split_dataset
+    from khiops.sklearn import KhiopsClassifier, train_test_split_dataset
     from sklearn import metrics
 
     # Load the dataset tables into dataframes
