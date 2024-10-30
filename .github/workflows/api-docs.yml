@@ -53,6 +53,7 @@ jobs:
         with:
           repository: khiopsml/khiops-python-tutorial
           path: doc/khiops-python-tutorial
+          ref: shorten-helpers-path
       - name: Add pip scripts directory to path
         run: echo PATH="$PATH:/github/home/.local/bin" >> "$GITHUB_ENV"
       - name: Install doc build requirements
