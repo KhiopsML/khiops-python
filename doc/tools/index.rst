@@ -7,5 +7,4 @@ These are auxiliary tools for the Khiops Python library.
   :toctree: generated
   :nosignatures:
 
-  utils.helpers
   tools
