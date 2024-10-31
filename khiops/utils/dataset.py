@@ -1454,11 +1454,10 @@ class FileTable(DatasetTable):
                 header_line=header,
             )
             kh.export_dictionary_as_json(tmp_kdic_path, tmp_kdicj_path)
-            with open(tmp_kdicj_path, encoding="utf8") as tmp_kdicj:
-                json_domain = json.load(tmp_kdicj)
+            json_domain = json.loads(fs.read(tmp_kdicj_path))
         finally:
-            os.remove(tmp_kdic_path)
-            os.remove(tmp_kdicj_path)
+            fs.remove(tmp_kdic_path)
+            fs.remove(tmp_kdicj_path)
 
         # Alert the user if the parsing failed
         if len(json_domain["dictionaries"]) == 0:
