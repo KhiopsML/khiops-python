@@ -10,6 +10,7 @@ import unittest
 import pandas as pd
 from numpy.testing import assert_array_equal
 from sklearn import datasets
+from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import column_or_1d
 
 from khiops.sklearn.estimators import KhiopsClassifier, KhiopsRegressor
@@ -44,8 +45,8 @@ def create_iris_mt():
     return X_iris_df, X_iris_sec_df, y_iris_series
 
 
-class KhiopsSklearnOutputTypes(unittest.TestCase):
-    """Tests for checking the output types of predictors"""
+class KhiopsSklearnOutputCoherence(unittest.TestCase):
+    """Tests for checking the proper output structure of estimators"""
 
     def setUp(self):
         KhiopsTestHelper.skip_long_test(self)
@@ -163,3 +164,17 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                         pd.api.types.is_float_dtype(y_pred),
                         f"Invalid predict return type {y_pred.dtype}.",
                     )
+
+    def test_pandas_df_index_is_preserved(self):
+        """Test that the pandas dataframe index is preserved when transforming
+
+        .. note:: The code handling this is all in KhiopsEstimator so we need to test it
+        only for one concrete class.
+
+        """
+        X, y = create_iris()
+        X_train, X_test, y_train, y_test = train_test_split(X, y)
+        khc = KhiopsClassifier(n_trees=0)
+        khc.fit(X_train, y_train)
+        pred_y_test = khc.predict(X_test)
+        pd.testing.assert_index_equal(pred_y_test.index, y_test.index)
