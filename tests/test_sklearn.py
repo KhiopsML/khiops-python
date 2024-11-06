@@ -2621,15 +2621,22 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
     def test_sklearn_check_estimator(self):
         # Set the estimators to test
         # Notes:
+        # - We use n_trees=0 so the tests execute faster
         # - We omit KhiopsCoclustering because he needs special inputs to work well
         #   and sklearn's check_estimator method does not accept them.
-        # - KhiopsEncoder es set with "0-1_normalization" as the preserve_dtype as the
-        #   default make fail many assert_almost_equal functions in sklearn and those
+        # - KhiopsEncoder:
+        #   - We set it with transform_type_numerical="0-1_normalization" as the tests
         #   expect numeric types
+        #   - We set it with informative_features_only=False so it always have output
+        #   columns (sklearn estimator checks expect non-empty encoders)
         khiops_estimators = [
             KhiopsClassifier(n_trees=0),
             KhiopsRegressor(n_trees=0),
-            KhiopsEncoder(n_trees=0, transform_type_numerical="0-1_normalization"),
+            KhiopsEncoder(
+                n_trees=0,
+                informative_features_only=False,
+                transform_type_numerical="0-1_normalization",
+            ),
         ]
 
         # Ignore the "No informative variables" warnings
@@ -2647,16 +2654,7 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
                 for estimator, check in check_estimator(
                     khiops_estimator, generate_only=True
                 ):
-                    # Skip some checks for KhiopsEncoder as they yield "empty"
-                    # deployed tables; they need to be implemented manually
                     check_name = check.func.__name__
-                    if check_name in [
-                        "check_fit_score_takes_y",
-                        "check_fit_idempotent",
-                        # yields "empty" deployed table as of sklearn >= 1.5:
-                        "check_estimators_dtypes",
-                    ] and isinstance(estimator, KhiopsEncoder):
-                        continue
                     print(
                         f">>> Executing {check_name} on "
                         f"{estimator.__class__.__name__}... ",
