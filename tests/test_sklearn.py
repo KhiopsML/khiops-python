@@ -12,7 +12,9 @@ import shutil
 import unittest
 import warnings
 
+import numpy as np
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.validation import NotFittedError, check_is_fitted
 
 import khiops.core as kh
 from khiops.sklearn.estimators import (
@@ -2666,3 +2668,37 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
                     ):
                         check(estimator)
                     print("Done")
+
+
+class KhiopsSklearnVariousTests(unittest.TestCase):
+    """Miscelanous sklearn classes tests"""
+
+    def assertNotFit(self, estimator):
+        """Asserts that an estimator is not in 'fit' state"""
+        try:
+            check_is_fitted(estimator)
+            self.fail(
+                f"Expected {estimator.__class__.__name__} not to be in 'fit' state."
+            )
+        except NotFittedError:
+            pass
+
+    def test_khiops_encoder_no_output_variables_implies_not_fit(self):
+        """Test that KhiopsEncoder is not fit when there are no output columns"""
+        # Obtain the features of Iris
+        df = KhiopsTestHelper.get_monotable_data("Iris")
+        X = df.drop("Class", axis=1)
+
+        # Create a noise target
+        rng = np.random.default_rng(seed=123)
+        y = rng.binomial(1, 0.5, size=X.shape[0])
+
+        # Fit a KhiopsEncoder and check we get a warning about no having output columns
+        khe = KhiopsEncoder()
+        with self.assertWarnsRegex(
+            UserWarning, "Encoder is not fit because Khiops didn't create any output"
+        ):
+            khe.fit(X, y)
+
+        # Check that the encoder is not fit
+        self.assertNotFit(khe)
