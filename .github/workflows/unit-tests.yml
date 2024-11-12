@@ -2,7 +2,7 @@
 name: Unit Tests
 env:
   DEFAULT_SAMPLES_REVISION: main
-  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.3-b.4
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.3
 on:
   workflow_dispatch:
     inputs:
@@ -10,10 +10,10 @@ on:
         default: main
         description: Git tag, branch or commit for the khiops-samples repository
       image-tag:
-        default: 10.2.3-b.5.0
+        default: 10.2.3.0
         description: Development Docker Image Tag
       khiops-desktop-revision:
-        default: 10.2.3-b.5
+        default: 10.2.3
         description: Khiops Windows Desktop Application Version
       run-long-tests:
         type: boolean
@@ -36,7 +36,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.3-b.5.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.3.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -256,7 +256,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3-b.5.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
