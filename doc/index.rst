@@ -9,12 +9,7 @@ Installation
 Khiops is better installed with `conda package manager <https://docs.conda.io/en/latest/>`_
 
 .. code-block:: shell
-
-    # Windows
-    conda install khiops -c khiops
-
-    # Linux/macOS
-    conda install khiops -c conda-forge -c khiops
+    conda install -c conda-forge -c khiops khiops
 
 More details and other install methods are documented at the `Khiops website
 <https://www.khiops.org/setup>`_.
