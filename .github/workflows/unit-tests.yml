@@ -125,7 +125,7 @@ jobs:
           CONDA_ENVS="py${{ matrix.python-version }} py${{ matrix.python-version }}_conda"
           for CONDA_ENV in $CONDA_ENVS
           do
-            $CONDA run --no-capture-output -n "$CONDA_ENV" coverage run -m xmlrunner -o "reports/py${{ matrix.python-version }}" -v
+            $CONDA run --no-capture-output -n "$CONDA_ENV" coverage run -m xmlrunner -o "reports/$CONDA_ENV" -v
             $CONDA run --no-capture-output -n "$CONDA_ENV" coverage report -m
             $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
           done
