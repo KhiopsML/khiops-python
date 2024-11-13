@@ -8,6 +8,9 @@ on:
       samples-revision:
         default: main
         description: khiops-samples repo revision
+      image-tag:
+        default: 10.2.3.0
+        description: Development Docker Image Tag
   pull_request:
   push:
     tags: ['*']
@@ -49,7 +52,11 @@ jobs:
       matrix:
         container: [ubuntu22.04, rocky9]
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:latest
+      # 'latest' default image tag cannot be set as an environment variable,
+      # because the `env` context is only accessible at the step level;
+      # hence, it is hard-coded
+      image: |-
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3.0' }}
     steps:
       - name: Set parameters as env
         run: |
@@ -77,7 +84,6 @@ jobs:
           rmaps_base_oversubscribe: true
           # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
-          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |-
           # Make sure MPI support is not loaded through env modules
           # Note: As the Docker container's shell is non-interactive, environment
@@ -93,11 +99,8 @@ jobs:
           kh-samples sklearn -i khiops_classifier -e
 
           # Test that the line containing "MPI command" also contains
-          # an executable name under a /bin directory
-          # Note: this executable name can be different, depending on the MPI
-          # backend and OS; for instance, "orterun" for OpenMPI on Ubuntu Linux, but
-          # "mpiexec" for OpenMPI on Rocky Linux
-          kh-status | grep "MPI command" | grep -Ewq "(/.+?)/bin/.+"
+          # an executable named "mpiexec"
+          kh-status | grep "MPI command" | grep -wq "mpiexec"
   release:
     if: github.ref_type == 'tag'
     needs: [build, test]

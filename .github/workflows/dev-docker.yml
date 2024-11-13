@@ -1,7 +1,8 @@
 ---
 name: Dev Docker
 env:
-  DEFAULT_KHIOPS_REVISION: 10.2.2
+  DEFAULT_KHIOPS_REVISION: 10.2.3
+  DEFAULT_IMAGE_INCREMENT: 0
   DEFAULT_SERVER_REVISION: main
   DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12
 on:
@@ -11,20 +12,28 @@ on:
     inputs:
       khiops-revision:
         type: string
-        default: main
+        default: 10.2.3
         description: Khiops Revision
+      image-increment:
+        type: number
+        default: 0
+        description: Image Tag Increment
+      push:
+        type: boolean
+        default: false
+        description: Push to GH Registry
+      set-latest:
+        type: boolean
+        default: false
+        description: Set as 'latest'
+      python-versions:
+        type: string
+        default: 3.8 3.9 3.10 3.11 3.12
+        description: Python versions to support
       server-revision:
         type: string
         default: main
         description: Khiops Server Revision
-      push:
-        type: boolean
-        default: true
-        description: Push to GH Registry
-      python-versions:
-        type: string
-        default: 3.8 3.9 3.10 3.11 3.12
-        description: Python versions supported by khiops-python
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -39,12 +48,13 @@ jobs:
       packages: write  # to write in the Github package registry
     steps:
       - name: Set input parameters as env or output
-        id: set-parameters
         run: |
           set -x
           echo "KHIOPS_REVISION=${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}" >> "$GITHUB_ENV"
+          echo "IMAGE_INCREMENT=${{ inputs.image-increment || env.DEFAULT_IMAGE_INCREMENT }}" >> "$GITHUB_ENV"
           echo "KHIOPSDEV_OS_CODENAME=$(echo '${{ matrix.khiopsdev-os }}' | tr -d '0-9.')" >> "$GITHUB_ENV"
           echo "SERVER_REVISION=${{ inputs.server-revision || env.DEFAULT_SERVER_REVISION }}" >> "$GITHUB_ENV"
+          echo "IMAGE_URL=ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}" >> "$GITHUB_ENV"
       - name: Checkout khiops-python sources
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
@@ -56,6 +66,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up the Docker Image Tags
+        run: |
+          set -x
+          # Set latest only if requested and on "dev" or "main" branch
+          if [[ "${{ inputs.set-latest }}" == "true" &&
+                ("$GITHUB_REF_NAME" == "dev" || "$GITHUB_REF_NAME" == "main") ]]
+          then
+            DOCKER_IMAGE_TAGS="$IMAGE_URL:latest,$IMAGE_URL:$KHIOPS_REVISION.$IMAGE_INCREMENT"
+          else
+            DOCKER_IMAGE_TAGS="$IMAGE_URL:$KHIOPS_REVISION.$IMAGE_INCREMENT"
+          fi
+          echo "DOCKER_IMAGE_TAGS=$DOCKER_IMAGE_TAGS" >> "$GITHUB_ENV"
       - name: Build image and push it to GitHub Container Registry
         uses: docker/build-push-action@v5
         with:
@@ -66,24 +88,8 @@ jobs:
             "KHIOPSDEV_OS=${{ matrix.khiopsdev-os }}"
             "SERVER_REVISION=${{ env.SERVER_REVISION }}"
             "PYTHON_VERSIONS=${{ inputs.python-versions || env.DEFAULT_PYTHON_VERSIONS }}"
-          tags: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}:latest
+          tags: ${{ env.DOCKER_IMAGE_TAGS }}
           # Push only on manual request
           push: ${{ inputs.push || false }}
       - name: Display the image digest
         run: echo ${{ steps.docker-build.outputs.digest }}
-  test:
-    # Test only when manually pushed an requested
-    if: ${{ inputs.push || false }}
-    needs: build-push
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        khiopsdev-os: [ubuntu22.04, rocky8, rocky9]
-    container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}:latest
-    steps:
-      - name: Check Khiops executables
-        run: |-
-          khiops -v
-          khiops_coclustering -v

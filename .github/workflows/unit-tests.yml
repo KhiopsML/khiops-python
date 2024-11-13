@@ -2,12 +2,19 @@
 name: Unit Tests
 env:
   DEFAULT_SAMPLES_REVISION: main
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.3
 on:
   workflow_dispatch:
     inputs:
       samples-revision:
         default: main
         description: Git tag, branch or commit for the khiops-samples repository
+      image-tag:
+        default: 10.2.3.0
+        description: Development Docker Image Tag
+      khiops-desktop-revision:
+        default: 10.2.3
+        description: Khiops Windows Desktop Application Version
       run-long-tests:
         type: boolean
         required: false
@@ -25,7 +32,11 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:latest
+      # 'latest' default image tag cannot be set as an environment variable,
+      # because the `env` context is only accessible at the step level;
+      # hence, it is hard-coded
+      image: |-
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.3.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -59,29 +70,36 @@ jobs:
       - name: Setup and Install Test Requirements
         if: success() || failure()
         run: |
-          mkdir -p -m u+rwx reports/py${{ matrix.python-version }}            
-          mkdir -p -m u+rwx reports/py${{ matrix.python-version }}_conda
-          # install within the conda environments without activating them
-          # Native Khiops-based Conda environment
-          /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }} -c conda-forge unittest-xml-reporting
-          /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }} --file test-requirements.txt
+          CONDA="/root/miniforge3/bin/conda"
+
+          # Native Khiops-based Conda environment, and
           # `khiops-core`-based Conda environment
-          /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }}_conda -c conda-forge unittest-xml-reporting
-          /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }}_conda --file test-requirements.txt
+          CONDA_ENVS="py${{ matrix.python-version }} py${{ matrix.python-version }}_conda"
+          for CONDA_ENV in $CONDA_ENVS
+          do
+            mkdir -p -m u+rwx reports/"$CONDA_ENV"
+            
+            # install within the conda environments without activating them
+            $CONDA install -y -n "$CONDA_ENV" unittest-xml-reporting
+            $CONDA install -y -n "$CONDA_ENV" --file test-requirements.txt
+          done
       - name: Install khiops-python dependencies
         if: success() || failure()
         run: |
           # The following git command is required, 
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
-          git config --global --add safe.directory $(realpath .)        
-          # Native Khiops-based Conda environment
-          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }} python setup.py egg_info
-          /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }} `grep -v "^\[" khiops.egg-info/requires.txt`
+          git config --global --add safe.directory $(realpath .)
+          CONDA="/root/miniforge3/bin/conda"
+          # Native Khiops-based Conda environment, and
           # `khiops-core`-based Conda environment
-          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }}_conda python setup.py egg_info
-          /root/miniconda3/bin/conda install -y -n py${{ matrix.python-version }}_conda `grep -v "^\[" khiops.egg-info/requires.txt`
-          rm -rf khiops.egg-info
+          CONDA_ENVS="py${{ matrix.python-version }} py${{ matrix.python-version }}_conda"
+          for CONDA_ENV in $CONDA_ENVS
+          do
+            $CONDA run --no-capture-output -n "$CONDA_ENV" python setup.py egg_info
+            $CONDA install -y -n "$CONDA_ENV" `grep -v "^\[" khiops.egg-info/requires.txt`
+            rm -rf khiops.egg-info
+          done
       - name: Prepare Unit Tests Environment
         if: github.ref != 'dev' && github.ref != 'main' && ! inputs.run-long-tests
         run: echo "UNITTEST_ONLY_SHORT_TESTS=true" >> "$GITHUB_ENV"
@@ -97,22 +115,20 @@ jobs:
           rmaps_base_oversubscribe: true
           # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
-          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |
-          # Make sure '/bin' is before '/usr/bin' in PATH
-          PATH=$(echo "/bin:"$PATH | sed 's#:/bin##')
-
           # This is needed so that the Git tag is parsed and the khiops-python
           # version is retrieved
           git config --global --add safe.directory $(realpath .)
-          # Native Khiops-based Conda environments
-          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }} coverage run -m xmlrunner -o "reports/py${{ matrix.python-version }}" -v
-          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }} coverage report -m
-          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }} coverage xml -o "reports/py${{ matrix.python-version }}/py-coverage.xml"
-          # `khiops-core`-based Conda environments
-          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }}_conda coverage run -m xmlrunner -o "reports/py${{ matrix.python-version }}_conda" -v
-          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }}_conda coverage report -m
-          /root/miniconda3/bin/conda run --no-capture-output -n py${{ matrix.python-version }}_conda coverage xml -o "reports/py${{ matrix.python-version }}_conda/py-coverage.xml"
+          CONDA="/root/miniforge3/bin/conda"
+          # Native Khiops-based Conda environment, and
+          # `khiops-core`-based Conda environment
+          CONDA_ENVS="py${{ matrix.python-version }} py${{ matrix.python-version }}_conda"
+          for CONDA_ENV in $CONDA_ENVS
+          do
+            $CONDA run --no-capture-output -n "$CONDA_ENV" coverage run -m xmlrunner -o "reports/$CONDA_ENV" -v
+            $CONDA run --no-capture-output -n "$CONDA_ENV" coverage report -m
+            $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
+          done
       - name: Display Unit Test Reports
         uses: dorny/test-reporter@v1
         with:
@@ -140,14 +156,107 @@ jobs:
             tests/resources/dictionary/copy_output_kdic/*.kdic
             tests/resources/general_options/general_options/*/*._kh
           retention-days: 7
-  check-mpiexec-on-linux:
+  check-khiops-integration-on-windows:
+    runs-on: windows-2019
+    steps:
+      - name: Download the Khiops Desktop NSIS Installer
+        shell: pwsh
+        run: |
+          $KHIOPS_DESKTOP_REVISION = '${{ inputs.khiops-desktop-revision || env.DEFAULT_KHIOPS_DESKTOP_REVISION }}'
+          $KHIOPS_DOWNLOAD_URL = "https://github.com/KhiopsML/khiops/releases/download/${KHIOPS_DESKTOP_REVISION}/khiops-${KHIOPS_DESKTOP_REVISION}-setup.exe"
+          Invoke-WebRequest "${KHIOPS_DOWNLOAD_URL}" `
+            -OutFile .\khiops-setup.exe `
+            -UseBasicParsing
+          Unblock-File .\khiops-setup.exe
+      - name: Install the Khiops Desktop Application
+        shell: pwsh
+        run: |
+          # Execute the installer
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+          Start-Process `
+            -FilePath .\khiops-setup.exe `
+            -ArgumentList '/S' `
+            -Wait
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          # Get Git tags so that versioneer can function correctly
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
+      - name: Checkout Khiops samples
+        uses: actions/checkout@v4
+        with:
+          repository: khiopsml/khiops-samples
+          ref: ${{ env.SAMPLES_REVISION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: khiops-samples
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install khiops-python dev dependencies
+        shell: pwsh
+        run: |
+          # The following git command is required, 
+          # as the Git repository is in a directory the current user does not own,
+          # Python versioneer fails to compute the current version correctly otherwise
+          git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()})
+          python setup.py egg_info
+
+          # Install the Pyrhon requirements
+          Get-Content .\khiops.egg-info\requires.txt `
+            | Select-String -Pattern '^\[' -NotMatch `
+            | Select-String -Pattern '^$' -NotMatch `
+            | % {$_.Line} `
+            | ForEach-Object {python -m pip install $_.toString()}
+          Remove-Item -r -force khiops.egg-info
+      - name: Setup and Install Test Requirements
+        run: python -m pip install -r test-requirements.txt
+      - name: Test Khiops Integration
+        env:
+          # Force > 2 CPU cores to launch MPI
+          KHIOPS_PROC_NUMBER: 4
+          KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # Refresh environment variables by using the Chocolatey tool
+          # Otherwise, the env vars set in the registry by the Khiops installer do not get updated
+          # See also https://github.com/actions/runner-images/discussions/6065#discussioncomment-3517318
+          Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
+          refreshenv
+
+          # Invoke the Python version set-up by the `setup-python` step / action
+          # Otherwise invoking `python` directly invokes the system-cached Python on the runner
+          # This is a side-effect of refreshing the environment
+          $Python = "${{ steps.setup-python.outputs.python-path }}"
+
+          # Print status
+          Invoke-Expression -Command "$Python -c 'import khiops.core as kh; kh.get_runner().print_status()'"
+
+          # Run integration tests on Ubuntu and Rocky
+          Invoke-Expression -Command "$Python -m unittest -v tests.test_khiops_integrations"
+
+          # Execute Khiops sample (train and deploy model)
+          Invoke-Expression -Command "$Python -m khiops.samples.samples -i deploy_model -e"
+
+          # Execute Khiops Coclustering sample (train and deploy model)
+          Invoke-Expression -Command "$Python -m khiops.samples.samples -i deploy_coclustering -e"
+  check-khiops-integration-on-linux:
     strategy:
       fail-fast: false
       matrix:
         container: [ubuntu22.04, rocky8, rocky9]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:latest
+      # 'latest' default image tag cannot be set as an environment variable,
+      # because the `env` context is only accessible at the step level;
+      # hence, it is hard-coded
+      image: |-
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -163,6 +272,13 @@ jobs:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
+      - name: Checkout Khiops samples
+        uses: actions/checkout@v4
+        with:
+          repository: khiopsml/khiops-samples
+          ref: ${{ env.SAMPLES_REVISION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: khiops-samples
       - name: Install khiops-python dev dependencies
         run: |
           # The following git command is required, 
@@ -175,16 +291,26 @@ jobs:
       - name: Setup and Install Test Requirements
         run: |
           pip install -r test-requirements.txt
-      - name: Launch proper MPI awareness test
+      - name: Test Khiops Integration
         env:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
+          KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
+          # Oversubscribe for MPI 4.x
+          rmaps_base_oversubscribe: true
+          # Oversubscribe for MPI > 4.x
+          OMPI_MCA_rmaps_base_oversubscribe: true
         run: |-
-          # Make sure '/bin' is before '/usr/bin' in PATH
-          PATH=$(echo "/bin:"$PATH | sed 's#:/bin##')
-
           # Make sure MPI support is not loaded through env modules
           # Note: As Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway
           if [ -n "$MODULESHOME" ]; then module unload mpi; fi
-          python -m unittest -v tests.test_khiops_integrations.KhiopsRunnerEnvironmentTests.test_runner_has_mpiexec_on_linux
+
+          # Print status
+          python -c "import khiops.core as kh; kh.get_runner().print_status()"
+
+          # Run integration tests on Ubuntu and Rocky
+          python -m unittest -v tests.test_khiops_integrations
+
+          # Execute Khiops sample (train and deploy model), which uses MPI
+          python -m khiops.samples.samples -i deploy_model -e

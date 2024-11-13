@@ -2,13 +2,28 @@
 
 **Notes:**
 - Versioning: The versioning scheme depends on the Khiops version supported (first 3 digits) and
-  a `khiops-python` correlative (4th digit).
+  a Khiops Python Library correlative (4th digit).
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.2.3.0 - 2024-11-13
+
+### Added
+
+- (`sklearn`) `train_test_split_dataset` helper function to ease the splitting in train/test for
+  multi-table datasets.
+- (`sklearn`) Complete support for `core` API functions parameters in the `sklearn` estimators.
+
+### Changed
+
+- (General) The Conda package only depends on the `conda-forge` and `khiops` channels.
+- *Internals*:
+  - Improve and simplify the integration with the `khiops-core` package via its `khiops_env`
+  script.
+
 ## 10.2.2.4 - 2024-08-05
 
-## Added
+### Added
 - (`sklearn`) Sklearn's attributes for supervised estimators.
 
 ## 10.2.2.3 - 2024-08-02
@@ -71,10 +86,10 @@
 
 ## 10.2.0.0 - 2024-02-15
 Note: This release marks the open sourcing of Khiops:
-- The `khiops-python` replaces the old `pykhiops` package. We recommend to uninstall `pykhiops`
-  before installing `khiops-python`. More information at the [Khiops website][khiops].
-- `khiops-python` uses a new four digit versioning convention.
-- The `khiops` conda package is available for many environments. See the [Khiops website][khiops]
+- The `khiops` package replaces the old `pykhiops` package. We recommend to uninstall
+  `pykhiops` before installing `khiops`. More information at the [Khiops site][khiops].
+- The `khiops` package uses a new four digit versioning convention.
+- The `khiops` conda package is available for many environments. See the [Khiops site][khiops]
   for more information.
 
 ### Added

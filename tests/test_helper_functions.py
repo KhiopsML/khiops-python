@@ -5,10 +5,14 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Tests for checking the output types of predictors"""
+import io
 import unittest
+
+import pandas as pd
 
 from khiops.core.dictionary import DictionaryDomain
 from khiops.core.helpers import build_multi_table_dictionary_domain
+from khiops.utils.helpers import train_test_split_dataset
 
 
 class KhiopsHelperFunctions(unittest.TestCase):
@@ -91,3 +95,342 @@ class KhiopsHelperFunctions(unittest.TestCase):
             for test_var, ref_var in zip(test_dict.variables, ref_dict.variables):
                 self.assertEqual(test_var.name, ref_var.name)
                 self.assertEqual(test_var.type, ref_var.type)
+
+    def test_train_test_split_dataset_dataframe(self):
+        """Tests that the train_test_split_dataset function works for df datasets"""
+        # Create the fixture dataset
+        clients_df = pd.read_csv(io.StringIO(CLIENTS_CSV))
+        calls_df = pd.read_csv(io.StringIO(CALLS_CSV))
+        connections_df = pd.read_csv(io.StringIO(CONNECTIONS_CSV))
+        ds_spec = {
+            "main_table": "clients",
+            "tables": {
+                "clients": (clients_df.drop("class", axis=1), ["id"]),
+                "calls": (calls_df, ["id", "call_id"]),
+                "connections": (connections_df, ["id", "call_id"]),
+            },
+            "relations": [("clients", "calls", False), ("calls", "connections", False)],
+        }
+        y = clients_df["class"]
+
+        # Execute the train/test split function
+        ds_spec_train, ds_spec_test, y_train, y_test = train_test_split_dataset(
+            ds_spec, y, test_size=0.5, random_state=31614
+        )
+
+        # Check that the target are the same as the reference
+        ref_y_train = pd.read_csv(io.StringIO(TRAIN_DF_TARGET_CSV))["class"]
+        ref_y_test = pd.read_csv(io.StringIO(TEST_DF_TARGET_CSV))["class"]
+        self._assert_series_equal(ref_y_train, y_train.reset_index()["class"])
+        self._assert_series_equal(ref_y_test, y_test.reset_index()["class"])
+
+        # Check that the dataset spec structure is the same
+        self._assert_dataset_keeps_structure(ds_spec_train, ds_spec)
+        self._assert_dataset_keeps_structure(ds_spec_test, ds_spec)
+
+        # Check that the table contents match those of the references
+        split_ds_specs = {
+            "train": ds_spec_train,
+            "test": ds_spec_test,
+        }
+        ref_table_dfs = {
+            "train": {
+                "clients": pd.read_csv(io.StringIO(TRAIN_DF_CLIENTS_CSV)),
+                "calls": pd.read_csv(io.StringIO(TRAIN_DF_CALLS_CSV)),
+                "connections": pd.read_csv(io.StringIO(TRAIN_DF_CONNECTIONS_CSV)),
+            },
+            "test": {
+                "clients": pd.read_csv(io.StringIO(TEST_DF_CLIENTS_CSV)),
+                "calls": pd.read_csv(io.StringIO(TEST_DF_CALLS_CSV)),
+                "connections": pd.read_csv(io.StringIO(TEST_DF_CONNECTIONS_CSV)),
+            },
+        }
+        for split, ref_tables in ref_table_dfs.items():
+            for table_name in ds_spec["tables"]:
+                with self.subTest(split=split, table_name=table_name):
+                    self._assert_frame_equal(
+                        split_ds_specs[split]["tables"][table_name][0].reset_index(
+                            drop=True
+                        ),
+                        ref_tables[table_name].reset_index(drop=True),
+                    )
+
+    def _assert_dataset_keeps_structure(self, ds_spec, ref_ds_spec):
+        """Asserts that the input dataset has the same structure as the reference
+
+        It does not check the contents of the tables.
+        """
+        # Check that the spec dictionary is the same excluding the tables
+        self.assertIn("main_table", ref_ds_spec)
+        self.assertIn("tables", ref_ds_spec)
+        self.assertIn("relations", ref_ds_spec)
+        self.assertEqual(ds_spec["main_table"], ref_ds_spec["main_table"])
+        self.assertEqual(ds_spec["relations"], ref_ds_spec["relations"])
+        self.assertEqual(ds_spec["tables"].keys(), ref_ds_spec["tables"].keys())
+        if "format" in ref_ds_spec:
+            self.assertIn("format", ds_spec)
+            self.assertEqual(ds_spec["format"], ref_ds_spec["format"])
+
+        # Check that the table keys are equal
+        for table_name, table_spec in ds_spec["tables"].items():
+            self.assertEqual(table_spec[1], ref_ds_spec["tables"][table_name][1])
+
+    def _assert_frame_equal(self, ref_df, out_df):
+        """Wrapper for the assert_frame_equal pandas function
+
+        In case of failure of assert_frame_equal we capture the AssertionError thrown by
+        it and make a unittest call to fail. This reports the error found by
+        assert_frame_equal while avoiding a double thrown exception.
+        """
+        failure_error = None
+        try:
+            pd.testing.assert_frame_equal(ref_df, out_df)
+        except AssertionError as error:
+            failure_error = error
+        if failure_error is not None:
+            self.fail(failure_error)
+
+    def _assert_series_equal(self, ref_series, out_series):
+        """Wrapper for the assert_frame_equal pandas function
+
+        In case of failure of assert_frame_equal we capture the AssertionError thrown by
+        it and make a unittest call to fail. This reports the error found by
+        assert_frame_equal while avoiding a double thrown exception.
+        """
+        failure_error = None
+        try:
+            pd.testing.assert_series_equal(ref_series, out_series)
+        except AssertionError as error:
+            failure_error = error
+        if failure_error is not None:
+            self.fail(failure_error)
+
+
+# pylint: disable=line-too-long
+# fmt: off
+
+# Test data
+
+CLIENTS_CSV = """
+id,name,phone,email,address,numberrange,time,date,class
+1,Hakeem Wilkinson,1-352-535-7028,at.pete@outlook.org,247-2921 Elit. Rd.,2,3:02 PM,"May 1, 2024",1
+10,Axel Holman,1-340-743-8860,est@google.com,Ap #737-7185 Donec St.,9,1:17 PM,"Jan 8, 2025",0
+13,Armando Cleveland,(520) 285-3188,amet.consectetuer@icloud.edu,Ap #167-1519 Tempus Avenue,8,1:50 PM,"Jul 24, 2024",0
+4,Edward Miles,(959) 886-5744,in.nec@outlook.edu,2184 Gravida Road,6,10:02 PM,"Mar 30, 2025",1
+7,Aurora Valentine,1-838-806-6257,etiam.gravida.molestie@yahoo.com,Ap #923-3118 Ante Ave,8,4:02 AM,"Dec 12, 2023",1
+""".lstrip()
+
+CALLS_CSV = """
+id,call_id,duration
+1,1,38
+1,20,29
+10,2,7
+13,25,329
+13,3,1
+13,30,8
+4,14,48
+4,2,543
+7,4,339
+""".lstrip()
+
+CONNECTIONS_CSV = """
+id,call_id,connection_ip
+1,1,277.1.56.30
+1,1,147.43.67.35
+1,1,164.27.26.50
+1,20,199.44.70.12
+1,20,169.51.97.96
+10,2,170.05.79.41
+10,2,118.45.57.51
+13,25,193.23.02.67
+13,25,146.74.18.88
+13,25,118.41.87.47
+13,25,161.51.79.60
+13,3,115.45.02.58
+13,30,12.115.90.93
+4,14,16.56.66.16
+4,14,19.30.36.57
+4,14,15.16.40.67
+4,2,10.189.71.73
+4,2,10.6.76.93
+7,4,16.66.64.13
+7,4,15.13.69.18
+""".lstrip()
+
+UNSORTED_CLIENTS_CSV = """
+id,name,phone,email,address,numberrange,time,date,class
+13,Armando Cleveland,(520) 285-3188,amet.consectetuer@icloud.edu,Ap #167-1519 Tempus Avenue,8,1:50 PM,"Jul 24, 2024",0
+10,Axel Holman,1-340-743-8860,est@google.com,Ap #737-7185 Donec St.,9,1:17 PM,"Jan 8, 2025",0
+1,Hakeem Wilkinson,1-352-535-7028,at.pete@outlook.org,247-2921 Elit. Rd.,2,3:02 PM,"May 1, 2024",1
+7,Aurora Valentine,1-838-806-6257,etiam.gravida.molestie@yahoo.com,Ap #923-3118 Ante Ave,8,4:02 AM,"Dec 12, 2023",1
+4,Edward Miles,(959) 886-5744,in.nec@outlook.edu,2184 Gravida Road,6,10:02 PM,"Mar 30, 2025",1
+""".lstrip()
+
+UNSORTED_CALLS_CSV = """
+id,call_id,duration
+1,1,38
+10,2,7
+13,25,329
+4,2,543
+13,30,8
+13,3,1
+4,14,48
+1,20,29
+7,4,339
+""".lstrip()
+
+UNSORTED_CONNECTIONS_CSV = """
+id,call_id,connection_ip
+13,25,193.23.02.67
+1,1,277.1.56.30
+4,14,16.56.66.16
+13,25,146.74.18.88
+13,25,118.41.87.47
+1,1,147.43.67.35
+4,14,19.30.36.57
+1,20,199.44.70.12
+10,2,170.05.79.41
+1,20,169.51.97.96
+10,2,118.45.57.51
+13,25,161.51.79.60
+13,3,115.45.02.58
+4,14,15.16.40.67
+1,1,164.27.26.50
+7,4,16.66.64.13
+13,30,12.115.90.93
+7,4,15.13.69.18
+4,2,10.189.71.73
+4,2,10.6.76.93
+""".lstrip()
+
+TRAIN_DF_CLIENTS_CSV = """
+id,name,phone,email,address,numberrange,time,date
+7,Aurora Valentine,1-838-806-6257,etiam.gravida.molestie@yahoo.com,Ap #923-3118 Ante Ave,8,4:02 AM,"Dec 12, 2023"
+13,Armando Cleveland,(520) 285-3188,amet.consectetuer@icloud.edu,Ap #167-1519 Tempus Avenue,8,1:50 PM,"Jul 24, 2024"
+""".lstrip()
+
+TRAIN_DF_CALLS_CSV = """
+id,call_id,duration
+7,4,339
+13,25,329
+13,3,1
+13,30,8
+""".lstrip()
+
+TRAIN_DF_TARGET_CSV = """
+class
+1
+0
+""".lstrip()
+
+TRAIN_DF_CONNECTIONS_CSV = """
+id,call_id,connection_ip
+7,4,16.66.64.13
+7,4,15.13.69.18
+13,25,193.23.02.67
+13,25,146.74.18.88
+13,25,118.41.87.47
+13,25,161.51.79.60
+13,3,115.45.02.58
+13,30,12.115.90.93
+""".lstrip()
+
+
+TEST_DF_CLIENTS_CSV = """
+id,name,phone,email,address,numberrange,time,date
+4,Edward Miles,(959) 886-5744,in.nec@outlook.edu,2184 Gravida Road,6,10:02 PM,"Mar 30, 2025"
+10,Axel Holman,1-340-743-8860,est@google.com,Ap #737-7185 Donec St.,9,1:17 PM,"Jan 8, 2025"
+1,Hakeem Wilkinson,1-352-535-7028,at.pete@outlook.org,247-2921 Elit. Rd.,2,3:02 PM,"May 1, 2024"
+""".lstrip()
+
+TEST_DF_TARGET_CSV = """
+class
+1
+0
+1
+""".lstrip()
+
+
+TEST_DF_CALLS_CSV = """
+id,call_id,duration
+4,14,48
+4,2,543
+10,2,7
+1,1,38
+1,20,29
+""".lstrip()
+
+TEST_DF_CONNECTIONS_CSV = """
+id,call_id,connection_ip
+4,14,16.56.66.16
+4,14,19.30.36.57
+4,14,15.16.40.67
+4,2,10.189.71.73
+4,2,10.6.76.93
+10,2,170.05.79.41
+10,2,118.45.57.51
+1,1,277.1.56.30
+1,1,147.43.67.35
+1,1,164.27.26.50
+1,20,199.44.70.12
+1,20,169.51.97.96
+""".lstrip()
+
+TRAIN_FILE_CLIENTS_CSV = """
+id,name,phone,email,address,numberrange,time,date,class
+10,Axel Holman,1-340-743-8860,est@google.com,Ap #737-7185 Donec St.,9,1:17 PM,"Jan 8, 2025",0
+13,Armando Cleveland,(520) 285-3188,amet.consectetuer@icloud.edu,Ap #167-1519 Tempus Avenue,8,1:50 PM,"Jul 24, 2024",0
+4,Edward Miles,(959) 886-5744,in.nec@outlook.edu,2184 Gravida Road,6,10:02 PM,"Mar 30, 2025",1
+""".lstrip()
+
+TRAIN_FILE_CALLS_CSV = """
+id,call_id,duration
+10,2,7
+13,25,329
+13,3,1
+13,30,8
+4,14,48
+4,2,543
+""".lstrip()
+
+TRAIN_FILE_CONNECTIONS_CSV = """
+id,call_id,connection_ip
+10,2,170.05.79.41
+10,2,118.45.57.51
+13,25,193.23.02.67
+13,25,146.74.18.88
+13,25,118.41.87.47
+13,25,161.51.79.60
+13,3,115.45.02.58
+13,30,12.115.90.93
+4,14,16.56.66.16
+4,14,19.30.36.57
+4,14,15.16.40.67
+4,2,10.189.71.73
+4,2,10.6.76.93
+""".lstrip()
+
+
+TEST_FILE_CLIENTS_CSV = """
+id,name,phone,email,address,numberrange,time,date,class
+1,Hakeem Wilkinson,1-352-535-7028,at.pete@outlook.org,247-2921 Elit. Rd.,2,3:02 PM,"May 1, 2024",1
+7,Aurora Valentine,1-838-806-6257,etiam.gravida.molestie@yahoo.com,Ap #923-3118 Ante Ave,8,4:02 AM,"Dec 12, 2023",1
+""".lstrip()
+
+TEST_FILE_CALLS_CSV = """
+id,call_id,duration
+1,1,38
+1,20,29
+7,4,339
+""".lstrip()
+
+TEST_FILE_CONNECTIONS_CSV = """
+id,call_id,connection_ip
+1,1,277.1.56.30
+1,1,147.43.67.35
+1,1,164.27.26.50
+1,20,199.44.70.12
+1,20,169.51.97.96
+7,4,16.66.64.13
+7,4,15.13.69.18
+""".lstrip()
