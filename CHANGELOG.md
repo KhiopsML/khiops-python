@@ -6,12 +6,20 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
+## 10.2.3.0 - 2024-11-13
 
 ### Added
 
-- (General) `train_test_split_dataset` helper function to ease the splitting in train/test for
+- (`sklearn`) `train_test_split_dataset` helper function to ease the splitting in train/test for
   multi-table datasets.
+- (`sklearn`) Complete support for `core` API functions parameters in the `sklearn` estimators.
+
+### Changed
+
+- (General) The Conda package only depends on the `conda-forge` and `khiops` channels.
+- *Internals*:
+  - Improve and simplify the integration with the `khiops-core` package via its `khiops_env`
+  script.
 
 ## 10.2.2.4 - 2024-08-05
 

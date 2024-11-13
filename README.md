@@ -14,11 +14,7 @@ in two ways:
 ## Installation
 
 ```bash
-# Windows
-conda install khiops -c khiops
-
-# Linux/macOS
-conda install khiops -c khiops -c conda-forge
+conda install -c conda-forge -c khiops khiops
 ```
 Other install method are documented at the [Khiops website][khiops-install].
 

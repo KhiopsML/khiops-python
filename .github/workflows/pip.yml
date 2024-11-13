@@ -9,7 +9,7 @@ on:
         default: main
         description: khiops-samples repo revision
       image-tag:
-        default: 10.2.3-b.5.0
+        default: 10.2.3.0
         description: Development Docker Image Tag
   pull_request:
   push:
@@ -56,7 +56,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3-b.5.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3.0' }}
     steps:
       - name: Set parameters as env
         run: |
