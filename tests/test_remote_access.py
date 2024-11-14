@@ -84,6 +84,10 @@ class KhiopsRemoteAccessTestsContainer:
                     f"{proto}://{bucket_name}/khiops-cicd/samples/{file}",
                     os.path.join(kh.get_samples_dir(), file),
                 )
+                # symetric call to ensure the upload was OK
+                fs.copy_to_local(
+                    f"{proto}://{bucket_name}/khiops-cicd/samples/{file}", "/tmp/dummy"
+                )
 
         def results_dir_root(self):
             """To be overridden by descendants if needed
