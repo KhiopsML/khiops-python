@@ -11,8 +11,10 @@ import os
 import shutil
 import unittest
 import warnings
+from itertools import product
 
 import numpy as np
+from sklearn.exceptions import NotFittedError
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.validation import NotFittedError, check_is_fitted
 
@@ -2704,3 +2706,25 @@ class KhiopsSklearnVariousTests(unittest.TestCase):
 
         # Check that the encoder is not fit
         self.assertNotFit(khe)
+
+    def test_export_operations_raise_when_not_fitted(self):
+        """Test that export functions raise NonFittedError exceptions when non-fitted
+
+        .. note:
+            The standard operations (predict, predict_proba, transform, etc) are
+            covered by KhiopsSklearnEstimatorStandardTests.
+        """
+        # Prepare the fixtures
+        export_operations = ["export_dictionary_file", "export_report_file"]
+        estimators = [
+            KhiopsClassifier(),
+            KhiopsRegressor(),
+            KhiopsEncoder(),
+            KhiopsCoclustering(),
+        ]
+
+        # Execute the tests
+        for export_operation, estimator in product(export_operations, estimators):
+            with self.subTest(export_operation=export_operation, estimator=estimator):
+                with self.assertRaises(NotFittedError):
+                    getattr(estimator, export_operation)("report.khj")
