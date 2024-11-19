@@ -99,14 +99,22 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         """Test that local runner works in non-Conda, Conda-based environments"""
 
         # Emulate Conda-based environment:
-        # - unset `CONDA_PREFIX` if set
+        # - remove $CONDA_PREFIX/bin from $PATH
+        # - unset `CONDA_PREFIX`
         # - create new KhiopsLocalRunner and initialize its Khiops binary
         #   directory
         # - check that the Khiops binary directory contains the MODL* binaries
         #   and `mpiexec` (which should be its default location)
-
-        # Unset `CONDA_PREFIX` if existing
         if "CONDA_PREFIX" in os.environ:
+            # Remove `CONDA_PREFIX/bin` from `PATH`
+            conda_prefix_bin = os.path.join(os.environ["CONDA_PREFIX"], "bin")
+            os.environ["PATH"] = os.pathsep.join(
+                path_fragment
+                for path_fragment in os.environ["PATH"].split(os.pathsep)
+                if path_fragment != conda_prefix_bin
+            )
+
+            # Unset `CONDA_PREFIX`
             del os.environ["CONDA_PREFIX"]
 
         # Create a fresh local runner
