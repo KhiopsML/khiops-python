@@ -21,6 +21,13 @@ on:
         default: false
         description: Execute long tests
   pull_request:
+    paths:
+      - khiops/**.py
+      - pykhiops/**.py  # TODO: Remove for Khiops 11
+      - tests/**.py
+      - tests/resources/**
+      - '!tests/resources/**.md'
+      - .github/workflows/unit-tests.yml
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -78,7 +85,7 @@ jobs:
           for CONDA_ENV in $CONDA_ENVS
           do
             mkdir -p -m u+rwx reports/"$CONDA_ENV"
-            
+
             # install within the conda environments without activating them
             $CONDA install -y -n "$CONDA_ENV" unittest-xml-reporting
             $CONDA install -y -n "$CONDA_ENV" --file test-requirements.txt
@@ -86,7 +93,7 @@ jobs:
       - name: Install khiops-python dependencies
         if: success() || failure()
         run: |
-          # The following git command is required, 
+          # The following git command is required,
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(realpath .)
@@ -201,7 +208,7 @@ jobs:
       - name: Install khiops-python dev dependencies
         shell: pwsh
         run: |
-          # The following git command is required, 
+          # The following git command is required,
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()})
@@ -283,7 +290,7 @@ jobs:
           path: khiops-samples
       - name: Install khiops-python dev dependencies
         run: |
-          # The following git command is required, 
+          # The following git command is required,
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(realpath .)
