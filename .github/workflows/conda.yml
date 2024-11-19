@@ -63,7 +63,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
         env:
           - {os: ubuntu-20.04, json-image: '{"image": null}'}
           - {os: ubuntu-22.04, json-image: '{"image": null}'}
@@ -71,9 +71,9 @@ jobs:
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
           - {os: windows-2019, json-image: '{"image": null}'}
           - {os: windows-2022, json-image: '{"image": null}'}
-          - {os: macos-12, json-image: '{"image": null}'}
           - {os: macos-13, json-image: '{"image": null}'}
           - {os: macos-14, json-image: '{"image": null}'}
+          - {os: macos-15, json-image: '{"image": null}'}
     runs-on: ${{ matrix.env.os }}
     container: ${{ fromJSON(matrix.env.json-image) }}
     steps:

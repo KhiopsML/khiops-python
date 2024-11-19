@@ -41,8 +41,9 @@ RUN true \
 ARG PYTHON_VERSIONS
 RUN /bin/bash -c 'for version in ${PYTHON_VERSIONS}; \
 do \
-    /root/miniforge3/bin/conda create -y -n py${version} python=${version}; \
-    /root/miniforge3/bin/conda create -y -n py${version}_conda python=${version}; \
+    # setuptools is a strong requirement for khiops-python. Force its installation because it is omitted since python 3.13
+    /root/miniforge3/bin/conda create -y -n py${version} python=${version} setuptools; \
+    /root/miniforge3/bin/conda create -y -n py${version}_conda python=${version} setuptools; \
     /root/miniforge3/bin/conda install -y -n py${version}_conda -c khiops-dev khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
 done'
 
