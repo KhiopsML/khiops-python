@@ -10,7 +10,7 @@ on:
         default: main
         description: Git tag, branch or commit for the khiops-samples repository
       image-tag:
-        default: 10.2.3.0
+        default: latest
         description: Development Docker Image Tag
       khiops-desktop-revision:
         default: 10.2.3
@@ -36,7 +36,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.3.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -96,6 +96,8 @@ jobs:
           CONDA_ENVS="py${{ matrix.python-version }} py${{ matrix.python-version }}_conda"
           for CONDA_ENV in $CONDA_ENVS
           do
+            # Since Python 3.13, setuptools is not installed automatically anymore
+            $CONDA install -y -n "$CONDA_ENV" setuptools
             $CONDA run --no-capture-output -n "$CONDA_ENV" python setup.py egg_info
             $CONDA install -y -n "$CONDA_ENV" `grep -v "^\[" khiops.egg-info/requires.txt`
             rm -rf khiops.egg-info
@@ -237,7 +239,7 @@ jobs:
           # Print status
           Invoke-Expression -Command "$Python -c 'import khiops.core as kh; kh.get_runner().print_status()'"
 
-          # Run integration tests on Ubuntu and Rocky
+          # Run integration tests on Windows
           Invoke-Expression -Command "$Python -m unittest -v tests.test_khiops_integrations"
 
           # Execute Khiops sample (train and deploy model)
@@ -256,7 +258,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
