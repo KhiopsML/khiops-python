@@ -953,6 +953,16 @@ class KhiopsLocalRunner(KhiopsRunner):
                     "Make sure you have installed Khiops >= 10.2.3. "
                     "Go to https://khiops.org for more information."
                 )
+
+        # In Conda-based environments, `khiops_env` might not be in the PATH,
+        # hence its path must be inferred
+        elif installation_method == "conda-based":
+            khiops_env_path = os.path.join(
+                _infer_env_bin_dir_for_conda_based_installations(), "khiops_env"
+            )
+            if platform.system() == "Windows":
+                khiops_env_path += ".cmd"
+
         # On UNIX or Conda, khiops_env is always in path for a proper installation
         else:
             khiops_env_path = shutil.which("khiops_env")
