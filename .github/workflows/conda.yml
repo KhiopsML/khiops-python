@@ -53,6 +53,7 @@ jobs:
         with:
           miniforge-version: latest
           python-version: '3.12'
+          conda-remove-defaults: true
       - name: Install Dependency Requirements for Building Conda Packages
         run: conda install -y conda-build
       - name: Build the Conda Package
@@ -91,6 +92,7 @@ jobs:
         with:
           miniforge-version: latest  # needed for macOS 13
           python-version: ${{ matrix.python-version }}
+          conda-remove-defaults: true
       - name: Download Conda Package Artifact
         uses: actions/download-artifact@v4
         with:
@@ -106,11 +108,30 @@ jobs:
           conda install --channel ./khiops-conda/ khiops
       - name: Test Khiops Installation Status
         run: kh-status
+      - name: Test Khiops Installation Status (Conda-Based Environments)
+        run: |
+          # Set `python` to the current Conda Python executable
+          PYTHON="$(type -P python)"
+
+          # Remove $CONDA_PREFIX/bin from PATH
+          PATH=$(echo $PATH | sed "s#$CONDA_PREFIX/bin:##g")
+
+          # Unset *CONDA* environment variables
+          # As a corrolary, CONDA_PREFIX is unset
+          # Note: There is no way to remove these variables from GITHUB_ENV
+          # (see https://github.com/actions/runner/issues/1126)
+          for CONDA_VAR in $(env | grep CONDA)
+          do
+            unset $(echo $CONDA_VAR | cut -d '=' -f 1)
+          done
+
+          # Note: kh-status is not reachable as it is not in PATH
+          $PYTHON -c "import khiops.core as kh; kh.get_runner().print_status()"
       - name: Download Sample Datasets
         run: |
           kh-download-datasets \
             --version ${{ inputs.khiops-samples-version || env.DEFAULT_SAMPLES_VERSION }}
-      - name: Test Conda Package Installation on Samples
+      - name: Test Conda Package on Samples
         env:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
@@ -120,6 +141,31 @@ jobs:
           kh-samples core -i train_coclustering -e
           kh-samples sklearn -i khiops_classifier -e
           kh-samples sklearn -i khiops_coclustering -e
+      - name: Test Conda Package on Some Samples (Conda-Based Environments)
+        env:
+          # Force > 2 CPU cores to launch mpiexec
+          KHIOPS_PROC_NUMBER: 4
+        run: |
+          # Set `python` to the current Conda Python executable
+          PYTHON="$(type -P python)"
+
+          # Remove $CONDA_PREFIX/bin from PATH
+          PATH=$(echo $PATH | sed "s#$CONDA_PREFIX/bin:##g")
+
+          # Unset *CONDA* environment variables
+          # As a corrolary, CONDA_PREFIX is unset
+          # Note: There is no way to remove these variables from GITHUB_ENV
+          # (see https://github.com/actions/runner/issues/1126)
+          for CONDA_VAR in $(env | grep CONDA)
+          do
+            unset $(echo $CONDA_VAR | cut -d '=' -f 1)
+          done
+
+          # Execute some Khiops and Khiops Coclustering samples
+          # Note: kh-samples is not reachable as it is not in PATH
+          $PYTHON -m khiops.samples.samples -i deploy_model -e
+          $PYTHON -m khiops.samples.samples -i deploy_coclustering -e
+
   # Release is only executed on tags
   # Note: For this job to work the secrets variables KHIOPS_ANACONDA_CHANNEL_TOKEN and
   #       KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN must be set with valid anaconda.org access tokens
@@ -141,6 +187,7 @@ jobs:
         with:
           miniforge-version: latest
           python-version: '3.12'
+          conda-remove-defaults: true
       - name: Install Requirement Packages
         run: conda install -y anaconda-client conda-index
       - name: Reindex the package directory
