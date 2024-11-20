@@ -139,14 +139,17 @@ def _infer_env_bin_dir_for_conda_based_installations():
         "so it finds the conda environment directory of this module"
     )
 
+    # Obtain the full path of the current file
+    current_file_path = Path(__file__).resolve()
+
     # Windows: Match %CONDA_PREFIX%\Lib\site-packages\khiops\core\internals\runner.py
-    if platform.platform() == "Windows":
-        conda_env_dir = Path(__file__).parents[5]
+    if platform.system() == "Windows":
+        conda_env_dir = current_file_path.parents[5]
     # Linux/macOS:
     # Match $CONDA_PREFIX/[Ll]ib/python3.X/site-packages/khiops/core/internals/runner.py
     else:
-        conda_env_dir = Path(__file__).parents[6]
-    env_bin_dir = os.path.join(conda_env_dir.as_posix(), "bin")
+        conda_env_dir = current_file_path.parents[6]
+    env_bin_dir = os.path.join(str(conda_env_dir), "bin")
 
     return env_bin_dir
 
@@ -170,7 +173,7 @@ def _check_conda_env_bin_dir(conda_env_bin_dir):
     # Conda env bin dir exists, along with the `conda-meta` dir
     conda_env_dir_path = conda_env_bin_dir_path.parent
     if (
-        conda_env_dir_path != conda_env_dir_path.root
+        str(conda_env_dir_path) != conda_env_dir_path.root  # `.root` is an `str`
         and conda_env_bin_dir_path.is_dir()
         and conda_env_dir_path.joinpath("conda-meta").is_dir()
     ):
