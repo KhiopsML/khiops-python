@@ -22,7 +22,16 @@ on:
   push:
     tags: ['*']
   pull_request:
-    paths: [packaging/conda/**, '!packaging/conda/README.md', .github/workflows/conda.yml]
+    paths:
+      - setup.py
+      - setup.cfg
+      - pyproject.toml
+      - LICENSE.md
+      - versioneer.py
+      - khiops/_version.py
+      - packaging/conda/**,
+      - '!packaging/conda/README.md'
+      - .github/workflows/conda.yml
 defaults:
   run:
     shell: bash -el {0}
