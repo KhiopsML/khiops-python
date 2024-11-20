@@ -969,70 +969,70 @@ class KhiopsLocalRunner(KhiopsRunner):
         # On UNIX or Conda, khiops_env is always in path for a proper installation
         else:
             khiops_env_path = shutil.which("khiops_env")
+            if khiops_env_path is None:
+                raise KhiopsEnvironmentError(
+                    "The 'khiops_env' script not found for the current "
+                    f"'{installation_method}' installation method. Make sure "
+                    "you have installed khiops >= 10.2.3. "
+                    "Go to https://khiops.org for more information."
+                )
 
-        if khiops_env_path is not None:
-            with subprocess.Popen(
-                [khiops_env_path, "--env"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-            ) as khiops_env_process:
-                stdout, _ = khiops_env_process.communicate()
-                for line in stdout.split("\n"):
-                    tokens = line.rstrip().split(maxsplit=1)
-                    if len(tokens) == 2:
-                        var_name, var_value = tokens
-                    elif len(tokens) == 1:
-                        var_name = tokens[0]
-                        var_value = ""
+        with subprocess.Popen(
+            [khiops_env_path, "--env"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        ) as khiops_env_process:
+            stdout, _ = khiops_env_process.communicate()
+            for line in stdout.split("\n"):
+                tokens = line.rstrip().split(maxsplit=1)
+                if len(tokens) == 2:
+                    var_name, var_value = tokens
+                elif len(tokens) == 1:
+                    var_name = tokens[0]
+                    var_value = ""
+                else:
+                    continue
+                # Set paths to Khiops binaries
+                if var_name == "KHIOPS_PATH":
+                    self.khiops_path = var_value
+                    os.environ["KHIOPS_PATH"] = var_value
+                elif var_name == "KHIOPS_COCLUSTERING_PATH":
+                    self.khiops_coclustering_path = var_value
+                    os.environ["KHIOPS_COCLUSTERING_PATH"] = var_value
+                # Set MPI command
+                elif var_name == "KHIOPS_MPI_COMMAND":
+                    self._mpi_command_args = shlex.split(var_value)
+                    os.environ["KHIOPS_MPI_COMMAND"] = var_value
+                # Set the Khiops process number
+                elif var_name == "KHIOPS_PROC_NUMBER":
+                    if var_value:
+                        self._set_max_cores(int(var_value))
+                        os.environ["KHIOPS_PROC_NUMBER"] = var_value
+                    # If `KHIOPS_PROC_NUMBER` is not set, then default to `0`
+                    # (use all cores)
                     else:
-                        continue
-                    # Set paths to Khiops binaries
-                    if var_name == "KHIOPS_PATH":
-                        self.khiops_path = var_value
-                        os.environ["KHIOPS_PATH"] = var_value
-                    elif var_name == "KHIOPS_COCLUSTERING_PATH":
-                        self.khiops_coclustering_path = var_value
-                        os.environ["KHIOPS_COCLUSTERING_PATH"] = var_value
-                    # Set MPI command
-                    elif var_name == "KHIOPS_MPI_COMMAND":
-                        self._mpi_command_args = shlex.split(var_value)
-                        os.environ["KHIOPS_MPI_COMMAND"] = var_value
-                    # Set the Khiops process number
-                    elif var_name == "KHIOPS_PROC_NUMBER":
-                        if var_value:
-                            self._set_max_cores(int(var_value))
-                            os.environ["KHIOPS_PROC_NUMBER"] = var_value
-                        # If `KHIOPS_PROC_NUMBER` is not set, then default to `0`
-                        # (use all cores)
-                        else:
-                            self._set_max_cores(0)
-                    # Set the Khiops memory limit
-                    elif var_name == "KHIOPS_MEMORY_LIMIT":
-                        if var_value:
-                            self.max_memory_mb = int(var_value)
-                            os.environ["KHIOPS_MEMORY_LIMIT"] = var_value
-                        else:
-                            self.max_memory_mb = 0
-                            os.environ["KHIOPS_MEMORY_LIMIT"] = ""
-                    # Set the default Khiops temporary directory
-                    # ("" means system's default)
-                    elif var_name == "KHIOPS_TMP_DIR":
-                        if var_value:
-                            self.khiops_temp_dir = var_value
-                            os.environ["KHIOPS_TMP_DIR"] = var_value
-                        else:
-                            self.khiops_temp_dir = ""
-                            os.environ["KHIOPS_TEMP_DIR"] = self.khiops_temp_dir
-                    # Propagate all the other environment variables to Khiops binaries
+                        self._set_max_cores(0)
+                # Set the Khiops memory limit
+                elif var_name == "KHIOPS_MEMORY_LIMIT":
+                    if var_value:
+                        self.max_memory_mb = int(var_value)
+                        os.environ["KHIOPS_MEMORY_LIMIT"] = var_value
                     else:
-                        os.environ[var_name] = var_value
-        else:
-            raise KhiopsEnvironmentError(
-                "The 'khiops_env' script not found. Make sure you have "
-                "installed khiops >= 10.2.3. "
-                "Go to https://khiops.org for more information."
-            )
+                        self.max_memory_mb = 0
+                        os.environ["KHIOPS_MEMORY_LIMIT"] = ""
+                # Set the default Khiops temporary directory
+                # ("" means system's default)
+                elif var_name == "KHIOPS_TMP_DIR":
+                    if var_value:
+                        self.khiops_temp_dir = var_value
+                        os.environ["KHIOPS_TMP_DIR"] = var_value
+                    else:
+                        self.khiops_temp_dir = ""
+                        os.environ["KHIOPS_TEMP_DIR"] = self.khiops_temp_dir
+                # Propagate all the other environment variables to Khiops binaries
+                else:
+                    os.environ[var_name] = var_value
 
         # Check the tools exist and are executable
         self._check_tools()
