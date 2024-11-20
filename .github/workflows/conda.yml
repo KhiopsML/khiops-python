@@ -53,6 +53,7 @@ jobs:
         with:
           miniforge-version: latest
           python-version: '3.12'
+          conda-remove-defaults: true
       - name: Install Dependency Requirements for Building Conda Packages
         run: conda install -y conda-build
       - name: Build the Conda Package
@@ -91,6 +92,7 @@ jobs:
         with:
           miniforge-version: latest  # needed for macOS 13
           python-version: ${{ matrix.python-version }}
+          conda-remove-defaults: true
       - name: Download Conda Package Artifact
         uses: actions/download-artifact@v4
         with:
@@ -141,6 +143,7 @@ jobs:
         with:
           miniforge-version: latest
           python-version: '3.12'
+          conda-remove-defaults: true
       - name: Install Requirement Packages
         run: conda install -y anaconda-client conda-index
       - name: Reindex the package directory
