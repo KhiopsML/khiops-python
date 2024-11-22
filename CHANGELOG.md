@@ -6,6 +6,11 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## Unreleased
+
+### Removed
+- (General) pyKhiops 9 compatibility code.
+
 ## 10.2.3.0 - 2024-11-13
 
 ### Added

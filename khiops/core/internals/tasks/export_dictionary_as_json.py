@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "export_dictionary_as_json",
         "khiops",
-        "9.0.0",
+        "10.0.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("json_dictionary_file_path", StringLikeType),

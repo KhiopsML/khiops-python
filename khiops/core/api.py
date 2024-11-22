@@ -27,16 +27,10 @@ from khiops.core.internals.common import (
     create_unambiguous_khiops_path,
     deprecation_message,
     is_string_like,
-    removal_message,
-    renaming_message,
     type_error_message,
 )
 from khiops.core.internals.io import KhiopsOutputWriter
-from khiops.core.internals.runner import (
-    _get_tool_info_khiops9,
-    _get_tool_info_khiops10,
-    get_runner,
-)
+from khiops.core.internals.runner import get_runner
 from khiops.core.internals.task import get_task_registry
 from khiops.core.internals.version import KhiopsVersion
 
@@ -379,52 +373,6 @@ def _clean_task_args(task_args):
     for arg_name in command_line_arg_names + other_arg_names:
         if arg_name in task_args:
             del task_args[arg_name]
-
-    # Remove removed parameters
-    removed_parameters = [
-        ("dictionary_domain", "dictionary_file_path_or_domain", "10"),
-        ("fill_test_database_settings", "use_complement_as_test", "10"),
-        ("map_predictor", None, "10"),
-        ("nb_predictor", None, "10"),
-        ("only_pairs_with", "specific_pairs", "10"),
-    ]
-    for arg_name, replacement_arg_name, removal_version in removed_parameters:
-        if arg_name in task_args and get_runner().khiops_version >= KhiopsVersion(
-            removal_version
-        ):
-            del task_args[arg_name]
-            warnings.warn(
-                removal_message(
-                    arg_name,
-                    removal_version,
-                    replacement=replacement_arg_name,
-                ),
-                stacklevel=4,
-            )
-    # Remove renamed parameters
-    renamed_parameters = [
-        ("max_evaluated_variable_number", "max_evaluated_variables", "10"),
-        ("max_selected_variable_number", "max_selected_variables", "10"),
-        ("constructed_number", "max_constructed_variables", "10"),
-        ("tree_number", "max_trees", "10"),
-        ("pair_number", "max_pairs", "10"),
-        ("max_interval_number", "max_intervals", "10"),
-        ("max_group_number", "max_groups", "10"),
-        ("max_variable_number", "max_variables", "10"),
-        ("recode_categorical_variables", "categorical_recoding_method", "10"),
-        ("recode_numerical_variables", "numerical_recoding_method", "10"),
-        ("recode_bivariate_variables", "pairs_recoding_method", "10"),
-        ("max_cell_number", "max_cells", "10"),
-    ]
-    for arg_name, new_arg_name, rename_version in renamed_parameters:
-        if arg_name in task_args and get_runner().khiops_version >= KhiopsVersion(
-            rename_version
-        ):
-            del task_args[arg_name]
-            warnings.warn(
-                renaming_message(arg_name, new_arg_name, rename_version),
-                stacklevel=4,
-            )
 
 
 #########
@@ -1939,55 +1887,3 @@ def build_multi_table_dictionary(
 
 
 # pylint: enable=unused-argument
-
-
-def get_khiops_info():
-    """Returns the Khiops license information
-
-    .. warning::
-        This method is *deprecated* since Khiops 10.1 and will be removed in Khiops
-        11. Use `get_khiops_version` to obtain the Khiops version of your system.
-
-    Returns
-    -------
-    tuple
-        A 4-tuple containing:
-
-        - The tool version
-        - The name of the machine
-        - The ID of the machine
-        - The number of remaining days for the license
-    """
-    warnings.warn(deprecation_message("get_khiops_info", "11.0.0"))
-    if get_runner().khiops_version >= KhiopsVersion("10.1.0"):
-        return get_khiops_version(), None, None, None
-    elif get_runner().khiops_version >= KhiopsVersion("10.0.0"):
-        return _get_tool_info_khiops10(get_runner(), "khiops")
-    else:
-        return _get_tool_info_khiops9(get_runner(), "khiops")
-
-
-def get_khiops_coclustering_info():
-    """Returns the Khiops Coclustering license information
-
-    .. warning::
-        This method is *deprecated* since Khiops 10.1 and will be removed in Khiops
-        11. Use `get_khiops_version` to obtain the Khiops version of your system.
-
-    Returns
-    -------
-    tuple
-        A 4-tuple containing:
-
-        - The tool version
-        - The name of the machine
-        - The ID of the machine
-        - The number of remaining days for the license
-    """
-    warnings.warn(deprecation_message("get_khiops_coclustering_info", "11.0.0"))
-    if get_runner().khiops_version >= KhiopsVersion("10.1.0"):
-        return get_khiops_version(), None, None, None
-    elif get_runner().khiops_version >= KhiopsVersion("10.0.0"):
-        return _get_tool_info_khiops10(get_runner(), "khiops_coclustering")
-    else:
-        return _get_tool_info_khiops9(get_runner(), "khiops_coclustering")

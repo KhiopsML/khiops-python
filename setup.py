@@ -28,9 +28,7 @@ if __name__ == "__main__":
                 "pk-status=khiops.tools:pk_status_entry_point",  # deprecated
             ]
         },
-        packages=find_packages(
-            include=["khiops", "khiops.*", "pykhiops", "pykhiops.*"]
-        ),
+        packages=find_packages(include=["khiops", "khiops.*"]),
         include_package_data=True,
         python_requires=">=3.8",
         install_requires=[
