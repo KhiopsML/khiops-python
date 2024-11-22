@@ -30,7 +30,6 @@ from khiops.core.exceptions import KhiopsEnvironmentError, KhiopsRuntimeError
 from khiops.core.internals.common import (
     CommandLineOptions,
     GeneralOptions,
-    deprecation_message,
     invalid_keys_message,
     is_string_like,
     type_error_message,
@@ -1061,12 +1060,16 @@ class KhiopsLocalRunner(KhiopsRunner):
                 if line.startswith("Khiops"):
                     khiops_version_str = line.rstrip().split(" ")[1]
                     break
-        # If -v fails the environment is KO: raise an error
+        # If MODL -v fails we raise an informative error
         else:
-            error_msg = f"Could not execute 'khiops -v': return code {return_code}."
+            error_msg = (
+                f"Could not obtain the Khiops version."
+                f"\nError executing '{self._tool_path('khiops')} -v': "
+                f"return code {return_code}."
+            )
             error_msg += f"\nstdout: {stdout}" if stdout else ""
             error_msg += f"\nstderr: {stderr}" if stderr else ""
-            raise KhiopsEnvironmentError(error_msg)
+            raise KhiopsRuntimeError(error_msg)
 
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
@@ -1325,31 +1328,3 @@ def get_runner():
 
 
 # pylint: enable=invalid-name
-
-##################################
-# Deprecated Methods and Classes #
-##################################
-
-
-class PyKhiopsRunner(KhiopsRunner):
-    """Deprecated
-
-    See `KhiopsRunner`.
-    """
-
-    def __init__(self):
-        super().__init__()
-        warnings.warn(deprecation_message("PyKhiopsRunner", "KhiopsRunner", "11.0.0"))
-
-
-class PyKhiopsLocalRunner(KhiopsLocalRunner):
-    """Deprecated
-
-    See `KhiopsLocalRunner`.
-    """
-
-    def __init__(self):
-        super().__init__()
-        warnings.warn(
-            deprecation_message("PyKhiopsLocalRunner", "KhiopsLocalRunner", "11.0.0")
-        )

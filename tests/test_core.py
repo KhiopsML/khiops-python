@@ -9,7 +9,6 @@ import glob
 import io
 import os
 import shutil
-import sys
 import textwrap
 import unittest
 import warnings
@@ -2252,26 +2251,6 @@ class KhiopsCoreVariousTests(unittest.TestCase):
         ]:
             with self.assertRaises(ValueError):
                 KhiopsVersion(version)
-
-    def test_pykhiops_import_deprecation_warning(self):
-        """Test that import pykhiops* raises deprecation warning"""
-        # Disable import outside toplevel because we are testing imports
-        # pylint: disable=import-outside-toplevel
-        with warnings.catch_warnings(record=True) as warning_list:
-            # This is needed as coverage already imported pykhiops
-            if "pykhiops" in sys.modules:
-                del sys.modules["pykhiops"]
-            import pykhiops.core as pk
-
-            # Test that the alias works
-            pk.get_runner().print_status()
-        self.assertEqual(len(warning_list), 1)
-        warning = warning_list[0]
-        self.assertTrue(issubclass(warning.category, UserWarning))
-        warning_message = warning.message
-        self.assertEqual(len(warning_message.args), 1)
-        message = warning_message.args[0]
-        self.assertTrue("'pykhiops'" in message and "deprecated" in message)
 
     @staticmethod
     def _build_multi_table_dictionary_args():
