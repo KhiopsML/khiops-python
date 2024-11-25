@@ -24,6 +24,7 @@ from khiops.core.exceptions import KhiopsRuntimeError
 from khiops.core.helpers import build_multi_table_dictionary_domain
 from khiops.core.internals.common import (
     CommandLineOptions,
+    SystemSettings,
     create_unambiguous_khiops_path,
     deprecation_message,
     is_string_like,
@@ -116,7 +117,9 @@ def _run_task(task_name, task_args):
     stdout_file_path = task_args["stdout_file_path"]
     stderr_file_path = task_args["stderr_file_path"]
 
-    command_line_options, task_called_with_domain = _preprocess_arguments(task_args)
+    command_line_options, system_settings, task_called_with_domain = (
+        _preprocess_arguments(task_args)
+    )
 
     # Obtain the api function from the registry
     task = get_task_registry().get_task(task_name, get_khiops_version())
@@ -128,6 +131,7 @@ def _run_task(task_name, task_args):
             task_args,
             command_line_options=command_line_options,
             trace=trace,
+            system_settings=system_settings,
             stdout_file_path=stdout_file_path,
             stderr_file_path=stderr_file_path,
         )
@@ -147,8 +151,9 @@ def _preprocess_arguments(args):
     Returns
     -------
     tuple
-        A 2-tuple containing:
+        A 3-tuple containing:
         - A `~.CommandLineOptions` instance
+        - A `~.SystemSettings` instance
         - A `bool` that is ``True`` if the value of the `dictionary_file_or_domain`
           `args` key is a `~.DictionaryDomain` instance.
 
@@ -167,10 +172,35 @@ def _preprocess_arguments(args):
         task_file_path=(args["task_file_path"] if "task_file_path" in args else ""),
     )
 
+    # Create a system settings object
+    system_settings = SystemSettings()
+    for arg in args:
+        if arg == "max_cores":
+            max_cores = args[arg]
+            if max_cores is not None:
+                system_settings.max_cores = int(max_cores)
+        elif arg == "memory_limit_mb":
+            memory_limit_mb = args[arg]
+            if memory_limit_mb is not None:
+                system_settings.memory_limit_mb = int(memory_limit_mb)
+        elif arg == "temp_dir":
+            temp_dir = args[arg]
+
+            # temp_dir is set to a non-empty string
+            if temp_dir:
+                system_settings.temp_dir = temp_dir
+        elif arg == "scenario_prologue":
+            scenario_prologue = args[arg]
+
+            # User-defined scenario prologue is set to a non-empty string
+            if scenario_prologue:
+                system_settings.scenario_prologue = scenario_prologue
+    system_settings.check()
+
     # Clean the args to leave only the task arguments
     _clean_task_args(args)
 
-    return command_line_options, task_is_called_with_domain
+    return command_line_options, system_settings, task_is_called_with_domain
 
 
 def _preprocess_task_arguments(task_args):
@@ -354,6 +384,7 @@ def _clean_task_args(task_args):
 
     More precisely it removes:
         - Command line arguments (they already are in another object).
+        - System settings (they already are in another object).
         - Parameters removed from the API and warns about it.
         - Renamed API parameters and warns about it.
     """
@@ -364,13 +395,21 @@ def _clean_task_args(task_args):
         "output_scenario_path",
         "task_file_path",
     ]
+    system_settings_arg_names = [
+        "max_cores",
+        "memory_limit_mb",
+        "temp_dir",
+        "scenario_prologue",
+    ]
     other_arg_names = [
         "dictionary_file_path_or_domain",
         "trace",
         "stdout_file_path",
         "stderr_file_path",
     ]
-    for arg_name in command_line_arg_names + other_arg_names:
+    for arg_name in (
+        command_line_arg_names + system_settings_arg_names + other_arg_names
+    ):
         if arg_name in task_args:
             del task_args[arg_name]
 
@@ -424,6 +463,10 @@ def export_dictionary_as_json(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
 ):
     """Exports a Khiops dictionary file to JSON format (``.kdicj``)
 
@@ -461,6 +504,10 @@ def build_dictionary_from_data_table(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Builds a dictionary file by analyzing a data table file
@@ -516,6 +563,10 @@ def check_database(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Checks if a data table is compatible with a dictionary file
@@ -613,6 +664,10 @@ def train_predictor(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Trains a model from a data table
@@ -804,6 +859,10 @@ def evaluate_predictor(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Evaluates the predictors in a dictionary file on a database
@@ -939,6 +998,10 @@ def train_recoder(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Trains a recoding model from a data table
@@ -1132,6 +1195,10 @@ def deploy_model(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Deploys a model on a data table
@@ -1220,6 +1287,10 @@ def build_deployed_dictionary(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     """Builds a dictionary file to read the output table of a deployed model
@@ -1271,6 +1342,10 @@ def sort_data_table(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Sorts a data table
@@ -1343,6 +1418,10 @@ def extract_keys_from_data_table(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Extracts from data table unique occurrences of a key variable
@@ -1418,6 +1497,10 @@ def train_coclustering(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Trains a coclustering model from a data table
@@ -1520,6 +1603,10 @@ def simplify_coclustering(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     """Simplifies a coclustering model
@@ -1589,6 +1676,10 @@ def prepare_coclustering_deployment(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     """Prepares a *individual-variable* coclustering deployment
@@ -1661,6 +1752,10 @@ def extract_clusters(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     """Extracts clusters to a tab separated (TSV) file
@@ -1713,6 +1808,10 @@ def detect_data_table_format(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
 ):
     """Detects the format of a data table
 
@@ -1727,6 +1826,8 @@ def detect_data_table_format(
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str, optional
         Name of the dictionary.
+    ... :
+        See :ref:`core-api-common-params`.
 
     Returns
     -------

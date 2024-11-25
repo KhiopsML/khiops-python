@@ -644,28 +644,30 @@ class KhiopsCoreIOTests(unittest.TestCase):
                     output_msg = str(context.exception)
                     self.assertEqual(output_msg, expected_msg)
 
-    def test_general_options(self):
-        """Test that the general options are written to the scenario file"""
+    def test_system_settings(self):
+        """Test that the system settings are written to the scenario file"""
         # Create the root directory of these tests
         test_resources_dir = os.path.join(resources_dir(), "scenario_generation")
 
         # Use the test runner that only compares the scenarios
         default_runner = kh.get_runner()
         test_runner = ScenarioWriterRunner(self, test_resources_dir)
-        test_runner.test_name = "general_options"
+        test_runner.test_name = "system_settings"
         test_runner.subtest_name = "default"
         cleanup_dir(test_runner.output_scenario_dir, "*/output/*._kh")
         kh.set_runner(test_runner)
 
-        # Set the general options
-        # Call private method for setting max_cores:
-        test_runner._set_max_cores(10)
-        test_runner.max_memory_mb = 1000
-        test_runner.khiops_temp_dir = "/another/tmp"
-        test_runner.scenario_prologue = "// Scenario prologue test"
-
-        # Call check_database (could be any other method)
-        kh.check_database("a.kdic", "dict_name", "data.txt")
+        # Call check_database (could be any other method), with the common execution
+        # options set
+        kh.check_database(
+            "a.kdic",
+            "dict_name",
+            "data.txt",
+            max_cores=10,
+            memory_limit_mb=1000,
+            temp_dir="/another/tmp",
+            scenario_prologue="// Scenario prologue test",
+        )
 
         # Compare the reference with the output
         assert_files_equal(
@@ -1957,12 +1959,12 @@ class ScenarioWriterRunner(KhiopsRunner):
         return self.execution_scenario_path
 
     def _write_task_scenario_file(
-        self, task, task_args, general_options, force_ansi_scenario=False
+        self, task, task_args, system_settings, force_ansi_scenario=False
     ):
         """Create the scenario and compare it to a reference"""
         # Create the execution scenario files with the parent method
         scenario_path = super()._write_task_scenario_file(
-            task, task_args, general_options
+            task, task_args, system_settings
         )
 
         # Create the reference if does not exists
@@ -1981,6 +1983,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         task_args,
         command_line_options,
         trace=False,
+        system_settings=None,
         force_ansi_scenario=False,
         **kwargs,
     ):
@@ -1990,6 +1993,7 @@ class ScenarioWriterRunner(KhiopsRunner):
             task_args,
             command_line_options,
             trace=trace,
+            system_settings=system_settings,
             force_ansi_scenario=force_ansi_scenario,
         )
 
