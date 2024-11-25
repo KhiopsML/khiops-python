@@ -96,6 +96,7 @@ class KhiopsRemoteAccessTestsContainer:
                 data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
                 target_variable="Class",
                 results_dir=output_dir,
+                temp_dir=self._khiops_temp_dir,
                 trace=True,
             )
 
@@ -111,8 +112,7 @@ class KhiopsRemoteAccessTestsContainer:
             """Test the training of a khiops_classifier with remote resources"""
             # Setup paths
             output_dir = (
-                kh.get_runner().khiops_temp_dir
-                + f"/KhiopsClassifier_output_dir_{uuid.uuid4()}/"
+                self._khiops_temp_dir + f"/KhiopsClassifier_output_dir_{uuid.uuid4()}/"
             )
             iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
             iris_data_file_path = fs.get_child_path(iris_data_dir, "Iris.txt")
@@ -146,7 +146,7 @@ class KhiopsRemoteAccessTestsContainer:
 
             # Setup paths
             output_dir = (
-                kh.get_runner().khiops_temp_dir
+                self._khiops_temp_dir
                 + f"/KhiopsCoclustering_output_dir_{uuid.uuid4()}/"
             )
             splice_data_dir = fs.get_child_path(
@@ -175,7 +175,7 @@ class KhiopsRemoteAccessTestsContainer:
         def test_train_predictor_fail_and_log_with_remote_access(self):
             """Test train_predictor failure and access to a remote log"""
             log_file_path = fs.get_child_path(
-                kh.get_runner().khiops_temp_dir, f"khiops_log_{uuid.uuid4()}.log"
+                self._khiops_temp_dir, f"khiops_log_{uuid.uuid4()}.log"
             )
             iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
             with self.assertRaises(kh.KhiopsRuntimeError):
@@ -205,7 +205,7 @@ class KhiopsS3RemoteFileTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAcces
             runner = kh.get_runner()
             bucket_name = os.environ["S3_BUCKET_NAME"]
             runner.samples_dir = f"s3://{bucket_name}/project/khiops-cicd/samples"
-            runner.khiops_temp_dir = f"s3://{bucket_name}/project/khiops-cicd/tmp"
+            cls._khiops_temp_dir = f"s3://{bucket_name}/project/khiops-cicd/tmp"
             runner.root_temp_dir = f"s3://{bucket_name}/project/khiops-cicd/tmp"
 
     @classmethod
@@ -233,7 +233,7 @@ class KhiopsGCSRemoteFileTests(
             runner = kh.get_runner()
             bucket_name = os.environ["GCS_BUCKET_NAME"]
             runner.samples_dir = f"gs://{bucket_name}/khiops-cicd/samples"
-            runner.khiops_temp_dir = f"gs://{bucket_name}/khiops-cicd/tmp"
+            cls._khiops_temp_dir = f"gs://{bucket_name}/khiops-cicd/tmp"
             runner.root_temp_dir = f"gs://{bucket_name}/khiops-cicd/tmp"
 
     @classmethod
@@ -314,7 +314,7 @@ class KhiopsDockerRunnerTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAcces
                 shared_dir=shared_dir,
                 insecure=True,
             )
-            docker_runner.khiops_temp_dir = os.path.join(shared_dir, "tmp")
+            cls._khiops_temp_dir = os.path.join(shared_dir, "tmp")
             docker_runner.samples_dir = target_samples_dir
 
             # Set current runner to the created Khiops service runner
@@ -333,7 +333,7 @@ class KhiopsDockerRunnerTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAcces
         # Cleanup: remove directories created in `setUpClass`
         if docker_runner_config_exists():
             shutil.rmtree(kh.get_runner().samples_dir)
-            shutil.rmtree(kh.get_runner().khiops_temp_dir)
+            shutil.rmtree(cls._khiops_temp_dir)
 
         # Reset the Khiops Python runner to the initial one
         kh.set_runner(cls.initial_runner)
@@ -345,4 +345,4 @@ class KhiopsDockerRunnerTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAcces
         return "KhiopsDockerRunner"
 
     def results_dir_root(self):
-        return kh.get_runner().khiops_temp_dir
+        return self._khiops_temp_dir

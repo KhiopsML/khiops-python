@@ -51,21 +51,6 @@ batch_mode : bool, default ``True``
     *Deprecated* Will be removed in Khiops 11. If ``True`` activates batch mode (command line option
     ``-b`` of the desktop app).
 
-.. _core-api-env-vars:
-
-Environment Variables
----------------------
-
-The default Khiops local runner used by the `khiops.core.api` functions can be customized via the
-environment variables listed below:
-
-
-- ``KHIOPS_PROC_NUMBER``: number of processes launched by Khiops
-- ``KHIOPS_MEMORY_LIMIT``: memory limit of the Khiops executables in megabytes;
-  ignored if set above the system memory limit
-- ``KHIOPS_TMP_DIR``: path to Khiops' temporary directory
-- ``KHIOPS_SAMPLES_DIR``: path to the Khiops sample datasets directory (only for the Khiops Python library)
-
 .. _core-api-input-types:
 
 Input Types
@@ -119,6 +104,15 @@ If in the `~khiops.core.api.train_predictor` call we set:
 specifies a 20-80 split of the dataset. Since ``sample_mode`` is "Exclude sample" the predictor will
 be trained on the 80 % part. The remaining 20 % will be used to evaluate the predictor's performance
 because ``use_complement_as_test`` is ``True``.
+
+.. _core-api-env-samples-dir:
+
+Samples Directory Customization
+-------------------------------
+
+The samples directory usable by the Khiops Python library can be customized via
+the ``KHIOPS_SAMPLES_DIR`` environment variable, which specifies the path to the Khiops sample
+datasets directory.
 
 Khiops JSON Files
 =================

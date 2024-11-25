@@ -360,82 +360,6 @@ class KhiopsRunner(ABC):
         return temp_dir
 
     @property
-    def scenario_prologue(self):
-        """str: Prologue applicable to prepend to all execution scenarios
-
-        Raises
-        ------
-        `TypeError`
-            If set to a non str object.
-        """
-        return self.general_options.scenario_prologue
-
-    @scenario_prologue.setter
-    def scenario_prologue(self, prologue):
-        self.general_options.user_scenario_prologue = prologue
-        self.general_options.check()
-
-    @property
-    def max_cores(self):
-        """int: Maximum number of cores for Khiops executions
-
-        You may not set this value directly. Instead, set the ``KHIOPS_PROC_NUMBER``
-        environment variable and then create another instance of
-        `~.KhiopsLocalRunner`.
-
-        Raises
-        ------
-        `TypeError`
-            If it is set to a non int object.
-        `ValueError`
-            If it is set to a negative int.
-        """
-        return self.general_options.max_cores
-
-    def _set_max_cores(self, core_number):
-        self.general_options.max_cores = core_number
-        self.general_options.check()
-
-    @property
-    def max_memory_mb(self):
-        """int: Maximum amount of memory (in MB) for Khiops executions
-
-        If set to 0 it uses the maximum available in the system.
-
-        Raises
-        ------
-        `TypeError`
-            If it is set to a non int object.
-        `ValueError`
-            If it is set to a negative int.
-        """
-        return self.general_options.max_memory_mb
-
-    @max_memory_mb.setter
-    def max_memory_mb(self, memory_mb):
-        self.general_options.max_memory_mb = memory_mb
-        self.general_options.check()
-
-    @property
-    def khiops_temp_dir(self):
-        """str: Temporary directory for Khiops executions
-
-        If equal to ``""`` it uses the system's temporary directory.
-
-        Raises
-        ------
-        `TypeError`
-            If set to a non str object.
-        """
-        return self.general_options.khiops_temp_dir
-
-    @khiops_temp_dir.setter
-    def khiops_temp_dir(self, temp_dir):
-        """Setter of khiops_temp_dir"""
-        self.general_options.khiops_temp_dir = temp_dir
-        self.general_options.check()
-
-    @property
     def samples_dir(self):
         r"""str: Location of the Khiops' sample datasets directory. May be an URL/URI"""
         return self._get_samples_dir()
@@ -839,20 +763,12 @@ class KhiopsLocalRunner(KhiopsRunner):
     - the ``khiops-core`` Linux native package installed on the local machine, or
     - the Windows Khiops desktop application installed on the local machine
 
-    .. rubric:: Environment variables taken into account by the runner:
-
-    - ``KHIOPS_PROC_NUMBER``: number of processes launched by Khiops
-    - ``KHIOPS_MEMORY_LIMIT``: memory limit of the Khiops executables in megabytes;
-      ignored if set above the system memory limit
-    - ``KHIOPS_TMP_DIR``: path to Khiops' temporary directory
-    - ``KHIOPS_SAMPLES_DIR``: path to the Khiops sample datasets directory
-      (only for the Khiops Python library)
-
     .. rubric:: Samples directory settings
 
-    Default values for the ``samples_dir``:
+    Default values for the ``samples_dir`` attribute:
 
-    - The value of the ``KHIOPS_SAMPLES_DIR`` environment variable
+    - The value of the ``KHIOPS_SAMPLES_DIR`` environment variable (path to the Khiops
+      sample datasets directory).
     - Otherwise:
 
       - Windows:
@@ -954,14 +870,6 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Check the tools exist and are executable
         self._check_tools()
 
-        # Switch to sequential mode if 0 < max_cores < 3
-        if self.max_cores in (1, 2):
-            warnings.warn(
-                f"Too few cores: {self.max_cores}. "
-                "To efficiently run Khiops in parallel at least 3 processes "
-                "are needed. Khiops will run in a single process."
-            )
-
         # Initialize the default samples dir
         self._initialize_default_samples_dir()
 
@@ -1046,11 +954,7 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Call the parent's method
         status_msg, warning_list = super()._build_status_message()
 
-        # Build the messages for temp_dir, install type and mpi
-        if self.khiops_temp_dir:
-            khiops_temp_dir_msg = self.khiops_temp_dir
-        else:
-            khiops_temp_dir_msg = "<empty> (system's default)"
+        # Build the messages for install type and mpi
         install_type_msg = _infer_khiops_installation_method()
         if self._mpi_command_args:
             mpi_command_args_msg = " ".join(self._mpi_command_args)
@@ -1063,7 +967,6 @@ class KhiopsLocalRunner(KhiopsRunner):
         status_msg += f"version             : {self.khiops_version}\n"
         status_msg += f"Khiops path         : {self.khiops_path}\n"
         status_msg += f"Khiops CC path      : {self.khiops_coclustering_path}\n"
-        status_msg += f"temp dir            : {khiops_temp_dir_msg}\n"
         status_msg += f"install type        : {install_type_msg}\n"
         status_msg += f"MPI command         : {mpi_command_args_msg}\n"
 

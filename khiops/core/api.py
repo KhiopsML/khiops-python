@@ -10,9 +10,9 @@ The methods in this module allow to execute all Khiops and Khiops Coclustering t
 
 See also:
     - :ref:`core-api-common-params`
-    - :ref:`core-api-env-vars`
     - :ref:`core-api-input-types`
     - :ref:`core-api-sampling-mode`
+    - :ref:`core-api-env-samples-dir`
 """
 import io
 import os
