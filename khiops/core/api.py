@@ -724,9 +724,11 @@ def train_predictor(
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
     snb_predictor : bool, default ``True``
-        If ``True`` it trains a Selective Naive Bayes predictor.
+        If ``True`` it trains a Selective Naive Bayes predictor. **Deprecated** will be
+        removed in Khiops 11.
     univariate_predictor_number : int, default 0
-        Number of univariate predictors to train.
+        Number of univariate predictors to train.**Deprecated** will be removed in
+        Khiops 11.
     map_predictor : bool, default ``False``
         If ``True`` trains a Maximum a Posteriori Naive Bayes predictor.
         **Deprecated** will be removed in Khiops Python 11.
@@ -762,23 +764,25 @@ def train_predictor(
     discretization_method : str
         Name of the discretization method. Its valid values depend on the task:
             - Supervised: "MODL" (default), "EqualWidth" or "EqualFrequency"
-            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or  "None"
+            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or "None"
     min_interval_frequency : int, default 0
         Minimum number of instances in an interval. If equal to 0 it is
-        automatically calculated.
+        automatically calculated. **Deprecated** will be removed in Khiops 11.
     max_intervals : int, default 0
         Maximum number of intervals to construct. If equal to 0 it is automatically
-        calculated.
+        calculated. **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
     grouping_method : str
         Name of the grouping method. Its valid values depend on the task:
             - Supervised: "MODL" (default) or "BasicGrouping"
             - Unsupervised: "BasicGrouping" (default) or "None"
     min_group_frequency : int, default 0
-        Minimum number of instances for a group.
+        Minimum number of instances for a group. **Deprecated** will be removed in
+        Khiops 11.
     max_groups : int, default 0
         Maximum number of groups. If equal to 0 it is automatically calculated.
+        **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -911,7 +915,7 @@ def evaluate_predictor(
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1083,14 +1087,14 @@ def train_recoder(
         substantially increase the training time.
     discretization_method : str
         Name of the discretization method. Its valid values depend on the task:
-            - Supervised: "MODL" (default), "EqualWidth" or "EqualFrequency".
-            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or "None".
+            - Supervised: "MODL" (default), "EqualWidth" or "EqualFrequency"
+            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or "None"
     min_interval_frequency : int, default 0
-        Minimum number of instances in an interval. If equal to 0 it is automatically
-        calculated.
+        Minimum number of instances in an interval. If equal to 0 it is
+        automatically calculated. **Deprecated** will be removed in Khiops 11.
     max_intervals : int, default 0
         Maximum number of intervals to construct. If equal to 0 it is automatically
-        calculated.
+        calculated. **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
     informative_variables_only : bool, default ``True``
         If ``True`` keeps only informative variables.
     max_variables : int, default 0
@@ -1126,14 +1130,16 @@ def train_recoder(
             - "none": Keeps the variable as-is
     grouping_method : str
         Name of the grouping method. Its vaild values depend on the task:
-            - Supervised: "MODL" (default) or "BasicGrouping".
-            - Unsupervised: "BasicGrouping" (default) or "None".
+            - Supervised: "MODL" (default) or "BasicGrouping"
+            - Unsupervised: "BasicGrouping" (default) or "None"
     min_group_frequency : int, default 0
-        Minimum number of instances for a group.
+        Minimum number of instances for a group. **Deprecated** will be removed in
+        Khiops 11.
     max_groups : int, default 0
         Maximum number of groups. If equal to 0 it is automatically calculated.
+        **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1250,7 +1256,7 @@ def deploy_model(
         A dictionary containing the output data paths and file paths for a multi-table
         dictionary file. For more details see :doc:`/multi_table_primer`.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1549,7 +1555,7 @@ def train_coclustering(
     min_optimization_time : int, default 0
         Minimum optimization time in seconds.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1632,7 +1638,7 @@ def simplify_coclustering(
       Dictionary that associate variable names to their maximum number of parts to
       preserve in the simplified coclustering. If not set there is no limit.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1717,7 +1723,7 @@ def prepare_coclustering_deployment(
     variables_prefix : str, default ""
         Prefix for the variables in the deployment dictionary.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
