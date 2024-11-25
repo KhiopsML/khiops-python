@@ -6,7 +6,13 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
+## 10.2.3.1 - 2024-11-26
+
+### Added
+- (General) Support for Python 3.13.
+
+### Fixed
+- (General) Initialization failing in Conda-based environments.
 
 ### Changed
 - (`core`) Support for system parameters has been moved from the `KhiopsLocalRunner` to the `core` API.
@@ -14,7 +20,7 @@
 - (`core`) System parameter `khiops_temp_dir` has been renamed to `temp_dir`.
 
 ### Removed
-- (General) pyKhiops 9 compatibility code.
+- (General) Khiops Python 9 compatibility.
 
 ## 10.2.3.0 - 2024-11-13
 
