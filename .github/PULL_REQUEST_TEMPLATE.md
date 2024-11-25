@@ -1,11 +1,3 @@
----
-name: Generic PR Template
-about: ''
-title: ''
-labels: ''
-assignees: ''
-
----
 
 _Put your message here_
 
