@@ -431,13 +431,11 @@ Samples
     output_script_path = os.path.join(results_dir, "output_scenario._kh")
     log_path = os.path.join(results_dir, "log.txt")
 
-    # Set memory limit to 1000 Mb and train with Khiops
-    kh.get_runner().max_memory_mb = 1000
-
     # Train the predictor. Besides the mandatory parameters, we specify:
     # - The value "more" as main target value
     # - The output Khiops script file location (generic)
     # - The log file location (generic)
+    # - The maximum memory used, set to 1000 MB
     # - To show the debug trace (generic)
     kh.train_predictor(
         dictionary_file_path,
@@ -448,11 +446,9 @@ Samples
         main_target_value="more",
         output_scenario_path=output_script_path,
         log_file_path=log_path,
+        memory_limit_mb=1000,
         trace=True,
     )
-
-    # Reset memory limit to default Khiops tool value
-    kh.get_runner().max_memory_mb = 0
 .. autofunction:: train_predictor_detect_format
 .. code-block:: python
 
@@ -1409,7 +1405,7 @@ Samples
     results_dir = os.path.join("kh_samples", "scenario_prologue")
 
     # Set the maximum memory "by hand" with an scenario prologue
-    kh.get_runner().scenario_prologue = """
+    scenario_prologue = """
         // Max memory 2000 mb
         AnalysisSpec.SystemParameters.MemoryLimit 2000
         """
@@ -1422,6 +1418,7 @@ Samples
         "class",
         results_dir,
         max_trees=0,
+        scenario_prologue=scenario_prologue,
     )
 .. autofunction:: build_deployed_dictionary
 .. code-block:: python

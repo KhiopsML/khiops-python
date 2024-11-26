@@ -8,6 +8,11 @@
 
 ## Unreleased
 
+### Changed
+- (`core`) Support for system parameters has been moved from the `KhiopsLocalRunner` to the `core` API.
+- (`core`) System parameter `max_memory_mb` has been renamed to `memory_limit_mb`.
+- (`core`) System parameter `khiops_temp_dir` has been renamed to `temp_dir`.
+
 ### Removed
 - (General) pyKhiops 9 compatibility code.
 

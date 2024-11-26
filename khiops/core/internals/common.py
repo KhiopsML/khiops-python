@@ -10,68 +10,77 @@ from collections.abc import Iterable, Mapping, Sequence
 from urllib.parse import urlparse
 
 
-class GeneralOptions:
-    """Khiops general options
+class SystemSettings:
+    """Khiops system settings
 
     .. note::
-        These options are not available in the `CommandLineOptions`.
+        These settings are not available in the `CommandLineOptions`.
     """
 
     def __init__(
         self,
-        max_cores=0,
-        max_memory_mb=0,
-        khiops_temp_dir="",
-        user_scenario_prologue="",
+        max_cores=None,
+        memory_limit_mb=None,
+        temp_dir="",
+        scenario_prologue="",
     ):
         """See class docstring"""
         self.max_cores = max_cores
-        self.max_memory_mb = max_memory_mb
-        self.khiops_temp_dir = khiops_temp_dir
-        self.user_scenario_prologue = user_scenario_prologue
+        self.memory_limit_mb = memory_limit_mb
+        self.temp_dir = temp_dir
+        self.scenario_prologue = scenario_prologue
         self.check()
 
     def __repr__(self):
         return (
-            f"General options: max_cores = {self.max_cores}, "
-            f"max_memory_mb = {self.max_memory_mb}, "
-            f"khiops_temp_dir = {self.khiops_temp_dir}"
+            f"System settings: max_cores = {self.max_cores}, "
+            f"memory_limit_mb = {self.memory_limit_mb}, "
+            f"temp_dir = {self.temp_dir}, "
+            f"scenario_prologue = {self.scenario_prologue}"
         )
 
     def check(self):
-        """Checks the types of the general options
+        """Checks the types of the system settings
 
         Raises
         ------
         `TypeError`
-            If any of the command line options does not have the proper type.
+            If any of the system settings does not have the proper type.
         `ValueError`
-            If ``max_cores`` or ``max_memory_mb`` are negative.
+            If ``max_cores`` or ``memory_limit_mb`` are set to negative numbers.
         """
-        # Check the field types
-        if not isinstance(self.max_cores, int):
-            raise TypeError(type_error_message("max_cores", self.max_cores, int))
-        if not isinstance(self.max_memory_mb, int):
-            raise TypeError(
-                type_error_message("max_memory_mb", self.max_memory_mb, int)
-            )
-        if not is_string_like(self.khiops_temp_dir):
-            raise TypeError(
-                type_error_message("khiops_temp_dir", self.khiops_temp_dir, str, bytes)
-            )
-        if not is_string_like(self.user_scenario_prologue):
+        # Check the field types and ranges where applicable
+        if self.max_cores is not None:
+            if not isinstance(self.max_cores, int):
+                raise TypeError(type_error_message("max_cores", self.max_cores, int))
+            if self.max_cores < 0:
+                raise ValueError(
+                    f"max_cores must be non-negative (it is {self.max_cores})"
+                )
+        if self.memory_limit_mb is not None:
+            if not isinstance(self.memory_limit_mb, int):
+                raise TypeError(
+                    type_error_message("memory_limit_mb", self.memory_limit_mb, int)
+                )
+            if self.memory_limit_mb < 0:
+                raise ValueError(
+                    "memory_limit_mb must be non-negative "
+                    f"(it is {self.memory_limit_mb})"
+                )
+        if not is_string_like(self.temp_dir):
             raise TypeError(
                 type_error_message(
-                    "user_scenario_prologue", self.user_scenario_prologue, str, bytes
+                    "temp_dir",
+                    self.temp_dir,
+                    str,
+                    bytes,
                 )
             )
-
-        # Check the field range
-        if self.max_cores < 0:
-            raise ValueError(f"max_cores must be non-negative (it is {self.max_cores})")
-        if self.max_memory_mb < 0:
-            raise ValueError(
-                f"max_memory_mb must be non-negative (it is {self.max_memory_mb})"
+        if not is_string_like(self.scenario_prologue):
+            raise TypeError(
+                type_error_message(
+                    "scenario_prologue", self.scenario_prologue, str, bytes
+                )
             )
 
 
