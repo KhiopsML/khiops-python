@@ -9,14 +9,14 @@ in two ways:
 - with the module `khiops.core`: To use Khiops in its native way (Khiops dictionary files +
   tabular data files as input)
 - with the module `khiops.sklearn`: To use Khiops with Scikit-Learn estimator objects (Pandas
-  dataframes or Numpy arrays as input)
+  dataframes or NumPy arrays as input)
 
 ## Installation
 
 ```bash
 conda install -c conda-forge -c khiops khiops
 ```
-Other install method are documented at the [Khiops website][khiops-install].
+Other install methods are documented at the [Khiops website][khiops-install].
 
 ### Requirements
 - [Python][python] (>=3.8)
@@ -28,10 +28,11 @@ Other install method are documented at the [Khiops website][khiops-install].
 
 ## Documentation
 The API Docs for the Khiops Python library are available [here][khiops-api-docs]. Other
-documentation (algorithms, installation, etc) may be found in the [Khiops site][khiops].
+documentation (algorithms, installation etc.) can be found on the [Khiops site][khiops].
 
-The library itself is documented with docstrings: for example to obtain help on the
-`train_predictor` function you can use:
+The library itself is documented with docstrings: for example, to obtain help on the
+`KhiopsClassifier` estimator and on the `train_predictor` function, respectively,
+you can use:
 ```python
 from khiops.sklearn import KhiopsClassifier
 help(KhiopsClassifier)
@@ -41,7 +42,8 @@ help(kh.train_predictor)
 ```
 
 ## License
-This software is distributed under the BSD 3-Clause-clear License, the text of which is available at
+The Khiops Python library is distributed under the BSD 3-Clause-clear License, the text
+of which is available at
 https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the [LICENSE.md](./LICENSE.md) for more
 details.
 

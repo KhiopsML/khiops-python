@@ -6,7 +6,7 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## 10.2.3.1 - 2024-11-26
+## 10.2.3.1 - 2024-11-27
 
 ### Added
 - (General) Support for Python 3.13.
