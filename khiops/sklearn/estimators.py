@@ -272,7 +272,11 @@ class KhiopsEstimator(ABC, BaseEstimator):
         return {"allow_nan": True, "accept_large_sparse": False}
 
     def _undefine_estimator_attributes(self):
-        """Undefines all *estimator* attributes (those that end with _)"""
+        """Undefines all sklearn estimator attributes (ie. pass to "not fit" state)
+
+        Sklearn estimator attributes follow the convention that their names end in "_".
+        See https://scikit-learn.org/stable/glossary.html#term-attributes
+        """
         for attribute_name in dir(self):
             if not attribute_name.startswith("_") and attribute_name.endswith("_"):
                 delattr(self, attribute_name)
@@ -361,10 +365,13 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # If on "fitted" state then:
         # - self.model_ must be a DictionaryDomain
         # - self.model_report_ must be a KhiopsJSONObject
-        assert not self.is_fitted_ or isinstance(self.model_, kh.DictionaryDomain)
-        assert not self.is_fitted_ or isinstance(
-            self.model_report_, kh.KhiopsJSONObject
-        )
+        if hasattr(self, "is_fitted_") and self.is_fitted_:
+            assert hasattr(self, "model_") and isinstance(
+                self.model_, kh.DictionaryDomain
+            )
+            assert hasattr(self, "model_report_") and isinstance(
+                self.model_report_, kh.KhiopsJSONObject
+            )
 
         return self
 
@@ -388,16 +395,19 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         # Train the model
         self._fit_train_model(ds, computation_dir, **kwargs)
-        self.n_features_in_ = ds.main_table.n_features()
 
         # If the main attributes are of the proper type finish the fitting
         # Otherwise it means there was an abort (early return) of the previous steps
-        if isinstance(self.model_, kh.DictionaryDomain) and isinstance(
-            self.model_report_, kh.KhiopsJSONObject
+        if (
+            hasattr(self, "model_")
+            and isinstance(self.model_, kh.DictionaryDomain)
+            and hasattr(self, "model_report_")
+            and isinstance(self.model_report_, kh.KhiopsJSONObject)
         ):
             self._fit_training_post_process(ds)
             self.is_fitted_ = True
             self.is_multitable_model_ = ds.is_multitable
+            self.n_features_in_ = ds.main_table.n_features()
 
     def _fit_check_params(self, ds, **_):
         """Check the model parameters including those data dependent (in kwargs)"""
@@ -422,7 +432,11 @@ class KhiopsEstimator(ABC, BaseEstimator):
     def _fit_train_model(self, ds, computation_dir, **kwargs):
         """Builds the model with one or more calls to khiops.core.api
 
-        It must return the path of the ``.kdic`` Khiops model file and the JSON report.
+        At a minimum it sets the following attributes:
+
+        - self.model_
+        - self.model_report_
+        - self.model_report_raw_ (deprecated)
         """
 
     @abstractmethod
@@ -2840,7 +2854,6 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
                     "transform_type_numerical", self.transform_type_numerical, str
                 )
             )
-
         self._numerical_transform_method()  # Raises ValueError if invalid
 
         # Check coherence between transformation types and tree number
@@ -2867,10 +2880,31 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
                     "informative_features_only", self.informative_features_only, bool
                 )
             )
+
         # Check 'group_target_value' parameter
         if not isinstance(self.group_target_value, bool):
             raise TypeError(
                 type_error_message("group_target_value", self.group_target_value, bool)
+            )
+
+    def _fit_train_model(self, ds, computation_dir, **kwargs):
+        # Call the parent method
+        super()._fit_train_model(ds, computation_dir, **kwargs)
+
+        # Check whether there are any used variables other than the target
+        model_doesnt_have_output_vars = True
+        for var in self.model_.get_dictionary(f"R_{ds.main_table.name}").variables:
+            if var.name != ds.target_column_id and var.used:
+                model_doesnt_have_output_vars = False
+                break
+
+        # If no informative vars undo the "fit" state (undefine attributes) and warn
+        if model_doesnt_have_output_vars:
+            self._undefine_estimator_attributes()
+            warnings.warn(
+                "Encoder is not fit because Khiops didn't create any output "
+                "variables. If you want to use non-informative features in the encoder "
+                "set 'informative_features_only' to False."
             )
 
     def _check_target_type(self, ds):
