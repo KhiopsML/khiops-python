@@ -66,7 +66,7 @@ class KhiopsRemoteAccessTestsContainer:
 
         @classmethod
         def init_remote_bucket(cls, bucket_name=None, proto=None):
-            # create remote root_temp_dir
+            # create the remote root_temp_dir
             remote_resource = fs.create_resource(
                 f"{proto}://{bucket_name}/khiops-cicd/tmp"
             )
@@ -84,7 +84,7 @@ class KhiopsRemoteAccessTestsContainer:
                     f"{proto}://{bucket_name}/khiops-cicd/samples/{file}",
                     os.path.join(kh.get_samples_dir(), file),
                 )
-                # symetric call to ensure the upload was OK
+                # symmetric call to ensure the upload was OK
                 fs.copy_to_local(
                     f"{proto}://{bucket_name}/khiops-cicd/samples/{file}", "/tmp/dummy"
                 )
@@ -155,10 +155,22 @@ class KhiopsRemoteAccessTestsContainer:
                 )
             self.print_test_title()
 
+        def tearDown(self):
+            # Cleanup the output dir (the files within and the folder)
+            if hasattr(self, "folder_name_to_clean_in_teardown"):
+                for filename in fs.list_dir(self.folder_name_to_clean_in_teardown):
+                    fs.remove(
+                        fs.get_child_path(
+                            self.folder_name_to_clean_in_teardown, filename
+                        )
+                    )
+                fs.remove(self.folder_name_to_clean_in_teardown)
+
         def test_train_predictor_with_remote_access(self):
             """Test train_predictor with remote resources"""
             iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
-            output_dir = fs.get_child_path(
+            # ask for folder cleaning during tearDown
+            self.folder_name_to_clean_in_teardown = output_dir = fs.get_child_path(
                 self.results_dir_root(),
                 f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
             )
@@ -175,22 +187,21 @@ class KhiopsRemoteAccessTestsContainer:
                 trace=True,
             )
 
-            # Check the existents of the trining files
+            # Check the existence of the training files
             self.assertTrue(fs.exists(fs.get_child_path(output_dir, "AllReports.khj")))
             self.assertTrue(fs.exists(fs.get_child_path(output_dir, "Modeling.kdic")))
 
-            # Cleanup
-            for filename in fs.list_dir(output_dir):
-                fs.remove(fs.get_child_path(output_dir, filename))
-
         def test_khiops_classifier_with_remote_access(self):
             """Test the training of a khiops_classifier with remote resources"""
+
             # Setup paths
             # note : the current implementation forces the khiops.log file
             # to be created in the output_dir (thus local)
             # (any attempt to override it as an arg
             # for the fit method will be ignored)
-            output_dir = (
+
+            # ask for folder cleaning during tearDown
+            self.folder_name_to_clean_in_teardown = output_dir = (
                 self._khiops_temp_dir + f"/KhiopsClassifier_output_dir_{uuid.uuid4()}/"
             )
             iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
@@ -214,10 +225,6 @@ class KhiopsRemoteAccessTestsContainer:
             predict_path = fs.get_child_path(output_dir, "predict.txt")
             self.assertTrue(fs.exists(predict_path), msg=f"Path: {predict_path}")
 
-            # Cleanup
-            for filename in fs.list_dir(output_dir):
-                fs.remove(fs.get_child_path(output_dir, filename))
-
         def test_khiops_coclustering_with_remote_access(self):
             """Test the training of a khiops_coclustering with remote resources"""
             # Skip if only short tests are run
@@ -228,7 +235,9 @@ class KhiopsRemoteAccessTestsContainer:
             # to be created in the output_dir (thus local)
             # (any attempt to override it as an arg
             # for the fit method will be ignored)
-            output_dir = (
+
+            # ask for folder cleaning during tearDown
+            self.folder_name_to_clean_in_teardown = output_dir = (
                 self._khiops_temp_dir
                 + f"/KhiopsCoclustering_output_dir_{uuid.uuid4()}/"
             )
@@ -261,6 +270,8 @@ class KhiopsRemoteAccessTestsContainer:
                 self._khiops_temp_dir, f"khiops_log_{uuid.uuid4()}.log"
             )
 
+            # no cleaning required as an exception would be raised
+            # without any result produced
             output_dir = fs.get_child_path(
                 self.results_dir_root(),
                 f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
