@@ -84,6 +84,10 @@ def khiops_classifier():
     print(f"Test accuracy = {test_accuracy}")
     print(f"Test auc      = {test_auc}")
 
+    # If you have Khiops Visualization installed you may open the report as follows
+    # khc.export_report_file("report.khj")
+    # kh.visualize_report("report.khj")
+
 
 def khiops_classifier_multiclass():
     """Trains a multiclass `.KhiopsClassifier` on a monotable dataframe"""
@@ -525,6 +529,10 @@ def khiops_regressor():
     print(f"Test R2  = {test_r2}")
     print(f"Test MAE = {test_mae}")
 
+    # If you have Khiops Visualization installed you may open the report as follows
+    # khr.export_report_file("report.khj")
+    # kh.visualize_report("report.khj")
+
 
 def khiops_encoder():
     """Trains a `.KhiopsEncoder` on a monotable dataframe
@@ -563,6 +571,10 @@ def khiops_encoder():
     print("Encoded data:")
     print(X_transformed[:10])
     print("---")
+
+    # If you have Khiops Visualization installed you may open the report as follows
+    # khe.export_report_file("report.khj")
+    # kh.visualize_report("report.khj")
 
 
 def khiops_encoder_multitable_star():
@@ -832,6 +844,10 @@ def khiops_coclustering():
     print("Predicted clusters (first 10)")
     print(X_clusters[:10])
     print("---")
+
+    # If you have Khiops Co-Visualization installed you may open the report as follows
+    # khcc.export_report_file("report.khcj")
+    # kh.visualize_report("report.khcj")
 
 
 def khiops_coclustering_simplify():

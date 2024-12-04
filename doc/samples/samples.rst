@@ -205,6 +205,9 @@ Samples
     )
     print("Reports file available at " + report_file_path)
     print("Modeling dictionary file available at " + modeling_dictionary_file_path)
+
+    # If you have Khiops Visualization installed you may open the report as follows
+    # kh.visualize_report(report_file_path)
 .. autofunction:: train_predictor_error_handling
 .. code-block:: python
 
@@ -1219,14 +1222,17 @@ Samples
     results_dir = os.path.join("kh_samples", "train_coclustering")
 
     # Train a coclustering model for variables "SampleId" and "Char"
-    coclustering_file_path = kh.train_coclustering(
+    coclustering_report_path = kh.train_coclustering(
         dictionary_file_path,
         "SpliceJunctionDNA",
         data_table_path,
         ["SampleId", "Char"],
         results_dir,
     )
-    print("Coclustering file available at " + coclustering_file_path)
+    print(f"Coclustering report file available at {coclustering_report_path}")
+
+    # If you have Khiops Co-Visualization installed you may open the report as follows
+    # kh.visualize_report(coclustering_report_path)
 .. autofunction:: simplify_coclustering
 .. code-block:: python
 

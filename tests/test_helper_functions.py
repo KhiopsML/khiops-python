@@ -6,12 +6,16 @@
 ######################################################################################
 """Tests for checking the output types of predictors"""
 import io
+import os
+import pathlib
+import platform
+import stat
 import unittest
 
 import pandas as pd
 
 from khiops.core.dictionary import DictionaryDomain
-from khiops.core.helpers import build_multi_table_dictionary_domain
+from khiops.core.helpers import build_multi_table_dictionary_domain, visualize_report
 from khiops.utils.helpers import train_test_split_dataset
 
 
@@ -204,6 +208,38 @@ class KhiopsHelperFunctions(unittest.TestCase):
             failure_error = error
         if failure_error is not None:
             self.fail(failure_error)
+
+    def test_visualize_report_fails_on_improper_file_extensions(self):
+        """Tests that visualize_report fails on files without extension .khj or .khcj"""
+        tmp_report_path = "report.json"
+        with self.assertRaises(ValueError) as ctx:
+            visualize_report(tmp_report_path)
+        self.assertIn("must have extension '.khj' or '.khcj'", str(ctx.exception))
+        self.assertIn(tmp_report_path, str(ctx.exception))
+
+    def test_visualize_report_fails_on_inexistent_file(self):
+        """Test that visualize_report fails on inexistent file"""
+        tmp_report_path = "INEXISTENT_REPORT.khj"
+        with self.assertRaises(FileNotFoundError) as ctx:
+            visualize_report(tmp_report_path)
+        self.assertIn(tmp_report_path, str(ctx.exception))
+
+    @unittest.skipIf(platform.system() == "Windows", "Test non-applicable in Windows")
+    def test_visualize_report_fails_on_file_with_executable_permissions(self):
+        """Test that visualize_report fails on files with executable permissions"""
+        # Create a temporary report file with executable permissions
+        tmp_report_path = pathlib.Path("./TEMPORARY_REPORT_ABCDEFG_123.khj")
+        tmp_report_path.touch()
+        os.chmod(tmp_report_path, os.stat(tmp_report_path).st_mode | stat.S_IEXEC)
+
+        # Check that the exception is raised with the proper message
+        with self.assertRaises(RuntimeError) as ctx:
+            visualize_report(tmp_report_path)
+        self.assertIn("Report file cannot be executable", str(ctx.exception))
+        self.assertIn(str(tmp_report_path), str(ctx.exception))
+
+        # Remove the temporary file
+        os.remove(tmp_report_path)
 
 
 # pylint: disable=line-too-long
