@@ -3,7 +3,7 @@ Internals
 These are internal modules with no "data science" functionality. Their documentation is available
 for completeness.
 
-.. currentmodule:: khiops.utils
+.. currentmodule:: khiops.sklearn
 .. autosummary::
   :nosignatures:
   :toctree: generated
