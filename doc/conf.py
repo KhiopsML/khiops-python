@@ -12,7 +12,7 @@ sys.path.append("..")
 sys.path.append("../khiops/samples")
 import khiops
 
-project = "Khiops"
+project = "Khiops Python"
 copyright = f"2018-{datetime.today().year}, Orange"
 author = "The Khiops Team"
 
