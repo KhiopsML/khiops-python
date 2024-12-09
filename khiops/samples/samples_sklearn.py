@@ -157,7 +157,6 @@ def khiops_classifier_multitable_star():
     accidents_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
     vehicles_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
@@ -215,32 +214,22 @@ def khiops_classifier_multitable_snowflake():
     # Load the dataset tables into dataframes
     accidents_data_dir = os.path.join(kh.get_samples_dir(), "Accidents")
     accidents_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Accidents.txt"),
-        sep="\t",
-        encoding="latin1",
+        os.path.join(accidents_data_dir, "Accidents.txt"), sep="\t"
     )
-    users_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Users.txt"), sep="\t", encoding="latin1"
-    )
+    users_df = pd.read_csv(os.path.join(accidents_data_dir, "Users.txt"), sep="\t")
     vehicles_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Vehicles.txt"),
-        sep="\t",
-        encoding="latin1",
+        os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
-    places_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", encoding="latin1"
-    )
+    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
 
-    # Create the dataset spec
-    # Note: We discard the "Gravity" column from the "Users" table to avoid a target
-    # leak. This is because the column was used to build the target.
+    # Build the multi-table dataset spec (the target is the "Gravity" column)
     X = {
         "main_table": "Accidents",
         "tables": {
-            "Accidents": (accidents_df, "AccidentId"),
+            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-            "Users": (users_df.drop("Gravity", axis=1), ["AccidentId", "VehicleId"]),
-            "Places": (places_df, ["AccidentId"]),
+            "Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, "AccidentId"),
         },
         "relations": [
             ("Accidents", "Vehicles"),
@@ -248,16 +237,7 @@ def khiops_classifier_multitable_snowflake():
             ("Accidents", "Places", True),
         ],
     }
-
-    # Load the target variable "Gravity" from the "AccidentsSummary" dataset
-    y = pd.read_csv(
-        os.path.join(kh.get_samples_dir(), "AccidentsSummary", "Accidents.txt"),
-        usecols=["Gravity"],
-        sep="\t",
-        encoding="latin1",
-    ).squeeze(
-        "columns"
-    )  # squeeze to ensure pandas.Series
+    y = accidents_df["Gravity"]
 
     # Split into train and test datasets
     X_train, X_test, y_train, y_test = train_test_split_dataset(X, y)
@@ -407,7 +387,6 @@ def khiops_classifier_with_hyperparameters():
     accidents_df = pd.read_csv(
         os.path.join(accidents_dataset_path, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
 
     # Split the root dataframe into train and test
@@ -590,7 +569,6 @@ def khiops_encoder_multitable_star():
     accidents_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
     vehicles_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
@@ -628,49 +606,30 @@ def khiops_encoder_multitable_snowflake():
     # Load the tables into dataframes
     accidents_data_dir = os.path.join(kh.get_samples_dir(), "Accidents")
     accidents_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Accidents.txt"),
-        sep="\t",
-        encoding="latin1",
+        os.path.join(accidents_data_dir, "Accidents.txt"), sep="\t"
     )
-    places_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", encoding="latin1"
-    )
-    users_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Users.txt"), sep="\t", encoding="latin1"
-    )
+    users_df = pd.read_csv(os.path.join(accidents_data_dir, "Users.txt"), sep="\t")
     vehicles_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Vehicles.txt"),
-        sep="\t",
-        encoding="latin1",
+        os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
+    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
 
-    # Build the multi-table spec
-    # Note: We discard the "Gravity" field from the "Users" table as it was used to
-    # build the target column
+    # Build the multi-table dataset spec (the target is the "Gravity" column)
     X = {
         "main_table": "Accidents",
         "tables": {
-            "Accidents": (accidents_df, "AccidentId"),
-            "Places": (places_df, "AccidentId"),
+            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-            "Users": (users_df.drop("Gravity", axis=1), ["AccidentId", "VehicleId"]),
+            "Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, "AccidentId"),
         },
         "relations": [
             ("Accidents", "Vehicles"),
-            ("Accidents", "Places", True),
             ("Vehicles", "Users"),
+            ("Accidents", "Places", True),
         ],
     }
-
-    # Load the target variable from the AccidentsSummary dataset
-    y = pd.read_csv(
-        os.path.join(kh.get_samples_dir(), "AccidentsSummary", "Accidents.txt"),
-        usecols=["Gravity"],
-        sep="\t",
-        encoding="latin1",
-    ).squeeze(
-        "columns"
-    )  # squeeze to ensure pandas.Series
+    y = accidents_df["Gravity"]
 
     # Create the KhiopsEncoder with 10 additional multitable features and fit it
     khe = KhiopsEncoder(n_features=10)
@@ -766,7 +725,6 @@ def khiops_encoder_with_hyperparameters():
     accidents_df = pd.read_csv(
         os.path.join(accidents_dataset_path, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
 
     # Obtain the root X feature table and the y target vector ("Class" column)
@@ -908,7 +866,6 @@ def khiops_classifier_multitable_list():
     accidents_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
     X = accidents_df.drop("Gravity", axis=1)
     y = accidents_df["Gravity"]
@@ -985,7 +942,6 @@ def khiops_classifier_multitable_star_file():
     accidents_df = pd.read_csv(
         os.path.join(accidents_dataset_path, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
 
     # Split the root dataframe into train and test

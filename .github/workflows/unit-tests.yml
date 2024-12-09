@@ -1,7 +1,7 @@
 ---
 name: Unit Tests
 env:
-  DEFAULT_SAMPLES_REVISION: main
+  DEFAULT_SAMPLES_REVISION: 10.2.4
   DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.3
 on:
   workflow_dispatch:

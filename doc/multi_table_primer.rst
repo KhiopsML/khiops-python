@@ -135,8 +135,8 @@ schema:
 
 We build the input ``X`` as follows::
 
-   accidents_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
-   vehicles_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Vehicles.txt", sep="\t", encoding="latin1")
+   accidents_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t")
+   vehicles_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Vehicles.txt", sep="\t")
    X = {
       "main_table" : "Accident",
       "tables": {
@@ -164,11 +164,10 @@ through the following *snowflake* schema
 
 We build the input ``X`` as follows::
 
-    # We use `Accidents.txt` table of `AccidentsSummary` as it contains the `Gravity` label pre-calculated
-    accidents_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t", encoding="latin1")
-    vehicles_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Vehicles.txt", sep="\t", encoding="latin1")
-    users_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Users.txt", sep="\t", encoding="latin1")
-    places_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Places.txt", sep="\t", encoding="latin1")
+    accidents_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Accidents.txt", sep="\t")
+    vehicles_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Vehicles.txt", sep="\t")
+    users_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Users.txt", sep="\t")
+    places_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Places.txt", sep="\t")
 
     X = {
         "main_table": "Accidents",
@@ -176,7 +175,7 @@ We build the input ``X`` as follows::
             "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
             "Users": (users_df, ["AccidentId", "VehicleId"]),
-            "Places": (places_df, ["AccidentId"]),
+            "Places": (places_df, "AccidentId"),
 
         },
         "relations": [
