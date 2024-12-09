@@ -35,39 +35,33 @@ class EstimatorAttributesTests(unittest.TestCase):
     """
 
     def _create_multitable_input(self, size=None):
+        # Load `Accidents` into dataframes
         accidents_dataset_path = path.join(kh.get_samples_dir(), "Accidents")
         accidents_df = pd.read_csv(
-            path.join(accidents_dataset_path, "Accidents.txt"),
-            sep="\t",
-            encoding="latin1",
+            path.join(accidents_dataset_path, "Accidents.txt"), sep="\t"
         )
-        users_df = pd.read_csv(
-            path.join(accidents_dataset_path, "Users.txt"), sep="\t", encoding="latin1"
-        )
+        users_df = pd.read_csv(path.join(accidents_dataset_path, "Users.txt"), sep="\t")
         vehicles_df = pd.read_csv(
-            path.join(accidents_dataset_path, "Vehicles.txt"),
-            sep="\t",
-            encoding="latin1",
+            path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
         )
         places_df = pd.read_csv(
-            path.join(accidents_dataset_path, "Places.txt"),
-            sep="\t",
-            encoding="latin1",
-            low_memory=False,
+            path.join(accidents_dataset_path, "Places.txt"), sep="\t", low_memory=False
         )
 
+        # Set the sample size
         if size is None:
             size = len(accidents_df)
 
+        # Create the multi-table dataset spec
         X = {
             "main_table": "Accidents",
             "tables": {
-                "Accidents": (accidents_df[:size], "AccidentId"),
-                "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-                "Users": (
-                    users_df.drop("Gravity", axis=1),
-                    ["AccidentId", "VehicleId"],
+                "Accidents": (
+                    accidents_df.drop("Gravity", axis=1)[:size],
+                    "AccidentId",
                 ),
+                "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
+                "Users": (users_df, ["AccidentId", "VehicleId"]),
                 "Places": (places_df, ["AccidentId"]),
             },
             "relations": [
@@ -76,12 +70,7 @@ class EstimatorAttributesTests(unittest.TestCase):
                 ("Accidents", "Places", True),
             ],
         }
-
-        y = pd.read_csv(
-            path.join(kh.get_samples_dir(), "AccidentsSummary", "Accidents.txt"),
-            sep="\t",
-            encoding="latin1",
-        )["Gravity"][:size]
+        y = accidents_df["Gravity"][:size]
 
         return X, y
 
