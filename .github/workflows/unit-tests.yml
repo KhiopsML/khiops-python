@@ -61,10 +61,10 @@ jobs:
           fetch-depth: 0
       # We move SAMPLES_REVISION to the environment so that we can use
       # them in both push and workflow_dispatch events
-      - name: Move SAMPLES_REVISION to the environment (push event)
-        if: github.event_name == 'push'
+      - name: Set SAMPLES_REVISION on 'pull_request' events
+        if: github.event_name == 'pull_request'
         run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
-      - name: Move SAMPLES_REVISION to the environment (workflow_dispatch event)
+      - name: Set SAMPLES_REVISION on 'workflow_dispatch' events
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
