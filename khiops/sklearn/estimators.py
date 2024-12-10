@@ -268,8 +268,27 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # Make sklearn get_params happy
         self.internal_sort = internal_sort
 
+    def __sklearn_tags__(self):
+        # We disable this because this import is only available for scikit-learn>=1.6
+        # pylint: disable=import-outside-toplevel
+        try:
+            from sklearn.utils import TransformerTags
+        except ImportError:
+            raise NotImplementedError("__sklearn_tags__ API unsupported.")
+
+        # Set the tags from _more_tags
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = self._more_tags()["allow_nan"]
+        for tag, tag_value in self._more_tags().items():
+            if tag == "requires_y":
+                tags.target_tags.required = tag_value
+            elif tag == "preserves_dtype":
+                tags.transformer_tags = TransformerTags()
+                tags.transformer_tags.preserves_dtype = tag_value
+        return tags
+
     def _more_tags(self):
-        return {"allow_nan": True, "accept_large_sparse": False}
+        return {"allow_nan": True}
 
     def _undefine_estimator_attributes(self):
         """Undefines all sklearn estimator attributes (ie. pass to "not fit" state)
@@ -631,7 +650,8 @@ class KhiopsEstimator(ABC, BaseEstimator):
         )
 
 
-class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
+# Note: scikit-learn **requires** inherit first the mixins and then other classes
+class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
     """A Khiops Coclustering model
 
     A coclustering is a non-supervised piecewise constant density estimator.
@@ -762,6 +782,12 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                     quote=False,
                 )
             )
+
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
 
     def fit(self, X, y=None, **kwargs):
         """Trains a Khiops Coclustering model
@@ -1399,8 +1425,16 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                 )
             )
 
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
+
     def _more_tags(self):
-        return {"require_y": True}
+        more_tags = super()._more_tags()
+        more_tags["requires_y"] = True
+        return more_tags
 
     def _fit_check_dataset(self, ds):
         super()._fit_check_dataset(ds)
@@ -1763,6 +1797,12 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         self.n_evaluated_features = n_evaluated_features
         self.n_selected_features = n_selected_features
 
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
+
     def predict(self, X):
         """Predicts the target variable for the test dataset X
 
@@ -1866,7 +1906,8 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             raise ValueError("'n_selected_features' must be positive")
 
 
-class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
+# Note: scikit-learn **requires** inherit first the mixins and then other classes
+class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     # Disable line too long as this docstring *needs* to have lines longer than 88c
     # pylint: disable=line-too-long
     r"""Khiops Selective Naive Bayes Classifier
@@ -2034,6 +2075,12 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         self.group_target_value = group_target_value
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Prediction"
+
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
 
     def _is_real_target_dtype_integer(self):
         return self._original_target_dtype is not None and (
@@ -2338,7 +2385,8 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         return model_copy
 
 
-class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
+# Note: scikit-learn **requires** inherit first the mixins and then other classes
+class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     # Disable line too long as this docstring *needs* to have lines longer than 88c
     # pylint: disable=line-too-long
     r"""Khiops Selective Naive Bayes Regressor
@@ -2616,7 +2664,8 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
     # pylint: enable=useless-super-delegation
 
 
-class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
+# Note: scikit-learn **requires** inherit first the mixins and then other classes
+class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     # Disable line too long as this docstring *needs* to have lines longer than 88c
     # pylint: disable=line-too-long
     r"""Khiops supervised discretization/grouping encoder
@@ -2783,8 +2832,16 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         self.keep_initial_variables = keep_initial_variables
         self._khiops_model_prefix = "R_"
 
-    def more_tags(self):
-        return {"preserves_dtype": []}
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
+
+    def _more_tags(self):
+        more_tags = super()._more_tags()
+        more_tags["preserves_dtype"] = []
+        return more_tags
 
     def _categorical_transform_method(self):
         _transform_types_categorical = {
