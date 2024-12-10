@@ -1,13 +1,13 @@
 ---
 name: Unit Tests
 env:
-  DEFAULT_SAMPLES_REVISION: main
+  DEFAULT_SAMPLES_REVISION: 10.2.0
   DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.3
 on:
   workflow_dispatch:
     inputs:
       samples-revision:
-        default: main
+        default: 10.2.0
         description: Git tag, branch or commit for the khiops-samples repository
       image-tag:
         default: latest
