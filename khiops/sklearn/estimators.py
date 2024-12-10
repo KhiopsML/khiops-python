@@ -1478,8 +1478,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         """
         if y is None:
             raise ValueError(
-                "'y' must be specified for fitting "
-                f"{self.__class__.__name__} estimator."
+                f"{self.__class__.__name__} requires y to be passed, "
+                "but the target y is None"
             )
         super().fit(X, y=y, **kwargs)
         return self
