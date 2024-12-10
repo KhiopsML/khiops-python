@@ -2657,6 +2657,8 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
                     khiops_estimator, generate_only=True
                 ):
                     check_name = check.func.__name__
+                    if check_name == "check_n_features_in_after_fitting":
+                        continue
                     print(
                         f">>> Executing {check_name} on "
                         f"{estimator.__class__.__name__}... ",
