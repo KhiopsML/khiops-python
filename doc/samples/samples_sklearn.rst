@@ -164,7 +164,6 @@ Samples
     accidents_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
     vehicles_df = pd.read_csv(os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t")
 
@@ -218,33 +217,19 @@ Samples
 
     # Load the dataset tables into dataframes
     accidents_data_dir = os.path.join(kh.get_samples_dir(), "Accidents")
-    accidents_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Accidents.txt"),
-        sep="\t",
-        encoding="latin1",
-    )
-    users_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Users.txt"), sep="\t", encoding="latin1"
-    )
-    vehicles_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Vehicles.txt"),
-        sep="\t",
-        encoding="latin1",
-    )
-    places_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", encoding="latin1"
-    )
+    accidents_df = pd.read_csv(os.path.join(accidents_data_dir, "Accidents.txt"), sep="\t")
+    users_df = pd.read_csv(os.path.join(accidents_data_dir, "Users.txt"), sep="\t")
+    vehicles_df = pd.read_csv(os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t")
+    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
 
-    # Create the dataset spec
-    # Note: We discard the "Gravity" column from the "Users" table to avoid a target
-    # leak. This is because the column was used to build the target.
+    # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
         "main_table": "Accidents",
         "tables": {
-            "Accidents": (accidents_df, "AccidentId"),
+            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-            "Users": (users_df.drop("Gravity", axis=1), ["AccidentId", "VehicleId"]),
-            "Places": (places_df, ["AccidentId"]),
+            "Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, "AccidentId"),
         },
         "relations": [
             ("Accidents", "Vehicles"),
@@ -253,15 +238,8 @@ Samples
         ],
     }
 
-    # Load the target variable "Gravity" from the "AccidentsSummary" dataset
-    y = pd.read_csv(
-        os.path.join(kh.get_samples_dir(), "AccidentsSummary", "Accidents.txt"),
-        usecols=["Gravity"],
-        sep="\t",
-        encoding="latin1",
-    ).squeeze(
-        "columns"
-    )  # squeeze to ensure pandas.Series
+    # Load the target variable "Gravity"
+    y = accidents_df["Gravity"]
 
     # Split into train and test datasets
     X_train, X_test, y_train, y_test = train_test_split_dataset(X, y)
@@ -406,7 +384,6 @@ Samples
     accidents_df = pd.read_csv(
         os.path.join(accidents_dataset_path, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
 
     # Split the root dataframe into train and test
@@ -575,11 +552,10 @@ Samples
     accidents_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
     vehicles_df = pd.read_csv(os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t")
 
-    # Build the multi-table spec and the target
+    # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
         "main_table": "Accidents",
         "tables": {
@@ -587,6 +563,8 @@ Samples
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
         },
     }
+
+    # Load the target variable "Gravity"
     y = accidents_df["Gravity"]
 
     # Create the KhiopsEncoder with 5 multitable features and fit it
@@ -609,50 +587,29 @@ Samples
 
     # Load the tables into dataframes
     accidents_data_dir = os.path.join(kh.get_samples_dir(), "Accidents")
-    accidents_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Accidents.txt"),
-        sep="\t",
-        encoding="latin1",
-    )
-    places_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", encoding="latin1"
-    )
-    users_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Users.txt"), sep="\t", encoding="latin1"
-    )
-    vehicles_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Vehicles.txt"),
-        sep="\t",
-        encoding="latin1",
-    )
+    accidents_df = pd.read_csv(os.path.join(accidents_data_dir, "Accidents.txt"), sep="\t")
+    users_df = pd.read_csv(os.path.join(accidents_data_dir, "Users.txt"), sep="\t")
+    vehicles_df = pd.read_csv(os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t")
+    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
 
-    # Build the multi-table spec
-    # Note: We discard the "Gravity" field from the "Users" table as it was used to
-    # build the target column
+    # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
         "main_table": "Accidents",
         "tables": {
-            "Accidents": (accidents_df, "AccidentId"),
-            "Places": (places_df, "AccidentId"),
+            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-            "Users": (users_df.drop("Gravity", axis=1), ["AccidentId", "VehicleId"]),
+            "Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, "AccidentId"),
         },
         "relations": [
             ("Accidents", "Vehicles"),
-            ("Accidents", "Places", True),
             ("Vehicles", "Users"),
+            ("Accidents", "Places", True),
         ],
     }
 
-    # Load the target variable from the AccidentsSummary dataset
-    y = pd.read_csv(
-        os.path.join(kh.get_samples_dir(), "AccidentsSummary", "Accidents.txt"),
-        usecols=["Gravity"],
-        sep="\t",
-        encoding="latin1",
-    ).squeeze(
-        "columns"
-    )  # squeeze to ensure pandas.Series
+    # Load the target variable "Gravity"
+    y = accidents_df["Gravity"]
 
     # Create the KhiopsEncoder with 10 additional multitable features and fit it
     khe = KhiopsEncoder(n_features=10)
@@ -735,32 +692,25 @@ Samples
     from khiops import core as kh
     from khiops.sklearn import KhiopsEncoder
 
-    # Load the root table of the dataset into a pandas dataframe
-    accidents_dataset_path = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
-    accidents_df = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Accidents.txt"),
-        sep="\t",
-        encoding="latin1",
-    )
+    # Load the tables into dataframes
+    accidents_data_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    accidents_df = pd.read_csv(os.path.join(accidents_data_dir, "Accidents.txt"), sep="\t")
+    vehicles_df = pd.read_csv(os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t")
 
-    # Obtain the root X feature table and the y target vector ("Class" column)
-    X_main = accidents_df.drop("Gravity", axis=1)
-    y = accidents_df["Gravity"]
-
-    # Load the secondary table of the dataset into a pandas dataframe
-    X_secondary = pd.read_csv(
-        os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
-    )
-
-    # Create the dataset multitable specification for the train/test split
-    # We specify each table with a name and a tuple (dataframe, key_columns)
-    X_dataset = {
+    # Build the multi-table dataset spec (drop the target column "Gravity")
+    X = {
         "main_table": "Accidents",
         "tables": {
-            "Accidents": (X_main, "AccidentId"),
-            "Vehicles": (X_secondary, ["AccidentId", "VehicleId"]),
+            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+            "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
         },
+        "relations": [
+            ("Accidents", "Vehicles"),
+        ],
     }
+
+    # Load the target variable "Gravity"
+    y = accidents_df["Gravity"]
 
     # Create the KhiopsEncoder with 10 additional multitable features and fit it
     khe = KhiopsEncoder(
@@ -777,13 +727,13 @@ Samples
         transform_type_numerical="part_id",
         transform_pairs="part_id",
     )
-    khe.fit(X_dataset, y)
+    khe.fit(X, y)
 
     # Transform the train dataset
     print("Encoded feature names:")
     print(khe.feature_names_out_)
     print("Encoded data:")
-    print(khe.transform(X_dataset)[:10])
+    print(khe.transform(X)[:10])
 .. autofunction:: khiops_coclustering
 .. code-block:: python
 
@@ -867,7 +817,6 @@ Samples
     accidents_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
     X = accidents_df.drop("Gravity", axis=1)
     y = accidents_df["Gravity"]
@@ -932,7 +881,6 @@ Samples
     accidents_df = pd.read_csv(
         os.path.join(accidents_dataset_path, "Accidents.txt"),
         sep="\t",
-        encoding="latin1",
     )
 
     # Split the root dataframe into train and test
