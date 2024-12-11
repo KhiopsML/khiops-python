@@ -54,11 +54,12 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
         """Test the KhiopsClassifier output types and classes of predict* methods"""
         X, y = create_iris()
         X_mt, X_sec_mt, _ = create_iris_mt()
-
         fixtures = {
             "ys": {
                 "int": y,
                 "int binary": y.replace({0: 0, 1: 0, 2: 1}),
+                "float": y.astype(float),
+                "bool": y.replace({0: True, 1: True, 2: False}),
                 "string": y.replace({0: "se", 1: "vi", 2: "ve"}),
                 "string binary": y.replace({0: "vi_or_se", 1: "vi_or_se", 2: "ve"}),
                 "int as string": y.replace({0: "8", 1: "9", 2: "10"}),
@@ -69,6 +70,8 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
             "y_type_check": {
                 "int": pd.api.types.is_integer_dtype,
                 "int binary": pd.api.types.is_integer_dtype,
+                "float": pd.api.types.is_float_dtype,
+                "bool": pd.api.types.is_bool_dtype,
                 "string": pd.api.types.is_string_dtype,
                 "string binary": pd.api.types.is_string_dtype,
                 "int as string": pd.api.types.is_string_dtype,
@@ -79,6 +82,8 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
             "expected_classes": {
                 "int": column_or_1d([0, 1, 2]),
                 "int binary": column_or_1d([0, 1]),
+                "float": column_or_1d([0.0, 1.0, 2.0]),
+                "bool": column_or_1d([False, True]),
                 "string": column_or_1d(["se", "ve", "vi"]),
                 "string binary": column_or_1d(["ve", "vi_or_se"]),
                 "int as string": column_or_1d(["10", "8", "9"]),

@@ -12,6 +12,7 @@
 
 - (General) `visualize_report` helper function to open reports with the Khiops Visualization and
   Khiops Co-Visualization app.
+- (`sklearn`) Support for `float` and `boolean` targets in `KhiopsClassifier`.
 
 ## 10.2.3.1 - 2024-11-27
 
