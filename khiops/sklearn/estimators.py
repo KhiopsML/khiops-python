@@ -198,6 +198,37 @@ def _check_numerical_target_type(ds):
         )
 
 
+def _check_pair_parameters(estimator):
+    assert isinstance(estimator, (KhiopsClassifier, KhiopsEncoder)), type_error_message(
+        "estimator", estimator, KhiopsClassifier, KhiopsEncoder
+    )
+    if not isinstance(estimator.n_pairs, int):
+        raise TypeError(type_error_message("n_pairs", estimator.n_pairs, int))
+    if estimator.n_pairs < 0:
+        raise ValueError("'n_pairs' must be positive")
+    if estimator.specific_pairs is not None:
+        if not is_list_like(estimator.specific_pairs):
+            raise TypeError(
+                type_error_message(
+                    "specific_pairs", estimator.specific_pairs, "list-like"
+                )
+            )
+        else:
+            for pair in estimator.specific_pairs:
+                if not isinstance(pair, tuple):
+                    raise TypeError(type_error_message(pair, pair, tuple))
+    if not isinstance(estimator.all_possible_pairs, bool):
+        raise TypeError(
+            type_error_message("all_possible_pairs", estimator.all_possible_pairs, bool)
+        )
+
+    # Check 'group_target_value' parameter
+    if not isinstance(estimator.group_target_value, bool):
+        raise TypeError(
+            type_error_message("group_target_value", estimator.group_target_value, bool)
+        )
+
+
 def _cleanup_dir(target_dir):
     """Cleanups a directory with only files in it
 
@@ -1379,7 +1410,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def __init__(
         self,
         n_features=100,
-        n_pairs=0,
         n_trees=10,
         specific_pairs=None,
         all_possible_pairs=True,
@@ -1398,7 +1428,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             internal_sort=internal_sort,
         )
         self.n_features = n_features
-        self.n_pairs = n_pairs
         self.n_trees = n_trees
         self.specific_pairs = specific_pairs
         self.all_possible_pairs = all_possible_pairs
@@ -1489,25 +1518,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             raise TypeError(type_error_message("n_trees", self.n_trees, int))
         if self.n_trees < 0:
             raise ValueError("'n_trees' must be positive")
-        if not isinstance(self.n_pairs, int):
-            raise TypeError(type_error_message("n_pairs", self.n_pairs, int))
-        if self.n_pairs < 0:
-            raise ValueError("'n_pairs' must be positive")
-        if self.specific_pairs is not None:
-            if not is_list_like(self.specific_pairs):
-                raise TypeError(
-                    type_error_message(
-                        "specific_pairs", self.specific_pairs, "list-like"
-                    )
-                )
-            else:
-                for pair in self.specific_pairs:
-                    if not isinstance(pair, tuple):
-                        raise TypeError(type_error_message(pair, pair, tuple))
-        if not isinstance(self.all_possible_pairs, bool):
-            raise TypeError(
-                type_error_message("all_possible_pairs", self.all_possible_pairs, bool)
-            )
         if self.construction_rules is not None:
             if not is_list_like(self.construction_rules):
                 raise TypeError(
@@ -1594,7 +1604,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Rename parameters to be compatible with khiops.core
         kwargs["max_constructed_variables"] = kwargs.pop("n_features")
-        kwargs["max_pairs"] = kwargs.pop("n_pairs")
         kwargs["max_trees"] = kwargs.pop("n_trees")
 
         # Add the additional_data_tables parameter
@@ -1774,7 +1783,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
     def __init__(
         self,
         n_features=100,
-        n_pairs=0,
         n_trees=10,
         n_selected_features=0,
         n_evaluated_features=0,
@@ -1789,7 +1797,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
     ):
         super().__init__(
             n_features=n_features,
-            n_pairs=n_pairs,
             n_trees=n_trees,
             specific_pairs=specific_pairs,
             all_possible_pairs=all_possible_pairs,
@@ -2081,12 +2088,9 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     ):
         super().__init__(
             n_features=n_features,
-            n_pairs=n_pairs,
             n_trees=n_trees,
             n_selected_features=n_selected_features,
             n_evaluated_features=n_evaluated_features,
-            specific_pairs=specific_pairs,
-            all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
@@ -2094,6 +2098,9 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             key=key,
             internal_sort=internal_sort,
         )
+        self.n_pairs = n_pairs
+        self.specific_pairs = specific_pairs
+        self.all_possible_pairs = all_possible_pairs
         self.group_target_value = group_target_value
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Prediction"
@@ -2140,11 +2147,19 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         # Call parent method
         super()._fit_check_params(ds, **kwargs)
 
-        # Check 'group_target_value' parameter
-        if not isinstance(self.group_target_value, bool):
-            raise TypeError(
-                type_error_message("group_target_value", self.group_target_value, bool)
-            )
+        # Check the pair related parameters
+        _check_pair_parameters(self)
+
+    def _fit_prepare_training_function_inputs(self, ds, computation_dir):
+        # Call the parent method
+        args, kwargs = super()._fit_prepare_training_function_inputs(
+            ds, computation_dir
+        )
+
+        # Rename parameters to be compatible with khiops.core
+        kwargs["max_pairs"] = kwargs.pop("n_pairs")
+
+        return args, kwargs
 
     def fit(self, X, y, **kwargs):
         """Fits a Selective Naive Bayes classifier according to X, y
@@ -2409,27 +2424,12 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     n_features : int, default 100
         *Multi-table only* : Maximum number of multi-table aggregate features to
         construct. See :doc:`/multi_table_primer` for more details.
-    n_pairs : int, default 0
-        Maximum number of pair features to construct. These features are 2D grid
-        partitions of univariate feature pairs. The grid is optimized such that in each
-        cell the target distribution is well approximated by a constant histogram. Only
-        pairs that are jointly more informative than their marginals may be taken into
-        account in the regressor.
     n_selected_features : int, default 0
         Maximum number of features to be selected in the SNB predictor. If equal to
         0 it selects all the features kept in the training.
     n_evaluated_features : int, default 0
         Maximum number of features to be evaluated in the SNB predictor training. If
         equal to 0 it evaluates all informative features.
-    specific_pairs : list of tuple, optional
-        User-specified pairs as a list of 2-tuples of feature names. If a given tuple
-        contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit ``n_pairs``). These pairs have top
-        priority: they are constructed first.
-    all_possible_pairs : bool, default ``True``
-        If ``True`` tries to create all possible pairs within the limit ``n_pairs``.
-        Pairs specified with ``specific_pairs`` have top priority: they are constructed
-        first.
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, it uses all
          possible rules.
@@ -2509,12 +2509,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     def __init__(
         self,
         n_features=100,
-        n_pairs=0,
         n_trees=0,
         n_selected_features=0,
         n_evaluated_features=0,
-        specific_pairs=None,
-        all_possible_pairs=True,
         construction_rules=None,
         verbose=False,
         output_dir=None,
@@ -2524,12 +2521,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     ):
         super().__init__(
             n_features=n_features,
-            n_pairs=n_pairs,
             n_trees=n_trees,
             n_selected_features=n_selected_features,
             n_evaluated_features=n_evaluated_features,
-            specific_pairs=specific_pairs,
-            all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
@@ -2821,10 +2815,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     ):
         super().__init__(
             n_features=n_features,
-            n_pairs=n_pairs,
             n_trees=n_trees,
-            specific_pairs=specific_pairs,
-            all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
@@ -2832,6 +2823,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             key=key,
             internal_sort=internal_sort,
         )
+        self.n_pairs = n_pairs
+        self.specific_pairs = specific_pairs
+        self.all_possible_pairs = all_possible_pairs
         self.categorical_target = categorical_target
         self.group_target_value = group_target_value
         self.transform_type_categorical = transform_type_categorical
@@ -2904,6 +2898,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         # Call parent method
         super()._fit_check_params(ds, **kwargs)
 
+        # Check the pair related parameters
+        _check_pair_parameters(self)
+
         # Check 'transform_type_categorical' parameter
         if not isinstance(self.transform_type_categorical, str):
             raise TypeError(
@@ -2922,6 +2919,15 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             )
         self._numerical_transform_method()  # Raises ValueError if invalid
 
+        # Check 'transform_type_pairs' parameter
+        if not isinstance(self.transform_type_pairs, str):
+            raise TypeError(
+                type_error_message(
+                    "transform_type_pairs", self.transform_type_pairs, str
+                )
+            )
+        self._pairs_transform_method()  # Raises ValueError if invalid
+
         # Check coherence between transformation types and tree number
         if (
             self.transform_type_categorical is None
@@ -2932,14 +2938,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
                 "transform_type_categorical and transform_type_numerical "
                 "cannot be both None with n_trees == 0."
             )
-        # Check 'transform_type_pairs' parameter
-        if not isinstance(self.transform_type_pairs, str):
-            raise TypeError(
-                type_error_message(
-                    "transform_type_pairs", self.transform_type_pairs, str
-                )
-            )
-        self._pairs_transform_method()  # Raises ValueError if invalid
 
         # Check 'informative_features_only' parameter
         if not isinstance(self.informative_features_only, bool):
@@ -3028,6 +3026,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         )
         # Rename encoder parameters, delete unused ones
         # to be compatible with khiops.core
+        kwargs["max_pairs"] = kwargs.pop("n_pairs")
         kwargs["keep_initial_categorical_variables"] = kwargs["keep_initial_variables"]
         kwargs["keep_initial_numerical_variables"] = kwargs.pop(
             "keep_initial_variables"
