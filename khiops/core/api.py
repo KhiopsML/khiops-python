@@ -748,12 +748,14 @@ def train_predictor(
     max_pairs : int, default 0
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
-        User-specified pairs as a list of 2-tuples of variable names. If a given tuple
-        contains only one non-empty variable name, then it generates all the pairs
-        containing it (within the limit ``max_pairs``).
+        User-specified pairs as a list of 2-tuples of feature names. If a given tuple
+        contains only one non-empty feature name, then it generates all the pairs
+        containing it (within the maximum limit ``max_pairs``). These pairs have top
+        priority: they are constructed first.
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
-        The pairs and variables given in ``specific_pairs`` have priority.
+        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+        first.
     only_pairs_with : str, default ""
         Constructs only pairs with the specifed variable name. If equal to the empty
         string "" it considers all variables to make pairs.
@@ -1072,12 +1074,14 @@ def train_recoder(
     max_pairs : int, default 0
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
-        User-specified pairs as a list of 2-tuples of variable names. If a given tuple
-        contains only one non-empty variable name, then it generates all the pairs
-        containing it (within the limit ``max_pairs``).
+        User-specified pairs as a list of 2-tuples of feature names. If a given tuple
+        contains only one non-empty feature name, then it generates all the pairs
+        containing it (within the maximum limit ``max_pairs``). These pairs have top
+        priority: they are constructed first.
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
-        The pairs and variables given in ``specific_pairs`` have priority.
+        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+        first.
     only_pairs_with : str, default ""
         Constructs only pairs with the specifed variable name. If equal to the empty
         string "" it considers all variables to make pairs.
