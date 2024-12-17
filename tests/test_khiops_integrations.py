@@ -9,7 +9,9 @@
 import os
 import platform
 import shutil
+import stat
 import subprocess
+import tempfile
 import unittest
 
 import khiops.core as kh
@@ -94,6 +96,76 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             self.assertTrue(os.access(mpiexec_path, os.X_OK))
         else:
             self.skipTest("Skipping test: MPI support is not installed")
+
+    def test_environment_error_on_bogus_khiops_env_script(self):
+        """Test that error is raised on reading erroneous khiops_env script"""
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+
+            # Create temporary khiops_env binary dir
+            # Note: The "bin" subdir is needed for Windows.
+            temp_khiops_env_dir = os.path.join(temp_dir, "bin")
+            os.makedirs(temp_khiops_env_dir)
+
+            # Create temporary khiops_env path
+            temp_khiops_env_file_path = os.path.join(temp_khiops_env_dir, "khiops_env")
+
+            # On Windows, set KHIOPS_HOME to the temp dir
+            original_khiops_home_env_var = os.environ.get("KHIOPS_HOME")
+            if platform.system() == "Windows":
+                os.environ["KHIOPS_HOME"] = temp_dir
+                temp_khiops_env_file_path += ".cmd"
+
+            # Replace the khiops_env with a script that fails showing an error message
+            with open(
+                temp_khiops_env_file_path, "w", encoding="utf-8"
+            ) as temp_khiops_env_file:
+                test_error_message = "Test Khiops environment error"
+                if platform.system() == "Windows":
+                    temp_khiops_env_file.write("@echo off\r\n")
+                    temp_khiops_env_file.write(f"echo {test_error_message}>&2\r\n")
+                    temp_khiops_env_file.write("exit /b 1")
+                else:
+                    temp_khiops_env_file.write("#!/bin/bash\n")
+                    temp_khiops_env_file.write(f'>&2 echo "{test_error_message}"\n')
+                    temp_khiops_env_file.write("exit 1")
+
+            # Make the temporary khiops_env file executable
+            os.chmod(
+                temp_khiops_env_file_path,
+                os.stat(temp_khiops_env_file_path).st_mode | stat.S_IEXEC,
+            )
+
+            # Store initial PATH
+            original_path_env_var = os.environ["PATH"]
+
+            # Prepend path to temporary khiops_env to PATH
+            os.environ["PATH"] = (
+                temp_khiops_env_dir + os.pathsep + original_path_env_var
+            )
+
+            # Create new KhiopsLocalRunner and capture the exception
+            with self.assertRaises(KhiopsEnvironmentError) as context:
+                _ = KhiopsLocalRunner()
+
+            # Restore initial PATH
+            os.environ["PATH"] = original_path_env_var
+
+            # On Windows, restore initial KHIOPS_HOME
+            if (
+                platform.system() == "Windows"
+                and original_khiops_home_env_var is not None
+            ):
+                os.environ["KHIOPS_HOME"] = original_khiops_home_env_var
+
+        # Check that the script error message matches the expected one
+        expected_msg = (
+            "Error initializing the environment for Khiops from the "
+            f"{temp_khiops_env_file_path} script. "
+            f"Contents of stderr:\n{test_error_message}\n"
+        )
+        output_msg = str(context.exception)
+        self.assertEqual(output_msg, expected_msg)
 
     def test_runner_with_conda_based_environment(self):
         """Test that local runner works in non-Conda, Conda-based environments"""
