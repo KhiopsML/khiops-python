@@ -2733,7 +2733,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         See the documentation for the ``numerical_recoding_method`` parameter of the
         `~.api.train_recoder` function for more details.
-    transform_pairs: str, default "part_id"
+    transform_type_pairs : str, default "part_id"
         Type of transformation for bivariate features. Valid values:
             - "part_id"
             - "part_label"
@@ -2811,7 +2811,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         keep_initial_variables=False,
         transform_type_categorical="part_id",
         transform_type_numerical="part_id",
-        transform_pairs="part_id",
+        transform_type_pairs="part_id",
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -2835,7 +2835,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         self.group_target_value = group_target_value
         self.transform_type_categorical = transform_type_categorical
         self.transform_type_numerical = transform_type_numerical
-        self.transform_pairs = transform_pairs
+        self.transform_type_pairs = transform_type_pairs
         self.informative_features_only = informative_features_only
         self.keep_initial_variables = keep_initial_variables
         self._khiops_model_prefix = "R_"
@@ -2892,12 +2892,12 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             "conditional_info": "conditional info",
             None: "none",
         }
-        if self.transform_pairs not in _transform_types:
+        if self.transform_type_pairs not in _transform_types:
             raise ValueError(
-                "'transform_pairs' must be one of the following:"
+                "'transform_type_pairs' must be one of the following:"
                 ",".join(_transform_types.keys)
             )
-        return _transform_types[self.transform_pairs]
+        return _transform_types[self.transform_type_pairs]
 
     def _fit_check_params(self, ds, **kwargs):
         # Call parent method
@@ -2931,10 +2931,12 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
                 "transform_type_categorical and transform_type_numerical "
                 "cannot be both None with n_trees == 0."
             )
-        # Check 'transform_pairs' parameter
-        if not isinstance(self.transform_pairs, str):
+        # Check 'transform_type_pairs' parameter
+        if not isinstance(self.transform_type_pairs, str):
             raise TypeError(
-                type_error_message("transform_pairs", self.transform_pairs, str)
+                type_error_message(
+                    "transform_type_pairs", self.transform_type_pairs, str
+                )
             )
         self._pairs_transform_method()  # Raises ValueError if invalid
 
@@ -3036,7 +3038,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         del kwargs["transform_type_categorical"]
         del kwargs["transform_type_numerical"]
-        del kwargs["transform_pairs"]
+        del kwargs["transform_type_pairs"]
         del kwargs["categorical_target"]
 
         return args, kwargs
