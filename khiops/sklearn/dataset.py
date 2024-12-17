@@ -346,7 +346,7 @@ def get_khiops_variable_name(column_id):
     return variable_name
 
 
-def read_internal_data_table(file_path_or_stream):
+def read_internal_data_table(file_path_or_stream, column_dtypes=None):
     """Reads into a DataFrame a data table file with the internal format settings
 
     The table is read with the following settings:
@@ -357,18 +357,34 @@ def read_internal_data_table(file_path_or_stream):
     - Use `csv.QUOTE_MINIMAL`
     - double quoting enabled (quotes within quotes can be escaped with '""')
     - UTF-8 encoding
+    - User-specified dtypes (optional)
 
     Parameters
     ----------
     file_path_or_stream : str or file object
         The path of the internal data table file to be read or a readable file
         object.
+    column_dtypes : dict, optional
+        Dictionary linking column names with dtypes. See ``dtype`` parameter of the
+        `pandas.read_csv` function. If not set, then the column types are detected
+        automatically by pandas.
 
     Returns
     -------
     `pandas.DataFrame`
-        The dataframe representation.
+        The dataframe representation of the data table.
     """
+    # Change the 'U' types (Unicode strings) to 'O' because pandas does not support them
+    # in read_csv
+    if column_dtypes is not None:
+        execution_column_dtypes = {}
+        for column_name, dtype in column_dtypes.items():
+            if hasattr(dtype, "kind") and dtype.kind == "U":
+                execution_column_dtypes[column_name] = np.dtype("O")
+    else:
+        execution_column_dtypes = None
+
+    # Read and return the dataframe
     return pd.read_csv(
         file_path_or_stream,
         sep="\t",
@@ -377,6 +393,7 @@ def read_internal_data_table(file_path_or_stream):
         quoting=csv.QUOTE_MINIMAL,
         doublequote=True,
         encoding="utf-8",
+        dtype=execution_column_dtypes,
     )
 
 
@@ -1132,6 +1149,11 @@ class PandasTable(DatasetTable):
             f"dtypes={dtypes_str}>"
         )
 
+    def get_column_dtype(self, column_id):
+        if column_id not in self.data_source.dtypes:
+            raise KeyError(f"Column '{column_id}' not found in the dtypes field")
+        return self.data_source.dtypes[column_id]
+
     def create_table_file_for_khiops(
         self, output_dir, sort=True, target_column=None, target_column_id=None
     ):
@@ -1213,6 +1235,9 @@ class NumpyTable(DatasetTable):
             f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
             f"dtype={dtype_str}; target={self.target_column_id}>"
         )
+
+    def get_column_dtype(self, _):
+        return self.data_source.dtype
 
     def create_table_file_for_khiops(
         self, output_dir, sort=True, target_column=None, target_column_id=None
@@ -1299,6 +1324,9 @@ class SparseTable(DatasetTable):
             f"<{self.__class__.__name__}; cols={list(self.column_ids)}; "
             f"dtype={dtype_str}>"
         )
+
+    def get_column_dtype(self, _):
+        return self.data_source.dtype
 
     def create_khiops_dictionary(self):
         """Creates a Khiops dictionary representing this sparse table
