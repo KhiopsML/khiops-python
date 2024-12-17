@@ -254,7 +254,7 @@ def copy_from_local(uri_or_path, local_path):
     Raises
     ------
     RuntimeError
-        If there was a problem when removing.
+        If there was a problem when copying.
     """
     create_resource(uri_or_path).copy_from_local(local_path)
 
@@ -272,7 +272,7 @@ def copy_to_local(uri_or_path, local_path):
     Raises
     ------
     RuntimeError
-        If there was a problem when removing.
+        If there was a problem when copying.
     """
     create_resource(uri_or_path).copy_to_local(local_path)
 
@@ -668,29 +668,26 @@ class AmazonS3Resource(FilesystemResource):
             )
 
     def copy_from_local(self, local_path):
-        response = self.s3_client.Bucket(self.uri_info.netloc).upload_file(
-            local_path, self.uri_info.path[1:]
-        )
-        status_code = response["ResponseMetadata"]["HTTPStatusCode"]
-        copy_ok = 200 <= status_code <= 299
-        if not copy_ok:
-            raise RuntimeError(
-                f"S3 copy_from_local failed {self.uri} with code {status_code}: "
-                + json.dumps(response)
+        # boto3.s3.transfer.upload_file is not expected to return an HTTP response
+        # but instead raises a S3UploadFailedError exception in case of error
+        try:
+            self.s3_client.Bucket(self.uri_info.netloc).upload_file(
+                local_path, self.uri_info.path[1:]
             )
+        # normalize the raised exception
+        except Exception as e:
+            raise RuntimeError(f"S3 copy_from_local failed {self.uri}") from e
 
     def copy_to_local(self, local_path):
-        response = self.s3_client.Bucket(self.uri_info.netloc).download_file(
-            local_path, self.uri_info.path[1:]
-        )
-        status_code = response["ResponseMetadata"]["HTTPStatusCode"]
-        copy_ok = 200 <= status_code <= 299
-        if not copy_ok:
-            raise RuntimeError(
-                f"S3 download failed {self.uri} with code {status_code}: "
-                + json.dumps(response)
+        # boto3.s3.transfer.download_file is not expected to return an HTTP response
+        # but instead raises a S3UploadFailedError exception in case of error
+        try:
+            self.s3_client.Bucket(self.uri_info.netloc).download_file(
+                self.uri_info.path[1:], local_path
             )
-        return copy_ok
+        # normalize the raised exception
+        except Exception as e:
+            raise RuntimeError(f"S3 download failed {self.uri}") from e
 
     def list_dir(self):
         # Add an extra slash to the path to treat it as a folder
