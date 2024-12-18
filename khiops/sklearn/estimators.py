@@ -273,8 +273,8 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # pylint: disable=import-outside-toplevel
         try:
             from sklearn.utils import TransformerTags
-        except ImportError:
-            raise NotImplementedError("__sklearn_tags__ API unsupported.")
+        except ImportError as exc:
+            raise NotImplementedError("__sklearn_tags__ API unsupported.") from exc
 
         # Set the tags from _more_tags
         tags = super().__sklearn_tags__()

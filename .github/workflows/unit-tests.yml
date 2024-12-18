@@ -231,6 +231,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          Set-StrictMode -Version Latest
+          $PSNativeCommandUseErrorActionPreference = $true
 
           # Refresh environment variables by using the Chocolatey tool
           # Otherwise, the env vars set in the registry by the Khiops installer do not get updated

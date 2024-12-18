@@ -842,7 +842,12 @@ class KhiopsLocalRunner(KhiopsRunner):
             stderr=subprocess.PIPE,
             universal_newlines=True,
         ) as khiops_env_process:
-            stdout, _ = khiops_env_process.communicate()
+            stdout, stderr = khiops_env_process.communicate()
+            if khiops_env_process.returncode != 0:
+                raise KhiopsEnvironmentError(
+                    "Error initializing the environment for Khiops from the "
+                    f"{khiops_env_path} script. Contents of stderr:\n{stderr}"
+                )
             for line in stdout.split("\n"):
                 tokens = line.rstrip().split(maxsplit=1)
                 if len(tokens) == 2:
