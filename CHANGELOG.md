@@ -6,17 +6,12 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
-
-### Added
-
-- (General) `visualize_report` helper function to open reports with the Khiops Visualization and
-  Khiops Co-Visualization app.
-
-## 10.2.3.1 - 2024-11-27
+## 10.2.4.0 - 2024-12-19
 
 ### Added
 - (General) Support for Python 3.13.
+- (General) `visualize_report` helper function to open reports with the Khiops Visualization and
+  Khiops Co-Visualization app.
 
 ### Fixed
 - (General) Initialization failing in Conda-based environments.
