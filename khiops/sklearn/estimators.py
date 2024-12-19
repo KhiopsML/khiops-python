@@ -1926,11 +1926,11 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         *Multi-table only* : Maximum number of multi-table aggregate features to
         construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
-        Maximum number of pair features to construct. These features represent a 2D grid
-        partition of the domain of a pair of features in which is optimized in a way
-        that the cells are the purest possible with respect to the target. Only pairs
-        which jointly are more informative that its univariate components may be taken
-        into account in the classifier.
+        Maximum number of pair features to construct. These features are 2D grid
+        partitions of univariate feature pairs. The grid is optimized such that in each
+        cell the target distribution is well approximated by a constant histogram. Only
+        pairs that are jointly more informative than their marginals may be taken into
+        account in the classifier.
     n_trees : int, default 10
         Maximum number of decision tree features to construct. The constructed trees
         combine other features, either native or constructed. These features usually
@@ -1945,13 +1945,15 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit n_pairs).
-    all_possible_pairs : bool, default True
-        If True tries to create all possible pairs within the limit max_pairs.
-        The pairs and features given in specific_pairs have priority.
+        containing it (within the maximum limit ``n_pairs``). These pairs have top
+        priority: they are constructed first.
+    all_possible_pairs : bool, default ``True``
+        If ``True`` tries to create all possible pairs within the limit ``n_pairs``.
+        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+        first.
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, it uses all
-         possible rules.
+        possible rules.
     group_target_value : bool, default ``False``
         Allows grouping of the target values in classification. It can substantially
         increase the training time.
@@ -2405,11 +2407,11 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         *Multi-table only* : Maximum number of multi-table aggregate features to
         construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
-        Maximum number of pair features to construct. These features represent a 2D grid
-        partition of the domain of a pair of features in which is optimized in a way
-        that the cells are the purest possible with respect to the target. Only pairs
-        which jointly are more informative that its univariate components may be taken
-        into account in the regressor.
+        Maximum number of pair features to construct. These features are 2D grid
+        partitions of univariate feature pairs. The grid is optimized such that in each
+        cell the target distribution is well approximated by a constant histogram. Only
+        pairs that are jointly more informative than their marginals may be taken into
+        account in the regressor.
     n_selected_features : int, default 0
         Maximum number of features to be selected in the SNB predictor. If equal to
         0 it selects all the features kept in the training.
@@ -2419,10 +2421,12 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit n_pairs).
-    all_possible_pairs : bool, default True
-        If True tries to create all possible pairs within the limit max_pairs.
-        The pairs and features given in specific_pairs have priority.
+        containing it (within the maximum limit ``n_pairs``). These pairs have top
+        priority: they are constructed first.
+    all_possible_pairs : bool, default ``True``
+        If ``True`` tries to create all possible pairs within the limit ``n_pairs``.
+        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+        first.
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, it uses all
          possible rules.
@@ -2678,9 +2682,11 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         *Multi-table only* : Maximum number of multi-table aggregate features to
         construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
-        Maximum number of pair features to construct. These features represent a 2D grid
-        partition of the domain of a pair of features in which is optimized in a way
-        that the cells are the purest possible with respect to the target.
+        Maximum number of pair features to construct. These features are 2D grid
+        partitions of univariate feature pairs. The grid is optimized such that in each
+        cell the target distribution is well approximated by a constant histogram. Only
+        pairs that are jointly more informative than their marginals may be taken into
+        account in the encoder.
     n_trees : int, default 10
         Maximum number of decision tree features to construct. The constructed trees
         combine other features, either native or constructed. These features usually
@@ -2688,10 +2694,12 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit n_pairs).
-    all_possible_pairs : bool, default True
-        If True tries to create all possible pairs within the limit max_pairs.
-        The pairs and features given in specific_pairs have priority.
+        containing it (within the maximum limit ``n_pairs``). These pairs have top
+        priority: they are constructed first.
+    all_possible_pairs : bool, default ``True``
+        If ``True`` tries to create all possible pairs within the limit ``n_pairs``.
+        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+        first.
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, it uses all
          possible rules.
