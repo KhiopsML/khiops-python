@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "extract_clusters",
         "khiops_coclustering",
-        "9.0.0",
+        "10.0.0",
         [
             ("coclustering_file_path", StringLikeType),
             ("cluster_variable", StringLikeType),

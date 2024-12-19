@@ -12,7 +12,9 @@ import shutil
 import unittest
 import warnings
 
+import numpy as np
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.validation import NotFittedError, check_is_fitted
 
 import khiops.core as kh
 from khiops.sklearn.estimators import (
@@ -2621,15 +2623,22 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
     def test_sklearn_check_estimator(self):
         # Set the estimators to test
         # Notes:
+        # - We use n_trees=0 so the tests execute faster
         # - We omit KhiopsCoclustering because he needs special inputs to work well
         #   and sklearn's check_estimator method does not accept them.
-        # - KhiopsEncoder es set with "0-1_normalization" as the preserve_dtype as the
-        #   default make fail many assert_almost_equal functions in sklearn and those
+        # - KhiopsEncoder:
+        #   - We set it with transform_type_numerical="0-1_normalization" as the tests
         #   expect numeric types
+        #   - We set it with informative_features_only=False so it always have output
+        #   columns (sklearn estimator checks expect non-empty encoders)
         khiops_estimators = [
             KhiopsClassifier(n_trees=0),
             KhiopsRegressor(n_trees=0),
-            KhiopsEncoder(n_trees=0, transform_type_numerical="0-1_normalization"),
+            KhiopsEncoder(
+                n_trees=0,
+                informative_features_only=False,
+                transform_type_numerical="0-1_normalization",
+            ),
         ]
 
         # Ignore the "No informative variables" warnings
@@ -2647,15 +2656,8 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
                 for estimator, check in check_estimator(
                     khiops_estimator, generate_only=True
                 ):
-                    # Skip some checks for KhiopsEncoder as they yield "empty"
-                    # deployed tables; they need to be implemented manually
                     check_name = check.func.__name__
-                    if check_name in [
-                        "check_fit_score_takes_y",
-                        "check_fit_idempotent",
-                        # yields "empty" deployed table as of sklearn >= 1.5:
-                        "check_estimators_dtypes",
-                    ] and isinstance(estimator, KhiopsEncoder):
+                    if check_name == "check_n_features_in_after_fitting":
                         continue
                     print(
                         f">>> Executing {check_name} on "
@@ -2668,3 +2670,37 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
                     ):
                         check(estimator)
                     print("Done")
+
+
+class KhiopsSklearnVariousTests(unittest.TestCase):
+    """Miscelanous sklearn classes tests"""
+
+    def assertNotFit(self, estimator):
+        """Asserts that an estimator is not in 'fit' state"""
+        try:
+            check_is_fitted(estimator)
+            self.fail(
+                f"Expected {estimator.__class__.__name__} not to be in 'fit' state."
+            )
+        except NotFittedError:
+            pass
+
+    def test_khiops_encoder_no_output_variables_implies_not_fit(self):
+        """Test that KhiopsEncoder is not fit when there are no output columns"""
+        # Obtain the features of Iris
+        df = KhiopsTestHelper.get_monotable_data("Iris")
+        X = df.drop("Class", axis=1)
+
+        # Create a noise target
+        rng = np.random.default_rng(seed=123)
+        y = rng.binomial(1, 0.5, size=X.shape[0])
+
+        # Fit a KhiopsEncoder and check we get a warning about no having output columns
+        khe = KhiopsEncoder()
+        with self.assertWarnsRegex(
+            UserWarning, "Encoder is not fit because Khiops didn't create any output"
+        ):
+            khe.fit(X, y)
+
+        # Check that the encoder is not fit
+        self.assertNotFit(khe)

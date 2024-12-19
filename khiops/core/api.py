@@ -10,9 +10,9 @@ The methods in this module allow to execute all Khiops and Khiops Coclustering t
 
 See also:
     - :ref:`core-api-common-params`
-    - :ref:`core-api-env-vars`
     - :ref:`core-api-input-types`
     - :ref:`core-api-sampling-mode`
+    - :ref:`core-api-env-samples-dir`
 """
 import io
 import os
@@ -24,19 +24,14 @@ from khiops.core.exceptions import KhiopsRuntimeError
 from khiops.core.helpers import build_multi_table_dictionary_domain
 from khiops.core.internals.common import (
     CommandLineOptions,
+    SystemSettings,
     create_unambiguous_khiops_path,
     deprecation_message,
     is_string_like,
-    removal_message,
-    renaming_message,
     type_error_message,
 )
 from khiops.core.internals.io import KhiopsOutputWriter
-from khiops.core.internals.runner import (
-    _get_tool_info_khiops9,
-    _get_tool_info_khiops10,
-    get_runner,
-)
+from khiops.core.internals.runner import get_runner
 from khiops.core.internals.task import get_task_registry
 from khiops.core.internals.version import KhiopsVersion
 
@@ -122,7 +117,9 @@ def _run_task(task_name, task_args):
     stdout_file_path = task_args["stdout_file_path"]
     stderr_file_path = task_args["stderr_file_path"]
 
-    command_line_options, task_called_with_domain = _preprocess_arguments(task_args)
+    command_line_options, system_settings, task_called_with_domain = (
+        _preprocess_arguments(task_args)
+    )
 
     # Obtain the api function from the registry
     task = get_task_registry().get_task(task_name, get_khiops_version())
@@ -134,6 +131,7 @@ def _run_task(task_name, task_args):
             task_args,
             command_line_options=command_line_options,
             trace=trace,
+            system_settings=system_settings,
             stdout_file_path=stdout_file_path,
             stderr_file_path=stderr_file_path,
         )
@@ -153,8 +151,9 @@ def _preprocess_arguments(args):
     Returns
     -------
     tuple
-        A 2-tuple containing:
+        A 3-tuple containing:
         - A `~.CommandLineOptions` instance
+        - A `~.SystemSettings` instance
         - A `bool` that is ``True`` if the value of the `dictionary_file_or_domain`
           `args` key is a `~.DictionaryDomain` instance.
 
@@ -173,10 +172,35 @@ def _preprocess_arguments(args):
         task_file_path=(args["task_file_path"] if "task_file_path" in args else ""),
     )
 
+    # Create a system settings object
+    system_settings = SystemSettings()
+    for arg in args:
+        if arg == "max_cores":
+            max_cores = args[arg]
+            if max_cores is not None:
+                system_settings.max_cores = int(max_cores)
+        elif arg == "memory_limit_mb":
+            memory_limit_mb = args[arg]
+            if memory_limit_mb is not None:
+                system_settings.memory_limit_mb = int(memory_limit_mb)
+        elif arg == "temp_dir":
+            temp_dir = args[arg]
+
+            # temp_dir is set to a non-empty string
+            if temp_dir:
+                system_settings.temp_dir = temp_dir
+        elif arg == "scenario_prologue":
+            scenario_prologue = args[arg]
+
+            # User-defined scenario prologue is set to a non-empty string
+            if scenario_prologue:
+                system_settings.scenario_prologue = scenario_prologue
+    system_settings.check()
+
     # Clean the args to leave only the task arguments
     _clean_task_args(args)
 
-    return command_line_options, task_is_called_with_domain
+    return command_line_options, system_settings, task_is_called_with_domain
 
 
 def _preprocess_task_arguments(task_args):
@@ -360,6 +384,7 @@ def _clean_task_args(task_args):
 
     More precisely it removes:
         - Command line arguments (they already are in another object).
+        - System settings (they already are in another object).
         - Parameters removed from the API and warns about it.
         - Renamed API parameters and warns about it.
     """
@@ -370,61 +395,23 @@ def _clean_task_args(task_args):
         "output_scenario_path",
         "task_file_path",
     ]
+    system_settings_arg_names = [
+        "max_cores",
+        "memory_limit_mb",
+        "temp_dir",
+        "scenario_prologue",
+    ]
     other_arg_names = [
         "dictionary_file_path_or_domain",
         "trace",
         "stdout_file_path",
         "stderr_file_path",
     ]
-    for arg_name in command_line_arg_names + other_arg_names:
+    for arg_name in (
+        command_line_arg_names + system_settings_arg_names + other_arg_names
+    ):
         if arg_name in task_args:
             del task_args[arg_name]
-
-    # Remove removed parameters
-    removed_parameters = [
-        ("dictionary_domain", "dictionary_file_path_or_domain", "10"),
-        ("fill_test_database_settings", "use_complement_as_test", "10"),
-        ("map_predictor", None, "10"),
-        ("nb_predictor", None, "10"),
-        ("only_pairs_with", "specific_pairs", "10"),
-    ]
-    for arg_name, replacement_arg_name, removal_version in removed_parameters:
-        if arg_name in task_args and get_runner().khiops_version >= KhiopsVersion(
-            removal_version
-        ):
-            del task_args[arg_name]
-            warnings.warn(
-                removal_message(
-                    arg_name,
-                    removal_version,
-                    replacement=replacement_arg_name,
-                ),
-                stacklevel=4,
-            )
-    # Remove renamed parameters
-    renamed_parameters = [
-        ("max_evaluated_variable_number", "max_evaluated_variables", "10"),
-        ("max_selected_variable_number", "max_selected_variables", "10"),
-        ("constructed_number", "max_constructed_variables", "10"),
-        ("tree_number", "max_trees", "10"),
-        ("pair_number", "max_pairs", "10"),
-        ("max_interval_number", "max_intervals", "10"),
-        ("max_group_number", "max_groups", "10"),
-        ("max_variable_number", "max_variables", "10"),
-        ("recode_categorical_variables", "categorical_recoding_method", "10"),
-        ("recode_numerical_variables", "numerical_recoding_method", "10"),
-        ("recode_bivariate_variables", "pairs_recoding_method", "10"),
-        ("max_cell_number", "max_cells", "10"),
-    ]
-    for arg_name, new_arg_name, rename_version in renamed_parameters:
-        if arg_name in task_args and get_runner().khiops_version >= KhiopsVersion(
-            rename_version
-        ):
-            del task_args[arg_name]
-            warnings.warn(
-                renaming_message(arg_name, new_arg_name, rename_version),
-                stacklevel=4,
-            )
 
 
 #########
@@ -476,6 +463,10 @@ def export_dictionary_as_json(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
 ):
     """Exports a Khiops dictionary file to JSON format (``.kdicj``)
 
@@ -513,6 +504,10 @@ def build_dictionary_from_data_table(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Builds a dictionary file by analyzing a data table file
@@ -568,6 +563,10 @@ def check_database(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Checks if a data table is compatible with a dictionary file
@@ -665,6 +664,10 @@ def train_predictor(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Trains a model from a data table
@@ -721,9 +724,11 @@ def train_predictor(
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
     snb_predictor : bool, default ``True``
-        If ``True`` it trains a Selective Naive Bayes predictor.
+        If ``True`` it trains a Selective Naive Bayes predictor. **Deprecated** will be
+        removed in Khiops 11.
     univariate_predictor_number : int, default 0
-        Number of univariate predictors to train.
+        Number of univariate predictors to train.**Deprecated** will be removed in
+        Khiops 11.
     map_predictor : bool, default ``False``
         If ``True`` trains a Maximum a Posteriori Naive Bayes predictor.
         **Deprecated** will be removed in Khiops Python 11.
@@ -759,23 +764,25 @@ def train_predictor(
     discretization_method : str
         Name of the discretization method. Its valid values depend on the task:
             - Supervised: "MODL" (default), "EqualWidth" or "EqualFrequency"
-            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or  "None"
+            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or "None"
     min_interval_frequency : int, default 0
         Minimum number of instances in an interval. If equal to 0 it is
-        automatically calculated.
+        automatically calculated. **Deprecated** will be removed in Khiops 11.
     max_intervals : int, default 0
         Maximum number of intervals to construct. If equal to 0 it is automatically
-        calculated.
+        calculated. **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
     grouping_method : str
         Name of the grouping method. Its valid values depend on the task:
             - Supervised: "MODL" (default) or "BasicGrouping"
             - Unsupervised: "BasicGrouping" (default) or "None"
     min_group_frequency : int, default 0
-        Minimum number of instances for a group.
+        Minimum number of instances for a group. **Deprecated** will be removed in
+        Khiops 11.
     max_groups : int, default 0
         Maximum number of groups. If equal to 0 it is automatically calculated.
+        **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -856,6 +863,10 @@ def evaluate_predictor(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Evaluates the predictors in a dictionary file on a database
@@ -904,7 +915,7 @@ def evaluate_predictor(
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -991,6 +1002,10 @@ def train_recoder(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Trains a recoding model from a data table
@@ -1072,14 +1087,14 @@ def train_recoder(
         substantially increase the training time.
     discretization_method : str
         Name of the discretization method. Its valid values depend on the task:
-            - Supervised: "MODL" (default), "EqualWidth" or "EqualFrequency".
-            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or "None".
+            - Supervised: "MODL" (default), "EqualWidth" or "EqualFrequency"
+            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or "None"
     min_interval_frequency : int, default 0
-        Minimum number of instances in an interval. If equal to 0 it is automatically
-        calculated.
+        Minimum number of instances in an interval. If equal to 0 it is
+        automatically calculated. **Deprecated** will be removed in Khiops 11.
     max_intervals : int, default 0
         Maximum number of intervals to construct. If equal to 0 it is automatically
-        calculated.
+        calculated. **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
     informative_variables_only : bool, default ``True``
         If ``True`` keeps only informative variables.
     max_variables : int, default 0
@@ -1115,14 +1130,16 @@ def train_recoder(
             - "none": Keeps the variable as-is
     grouping_method : str
         Name of the grouping method. Its vaild values depend on the task:
-            - Supervised: "MODL" (default) or "BasicGrouping".
-            - Unsupervised: "BasicGrouping" (default) or "None".
+            - Supervised: "MODL" (default) or "BasicGrouping"
+            - Unsupervised: "BasicGrouping" (default) or "None"
     min_group_frequency : int, default 0
-        Minimum number of instances for a group.
+        Minimum number of instances for a group. **Deprecated** will be removed in
+        Khiops 11.
     max_groups : int, default 0
         Maximum number of groups. If equal to 0 it is automatically calculated.
+        **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1184,6 +1201,10 @@ def deploy_model(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Deploys a model on a data table
@@ -1235,7 +1256,7 @@ def deploy_model(
         A dictionary containing the output data paths and file paths for a multi-table
         dictionary file. For more details see :doc:`/multi_table_primer`.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1272,6 +1293,10 @@ def build_deployed_dictionary(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     """Builds a dictionary file to read the output table of a deployed model
@@ -1323,6 +1348,10 @@ def sort_data_table(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Sorts a data table
@@ -1395,6 +1424,10 @@ def extract_keys_from_data_table(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Extracts from data table unique occurrences of a key variable
@@ -1470,6 +1503,10 @@ def train_coclustering(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     r"""Trains a coclustering model from a data table
@@ -1518,7 +1555,7 @@ def train_coclustering(
     min_optimization_time : int, default 0
         Minimum optimization time in seconds.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1572,6 +1609,10 @@ def simplify_coclustering(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     """Simplifies a coclustering model
@@ -1597,7 +1638,7 @@ def simplify_coclustering(
       Dictionary that associate variable names to their maximum number of parts to
       preserve in the simplified coclustering. If not set there is no limit.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1641,6 +1682,10 @@ def prepare_coclustering_deployment(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     """Prepares a *individual-variable* coclustering deployment
@@ -1678,7 +1723,7 @@ def prepare_coclustering_deployment(
     variables_prefix : str, default ""
         Prefix for the variables in the deployment dictionary.
     results_prefix : str, default ""
-        Prefix of the result files.
+        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1713,6 +1758,10 @@ def extract_clusters(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
     **kwargs,
 ):
     """Extracts clusters to a tab separated (TSV) file
@@ -1765,6 +1814,10 @@ def detect_data_table_format(
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
 ):
     """Detects the format of a data table
 
@@ -1779,6 +1832,8 @@ def detect_data_table_format(
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str, optional
         Name of the dictionary.
+    ... :
+        See :ref:`core-api-common-params`.
 
     Returns
     -------
@@ -1939,55 +1994,3 @@ def build_multi_table_dictionary(
 
 
 # pylint: enable=unused-argument
-
-
-def get_khiops_info():
-    """Returns the Khiops license information
-
-    .. warning::
-        This method is *deprecated* since Khiops 10.1 and will be removed in Khiops
-        11. Use `get_khiops_version` to obtain the Khiops version of your system.
-
-    Returns
-    -------
-    tuple
-        A 4-tuple containing:
-
-        - The tool version
-        - The name of the machine
-        - The ID of the machine
-        - The number of remaining days for the license
-    """
-    warnings.warn(deprecation_message("get_khiops_info", "11.0.0"))
-    if get_runner().khiops_version >= KhiopsVersion("10.1.0"):
-        return get_khiops_version(), None, None, None
-    elif get_runner().khiops_version >= KhiopsVersion("10.0.0"):
-        return _get_tool_info_khiops10(get_runner(), "khiops")
-    else:
-        return _get_tool_info_khiops9(get_runner(), "khiops")
-
-
-def get_khiops_coclustering_info():
-    """Returns the Khiops Coclustering license information
-
-    .. warning::
-        This method is *deprecated* since Khiops 10.1 and will be removed in Khiops
-        11. Use `get_khiops_version` to obtain the Khiops version of your system.
-
-    Returns
-    -------
-    tuple
-        A 4-tuple containing:
-
-        - The tool version
-        - The name of the machine
-        - The ID of the machine
-        - The number of remaining days for the license
-    """
-    warnings.warn(deprecation_message("get_khiops_coclustering_info", "11.0.0"))
-    if get_runner().khiops_version >= KhiopsVersion("10.1.0"):
-        return get_khiops_version(), None, None, None
-    elif get_runner().khiops_version >= KhiopsVersion("10.0.0"):
-        return _get_tool_info_khiops10(get_runner(), "khiops_coclustering")
-    else:
-        return _get_tool_info_khiops9(get_runner(), "khiops_coclustering")

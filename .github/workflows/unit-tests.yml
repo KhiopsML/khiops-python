@@ -1,19 +1,19 @@
 ---
 name: Unit Tests
 env:
-  DEFAULT_SAMPLES_REVISION: main
-  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.3
+  DEFAULT_SAMPLES_REVISION: 10.2.4
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.4
 on:
   workflow_dispatch:
     inputs:
       samples-revision:
-        default: main
-        description: Git tag, branch or commit for the khiops-samples repository
+        default: 10.2.4
+        description: Git Tag/Branch/Commit for the khiops-samples Repo
       image-tag:
-        default: 10.2.3.0
+        default: latest
         description: Development Docker Image Tag
       khiops-desktop-revision:
-        default: 10.2.3
+        default: 10.2.4
         description: Khiops Windows Desktop Application Version
       run-long-tests:
         type: boolean
@@ -21,6 +21,13 @@ on:
         default: false
         description: Execute long tests
   pull_request:
+    paths:
+      - khiops/**.py
+      - pykhiops/**.py  # TODO: Remove for Khiops 11
+      - tests/**.py
+      - tests/resources/**
+      - '!tests/resources/**.md'
+      - .github/workflows/unit-tests.yml
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -30,13 +37,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
     container:
       # 'latest' default image tag cannot be set as an environment variable,
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.2.3.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -54,10 +61,10 @@ jobs:
           fetch-depth: 0
       # We move SAMPLES_REVISION to the environment so that we can use
       # them in both push and workflow_dispatch events
-      - name: Move SAMPLES_REVISION to the environment (push event)
-        if: github.event_name == 'push'
+      - name: Set SAMPLES_REVISION on 'pull_request' events
+        if: github.event_name == 'pull_request'
         run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
-      - name: Move SAMPLES_REVISION to the environment (workflow_dispatch event)
+      - name: Set SAMPLES_REVISION on 'workflow_dispatch' events
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
@@ -78,7 +85,7 @@ jobs:
           for CONDA_ENV in $CONDA_ENVS
           do
             mkdir -p -m u+rwx reports/"$CONDA_ENV"
-            
+
             # install within the conda environments without activating them
             $CONDA install -y -n "$CONDA_ENV" unittest-xml-reporting
             $CONDA install -y -n "$CONDA_ENV" --file test-requirements.txt
@@ -86,7 +93,7 @@ jobs:
       - name: Install khiops-python dependencies
         if: success() || failure()
         run: |
-          # The following git command is required, 
+          # The following git command is required,
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(realpath .)
@@ -96,6 +103,8 @@ jobs:
           CONDA_ENVS="py${{ matrix.python-version }} py${{ matrix.python-version }}_conda"
           for CONDA_ENV in $CONDA_ENVS
           do
+            # Since Python 3.13, setuptools is not installed automatically anymore
+            $CONDA install -y -n "$CONDA_ENV" setuptools
             $CONDA run --no-capture-output -n "$CONDA_ENV" python setup.py egg_info
             $CONDA install -y -n "$CONDA_ENV" `grep -v "^\[" khiops.egg-info/requires.txt`
             rm -rf khiops.egg-info
@@ -199,7 +208,7 @@ jobs:
       - name: Install khiops-python dev dependencies
         shell: pwsh
         run: |
-          # The following git command is required, 
+          # The following git command is required,
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()})
@@ -222,6 +231,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          Set-StrictMode -Version Latest
+          $PSNativeCommandUseErrorActionPreference = $true
 
           # Refresh environment variables by using the Chocolatey tool
           # Otherwise, the env vars set in the registry by the Khiops installer do not get updated
@@ -237,7 +248,7 @@ jobs:
           # Print status
           Invoke-Expression -Command "$Python -c 'import khiops.core as kh; kh.get_runner().print_status()'"
 
-          # Run integration tests on Ubuntu and Rocky
+          # Run integration tests on Windows
           Invoke-Expression -Command "$Python -m unittest -v tests.test_khiops_integrations"
 
           # Execute Khiops sample (train and deploy model)
@@ -256,7 +267,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -281,7 +292,7 @@ jobs:
           path: khiops-samples
       - name: Install khiops-python dev dependencies
         run: |
-          # The following git command is required, 
+          # The following git command is required,
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(realpath .)

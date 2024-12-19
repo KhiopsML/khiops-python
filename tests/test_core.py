@@ -9,7 +9,6 @@ import glob
 import io
 import os
 import shutil
-import sys
 import textwrap
 import unittest
 import warnings
@@ -645,28 +644,30 @@ class KhiopsCoreIOTests(unittest.TestCase):
                     output_msg = str(context.exception)
                     self.assertEqual(output_msg, expected_msg)
 
-    def test_general_options(self):
-        """Test that the general options are written to the scenario file"""
+    def test_system_settings(self):
+        """Test that the system settings are written to the scenario file"""
         # Create the root directory of these tests
         test_resources_dir = os.path.join(resources_dir(), "scenario_generation")
 
         # Use the test runner that only compares the scenarios
         default_runner = kh.get_runner()
         test_runner = ScenarioWriterRunner(self, test_resources_dir)
-        test_runner.test_name = "general_options"
+        test_runner.test_name = "system_settings"
         test_runner.subtest_name = "default"
         cleanup_dir(test_runner.output_scenario_dir, "*/output/*._kh")
         kh.set_runner(test_runner)
 
-        # Set the general options
-        # Call private method for setting max_cores:
-        test_runner._set_max_cores(10)
-        test_runner.max_memory_mb = 1000
-        test_runner.khiops_temp_dir = "/another/tmp"
-        test_runner.scenario_prologue = "// Scenario prologue test"
-
-        # Call check_database (could be any other method)
-        kh.check_database("a.kdic", "dict_name", "data.txt")
+        # Call check_database (could be any other method), with the common execution
+        # options set
+        kh.check_database(
+            "a.kdic",
+            "dict_name",
+            "data.txt",
+            max_cores=10,
+            memory_limit_mb=1000,
+            temp_dir="/another/tmp",
+            scenario_prologue="// Scenario prologue test",
+        )
 
         # Compare the reference with the output
         assert_files_equal(
@@ -1958,12 +1959,12 @@ class ScenarioWriterRunner(KhiopsRunner):
         return self.execution_scenario_path
 
     def _write_task_scenario_file(
-        self, task, task_args, general_options, force_ansi_scenario=False
+        self, task, task_args, system_settings, force_ansi_scenario=False
     ):
         """Create the scenario and compare it to a reference"""
         # Create the execution scenario files with the parent method
         scenario_path = super()._write_task_scenario_file(
-            task, task_args, general_options
+            task, task_args, system_settings
         )
 
         # Create the reference if does not exists
@@ -1982,6 +1983,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         task_args,
         command_line_options,
         trace=False,
+        system_settings=None,
         force_ansi_scenario=False,
         **kwargs,
     ):
@@ -1991,6 +1993,7 @@ class ScenarioWriterRunner(KhiopsRunner):
             task_args,
             command_line_options,
             trace=trace,
+            system_settings=system_settings,
             force_ansi_scenario=force_ansi_scenario,
         )
 
@@ -2252,26 +2255,6 @@ class KhiopsCoreVariousTests(unittest.TestCase):
         ]:
             with self.assertRaises(ValueError):
                 KhiopsVersion(version)
-
-    def test_pykhiops_import_deprecation_warning(self):
-        """Test that import pykhiops* raises deprecation warning"""
-        # Disable import outside toplevel because we are testing imports
-        # pylint: disable=import-outside-toplevel
-        with warnings.catch_warnings(record=True) as warning_list:
-            # This is needed as coverage already imported pykhiops
-            if "pykhiops" in sys.modules:
-                del sys.modules["pykhiops"]
-            import pykhiops.core as pk
-
-            # Test that the alias works
-            pk.get_runner().print_status()
-        self.assertEqual(len(warning_list), 1)
-        warning = warning_list[0]
-        self.assertTrue(issubclass(warning.category, UserWarning))
-        warning_message = warning.message
-        self.assertEqual(len(warning_message.args), 1)
-        message = warning_message.args[0]
-        self.assertTrue("'pykhiops'" in message and "deprecated" in message)
 
     @staticmethod
     def _build_multi_table_dictionary_args():
@@ -2608,89 +2591,6 @@ class KhiopsCoreVariousTests(unittest.TestCase):
             with self.subTest(template_name=template_name, template_code=template_code):
                 with self.assertRaisesRegex(ValueError, error_msgs[template_name]):
                     ConfigurableKhiopsScenario(template_code)
-
-    def test_khiops_environment_variables_basic(self):
-        """Tests that the KHIOPS_* environment variables are properly handled"""
-
-        # Define test fixtures
-        fixtures = [
-            {
-                "variable": "KHIOPS_TMP_DIR",
-                "value": os.path.join("", "mytmp"),
-                "runner_field": "khiops_temp_dir",
-                "expected_field_value": os.path.join("", "mytmp"),
-            },
-            {
-                "variable": "KHIOPS_PROC_NUMBER",
-                "value": 1,
-                "runner_field": "max_cores",
-                "expected_field_value": 1,
-            },
-            {
-                "variable": "KHIOPS_PROC_NUMBER",
-                "value": 2,
-                "runner_field": "max_cores",
-                "expected_field_value": 2,
-            },
-            {
-                "variable": "KHIOPS_PROC_NUMBER",
-                "value": -1,
-                "runner_field": "max_cores",
-                "expected_error": ValueError,
-            },
-            {
-                "variable": "KHIOPS_MEMORY_LIMIT",
-                "value": 1001,
-                "runner_field": "max_memory_mb",
-                "expected_field_value": 1001,
-            },
-            {
-                "variable": "KHIOPS_MEMORY_LIMIT",
-                "value": -10,
-                "runner_field": "max_memory_mb",
-                "expected_error": ValueError,
-            },
-        ]
-
-        # Execute the tests
-        for fixture in fixtures:
-            with self.subTest(variable=fixture["variable"], value=fixture["value"]):
-                # Save the old env var value
-                if fixture["variable"] in os.environ:
-                    old_value = os.environ[fixture["variable"]]
-                else:
-                    old_value = None
-
-                # Set the variable in the environment
-                os.environ[fixture["variable"]] = str(fixture["value"])
-
-                # Check the expected result (or error) on re-initialization
-
-                if "expected_error" in fixture:
-                    with self.assertRaises(fixture["expected_error"]):
-                        # Create a fresh runner and initialize its env
-                        with MockedRunnerContext(
-                            create_mocked_raw_run(False, False, 0)
-                        ):
-                            kh.check_database("a.kdic", "a", "a.txt")
-                else:
-                    assert "expected_field_value" in fixture
-                    # Create a fresh runner and initialize its env
-                    with MockedRunnerContext(
-                        create_mocked_raw_run(False, False, 0)
-                    ) as runner:
-                        kh.check_database("a.kdic", "a", "a.txt")
-
-                    self.assertEqual(
-                        getattr(runner, fixture["runner_field"]),
-                        fixture["expected_field_value"],
-                    )
-
-                # Restore the old environment value (if any)
-                if old_value is None:
-                    del os.environ[fixture["variable"]]
-                else:
-                    os.environ[fixture["variable"]] = old_value
 
     def test_raise_exception_on_error_case_without_a_message(self):
         with self.assertRaises(KhiopsRuntimeError) as context:

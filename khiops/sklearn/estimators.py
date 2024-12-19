@@ -268,11 +268,34 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # Make sklearn get_params happy
         self.internal_sort = internal_sort
 
+    def __sklearn_tags__(self):
+        # We disable this because this import is only available for scikit-learn>=1.6
+        # pylint: disable=import-outside-toplevel
+        try:
+            from sklearn.utils import TransformerTags
+        except ImportError as exc:
+            raise NotImplementedError("__sklearn_tags__ API unsupported.") from exc
+
+        # Set the tags from _more_tags
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = self._more_tags()["allow_nan"]
+        for tag, tag_value in self._more_tags().items():
+            if tag == "requires_y":
+                tags.target_tags.required = tag_value
+            elif tag == "preserves_dtype":
+                tags.transformer_tags = TransformerTags()
+                tags.transformer_tags.preserves_dtype = tag_value
+        return tags
+
     def _more_tags(self):
-        return {"allow_nan": True, "accept_large_sparse": False}
+        return {"allow_nan": True}
 
     def _undefine_estimator_attributes(self):
-        """Undefines all *estimator* attributes (those that end with _)"""
+        """Undefines all sklearn estimator attributes (ie. pass to "not fit" state)
+
+        Sklearn estimator attributes follow the convention that their names end in "_".
+        See https://scikit-learn.org/stable/glossary.html#term-attributes
+        """
         for attribute_name in dir(self):
             if not attribute_name.startswith("_") and attribute_name.endswith("_"):
                 delattr(self, attribute_name)
@@ -361,10 +384,13 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # If on "fitted" state then:
         # - self.model_ must be a DictionaryDomain
         # - self.model_report_ must be a KhiopsJSONObject
-        assert not self.is_fitted_ or isinstance(self.model_, kh.DictionaryDomain)
-        assert not self.is_fitted_ or isinstance(
-            self.model_report_, kh.KhiopsJSONObject
-        )
+        if hasattr(self, "is_fitted_") and self.is_fitted_:
+            assert hasattr(self, "model_") and isinstance(
+                self.model_, kh.DictionaryDomain
+            )
+            assert hasattr(self, "model_report_") and isinstance(
+                self.model_report_, kh.KhiopsJSONObject
+            )
 
         return self
 
@@ -388,16 +414,19 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         # Train the model
         self._fit_train_model(ds, computation_dir, **kwargs)
-        self.n_features_in_ = ds.main_table.n_features()
 
         # If the main attributes are of the proper type finish the fitting
         # Otherwise it means there was an abort (early return) of the previous steps
-        if isinstance(self.model_, kh.DictionaryDomain) and isinstance(
-            self.model_report_, kh.KhiopsJSONObject
+        if (
+            hasattr(self, "model_")
+            and isinstance(self.model_, kh.DictionaryDomain)
+            and hasattr(self, "model_report_")
+            and isinstance(self.model_report_, kh.KhiopsJSONObject)
         ):
             self._fit_training_post_process(ds)
             self.is_fitted_ = True
             self.is_multitable_model_ = ds.is_multitable
+            self.n_features_in_ = ds.main_table.n_features()
 
     def _fit_check_params(self, ds, **_):
         """Check the model parameters including those data dependent (in kwargs)"""
@@ -422,7 +451,11 @@ class KhiopsEstimator(ABC, BaseEstimator):
     def _fit_train_model(self, ds, computation_dir, **kwargs):
         """Builds the model with one or more calls to khiops.core.api
 
-        It must return the path of the ``.kdic`` Khiops model file and the JSON report.
+        At a minimum it sets the following attributes:
+
+        - self.model_
+        - self.model_report_
+        - self.model_report_raw_ (deprecated)
         """
 
     @abstractmethod
@@ -617,7 +650,8 @@ class KhiopsEstimator(ABC, BaseEstimator):
         )
 
 
-class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
+# Note: scikit-learn **requires** inherit first the mixins and then other classes
+class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
     """A Khiops Coclustering model
 
     A coclustering is a non-supervised piecewise constant density estimator.
@@ -748,6 +782,12 @@ class KhiopsCoclustering(KhiopsEstimator, ClusterMixin):
                     quote=False,
                 )
             )
+
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
 
     def fit(self, X, y=None, **kwargs):
         """Trains a Khiops Coclustering model
@@ -1385,8 +1425,16 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                 )
             )
 
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
+
     def _more_tags(self):
-        return {"require_y": True}
+        more_tags = super()._more_tags()
+        more_tags["requires_y"] = True
+        return more_tags
 
     def _fit_check_dataset(self, ds):
         super()._fit_check_dataset(ds)
@@ -1430,8 +1478,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         """
         if y is None:
             raise ValueError(
-                "'y' must be specified for fitting "
-                f"{self.__class__.__name__} estimator."
+                f"{self.__class__.__name__} requires y to be passed, "
+                "but the target y is None"
             )
         super().fit(X, y=y, **kwargs)
         return self
@@ -1749,6 +1797,12 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         self.n_evaluated_features = n_evaluated_features
         self.n_selected_features = n_selected_features
 
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
+
     def predict(self, X):
         """Predicts the target variable for the test dataset X
 
@@ -1852,7 +1906,8 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             raise ValueError("'n_selected_features' must be positive")
 
 
-class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
+# Note: scikit-learn **requires** inherit first the mixins and then other classes
+class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     # Disable line too long as this docstring *needs* to have lines longer than 88c
     # pylint: disable=line-too-long
     r"""Khiops Selective Naive Bayes Classifier
@@ -2020,6 +2075,12 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         self.group_target_value = group_target_value
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Prediction"
+
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
 
     def _is_real_target_dtype_integer(self):
         return self._original_target_dtype is not None and (
@@ -2324,7 +2385,8 @@ class KhiopsClassifier(KhiopsPredictor, ClassifierMixin):
         return model_copy
 
 
-class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
+# Note: scikit-learn **requires** inherit first the mixins and then other classes
+class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     # Disable line too long as this docstring *needs* to have lines longer than 88c
     # pylint: disable=line-too-long
     r"""Khiops Selective Naive Bayes Regressor
@@ -2602,7 +2664,8 @@ class KhiopsRegressor(KhiopsPredictor, RegressorMixin):
     # pylint: enable=useless-super-delegation
 
 
-class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
+# Note: scikit-learn **requires** inherit first the mixins and then other classes
+class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     # Disable line too long as this docstring *needs* to have lines longer than 88c
     # pylint: disable=line-too-long
     r"""Khiops supervised discretization/grouping encoder
@@ -2769,8 +2832,16 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
         self.keep_initial_variables = keep_initial_variables
         self._khiops_model_prefix = "R_"
 
-    def more_tags(self):
-        return {"preserves_dtype": []}
+    def __sklearn_tags__(self):
+        # If we don't implement this trivial method it's not found by the sklearn. This
+        # is likely due to the complex resolution of the multiple inheritance.
+        # pylint: disable=useless-parent-delegation
+        return super().__sklearn_tags__()
+
+    def _more_tags(self):
+        more_tags = super()._more_tags()
+        more_tags["preserves_dtype"] = []
+        return more_tags
 
     def _categorical_transform_method(self):
         _transform_types_categorical = {
@@ -2840,7 +2911,6 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
                     "transform_type_numerical", self.transform_type_numerical, str
                 )
             )
-
         self._numerical_transform_method()  # Raises ValueError if invalid
 
         # Check coherence between transformation types and tree number
@@ -2867,10 +2937,31 @@ class KhiopsEncoder(KhiopsSupervisedEstimator, TransformerMixin):
                     "informative_features_only", self.informative_features_only, bool
                 )
             )
+
         # Check 'group_target_value' parameter
         if not isinstance(self.group_target_value, bool):
             raise TypeError(
                 type_error_message("group_target_value", self.group_target_value, bool)
+            )
+
+    def _fit_train_model(self, ds, computation_dir, **kwargs):
+        # Call the parent method
+        super()._fit_train_model(ds, computation_dir, **kwargs)
+
+        # Check whether there are any used variables other than the target
+        model_doesnt_have_output_vars = True
+        for var in self.model_.get_dictionary(f"R_{ds.main_table.name}").variables:
+            if var.name != ds.target_column_id and var.used:
+                model_doesnt_have_output_vars = False
+                break
+
+        # If no informative vars undo the "fit" state (undefine attributes) and warn
+        if model_doesnt_have_output_vars:
+            self._undefine_estimator_attributes()
+            warnings.warn(
+                "Encoder is not fit because Khiops didn't create any output "
+                "variables. If you want to use non-informative features in the encoder "
+                "set 'informative_features_only' to False."
             )
 
     def _check_target_type(self, ds):

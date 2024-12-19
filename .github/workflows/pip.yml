@@ -1,17 +1,25 @@
 ---
 name: Pip Package
 env:
-  DEFAULT_SAMPLES_REVISION: main
+  DEFAULT_SAMPLES_REVISION: 10.2.4
 on:
   workflow_dispatch:
     inputs:
       samples-revision:
-        default: main
+        default: 10.2.4
         description: khiops-samples repo revision
       image-tag:
-        default: 10.2.3.0
+        default: latest
         description: Development Docker Image Tag
   pull_request:
+    paths:
+      - setup.py
+      - setup.cfg
+      - pyproject.toml
+      - LICENSE.md
+      - versioneer.py
+      - khiops/_version.py
+      - .github/workflows/pip.yml
   push:
     tags: ['*']
 concurrency:
@@ -56,7 +64,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.2.3.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
     steps:
       - name: Set parameters as env
         run: |

@@ -89,7 +89,7 @@ def kh_samples_entry_point():  # pragma: no cover
 
 
 # Samples version: To be updated when khiops-samples does
-DEFAULT_SAMPLES_VERSION = "10.2.0"
+DEFAULT_SAMPLES_VERSION = "10.2.4"
 
 
 def kh_download_datasets_entry_point():

@@ -229,6 +229,9 @@ def train_predictor_file_paths():
     print("Reports file available at " + report_file_path)
     print("Modeling dictionary file available at " + modeling_dictionary_file_path)
 
+    # If you have Khiops Visualization installed you may open the report as follows
+    # kh.visualize_report(report_file_path)
+
 
 def train_predictor_error_handling():
     """Shows how to handle errors when training a predictor
@@ -500,13 +503,11 @@ def train_predictor_with_multiple_parameters():
     output_script_path = os.path.join(results_dir, "output_scenario._kh")
     log_path = os.path.join(results_dir, "log.txt")
 
-    # Set memory limit to 1000 Mb and train with Khiops
-    kh.get_runner().max_memory_mb = 1000
-
     # Train the predictor. Besides the mandatory parameters, we specify:
     # - The value "more" as main target value
     # - The output Khiops script file location (generic)
     # - The log file location (generic)
+    # - The maximum memory used, set to 1000 MB
     # - To show the debug trace (generic)
     kh.train_predictor(
         dictionary_file_path,
@@ -517,11 +518,9 @@ def train_predictor_with_multiple_parameters():
         main_target_value="more",
         output_scenario_path=output_script_path,
         log_file_path=log_path,
+        memory_limit_mb=1000,
         trace=True,
     )
-
-    # Reset memory limit to default Khiops tool value
-    kh.get_runner().max_memory_mb = 0
 
 
 def train_predictor_detect_format():
@@ -1376,14 +1375,17 @@ def train_coclustering():
     results_dir = os.path.join("kh_samples", "train_coclustering")
 
     # Train a coclustering model for variables "SampleId" and "Char"
-    coclustering_file_path = kh.train_coclustering(
+    coclustering_report_path = kh.train_coclustering(
         dictionary_file_path,
         "SpliceJunctionDNA",
         data_table_path,
         ["SampleId", "Char"],
         results_dir,
     )
-    print("Coclustering file available at " + coclustering_file_path)
+    print(f"Coclustering report file available at {coclustering_report_path}")
+
+    # If you have Khiops Co-Visualization installed you may open the report as follows
+    # kh.visualize_report(coclustering_report_path)
 
 
 def simplify_coclustering():
@@ -1578,7 +1580,7 @@ def scenario_prologue():
     results_dir = os.path.join("kh_samples", "scenario_prologue")
 
     # Set the maximum memory "by hand" with an scenario prologue
-    kh.get_runner().scenario_prologue = """
+    scenario_prologue = """
         // Max memory 2000 mb
         AnalysisSpec.SystemParameters.MemoryLimit 2000
         """
@@ -1591,6 +1593,7 @@ def scenario_prologue():
         "class",
         results_dir,
         max_trees=0,
+        scenario_prologue=scenario_prologue,
     )
 
 

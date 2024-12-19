@@ -9,7 +9,7 @@ profile = "black"
 max-line-length = 88
 
 # Fail on errors and specific rules or if there are too many errors
-fail-on = ["E", "line-too-long", "unused-variable"]
+fail-on = ["E", "line-too-long", "unused-variable", "unused-import"]
 fail-under = 9.9
 
 [tool.pylint.messages_control]

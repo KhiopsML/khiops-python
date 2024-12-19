@@ -39,12 +39,18 @@ RUN true \
 # set up all the supported Python environments under conda (for the unit tests)
 # relying on a variable containing all the versions
 ARG PYTHON_VERSIONS
-RUN /bin/bash -c 'for version in ${PYTHON_VERSIONS}; \
-do \
-    /root/miniforge3/bin/conda create -y -n py${version} python=${version}; \
-    /root/miniforge3/bin/conda create -y -n py${version}_conda python=${version}; \
-    /root/miniforge3/bin/conda install -y -n py${version}_conda -c khiops-dev khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
-done'
+RUN true \
+  && export CONDA="/root/miniforge3/bin/conda" \
+  && /bin/bash -c 'for version in ${PYTHON_VERSIONS}; \
+    do \
+        CONDA_ENVS="py${version} py${version}_conda"; \
+        for CONDA_ENV in $CONDA_ENVS; \
+        do \
+            $CONDA create -y -n $CONDA_ENV python=${version}; \
+        done; \
+        $CONDA install -y -n py${version}_conda -c khiops-dev khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
+    done' \
+  && true
 
 RUN mkdir -p /scripts
 COPY ./run_service.sh /scripts/run_service.sh

@@ -6,6 +6,24 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.2.4.0 - 2024-12-19
+
+### Added
+- (General) Support for Python 3.13.
+- (General) `visualize_report` helper function to open reports with the Khiops Visualization and
+  Khiops Co-Visualization app.
+
+### Fixed
+- (General) Initialization failing in Conda-based environments.
+
+### Changed
+- (`core`) Support for system parameters has been moved from the `KhiopsLocalRunner` to the `core` API.
+- (`core`) System parameter `max_memory_mb` has been renamed to `memory_limit_mb`.
+- (`core`) System parameter `khiops_temp_dir` has been renamed to `temp_dir`.
+
+### Removed
+- (General) Khiops Python 9 compatibility.
+
 ## 10.2.3.0 - 2024-11-13
 
 ### Added
