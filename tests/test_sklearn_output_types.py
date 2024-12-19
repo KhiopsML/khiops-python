@@ -7,6 +7,7 @@
 """Tests for checking the output types of predictors"""
 import unittest
 
+import numpy as np
 import pandas as pd
 from numpy.testing import assert_array_equal
 from sklearn import datasets
@@ -50,21 +51,48 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
     def setUp(self):
         KhiopsTestHelper.skip_long_test(self)
 
+    def _replace(self, array, replacement_dict):
+        return np.array([replacement_dict[value] for value in array])
+
     def test_classifier_output_types(self):
         """Test the KhiopsClassifier output types and classes of predict* methods"""
+        # Create the references for the combinations of mono/multi-table and
+        # binary/multiclass
         X, y = create_iris()
-        X_mt, X_sec_mt, _ = create_iris_mt()
+        raw_X_main_mt, raw_X_sec_mt, _ = create_iris_mt()
+        X_mt = {
+            "main_table": "iris_main",
+            "tables": {
+                "iris_main": (raw_X_main_mt, "Id"),
+                "iris_sec": (raw_X_sec_mt, "Id"),
+            },
+            "relations": [("iris_main", "iris_sec")],
+        }
+        khc = KhiopsClassifier(n_trees=0)
+        khc.fit(X, y)
+        y_pred = khc.predict(X)
+        y_bin = y.replace({0: 0, 1: 0, 2: 1})
+        khc.fit(X, y_bin)
+        y_bin_pred = khc.predict(X)
+        khc.fit(X_mt, y)
+        khc.export_report_file("report.khj")
+        y_mt_pred = khc.predict(X_mt)
+        khc.fit(X_mt, y_bin)
+        y_mt_bin_pred = khc.predict(X_mt)
 
+        # Create the fixtures
         fixtures = {
             "ys": {
                 "int": y,
-                "int binary": y.replace({0: 0, 1: 0, 2: 1}),
-                "string": y.replace({0: "se", 1: "vi", 2: "ve"}),
-                "string binary": y.replace({0: "vi_or_se", 1: "vi_or_se", 2: "ve"}),
-                "int as string": y.replace({0: "8", 1: "9", 2: "10"}),
-                "int as string binary": y.replace({0: "89", 1: "89", 2: "10"}),
-                "cat int": y.astype("category"),
-                "cat string": y.replace({0: "se", 1: "vi", 2: "ve"}).astype("category"),
+                "int binary": y_bin,
+                "string": self._replace(y, {0: "se", 1: "vi", 2: "ve"}),
+                "string binary": self._replace(y_bin, {0: "vi_or_se", 1: "ve"}),
+                "int as string": self._replace(y, {0: "8", 1: "9", 2: "10"}),
+                "int as string binary": self._replace(y_bin, {0: "89", 1: "10"}),
+                "cat int": pd.Series(y).astype("category"),
+                "cat string": pd.Series(
+                    self._replace(y, {0: "se", 1: "vi", 2: "ve"})
+                ).astype("category"),
             },
             "y_type_check": {
                 "int": pd.api.types.is_integer_dtype,
@@ -86,15 +114,41 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                 "cat int": column_or_1d([0, 1, 2]),
                 "cat string": column_or_1d(["se", "ve", "vi"]),
             },
+            "expected_y_preds": {
+                "mono": {
+                    "int": y_pred,
+                    "int binary": y_bin_pred,
+                    "string": self._replace(y_pred, {0: "se", 1: "vi", 2: "ve"}),
+                    "string binary": self._replace(
+                        y_bin_pred, {0: "vi_or_se", 1: "ve"}
+                    ),
+                    "int as string": self._replace(y_pred, {0: "8", 1: "9", 2: "10"}),
+                    "int as string binary": self._replace(
+                        y_bin_pred, {0: "89", 1: "10"}
+                    ),
+                    "cat int": y_pred,
+                    "cat string": self._replace(y_pred, {0: "se", 1: "vi", 2: "ve"}),
+                },
+                "multi": {
+                    "int": y_mt_pred,
+                    "int binary": y_mt_bin_pred,
+                    "string": self._replace(y_mt_pred, {0: "se", 1: "vi", 2: "ve"}),
+                    "string binary": self._replace(
+                        y_mt_bin_pred, {0: "vi_or_se", 1: "ve"}
+                    ),
+                    "int as string": self._replace(
+                        y_mt_pred, {0: "8", 1: "9", 2: "10"}
+                    ),
+                    "int as string binary": self._replace(
+                        y_mt_bin_pred, {0: "89", 1: "10"}
+                    ),
+                    "cat int": y_mt_pred,
+                    "cat string": self._replace(y_mt_pred, {0: "se", 1: "vi", 2: "ve"}),
+                },
+            },
             "Xs": {
                 "mono": X,
-                "multi": {
-                    "main_table": "iris_main",
-                    "tables": {
-                        "iris_main": (X_mt, "Id"),
-                        "iris_sec": (X_sec_mt, "Id"),
-                    },
-                },
+                "multi": X_mt,
             },
         }
 
@@ -119,8 +173,13 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                     y_pred = khc.predict(X)
                     self.assertTrue(
                         y_type_check(y_pred),
-                        f"Invalid predict return type {y_pred.dtype}.",
+                        f"'{y_type_check.__name__}' was False for "
+                        f"dtype '{y_pred.dtype}'.",
                     )
+
+                    # Check the predictions match
+                    expected_y_pred = fixtures["expected_y_preds"][dataset_type][y_type]
+                    assert_array_equal(y_pred, expected_y_pred)
 
                     # Check the dimensions of predict_proba
                     y_probas = khc.predict_proba(X)
