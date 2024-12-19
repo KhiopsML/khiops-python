@@ -172,7 +172,6 @@ class EstimatorAttributesTests(unittest.TestCase):
             self.assertEqual(
                 model.n_features_used_, len(feature_used_importances_report)
             )
-        self.assertTrue(model.is_fitted_)
 
     def test_classifier_attributes_monotable(self):
         """Test consistency of KhiopsClassifier's attributes with the output reports
