@@ -2,7 +2,7 @@
 name: Unit Tests
 env:
   DEFAULT_SAMPLES_REVISION: 10.2.4
-  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.3
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.4
 on:
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
         default: latest
         description: Development Docker Image Tag
       khiops-desktop-revision:
-        default: 10.2.3
+        default: 10.2.4
         description: Khiops Windows Desktop Application Version
       run-long-tests:
         type: boolean
