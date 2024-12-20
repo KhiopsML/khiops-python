@@ -29,7 +29,7 @@ Khiops Python library.
 ./create-doc -d -t
 
 # To only execute Sphinx on updated reST resources
-# make html
+# sphinx-build -M html . _build/
 ```
 
 ## Sphinx
