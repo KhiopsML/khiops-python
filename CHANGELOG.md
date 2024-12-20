@@ -87,7 +87,7 @@
 
 ### Fixed
 - `core`
-  - Metric name search in estimator analyis report.
+  - Metric name search in estimator analysis report.
 
 ## 10.2.1.0 - 2024-03-26
 
@@ -219,7 +219,7 @@ Note: This release marks the open sourcing of Khiops:
   - Estimators now accept dataframes with numerical column indexes.
   - `KhiopsClassifier` now accepts integer target vectors.
   - `classes_` estimator attribute for `KhiopsClassifier` (available once fitted).
-  - `feature_names_out_` estimator attirbute for `KhiopsEncoder` (available once fitted).
+  - `feature_names_out_` estimator attribute for `KhiopsEncoder` (available once fitted).
   - `export_report_file` and `export_dictionary_file` to export Khiops report and dictionary files
     once the estimators are fitted.
   - `internal_sort` parameter for estimators that may be used to not sort the tables on the

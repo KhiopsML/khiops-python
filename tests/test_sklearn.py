@@ -1857,7 +1857,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 assert estimator_method == "fit", f"Real: {estimator_method}"
                 prediction_table_path = ""
 
-        # Buld the resources
+        # Build the resources
         resources = {
             "report_path": report_path,
             "model_kdic_path": model_kdic_path,

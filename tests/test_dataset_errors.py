@@ -30,7 +30,7 @@ class AnotherType(object):
 class DatasetSpecErrorsTests(unittest.TestCase):
     """Test the output message when the input data contains errors
 
-    Each test covers an egde-case for the initialization of Dataset/DatasetTable and
+    Each test covers an edge-case for the initialization of Dataset/DatasetTable and
     checks:
 
     - that either `TypeError` or `ValueError` is raised and
@@ -796,7 +796,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
-    def test_dict_spec_entiy_flag_relation_must_be_bool(self):
+    def test_dict_spec_entity_flag_relation_must_be_bool(self):
         """Test Dataset raising TypeError when the entity flag is not boolean"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["relations"][0] = ("B", "D", AnotherType())

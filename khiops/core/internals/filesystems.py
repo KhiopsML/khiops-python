@@ -19,7 +19,7 @@ from urllib.parse import urlparse
 # pylint: disable=invalid-name
 
 # Import boto3 if available
-# Delay the raising of an ImportError to an instantation of a AmazonS3Resource
+# Delay an ImportError raising to an instantiation of a AmazonS3Resource
 try:
     import boto3
     import boto3.session
@@ -30,7 +30,7 @@ except ImportError as import_error:
     boto3_import_error = import_error
 
 # Import google.could if available
-# Delay the raising of an ImportError to an instantation of a GoogleCloudStorageResource
+# Delay an ImportError raising to an instantiation of a GoogleCloudStorageResource
 try:
     from google.cloud import storage
 

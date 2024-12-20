@@ -223,7 +223,7 @@ def _check_relations_entry(main_table_name, tables_spec, relations_spec):
                 f"Each relation must be unique."
             )
 
-        # Check hierachical keys
+        # Check hierarchical keys
         _check_hierarchical_keys(
             i,
             parent_table,
@@ -694,7 +694,7 @@ class Dataset:
                 )
             self.secondary_tables = []
 
-        # If the relations are not specified intialize to a star schema
+        # If the relations are not specified initialize to a star schema
         if "relations" not in X:
             self.relations = [
                 (self.main_table.name, table.name, False)

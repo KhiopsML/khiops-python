@@ -214,7 +214,7 @@ jobs:
           git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()})
           python setup.py egg_info
 
-          # Install the Pyrhon requirements
+          # Install the Python requirements
           Get-Content .\khiops.egg-info\requires.txt `
             | Select-String -Pattern '^\[' -NotMatch `
             | Select-String -Pattern '^$' -NotMatch `

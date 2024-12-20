@@ -680,7 +680,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
     max_part_numbers : dict, optional
         Maximum number of clusters for each of the co-clustered column. Specifically, a
         key-value pair of this dictionary represents the column name and its respective
-        maximum number of clusters. If not specified there is no maximun number of
+        maximum number of clusters. If not specified there is no maximum number of
         clusters is imposed on any column.
         **Deprecated** will be removed in Khiops 11. Use the ``max_part_number``
         parameter of the `fit` method.
@@ -1294,7 +1294,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # The "model dictionary domain" in the coclustering case it is just composed
         # of the secondary table. The main "keys" table is a technical object.
         # So we check the compatibility against only this dictionary and override
-        # the parents implementaion
+        # the parents implementation
         for dictionary in self.model_.dictionaries:
             if dictionary.name != self.model_main_dictionary_name_:
                 _check_dictionary_compatibility(
@@ -1702,7 +1702,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         # Call the parent method
         super()._transform_check_dataset(ds)
 
-        # Check the coherence between thi input table and the model
+        # Check the coherence between the input table and the model
         if self.is_multitable_model_ and not ds.is_multitable:
             raise ValueError(
                 "You are trying to apply on single-table inputs a model which has "
@@ -2263,7 +2263,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         y_pred = super().predict(X)
 
         # Adjust the data type according to the original target type
-        # Note: String is coerced explictly because astype does not work as expected
+        # Note: String is coerced explicitly because astype does not work as expected
         if isinstance(y_pred, pd.DataFrame):
             # Transform to numpy.ndarray
             y_pred = y_pred.to_numpy(copy=False).ravel()
@@ -2332,7 +2332,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         # Create the input dataset
 
-        # Call the generic transfrom method
+        # Call the generic transform method
         try:
             ds = Dataset(X, key=self.key)
             y_probas = self._transform(

@@ -210,7 +210,7 @@ class KhiopsTask:
             for kwarg_signature in self.kwargs_signature
         }
 
-        # Post-intialization checks
+        # Post-initialization checks
         # Check that the path_valued_arg_names are contained in either args or kwargs
         all_arg_names = list(self._args_signature_by_name.keys()) + list(
             self._kwargs_signature_by_name.keys()

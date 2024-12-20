@@ -365,7 +365,7 @@ class KhiopsRunner(ABC):
         return self._get_samples_dir()
 
     def _get_samples_dir(self):
-        """To be overriden by subclasses"""
+        """To be overridden by subclasses"""
         return self._samples_dir
 
     @samples_dir.setter
@@ -386,7 +386,7 @@ class KhiopsRunner(ABC):
         return self._get_khiops_version()
 
     def _get_khiops_version(self):
-        """khiops_version getter to be overriden by subclasses"""
+        """khiops_version getter to be overridden by subclasses"""
         return self._khiops_version
 
     def _build_status_message(self):
@@ -1072,7 +1072,7 @@ class KhiopsLocalRunner(KhiopsRunner):
         super()._set_samples_dir(samples_dir)
 
     def _get_samples_dir(self):
-        # Check the samples dir once (the check emmits only warnings)
+        # Check the samples dir once (the check emits only warnings)
         if not self._samples_dir_checked:
             _check_samples_dir(self._samples_dir)
             self._samples_dir_checked = True

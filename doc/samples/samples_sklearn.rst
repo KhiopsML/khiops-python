@@ -400,7 +400,7 @@ Samples
         os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
     )
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
+    # Split the secondary dataframe with the keys of the split root dataframe
     X_train_ids = X_train_main["AccidentId"].to_frame()
     X_test_ids = X_test_main["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
@@ -825,7 +825,7 @@ Samples
     # Load the secondary table of the dataset into a pandas dataframe
     vehicles_df = pd.read_csv(os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t")
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
+    # Split the secondary dataframe with the keys of the split root dataframe
     X_train_ids = X_train["AccidentId"].to_frame()
     X_test_ids = X_test["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
@@ -891,7 +891,7 @@ Samples
         os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
     )
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
+    # Split the secondary dataframe with the keys of the split root dataframe
     X_train_ids = X_train_main["AccidentId"].to_frame()
     X_test_ids = X_test_main["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
