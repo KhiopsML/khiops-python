@@ -82,7 +82,7 @@ class ConfigurableKhiopsScenario:
             line = next(line_iter, None)
             line_num += 1
 
-        # Eliminate empty lines at the beggining and end if any
+        # Eliminate empty lines at the beginning and end if any
         if self._parsed_template[0] == "":
             self._parsed_template.pop(0)
         if self._parsed_template[-1] == "":
@@ -128,7 +128,7 @@ class ConfigurableKhiopsScenario:
             if statement_re.match(statement) is None:
                 raise ValueError(
                     "Statement must contain only alphabetic characters and '.' "
-                    f"(no '.' at the beggining): '{statement}'"
+                    f"(no '.' at the beginning): '{statement}'"
                 )
 
         return section_param_name, section_spec
