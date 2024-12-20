@@ -75,7 +75,7 @@ parse_commandline "$@"
 rm -v core/generated/*.rst
 rm -v sklearn/generated/*.rst
 rm -v internal/generated/*.rst
-make clean
+sphinx-build -M clean . _build
 
 if [[ $_arg_clean_tutorial == "on" ]]
 then
