@@ -25,7 +25,7 @@ def create_iris():
     """Returns a mono table iris dataset"""
     X_iris_array, y_iris_array = datasets.load_iris(return_X_y=True)
     X_iris_df = pd.DataFrame(
-        X_iris_array, columns=["SepalLenght", "SepalWidth", "PetalLength", "PetalWidth"]
+        X_iris_array, columns=["SepalLength", "SepalWidth", "PetalLength", "PetalWidth"]
     )
     y_iris_series = pd.Series(y_iris_array, name="Class")
     return X_iris_df, y_iris_series
@@ -39,7 +39,7 @@ def create_iris_mt():
         id_vars=["Id"], var_name="Measurement", value_name="Value"
     )
     X_iris_df = X_iris_df.drop(
-        ["SepalLenght", "SepalWidth", "PetalLength", "PetalWidth"], axis=1
+        ["SepalLength", "SepalWidth", "PetalLength", "PetalWidth"], axis=1
     )
     return X_iris_df, X_iris_sec_df, y_iris_series
 

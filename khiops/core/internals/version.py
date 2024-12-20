@@ -97,7 +97,7 @@ class KhiopsVersion:
                     version_str,
                 )
 
-            # Store the rest of the prelease (if any) and check it is a number
+            # Store the rest of the prerelease (if any) and check it is a number
             # We accept not having a "." in the pre-release increment for backward
             # compatibility.
             self._pre_release_increment = _pre_release.replace(
