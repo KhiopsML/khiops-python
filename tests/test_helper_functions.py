@@ -16,7 +16,7 @@ import pandas as pd
 
 from khiops.core.dictionary import DictionaryDomain
 from khiops.core.helpers import build_multi_table_dictionary_domain, visualize_report
-from khiops.utils.helpers import train_test_split_dataset
+from khiops.sklearn import train_test_split_dataset
 
 
 class KhiopsHelperFunctions(unittest.TestCase):

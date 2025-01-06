@@ -11,3 +11,4 @@ from khiops.sklearn.estimators import (
     KhiopsEncoder,
     KhiopsRegressor,
 )
+from khiops.sklearn.helpers import train_test_split_dataset

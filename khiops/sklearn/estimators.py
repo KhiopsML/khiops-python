@@ -50,7 +50,7 @@ from khiops.core.internals.common import (
     is_list_like,
     type_error_message,
 )
-from khiops.utils.dataset import (
+from khiops.sklearn.dataset import (
     Dataset,
     FileTable,
     get_khiops_variable_name,
