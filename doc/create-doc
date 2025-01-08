@@ -106,4 +106,4 @@ cd "../.."
 
 # Create the documentation with Sphinx
 echo "Executing Sphinx"
-make html
+sphinx-build -M html . _build/
