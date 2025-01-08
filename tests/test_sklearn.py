@@ -1114,12 +1114,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
-                                "max_pairs": 1,
                                 "max_trees": 0,
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
-                                "specific_pairs": [("age", "race")],
-                                "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
                                 "additional_data_tables": {},
                             }
@@ -1206,12 +1203,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
-                                "max_pairs": 1,
                                 "max_trees": 0,
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
-                                "specific_pairs": [("age", "race")],
-                                "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
                                 "additional_data_tables": {},
                             }
@@ -1306,12 +1300,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "detect_format": False,
                                 "header_line": True,
                                 "max_constructed_variables": 10,
-                                "max_pairs": 1,
                                 "max_trees": 0,
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
-                                "specific_pairs": [],
-                                "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
                                 "additional_data_tables": {
                                     "SpliceJunction`SpliceJunctionDNA"
@@ -1416,12 +1407,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "detect_format": False,
                                 "header_line": True,
                                 "max_constructed_variables": 10,
-                                "max_pairs": 1,
                                 "max_trees": 0,
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
-                                "specific_pairs": [],
-                                "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
@@ -2407,11 +2395,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             schema_type="monotable",
             source_type="dataframe",
             extra_estimator_kwargs={
-                "n_pairs": 1,
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
-                "specific_pairs": [("age", "race")],
-                "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
             },
         )
@@ -2426,11 +2411,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             schema_type="monotable",
             source_type="dataframe_xy",
             extra_estimator_kwargs={
-                "n_pairs": 1,
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
-                "specific_pairs": [("age", "race")],
-                "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
             },
         )
@@ -2443,11 +2425,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             schema_type="monotable",
             source_type="file_dataset",
             extra_estimator_kwargs={
-                "n_pairs": 1,
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
-                "specific_pairs": [("age", "race")],
-                "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
             },
         )
@@ -2461,12 +2440,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             source_type="dataframe",
             extra_estimator_kwargs={
                 "n_features": 10,
-                "n_pairs": 1,
                 "n_trees": 0,
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
-                "specific_pairs": [],
-                "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
             },
         )
@@ -2480,12 +2456,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             source_type="file_dataset",
             extra_estimator_kwargs={
                 "n_features": 10,
-                "n_pairs": 1,
                 "n_trees": 0,
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
-                "specific_pairs": [],
-                "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
             },
         )

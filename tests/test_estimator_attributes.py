@@ -214,7 +214,7 @@ class EstimatorAttributesTests(unittest.TestCase):
         adult_df = pd.read_csv(adult_dataset_path, sep="\t").sample(750)
         X = adult_df.drop("age", axis=1)
         y = adult_df["age"]
-        khr_adult = KhiopsRegressor(n_trees=0, n_pairs=5)
+        khr_adult = KhiopsRegressor(n_trees=0)
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 action="ignore",
