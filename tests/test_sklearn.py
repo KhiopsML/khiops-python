@@ -2267,7 +2267,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "keep_initial_variables": False,
                 "transform_type_categorical": "part_id",
                 "transform_type_numerical": "part_id",
-                "transform_pairs": "part_id",
+                "transform_type_pairs": "part_id",
             },
         )
 
@@ -2291,7 +2291,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "keep_initial_variables": False,
                 "transform_type_categorical": "part_id",
                 "transform_type_numerical": "part_id",
-                "transform_pairs": "part_id",
+                "transform_type_pairs": "part_id",
             },
         )
 
@@ -2313,7 +2313,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "keep_initial_variables": False,
                 "transform_type_categorical": "part_id",
                 "transform_type_numerical": "part_id",
-                "transform_pairs": "part_id",
+                "transform_type_pairs": "part_id",
             },
         )
 
@@ -2336,7 +2336,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "keep_initial_variables": False,
                 "transform_type_categorical": "part_id",
                 "transform_type_numerical": "part_id",
-                "transform_pairs": "part_id",
+                "transform_type_pairs": "part_id",
             },
         )
 
@@ -2359,7 +2359,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "keep_initial_variables": False,
                 "transform_type_categorical": "part_id",
                 "transform_type_numerical": "part_id",
-                "transform_pairs": "part_id",
+                "transform_type_pairs": "part_id",
             },
         )
 
