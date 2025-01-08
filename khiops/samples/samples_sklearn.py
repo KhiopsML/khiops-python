@@ -405,7 +405,7 @@ def khiops_classifier_with_hyperparameters():
         os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
     )
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
+    # Split the secondary dataframe with the keys of the split root dataframe
     X_train_ids = X_train_main["AccidentId"].to_frame()
     X_test_ids = X_test_main["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
@@ -882,7 +882,7 @@ def khiops_classifier_multitable_list():
         os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
+    # Split the secondary dataframe with the keys of the split root dataframe
     X_train_ids = X_train["AccidentId"].to_frame()
     X_test_ids = X_test["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
@@ -956,7 +956,7 @@ def khiops_classifier_multitable_star_file():
         os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
     )
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
+    # Split the secondary dataframe with the keys of the split root dataframe
     X_train_ids = X_train_main["AccidentId"].to_frame()
     X_test_ids = X_test_main["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")

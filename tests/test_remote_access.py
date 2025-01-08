@@ -62,11 +62,11 @@ class KhiopsRemoteAccessTestsContainer:
             return os.curdir
 
         def config_exists(self):
-            """To be overriden by descendants"""
+            """To be overridden by descendants"""
             return False
 
         def remote_access_test_case(self):
-            """To be overriden by descendants"""
+            """To be overridden by descendants"""
             return ""
 
         def print_test_title(self):
@@ -258,11 +258,11 @@ class KhiopsDockerRunnerTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAcces
         """Sets up docker runner service for this test case
         This method executes the following steps:
             - If environment variable ``KHIOPS_RUNNER_SERVICE_PATH`` is set then it
-              launches the service and makes sure it is operational before excuting the
+              launches the service and makes sure it is operational before executing the
               test case.  Otherwise it skips the test case.
             - Then it copies ``samples`` to a shared directory accessible to both the
               local Khiops runner service and the process using Khiops Python.
-            - Finnaly it creates create the `.KhiopsDockerRunner` client for the
+            - Finally it creates the `.KhiopsDockerRunner` client for the
               Khiops service and set it as current runner.
         """
         # Save the initial Khiops Python runner

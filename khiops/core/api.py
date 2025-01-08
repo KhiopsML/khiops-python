@@ -757,7 +757,7 @@ def train_predictor(
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
     only_pairs_with : str, default ""
-        Constructs only pairs with the specifed variable name. If equal to the empty
+        Constructs only pairs with the specified variable name. If equal to the empty
         string "" it considers all variables to make pairs.
         **Deprecated** will be removed in Khiops Python 11, use ``specific_pairs``.
     group_target_value : bool, default ``False``
@@ -1083,7 +1083,7 @@ def train_recoder(
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
     only_pairs_with : str, default ""
-        Constructs only pairs with the specifed variable name. If equal to the empty
+        Constructs only pairs with the specified variable name. If equal to the empty
         string "" it considers all variables to make pairs.
         **Deprecated** will be removed in Khiops Python 11, use ``specific_pairs``.
     group_target_value : bool, default ``False``
@@ -1133,7 +1133,7 @@ def train_recoder(
             - "conditional info": Conditional information of the interval/group
             - "none": Keeps the variable as-is
     grouping_method : str
-        Name of the grouping method. Its vaild values depend on the task:
+        Name of the grouping method. Its valid values depend on the task:
             - Supervised: "MODL" (default) or "BasicGrouping"
             - Unsupervised: "BasicGrouping" (default) or "None"
     min_group_frequency : int, default 0
