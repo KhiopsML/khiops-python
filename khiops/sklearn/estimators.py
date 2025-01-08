@@ -37,6 +37,7 @@ from sklearn.base import (
     RegressorMixin,
     TransformerMixin,
 )
+from sklearn.exceptions import NotFittedError
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import assert_all_finite, check_is_fitted, column_or_1d
 
@@ -302,7 +303,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     def _get_main_dictionary(self):
         """Returns the model's main Khiops dictionary"""
-        assert self.model_ is not None, "Model dictionary domain not available."
+        self._assert_is_fitted()
         return self.model_.get_dictionary(self.model_main_dictionary_name_)
 
     def export_report_file(self, report_file_path):
@@ -318,16 +319,14 @@ class KhiopsEstimator(ABC, BaseEstimator):
         `ValueError`
             When the instance is not fitted.
         """
-        if not self.is_fitted_:
-            raise ValueError(f"{self.__class__.__name__} not fitted yet.")
+        check_is_fitted(self)
         if self.model_report_ is None:
             raise ValueError("Report not available (imported model?).")
         self.model_report_.write_khiops_json_file(report_file_path)
 
     def export_dictionary_file(self, dictionary_file_path):
         """Export the model's Khiops dictionary file (.kdic)"""
-        if not self.is_fitted_:
-            raise ValueError(f"{self.__class__.__name__} not fitted yet.")
+        check_is_fitted(self)
         self.model_.export_khiops_dictionary_file(dictionary_file_path)
 
     def _import_model(self, kdic_path):
@@ -384,13 +383,19 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # If on "fitted" state then:
         # - self.model_ must be a DictionaryDomain
         # - self.model_report_ must be a KhiopsJSONObject
-        if hasattr(self, "is_fitted_") and self.is_fitted_:
-            assert hasattr(self, "model_") and isinstance(
-                self.model_, kh.DictionaryDomain
-            )
-            assert hasattr(self, "model_report_") and isinstance(
-                self.model_report_, kh.KhiopsJSONObject
-            )
+        try:
+            check_is_fitted(self)
+            assert isinstance(self.model_, kh.DictionaryDomain)
+            assert isinstance(self.model_report_, kh.KhiopsJSONObject)
+            assert isinstance(self.model_, kh.DictionaryDomain)
+        # Note:
+        #   We ignore any raised NotFittedError by check_is_fitted because we are using
+        #   the try/catch as an if/else. The code intended is
+        #     if check_is_fitted(self):
+        #         # asserts
+        #   But check_is_fitted has a do-nothing or raise pattern.
+        except NotFittedError:
+            pass
 
         return self
 
@@ -424,7 +429,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
             and isinstance(self.model_report_, kh.KhiopsJSONObject)
         ):
             self._fit_training_post_process(ds)
-            self.is_fitted_ = True
             self.is_multitable_model_ = ds.is_multitable
             self.n_features_in_ = ds.main_table.n_features()
 
@@ -649,6 +653,12 @@ class KhiopsEstimator(ABC, BaseEstimator):
             prefix=f"{self.__class__.__name__}_{method_name}_"
         )
 
+    def _assert_is_fitted(self):
+        try:
+            check_is_fitted(self)
+        except NotFittedError:
+            raise AssertionError("Model not fitted")
+
 
 # Note: scikit-learn **requires** inherit first the mixins and then other classes
 class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
@@ -704,8 +714,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
     Attributes
     ----------
-    is_fitted_ : bool
-        ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -1152,7 +1160,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             # Copy relevant attributes
             # Note: do not copy `model_*` attributes, that get rebuilt anyway
             for attribute_name in (
-                "is_fitted_",
                 "is_multitable_model_",
                 "model_main_dictionary_name_",
                 "model_id_column",
@@ -1215,8 +1222,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             A *new*, simplified `.KhiopsCoclustering` estimator instance.
         """
         # Check that the estimator is fitted:
-        if not self.is_fitted_:
-            raise ValueError("Only fitted coclustering estimators can be simplified")
+        check_is_fitted(self)
 
         return self._simplify(
             max_preserved_information=max_preserved_information,
@@ -2015,8 +2021,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         - Importance: The geometric mean between the Level and the Weight.
 
-    is_fitted_ : bool
-        ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -2097,7 +2101,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
     def _sorted_prob_variable_names(self):
         """Returns the model probability variable names in the order of self.classes_"""
-        assert self.is_fitted_, "Model not fit yet"
+        self._assert_is_fitted()
 
         # Collect the probability variables from the model main dictionary
         prob_variables = []
@@ -2483,8 +2487,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
         - Importance: The geometric mean between the Level and the Weight.
 
-    is_fitted_ : bool
-        ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -2774,8 +2776,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         Level of the features evaluated by the classifier. The Level is  measure of the
         predictive importance of the feature taken individually. It ranges between 0 (no
         predictive interest) and 1 (optimal predictive importance).
-    is_fitted_ : bool
-        ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
