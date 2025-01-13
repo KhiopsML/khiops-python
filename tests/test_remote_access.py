@@ -137,6 +137,10 @@ class KhiopsRemoteAccessTestsContainer:
 
             # If $(dirname khiops_path) is identical to $CONDA_PREFIX/bin,
             # then return True
+            print(
+                f"DEBUG==Variables available when testing if in a CONDA env : "
+                f"{os.environ}"
+            )
             conda_prefix = os.environ.get("CONDA_PREFIX")
             print(f"DEBUG=={conda_prefix}/bin vs {khiops_path}")
             return conda_prefix is not None and os.path.join(
