@@ -5,8 +5,8 @@ env:
   DEFAULT_IMAGE_INCREMENT: 0
   DEFAULT_SERVER_REVISION: main
   DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12 3.13
-  DEFAULT_KHIOPS_GCS_DRIVER_REVISION: 0.0.10
-  DEFAULT_KHIOPS_S3_DRIVER_REVISION: 0.0.12
+  DEFAULT_KHIOPS_GCS_DRIVER_REVISION: 0.0.11
+  DEFAULT_KHIOPS_S3_DRIVER_REVISION: 0.0.13
 on:
   pull_request:
     paths: [packaging/docker/khiopspydev/Dockerfile.*, .github/workflows/dev-docker.yml]
@@ -38,11 +38,11 @@ on:
         description: Khiops Server Revision
       khiops-gcs-driver-revision:
         type: string
-        default: 0.0.10
+        default: 0.0.11
         description: Driver version for Google Cloud Storage remote files
       khiops-s3-driver-revision:
         type: string
-        default: 0.0.12
+        default: 0.0.13
         description: Driver version for AWS-S3 remote files
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
