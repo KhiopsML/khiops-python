@@ -105,12 +105,7 @@ class KhiopsRemoteAccessTestsContainer:
             return ""
 
         def should_skip_in_a_conda_env(self):
-            """To be overriden by descendants
-
-            Temporarily skip the S3 and GCS tests in a conda environment
-            until the drivers for remote files access
-            are released as conda packages
-            """
+            """To be overriden by descendants"""
             return True
 
         def print_test_title(self):
@@ -145,11 +140,9 @@ class KhiopsRemoteAccessTestsContainer:
             ) == os.path.dirname(khiops_path)
 
         def setUp(self):
+
             self.skip_if_no_config()
             if self.is_in_a_conda_env() and self.should_skip_in_a_conda_env():
-                # TODO : Temporarily skip the test for Conda-installed khiops-core
-                #  until the drivers for remote files access
-                #  are released as conda packages
                 self.skipTest(
                     f"Remote test case {self.remote_access_test_case()} "
                     "in a conda environment is currently skipped"
@@ -322,6 +315,11 @@ class KhiopsS3RemoteFileTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAcces
         if s3_config_exists():
             kh.get_runner().__init__()
 
+    def should_skip_in_a_conda_env(self):
+        # The S3 driver is now released for conda too.
+        # No need to skip the tests any longer in a conda environment
+        return False
+
     def config_exists(self):
         return s3_config_exists()
 
@@ -359,6 +357,11 @@ class KhiopsGCSRemoteFileTests(
         """Sets back the runner defaults"""
         if gcs_config_exists():
             kh.get_runner().__init__()
+
+    def should_skip_in_a_conda_env(self):
+        # The GCS driver is now released for conda too.
+        # No need to skip the tests any longer in a conda environment
+        return False
 
     def config_exists(self):
         return gcs_config_exists()
