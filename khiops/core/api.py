@@ -563,6 +563,7 @@ def train_predictor(
     dictionary_name,
     data_table_path,
     target_variable,
+    report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -612,6 +613,8 @@ def train_predictor(
         Name of the target variable. If the specified variable is categorical it
         constructs a classifier and if it is numerical a regressor. If equal to "" it
         performs an unsupervised analysis.
+    report_file_path : str
+        Path to the analysis report file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -724,21 +727,23 @@ def train_predictor(
     _run_task("train_predictor", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
-    current_dir = os.getcwd()
-    reports_file_path = fs.get_child_path(current_dir, "AllReports.khj")
-
     if target_variable != "":
-        modeling_dictionary_file_path = fs.get_child_path(current_dir, "Modeling.kdic")
+        current_dir = os.path.dirname(report_file_path)
+        report_file_name, _ = os.path.splitext(os.path.basename(report_file_path))
+        modeling_dictionary_file_path = fs.get_child_path(
+            current_dir, f"{report_file_name}.model.kdic"
+        )
     else:
         modeling_dictionary_file_path = None
 
-    return (reports_file_path, modeling_dictionary_file_path)
+    return (report_file_path, modeling_dictionary_file_path)
 
 
 def evaluate_predictor(
     dictionary_file_path_or_domain,
     train_dictionary_name,
     data_table_path,
+    report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -771,6 +776,8 @@ def evaluate_predictor(
         Name of the main dictionary used while training the models.
     data_table_path : str
         Path of the evaluation data table file.
+    report_file_path : str
+        Path to the analysis report file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -828,17 +835,11 @@ def evaluate_predictor(
     # WARNING: Do not move this line, see the top of the "tasks" section for details
     task_args = locals()
 
-    # Create the evaluation file path and remove the directory and prefix arguments
-    current_dir = os.getcwd()
-    task_args["evaluation_report_path"] = fs.get_child_path(
-        current_dir, "EvaluationReport.xls"
-    )
-
     # Run the task
     _run_task("evaluate_predictor", task_args)
 
     # Return the path of the JSON report
-    return fs.get_child_path(current_dir, "EvaluationReport.khj")
+    return report_file_path
 
 
 def train_recoder(
@@ -846,6 +847,7 @@ def train_recoder(
     dictionary_name,
     data_table_path,
     target_variable,
+    report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -1027,11 +1029,14 @@ def train_recoder(
     _run_task("train_recoder", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
-    current_dir = os.getcwd()
-    reports_file_path = fs.get_child_path(current_dir, "AllReports.khj")
-    modeling_dictionary_file_path = fs.get_child_path(current_dir, "Modeling.kdic")
+    current_dir = os.path.dirname(report_file_path)
+    report_file_name, _ = os.path.splitext(os.path.basename(report_file_path))
 
-    return (reports_file_path, modeling_dictionary_file_path)
+    modeling_dictionary_file_path = fs.get_child_path(
+        current_dir, f"{report_file_name}.model.kdic"
+    )
+
+    return (report_file_path, modeling_dictionary_file_path)
 
 
 def deploy_model(
