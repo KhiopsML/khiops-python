@@ -280,21 +280,6 @@ def type_error_message(variable_name, variable, *target_types):
     )
 
 
-def removal_message(removed_feature, since, replacement=None):
-    """Formats a feature removal message"""
-    message = f"'{removed_feature}' removed since {since}. "
-    if replacement:
-        message += f"Use '{replacement}'."
-    else:
-        message += "There is no replacement."
-    return message
-
-
-def renaming_message(renamed_feature, new_name, since):
-    """Formats a feature renaming message"""
-    return f"Ignoring '{renamed_feature}': renamed to '{new_name}' since {since}."
-
-
 def invalid_keys_message(kwargs):
     """Formats an invalid keyword parameter message"""
     return f"Ignoring invalid parameter(s): {','.join(kwargs.keys())}."
