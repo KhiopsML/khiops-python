@@ -49,7 +49,7 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
     """Tests for checking the output types of predictors"""
 
     def setUp(self):
-        KhiopsTestHelper.skip_long_test(self)
+        KhiopsTestHelper.skip_expensive_test(self)
 
     def _replace(self, array, replacement_dict):
         return np.array([replacement_dict[value] for value in array])

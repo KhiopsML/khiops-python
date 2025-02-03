@@ -223,7 +223,7 @@ class KhiopsMultitableFitTests(unittest.TestCase):
     """Test if Khiops estimator can be fitted on multi-table data"""
 
     def setUp(self):
-        KhiopsTestHelper.skip_long_test(self)
+        KhiopsTestHelper.skip_expensive_test(self)
 
     def test_estimator_multiple_create_and_fit_does_not_raise_exception(self):
         """Test if estimator can be fitted from paths several times"""
