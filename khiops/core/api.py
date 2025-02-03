@@ -738,6 +738,45 @@ def train_predictor(
 
     return (report_file_path, modeling_dictionary_file_path)
 
+def interpret_predictor(
+    dictionary_file_path_or_domain,
+    predictor_dictionary_name,
+    interpretor_file_path,
+    max_variable_importances=0,
+    reinforcement_target_value="",
+    reinforcement_lever_variables=None,
+    batch_mode=True,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
+    trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
+    **kwargs,
+):
+    r"""Builds an intepretation dictionary from a predictor
+
+    Parameters
+    ----------
+    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+        Path of a Khiops dictionary file or a DictionaryDomain object.
+    predictor_dictionary_name : str
+        Name of the predictor dictionary used while building the interpretation model.
+    intepretor_file_path : str
+        Path to the intepretor dictionary file.
+    max_variable_importances : int, default 0
+        Maximum number of variable importances to be selected in the intepretation model. If equal to 0, then all the variables in the prediction model are considered.
+    reinforcement_target_value : str, default ""
+        If this target value is specified, then its probability of occurrence is tentatively increased.
+    reinforcement_lever_variables : list of str, optional
+        The names of variables to use as lever variables while buildint the intepretation model. Min length: 0. Max length: the total number of variables in the prediction model. If not specified, all variables are used.
+    """
+    pass
+
 
 def evaluate_predictor(
     dictionary_file_path_or_domain,
@@ -1343,6 +1382,7 @@ def train_coclustering(
     dictionary_name,
     data_table_path,
     coclustering_variables,
+    coclustering_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -1378,6 +1418,8 @@ def train_coclustering(
         Path of the data table file.
     coclustering_variables : list of str
         The names of variables to use in coclustering. Min length: 2. Max length: 10.
+    coclustering_file_path : str
+        Path to the coclustering report file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1443,8 +1485,115 @@ def train_coclustering(
     _run_task("train_coclustering", task_args)
 
     # Return the path of the coclustering file
-    return fs.get_child_path(os.getcwd(), "Coclustering.khcj")
+    return coclustering_file_path
 
+def train_instance_variable_coclustering(
+    dictionary_file_path_or_domain,
+    dictionary_name,
+    data_table_path,
+    identifier_variable,
+    coclustering_file_path,
+    detect_format=True,
+    header_line=None,
+    field_separator=None,
+    sample_percentage=100.0,
+    sampling_mode="Include sample",
+    selection_variable="",
+    selection_value="",
+    additional_data_tables=None,
+    min_optimization_time=0,
+    batch_mode=True,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
+    trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
+    **kwargs,
+):
+    r"""Trains a coclustering model from a data table
+
+    Parameters
+    ----------
+    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+        Path of a Khiops dictionary file or a DictionaryDomain object.
+    dictionary_name : str
+        Name of the dictionary to be analyzed.
+    data_table_path : str
+        Path of the data table file.
+    identifier_variable : str
+        The name of the variable used to identify the instances in instance x variable
+        coclustering.
+    coclustering_file_path : str
+        Path to the coclustering report file.
+    detect_format : bool, default ``True``
+        If ``True`` detects automatically whether the data table file has a header and
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    sample_percentage : float, default 100.0
+        See ``sampling_mode`` option below.
+    sampling_mode : "Include sample" or "Exclude sample"
+        If equal to "Include sample" it trains the coclustering estimator on
+        ``sample_percentage`` percent of the data. If equal to "Exclude sample" it
+        trains the coclustering estimator on the complement of the data selected with
+        "Include sample". See also :ref:`core-api-sampling-mode`.
+    selection_variable : str, default ""
+        It trains with only the records such that the value of ``selection_variable`` is
+        equal to ``selection_value``. Ignored if equal to "".
+    selection_value: str or int or float, default ""
+        See ``selection_variable`` option above. Ignored if equal to "".
+    additional_data_tables : dict, optional
+        A dictionary containing the data paths and file paths for a multi-table
+        dictionary file. For more details see :doc:`/multi_table_primer`.
+    min_optimization_time : int, default 0
+        Minimum optimization time in seconds.
+    ... :
+        See :ref:`core-api-common-params`.
+
+    Returns
+    -------
+    str
+        The path of the of the resulting coclustering file.
+
+    Raises
+    ------
+    `ValueError`
+        Number of coclustering variables out of the range 2-10.
+    `TypeError`
+        Invalid type of an argument.
+
+    Examples
+    --------
+    See the following function of the ``samples.py`` documentation script:
+        - `samples.train_coclustering()`
+    """
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
+
+    # Check the size of coclustering_variables
+    if len(task_args["coclustering_variables"]) < 2:
+        raise ValueError("coclustering_variables must have at least 2 elements")
+    elif len(task_args["coclustering_variables"]) > 10:
+        raise ValueError("coclustering_variables must have at most 10 elements")
+
+    # Run the task
+    _run_task("train_coclustering", task_args)
+
+    # Return the path of the coclustering file
+    return coclustering_file_path
 
 def simplify_coclustering(
     coclustering_file_path,
@@ -1513,6 +1662,7 @@ def prepare_coclustering_deployment(
     coclustering_file_path,
     table_variable,
     deployed_variable_name,
+    coclustering_dictionary_file,
     max_preserved_information=0,
     max_cells=0,
     max_part_numbers=None,
@@ -1547,6 +1697,8 @@ def prepare_coclustering_deployment(
         Name of the table variable in the dictionary.
     deployed_variable_name : str
         Name of the coclustering variable to deploy.
+    coclustering_dictionary_file : str
+        Path of the coclustering dictionary file for deployment.
     max_preserved_information : int, default 0
         Maximum information preserve in the simplified coclustering. If equal to 0
         there is no limit.
