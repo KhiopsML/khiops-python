@@ -1343,6 +1343,7 @@ def train_coclustering(
     dictionary_name,
     data_table_path,
     coclustering_variables,
+    coclustering_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -1378,6 +1379,8 @@ def train_coclustering(
         Path of the data table file.
     coclustering_variables : list of str
         The names of variables to use in coclustering. Min length: 2. Max length: 10.
+    coclustering_file_path : str
+        Path to the coclustering report file.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1443,7 +1446,7 @@ def train_coclustering(
     _run_task("train_coclustering", task_args)
 
     # Return the path of the coclustering file
-    return fs.get_child_path(os.getcwd(), "Coclustering.khcj")
+    return coclustering_file_path
 
 
 def simplify_coclustering(
@@ -1513,6 +1516,7 @@ def prepare_coclustering_deployment(
     coclustering_file_path,
     table_variable,
     deployed_variable_name,
+    coclustering_dictionary_file,
     max_preserved_information=0,
     max_cells=0,
     max_part_numbers=None,
@@ -1547,6 +1551,8 @@ def prepare_coclustering_deployment(
         Name of the table variable in the dictionary.
     deployed_variable_name : str
         Name of the coclustering variable to deploy.
+    coclustering_dictionary_file : str
+        Path of the coclustering dictionary file for deployment.
     max_preserved_information : int, default 0
         Maximum information preserve in the simplified coclustering. If equal to 0
         there is no limit.
