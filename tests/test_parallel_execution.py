@@ -28,7 +28,7 @@ class KhiopsParallelRunningTests(TestCase, KhiopsTestHelper):
     _n_cpus = -1
 
     def setUp(self):
-        KhiopsTestHelper.skip_long_test(self)
+        KhiopsTestHelper.skip_expensive_test(self)
 
     def _parallelise(self, callback, arg_sequence, n_cpus):
         """Parallelisation driver"""

@@ -16,7 +16,7 @@ class KhiopsSamplesTests(unittest.TestCase):
     """Test if all samples run without problems"""
 
     def setUp(self):
-        KhiopsTestHelper.skip_long_test(self)
+        KhiopsTestHelper.skip_expensive_test(self)
 
     def test_samples(self):
         """Test if all samples run without problems"""

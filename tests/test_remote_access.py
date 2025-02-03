@@ -140,6 +140,8 @@ class KhiopsRemoteAccessTestsContainer:
             ) == os.path.dirname(khiops_path)
 
         def setUp(self):
+            # Skip if only short and cheap tests are run
+            KhiopsTestHelper.skip_expensive_test(self)
 
             self.skip_if_no_config()
             if self.is_in_a_conda_env() and self.should_skip_in_a_conda_env():
@@ -221,8 +223,6 @@ class KhiopsRemoteAccessTestsContainer:
 
         def test_khiops_coclustering_with_remote_access(self):
             """Test the training of a khiops_coclustering with remote resources"""
-            # Skip if only short tests are run
-            KhiopsTestHelper.skip_long_test(self)
 
             # Setup paths
             # note : the current implementation forces the khiops.log file

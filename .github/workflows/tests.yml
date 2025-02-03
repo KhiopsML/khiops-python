@@ -15,11 +15,11 @@ on:
       khiops-desktop-revision:
         default: 10.2.4
         description: Khiops Windows Desktop Application Version
-      run-long-tests:
+      run-expensive-tests:
         type: boolean
         required: false
         default: false
-        description: Execute long tests
+        description: Execute expensive tests
   pull_request:
     paths:
       - khiops/**.py
@@ -110,8 +110,8 @@ jobs:
             rm -rf khiops.egg-info
           done
       - name: Prepare Unit Tests Environment
-        if: github.ref != 'dev' && github.ref != 'main' && ! inputs.run-long-tests
-        run: echo "UNITTEST_ONLY_SHORT_TESTS=true" >> "$GITHUB_ENV"
+        if: github.ref != 'dev' && github.ref != 'main' && ! inputs.run-expensive-tests
+        run: echo "SKIP_EXPENSIVE_TESTS=true" >> "$GITHUB_ENV"
       - name: Prepare Integration Tests on remote files
         env:
           AWS_ENDPOINT_URL: http://localhost:4569
