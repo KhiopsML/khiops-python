@@ -121,7 +121,7 @@ jobs:
         with:
           name: pip-package
       - name: Upload Pip package to the release
-        uses: ncipollo/release-action@v1.14.0
+        uses: ncipollo/release-action@v1.15.0
         with:
           allowUpdates: true
           artifacts: khiops*.tar.gz
