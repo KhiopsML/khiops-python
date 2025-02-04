@@ -14,6 +14,7 @@ from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
+import sklearn
 from scipy import sparse as sp
 from sklearn.utils import check_array
 from sklearn.utils.validation import column_or_1d
@@ -430,6 +431,19 @@ def write_internal_data_table(dataframe, file_path_or_stream):
     )
 
 
+def _column_or_1d_with_dtype(y, dtype=None):
+    # 'dtype' has been introduced on `column_or_1d' since Scikit-learn 1.2;
+    if sklearn.__version__ < "1.2":
+        if pd.api.types.is_string_dtype(dtype) and y.isin(["True", "False"]).all():
+            warnings.warn(
+                "'y' stores strings restricted to 'True'/'False' values: "
+                "The predict method may return a bool vector."
+            )
+        return column_or_1d(y, warn=True)
+    else:
+        return column_or_1d(y, warn=True, dtype=dtype)
+
+
 class Dataset:
     """A representation of a dataset
 
@@ -738,8 +752,22 @@ class Dataset:
         if isinstance(y, str):
             y_checked = y
         else:
-            y_checked = column_or_1d(y, warn=True)
-
+            if hasattr(y, "dtype"):
+                if isinstance(y.dtype, pd.CategoricalDtype):
+                    y_checked = _column_or_1d_with_dtype(
+                        y, dtype=y.dtype.categories.dtype
+                    )
+                else:
+                    y_checked = _column_or_1d_with_dtype(y, dtype=y.dtype)
+            elif hasattr(y, "dtypes"):
+                if isinstance(y.dtypes[0], pd.CategoricalDtype):
+                    y_checked = _column_or_1d_with_dtype(
+                        y, dtype=y.dtypes[0].categories.dtype
+                    )
+                else:
+                    y_checked = _column_or_1d_with_dtype(y)
+            else:
+                y_checked = _column_or_1d_with_dtype(y)
         # Check the target type coherence with those of X's tables
         if isinstance(
             self.main_table, (PandasTable, SparseTable, NumpyTable)
