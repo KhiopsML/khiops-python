@@ -416,7 +416,7 @@ def read_dictionary_file(dictionary_file_path):
     """
     # Check the extension of the input dictionary file
     extension = os.path.splitext(dictionary_file_path)[1].lower()
-    if extension not in [".kdic", ".kdicj", "json"]:
+    if extension not in [".kdic", ".kdicj", ".json"]:
         raise ValueError(
             f"Input file must have extension 'kdic', 'kdicj' or 'json'."
             f"It has extension: '{extension}'."
