@@ -453,8 +453,11 @@ class KhiopsDockerRunnerTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAcces
 
         # Cleanup: remove directories created in `setUpClass`
         if docker_runner_config_exists():
-            shutil.rmtree(kh.get_runner().samples_dir)
-            shutil.rmtree(cls._khiops_temp_dir)
+
+            # If Khiops samples and temp dirs exist, remove them
+            with suppress(FileNotFoundError):
+                shutil.rmtree(kh.get_runner().samples_dir)
+                shutil.rmtree(cls._khiops_temp_dir)
 
         # Reset the Khiops Python runner to the initial one
         kh.set_runner(cls.initial_runner)
