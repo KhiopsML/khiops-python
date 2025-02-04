@@ -71,12 +71,12 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
         khc = KhiopsClassifier(n_trees=0)
         khc.fit(X, y)
         y_pred = khc.predict(X)
+        khc.fit(X_mt, y)
+        y_mt_pred = khc.predict(X_mt)
+
         y_bin = y.replace({0: 0, 1: 0, 2: 1})
         khc.fit(X, y_bin)
         y_bin_pred = khc.predict(X)
-        khc.fit(X_mt, y)
-        khc.export_report_file("report.khj")
-        y_mt_pred = khc.predict(X_mt)
         khc.fit(X_mt, y_bin)
         y_mt_bin_pred = khc.predict(X_mt)
 
@@ -85,6 +85,8 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
             "ys": {
                 "int": y,
                 "int binary": y_bin,
+                "float": y.astype(float),
+                "bool": y.replace({0: True, 1: True, 2: False}),
                 "string": self._replace(y, {0: "se", 1: "vi", 2: "ve"}),
                 "string binary": self._replace(y_bin, {0: "vi_or_se", 1: "ve"}),
                 "int as string": self._replace(y, {0: "8", 1: "9", 2: "10"}),
@@ -93,30 +95,42 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                 "cat string": pd.Series(
                     self._replace(y, {0: "se", 1: "vi", 2: "ve"})
                 ).astype("category"),
+                "cat float": y.astype(float).astype("category"),
+                "cat bool": y.replace({0: True, 1: True, 2: False}).astype("category"),
             },
             "y_type_check": {
                 "int": pd.api.types.is_integer_dtype,
                 "int binary": pd.api.types.is_integer_dtype,
+                "float": pd.api.types.is_float_dtype,
+                "bool": pd.api.types.is_bool_dtype,
                 "string": pd.api.types.is_string_dtype,
                 "string binary": pd.api.types.is_string_dtype,
                 "int as string": pd.api.types.is_string_dtype,
                 "int as string binary": pd.api.types.is_string_dtype,
                 "cat int": pd.api.types.is_integer_dtype,
                 "cat string": pd.api.types.is_string_dtype,
+                "cat float": pd.api.types.is_float_dtype,
+                "cat bool": pd.api.types.is_bool_dtype,
             },
             "expected_classes": {
                 "int": column_or_1d([0, 1, 2]),
                 "int binary": column_or_1d([0, 1]),
+                "float": column_or_1d([0.0, 1.0, 2.0]),
+                "bool": column_or_1d([False, True]),
                 "string": column_or_1d(["se", "ve", "vi"]),
                 "string binary": column_or_1d(["ve", "vi_or_se"]),
                 "int as string": column_or_1d(["10", "8", "9"]),
                 "int as string binary": column_or_1d(["10", "89"]),
                 "cat int": column_or_1d([0, 1, 2]),
                 "cat string": column_or_1d(["se", "ve", "vi"]),
+                "cat float": column_or_1d([0.0, 1.0, 2.0]),
+                "cat bool": column_or_1d([False, True]),
             },
             "expected_y_preds": {
                 "mono": {
                     "int": y_pred,
+                    "float": y_pred.astype(float),
+                    "bool": self._replace(y_bin_pred, {0: True, 1: False}),
                     "int binary": y_bin_pred,
                     "string": self._replace(y_pred, {0: "se", 1: "vi", 2: "ve"}),
                     "string binary": self._replace(
@@ -128,9 +142,15 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                     ),
                     "cat int": y_pred,
                     "cat string": self._replace(y_pred, {0: "se", 1: "vi", 2: "ve"}),
+                    "cat float": self._replace(
+                        y_pred, {target: float(target) for target in (0, 1, 2)}
+                    ),
+                    "cat bool": self._replace(y_bin_pred, {0: True, 1: False}),
                 },
                 "multi": {
                     "int": y_mt_pred,
+                    "float": y_mt_pred.astype(float),
+                    "bool": self._replace(y_mt_bin_pred, {0: True, 1: False}),
                     "int binary": y_mt_bin_pred,
                     "string": self._replace(y_mt_pred, {0: "se", 1: "vi", 2: "ve"}),
                     "string binary": self._replace(
@@ -144,6 +164,10 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                     ),
                     "cat int": y_mt_pred,
                     "cat string": self._replace(y_mt_pred, {0: "se", 1: "vi", 2: "ve"}),
+                    "cat float": self._replace(
+                        y_mt_pred, {target: float(target) for target in (0, 1, 2)}
+                    ),
+                    "cat bool": self._replace(y_mt_bin_pred, {0: True, 1: False}),
                 },
             },
             "Xs": {

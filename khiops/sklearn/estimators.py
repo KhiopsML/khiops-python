@@ -148,6 +148,7 @@ def _check_categorical_target_type(ds):
         or pd.api.types.is_string_dtype(ds.target_column.dtype)
         or pd.api.types.is_integer_dtype(ds.target_column.dtype)
         or pd.api.types.is_float_dtype(ds.target_column.dtype)
+        or pd.api.types.is_bool_dtype(ds.target_column.dtype)
     ):
         raise ValueError(
             f"'y' has invalid type '{ds.target_column_type}'. "
@@ -1856,6 +1857,24 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             )
         )
 
+    def _is_real_target_dtype_float(self):
+        return self._original_target_dtype is not None and (
+            pd.api.types.is_float_dtype(self._original_target_dtype)
+            or (
+                isinstance(self._original_target_dtype, pd.CategoricalDtype)
+                and pd.api.types.is_float_dtype(self._original_target_dtype.categories)
+            )
+        )
+
+    def _is_real_target_dtype_bool(self):
+        return self._original_target_dtype is not None and (
+            pd.api.types.is_bool_dtype(self._original_target_dtype)
+            or (
+                isinstance(self._original_target_dtype, pd.CategoricalDtype)
+                and pd.api.types.is_bool_dtype(self._original_target_dtype.categories)
+            )
+        )
+
     def _sorted_prob_variable_names(self):
         """Returns the model probability variable names in the order of self.classes_"""
         self._assert_is_fitted()
@@ -1949,7 +1968,11 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
                     self.classes_.append(variable.meta_data.get_value(key))
         if self._is_real_target_dtype_integer():
             self.classes_ = [int(class_value) for class_value in self.classes_]
-            self.classes_.sort()
+        elif self._is_real_target_dtype_float():
+            self.classes_ = [float(class_value) for class_value in self.classes_]
+        elif self._is_real_target_dtype_bool():
+            self.classes_ = [class_value == "True" for class_value in self.classes_]
+        self.classes_.sort()
         self.classes_ = column_or_1d(self.classes_)
 
         # Count number of classes
@@ -1996,9 +2019,10 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         -------
         `ndarray <numpy.ndarray>`
             An array containing the encoded columns. A first column containing key
-            column ids is added in multi-table mode. The `numpy.dtype` of the array is
-            integer if the classifier was learned with an integer ``y``. Otherwise it
-            will be ``str``.
+            column ids is added in multi-table mode. The `numpy.dtype` of the array
+            matches the type of ``y`` used during training. It will be integer, float,
+            or boolean if the classifier was trained with a ``y`` of the corresponding
+            type. Otherwise it will be ``str``.
 
             The key columns are added for multi-table tasks.
         """
