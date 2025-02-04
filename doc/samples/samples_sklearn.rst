@@ -98,6 +98,82 @@ Samples
     # If you have Khiops Visualization installed you may open the report as follows
     # khc.export_report_file("report.khj")
     # kh.visualize_report("report.khj")
+.. autofunction:: khiops_classifier_boolean_target
+.. code-block:: python
+
+    # Imports
+    import os
+    import pandas as pd
+    from khiops import core as kh
+    from khiops.sklearn import KhiopsClassifier
+    from sklearn.model_selection import train_test_split
+
+    # Load the dataset into a pandas dataframe
+    adult_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    adult_df = pd.read_csv(adult_path, sep="\t")
+
+    # Split the whole dataframe into train and test (70%-30%)
+    adult_train_df, adult_test_df = train_test_split(
+        adult_df, test_size=0.3, random_state=1
+    )
+
+    # Split the dataset into:
+    # - the X feature table
+    # - the y target vector ("class" column)
+    X_train = adult_train_df.drop("class", axis=1)
+    X_test = adult_test_df.drop("class", axis=1)
+    y_train = adult_train_df["class"]
+    y_train.replace({"less": False, "more": True}, inplace=True)
+
+    # Create the classifier object
+    khc = KhiopsClassifier()
+
+    # Train the classifier
+    khc.fit(X_train, y_train)
+
+    # Predict the classes on the test dataset
+    y_test_pred = khc.predict(X_test)
+    print("Predicted classes (first 10):")
+    print(y_test_pred[0:10])
+    print("---")
+.. autofunction:: khiops_classifier_float_target
+.. code-block:: python
+
+    # Imports
+    import os
+    import pandas as pd
+    from khiops import core as kh
+    from khiops.sklearn import KhiopsClassifier
+    from sklearn.model_selection import train_test_split
+
+    # Load the dataset into a pandas dataframe
+    adult_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    adult_df = pd.read_csv(adult_path, sep="\t")
+
+    # Split the whole dataframe into train and test (70%-30%)
+    adult_train_df, adult_test_df = train_test_split(
+        adult_df, test_size=0.3, random_state=1
+    )
+
+    # Split the dataset into:
+    # - the X feature table
+    # - the y target vector ("class" column)
+    X_train = adult_train_df.drop("class", axis=1)
+    X_test = adult_test_df.drop("class", axis=1)
+    y_train = adult_train_df["class"]
+    y_train.replace({"less": 0.0, "more": 1.0}, inplace=True)
+
+    # Create the classifier object
+    khc = KhiopsClassifier()
+
+    # Train the classifier
+    khc.fit(X_train, y_train)
+
+    # Predict the classes on the test dataset
+    y_test_pred = khc.predict(X_test)
+    print("Predicted classes (first 10):")
+    print(y_test_pred[0:10])
+    print("---")
 .. autofunction:: khiops_classifier_multiclass
 .. code-block:: python
 
