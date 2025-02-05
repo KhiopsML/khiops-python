@@ -129,8 +129,10 @@ class KhiopsRemoteAccessTestsContainer:
             if not isinstance(kh.get_runner(), KhiopsLocalRunner):
                 return False
 
-            # Get path to the Khiops executable
+            # Get path to the Khiops executable (temporarily disable pylint warning)
+            # pylint: disable=protected-access
             khiops_path = kh.get_runner()._khiops_path
+            # pylint: enable=protected-access
 
             # If $(dirname khiops_path) is identical to $CONDA_PREFIX/bin,
             # then return True
