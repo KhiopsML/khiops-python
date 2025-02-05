@@ -677,8 +677,8 @@ class KhiopsEstimator(ABC, BaseEstimator):
     def _assert_is_fitted(self):
         try:
             check_is_fitted(self)
-        except NotFittedError:
-            raise AssertionError("Model not fitted")
+        except NotFittedError as exc:
+            raise AssertionError("Model not fitted") from exc
 
 
 # Note: scikit-learn **requires** inherit first the mixins and then other classes

@@ -16,7 +16,7 @@ from itertools import product
 import numpy as np
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.validation import NotFittedError, check_is_fitted
+from sklearn.utils.validation import check_is_fitted
 
 import khiops.core as kh
 from khiops.sklearn.estimators import (
