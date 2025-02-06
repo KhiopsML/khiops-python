@@ -218,7 +218,9 @@ Samples
     accidents_df = pd.read_csv(os.path.join(accidents_data_dir, "Accidents.txt"), sep="\t")
     users_df = pd.read_csv(os.path.join(accidents_data_dir, "Users.txt"), sep="\t")
     vehicles_df = pd.read_csv(os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t")
-    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
+    places_df = pd.read_csv(
+        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", low_memory=False
+    )
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
@@ -588,7 +590,9 @@ Samples
     accidents_df = pd.read_csv(os.path.join(accidents_data_dir, "Accidents.txt"), sep="\t")
     users_df = pd.read_csv(os.path.join(accidents_data_dir, "Users.txt"), sep="\t")
     vehicles_df = pd.read_csv(os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t")
-    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
+    places_df = pd.read_csv(
+        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", low_memory=False
+    )
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {

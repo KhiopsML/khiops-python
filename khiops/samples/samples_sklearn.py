@@ -218,7 +218,9 @@ def khiops_classifier_multitable_snowflake():
     vehicles_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
-    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
+    places_df = pd.read_csv(
+        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", low_memory=False
+    )
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
@@ -614,7 +616,9 @@ def khiops_encoder_multitable_snowflake():
     vehicles_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
-    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
+    places_df = pd.read_csv(
+        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", low_memory=False
+    )
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
