@@ -210,6 +210,10 @@ jobs:
             tests/resources/general_options/general_options/*/*._kh
           retention-days: 7
   check-khiops-integration-on-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
     runs-on: windows-2019
     steps:
       - name: Download the Khiops Desktop NSIS Installer
@@ -248,7 +252,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
       - name: Install khiops-python dev dependencies
         shell: pwsh
         run: |
@@ -256,6 +260,12 @@ jobs:
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()})
+
+          # Install setuptools as it is not automatically included for
+          # Python >= 3.12
+          python -m pip install setuptools
+
+          # Collect the Python dependency requirements
           python setup.py egg_info
 
           # Install the Python requirements
