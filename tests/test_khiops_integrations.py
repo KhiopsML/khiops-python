@@ -177,6 +177,7 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         #   directory
         # - check that the Khiops binary directory contains the MODL* binaries
         #   and `mpiexec` (which should be its default location)
+        conda_prefix = None
         if "CONDA_PREFIX" in os.environ:
             # Remove `CONDA_PREFIX/bin` from `PATH`
             conda_prefix_bin = os.path.join(os.environ["CONDA_PREFIX"], "bin")
@@ -186,11 +187,22 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
                 if path_fragment != conda_prefix_bin
             )
 
+            # Store existing CONDA_PREFIX
+            conda_prefix = os.environ["CONDA_PREFIX"]
+
             # Unset `CONDA_PREFIX`
             del os.environ["CONDA_PREFIX"]
 
         # Create a fresh local runner
         runner = KhiopsLocalRunner()
+
+        # Restore CONDA_PREFIX
+        if conda_prefix is not None:
+            os.environ["CONDA_PREFIX"] = conda_prefix
+
+            # Restore `CONDA_PREFIX/bin` into `PATH`
+            conda_prefix_bin = os.path.join(conda_prefix, "bin")
+            os.environ["PATH"] = os.pathsep.join([conda_prefix_bin, os.environ["PATH"]])
 
         # Check that MODL* files as set in the runner exist and are executable
         self.assertTrue(os.path.isfile(runner.khiops_path))
@@ -211,7 +223,7 @@ class KhiopsMultitableFitTests(unittest.TestCase):
     """Test if Khiops estimator can be fitted on multi-table data"""
 
     def setUp(self):
-        KhiopsTestHelper.skip_long_test(self)
+        KhiopsTestHelper.skip_expensive_test(self)
 
     def test_estimator_multiple_create_and_fit_does_not_raise_exception(self):
         """Test if estimator can be fitted from paths several times"""

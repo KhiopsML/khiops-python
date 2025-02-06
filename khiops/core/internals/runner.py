@@ -594,17 +594,26 @@ class KhiopsRunner(ABC):
 
         # Create the message reporting the errors and warnings
         error_msg = ""
-        errors, fatal_errors, warning_messages = self._collect_errors(log_file_path)
-        if warning_messages:
-            error_msg += "Warnings in log:\n" + "".join(warning_messages)
-        if errors:
-            if error_msg:
-                error_msg += "\n"
-            error_msg += "Errors in log:\n" + "".join(errors)
-        if fatal_errors:
-            if error_msg:
-                error_msg += "\n"
-            error_msg += "Fatal errors in log:\n" + "".join(fatal_errors)
+        # If the log file exists: Collect the errors and warnings messages
+        if fs.exists(log_file_path):
+            errors, fatal_errors, warning_messages = self._collect_errors(log_file_path)
+            if warning_messages:
+                error_msg += "Warnings in log:\n" + "".join(warning_messages)
+            if errors:
+                if error_msg:
+                    error_msg += "\n"
+                error_msg += "Errors in log:\n" + "".join(errors)
+            if fatal_errors:
+                if error_msg:
+                    error_msg += "\n"
+                error_msg += "Fatal errors in log:\n" + "".join(fatal_errors)
+        # Otherwise warn that the log file is missing
+        else:
+            warnings.warn(
+                f"Log file not found after {tool_name} execution."
+                f"Path: {log_file_path}"
+            )
+            errors = fatal_errors = []
 
         # Add stdout to the warning message if non empty
         if stdout:
