@@ -81,9 +81,9 @@ jobs:
       - name: Set up the Docker Image Tags
         run: |
           set -x
-          # Set latest only if requested and on "dev" or "main" branch
+          # Set latest only if requested and on "dev", "dev-v10" or "main" branch
           if [[ "${{ inputs.set-latest }}" == "true" &&
-                ("$GITHUB_REF_NAME" == "dev" || "$GITHUB_REF_NAME" == "main") ]]
+                ("$GITHUB_REF_NAME" == "dev" || "$GITHUB_REF_NAME" == "dev-v10" || "$GITHUB_REF_NAME" == "main") ]]
           then
             DOCKER_IMAGE_TAGS="$IMAGE_URL:latest,$IMAGE_URL:$KHIOPS_REVISION.$IMAGE_INCREMENT"
           else
