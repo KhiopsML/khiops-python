@@ -51,7 +51,7 @@ jobs:
       - name: Install Miniforge
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniforge-version: latest
+          miniforge-version: 24.11.0-0
           python-version: '3.12'
           conda-remove-defaults: true
       - name: Install Dependency Requirements for Building Conda Packages
@@ -90,7 +90,7 @@ jobs:
       - name: Install Miniforge
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniforge-version: latest  # needed for macOS 13
+          miniforge-version: 24.11.0-0
           python-version: ${{ matrix.python-version }}
           conda-remove-defaults: true
       - name: Download Conda Package Artifact
@@ -185,7 +185,7 @@ jobs:
       - name: Install Miniforge
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniforge-version: latest
+          miniforge-version: 24.11.0-0
           python-version: '3.12'
           conda-remove-defaults: true
       - name: Install Requirement Packages
