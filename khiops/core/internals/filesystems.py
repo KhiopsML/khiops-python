@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -19,10 +19,11 @@ from urllib.parse import urlparse
 # pylint: disable=invalid-name
 
 # Import boto3 if available
-# Delay the raising of an ImportError to an instantation of a AmazonS3Resource
+# Delay an ImportError raising to an instantiation of a AmazonS3Resource
 try:
     import boto3
     import boto3.session
+    from boto3.exceptions import S3UploadFailedError
     from botocore.exceptions import ClientError
 
     boto3_import_error = None
@@ -30,7 +31,7 @@ except ImportError as import_error:
     boto3_import_error = import_error
 
 # Import google.could if available
-# Delay the raising of an ImportError to an instantation of a GoogleCloudStorageResource
+# Delay an ImportError raising to an instantiation of a GoogleCloudStorageResource
 try:
     from google.cloud import storage
 
@@ -254,7 +255,7 @@ def copy_from_local(uri_or_path, local_path):
     Raises
     ------
     RuntimeError
-        If there was a problem when removing.
+        If there was a problem when copying.
     """
     create_resource(uri_or_path).copy_from_local(local_path)
 
@@ -272,7 +273,7 @@ def copy_to_local(uri_or_path, local_path):
     Raises
     ------
     RuntimeError
-        If there was a problem when removing.
+        If there was a problem when copying.
     """
     create_resource(uri_or_path).copy_to_local(local_path)
 
@@ -668,29 +669,22 @@ class AmazonS3Resource(FilesystemResource):
             )
 
     def copy_from_local(self, local_path):
-        response = self.s3_client.Bucket(self.uri_info.netloc).upload_file(
-            local_path, self.uri_info.path[1:]
-        )
-        status_code = response["ResponseMetadata"]["HTTPStatusCode"]
-        copy_ok = 200 <= status_code <= 299
-        if not copy_ok:
-            raise RuntimeError(
-                f"S3 copy_from_local failed {self.uri} with code {status_code}: "
-                + json.dumps(response)
+        try:
+            self.s3_client.Bucket(self.uri_info.netloc).upload_file(
+                local_path, self.uri_info.path[1:]
             )
+        # normalize the raised exception
+        except S3UploadFailedError as exc:
+            raise RuntimeError(f"S3 copy_from_local failed {self.uri}") from exc
 
     def copy_to_local(self, local_path):
-        response = self.s3_client.Bucket(self.uri_info.netloc).download_file(
-            local_path, self.uri_info.path[1:]
-        )
-        status_code = response["ResponseMetadata"]["HTTPStatusCode"]
-        copy_ok = 200 <= status_code <= 299
-        if not copy_ok:
-            raise RuntimeError(
-                f"S3 download failed {self.uri} with code {status_code}: "
-                + json.dumps(response)
+        try:
+            self.s3_client.Bucket(self.uri_info.netloc).download_file(
+                self.uri_info.path[1:], local_path
             )
-        return copy_ok
+        # normalize the raised exception
+        except S3UploadFailedError as exc:
+            raise RuntimeError(f"S3 download failed {self.uri}") from exc
 
     def list_dir(self):
         # Add an extra slash to the path to treat it as a folder

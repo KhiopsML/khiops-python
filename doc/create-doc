@@ -78,7 +78,7 @@ then
 fi
 
 # Convert tutorials to reST
-tutorials_dir="./tutorials"
+tutorials_dir="$(realpath ./tutorials)"
 mkdir -p "$tutorials_dir"
 if [[ $TRANSFORM_NOTEBOOKS ]]
 then
@@ -100,10 +100,10 @@ python create-coursework.py
 cd coursework
 mkdir -p exercises
 touch exercises/.dummy # Create a dummy so the "exercises" directory is created on unzip
-zip "../../$tutorials_dir/core_tutorials.zip" Core*.ipynb data/*/* exercises/.dummy
-zip "../../$tutorials_dir/sklearn_tutorials.zip" Sklearn*.ipynb data/*/* exercises/.dummy
+zip "$tutorials_dir/core_tutorials.zip" Core*.ipynb data/*/* exercises/.dummy
+zip "$tutorials_dir/sklearn_tutorials.zip" Sklearn*.ipynb data/*/* exercises/.dummy
 cd "../.."
 
 # Create the documentation with Sphinx
 echo "Executing Sphinx"
-make html
+sphinx-build -M html . _build/

@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -28,7 +28,7 @@ class KhiopsParallelRunningTests(TestCase, KhiopsTestHelper):
     _n_cpus = -1
 
     def setUp(self):
-        KhiopsTestHelper.skip_long_test(self)
+        KhiopsTestHelper.skip_expensive_test(self)
 
     def _parallelise(self, callback, arg_sequence, n_cpus):
         """Parallelisation driver"""

@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -16,7 +16,7 @@ import pandas as pd
 
 from khiops.core.dictionary import DictionaryDomain
 from khiops.core.helpers import build_multi_table_dictionary_domain, visualize_report
-from khiops.utils.helpers import train_test_split_dataset
+from khiops.sklearn import train_test_split_dataset
 
 
 class KhiopsHelperFunctions(unittest.TestCase):

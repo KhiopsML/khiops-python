@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -1290,7 +1290,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             report.get_predictor_performance("INEXISTENT REPORT NAME")
 
-        # Test anomalous access to perfomance objects
+        # Test anomalous access to performance objects
         for predictor_name in report.get_predictor_names():
             self._test_performance_report_accessors(
                 result_file_name,
@@ -1750,7 +1750,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         test_resources_dir = os.path.join(resources_dir(), "dictionary")
         ref_kdicj_dir = os.path.join(test_resources_dir, "ref_kdicj")
 
-        # Set the expeced outputs
+        # Set the expected outputs
         expected_data_paths = {
             "Adult": {"Adult": []},
             "SpliceJunction": {
@@ -2482,7 +2482,7 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                 scenario.write(writer, arguments[template_name, argument_set])
                 output_scenario = stream.getvalue().decode("ascii").replace("\r", "")
 
-                # Compare the output scenario and the expected fixutre
+                # Compare the output scenario and the expected fixture
                 self.assertEqual(output_scenario, expected_scenario)
 
     def test_invalid_templates(self):

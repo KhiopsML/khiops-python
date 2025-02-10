@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -37,6 +37,7 @@ from sklearn.base import (
     RegressorMixin,
     TransformerMixin,
 )
+from sklearn.exceptions import NotFittedError
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import assert_all_finite, check_is_fitted, column_or_1d
 
@@ -50,7 +51,7 @@ from khiops.core.internals.common import (
     is_list_like,
     type_error_message,
 )
-from khiops.utils.dataset import (
+from khiops.sklearn.dataset import (
     Dataset,
     FileTable,
     get_khiops_variable_name,
@@ -197,6 +198,37 @@ def _check_numerical_target_type(ds):
         )
 
 
+def _check_pair_parameters(estimator):
+    assert isinstance(estimator, (KhiopsClassifier, KhiopsEncoder)), type_error_message(
+        "estimator", estimator, KhiopsClassifier, KhiopsEncoder
+    )
+    if not isinstance(estimator.n_pairs, int):
+        raise TypeError(type_error_message("n_pairs", estimator.n_pairs, int))
+    if estimator.n_pairs < 0:
+        raise ValueError("'n_pairs' must be positive")
+    if estimator.specific_pairs is not None:
+        if not is_list_like(estimator.specific_pairs):
+            raise TypeError(
+                type_error_message(
+                    "specific_pairs", estimator.specific_pairs, "list-like"
+                )
+            )
+        else:
+            for pair in estimator.specific_pairs:
+                if not isinstance(pair, tuple):
+                    raise TypeError(type_error_message(pair, pair, tuple))
+    if not isinstance(estimator.all_possible_pairs, bool):
+        raise TypeError(
+            type_error_message("all_possible_pairs", estimator.all_possible_pairs, bool)
+        )
+
+    # Check 'group_target_value' parameter
+    if not isinstance(estimator.group_target_value, bool):
+        raise TypeError(
+            type_error_message("group_target_value", estimator.group_target_value, bool)
+        )
+
+
 def _cleanup_dir(target_dir):
     """Cleanups a directory with only files in it
 
@@ -231,7 +263,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         The name of the column to be used as key.
         **Deprecated** will be removed in Khiops 11.
     internal_sort : bool, optional
-        *Advanced.*: See concrete estimator classes for information about this
+        *Advanced*: See concrete estimator classes for information about this
         parameter.
         **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
         estimator parameter instead.
@@ -302,7 +334,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     def _get_main_dictionary(self):
         """Returns the model's main Khiops dictionary"""
-        assert self.model_ is not None, "Model dictionary domain not available."
+        self._assert_is_fitted()
         return self.model_.get_dictionary(self.model_main_dictionary_name_)
 
     def export_report_file(self, report_file_path):
@@ -318,16 +350,14 @@ class KhiopsEstimator(ABC, BaseEstimator):
         `ValueError`
             When the instance is not fitted.
         """
-        if not self.is_fitted_:
-            raise ValueError(f"{self.__class__.__name__} not fitted yet.")
+        check_is_fitted(self)
         if self.model_report_ is None:
             raise ValueError("Report not available (imported model?).")
         self.model_report_.write_khiops_json_file(report_file_path)
 
     def export_dictionary_file(self, dictionary_file_path):
         """Export the model's Khiops dictionary file (.kdic)"""
-        if not self.is_fitted_:
-            raise ValueError(f"{self.__class__.__name__} not fitted yet.")
+        check_is_fitted(self)
         self.model_.export_khiops_dictionary_file(dictionary_file_path)
 
     def _import_model(self, kdic_path):
@@ -384,13 +414,19 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # If on "fitted" state then:
         # - self.model_ must be a DictionaryDomain
         # - self.model_report_ must be a KhiopsJSONObject
-        if hasattr(self, "is_fitted_") and self.is_fitted_:
-            assert hasattr(self, "model_") and isinstance(
-                self.model_, kh.DictionaryDomain
-            )
-            assert hasattr(self, "model_report_") and isinstance(
-                self.model_report_, kh.KhiopsJSONObject
-            )
+        try:
+            check_is_fitted(self)
+            assert isinstance(self.model_, kh.DictionaryDomain)
+            assert isinstance(self.model_report_, kh.KhiopsJSONObject)
+            assert isinstance(self.model_, kh.DictionaryDomain)
+        # Note:
+        #   We ignore any raised NotFittedError by check_is_fitted because we are using
+        #   the try/catch as an if/else. The code intended is
+        #     if check_is_fitted(self):
+        #         # asserts
+        #   But check_is_fitted has a do-nothing or raise pattern.
+        except NotFittedError:
+            pass
 
         return self
 
@@ -424,7 +460,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
             and isinstance(self.model_report_, kh.KhiopsJSONObject)
         ):
             self._fit_training_post_process(ds)
-            self.is_fitted_ = True
             self.is_multitable_model_ = ds.is_multitable
             self.n_features_in_ = ds.main_table.n_features()
 
@@ -466,7 +501,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         self,
         ds,
         computation_dir,
-        _transform_create_deployment_model_fun,
+        _transform_prepare_deployment_fun,
         drop_key,
         transformed_file_name,
     ):
@@ -478,11 +513,13 @@ class KhiopsEstimator(ABC, BaseEstimator):
         self._transform_check_dataset(ds)
 
         # Create a deployment dataset
-        # Note: The input dataset is not necessarily ready to be deployed
+        # Note: The input dataset isn't ready for deployment in the case of coclustering
         deployment_ds = self._transform_create_deployment_dataset(ds, computation_dir)
 
-        # Create a deployment dictionary
-        deployment_dictionary_domain = _transform_create_deployment_model_fun(ds)
+        # Create a deployment dictionary and the internal table column dtypes
+        deployment_dictionary_domain, internal_table_column_dtypes = (
+            _transform_prepare_deployment_fun(ds)
+        )
 
         # Deploy the model
         output_table_path = self._transform_deploy_model(
@@ -493,10 +530,36 @@ class KhiopsEstimator(ABC, BaseEstimator):
             transformed_file_name,
         )
 
-        # Post-process to return the correct output type
-        return self._transform_deployment_post_process(
-            deployment_ds, output_table_path, drop_key
-        )
+        # Post-process to return the correct output type and order
+        if deployment_ds.is_in_memory:
+            # Load the table as a dataframe
+            with io.BytesIO(fs.read(output_table_path)) as output_table_stream:
+                output_table_df = read_internal_data_table(
+                    output_table_stream, column_dtypes=internal_table_column_dtypes
+                )
+
+            # On multi-table:
+            # - Reorder the table to the original table order
+            #     - Because transformed data table file is sorted by key
+            # - Drop the key columns if specified
+            if deployment_ds.is_multitable:
+                key_df = deployment_ds.main_table.data_source[
+                    deployment_ds.main_table.key
+                ]
+                output_table_df_or_path = key_df.merge(
+                    output_table_df, on=deployment_ds.main_table.key
+                )
+                if drop_key:
+                    output_table_df_or_path.drop(
+                        deployment_ds.main_table.key, axis=1, inplace=True
+                    )
+            # On mono-table: Return the read dataframe as-is
+            else:
+                output_table_df_or_path = output_table_df
+        else:
+            output_table_df_or_path = output_table_path
+
+        return output_table_df_or_path
 
     def _transform_create_deployment_dataset(self, ds, _):
         """Creates if necessary a new dataset to execute the model deployment
@@ -605,49 +668,17 @@ class KhiopsEstimator(ABC, BaseEstimator):
         if ds.table_type == FileTable and self.output_dir is None:
             raise ValueError("'output_dir' is not set but dataset is file-based")
 
-    def _transform_deployment_post_process(
-        self, deployment_ds, output_table_path, drop_key
-    ):
-        # Return a dataframe for dataframe based datasets
-        if deployment_ds.is_in_memory:
-            # Read the transformed table with the internal table settings
-            with io.BytesIO(fs.read(output_table_path)) as output_table_stream:
-                output_table_df = read_internal_data_table(output_table_stream)
-
-            # On multi-table:
-            # - Reorder the table to the original table order
-            #     - Because transformed data table file is sorted by key
-            # - Drop the key columns if specified
-            if deployment_ds.is_multitable:
-                key_df = deployment_ds.main_table.data_source[
-                    deployment_ds.main_table.key
-                ]
-                output_table_df_or_path = key_df.merge(
-                    output_table_df, on=deployment_ds.main_table.key
-                )
-                if drop_key:
-                    output_table_df_or_path.drop(
-                        deployment_ds.main_table.key, axis=1, inplace=True
-                    )
-            # On mono-table: Return the read dataframe as-is
-            else:
-                output_table_df_or_path = output_table_df
-        # Return a file path for file based datasets
-        else:
-            output_table_df_or_path = output_table_path
-
-        assert isinstance(
-            output_table_df_or_path, (str, pd.DataFrame)
-        ), type_error_message(
-            "output_table_df_or_path", output_table_df_or_path, str, pd.DataFrame
-        )
-        return output_table_df_or_path
-
     def _create_computation_dir(self, method_name):
         """Creates a temporary computation directory"""
         return kh.get_runner().create_temp_dir(
             prefix=f"{self.__class__.__name__}_{method_name}_"
         )
+
+    def _assert_is_fitted(self):
+        try:
+            check_is_fitted(self)
+        except NotFittedError as exc:
+            raise AssertionError("Model not fitted") from exc
 
 
 # Note: scikit-learn **requires** inherit first the mixins and then other classes
@@ -680,7 +711,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
     max_part_numbers : dict, optional
         Maximum number of clusters for each of the co-clustered column. Specifically, a
         key-value pair of this dictionary represents the column name and its respective
-        maximum number of clusters. If not specified there is no maximun number of
+        maximum number of clusters. If not specified there is no maximum number of
         clusters is imposed on any column.
         **Deprecated** will be removed in Khiops 11. Use the ``max_part_number``
         parameter of the `fit` method.
@@ -704,8 +735,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
     Attributes
     ----------
-    is_fitted_ : bool
-        ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -1152,7 +1181,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             # Copy relevant attributes
             # Note: do not copy `model_*` attributes, that get rebuilt anyway
             for attribute_name in (
-                "is_fitted_",
                 "is_multitable_model_",
                 "model_main_dictionary_name_",
                 "model_id_column",
@@ -1215,8 +1243,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             A *new*, simplified `.KhiopsCoclustering` estimator instance.
         """
         # Check that the estimator is fitted:
-        if not self.is_fitted_:
-            raise ValueError("Only fitted coclustering estimators can be simplified")
+        check_is_fitted(self)
 
         return self._simplify(
             max_preserved_information=max_preserved_information,
@@ -1260,7 +1287,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             y_pred = super()._transform(
                 ds,
                 computation_dir,
-                self._transform_prepare_deployment_model_for_predict,
+                self._transform_prepare_deployment_for_predict,
                 False,
                 "predict.txt",
             )
@@ -1294,7 +1321,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # The "model dictionary domain" in the coclustering case it is just composed
         # of the secondary table. The main "keys" table is a technical object.
         # So we check the compatibility against only this dictionary and override
-        # the parents implementaion
+        # the parents implementation
         for dictionary in self.model_.dictionaries:
             if dictionary.name != self.model_main_dictionary_name_:
                 _check_dictionary_compatibility(
@@ -1366,16 +1393,11 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         return Dataset(deploy_dataset_spec)
 
-    def _transform_prepare_deployment_model_for_predict(self, _):
-        return self.model_.copy()
-
-    def _transform_deployment_post_process(
-        self, deployment_ds, output_table_path, drop_key
-    ):
-        assert deployment_ds.is_multitable
-        return super()._transform_deployment_post_process(
-            deployment_ds, output_table_path, drop_key
-        )
+    def _transform_prepare_deployment_for_predict(self, _):
+        # TODO: Replace the second return value (the output columns' dtypes) with a
+        #       proper value instead of `None`. In the current state, it will use pandas
+        #       type auto-detection to load the internal table into memory.
+        return self.model_.copy(), None
 
     def fit_predict(self, X, y=None, **kwargs):
         """Performs clustering on X and returns result (instead of labels)"""
@@ -1388,7 +1410,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def __init__(
         self,
         n_features=100,
-        n_pairs=0,
         n_trees=10,
         specific_pairs=None,
         all_possible_pairs=True,
@@ -1407,11 +1428,11 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             internal_sort=internal_sort,
         )
         self.n_features = n_features
-        self.n_pairs = n_pairs
         self.n_trees = n_trees
         self.specific_pairs = specific_pairs
         self.all_possible_pairs = all_possible_pairs
         self.construction_rules = construction_rules
+        self._original_target_dtype = None
         self._predicted_target_meta_data_tag = None
 
         # Deprecation message for 'key' constructor parameter
@@ -1497,25 +1518,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             raise TypeError(type_error_message("n_trees", self.n_trees, int))
         if self.n_trees < 0:
             raise ValueError("'n_trees' must be positive")
-        if not isinstance(self.n_pairs, int):
-            raise TypeError(type_error_message("n_pairs", self.n_pairs, int))
-        if self.n_pairs < 0:
-            raise ValueError("'n_pairs' must be positive")
-        if self.specific_pairs is not None:
-            if not is_list_like(self.specific_pairs):
-                raise TypeError(
-                    type_error_message(
-                        "specific_pairs", self.specific_pairs, "list-like"
-                    )
-                )
-            else:
-                for pair in self.specific_pairs:
-                    if not isinstance(pair, tuple):
-                        raise TypeError(type_error_message(pair, pair, tuple))
-        if not isinstance(self.all_possible_pairs, bool):
-            raise TypeError(
-                type_error_message("all_possible_pairs", self.all_possible_pairs, bool)
-            )
         if self.construction_rules is not None:
             if not is_list_like(self.construction_rules):
                 raise TypeError(
@@ -1602,7 +1604,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Rename parameters to be compatible with khiops.core
         kwargs["max_constructed_variables"] = kwargs.pop("n_features")
-        kwargs["max_pairs"] = kwargs.pop("n_pairs")
         kwargs["max_trees"] = kwargs.pop("n_trees")
 
         # Add the additional_data_tables parameter
@@ -1618,6 +1619,22 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def _fit_training_post_process(self, ds):
         # Call parent method
         super()._fit_training_post_process(ds)
+
+        # Save the target and key column dtype's
+        if ds.is_in_memory:
+            if self._original_target_dtype is None:
+                self._original_target_dtype = ds.target_column.dtype
+            if ds.main_table.key is not None:
+                self._original_key_dtypes = {}
+                for column_id in ds.main_table.key:
+                    self._original_key_dtypes[column_id] = (
+                        ds.main_table.get_column_dtype(column_id)
+                    )
+            else:
+                self._original_key_dtypes = None
+        else:
+            self._original_target_dtype = None
+            self._original_key_dtypes = None
 
         # Set the target variable name
         self.model_target_variable_name_ = get_khiops_variable_name(ds.target_column_id)
@@ -1702,7 +1719,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         # Call the parent method
         super()._transform_check_dataset(ds)
 
-        # Check the coherence between thi input table and the model
+        # Check the coherence between the input table and the model
         if self.is_multitable_model_ and not ds.is_multitable:
             raise ValueError(
                 "You are trying to apply on single-table inputs a model which has "
@@ -1766,7 +1783,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
     def __init__(
         self,
         n_features=100,
-        n_pairs=0,
         n_trees=10,
         n_selected_features=0,
         n_evaluated_features=0,
@@ -1781,7 +1797,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
     ):
         super().__init__(
             n_features=n_features,
-            n_pairs=n_pairs,
             n_trees=n_trees,
             specific_pairs=specific_pairs,
             all_possible_pairs=all_possible_pairs,
@@ -1794,6 +1809,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         )
         # Data to be specified by inherited classes
         self._predicted_target_meta_data_tag = None
+        self._predicted_target_name_prefix = None
         self.n_evaluated_features = n_evaluated_features
         self.n_selected_features = n_selected_features
 
@@ -1821,7 +1837,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             y_pred = super()._transform(
                 ds,
                 computation_dir,
-                self._transform_prepare_deployment_model_for_predict,
+                self._transform_prepare_deployment_for_predict,
                 True,
                 "predict.txt",
             )
@@ -1849,7 +1865,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
 
         return args, kwargs
 
-    def _transform_prepare_deployment_model_for_predict(self, ds):
+    def _transform_prepare_deployment_for_predict(self, ds):
         assert (
             self._predicted_target_meta_data_tag is not None
         ), "Predicted target metadata tag is not set"
@@ -1874,7 +1890,20 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         if self.model_target_variable_name_ not in list(ds.main_table.column_ids):
             model_dictionary.remove_variable(self.model_target_variable_name_)
 
-        return model_copy
+        # Create the output column dtype dict
+        if ds.is_in_memory:
+            predicted_target_column_name = (
+                self._predicted_target_name_prefix + self.model_target_variable_name_
+            )
+            output_columns_dtype = {
+                predicted_target_column_name: self._original_target_dtype
+            }
+            if self.is_multitable_model_:
+                output_columns_dtype.update(self._original_key_dtypes)
+        else:
+            output_columns_dtype = None
+
+        return model_copy, output_columns_dtype
 
     def get_feature_used_statistics(self, modeling_report):
         # Extract, from the modeling report, names, levels, weights and importances
@@ -1889,7 +1918,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
                     for var in modeling_report.selected_variables
                 ]
             )
-        # Return empty arrays if not selected_variables is available
+        # Return empty arrays if no selected variables are available
         else:
             feature_used_names_ = np.array([], dtype=np.dtype("<U1"))
             feature_used_importances_ = np.array([])
@@ -1926,11 +1955,11 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         *Multi-table only* : Maximum number of multi-table aggregate features to
         construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
-        Maximum number of pair features to construct. These features represent a 2D grid
-        partition of the domain of a pair of features in which is optimized in a way
-        that the cells are the purest possible with respect to the target. Only pairs
-        which jointly are more informative that its univariate components may be taken
-        into account in the classifier.
+        Maximum number of pair features to construct. These features are 2D grid
+        partitions of univariate feature pairs. The grid is optimized such that in each
+        cell the target distribution is well approximated by a constant histogram. Only
+        pairs that are jointly more informative than their marginals may be taken into
+        account in the classifier.
     n_trees : int, default 10
         Maximum number of decision tree features to construct. The constructed trees
         combine other features, either native or constructed. These features usually
@@ -1945,13 +1974,15 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit n_pairs).
-    all_possible_pairs : bool, default True
-        If True tries to create all possible pairs within the limit max_pairs.
-        The pairs and features given in specific_pairs have priority.
+        containing it (within the maximum limit ``n_pairs``). These pairs have top
+        priority: they are constructed first.
+    all_possible_pairs : bool, default ``True``
+        If ``True`` tries to create all possible pairs within the limit ``n_pairs``.
+        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+        first.
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, it uses all
-         possible rules.
+        possible rules.
     group_target_value : bool, default ``False``
         Allows grouping of the target values in classification. It can substantially
         increase the training time.
@@ -2013,8 +2044,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         - Importance: The geometric mean between the Level and the Weight.
 
-    is_fitted_ : bool
-        ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -2059,12 +2088,9 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     ):
         super().__init__(
             n_features=n_features,
-            n_pairs=n_pairs,
             n_trees=n_trees,
             n_selected_features=n_selected_features,
             n_evaluated_features=n_evaluated_features,
-            specific_pairs=specific_pairs,
-            all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
@@ -2072,9 +2098,13 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             key=key,
             internal_sort=internal_sort,
         )
+        self.n_pairs = n_pairs
+        self.specific_pairs = specific_pairs
+        self.all_possible_pairs = all_possible_pairs
         self.group_target_value = group_target_value
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Prediction"
+        self._predicted_target_name_prefix = "Predicted"
 
     def __sklearn_tags__(self):
         # If we don't implement this trivial method it's not found by the sklearn. This
@@ -2095,7 +2125,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
     def _sorted_prob_variable_names(self):
         """Returns the model probability variable names in the order of self.classes_"""
-        assert self.is_fitted_, "Model not fit yet"
+        self._assert_is_fitted()
 
         # Collect the probability variables from the model main dictionary
         prob_variables = []
@@ -2117,11 +2147,19 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         # Call parent method
         super()._fit_check_params(ds, **kwargs)
 
-        # Check 'group_target_value' parameter
-        if not isinstance(self.group_target_value, bool):
-            raise TypeError(
-                type_error_message("group_target_value", self.group_target_value, bool)
-            )
+        # Check the pair related parameters
+        _check_pair_parameters(self)
+
+    def _fit_prepare_training_function_inputs(self, ds, computation_dir):
+        # Call the parent method
+        args, kwargs = super()._fit_prepare_training_function_inputs(
+            ds, computation_dir
+        )
+
+        # Rename parameters to be compatible with khiops.core
+        kwargs["max_pairs"] = kwargs.pop("n_pairs")
+
+        return args, kwargs
 
     def fit(self, X, y, **kwargs):
         """Fits a Selective Naive Bayes classifier according to X, y
@@ -2182,12 +2220,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     def _fit_training_post_process(self, ds):
         # Call the parent's method
         super()._fit_training_post_process(ds)
-
-        # Save the target datatype
-        if ds.is_in_memory:
-            self._original_target_dtype = ds.target_column.dtype
-        else:
-            self._original_target_dtype = None
 
         # Save class values in the order of deployment
         self.classes_ = []
@@ -2260,37 +2292,15 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         # Call the parent's method
         y_pred = super().predict(X)
 
-        # Adjust the data type according to the original target type
-        # Note: String is coerced explictly because astype does not work as expected
+        # Convert to numpy if it is in memory
         if isinstance(y_pred, pd.DataFrame):
-            # Transform to numpy.ndarray
-            y_pred = y_pred.to_numpy(copy=False).ravel()
+            y_pred = y_pred[
+                self._predicted_target_name_prefix + self.model_target_variable_name_
+            ].to_numpy(copy=False)
 
-            # If integer and string just transform
-            if pd.api.types.is_integer_dtype(self._original_target_dtype):
-                y_pred = y_pred.astype(self._original_target_dtype)
-            # If str transform to str
-            # Note: If the original type is None then it was learned with a file dataset
-            elif self._original_target_dtype is None or pd.api.types.is_string_dtype(
-                self._original_target_dtype
-            ):
-                y_pred = y_pred.astype(str, copy=False)
-            # If category first coerce the type to the categories' type
-            else:
-                assert isinstance(self._original_target_dtype, pd.CategoricalDtype), (
-                    "_original_target_dtype is not categorical"
-                    f", it is '{self._original_target_dtype}'"
-                )
-                if pd.api.types.is_integer_dtype(
-                    self._original_target_dtype.categories.dtype
-                ):
-                    y_pred = y_pred.astype(
-                        self._original_target_dtype.categories.dtype, copy=False
-                    )
-                else:
-                    y_pred = y_pred.astype(str, copy=False)
-
-        assert isinstance(y_pred, (str, np.ndarray)), "Expected str or np.array"
+        assert isinstance(y_pred, (np.ndarray, str)), type_error_message(
+            "y_pred", y_pred, np.ndarray, str
+        )
         return y_pred
 
     def predict_proba(self, X):
@@ -2330,13 +2340,13 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         # Create the input dataset
 
-        # Call the generic transfrom method
+        # Call the generic transform method
         try:
             ds = Dataset(X, key=self.key)
             y_probas = self._transform(
                 ds,
                 computation_dir,
-                self._transform_prepare_deployment_model_for_predict_proba,
+                self._transform_prepare_deployment_for_predict_proba,
                 True,
                 "predict_proba.txt",
             )
@@ -2359,7 +2369,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         assert isinstance(y_probas, (str, np.ndarray)), "Expected str or np.ndarray"
         return y_probas
 
-    def _transform_prepare_deployment_model_for_predict_proba(self, ds):
+    def _transform_prepare_deployment_for_predict_proba(self, ds):
         assert hasattr(
             self, "model_target_variable_name_"
         ), "Target variable name has not been set"
@@ -2382,7 +2392,17 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         if self.model_target_variable_name_ not in list(ds.main_table.column_ids):
             model_dictionary.remove_variable(self.model_target_variable_name_)
 
-        return model_copy
+        if ds.is_in_memory:
+            output_columns_dtype = {}
+            if self.is_multitable_model_:
+                output_columns_dtype.update(self._original_key_dtypes)
+            for variable in model_dictionary.variables:
+                if variable.used and variable.name not in model_dictionary.key:
+                    output_columns_dtype[variable.name] = np.float64
+        else:
+            output_columns_dtype = None
+
+        return model_copy, output_columns_dtype
 
 
 # Note: scikit-learn **requires** inherit first the mixins and then other classes
@@ -2404,25 +2424,12 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     n_features : int, default 100
         *Multi-table only* : Maximum number of multi-table aggregate features to
         construct. See :doc:`/multi_table_primer` for more details.
-    n_pairs : int, default 0
-        Maximum number of pair features to construct. These features represent a 2D grid
-        partition of the domain of a pair of features in which is optimized in a way
-        that the cells are the purest possible with respect to the target. Only pairs
-        which jointly are more informative that its univariate components may be taken
-        into account in the regressor.
     n_selected_features : int, default 0
         Maximum number of features to be selected in the SNB predictor. If equal to
         0 it selects all the features kept in the training.
     n_evaluated_features : int, default 0
         Maximum number of features to be evaluated in the SNB predictor training. If
         equal to 0 it evaluates all informative features.
-    specific_pairs : list of tuple, optional
-        User-specified pairs as a list of 2-tuples of feature names. If a given tuple
-        contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit n_pairs).
-    all_possible_pairs : bool, default True
-        If True tries to create all possible pairs within the limit max_pairs.
-        The pairs and features given in specific_pairs have priority.
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, it uses all
          possible rules.
@@ -2479,8 +2486,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
         - Importance: The geometric mean between the Level and the Weight.
 
-    is_fitted_ : bool
-        ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -2504,12 +2509,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     def __init__(
         self,
         n_features=100,
-        n_pairs=0,
         n_trees=0,
         n_selected_features=0,
         n_evaluated_features=0,
-        specific_pairs=None,
-        all_possible_pairs=True,
         construction_rules=None,
         verbose=False,
         output_dir=None,
@@ -2519,12 +2521,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     ):
         super().__init__(
             n_features=n_features,
-            n_pairs=n_pairs,
             n_trees=n_trees,
             n_selected_features=n_selected_features,
             n_evaluated_features=n_evaluated_features,
-            specific_pairs=specific_pairs,
-            all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
@@ -2534,6 +2533,8 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         )
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Mean"
+        self._predicted_target_name_prefix = "M"
+        self._original_target_dtype = np.float64
 
     def fit(self, X, y=None, **kwargs):
         """Fits a Selective Naive Bayes regressor according to X, y
@@ -2678,9 +2679,11 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         *Multi-table only* : Maximum number of multi-table aggregate features to
         construct. See :doc:`/multi_table_primer` for more details.
     n_pairs : int, default 0
-        Maximum number of pair features to construct. These features represent a 2D grid
-        partition of the domain of a pair of features in which is optimized in a way
-        that the cells are the purest possible with respect to the target.
+        Maximum number of pair features to construct. These features are 2D grid
+        partitions of univariate feature pairs. The grid is optimized such that in each
+        cell the target distribution is well approximated by a constant histogram. Only
+        pairs that are jointly more informative than their marginals may be taken into
+        account in the encoder.
     n_trees : int, default 10
         Maximum number of decision tree features to construct. The constructed trees
         combine other features, either native or constructed. These features usually
@@ -2688,10 +2691,12 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit n_pairs).
-    all_possible_pairs : bool, default True
-        If True tries to create all possible pairs within the limit max_pairs.
-        The pairs and features given in specific_pairs have priority.
+        containing it (within the maximum limit ``n_pairs``). These pairs have top
+        priority: they are constructed first.
+    all_possible_pairs : bool, default ``True``
+        If ``True`` tries to create all possible pairs within the limit ``n_pairs``.
+        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+        first.
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, it uses all
          possible rules.
@@ -2723,7 +2728,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         See the documentation for the ``numerical_recoding_method`` parameter of the
         `~.api.train_recoder` function for more details.
-    transform_pairs: str, default "part_id"
+    transform_type_pairs : str, default "part_id"
         Type of transformation for bivariate features. Valid values:
             - "part_id"
             - "part_label"
@@ -2766,8 +2771,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         Level of the features evaluated by the classifier. The Level is  measure of the
         predictive importance of the feature taken individually. It ranges between 0 (no
         predictive interest) and 1 (optimal predictive importance).
-    is_fitted_ : bool
-        ``True`` if the estimator is fitted.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -2803,7 +2806,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         keep_initial_variables=False,
         transform_type_categorical="part_id",
         transform_type_numerical="part_id",
-        transform_pairs="part_id",
+        transform_type_pairs="part_id",
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -2812,10 +2815,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     ):
         super().__init__(
             n_features=n_features,
-            n_pairs=n_pairs,
             n_trees=n_trees,
-            specific_pairs=specific_pairs,
-            all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,
@@ -2823,11 +2823,14 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             key=key,
             internal_sort=internal_sort,
         )
+        self.n_pairs = n_pairs
+        self.specific_pairs = specific_pairs
+        self.all_possible_pairs = all_possible_pairs
         self.categorical_target = categorical_target
         self.group_target_value = group_target_value
         self.transform_type_categorical = transform_type_categorical
         self.transform_type_numerical = transform_type_numerical
-        self.transform_pairs = transform_pairs
+        self.transform_type_pairs = transform_type_pairs
         self.informative_features_only = informative_features_only
         self.keep_initial_variables = keep_initial_variables
         self._khiops_model_prefix = "R_"
@@ -2884,16 +2887,19 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             "conditional_info": "conditional info",
             None: "none",
         }
-        if self.transform_pairs not in _transform_types:
+        if self.transform_type_pairs not in _transform_types:
             raise ValueError(
-                "'transform_pairs' must be one of the following:"
+                "'transform_type_pairs' must be one of the following:"
                 ",".join(_transform_types.keys)
             )
-        return _transform_types[self.transform_pairs]
+        return _transform_types[self.transform_type_pairs]
 
     def _fit_check_params(self, ds, **kwargs):
         # Call parent method
         super()._fit_check_params(ds, **kwargs)
+
+        # Check the pair related parameters
+        _check_pair_parameters(self)
 
         # Check 'transform_type_categorical' parameter
         if not isinstance(self.transform_type_categorical, str):
@@ -2913,6 +2919,15 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             )
         self._numerical_transform_method()  # Raises ValueError if invalid
 
+        # Check 'transform_type_pairs' parameter
+        if not isinstance(self.transform_type_pairs, str):
+            raise TypeError(
+                type_error_message(
+                    "transform_type_pairs", self.transform_type_pairs, str
+                )
+            )
+        self._pairs_transform_method()  # Raises ValueError if invalid
+
         # Check coherence between transformation types and tree number
         if (
             self.transform_type_categorical is None
@@ -2923,12 +2938,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
                 "transform_type_categorical and transform_type_numerical "
                 "cannot be both None with n_trees == 0."
             )
-        # Check 'transform_pairs' parameter
-        if not isinstance(self.transform_pairs, str):
-            raise TypeError(
-                type_error_message("transform_pairs", self.transform_pairs, str)
-            )
-        self._pairs_transform_method()  # Raises ValueError if invalid
 
         # Check 'informative_features_only' parameter
         if not isinstance(self.informative_features_only, bool):
@@ -3017,6 +3026,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         )
         # Rename encoder parameters, delete unused ones
         # to be compatible with khiops.core
+        kwargs["max_pairs"] = kwargs.pop("n_pairs")
         kwargs["keep_initial_categorical_variables"] = kwargs["keep_initial_variables"]
         kwargs["keep_initial_numerical_variables"] = kwargs.pop(
             "keep_initial_variables"
@@ -3028,7 +3038,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         del kwargs["transform_type_categorical"]
         del kwargs["transform_type_numerical"]
-        del kwargs["transform_pairs"]
+        del kwargs["transform_type_pairs"]
         del kwargs["categorical_target"]
 
         return args, kwargs
@@ -3088,7 +3098,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             X_transformed = super()._transform(
                 ds,
                 computation_dir,
-                self._transform_prepare_deployment_model,
+                self._transform_prepare_deployment_for_transform,
                 True,
                 "transform.txt",
             )
@@ -3100,7 +3110,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             return X_transformed.to_numpy(copy=False)
         return X_transformed
 
-    def _transform_prepare_deployment_model(self, ds):
+    def _transform_prepare_deployment_for_transform(self, ds):
         assert hasattr(
             self, "model_target_variable_name_"
         ), "Target variable name has not been set"
@@ -3113,7 +3123,10 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         if self.model_target_variable_name_ not in list(ds.main_table.column_ids):
             model_dictionary.remove_variable(self.model_target_variable_name_)
 
-        return model_copy
+        # TODO: Replace the second return value (the output columns' dtypes) with a
+        #       proper value instead of `None`. In the current state, it will use pandas
+        #       type auto-detection to load the internal table into memory.
+        return model_copy, None
 
     def fit_transform(self, X, y=None, **kwargs):
         """Fit and transforms its inputs

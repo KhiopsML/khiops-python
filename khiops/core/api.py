@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -748,14 +748,16 @@ def train_predictor(
     max_pairs : int, default 0
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
-        User-specified pairs as a list of 2-tuples of variable names. If a given tuple
-        contains only one non-empty variable name, then it generates all the pairs
-        containing it (within the limit ``max_pairs``).
+        User-specified pairs as a list of 2-tuples of feature names. If a given tuple
+        contains only one non-empty feature name, then it generates all the pairs
+        containing it (within the maximum limit ``max_pairs``). These pairs have top
+        priority: they are constructed first.
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
-        The pairs and variables given in ``specific_pairs`` have priority.
+        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+        first.
     only_pairs_with : str, default ""
-        Constructs only pairs with the specifed variable name. If equal to the empty
+        Constructs only pairs with the specified variable name. If equal to the empty
         string "" it considers all variables to make pairs.
         **Deprecated** will be removed in Khiops Python 11, use ``specific_pairs``.
     group_target_value : bool, default ``False``
@@ -1072,14 +1074,16 @@ def train_recoder(
     max_pairs : int, default 0
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
-        User-specified pairs as a list of 2-tuples of variable names. If a given tuple
-        contains only one non-empty variable name, then it generates all the pairs
-        containing it (within the limit ``max_pairs``).
+        User-specified pairs as a list of 2-tuples of feature names. If a given tuple
+        contains only one non-empty feature name, then it generates all the pairs
+        containing it (within the maximum limit ``max_pairs``). These pairs have top
+        priority: they are constructed first.
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
-        The pairs and variables given in ``specific_pairs`` have priority.
+        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+        first.
     only_pairs_with : str, default ""
-        Constructs only pairs with the specifed variable name. If equal to the empty
+        Constructs only pairs with the specified variable name. If equal to the empty
         string "" it considers all variables to make pairs.
         **Deprecated** will be removed in Khiops Python 11, use ``specific_pairs``.
     group_target_value : bool, default ``False``
@@ -1129,7 +1133,7 @@ def train_recoder(
             - "conditional info": Conditional information of the interval/group
             - "none": Keeps the variable as-is
     grouping_method : str
-        Name of the grouping method. Its vaild values depend on the task:
+        Name of the grouping method. Its valid values depend on the task:
             - Supervised: "MODL" (default) or "BasicGrouping"
             - Unsupervised: "BasicGrouping" (default) or "None"
     min_group_frequency : int, default 0

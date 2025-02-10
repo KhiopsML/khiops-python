@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -490,7 +490,7 @@ class CoclusteringDimension:
     """A coclustering dimension (variable)
 
     A coclustering dimension is a hierarchical clustering of an input variable. The
-    leafs of this hierarchy are linked to an element of a partition of the input
+    leaves of this hierarchy are linked to an element of a partition of the input
     variable. Leaf clusters have variable parts as their children.
 
     It only has a no-parameter constructor.
@@ -553,7 +553,7 @@ class CoclusteringDimension:
         # Default group attribute only for categorical dimensions
         self.default_group = None
 
-        # List of the hierarchy clusters, ranging from the root to the leafs
+        # List of the hierarchy clusters, ranging from the root to the leaves
         self.root_cluster = None
         self.clusters = []
 
@@ -939,7 +939,7 @@ class CoclusteringDimensionPart:
         # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
             json_data = {}
-        # Otherise check the validity of json_data
+        # Otherwise check the validity of json_data
         elif "cluster" not in json_data:
             raise KhiopsJSONError("'cluster' key not found")
 
@@ -955,7 +955,7 @@ class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
     json_data : dict, optional
         Python dictionary representing an element of type "Numerical" of the list at the
         ``dimensionPartitions`` field of a Khiops Coclustering JSON report file. If not
-        specifed it returns an empty instance.
+        specified it returns an empty instance.
 
     Raises
     ------
@@ -1205,7 +1205,7 @@ class CoclusteringCluster:
         # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
             json_data = {}
-        # Otherwise check the "cluter" and "parentCluster" keys
+        # Otherwise check the "cluster" and "parentCluster" keys
         else:
             if "cluster" not in json_data:
                 raise KhiopsJSONError("'cluster' key not found")
@@ -1224,7 +1224,7 @@ class CoclusteringCluster:
         self.short_description = json_data.get("shortDescription", "")
         self.description = json_data.get("description", "")
 
-        # Link to child clusters, None for the leafs of the hierarchy
+        # Link to child clusters, None for the leaves of the hierarchy
         # The user must specify the CoclusteringCluster references parent_cluster
         # and child_cluster that link this instance to the hierarchy
         self.parent_cluster = None

@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -210,7 +210,7 @@ class KhiopsTask:
             for kwarg_signature in self.kwargs_signature
         }
 
-        # Post-intialization checks
+        # Post-initialization checks
         # Check that the path_valued_arg_names are contained in either args or kwargs
         all_arg_names = list(self._args_signature_by_name.keys()) + list(
             self._kwargs_signature_by_name.keys()

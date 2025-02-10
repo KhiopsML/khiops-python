@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -172,7 +172,6 @@ class EstimatorAttributesTests(unittest.TestCase):
             self.assertEqual(
                 model.n_features_used_, len(feature_used_importances_report)
             )
-        self.assertTrue(model.is_fitted_)
 
     def test_classifier_attributes_monotable(self):
         """Test consistency of KhiopsClassifier's attributes with the output reports
@@ -215,7 +214,7 @@ class EstimatorAttributesTests(unittest.TestCase):
         adult_df = pd.read_csv(adult_dataset_path, sep="\t").sample(750)
         X = adult_df.drop("age", axis=1)
         y = adult_df["age"]
-        khr_adult = KhiopsRegressor(n_trees=0, n_pairs=5)
+        khr_adult = KhiopsRegressor(n_trees=0)
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 action="ignore",

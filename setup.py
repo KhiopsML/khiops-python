@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -49,7 +49,14 @@ if __name__ == "__main__":
         ],
         cmdclass=versioneer.get_cmdclass(),
         extras_require={
-            "s3": ["boto3>=1.17.39"],
+            "s3": [
+                # do not necessary use the latest version
+                # to avoid undesired breaking changes
+                "boto3>=1.17.39,<=1.35.69",
+                # an open issue on boto3 (https://github.com/boto/boto3/issues/3585)
+                # forces a minimal version of pyopenssl
+                "pyopenssl>=24.0.0,<25.0.0",
+            ],
             "gcs": ["google-cloud-storage>=1.37.0"],
         },
     )

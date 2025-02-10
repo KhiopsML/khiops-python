@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -416,7 +416,7 @@ def read_dictionary_file(dictionary_file_path):
     """
     # Check the extension of the input dictionary file
     extension = os.path.splitext(dictionary_file_path)[1].lower()
-    if extension not in [".kdic", ".kdicj", "json"]:
+    if extension not in [".kdic", ".kdicj", ".json"]:
         raise ValueError(
             f"Input file must have extension 'kdic', 'kdicj' or 'json'."
             f"It has extension: '{extension}'."

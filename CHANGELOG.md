@@ -6,6 +6,24 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.3.0.0 - 2025-02-10
+
+### Fixed
+- (`core`) Dictionary file `.json` extension check in the `khiops.dictionary.read_dictionary_file`
+function.
+
+### Changed
+- (`sklearn`) The `train_test_split_dataset` helper has been moved from `khiops.utils` to
+`khiops.sklearn`.
+- (`sklearn`) The `transform_pairs` parameter of the `KhiopsEncoder` sklearn estimator has been
+renamed to `transform_type_pairs`.
+
+### Removed
+- (`sklearn`) The `is_fitted_` estimator attribute. The Scikit-learn `check_is_fitted` function
+can be used to test the fitted state of the estimators.
+- (`sklearn`) The `n_pairs` parameter of the `KhiopsRegressor` sklearn estimator. It was never
+supported.
+
 ## 10.2.4.0 - 2024-12-19
 
 ### Added
@@ -87,7 +105,7 @@
 
 ### Fixed
 - `core`
-  - Metric name search in estimator analyis report.
+  - Metric name search in estimator analysis report.
 
 ## 10.2.1.0 - 2024-03-26
 
@@ -219,7 +237,7 @@ Note: This release marks the open sourcing of Khiops:
   - Estimators now accept dataframes with numerical column indexes.
   - `KhiopsClassifier` now accepts integer target vectors.
   - `classes_` estimator attribute for `KhiopsClassifier` (available once fitted).
-  - `feature_names_out_` estimator attirbute for `KhiopsEncoder` (available once fitted).
+  - `feature_names_out_` estimator attribute for `KhiopsEncoder` (available once fitted).
   - `export_report_file` and `export_dictionary_file` to export Khiops report and dictionary files
     once the estimators are fitted.
   - `internal_sort` parameter for estimators that may be used to not sort the tables on the

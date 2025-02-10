@@ -15,7 +15,7 @@ Khiops Python library.
 
 # You'll also need a system-wide installation of pandoc (https://pandoc.org)
 
-# Execute this if there were non commited updates to samples.py or samples_sklearn.py:
+# Execute this if there were non committed updates to samples.py or samples_sklearn.py:
 # ./convert-samples-hook
 
 # To clean the html documentation
@@ -29,7 +29,7 @@ Khiops Python library.
 ./create-doc -d -t
 
 # To only execute Sphinx on updated reST resources
-# make html
+# sphinx-build -M html . _build/
 ```
 
 ## Sphinx

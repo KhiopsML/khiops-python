@@ -1,3 +1,9 @@
+######################################################################################
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
+# This software is distributed under the BSD 3-Clause-clear License, the text of     #
+# which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
+# see the "LICENSE.md" file for more details.                                        #
+######################################################################################
 """General helper functions"""
 
 import itertools
@@ -5,7 +11,7 @@ import itertools
 from sklearn.model_selection import train_test_split
 
 from khiops.core.internals.common import is_dict_like, type_error_message
-from khiops.utils.dataset import Dataset, FileTable
+from khiops.sklearn.dataset import Dataset, FileTable
 
 # Note: We build the splits with lists and itertools.chain avoid pylint warning about
 # unbalanced-tuple-unpacking. See issue https://github.com/pylint-dev/pylint/issues/5671

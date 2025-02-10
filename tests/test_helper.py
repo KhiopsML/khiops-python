@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -272,10 +272,10 @@ class KhiopsTestHelper:
         return values
 
     @staticmethod
-    def skip_long_test(test_case):
-        if "UNITTEST_ONLY_SHORT_TESTS" in os.environ:
-            if os.environ["UNITTEST_ONLY_SHORT_TESTS"].lower() == "true":
-                test_case.skipTest("Skipping long test")
+    def skip_expensive_test(test_case):
+        if "SKIP_EXPENSIVE_TESTS" in os.environ:
+            if os.environ["SKIP_EXPENSIVE_TESTS"].lower() == "true":
+                test_case.skipTest("Skipping expensive test")
 
     @staticmethod
     def create_parameter_trace():

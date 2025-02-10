@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -365,7 +365,7 @@ class KhiopsRunner(ABC):
         return self._get_samples_dir()
 
     def _get_samples_dir(self):
-        """To be overriden by subclasses"""
+        """To be overridden by subclasses"""
         return self._samples_dir
 
     @samples_dir.setter
@@ -386,7 +386,7 @@ class KhiopsRunner(ABC):
         return self._get_khiops_version()
 
     def _get_khiops_version(self):
-        """khiops_version getter to be overriden by subclasses"""
+        """khiops_version getter to be overridden by subclasses"""
         return self._khiops_version
 
     def _build_status_message(self):
@@ -594,17 +594,26 @@ class KhiopsRunner(ABC):
 
         # Create the message reporting the errors and warnings
         error_msg = ""
-        errors, fatal_errors, warning_messages = self._collect_errors(log_file_path)
-        if warning_messages:
-            error_msg += "Warnings in log:\n" + "".join(warning_messages)
-        if errors:
-            if error_msg:
-                error_msg += "\n"
-            error_msg += "Errors in log:\n" + "".join(errors)
-        if fatal_errors:
-            if error_msg:
-                error_msg += "\n"
-            error_msg += "Fatal errors in log:\n" + "".join(fatal_errors)
+        # If the log file exists: Collect the errors and warnings messages
+        if fs.exists(log_file_path):
+            errors, fatal_errors, warning_messages = self._collect_errors(log_file_path)
+            if warning_messages:
+                error_msg += "Warnings in log:\n" + "".join(warning_messages)
+            if errors:
+                if error_msg:
+                    error_msg += "\n"
+                error_msg += "Errors in log:\n" + "".join(errors)
+            if fatal_errors:
+                if error_msg:
+                    error_msg += "\n"
+                error_msg += "Fatal errors in log:\n" + "".join(fatal_errors)
+        # Otherwise warn that the log file is missing
+        else:
+            warnings.warn(
+                f"Log file not found after {tool_name} execution."
+                f"Path: {log_file_path}"
+            )
+            errors = fatal_errors = []
 
         # Add stdout to the warning message if non empty
         if stdout:
@@ -1072,7 +1081,7 @@ class KhiopsLocalRunner(KhiopsRunner):
         super()._set_samples_dir(samples_dir)
 
     def _get_samples_dir(self):
-        # Check the samples dir once (the check emmits only warnings)
+        # Check the samples dir once (the check emits only warnings)
         if not self._samples_dir_checked:
             _check_samples_dir(self._samples_dir)
             self._samples_dir_checked = True

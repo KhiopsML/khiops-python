@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from khiops.core.internals.common import type_error_message
-from khiops.utils.dataset import Dataset, FileTable, PandasTable
+from khiops.sklearn.dataset import Dataset, FileTable, PandasTable
 
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
@@ -30,7 +30,7 @@ class AnotherType(object):
 class DatasetSpecErrorsTests(unittest.TestCase):
     """Test the output message when the input data contains errors
 
-    Each test covers an egde-case for the initialization of Dataset/DatasetTable and
+    Each test covers an edge-case for the initialization of Dataset/DatasetTable and
     checks:
 
     - that either `TypeError` or `ValueError` is raised and
@@ -796,7 +796,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
-    def test_dict_spec_entiy_flag_relation_must_be_bool(self):
+    def test_dict_spec_entity_flag_relation_must_be_bool(self):
         """Test Dataset raising TypeError when the entity flag is not boolean"""
         bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["relations"][0] = ("B", "D", AnotherType())

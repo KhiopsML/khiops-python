@@ -1,5 +1,5 @@
 ######################################################################################
-# Copyright (c) 2024 Orange. All rights reserved.                                    #
+# Copyright (c) 2023-2025 Orange. All rights reserved.                               #
 # This software is distributed under the BSD 3-Clause-clear License, the text of     #
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
@@ -148,8 +148,7 @@ def khiops_classifier_multitable_star():
     import os
     import pandas as pd
     from khiops import core as kh
-    from khiops.sklearn import KhiopsClassifier
-    from khiops.utils.helpers import train_test_split_dataset
+    from khiops.sklearn import KhiopsClassifier, train_test_split_dataset
     from sklearn import metrics
 
     # Load the dataset into pandas dataframes
@@ -207,8 +206,7 @@ def khiops_classifier_multitable_snowflake():
     import os
     import pandas as pd
     from khiops import core as kh
-    from khiops.sklearn import KhiopsClassifier
-    from khiops.utils.helpers import train_test_split_dataset
+    from khiops.sklearn import KhiopsClassifier, train_test_split_dataset
     from sklearn import metrics
 
     # Load the dataset tables into dataframes
@@ -220,7 +218,9 @@ def khiops_classifier_multitable_snowflake():
     vehicles_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
-    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
+    places_df = pd.read_csv(
+        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", low_memory=False
+    )
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
@@ -407,7 +407,7 @@ def khiops_classifier_with_hyperparameters():
         os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
     )
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
+    # Split the secondary dataframe with the keys of the split root dataframe
     X_train_ids = X_train_main["AccidentId"].to_frame()
     X_test_ids = X_test_main["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
@@ -616,7 +616,9 @@ def khiops_encoder_multitable_snowflake():
     vehicles_df = pd.read_csv(
         os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
-    places_df = pd.read_csv(os.path.join(accidents_data_dir, "Places.txt"), sep="\t")
+    places_df = pd.read_csv(
+        os.path.join(accidents_data_dir, "Places.txt"), sep="\t", low_memory=False
+    )
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
@@ -763,7 +765,7 @@ def khiops_encoder_with_hyperparameters():
         keep_initial_variables=True,
         transform_type_categorical="part_id",
         transform_type_numerical="part_id",
-        transform_pairs="part_id",
+        transform_type_pairs="part_id",
     )
     khe.fit(X, y)
 
@@ -884,7 +886,7 @@ def khiops_classifier_multitable_list():
         os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
     )
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
+    # Split the secondary dataframe with the keys of the split root dataframe
     X_train_ids = X_train["AccidentId"].to_frame()
     X_test_ids = X_test["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
@@ -958,7 +960,7 @@ def khiops_classifier_multitable_star_file():
         os.path.join(accidents_dataset_path, "Vehicles.txt"), sep="\t"
     )
 
-    # Split the secondary dataframe with the keys of the splitted root dataframe
+    # Split the secondary dataframe with the keys of the split root dataframe
     X_train_ids = X_train_main["AccidentId"].to_frame()
     X_test_ids = X_test_main["AccidentId"].to_frame()
     X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
