@@ -6,7 +6,7 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## 10.3.0.0 - 2025-02-06
+## 10.3.0.0 - 2025-02-10
 
 ### Fixed
 - (`core`) Dictionary file `.json` extension check in the `khiops.dictionary.read_dictionary_file`
