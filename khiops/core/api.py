@@ -738,6 +738,45 @@ def train_predictor(
 
     return (report_file_path, modeling_dictionary_file_path)
 
+def interpret_predictor(
+    dictionary_file_path_or_domain,
+    predictor_dictionary_name,
+    interpretor_file_path,
+    max_variable_importances=0,
+    reinforcement_target_value="",
+    reinforcement_lever_variables=None,
+    batch_mode=True,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
+    trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
+    **kwargs,
+):
+    r"""Builds an intepretation dictionary from a predictor
+
+    Parameters
+    ----------
+    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+        Path of a Khiops dictionary file or a DictionaryDomain object.
+    predictor_dictionary_name : str
+        Name of the predictor dictionary used while building the interpretation model.
+    intepretor_file_path : str
+        Path to the intepretor dictionary file.
+    max_variable_importances : int, default 0
+        Maximum number of variable importances to be selected in the intepretation model. If equal to 0, then all the variables in the prediction model are considered.
+    reinforcement_target_value : str, default ""
+        If this target value is specified, then its probability of occurrence is tentatively increased.
+    reinforcement_lever_variables : list of str, optional
+        The names of variables to use as lever variables while buildint the intepretation model. Min length: 0. Max length: the total number of variables in the prediction model. If not specified, all variables are used.
+    """
+    pass
+
 
 def evaluate_predictor(
     dictionary_file_path_or_domain,
