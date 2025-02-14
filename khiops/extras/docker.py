@@ -105,11 +105,6 @@ class KhiopsDockerRunner(KhiopsRunner):
         trace,
     ):
         # Check arguments
-        if not command_line_options.batch_mode:
-            warnings.warn(
-                "Ignoring unsupported KhiopsDockerRunner parameter 'batch_mode'",
-                stacklevel=3,
-            )
         if command_line_options.output_scenario_path:
             output_scenario_dir = fs.get_parent_path(
                 command_line_options.output_scenario_path

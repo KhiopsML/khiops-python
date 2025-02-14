@@ -159,7 +159,6 @@ def _preprocess_arguments(args):
 
     # Create a command line options object
     command_line_options = CommandLineOptions(
-        batch_mode=args["batch_mode"] if "batch_mode" in args else True,
         log_file_path=(args["log_file_path"] if "log_file_path" in args else ""),
         output_scenario_path=(
             args["output_scenario_path"] if "output_scenario_path" in args else ""
@@ -325,7 +324,6 @@ def _clean_task_args(task_args):
     """
     # Remove non-task parameters
     command_line_arg_names = [
-        "batch_mode",
         "log_file_path",
         "output_scenario_path",
         "task_file_path",
@@ -391,7 +389,6 @@ def get_samples_dir():
 def export_dictionary_as_json(
     dictionary_file_path_or_domain,
     json_dictionary_file_path,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -432,7 +429,6 @@ def build_dictionary_from_data_table(
     detect_format=True,
     header_line=None,
     field_separator=None,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -491,7 +487,6 @@ def check_database(
     selection_value="",
     additional_data_tables=None,
     max_messages=20,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -586,7 +581,6 @@ def train_predictor(
     discretization_method=None,
     grouping_method=None,
     max_parts=0,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -738,6 +732,7 @@ def train_predictor(
 
     return (report_file_path, modeling_dictionary_file_path)
 
+
 def interpret_predictor(
     dictionary_file_path_or_domain,
     predictor_dictionary_name,
@@ -745,7 +740,6 @@ def interpret_predictor(
     max_variable_importances=0,
     reinforcement_target_value="",
     reinforcement_lever_variables=None,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -769,11 +763,16 @@ def interpret_predictor(
     intepretor_file_path : str
         Path to the intepretor dictionary file.
     max_variable_importances : int, default 0
-        Maximum number of variable importances to be selected in the intepretation model. If equal to 0, then all the variables in the prediction model are considered.
+        Maximum number of variable importances to be selected in the intepretation
+        model. If equal to 0, then all the variables in the prediction model are
+        considered.
     reinforcement_target_value : str, default ""
-        If this target value is specified, then its probability of occurrence is tentatively increased.
+        If this target value is specified, then its probability of occurrence is
+        tentatively increased.
     reinforcement_lever_variables : list of str, optional
-        The names of variables to use as lever variables while buildint the intepretation model. Min length: 0. Max length: the total number of variables in the prediction model. If not specified, all variables are used.
+        The names of variables to use as lever variables while building the
+        intepretation model. Min length: 0. Max length: the total number of variables
+        in the prediction model. If not specified, all variables are used.
     """
     pass
 
@@ -792,7 +791,6 @@ def evaluate_predictor(
     selection_value="",
     additional_data_tables=None,
     main_target_value="",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -912,7 +910,6 @@ def train_recoder(
     discretization_method=None,
     grouping_method=None,
     max_parts=0,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1094,7 +1091,6 @@ def deploy_model(
     output_header_line=True,
     output_field_separator="\t",
     output_additional_data_tables=None,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1184,7 +1180,6 @@ def build_deployed_dictionary(
     dictionary_file_path_or_domain,
     dictionary_name,
     output_dictionary_file_path,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1239,7 +1234,6 @@ def sort_data_table(
     field_separator=None,
     output_header_line=True,
     output_field_separator="\t",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1315,7 +1309,6 @@ def extract_keys_from_data_table(
     field_separator=None,
     output_header_line=True,
     output_field_separator="\t",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1393,7 +1386,6 @@ def train_coclustering(
     additional_data_tables=None,
     frequency_variable="",
     min_optimization_time=0,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1487,6 +1479,7 @@ def train_coclustering(
     # Return the path of the coclustering file
     return coclustering_file_path
 
+
 def train_instance_variable_coclustering(
     dictionary_file_path_or_domain,
     dictionary_name,
@@ -1502,7 +1495,6 @@ def train_instance_variable_coclustering(
     selection_value="",
     additional_data_tables=None,
     min_optimization_time=0,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1595,6 +1587,7 @@ def train_instance_variable_coclustering(
     # Return the path of the coclustering file
     return coclustering_file_path
 
+
 def simplify_coclustering(
     coclustering_file_path,
     simplified_coclustering_file_path,
@@ -1602,7 +1595,6 @@ def simplify_coclustering(
     max_cells=0,
     max_total_parts=0,
     max_part_numbers=None,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1670,7 +1662,6 @@ def prepare_coclustering_deployment(
     build_distance_variables=False,
     build_frequency_variables=False,
     variables_prefix="",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1744,7 +1735,6 @@ def extract_clusters(
     clusters_file_path,
     max_preserved_information=0,
     max_cells=0,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
