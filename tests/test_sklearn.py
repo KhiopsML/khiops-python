@@ -1685,6 +1685,20 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
 class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
     """Tests to comply with `sklearn.util.estimator_checks.check_estimator`"""
 
+    _env_khiops_proc_number = None
+
+    @classmethod
+    def setUpClass(cls):
+        # Set the number of processes to 1: Lots of test on small datasets
+        kh.get_runner()  # Just to activate the lazy initialization
+        cls._env_khiops_proc_number = os.environ["KHIOPS_PROC_NUMBER"]
+        os.environ["KHIOPS_PROC_NUMBER"] = "1"
+
+    @classmethod
+    def tearDownClass(cls):
+        # Restore the original number of processes
+        os.environ["KHIOPS_PROC_NUMBER"] = cls._env_khiops_proc_number
+
     def test_sklearn_check_estimator(self):
         # Set the estimators to test
         # Notes:

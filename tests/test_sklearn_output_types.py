@@ -5,6 +5,7 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Tests for checking the output types of predictors"""
+import os
 import unittest
 
 import numpy as np
@@ -13,8 +14,8 @@ from numpy.testing import assert_array_equal
 from sklearn import datasets
 from sklearn.utils.validation import column_or_1d
 
+from khiops import core as kh
 from khiops.sklearn.estimators import KhiopsClassifier, KhiopsRegressor
-from tests.test_helper import KhiopsTestHelper
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
@@ -48,8 +49,19 @@ def create_iris_mt():
 class KhiopsSklearnOutputTypes(unittest.TestCase):
     """Tests for checking the output types of predictors"""
 
-    def setUp(self):
-        KhiopsTestHelper.skip_expensive_test(self)
+    _env_khiops_proc_number = None
+
+    @classmethod
+    def setUpClass(cls):
+        # Set the number of processes to 1: Lots of test on small datasets
+        kh.get_runner()  # Just to activate the lazy initialization
+        cls._env_khiops_proc_number = os.environ["KHIOPS_PROC_NUMBER"]
+        os.environ["KHIOPS_PROC_NUMBER"] = "1"
+
+    @classmethod
+    def tearDownClass(cls):
+        # Restore the original number of processes
+        os.environ["KHIOPS_PROC_NUMBER"] = cls._env_khiops_proc_number
 
     def _replace(self, array, replacement_dict):
         return np.array([replacement_dict[value] for value in array])
