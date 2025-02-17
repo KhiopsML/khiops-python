@@ -1381,6 +1381,56 @@ def extract_keys_from_data_table(
     # Run the task
     _run_task("extract_keys_from_data_table", task_args)
 
+def build_multi_table_dictionary(
+    dictionary_file_path_or_domain,
+    dictionary_name,
+    output_dictionary_name,
+    output_dictionary_table_variable_name,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
+    trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
+    **kwargs,
+):
+    r"""Builds a dictionary with a Table variable based on an input dictionary and adds it
+    to the input dictionary
+
+    Parameters
+    ----------
+    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+        Path of a Khiops dictionary file or a DictionaryDomain object.
+    dictionary_name : str
+        Name of the dictionary of the data table. Must be a root dictionary.
+    output_dictionary_name : str
+        Name of the output dictionary. It is a main dictionary which uses
+        `dictionary_name` as secondary table and the same key as `dictionary_name`.
+        The output dictionary is added to the input dictionary file or
+        `.DictionaryDomain` object.
+    ... :
+        See :ref:`core-api-common-params`.
+
+    Raises
+    ------
+    `TypeError`
+        Invalid type of an argument.
+
+    Examples
+    --------
+    See the following function of the ``samples.py`` documentation script:
+        - `samples.build_multi_table_dictionary()`
+    """
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
+
+    # Run the task
+    _run_task("build_multi_table_dictionary", task_args)
 
 def train_coclustering(
     dictionary_file_path_or_domain,
