@@ -569,15 +569,18 @@ def train_predictor(
     selection_value="",
     additional_data_tables=None,
     main_target_value="",
+    keep_selected_variables_only=True,
     max_evaluated_variables=0,
     max_selected_variables=0,
-    max_constructed_variables=100,
+    max_constructed_variables=1000,
     construction_rules=None,
+    max_text_features=10000,
     max_trees=10,
     max_pairs=0,
     all_possible_pairs=True,
     specific_pairs=None,
-    group_target_value=False,
+    text_features="words",
+    group_target_values=False,
     discretization_method=None,
     grouping_method=None,
     max_parts=0,
@@ -643,31 +646,40 @@ def train_predictor(
     main_target_value : str, default ""
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
+    keep_selected_variables_only : bool, default ``True``
+        Keeps only predictor-selected variables in the supervised analysis report.
     max_evaluated_variables : int, default 0
         Maximum number of variables to be evaluated in the SNB predictor training. If
         equal to 0 it evaluates all informative variables.
     max_selected_variables : int, default 0
         Maximum number of variables to be selected in the SNB predictor. If equal to
         0 it selects all the variables kept in the training.
-    max_constructed_variables : int, default 100
+    max_constructed_variables : int, default 1000
         Maximum number of variables to construct.
     construction_rules : list of str, optional
         Allowed rules for the automatic variable construction. If not set it uses all
         possible rules.
+    max_text_features : int, default 10000
+        Maximum number of text features to construct.
     max_trees : int, default 10
         Maximum number of trees to construct. Not yet available in regression.
     max_pairs : int, default 0
-        Maximum number of variables pairs to construct.
+        Maximum number of variable pairs to construct.
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
         containing it (within the maximum limit ``max_pairs``). These pairs have top
         priority: they are constructed first.
+    text_features : str, default "words"
+        Type of the text features. Can be either one of:
+        - "words": sequences of non-space characters
+        - "ngrams": sequences of bytes
+        - "tokens": user-defined
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
-    group_target_value : bool, default ``False``
+    group_target_values : bool, default ``False``
         Allows grouping of the target variable values in classification. It can
         substantially increase the training time.
     discretization_method : str
