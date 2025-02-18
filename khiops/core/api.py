@@ -558,7 +558,7 @@ def train_predictor(
     dictionary_name,
     data_table_path,
     target_variable,
-    report_file_path,
+    analysis_report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -568,6 +568,7 @@ def train_predictor(
     selection_variable="",
     selection_value="",
     additional_data_tables=None,
+    do_data_preparation_only=False,
     main_target_value="",
     keep_selected_variables_only=True,
     max_evaluated_variables=0,
@@ -580,7 +581,7 @@ def train_predictor(
     all_possible_pairs=True,
     specific_pairs=None,
     text_features="words",
-    group_target_values=False,
+    group_target_value=False,
     discretization_method=None,
     grouping_method=None,
     max_parts=0,
@@ -610,8 +611,10 @@ def train_predictor(
         Name of the target variable. If the specified variable is categorical it
         constructs a classifier and if it is numerical a regressor. If equal to "" it
         performs an unsupervised analysis.
-    report_file_path : str
-        Path to the analysis report file.
+    analysis_report_file_path : str
+        Path to the analysis report file in the JSON format. An additional dictionary
+        file with the same name and extension `.model.kdic` is built, which contains
+        the trained models.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -643,6 +646,9 @@ def train_predictor(
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see :doc:`/multi_table_primer`.
+    do_data_preparation_only : bool, default ``False``
+        If ``False``, it trains a Selective Naive Bayes predictor. Otherwise, only data
+        preparation via MODL discretization is done.
     main_target_value : str, default ""
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
@@ -662,7 +668,7 @@ def train_predictor(
     max_text_features : int, default 10000
         Maximum number of text features to construct.
     max_trees : int, default 10
-        Maximum number of trees to construct. Not yet available in regression.
+        Maximum number of trees to construct.
     max_pairs : int, default 0
         Maximum number of variable pairs to construct.
     specific_pairs : list of tuple, optional
@@ -679,7 +685,7 @@ def train_predictor(
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
-    group_target_values : bool, default ``False``
+    group_target_value : bool, default ``False``
         Allows grouping of the target variable values in classification. It can
         substantially increase the training time.
     discretization_method : str
@@ -691,7 +697,8 @@ def train_predictor(
         Its valid values are: "BasicGrouping" (default) or "None".
         Ignored for supervised analysis.
     max_parts : int, default 0
-        Maximum number of parts. If equal to 0 it is automatically calculated.
+        Maximum number of variable parts produced by preprocessing methods. If equal
+        to 0 it is automatically calculated.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -734,8 +741,10 @@ def train_predictor(
 
     # Return the paths of the JSON report and modelling dictionary file
     if target_variable != "":
-        current_dir = os.path.dirname(report_file_path)
-        report_file_name, _ = os.path.splitext(os.path.basename(report_file_path))
+        current_dir = os.path.dirname(analysis_report_file_path)
+        report_file_name, _ = os.path.splitext(
+            os.path.basename(analysis_report_file_path)
+        )
         modeling_dictionary_file_path = fs.get_child_path(
             current_dir, f"{report_file_name}.model.kdic"
         )
@@ -793,7 +802,7 @@ def evaluate_predictor(
     dictionary_file_path_or_domain,
     train_dictionary_name,
     data_table_path,
-    report_file_path,
+    evaluation_report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -825,8 +834,8 @@ def evaluate_predictor(
         Name of the main dictionary used while training the models.
     data_table_path : str
         Path of the evaluation data table file.
-    report_file_path : str
-        Path to the analysis report file.
+    evaluation_report_file_path : str
+        Path to the evaluation report file, in the JSON format.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -888,7 +897,7 @@ def evaluate_predictor(
     _run_task("evaluate_predictor", task_args)
 
     # Return the path of the JSON report
-    return report_file_path
+    return evaluation_report_file_path
 
 
 def train_recoder(
@@ -896,7 +905,7 @@ def train_recoder(
     dictionary_name,
     data_table_path,
     target_variable,
-    report_file_path,
+    analysis_report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -959,8 +968,10 @@ def train_recoder(
         Path of the data table file.
     target_variable : str
         Name of the target variable. If equal to "" it trains an unsupervised recoder.
-    report_file_path : str
-        Path of the analysis report.
+    analysis_report_file_path : str
+        Path to the analysis report file in the JSON format. An additional dictionary
+        file with the same name and extension `.model.kdic` is built, which contains
+        the trained recoding model.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -994,7 +1005,7 @@ def train_recoder(
         Allowed rules for the automatic variable construction. If not set it uses all
         possible rules.
     max_trees : int, default 0
-        Maximum number of trees to construct. Not yet available in regression.
+        Maximum number of trees to construct.
     max_pairs : int, default 0
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
@@ -1077,14 +1088,14 @@ def train_recoder(
     _run_task("train_recoder", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
-    current_dir = os.path.dirname(report_file_path)
-    report_file_name, _ = os.path.splitext(os.path.basename(report_file_path))
+    current_dir = os.path.dirname(analysis_report_file_path)
+    report_file_name, _ = os.path.splitext(os.path.basename(analysis_report_file_path))
 
     modeling_dictionary_file_path = fs.get_child_path(
         current_dir, f"{report_file_name}.model.kdic"
     )
 
-    return (report_file_path, modeling_dictionary_file_path)
+    return (analysis_report_file_path, modeling_dictionary_file_path)
 
 
 def deploy_model(
@@ -1381,63 +1392,13 @@ def extract_keys_from_data_table(
     # Run the task
     _run_task("extract_keys_from_data_table", task_args)
 
-def build_multi_table_dictionary(
-    dictionary_file_path_or_domain,
-    dictionary_name,
-    output_dictionary_name,
-    output_dictionary_table_variable_name,
-    log_file_path=None,
-    output_scenario_path=None,
-    task_file_path=None,
-    trace=False,
-    stdout_file_path="",
-    stderr_file_path="",
-    max_cores=None,
-    memory_limit_mb=None,
-    temp_dir="",
-    scenario_prologue="",
-    **kwargs,
-):
-    r"""Builds a dictionary with a Table variable based on an input dictionary and adds it
-    to the input dictionary
-
-    Parameters
-    ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
-        Path of a Khiops dictionary file or a DictionaryDomain object.
-    dictionary_name : str
-        Name of the dictionary of the data table. Must be a root dictionary.
-    output_dictionary_name : str
-        Name of the output dictionary. It is a main dictionary which uses
-        `dictionary_name` as secondary table and the same key as `dictionary_name`.
-        The output dictionary is added to the input dictionary file or
-        `.DictionaryDomain` object.
-    ... :
-        See :ref:`core-api-common-params`.
-
-    Raises
-    ------
-    `TypeError`
-        Invalid type of an argument.
-
-    Examples
-    --------
-    See the following function of the ``samples.py`` documentation script:
-        - `samples.build_multi_table_dictionary()`
-    """
-    # Save the task arguments
-    # WARNING: Do not move this line, see the top of the "tasks" section for details
-    task_args = locals()
-
-    # Run the task
-    _run_task("build_multi_table_dictionary", task_args)
 
 def train_coclustering(
     dictionary_file_path_or_domain,
     dictionary_name,
     data_table_path,
     coclustering_variables,
-    coclustering_file_path,
+    coclustering_report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -1472,8 +1433,8 @@ def train_coclustering(
         Path of the data table file.
     coclustering_variables : list of str
         The names of variables to use in coclustering. Min length: 2. Max length: 10.
-    coclustering_file_path : str
-        Path to the coclustering report file.
+    coclustering_report_file_path : str
+        Path to the coclustering report file in the JSON format.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1539,7 +1500,7 @@ def train_coclustering(
     _run_task("train_coclustering", task_args)
 
     # Return the path of the coclustering file
-    return coclustering_file_path
+    return coclustering_report_file_path
 
 
 def train_instance_variable_coclustering(
@@ -1547,7 +1508,7 @@ def train_instance_variable_coclustering(
     dictionary_name,
     data_table_path,
     identifier_variable,
-    coclustering_file_path,
+    coclustering_report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -1582,8 +1543,8 @@ def train_instance_variable_coclustering(
     identifier_variable : str
         The name of the variable used to identify the instances in instance x variable
         coclustering.
-    coclustering_file_path : str
-        Path to the coclustering report file.
+    coclustering_report_file_path : str
+        Path to the coclustering report file in the JSON format.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1716,7 +1677,7 @@ def prepare_coclustering_deployment(
     coclustering_file_path,
     table_variable,
     deployed_variable_name,
-    coclustering_dictionary_file,
+    coclustering_dictionary_file_path,
     max_preserved_information=0,
     max_cells=0,
     max_part_numbers=None,
@@ -1750,7 +1711,7 @@ def prepare_coclustering_deployment(
         Name of the table variable in the dictionary.
     deployed_variable_name : str
         Name of the coclustering variable to deploy.
-    coclustering_dictionary_file : str
+    coclustering_dictionary_file_path : str
         Path of the coclustering dictionary file for deployment.
     max_preserved_information : int, default 0
         Maximum information preserve in the simplified coclustering. If equal to 0
