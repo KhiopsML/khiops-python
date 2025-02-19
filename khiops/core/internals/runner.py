@@ -120,11 +120,17 @@ def _extract_path_from_uri(uri):
     return path
 
 
+def _get_khiops_env_script_file_name():
+    """Returns the file name for the khiops_env script in a portable way"""
+    khiops_env_file_name = "khiops_env"
+    if platform.system() == "Windows":
+        khiops_env_file_name += ".cmd"
+    return khiops_env_file_name
+
+
 def _khiops_env_file_exists(env_dir):
     """Check ``khiops_env`` exists relative to the specified environment dir"""
-    khiops_env_path = os.path.join(env_dir, "khiops_env")
-    if platform.system() == "Windows":
-        khiops_env_path += ".cmd"
+    khiops_env_path = os.path.join(env_dir, _get_khiops_env_script_file_name())
     return os.path.exists(khiops_env_path) and os.path.isfile(khiops_env_path)
 
 
