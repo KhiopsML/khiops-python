@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "build_dictionary_from_data_table",
         "khiops",
-        "10.0.0",
+        "10.6.0-b.0",
         [
             ("data_table_path", StringLikeType),
             ("output_dictionary_name", StringLikeType),
@@ -29,13 +29,14 @@ TASKS = [
         # fmt: off
         """
         // Dictionary building settings
-        ClassManagement.BuildClassDefButton
-        SourceDataTable.DatabaseName __data_table_path__
-        SourceDataTable.HeaderLineUsed __header_line__
-        SourceDataTable.FieldSeparator __field_separator__
+        ClassManagement.ManageClasses
+        BuildClassDefButton
+        SourceDataTable.DatabaseSpec.Data.DatabaseName __data_table_path__
+        SourceDataTable.DatabaseSpec.Data.HeaderLineUsed __header_line__
+        SourceDataTable.DatabaseSpec.Data.FieldSeparator __field_separator__
         __OPT__
         __detect_format__
-        SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+        SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         __END_OPT__
         BuildClassDef
         ClassName __output_dictionary_name__
@@ -44,6 +45,9 @@ TASKS = [
 
         // Save dictionary
         ClassFileName __output_dictionary_file_path__
+        OK
+        Exit
+        ClassManagement.Quit
         OK
         """,
         # fmt: on
