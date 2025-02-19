@@ -8,6 +8,7 @@
 
 import os
 import platform
+import shlex
 import shutil
 import stat
 import subprocess
@@ -87,10 +88,8 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         else:
             self.skipTest("Skipping test: platform not Ubuntu or Rocky Linux")
         if openmpi_found:
-            runner = kh.get_runner()
-            if not runner.mpi_command_args:
-                self.fail("MPI support found, but MPI command args not set")
-            mpiexec_path = runner.mpi_command_args[0]
+            _ = kh.get_runner()
+            mpiexec_path = shlex.split(os.environ["KHIOPS_MPI_COMMAND"])[0]
             self.assertTrue(os.path.exists(mpiexec_path))
             self.assertTrue(os.path.isfile(mpiexec_path))
             self.assertTrue(os.access(mpiexec_path, os.X_OK))
@@ -174,17 +173,17 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             To test a real initialization this test should be executed alone.
         """
         # Obtain the current runner
-        runner = kh.get_runner()
+        _ = kh.get_runner()
 
         # Check that MODL* files as set in the runner exist and are executable
-        self.assertTrue(os.path.isfile(runner.khiops_path))
-        self.assertTrue(os.access(runner.khiops_path, os.X_OK))
-        self.assertTrue(os.path.isfile(runner.khiops_coclustering_path))
-        self.assertTrue(os.access(runner.khiops_coclustering_path, os.X_OK))
+        self.assertTrue(os.path.isfile(os.environ["KHIOPS_PATH"]))
+        self.assertTrue(os.access(os.environ["KHIOPS_PATH"], os.X_OK))
+        self.assertTrue(os.path.isfile(os.environ["KHIOPS_COCLUSTERING_PATH"]))
+        self.assertTrue(os.access(os.environ["KHIOPS_COCLUSTERING_PATH"], os.X_OK))
 
         # Check that mpiexec is set correctly in the runner:
-        if runner.mpi_command_args:
-            mpiexec_path = runner.mpi_command_args[0]
+        if os.environ["KHIOPS_MPI_COMMAND"]:
+            mpiexec_path = shlex.split(os.environ["KHIOPS_MPI_COMMAND"])[0]
             self.assertTrue(os.path.exists(mpiexec_path))
             self.assertTrue(os.path.isfile(mpiexec_path))
             self.assertTrue(os.access(mpiexec_path, os.X_OK))

@@ -157,6 +157,41 @@ def _infer_env_bin_dir_for_conda_based_installations():
     return env_bin_dir
 
 
+def _read_khiops_env_output(khiops_env_path):
+    """Reads the output of the khiops_env script and puts it in a dictionary"""
+    # Initialize the output
+    khiops_env_output = {}
+
+    # Execute khiops_env --env
+    with subprocess.Popen(
+        [khiops_env_path, "--env"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    ) as khiops_env_process:
+        stdout, stderr = khiops_env_process.communicate()
+        if khiops_env_process.returncode != 0:
+            raise KhiopsEnvironmentError(
+                "Error initializing the environment for Khiops from the "
+                f"{khiops_env_path} script. Contents of stderr:\n{stderr}"
+            )
+
+        # Read the output line and set the keys in the dictionary
+        for line in stdout.split("\n"):
+            tokens = line.rstrip().split(maxsplit=1)
+            if len(tokens) == 2:
+                var_name, var_value = tokens
+            elif len(tokens) == 1:
+                var_name = tokens[0]
+                var_value = ""
+            else:
+                continue
+
+            khiops_env_output[var_name] = var_value
+
+    return khiops_env_output
+
+
 def _check_conda_env_bin_dir(conda_env_bin_dir):
     """Check inferred Conda environment binary directory really is one
 
@@ -184,7 +219,47 @@ def _check_conda_env_bin_dir(conda_env_bin_dir):
     return is_conda_env_bin_dir
 
 
-def _infer_khiops_installation_method(trace=False):
+def _get_khiops_env_script_path():
+    # On Windows native installations, rely on the `KHIOPS_HOME` environment
+    # variable set by the Khiops Desktop Application installer
+    installation_method = _infer_khiops_installation_method()
+    if platform.system() == "Windows" and installation_method == "binary+pip":
+        # KHIOPS_HOME variable by default
+        if "KHIOPS_HOME" in os.environ:
+            khiops_env_script_path = os.path.join(
+                os.environ["KHIOPS_HOME"], "bin", _get_khiops_env_script_file_name()
+            )
+        # Raise error if KHIOPS_HOME is not set
+        else:
+            raise KhiopsEnvironmentError(
+                "No environment variable named 'KHIOPS_HOME' found. "
+                "Make sure you have installed Khiops >= 10.2.3. "
+                "Go to https://khiops.org for more information."
+            )
+
+    # In Conda-based environments, `khiops_env` might not be in the PATH,
+    # hence its path must be inferred
+    elif installation_method == "conda-based":
+        khiops_env_script_path = os.path.join(
+            _infer_env_bin_dir_for_conda_based_installations(),
+            _get_khiops_env_script_file_name(),
+        )
+
+    # On UNIX or Conda, khiops_env is always in path for a proper installation
+    else:
+        khiops_env_script_path = shutil.which("khiops_env")
+        if khiops_env_script_path is None:
+            raise KhiopsEnvironmentError(
+                "The 'khiops_env' script not found for the current "
+                f"'{installation_method}' installation method. Make sure "
+                "you have installed khiops >= 10.2.3. "
+                "Go to https://khiops.org for more information."
+            )
+
+    return khiops_env_script_path
+
+
+def _infer_khiops_installation_method():
     """Return the Khiops installation method"""
     # We are in a conda environment if
     # - if the CONDA_PREFIX environment variable exists and,
@@ -201,16 +276,12 @@ def _infer_khiops_installation_method(trace=False):
     # Otherwise, we choose between conda-based and local (default choice)
     else:
         env_bin_dir = _infer_env_bin_dir_for_conda_based_installations()
-        if trace:
-            print(f"Environment binary dir: '{env_bin_dir}'")
         if _check_conda_env_bin_dir(env_bin_dir) and _khiops_env_file_exists(
             env_bin_dir
         ):
             installation_method = "conda-based"
         else:
             installation_method = "binary+pip"
-    if trace:
-        print(f"Installation method: '{installation_method}'")
     assert installation_method in ("conda", "conda-based", "binary+pip")
     return installation_method
 
@@ -799,9 +870,6 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def __init__(self):
         # Define specific attributes
-        self._mpi_command_args = None
-        self._khiops_path = None
-        self._khiops_coclustering_path = None
         self._khiops_version = None
         self._samples_dir = None
         self._samples_dir_checked = False
@@ -809,86 +877,23 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Call parent constructor
         super().__init__()
 
+        # Initialize the khiops_env variables cache
+        self._khiops_env_cache = {}
+
         # Initialize Khiops environment
         self._initialize_khiops_environment()
 
     def _initialize_khiops_environment(self):
-        # Check the `khiops_env` script
-        # On Windows native installations, rely on the `KHIOPS_HOME` environment
-        # variable set by the Khiops Desktop Application installer
-        installation_method = _infer_khiops_installation_method()
-        if platform.system() == "Windows" and installation_method == "binary+pip":
-            # KHIOPS_HOME variable by default
-            if "KHIOPS_HOME" in os.environ:
-                khiops_env_path = os.path.join(
-                    os.environ["KHIOPS_HOME"], "bin", "khiops_env.cmd"
-                )
-            # Raise error if KHIOPS_HOME is not set
-            else:
-                raise KhiopsEnvironmentError(
-                    "No environment variable named 'KHIOPS_HOME' found. "
-                    "Make sure you have installed Khiops >= 10.2.3. "
-                    "Go to https://khiops.org for more information."
-                )
+        # Obtain the khiops_env script path
+        khiops_env_path = _get_khiops_env_script_path()
 
-        # In Conda-based environments, `khiops_env` might not be in the PATH,
-        # hence its path must be inferred
-        elif installation_method == "conda-based":
-            khiops_env_path = os.path.join(
-                _infer_env_bin_dir_for_conda_based_installations(), "khiops_env"
-            )
-            if platform.system() == "Windows":
-                khiops_env_path += ".cmd"
+        # Read the contents from the execution of the khiops_env script
+        # Put them in the cache and in the environment
+        self._khiops_env_cache = _read_khiops_env_output(khiops_env_path)
+        os.environ.update(self._khiops_env_cache)
 
-        # On UNIX or Conda, khiops_env is always in path for a proper installation
-        else:
-            khiops_env_path = shutil.which("khiops_env")
-            if khiops_env_path is None:
-                raise KhiopsEnvironmentError(
-                    "The 'khiops_env' script not found for the current "
-                    f"'{installation_method}' installation method. Make sure "
-                    "you have installed khiops >= 10.2.3. "
-                    "Go to https://khiops.org for more information."
-                )
-
-        with subprocess.Popen(
-            [khiops_env_path, "--env"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        ) as khiops_env_process:
-            stdout, stderr = khiops_env_process.communicate()
-            if khiops_env_process.returncode != 0:
-                raise KhiopsEnvironmentError(
-                    "Error initializing the environment for Khiops from the "
-                    f"{khiops_env_path} script. Contents of stderr:\n{stderr}"
-                )
-            for line in stdout.split("\n"):
-                tokens = line.rstrip().split(maxsplit=1)
-                if len(tokens) == 2:
-                    var_name, var_value = tokens
-                elif len(tokens) == 1:
-                    var_name = tokens[0]
-                    var_value = ""
-                else:
-                    continue
-                # Set paths to Khiops binaries
-                if var_name == "KHIOPS_PATH":
-                    self.khiops_path = var_value
-                    os.environ["KHIOPS_PATH"] = var_value
-                elif var_name == "KHIOPS_COCLUSTERING_PATH":
-                    self.khiops_coclustering_path = var_value
-                    os.environ["KHIOPS_COCLUSTERING_PATH"] = var_value
-                # Set MPI command
-                elif var_name == "KHIOPS_MPI_COMMAND":
-                    self._mpi_command_args = shlex.split(var_value)
-                    os.environ["KHIOPS_MPI_COMMAND"] = var_value
-                # Propagate all the other environment variables to Khiops binaries
-                else:
-                    os.environ[var_name] = var_value
-
-                # Set KHIOPS_API_MODE to `true`
-                os.environ["KHIOPS_API_MODE"] = "true"
+        # Set KHIOPS_API_MODE to `true`
+        os.environ["KHIOPS_API_MODE"] = "true"
 
         # Check the tools exist and are executable
         self._check_tools()
@@ -979,8 +984,8 @@ class KhiopsLocalRunner(KhiopsRunner):
 
         # Build the messages for install type and mpi
         install_type_msg = _infer_khiops_installation_method()
-        if self._mpi_command_args:
-            mpi_command_args_msg = " ".join(self._mpi_command_args)
+        if "KHIOPS_MPI_COMMAND" in os.environ and os.environ["KHIOPS_MPI_COMMAND"]:
+            mpi_command_args_msg = os.environ["KHIOPS_MPI_COMMAND"]
         else:
             mpi_command_args_msg = "<empty>"
 
@@ -988,14 +993,19 @@ class KhiopsLocalRunner(KhiopsRunner):
         status_msg += "\n\n"
         status_msg += "khiops local installation settings\n"
         status_msg += f"version             : {self.khiops_version}\n"
-        status_msg += f"Khiops path         : {self.khiops_path}\n"
-        status_msg += f"Khiops CC path      : {self.khiops_coclustering_path}\n"
+        status_msg += f"Khiops path         : {os.environ['KHIOPS_PATH']}\n"
+        status_msg += (
+            f"Khiops CC path      : {os.environ['KHIOPS_COCLUSTERING_PATH']}\n"
+        )
+        status_msg += f"khiops_env path     : {_get_khiops_env_script_path()}\n"
         status_msg += f"install type        : {install_type_msg}\n"
         status_msg += f"MPI command         : {mpi_command_args_msg}\n"
 
         # Add output of khiops -s which gives the MODL_* binary status
         status_msg += "\n\n"
-        khiops_executable = os.path.join(os.path.dirname(self.khiops_path), "khiops")
+        khiops_executable = os.path.join(
+            os.path.dirname(os.environ["KHIOPS_PATH"]), "khiops"
+        )
         status_msg += f"Khiops executable status (output of '{khiops_executable} -s')\n"
         stdout, stderr, return_code = self.raw_run("khiops", ["-s"], use_mpi=True)
 
@@ -1017,68 +1027,26 @@ class KhiopsLocalRunner(KhiopsRunner):
         )
         return self._khiops_version
 
-    @property
-    def mpi_command_args(self):
-        return self._mpi_command_args
-
-    @property
-    def khiops_path(self):
-        """str: Path to the ``MODL*`` Khiops binary
-
-        Set by the ``khiops_env`` script from the ``khiops-core`` package.
-
-        """
-        return self._khiops_path
-
-    @khiops_path.setter
-    def khiops_path(self, modl_path):
+    def check_executable_path(self, exec_path):
         # Check that the path is a directory and it exists
-        if not os.path.exists(modl_path):
-            raise KhiopsEnvironmentError(f"Inexistent Khiops path: '{modl_path}'")
-        if not os.path.isfile(modl_path):
+        if not os.path.exists(exec_path):
             raise KhiopsEnvironmentError(
-                f"Khiops file path is a directory: {modl_path}"
+                f"Inexistent Khiops executable path: " f"{exec_path}"
             )
-
-        # Set the MODL path
-        self._khiops_path = modl_path
-
-    @property
-    def khiops_coclustering_path(self):
-        """str: Path to the ``MODL_Coclustering`` Khiops Coclustering binary
-
-        Set by the ``khiops_env`` script from the ``khiops-core`` package.
-
-        """
-        return self._khiops_coclustering_path
-
-    @khiops_coclustering_path.setter
-    def khiops_coclustering_path(self, modl_coclustering_path):
-        # Check that the path is a directory and it exists
-        if not os.path.exists(modl_coclustering_path):
+        if not os.path.isfile(exec_path):
             raise KhiopsEnvironmentError(
-                f"Inexistent Khiops coclustering path: '{modl_coclustering_path}'"
+                f"Khiops executable file path is a directory: {exec_path}"
             )
-        if not os.path.isfile(modl_coclustering_path):
-            raise KhiopsEnvironmentError(
-                "Khiops coclustering file path is a directory: "
-                f"{modl_coclustering_path}"
-            )
-
-        # Set the MODL_Coclustering path
-        self._khiops_coclustering_path = modl_coclustering_path
 
     def _tool_path(self, tool_name):
         """Full path of a Khiops tool binary"""
-        assert (
-            self.khiops_path is not None and self.khiops_coclustering_path is not None
-        )
+        assert "KHIOPS_PATH" in os.environ and "KHIOPS_COCLUSTERING_PATH" in os.environ
         tool_name = tool_name.lower()
         if tool_name not in ["khiops", "khiops_coclustering"]:
             raise ValueError(f"Invalid tool name: {tool_name}")
         modl_binaries = {
-            "khiops": self.khiops_path,
-            "khiops_coclustering": self.khiops_coclustering_path,
+            "khiops": os.environ["KHIOPS_PATH"],
+            "khiops_coclustering": os.environ["KHIOPS_COCLUSTERING_PATH"],
         }
         bin_path = modl_binaries[tool_name]
 
@@ -1124,11 +1092,14 @@ class KhiopsLocalRunner(KhiopsRunner):
                 type_error_message("command_line_args", command_line_args, list)
             )
 
+        # Refresh the environment (only if needed)
+        self._refresh_khiops_environment()
+
         # Build command line arguments
         # Nota: Khiops Coclustering is executed without MPI
         khiops_process_args = []
         if tool_name == "khiops" and use_mpi:
-            khiops_process_args += self._mpi_command_args
+            khiops_process_args += shlex.split(os.environ["KHIOPS_MPI_COMMAND"])
         khiops_process_args += [self._tool_path(tool_name)]
         if command_line_args:
             khiops_process_args += command_line_args
@@ -1159,6 +1130,22 @@ class KhiopsLocalRunner(KhiopsRunner):
             stdout, stderr = khiops_process.communicate()
 
         return stdout, stderr, khiops_process.returncode
+
+    def _refresh_khiops_environment(self):
+        """Update the Khiops environment khiops_env only if variables have changed"""
+        # Check if the cache is invalidated
+        cache_invalidated = False
+        for cached_var_name, cached_var_value in self._khiops_env_cache.items():
+            if (
+                cached_var_name not in os.environ
+                or os.environ[cached_var_name] != cached_var_value
+            ):
+                cache_invalidated = True
+                break
+
+        # If the cache is invalidated then refresh the environment
+        if cache_invalidated:
+            self._initialize_khiops_environment()
 
     def _run(
         self,
