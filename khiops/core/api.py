@@ -16,6 +16,7 @@ See also:
 """
 import io
 import os
+import warnings
 
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
@@ -24,6 +25,7 @@ from khiops.core.internals.common import (
     CommandLineOptions,
     SystemSettings,
     create_unambiguous_khiops_path,
+    deprecation_message,
     is_string_like,
     type_error_message,
 )
@@ -218,7 +220,7 @@ def _preprocess_task_arguments(task_args):
         "coclustering_report_file_path": "Coclustering.khcj",
         "coclustering_dictionary_file_path": "Coclustering.kdic",
     }
-    for file_path_arg_name, default_file_name in file_path_arg_names:
+    for file_path_arg_name, default_file_name in file_path_arg_names.items():
         if file_path_arg_name in task_args:
             file_path = task_args[file_path_arg_name]
 
@@ -236,7 +238,7 @@ def _preprocess_task_arguments(task_args):
                 )
                 # Update the path
                 full_file_path = fs.get_child_path(
-                    os.path.normpath(report_file_path), default_file_name
+                    os.path.normpath(file_path), default_file_name
                 )
                 task_args[file_path_arg_name] = full_file_path
 
@@ -1638,7 +1640,7 @@ def train_instance_variable_coclustering(
     _run_task("train_coclustering", task_args)
 
     # Return the path of the coclustering file
-    return coclustering_file_path
+    return coclustering_report_file_path
 
 
 def simplify_coclustering(
