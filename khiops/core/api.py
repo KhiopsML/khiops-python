@@ -210,6 +210,36 @@ def _preprocess_task_arguments(task_args):
     bool
         ``True`` if the task was called with an input `.DictionaryDomain`.
     """
+    # Process the output path
+    # if path is dir, then generate full report path according to GUI defaults
+    file_path_arg_names = {
+        "analysis_report_file_path": "AnalysisResults.khj",
+        "evaluation_report_file_path": "EvaluationReport.khj",
+        "coclustering_report_file_path": "Coclustering.khcj",
+        "coclustering_dictionary_file_path": "Coclustering.kdic",
+    }
+    for file_path_arg_name, default_file_name in file_path_arg_names:
+        if file_path_arg_name in task_args:
+            file_path = task_args[file_path_arg_name]
+
+            # If path ends with path separator, then consider
+            # it is dir and concatenate default report file name to it
+            if file_path.endswith(os.path.sep):
+                # Add deprecation warning
+                warnings.warn(
+                    deprecation_message(
+                        "'results_dir'",
+                        "11.0.1",
+                        replacement=file_path_arg_name,
+                        quote=False,
+                    )
+                )
+                # Update the path
+                full_file_path = fs.get_child_path(
+                    os.path.normpath(report_file_path), default_file_name
+                )
+                task_args[file_path_arg_name] = full_file_path
+
     # Process the input dictionary domain if any
     # build_frequency_variables and detect_format are processed differently below
     task_called_with_domain = False
@@ -751,7 +781,7 @@ def train_predictor(
     else:
         modeling_dictionary_file_path = None
 
-    return (report_file_path, modeling_dictionary_file_path)
+    return (analysis_report_file_path, modeling_dictionary_file_path)
 
 
 def interpret_predictor(
@@ -1614,6 +1644,7 @@ def train_instance_variable_coclustering(
 def simplify_coclustering(
     coclustering_file_path,
     simplified_coclustering_file_path,
+    results_dir=None,
     max_preserved_information=0,
     max_cells=0,
     max_total_parts=0,
@@ -1666,6 +1697,30 @@ def simplify_coclustering(
     # Save the task arguments
     # WARNING: Do not move this line, see the top of the "tasks" section for details
     task_args = locals()
+
+    # Special processing for:
+    # - simplified_coclustering_file_path which does not start with the path separator
+    #   (i.e. is a file name or a relative path), and
+    # - results_dir which is not None
+    # * concatenate simplified_coclustering_file_path to results_dir
+    # * issue deprecation warning for results_dir
+    # * remove 'results_dir' from the task arguments
+
+    if results_dir is not None and not simplified_coclustering_file_path.startswith(
+        os.path.sep
+    ):
+        warnings.warn(
+            deprecation_message(
+                f"'{results_dir}'",
+                "11.0.1",
+                replacement="simplified_coclustering_file_path",
+                quote=False,
+            )
+        )
+        task_args["simplified_coclustering_file_path"] = os.path.join(
+            results_dir, simplified_coclustering_file_path
+        )
+        del task_args["results_dir"]
 
     # Run the task
     _run_task("simplify_coclustering", task_args)
