@@ -1855,14 +1855,6 @@ def extract_clusters(
     # WARNING: Do not move this line, see the top of the "tasks" section for details
     task_args = locals()
 
-    # Obtain the directory and name of the clusters file
-    clusters_file_path = create_unambiguous_khiops_path(task_args["clusters_file_path"])
-    clusters_file_name = os.path.basename(clusters_file_path)
-    task_args["clusters_file_name"] = clusters_file_name
-
-    # Delete the clusters_file_path argument
-    del task_args["clusters_file_path"]
-
     # Run the task
     _run_task("extract_clusters", task_args)
 

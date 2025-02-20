@@ -19,7 +19,7 @@ TASKS = [
             ("coclustering_file_path", StringLikeType),
             ("cluster_variable", StringLikeType),
             ("results_dir", StringLikeType),
-            ("clusters_file_name", StringLikeType),
+            ("clusters_file_path", StringLikeType),
         ],
         [
             ("max_preserved_information", IntType, 0),
@@ -36,17 +36,18 @@ TASKS = [
         SelectInputCoclustering
         InputCoclusteringFileName __coclustering_file_path__
         OK
-        CoclusteringAttributeSpec.CoclusteringAttribute __cluster_variable__
+        CoclusteringAttribute __cluster_variable__
         PostProcessingSpec.MaxPreservedInformation __max_preserved_information__
         PostProcessingSpec.MaxCellNumber __max_cells__
 
         // Output settings
-        AnalysisResults.ResultFilesDirectory __results_dir__
-        AnalysisResults.ClusterFileName __clusters_file_name__
+        ClusterFileName __clusters_file_path__
 
         // Extract clusters
         ExtractClusters
         Exit
+        ClassManagement.Quit
+        OK
         """,
         # fmt: on
     ),
