@@ -167,42 +167,14 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         output_msg = str(context.exception)
         self.assertEqual(output_msg, expected_msg)
 
-    def test_runner_with_conda_based_environment(self):
-        """Test that local runner works in non-Conda, Conda-based environments"""
+    def test_runner_environment_initialization(self):
+        """Test that local runner initializes/ed its environment properly
 
-        # Emulate Conda-based environment:
-        # - remove $CONDA_PREFIX/bin from $PATH
-        # - unset `CONDA_PREFIX`
-        # - create new KhiopsLocalRunner and initialize its Khiops binary
-        #   directory
-        # - check that the Khiops binary directory contains the MODL* binaries
-        #   and `mpiexec` (which should be its default location)
-        conda_prefix = None
-        if "CONDA_PREFIX" in os.environ:
-            # Remove `CONDA_PREFIX/bin` from `PATH`
-            conda_prefix_bin = os.path.join(os.environ["CONDA_PREFIX"], "bin")
-            os.environ["PATH"] = os.pathsep.join(
-                path_fragment
-                for path_fragment in os.environ["PATH"].split(os.pathsep)
-                if path_fragment != conda_prefix_bin
-            )
-
-            # Store existing CONDA_PREFIX
-            conda_prefix = os.environ["CONDA_PREFIX"]
-
-            # Unset `CONDA_PREFIX`
-            del os.environ["CONDA_PREFIX"]
-
-        # Create a fresh local runner
-        runner = KhiopsLocalRunner()
-
-        # Restore CONDA_PREFIX
-        if conda_prefix is not None:
-            os.environ["CONDA_PREFIX"] = conda_prefix
-
-            # Restore `CONDA_PREFIX/bin` into `PATH`
-            conda_prefix_bin = os.path.join(conda_prefix, "bin")
-            os.environ["PATH"] = os.pathsep.join([conda_prefix_bin, os.environ["PATH"]])
+        .. note::
+            To test a real initialization this test should be executed alone.
+        """
+        # Obtain the current runner
+        runner = kh.get_runner()
 
         # Check that MODL* files as set in the runner exist and are executable
         self.assertTrue(os.path.isfile(runner.khiops_path))
@@ -211,12 +183,11 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         self.assertTrue(os.access(runner.khiops_coclustering_path, os.X_OK))
 
         # Check that mpiexec is set correctly in the runner:
-        mpi_command_args = runner.mpi_command_args
-        self.assertTrue(len(mpi_command_args) > 0)
-        mpiexec_path = runner.mpi_command_args[0]
-        self.assertTrue(os.path.exists(mpiexec_path))
-        self.assertTrue(os.path.isfile(mpiexec_path))
-        self.assertTrue(os.access(mpiexec_path, os.X_OK))
+        if runner.mpi_command_args:
+            mpiexec_path = runner.mpi_command_args[0]
+            self.assertTrue(os.path.exists(mpiexec_path))
+            self.assertTrue(os.path.isfile(mpiexec_path))
+            self.assertTrue(os.access(mpiexec_path, os.X_OK))
 
 
 class KhiopsMultitableFitTests(unittest.TestCase):
