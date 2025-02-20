@@ -256,7 +256,7 @@ def _preprocess_task_arguments(task_args):
     # Set the default discretization method for unsupervised analysis
     if "discretization_method" in task_args and not task_args.get("target_variable"):
         if task_args["discretization_method"] is None:
-            task_args["discretization_method"] = "EqualWidth"
+            task_args["discretization_method"] = "MODL"
 
     # Remove discretization method if specified for supervised analysis:
     # it is always MODL
@@ -266,7 +266,7 @@ def _preprocess_task_arguments(task_args):
     # Set the default grouping method for unsupervised analysis
     if "grouping_method" in task_args and not task_args.get("target_variable"):
         if task_args["grouping_method"] is None:
-            task_args["grouping_method"] = "BasicGrouping"
+            task_args["grouping_method"] = "MODL"
 
     # Remove grouping method if specified for supervised analysis:
     # it is always MODL
