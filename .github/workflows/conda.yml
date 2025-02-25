@@ -117,7 +117,7 @@ jobs:
           PATH=$(echo $PATH | sed "s#$CONDA_PREFIX/bin:##g")
 
           # Unset *CONDA* environment variables
-          # As a corrolary, CONDA_PREFIX is unset
+          # As a corollary, CONDA_PREFIX is unset
           # Note: There is no way to remove these variables from GITHUB_ENV
           # (see https://github.com/actions/runner/issues/1126)
           for CONDA_VAR in $(env | grep CONDA)
@@ -131,17 +131,17 @@ jobs:
         run: |
           kh-download-datasets \
             --version ${{ inputs.khiops-samples-version || env.DEFAULT_SAMPLES_VERSION }}
-      - name: Test Conda Package on Samples
+      - name: Run Samples
         env:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
         run: |
-          kh-samples core -i train_predictor -e
+          kh-samples core -i deploy_model -e
+          kh-samples core -i deploy_coclustering -e
           kh-samples core -i train_predictor_error_handling -e
-          kh-samples core -i train_coclustering -e
           kh-samples sklearn -i khiops_classifier -e
           kh-samples sklearn -i khiops_coclustering -e
-      - name: Test Conda Package on Some Samples (Conda-Based Environments)
+      - name: Run Samples (Conda-Based Environments)
         env:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
@@ -153,7 +153,7 @@ jobs:
           PATH=$(echo $PATH | sed "s#$CONDA_PREFIX/bin:##g")
 
           # Unset *CONDA* environment variables
-          # As a corrolary, CONDA_PREFIX is unset
+          # As a corollary, CONDA_PREFIX is unset
           # Note: There is no way to remove these variables from GITHUB_ENV
           # (see https://github.com/actions/runner/issues/1126)
           for CONDA_VAR in $(env | grep CONDA)
@@ -161,10 +161,49 @@ jobs:
             unset $(echo $CONDA_VAR | cut -d '=' -f 1)
           done
 
-          # Execute some Khiops and Khiops Coclustering samples
+          # Run samples
           # Note: kh-samples is not reachable as it is not in PATH
           $PYTHON -m khiops.samples.samples -i deploy_model -e
           $PYTHON -m khiops.samples.samples -i deploy_coclustering -e
+          $PYTHON -m khiops.samples.samples -i train_predictor_error_handling -e
+          $PYTHON -m khiops.samples.samples_sklearn -i khiops_classifier -e
+          $PYTHON -m khiops.samples.samples_sklearn -i khiops_coclustering -e
+      # Checkout the sources to obtain the tests
+      # Note: The `sparse-checkout` option of this action is bugged so we checkout all the sources
+      #       See https://github.com/actions/checkout/issues/1628
+      - name: Checkout Sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      # This is needed so python does not retrieve the khiops module from PWD
+      - name: Remove the khiops Module from the Sources
+        run: rm -rf khiops
+      - name: Install the Test Requirements
+        run: conda install -y --file test-requirements.txt
+      - name: Run the Runner Initialization Integration Test
+        run: |
+          python -m unittest -v \
+            tests.test_khiops_integrations.KhiopsRunnerEnvironmentTests.test_runner_environment_initialization
+      - name: Run the Runner Initialization Integration Test (Conda-Based Environments)
+        run: |
+          # Set `python` to the current Conda Python executable
+          PYTHON="$(type -P python)"
+
+          # Remove $CONDA_PREFIX/bin from PATH
+          PATH=$(echo $PATH | sed "s#$CONDA_PREFIX/bin:##g")
+
+          # Unset *CONDA* environment variables
+          # As a corolary, CONDA_PREFIX is unset
+          # Note: There is no way to remove these variables from GITHUB_ENV
+          # (see https://github.com/actions/runner/issues/1126)
+          for CONDA_VAR in $(env | grep CONDA)
+          do
+            unset $(echo $CONDA_VAR | cut -d '=' -f 1)
+          done
+
+          # Execute the runner initialization integration test
+          $PYTHON -m unittest -v \
+            tests.test_khiops_integrations.KhiopsRunnerEnvironmentTests.test_runner_environment_initialization
 
   # Release is only executed on tags
   # Note: For this job to work the secrets variables KHIOPS_ANACONDA_CHANNEL_TOKEN and
