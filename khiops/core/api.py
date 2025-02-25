@@ -24,7 +24,6 @@ from khiops.core.exceptions import KhiopsRuntimeError
 from khiops.core.internals.common import (
     CommandLineOptions,
     SystemSettings,
-    create_unambiguous_khiops_path,
     deprecation_message,
     is_string_like,
     type_error_message,
