@@ -738,8 +738,22 @@ class Dataset:
         if isinstance(y, str):
             y_checked = y
         else:
-            y_checked = column_or_1d(y, warn=True)
-
+            if hasattr(y, "dtype"):
+                if isinstance(y.dtype, pd.CategoricalDtype):
+                    y_checked = column_or_1d(
+                        y, warn=True, dtype=y.dtype.categories.dtype
+                    )
+                else:
+                    y_checked = column_or_1d(y, warn=True, dtype=y.dtype)
+            elif hasattr(y, "dtypes"):
+                if isinstance(y.dtypes[0], pd.CategoricalDtype):
+                    y_checked = column_or_1d(
+                        y, warn=True, dtype=y.dtypes[0].categories.dtype
+                    )
+                else:
+                    y_checked = column_or_1d(y, warn=True)
+            else:
+                y_checked = column_or_1d(y, warn=True)
         # Check the target type coherence with those of X's tables
         if isinstance(
             self.main_table, (PandasTable, SparseTable, NumpyTable)
