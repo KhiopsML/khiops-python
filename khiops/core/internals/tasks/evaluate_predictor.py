@@ -14,12 +14,12 @@ TASKS = [
     tm.KhiopsTask(
         "evaluate_predictor",
         "khiops",
-        "10.0.0",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("train_dictionary_name", StringLikeType),
             ("data_table_path", StringLikeType),
-            ("evaluation_report_path", StringLikeType),
+            ("evaluation_report_file_path", StringLikeType),
         ],
         [
             ("detect_format", BoolType, True),
@@ -35,7 +35,7 @@ TASKS = [
         [
             "dictionary_file_path",
             "data_table_path",
-            "evaluation_report_path",
+            "evaluation_report_file_path",
             "additional_data_tables",
         ],
         # fmt: off
@@ -48,28 +48,32 @@ TASKS = [
         // Evaluate predictor settings
         LearningTools.EvaluatePredictors
         MainTargetModality __main_target_value__
-        EvaluationDatabase.DatabaseFiles.List.Key __train_dictionary_name__
-        EvaluationDatabase.DatabaseFiles.DataTableName __data_table_path__
+        EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
         __DICT__
         __additional_data_tables__
-        EvaluationDatabase.DatabaseFiles.List.Key
-        EvaluationDatabase.DatabaseFiles.DataTableName
+        EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName
         __END_DICT__
-        EvaluationDatabase.HeaderLineUsed __header_line__
-        EvaluationDatabase.FieldSeparator __field_separator__
+        EvaluationDatabase.DatabaseSpec.Data.HeaderLineUsed __header_line__
+        EvaluationDatabase.DatabaseSpec.Data.FieldSeparator __field_separator__
         __OPT__
         __detect_format__
-        EvaluationDatabase.DatabaseFormatDetector.DetectFileFormat
+        EvaluationDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         __END_OPT__
-        EvaluationDatabase.SampleNumberPercentage __sample_percentage__
-        EvaluationDatabase.SamplingMode __sampling_mode__
-        EvaluationDatabase.SelectionAttribute __selection_variable__
-        EvaluationDatabase.SelectionValue __selection_value__
-        EvaluationFileName __evaluation_report_path__
+        EvaluationDatabase.DatabaseSpec.Sampling.SampleNumberPercentage __sample_percentage__
+        EvaluationDatabase.DatabaseSpec.Sampling.SamplingMode __sampling_mode__
+        EvaluatedPredictors.List.Key __train_dictionary_name__
+        EvaluationDatabase.DatabaseSpec.Selection.SelectionAttribute __selection_variable__
+        EvaluationDatabase.DatabaseSpec.Selection.SelectionValue __selection_value__
+        ExportAsXls false
+        EvaluationFileName __evaluation_report_file_path__
 
         // Evaluate predictor
         EvaluatePredictors
         Exit
+        ClassManagement.Quit
+        OK
         """,
         # fmt: on
     ),
