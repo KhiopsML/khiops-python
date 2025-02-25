@@ -947,10 +947,12 @@ def train_recoder(
     additional_data_tables=None,
     max_constructed_variables=100,
     construction_rules=None,
-    max_trees=0,
+    max_text_features=10000,
+    max_trees=10,
     max_pairs=0,
     all_possible_pairs=True,
     specific_pairs=None,
+    text_features="words",
     informative_variables_only=True,
     max_variables=0,
     keep_initial_categorical_variables=False,
@@ -1035,7 +1037,9 @@ def train_recoder(
     construction_rules : list of str, optional
         Allowed rules for the automatic variable construction. If not set it uses all
         possible rules.
-    max_trees : int, default 0
+    max_text_features : int, default 10000
+        Maximum number of text features to construct.
+    max_trees : int, default 10
         Maximum number of trees to construct.
     max_pairs : int, default 0
         Maximum number of variables pairs to construct.
@@ -1044,6 +1048,11 @@ def train_recoder(
         contains only one non-empty feature name, then it generates all the pairs
         containing it (within the maximum limit ``max_pairs``). These pairs have top
         priority: they are constructed first.
+    text_features : str, default "words"
+        Type of the text features. Can be either one of:
+        - "words": sequences of non-space characters
+        - "ngrams": sequences of bytes
+        - "tokens": user-defined
     all_possible_pairs : bool, default ``True``
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
@@ -1086,14 +1095,19 @@ def train_recoder(
             - "none": Keeps the variable as-is
     discretization_method : str
         Name of the discretization method, for unsupervised analysis only.
-        Its valid values are: "EqualWidth" (default), "EqualFrequency" or "None".
-        Ignored for supervised analysis.
+        Its valid values are: "MODL" (default), "EqualWidth", "EqualFrequency"
+        or "None". Ignored for supervised analysis.
     grouping_method : str
         Name of the grouping method, for unsupervised analysis only.
-        Its valid values are: "BasicGrouping" (default) or "None".
+        Its valid values are: "MODL" (default), "BasicGrouping" or "None".
         Ignored for supervised analysis.
     max_parts : int, default 0
-        Maximum number of parts. If equal to 0 it is automatically calculated.
+        Maximum number of variable parts produced by preprocessing methods. If equal
+        to 0 it is automatically calculated.
+        Set to 10 intervals for unsupervised analysis if ``discretization_method``
+        is set to "EqualWidth" or "EqualFrequency".
+        Set to 10 groups for unsupervised analysis if ``grouping_method``
+        is set to "BasicGrouping".
     ... :
         See :ref:`core-api-common-params`.
 

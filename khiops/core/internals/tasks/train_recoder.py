@@ -22,13 +22,13 @@ TASKS = [
     tm.KhiopsTask(
         "train_recoder",
         "khiops",
-        "10.0.0",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
             ("data_table_path", StringLikeType),
             ("target_variable", StringLikeType),
-            ("results_dir", StringLikeType),
+            ("analysis_report_file_path", StringLikeType),
         ],
         [
             ("detect_format", BoolType, True),
@@ -39,8 +39,9 @@ TASKS = [
             ("selection_variable", StringLikeType, ""),
             ("selection_value", StringLikeType, ""),
             ("additional_data_tables", DictType(StringLikeType, StringLikeType), None),
-            ("max_constructed_variables", IntType, 0),
+            ("max_constructed_variables", IntType, 1000),
             ("construction_rules", ListType(StringLikeType), None),
+            ("max_text_features", IntType, 10000),
             ("max_trees", IntType, 10),
             ("max_pairs", IntType, 0),
             ("all_possible_pairs", BoolType, True),
@@ -49,10 +50,9 @@ TASKS = [
                 ListType(TupleType(StringLikeType, StringLikeType)),
                 None,
             ),
+            ("text_features", StringLikeType, "words"),
             ("group_target_value", BoolType, False),
             ("discretization_method", StringLikeType, "MODL"),
-            ("min_interval_frequency", IntType, 0),
-            ("max_intervals", IntType, 0),
             ("informative_variables_only", BoolType, True),
             ("max_variables", IntType, 0),
             ("keep_initial_categorical_variables", BoolType, True),
@@ -61,14 +61,11 @@ TASKS = [
             ("numerical_recoding_method", StringLikeType, "part Id"),
             ("pairs_recoding_method", StringLikeType, "part Id"),
             ("grouping_method", StringLikeType, "MODL"),
-            ("min_group_frequency", IntType, 0),
-            ("max_groups", IntType, 0),
-            ("results_prefix", StringLikeType, ""),
+            ("max_parts", IntType, 0),
         ],
         [
             "dictionary_file_path",
             "data_table_path",
-            "results_dir",
             "additional_data_tables",
         ],
         # fmt: off
@@ -77,36 +74,36 @@ TASKS = [
         ClassManagement.OpenFile
         ClassFileName __dictionary_file_path__
         OK
-        ClassManagement.ClassName __dictionary_name__
+        TrainDatabase.ClassName __dictionary_name__
 
         // Train/test database settings
-        TrainDatabase.DatabaseFiles.List.Key __dictionary_name__
-        TrainDatabase.DatabaseFiles.DataTableName __data_table_path__
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
         __DICT__
         __additional_data_tables__
-        TrainDatabase.DatabaseFiles.List.Key
-        TrainDatabase.DatabaseFiles.DataTableName
+        TrainDatabase.DatabaseSpec.DatabaseFiles.List.Key
+        TrainDatabase.DatabaseSpec.DatabaseFiles.DataTableName
         __END_DICT__
-        TrainDatabase.HeaderLineUsed __header_line__
-        TrainDatabase.FieldSeparator __field_separator__
+        TrainDatabase.DatabaseSpec.Data.HeaderLineUsed __header_line__
+        TrainDatabase.DatabaseSpec.Data.FieldSeparator __field_separator__
         __OPT__
         __detect_format__
-        TrainDatabase.DatabaseFormatDetector.DetectFileFormat
+        TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         __END_OPT__
-        TrainDatabase.SampleNumberPercentage __sample_percentage__
-        TrainDatabase.SamplingMode __sampling_mode__
-        TrainDatabase.SelectionAttribute __selection_variable__
-        TrainDatabase.SelectionValue __selection_value__
+        TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage __sample_percentage__
+        TrainDatabase.DatabaseSpec.Sampling.SamplingMode __sampling_mode__
+        TrainDatabase.DatabaseSpec.Selection.SelectionAttribute __selection_variable__
+        TrainDatabase.DatabaseSpec.Selection.SelectionValue __selection_value__
 
         // Target variable
         AnalysisSpec.TargetAttributeName __target_variable__
 
-        // Disable predictors
-        AnalysisSpec.PredictorsSpec.SelectiveNaiveBayesPredictor false
-        AnalysisSpec.PredictorsSpec.NaiveBayesPredictor false
-        AnalysisSpec.PredictorsSpec.AdvancedSpec.UnivariatePredictorNumber 0
+        // Disable predictors: do data preparation only
+        AnalysisSpec.PredictorsSpec.AdvancedSpec.DataPreparationOnly true
+
 
         // Feature engineering
+        AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTextFeatureNumber __max_text_features__
         AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber __max_trees__
         AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxAttributePairNumber __max_pairs__
         AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectAttributePairsParameters
@@ -128,16 +125,20 @@ TASKS = [
         __END_DICT__
         Exit
 
+        //  Text feature parameters
+        AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectTextFeaturesParameters
+        TextFeatures __text_features__
+        Exit
+
         // Data preparation (discretization & grouping) settings
         AnalysisSpec.PreprocessingSpec.TargetGrouped __group_target_value__
-        AnalysisSpec.PreprocessingSpec.DiscretizerSpec.SupervisedMethodName __discretization_method__
-        AnalysisSpec.PreprocessingSpec.DiscretizerSpec.UnsupervisedMethodName __discretization_method__
-        AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MinIntervalFrequency __min_interval_frequency__
-        AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MaxIntervalNumber __max_intervals__
-        AnalysisSpec.PreprocessingSpec.GrouperSpec.SupervisedMethodName __grouping_method__
-        AnalysisSpec.PreprocessingSpec.GrouperSpec.UnsupervisedMethodName __grouping_method__
-        AnalysisSpec.PreprocessingSpec.GrouperSpec.MinGroupFrequency __min_group_frequency__
-        AnalysisSpec.PreprocessingSpec.GrouperSpec.MaxGroupNumber __max_groups__
+
+        AnalysisSpec.PreprocessingSpec.MaxPartNumber __max_parts__
+        AnalysisSpec.PreprocessingSpec.InspectAdvancedParameters
+        DiscretizerUnsupervisedMethodName __discretization_method__
+        GrouperUnsupervisedMethodName __grouping_method__
+        Exit
+
 
         // Recoder Settings
         AnalysisSpec.RecodersSpec.Recoder true
@@ -150,11 +151,12 @@ TASKS = [
         AnalysisSpec.RecodersSpec.RecodingSpec.RecodeBivariateAttributes __pairs_recoding_method__
 
         // Output settings
-        AnalysisResults.ResultFilesDirectory __results_dir__
-        AnalysisResults.ResultFilesPrefix __results_prefix__
+        AnalysisResults.ReportFileName __analysis_report_file_path__
 
         // Train recoder
         ComputeStats
+        ClassManagement.Quit
+        OK
         """,
         # fmt: on
     ),
