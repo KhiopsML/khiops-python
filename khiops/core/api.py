@@ -1863,6 +1863,9 @@ def detect_data_table_format(
     data_table_path,
     dictionary_file_path_or_domain=None,
     dictionary_name=None,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
@@ -1870,6 +1873,7 @@ def detect_data_table_format(
     memory_limit_mb=None,
     temp_dir="",
     scenario_prologue="",
+    **kwargs,
 ):
     """Detects the format of a data table
 
@@ -1904,11 +1908,15 @@ def detect_data_table_format(
     # Save the task arguments
     # WARNING: Do not move this line, see the top of the "tasks" section for details
     task_args = locals()
+    # If not defined, create log file to save the detect format output
 
-    # Create log file to save the detect format output
-    log_file_path = get_runner().create_temp_file("_detect_data_table_format_", ".log")
-    task_args["log_file_path"] = log_file_path
-
+    delete_log_file = False
+    if log_file_path is None:
+        delete_log_file = True
+        log_file_path = get_runner().create_temp_file(
+            "_detect_data_table_format_", ".log"
+        )
+        task_args["log_file_path"] = log_file_path
     # Run the task without dictionary
     if dictionary_file_path_or_domain is None:
         if "dictionary_name" in task_args:
@@ -1959,7 +1967,7 @@ def detect_data_table_format(
     # Clean up the log file if necessary
     if trace:
         print(f"detect_format log file: {log_file_path}")
-    else:
+    elif delete_log_file is True:
         fs.remove(log_file_path)
 
     return header_line, field_separator
