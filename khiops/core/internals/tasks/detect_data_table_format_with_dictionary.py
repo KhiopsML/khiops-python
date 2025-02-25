@@ -28,12 +28,13 @@ TASKS = [
         ClassManagement.OpenFile
         ClassFileName __dictionary_file_path__
         OK
-        ClassManagement.ClassName __dictionary_name__
+
+        TrainDatabase.ClassName __dictionary_name__
 
         // Detect format the data table format on the "Extract Keys" window
         LearningTools.ExtractKeysFromDataTable
-        SourceDataTable.DatabaseName __data_table_path__
-        SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+        SourceDataTable.DatabaseSpec.Data.DatabaseName __data_table_path__
+        SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         Exit
         """,
         # fmt: on
