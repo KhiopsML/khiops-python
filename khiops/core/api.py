@@ -679,7 +679,7 @@ def train_predictor(
         dictionary file. For more details see :doc:`/multi_table_primer`.
     do_data_preparation_only : bool, default ``False``
         If ``False``, it trains a Selective Naive Bayes predictor. Otherwise, only data
-        preparation via MODL discretization is done.
+        preparation via MODL preprocessing is done.
     main_target_value : str, default ""
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
@@ -721,15 +721,19 @@ def train_predictor(
         substantially increase the training time.
     discretization_method : str
         Name of the discretization method, for unsupervised analysis only.
-        Its valid values are: "EqualWidth" (default), "EqualFrequency" or "None".
-        Ignored for supervised analysis.
+        Its valid values are: "MODL" (default), "EqualWidth", "EqualFrequency"
+        or "None". Ignored for supervised analysis.
     grouping_method : str
         Name of the grouping method, for unsupervised analysis only.
-        Its valid values are: "BasicGrouping" (default) or "None".
+        Its valid values are: "MODL" (default), "BasicGrouping" or "None".
         Ignored for supervised analysis.
     max_parts : int, default 0
         Maximum number of variable parts produced by preprocessing methods. If equal
         to 0 it is automatically calculated.
+        Set to 10 intervals for unsupervised analysis if ``discretization_method``
+        is set to "EqualWidth" or "EqualFrequency".
+        Set to 10 groups for unsupervised analysis if ``grouping_method``
+        is set to "BasicGrouping".
     ... :
         See :ref:`core-api-common-params`.
 
