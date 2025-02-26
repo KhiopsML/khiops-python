@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "sort_data_table",
         "khiops",
-        "10.0.0",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
@@ -40,10 +40,10 @@ TASKS = [
         ClassManagement.OpenFile
         ClassFileName __dictionary_file_path__
         OK
-        ClassManagement.ClassName __dictionary_name__
 
         // Sort table settings
         LearningTools.SortDataTableByKey
+        ClassName __dictionary_name__
         SortAttributes.SelectDefaultKeyAttributes
         __LIST__
         __sort_variables__
@@ -62,22 +62,24 @@ TASKS = [
         __END_LIST__
 
         // Source table settings
-        SourceDataTable.DatabaseName __data_table_path__
-        SourceDataTable.HeaderLineUsed __header_line__
-        SourceDataTable.FieldSeparator __field_separator__
+        SourceDataTable.DatabaseSpec.Data.DatabaseName __data_table_path__
+        SourceDataTable.DatabaseSpec.Data.HeaderLineUsed __header_line__
+        SourceDataTable.DatabaseSpec.Data.FieldSeparator __field_separator__
         __OPT__
         __detect_format__
-        SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+        SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         __END_OPT__
 
         // Target table settings
-        TargetDataTable.HeaderLineUsed __output_header_line__
-        TargetDataTable.DatabaseName __output_data_table_path__
-        TargetDataTable.FieldSeparator __output_field_separator__
+        TargetDataTable.DatabaseSpec.Data.HeaderLineUsed __output_header_line__
+        TargetDataTable.DatabaseSpec.Data.DatabaseName __output_data_table_path__
+        TargetDataTable.DatabaseSpec.Data.FieldSeparator __output_field_separator__
 
         // Sort table
         SortDataTableByKey
         Exit
+        ClassManagement.Quit
+        OK
         """,
         # fmt: on
     ),
