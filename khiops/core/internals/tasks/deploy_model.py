@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "deploy_model",
         "khiops",
-        "10.0.0",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
@@ -57,34 +57,34 @@ TASKS = [
         ClassName __dictionary_name__
 
         // Input database settings
-        SourceDatabase.DatabaseFiles.List.Key __dictionary_name__
-        SourceDatabase.DatabaseFiles.DataTableName __data_table_path__
+        SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
         __DICT__
         __additional_data_tables__
-        SourceDatabase.DatabaseFiles.List.Key
-        SourceDatabase.DatabaseFiles.DataTableName
+        SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName
         __END_DICT__
-        SourceDatabase.HeaderLineUsed __header_line__
-        SourceDatabase.FieldSeparator __field_separator__
+        SourceDatabase.DatabaseSpec.Data.HeaderLineUsed __header_line__
+        SourceDatabase.DatabaseSpec.Data.FieldSeparator __field_separator__
         __OPT__
         __detect_format__
-        SourceDatabase.DatabaseFormatDetector.DetectFileFormat
+        SourceDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         __END_OPT__
-        SourceDatabase.SampleNumberPercentage __sample_percentage__
-        SourceDatabase.SamplingMode  __sampling_mode__
-        SourceDatabase.SelectionAttribute __selection_variable__
-        SourceDatabase.SelectionValue __selection_value__
+        SourceDatabase.DatabaseSpec.Sampling.SampleNumberPercentage __sample_percentage__
+        SourceDatabase.DatabaseSpec.Sampling.SamplingMode  __sampling_mode__
+        SourceDatabase.DatabaseSpec.Selection.SelectionAttribute __selection_variable__
+        SourceDatabase.DatabaseSpec.Selection.SelectionValue __selection_value__
 
         // Output database settings
-        TargetDatabase.DatabaseFiles.List.Key __dictionary_name__
-        TargetDatabase.DatabaseFiles.DataTableName __output_data_table_path__
+        TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __output_data_table_path__
         __DICT__
         __output_additional_data_tables__
-        TargetDatabase.DatabaseFiles.List.Key
-        TargetDatabase.DatabaseFiles.DataTableName
+        TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName
         __END_DICT__
-        TargetDatabase.HeaderLineUsed __output_header_line__
-        TargetDatabase.FieldSeparator __output_field_separator__
+        TargetDatabase.DatabaseSpec.Data.HeaderLineUsed __output_header_line__
+        TargetDatabase.DatabaseSpec.Data.FieldSeparator __output_field_separator__
 
         // Transfer
         TransferDatabase
