@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "detect_data_table_format_with_dictionary",
         "khiops",
-        "10.0.1",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
