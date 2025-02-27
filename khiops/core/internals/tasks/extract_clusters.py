@@ -6,7 +6,7 @@
 ######################################################################################
 """extract_clusters task family"""
 from khiops.core.internals import task as tm
-from khiops.core.internals.types import IntType, StringLikeType
+from khiops.core.internals.types import DictType, IntType, StringLikeType
 
 # Disable long lines to have readable scenarios
 # pylint: disable=line-too-long
@@ -23,6 +23,8 @@ TASKS = [
         [
             ("max_preserved_information", IntType, 0),
             ("max_cells", IntType, 0),
+            ("max_total_parts", IntType, 0),
+            ("max_part_numbers", DictType(StringLikeType, IntType), None),
         ],
         [
             "coclustering_file_path",
@@ -37,6 +39,12 @@ TASKS = [
         CoclusteringAttribute __cluster_variable__
         PostProcessingSpec.MaxPreservedInformation __max_preserved_information__
         PostProcessingSpec.MaxCellNumber __max_cells__
+        PostProcessingSpec.MaxTotalPartNumber __max_total_parts__
+        __DICT__
+        __max_part_numbers__
+        PostProcessingSpec.PostProcessedAttributes.List.Key
+        PostProcessingSpec.PostProcessedAttributes.MaxPartNumber
+        __END_DICT__
 
         // Output settings
         ClusterFileName __clusters_file_path__
