@@ -26,9 +26,7 @@ TASKS = [
             ("max_total_parts", IntType, 0),
             ("max_part_numbers", DictType(StringLikeType, IntType), None),
         ],
-        [
-            "coclustering_file_path",
-        ],
+        ["coclustering_file_path", "clusters_file_path"],
         # fmt: off
         """
         // Extract cluster settings
