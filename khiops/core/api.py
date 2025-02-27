@@ -1733,7 +1733,11 @@ def simplify_coclustering(
         task_args["simplified_coclustering_file_path"] = os.path.join(
             results_dir, simplified_coclustering_file_path
         )
-        del task_args["results_dir"]
+
+    # Remove results_dir from the task arguments in all cases
+    # Note: it is ignored if None or if simplified_coclustering_file_path is
+    # absolute
+    del task_args["results_dir"]
 
     # Run the task
     _run_task("simplify_coclustering", task_args)
