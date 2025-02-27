@@ -44,10 +44,10 @@ TASKS = [
         ClassManagement.OpenFile
         ClassFileName __dictionary_file_path__
         OK
-        ClassManagement.ClassName __dictionary_name__
 
         // Train database settings
-        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key __dictionary_name__
+        TrainDatabase.ClassName __dictionary_name__
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
         TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
         __DICT__
         __additional_data_tables__
