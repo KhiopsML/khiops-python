@@ -1647,14 +1647,8 @@ def train_instance_variable_coclustering(
     # WARNING: Do not move this line, see the top of the "tasks" section for details
     task_args = locals()
 
-    # Check the size of coclustering_variables
-    if len(task_args["coclustering_variables"]) < 2:
-        raise ValueError("coclustering_variables must have at least 2 elements")
-    elif len(task_args["coclustering_variables"]) > 10:
-        raise ValueError("coclustering_variables must have at most 10 elements")
-
     # Run the task
-    _run_task("train_coclustering", task_args)
+    _run_task("train_instance_variable_coclustering", task_args)
 
     # Return the path of the coclustering file
     return coclustering_report_file_path
