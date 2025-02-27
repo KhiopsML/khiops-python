@@ -81,8 +81,8 @@ TASKS = [
         TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
         __DICT__
         __additional_data_tables__
-        TrainDatabase.DatabaseSpec.DatabaseFiles.List.Key
-        TrainDatabase.DatabaseSpec.DatabaseFiles.DataTableName
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName
         __END_DICT__
         TrainDatabase.DatabaseSpec.Data.HeaderLineUsed __header_line__
         TrainDatabase.DatabaseSpec.Data.FieldSeparator __field_separator__
