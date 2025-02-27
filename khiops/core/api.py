@@ -1834,6 +1834,8 @@ def extract_clusters(
     clusters_file_path,
     max_preserved_information=0,
     max_cells=0,
+    max_total_parts=0,
+    max_part_numbers=None,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1862,6 +1864,12 @@ def extract_clusters(
     max_cells : int, default 0
         Maximum number of cells in the simplified coclustering. If equal to 0 there is
         no limit.
+    max_total_parts : int, default 0
+        Maximum number of parts totaled over all variables. If equal to 0 there is no
+        limit.
+    max_part_numbers : dict, optional
+      Dictionary that associate variable names to their maximum number of parts to
+      preserve in the simplified coclustering. If not set there is no limit.
     ... :
         See :ref:`core-api-common-params`.
 
