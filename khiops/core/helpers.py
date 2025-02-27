@@ -370,7 +370,7 @@ def deploy_predictor_for_metrics(
         as "\\t").
     sample_percentage : int, default 70
         See ``sampling_mode`` option below.
-    sampling_mode : "Include sample" or "Exclude sample"
+    sampling_mode : "Include sample" or "Exclude sample", default "Include sample"
         If equal to "Include sample" deploys the predictor on ``sample_percentage``
         percent of data and if equal to "Exclude sample" on the complementary ``100 -
         sample_percentage`` percent of data.
