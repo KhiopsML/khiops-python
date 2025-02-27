@@ -26,6 +26,7 @@ TASKS = [
         [
             ("max_preserved_information", IntType, 0),
             ("max_cells", IntType, 0),
+            ("max_total_parts", IntType, 0),
             ("max_part_numbers", DictType(StringLikeType, IntType), None),
             ("build_cluster_variable", BoolType, True),
             ("build_distance_variables", BoolType, False),
@@ -55,6 +56,7 @@ TASKS = [
         // Simplification settings
         PostProcessingSpec.MaxPreservedInformation __max_preserved_information__
         PostProcessingSpec.MaxCellNumber __max_cells__
+        PostProcessingSpec.MaxTotalPartNumber __max_total_parts__
         __DICT__
         __max_part_numbers__
         PostProcessingSpec.PostProcessedAttributes.List.Key
