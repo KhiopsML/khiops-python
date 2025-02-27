@@ -14,14 +14,14 @@ TASKS = [
     tm.KhiopsTask(
         "prepare_coclustering_deployment",
         "khiops_coclustering",
-        "10.0.0",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
             ("coclustering_file_path", StringLikeType),
             ("table_variable", StringLikeType),
             ("deployed_variable_name", StringLikeType),
-            ("results_dir", StringLikeType),
+            ("coclustering_dictionary_file_path", StringLikeType),
         ],
         [
             ("max_preserved_information", IntType, 0),
@@ -31,12 +31,11 @@ TASKS = [
             ("build_distance_variables", BoolType, False),
             ("build_frequency_variables", BoolType, False),
             ("variables_prefix", StringLikeType, ""),
-            ("results_prefix", StringLikeType, ""),
         ],
         [
             "dictionary_file_path",
             "coclustering_file_path",
-            "results_dir",
+            "coclustering_dictionary_file_path",
         ],
         # fmt: off
         """
@@ -44,7 +43,6 @@ TASKS = [
         ClassManagement.OpenFile
         ClassFileName __dictionary_file_path__
         OK
-        ClassManagement.ClassName __dictionary_name__
 
         // Prepare deployment window
         LearningTools.PrepareDeployment
@@ -64,6 +62,7 @@ TASKS = [
         __END_DICT__
 
         // Deployment dictionary settings
+        DeploymentSpec.InputClassName __dictionary_name__
         DeploymentSpec.InputObjectArrayAttributeName __table_variable__
         DeploymentSpec.DeployedAttributeName __deployed_variable_name__
         DeploymentSpec.BuildPredictedClusterAttribute __build_cluster_variable__
@@ -72,12 +71,13 @@ TASKS = [
         DeploymentSpec.OutputAttributesPrefix __variables_prefix__
 
         // Output settings
-        AnalysisResults.ResultFilesDirectory __results_dir__
-        AnalysisResults.ResultFilesPrefix __results_prefix__
+        CoclusteringDictionaryFileName __coclustering_dictionary_file_path__
 
         // Execute prepare deployment
         PrepareDeployment
         Exit
+        ClassManagement.Quit
+        OK
         """,
         # fmt: on
     ),
