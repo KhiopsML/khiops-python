@@ -631,6 +631,32 @@ Samples
     print("final auc")
     print("train auc: " + str(mean_train_auc) + " +- " + str(sd_train_auc))
     print("test  auc: " + str(mean_test_auc) + " +- " + str(sd_test_auc))
+.. autofunction:: interpret_predictor
+.. code-block:: python
+
+    # Imports
+    import os
+    from khiops import core as kh
+
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    output_dir = os.path.join("kh_samples", "interpret_predictor")
+    analysis_report_file_path = os.path.join(output_dir, "AdultAnalysisResults.khj")
+    interpretor_file_path = os.path.join(output_dir, "AdultIntepretationModel.kdic")
+
+    # Build prediction model
+    _, predictor_file_path = kh.train_predictor(
+        dictionary_file_path,
+        "Adult",
+        data_table_path,
+        "class",
+        analysis_report_file_path,
+    )
+
+    # Build interpretation model
+    kh.interpret_predictor(predictor_file_path, "SNB_Adult", interpretor_file_path)
+
+    print(f"The intepretation model is '{interpretor_file_path}'")
 .. autofunction:: multiple_train_predictor
 .. code-block:: python
 
@@ -957,6 +983,57 @@ Samples
     kh.deploy_model(
         model_dictionary_file_path,
         "SNB_Accident",
+        accidents_table_path,
+        output_data_table_path,
+        additional_data_tables={"Vehicles": vehicles_table_path},
+    )
+.. autofunction:: deploy_model_mt_with_interpretation
+.. code-block:: python
+
+    # Imports
+    import os
+    from khiops import core as kh
+
+    # Set the file paths
+    accidents_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
+    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
+    output_dir = os.path.join("kh_samples", "deploy_model_mt")
+    report_file_path = os.path.join(output_dir, "AccidentsSummaryAnalysisResults.khj")
+    interpretor_file_path = os.path.join(
+        output_dir, "AccidentsSummaryInterpretationModel.kdic"
+    )
+    output_data_table_path = os.path.join(output_dir, "InterpretedAccidents.txt")
+
+    # Train the predictor (see train_predictor_mt for details)
+    # Add max_evaluated_variables so that an interpretation model can be built
+    # (see https://github.com/KhiopsML/khiops/issues/577)
+    _, model_dictionary_file_path = kh.train_predictor(
+        dictionary_file_path,
+        "Accident",
+        accidents_table_path,
+        "Gravity",
+        report_file_path,
+        additional_data_tables={"Vehicles": vehicles_table_path},
+        max_trees=0,
+        max_evaluated_variables=10,
+    )
+
+    # Interpret the predictor
+    kh.interpret_predictor(
+        model_dictionary_file_path,
+        "SNB_Accident",
+        interpretor_file_path,
+        reinforcement_target_value="NonLethal",
+    )
+
+    # Deploy the interpretation model on the database
+    # Besides the mandatory parameters, it is specified:
+    # - A python dictionary linking data paths to file paths for non-root tables
+    kh.deploy_model(
+        interpretor_file_path,
+        "Interpretation_SNB_Accident",
         accidents_table_path,
         output_data_table_path,
         additional_data_tables={"Vehicles": vehicles_table_path},
