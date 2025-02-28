@@ -830,7 +830,12 @@ def interpret_predictor(
         intepretation model. Min length: 0. Max length: the total number of variables
         in the prediction model. If not specified, all variables are used.
     """
-    pass
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
+
+    # Run the task
+    _run_task("interpret_predictor", task_args)
 
 
 def evaluate_predictor(
