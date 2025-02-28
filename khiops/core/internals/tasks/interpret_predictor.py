@@ -21,7 +21,6 @@ TASKS = [
             ("interpretor_file_path", StringLikeType),
         ],
         [
-            ("max_variable_importances", IntType, 0),
             ("reinforcement_target_value", StringLikeType, ""),
             ("reinforcement_lever_variables", ListType(StringLikeType), None),
         ],
@@ -37,10 +36,8 @@ TASKS = [
         // Intepretation settings
         TrainDatabase.ClassName __predictor_dictionary_name__
 
-        // Intepret model
+        // Interpret model
         LearningTools.InterpretPredictor
-
-        WhyParameter.WhyNumber __max_variable_importances__
         HowParameter.HowClass __reinforcement_target_value__
 
         __DICT__
