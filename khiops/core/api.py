@@ -305,6 +305,16 @@ def _preprocess_task_arguments(task_args):
         if isinstance(task_args["selection_value"], (int, float)):
             task_args["selection_value"] = str(task_args["selection_value"])
 
+    # Discard the max_variable_importances interpretation parameters
+    if "max_variable_importances" in task_args:
+        if task_args["max_variable_importances"] is not None:
+            warnings.warn(
+                "The 'max_variable_importances' parameter of the "
+                "'khiops.core.api.intepret_predictor' function is not supported "
+                " yet. All model variables' importances are computed."
+            )
+        del task_args["max_variable_importances"]
+
     # Flatten kwargs
     if "kwargs" in task_args:
         task_args.update(task_args["kwargs"])
@@ -793,7 +803,7 @@ def interpret_predictor(
     dictionary_file_path_or_domain,
     predictor_dictionary_name,
     interpretor_file_path,
-    max_variable_importances=0,
+    max_variable_importances=None,
     reinforcement_target_value="",
     reinforcement_lever_variables=None,
     log_file_path=None,
@@ -818,10 +828,11 @@ def interpret_predictor(
         Name of the predictor dictionary used while building the interpretation model.
     intepretor_file_path : str
         Path to the intepretor dictionary file.
-    max_variable_importances : int, default 0
+    max_variable_importances : int, optional
         Maximum number of variable importances to be selected in the intepretation
-        model. If equal to 0, then all the variables in the prediction model are
+        model. If not set, then all the variables in the prediction model are
         considered.
+        ..note:: Not currently supported; not taken into account if set.
     reinforcement_target_value : str, default ""
         If this target value is specified, then its probability of occurrence is
         tentatively increased.
