@@ -1556,7 +1556,6 @@ def train_instance_variable_coclustering(
     dictionary_file_path_or_domain,
     dictionary_name,
     data_table_path,
-    identifier_variable,
     coclustering_report_file_path,
     detect_format=True,
     header_line=None,
@@ -1580,6 +1579,9 @@ def train_instance_variable_coclustering(
     **kwargs,
 ):
     r"""Trains a coclustering model from a data table
+    Note: if keys are available in the input dictionary, they are used as instance
+    identifiers. Otherwise, line numbers in the instance data table are used as
+    instance idenfitiers.
 
     Parameters
     ----------
@@ -1589,9 +1591,6 @@ def train_instance_variable_coclustering(
         Name of the dictionary to be analyzed.
     data_table_path : str
         Path of the data table file.
-    identifier_variable : str
-        The name of the variable used to identify the instances in instance x variable
-        coclustering.
     coclustering_report_file_path : str
         Path to the coclustering report file in the JSON format.
     detect_format : bool, default ``True``

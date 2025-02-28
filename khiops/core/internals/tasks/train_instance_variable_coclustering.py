@@ -25,7 +25,6 @@ TASKS = [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
             ("data_table_path", StringLikeType),
-            ("identifier_variable", StringLikeType),
             ("coclustering_report_file_path", StringLikeType),
         ],
         [
@@ -74,9 +73,6 @@ TASKS = [
 
         // Enforce instance x variable coclustering
         AnalysisSpec.CoclusteringType Instances x Variables coclustering
-
-        // Identifier variable
-        AnalysisSpec.VarPartCoclusteringParameters.IdentifierAttributeName __identifier_variable__
 
         // Minimum optimization time
         AnalysisSpec.SystemParameters.OptimizationTime __min_optimization_time__
