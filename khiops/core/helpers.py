@@ -11,6 +11,7 @@ import subprocess
 
 import khiops.core.internals.filesystems as fs
 from khiops.core import api
+from khiops.core.coclustering_results import read_coclustering_results_file
 from khiops.core.dictionary import (
     Dictionary,
     DictionaryDomain,
@@ -133,7 +134,7 @@ def deploy_coclustering(
     task_file_path=None,
     trace=False,
 ):
-    r"""Deploys an *individual-variable* coclustering on a data table
+    r"""Deploys a coclustering on a data table
 
     This procedure generates the following files:
         - ``coclustering_dictionary_file_path``: A multi-table dictionary file for
@@ -150,7 +151,8 @@ def deploy_coclustering(
     data_table_path : str
         Path of the data table file.
     coclustering_file_path : str
-        Path of the coclustering model file (extension ``.khc`` or ``.khcj``)
+        Path of the coclustering model file (extension ``.khc`` or ``.khcj``).
+        .. note:: Instance-variable coclustering is not currently supported.
     key_variable_names : list of str
         Names of the variables forming the unique keys of the individuals.
     deployed_variable_name : str
@@ -210,12 +212,26 @@ def deploy_coclustering(
         Invalid type ``dictionary_file_path_or_domain`` or ``key_variable_names``
     `ValueError`
         If the type of the dictionary key variables is not equal to ``Categorical``
+    `NotImplementedError`
+        If the coclustering to be deployed is of the instance-variable type
 
     Examples
     --------
     See the following function of the ``samples.py`` documentation script:
         - `samples.deploy_coclustering()`
     """
+    # Fail early for instance-variable coclustering, which is not supported
+    if any(
+        dimension.is_variable_part
+        for dimension in read_coclustering_results_file(
+            coclustering_file_path
+        ).coclustering_report.dimensions
+    ):
+        raise NotImplementedError(
+            "Deployment support for instance-variable coclustering is not yet "
+            "implemented."
+        )
+
     # Obtain the dictionary of the table where the coclustering variables are
     api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
