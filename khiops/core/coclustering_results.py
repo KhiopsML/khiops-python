@@ -506,6 +506,9 @@ class CoclusteringDimension:
     ----------
     name : str
         Name of the variable associated to this dimension.
+    is_variable_part : boolean
+        True if the dimension is a part of a variable in an instance-variable
+        coclustering.
     type : "Numerical" or "Categorical"
         Dimension type.
     part_number : int
@@ -536,6 +539,7 @@ class CoclusteringDimension:
         """See class docstring"""
         # Summary attributes
         self.name = ""
+        self.is_variable_part = False
         self.type = ""
         self.part_number = 0
         self.initial_part_number = 0
@@ -587,6 +591,7 @@ class CoclusteringDimension:
 
         # Initialize the summary fields
         self.name = json_data.get("name", "")
+        self.is_variable_part = json_data.get("isVarPart", False)
         self.type = json_data.get("type", "")
         self.part_number = json_data.get("parts", 0)
         self.initial_part_number = json_data.get("initialParts", 0)
@@ -807,6 +812,7 @@ class CoclusteringDimension:
             Output writer for the report file.
         """
         writer.write(f"{self.name}\t")
+        writer.write(f"{self.is_variable_part}\t")
         writer.write(f"{self.type}\t")
         writer.write(f"{self.part_number}\t")
         writer.write(f"{self.initial_part_number}\t")
