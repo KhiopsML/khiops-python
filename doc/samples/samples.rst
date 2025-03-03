@@ -1355,6 +1355,37 @@ Samples
 
     # If you have Khiops Co-Visualization installed you may open the report as follows
     # kh.visualize_report(coclustering_report_path)
+.. autofunction:: train_instance_variable_coclustering
+.. code-block:: python
+
+    # Imports
+    import os
+    from khiops import core as kh
+
+    # Set the file paths
+    iris_dir = os.path.join(kh.get_samples_dir(), "Iris")
+    dictionary_file_path = os.path.join(iris_dir, "Iris.kdic")
+    data_table_path = os.path.join(iris_dir, "Iris.txt")
+    coclustering_report_path = os.path.join(
+        "kh_samples",
+        "train_instance_variable_coclustering",
+        "IrisInstanceVariable_CoclusteringResults.khcj",
+    )
+
+    # Train a coclustering model for variables "SampleId" and "Char"
+    kh.train_instance_variable_coclustering(
+        dictionary_file_path,
+        "Iris",
+        data_table_path,
+        coclustering_report_path,
+    )
+    print(
+        "Instance-variable coclustering report file available "
+        f"at {coclustering_report_path}"
+    )
+
+    # If you have Khiops Co-Visualization installed you may open the report as follows
+    # kh.visualize_report(coclustering_report_path)
 .. autofunction:: simplify_coclustering
 .. code-block:: python
 
