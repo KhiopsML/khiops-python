@@ -6,7 +6,7 @@
 ######################################################################################
 """interpret_predictor task family"""
 from khiops.core.internals import task as tm
-from khiops.core.internals.types import IntType, ListType, StringLikeType
+from khiops.core.internals.types import ListType, StringLikeType
 
 # Disable long lines to have readable scenarios
 # pylint: disable=line-too-long
