@@ -1518,6 +1518,42 @@ def train_coclustering():
     # kh.visualize_report(coclustering_report_path)
 
 
+def train_instance_variable_coclustering():
+    """Trains an instance-variable coclustering model in the simplest way possible
+
+    It is a call to `~.api.train_instance_variable_coclustering` with only its mandatory
+    parameters.
+    """
+    # Imports
+    import os
+    from khiops import core as kh
+
+    # Set the file paths
+    iris_dir = os.path.join(kh.get_samples_dir(), "Iris")
+    dictionary_file_path = os.path.join(iris_dir, "Iris.kdic")
+    data_table_path = os.path.join(iris_dir, "Iris.txt")
+    coclustering_report_path = os.path.join(
+        "kh_samples",
+        "train_instance_variable_coclustering",
+        "IrisInstanceVariable_CoclusteringResults.khcj",
+    )
+
+    # Train a coclustering model for variables "SampleId" and "Char"
+    kh.train_instance_variable_coclustering(
+        dictionary_file_path,
+        "Iris",
+        data_table_path,
+        coclustering_report_path,
+    )
+    print(
+        "Instance-variable coclustering report file available "
+        f"at {coclustering_report_path}"
+    )
+
+    # If you have Khiops Co-Visualization installed you may open the report as follows
+    # kh.visualize_report(coclustering_report_path)
+
+
 def simplify_coclustering():
     """Simplifies a coclustering model while preserving 80% of its information"""
     # Imports
@@ -1578,7 +1614,7 @@ def extract_clusters():
 
 
 def deploy_coclustering():
-    """Deploys an "individual-variable" coclustering"""
+    """Deploys a coclustering"""
     # Imports
     import os
     from khiops import core as kh
@@ -1616,7 +1652,7 @@ def deploy_coclustering():
 
 
 def deploy_coclustering_expert():
-    """Deploys an "individual-variable" coclustering step-by-step
+    """Deploys a coclustering step-by-step
 
     The `.api.prepare_coclustering_deployment` method is called twice to prepare the
     deployment at two granularity levels. Then, the model is deployed and the respective
@@ -1805,6 +1841,7 @@ exported_samples = [
     sort_data_table_expert,
     extract_keys_from_data_table,
     train_coclustering,
+    train_instance_variable_coclustering,
     simplify_coclustering,
     extract_clusters,
     deploy_coclustering,
