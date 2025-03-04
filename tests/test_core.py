@@ -284,28 +284,26 @@ class KhiopsCoreIOTests(unittest.TestCase):
         datasets = ["Adult", "SpliceJunction", "Customer"]
         additional_data_tables = {
             "Adult": None,
-            "SpliceJunction": {"SpliceJunction`DNA": "SpliceJunctionDNABidon.csv"},
+            "SpliceJunction": {"DNA": "SpliceJunctionDNABidon.csv"},
             "Customer": {
-                "Customer`Services": "ServicesBidon.csv",
-                "Customer`Services`Usages": "UsagesBidon.csv",
-                "Customer`Address": "AddressBidon.csv",
-                "City": "CityBidon.csv",
-                "Country": "CountryBidon.csv",
-                "Product": "ProductBidon.csv",
+                "Services": "ServicesBidon.csv",
+                "Services/Usages": "UsagesBidon.csv",
+                "Address": "AddressBidon.csv",
+                "/City": "CityBidon.csv",
+                "/Country": "CountryBidon.csv",
+                "/Product": "ProductBidon.csv",
             },
         }
         output_additional_data_tables = {
             "Adult": None,
-            "SpliceJunction": {
-                "SpliceJunction`DNA": "TransferSpliceJunctionDNABidon.csv"
-            },
+            "SpliceJunction": {"DNA": "TransferSpliceJunctionDNABidon.csv"},
             "Customer": {
-                "Customer`Services": "TransferServicesBidon.csv",
-                "Customer`Services`Usages": "TransferUsagesBidon.csv",
-                "Customer`Address": "TransferAddressBidon.csv",
-                "City": "TransferCityBidon.csv",
-                "Country": "TransferCountryBidon.csv",
-                "Product": "TransferProductBidon.csv",
+                "Services": "TransferServicesBidon.csv",
+                "Services/Usages": "TransferUsagesBidon.csv",
+                "Address": "TransferAddressBidon.csv",
+                "/City": "TransferCityBidon.csv",
+                "/Country": "TransferCountryBidon.csv",
+                "/Product": "TransferProductBidon.csv",
             },
         }
         target_variables = {"Adult": "class", "SpliceJunction": "Class", "Customer": ""}
@@ -1754,38 +1752,38 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         expected_data_paths = {
             "Adult": {"Adult": []},
             "SpliceJunction": {
-                "SpliceJunction": ["SpliceJunction`DNA"],
+                "SpliceJunction": ["DNA"],
                 "SpliceJunctionDNA": [],
             },
             "SpliceJunctionModeling": {
-                "SNB_SpliceJunction": ["SNB_SpliceJunction`SpliceJunctionDNA"],
+                "SNB_SpliceJunction": ["SpliceJunctionDNA"],
                 "SNB_SpliceJunctionDNA": [],
             },
             "Customer": {
                 "Address": [],
                 "Customer": [
-                    "Customer`Services",
-                    "Customer`Services`Usages",
-                    "Customer`Address",
+                    "Services",
+                    "Services/Usages",
+                    "Address",
                 ],
-                "Service": ["Service`Usages"],
+                "Service": ["Usages"],
                 "Usage": [],
             },
             "CustomerExtended": {
-                "Address": ["City", "Country"],
-                "City": ["Country"],
+                "Address": ["/City", "/Country"],
+                "City": ["/Country"],
                 "Country": [],
                 "Customer": [
-                    "Customer`Services",
-                    "Customer`Services`Usages",
-                    "Customer`Address",
-                    "City",
-                    "Country",
-                    "Product",
+                    "Services",
+                    "Services/Usages",
+                    "Address",
+                    "/City",
+                    "/Country",
+                    "/Product",
                 ],
                 "Product": [],
-                "Service": ["Service`Usages", "Product"],
-                "Usage": ["Product"],
+                "Service": ["Usages", "/Product"],
+                "Usage": ["/Product"],
             },
         }
         dictionaries_by_domain = {
@@ -1830,24 +1828,21 @@ class KhiopsCoreServicesTests(unittest.TestCase):
 
         # Set the expected outputs
         expected_dictionary_names = {
-            "SpliceJunction": {"SpliceJunction`DNA": "SpliceJunctionDNA"},
-            "SpliceJunctionModeling": {
-                "SNB_SpliceJunction`SpliceJunctionDNA": "SNB_SpliceJunctionDNA"
-            },
+            "SpliceJunction": {"DNA": "SpliceJunctionDNA"},
+            "SpliceJunctionModeling": {"SpliceJunctionDNA": "SNB_SpliceJunctionDNA"},
             "Customer": {
-                "Customer`Services": "Service",
-                "Customer`Services`Usages": "Usage",
-                "Customer`Address": "Address",
-                "Service`Usages": "Usage",
+                "Services": "Service",
+                "Services/Usages": "Usage",
+                "Address": "Address",
+                "Services/Usages": "Usage",
             },
             "CustomerExtended": {
-                "City": "City",
-                "Country": "Country",
-                "Customer`Services": "Service",
-                "Customer`Services`Usages": "Usage",
-                "Customer`Address": "Address",
-                "Product": "Product",
-                "Service`Usages": "Usage",
+                "/City": "City",
+                "/Country": "Country",
+                "Services": "Service",
+                "Address": "Address",
+                "/Product": "Product",
+                "Services/Usages": "Usage",
             },
         }
 
@@ -1881,14 +1876,14 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 domain.get_dictionary_at_data_path("INVALID DATA PATH")
             with self.assertRaises(ValueError):
-                domain.get_dictionary_at_data_path("InexistentDictionary`Some`Path")
+                domain.get_dictionary_at_data_path("Some/Path")
             first_data_path = list(expected_dictionary_names_by_data_path.keys())[0]
-            data_path_parts = first_data_path.split("`")
+            data_path_parts = first_data_path.split("/")
             with self.assertRaises(ValueError):
-                domain.get_dictionary_at_data_path(f"{data_path_parts[0]}`Some`Path")
+                domain.get_dictionary_at_data_path("Some/Path")
             with self.assertRaises(ValueError):
                 domain.get_dictionary_at_data_path(
-                    f"{data_path_parts[0]}`{valid_non_table_vars[domain_name]}`Path"
+                    f"{valid_non_table_vars[domain_name]}/Path"
                 )
 
 
