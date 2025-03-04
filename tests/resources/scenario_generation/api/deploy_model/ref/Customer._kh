@@ -9,45 +9,45 @@ LearningTools.TransferDatabase
 ClassName Customer
 
 // Input database settings
-SourceDatabase.DatabaseFiles.List.Key Customer
-SourceDatabase.DatabaseFiles.DataTableName Customer.csv
-SourceDatabase.DatabaseFiles.List.Key Customer`Services
-SourceDatabase.DatabaseFiles.DataTableName ServicesBidon.csv
-SourceDatabase.DatabaseFiles.List.Key Customer`Services`Usages
-SourceDatabase.DatabaseFiles.DataTableName UsagesBidon.csv
-SourceDatabase.DatabaseFiles.List.Key Customer`Address
-SourceDatabase.DatabaseFiles.DataTableName AddressBidon.csv
-SourceDatabase.DatabaseFiles.List.Key City
-SourceDatabase.DatabaseFiles.DataTableName CityBidon.csv
-SourceDatabase.DatabaseFiles.List.Key Country
-SourceDatabase.DatabaseFiles.DataTableName CountryBidon.csv
-SourceDatabase.DatabaseFiles.List.Key Product
-SourceDatabase.DatabaseFiles.DataTableName ProductBidon.csv
-SourceDatabase.HeaderLineUsed true
-SourceDatabase.FieldSeparator 
-SourceDatabase.DatabaseFormatDetector.DetectFileFormat
-SourceDatabase.SampleNumberPercentage 100.0
-SourceDatabase.SamplingMode Include sample
-SourceDatabase.SelectionAttribute 
-SourceDatabase.SelectionValue 
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Address
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /City
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CityBidon.csv
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Country
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CountryBidon.csv
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Product
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ProductBidon.csv
+SourceDatabase.DatabaseSpec.Data.HeaderLineUsed true
+SourceDatabase.DatabaseSpec.Data.FieldSeparator
+SourceDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+SourceDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+SourceDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+SourceDatabase.DatabaseSpec.Selection.SelectionAttribute
+SourceDatabase.DatabaseSpec.Selection.SelectionValue
 
 // Output database settings
-TargetDatabase.DatabaseFiles.List.Key Customer
-TargetDatabase.DatabaseFiles.DataTableName .\CustomerDeployed.csv
-TargetDatabase.DatabaseFiles.List.Key Customer`Services
-TargetDatabase.DatabaseFiles.DataTableName .\TransferServicesBidon.csv
-TargetDatabase.DatabaseFiles.List.Key Customer`Services`Usages
-TargetDatabase.DatabaseFiles.DataTableName .\TransferUsagesBidon.csv
-TargetDatabase.DatabaseFiles.List.Key Customer`Address
-TargetDatabase.DatabaseFiles.DataTableName .\TransferAddressBidon.csv
-TargetDatabase.DatabaseFiles.List.Key City
-TargetDatabase.DatabaseFiles.DataTableName .\TransferCityBidon.csv
-TargetDatabase.DatabaseFiles.List.Key Country
-TargetDatabase.DatabaseFiles.DataTableName .\TransferCountryBidon.csv
-TargetDatabase.DatabaseFiles.List.Key Product
-TargetDatabase.DatabaseFiles.DataTableName .\TransferProductBidon.csv
-TargetDatabase.HeaderLineUsed true
-TargetDatabase.FieldSeparator 
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ./CustomerDeployed.csv
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ./TransferServicesBidon.csv
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ./TransferUsagesBidon.csv
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Address
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ./TransferAddressBidon.csv
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /City
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ./TransferCityBidon.csv
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Country
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ./TransferCountryBidon.csv
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Product
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ./TransferProductBidon.csv
+TargetDatabase.DatabaseSpec.Data.HeaderLineUsed true
+TargetDatabase.DatabaseSpec.Data.FieldSeparator
 
 // Transfer
 TransferDatabase

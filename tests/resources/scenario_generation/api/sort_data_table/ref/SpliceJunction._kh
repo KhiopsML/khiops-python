@@ -3,10 +3,10 @@
 ClassManagement.OpenFile
 ClassFileName SpliceJunction.kdic
 OK
-ClassManagement.ClassName SpliceJunction
 
 // Sort table settings
 LearningTools.SortDataTableByKey
+ClassName SpliceJunction
 SortAttributes.SelectDefaultKeyAttributes
 SortAttributes.RemoveItem
 SortAttributes.RemoveItem
@@ -22,15 +22,15 @@ SortAttributes.InsertItemAfter
 SortAttributes.Name SampleId
 
 // Source table settings
-SourceDataTable.DatabaseName SpliceJunction.csv
-SourceDataTable.HeaderLineUsed true
-SourceDataTable.FieldSeparator 
-SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+SourceDataTable.DatabaseSpec.Data.DatabaseName SpliceJunction.csv
+SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
+SourceDataTable.DatabaseSpec.Data.FieldSeparator
+SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 
 // Target table settings
-TargetDataTable.HeaderLineUsed true
-TargetDataTable.DatabaseName .\SpliceJunctionSorted.csv
-TargetDataTable.FieldSeparator 
+TargetDataTable.DatabaseSpec.Data.HeaderLineUsed true
+TargetDataTable.DatabaseSpec.Data.DatabaseName ./SpliceJunctionSorted.csv
+TargetDataTable.DatabaseSpec.Data.FieldSeparator
 
 // Sort table
 SortDataTableByKey

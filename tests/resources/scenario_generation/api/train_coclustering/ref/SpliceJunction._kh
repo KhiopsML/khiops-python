@@ -3,34 +3,33 @@
 ClassManagement.OpenFile
 ClassFileName SpliceJunction.kdic
 OK
-ClassManagement.ClassName SpliceJunction
 
 // Train database settings
-Database.DatabaseFiles.List.Key SpliceJunction
-Database.DatabaseFiles.DataTableName SpliceJunction.csv
-Database.DatabaseFiles.List.Key SpliceJunction`DNA
-Database.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
-Database.HeaderLineUsed true
-Database.FieldSeparator 
-Database.DatabaseFormatDetector.DetectFileFormat
-Database.SampleNumberPercentage 100.0
-Database.SamplingMode Include sample
-Database.SelectionAttribute 
-Database.SelectionValue 
+Database.ClassName SpliceJunction
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key DNA
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
+Database.DatabaseSpec.Data.HeaderLineUsed true
+Database.DatabaseSpec.Data.FieldSeparator
+Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+Database.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+Database.DatabaseSpec.Sampling.SamplingMode Include sample
+Database.DatabaseSpec.Selection.SelectionAttribute
+Database.DatabaseSpec.Selection.SelectionValue
 
 // Coclustering variables settings
 AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
 AnalysisSpec.CoclusteringParameters.Attributes.Name SampleId
 AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
 AnalysisSpec.CoclusteringParameters.Attributes.Name NonExistentVar
-AnalysisSpec.CoclusteringParameters.FrequencyAttribute 
+AnalysisSpec.CoclusteringParameters.FrequencyAttributeName
 
 // Minimum optimization time
 AnalysisSpec.SystemParameters.OptimizationTime 0
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\SpliceJunctionResults
-AnalysisResults.ResultFilesPrefix 
+AnalysisResults.CoclusteringFileName SpliceJunctionResults/SpliceJunctionCoclusteringResults._khcj
 
 // Train
 BuildCoclustering
