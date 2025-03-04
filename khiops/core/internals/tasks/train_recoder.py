@@ -155,8 +155,6 @@ TASKS = [
 
         // Train recoder
         ComputeStats
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

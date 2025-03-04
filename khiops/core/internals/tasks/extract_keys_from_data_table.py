@@ -55,8 +55,6 @@ TASKS = [
         TargetDataTable.DatabaseSpec.Data.FieldSeparator __output_field_separator__
         ExtractKeysFromDataTable
         Exit
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

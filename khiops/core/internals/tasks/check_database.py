@@ -70,8 +70,6 @@ TASKS = [
 
         // Execute check database
         LearningTools.CheckData
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

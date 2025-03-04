@@ -54,8 +54,6 @@ TASKS = [
         ClassFileName __interpretor_file_path__
         OK
         Exit
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

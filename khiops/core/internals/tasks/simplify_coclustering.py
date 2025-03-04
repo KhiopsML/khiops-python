@@ -51,8 +51,6 @@ TASKS = [
         // Simplify Coclustering
         PostProcessCoclustering
         Exit
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

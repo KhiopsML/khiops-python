@@ -47,8 +47,6 @@ TASKS = [
         ClassFileName __output_dictionary_file_path__
         OK
         Exit
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

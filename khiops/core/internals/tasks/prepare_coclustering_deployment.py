@@ -78,8 +78,6 @@ TASKS = [
         // Execute prepare deployment
         PrepareDeployment
         Exit
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),
