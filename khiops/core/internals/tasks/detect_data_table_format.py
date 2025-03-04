@@ -26,8 +26,6 @@ TASKS = [
         TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key       // List item selection
         TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
         TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

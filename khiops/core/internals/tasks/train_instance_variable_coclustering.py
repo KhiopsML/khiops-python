@@ -82,8 +82,6 @@ TASKS = [
 
         // Train
         BuildCoclustering
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

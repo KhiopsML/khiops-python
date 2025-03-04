@@ -153,8 +153,6 @@ TASKS = [
 
         // Build model
         ComputeStats
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

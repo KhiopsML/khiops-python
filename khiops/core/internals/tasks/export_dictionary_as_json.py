@@ -31,8 +31,6 @@ TASKS = [
         ClassManagement.ExportAsJSON
         JSONFileName __json_dictionary_file_path__
         OK
-        ClassManagement.Quit
-        OK
         """,
     ),
 ]

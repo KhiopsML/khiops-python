@@ -72,8 +72,6 @@ TASKS = [
         // Evaluate predictor
         EvaluatePredictors
         Exit
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

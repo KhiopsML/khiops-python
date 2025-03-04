@@ -50,8 +50,6 @@ TASKS = [
         // Extract clusters
         ExtractClusters
         Exit
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),

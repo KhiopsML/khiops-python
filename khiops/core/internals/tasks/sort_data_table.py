@@ -78,8 +78,6 @@ TASKS = [
         // Sort table
         SortDataTableByKey
         Exit
-        ClassManagement.Quit
-        OK
         """,
         # fmt: on
     ),
