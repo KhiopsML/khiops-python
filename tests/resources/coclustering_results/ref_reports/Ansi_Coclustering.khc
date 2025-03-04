@@ -1,9 +1,9 @@
 #Khiops 10.0.0.3i
 Short description	
 Dimensions	2
-Name	Type	Parts	Initial parts	Values	Interest	Description
-Char	Categorical	2	2	2	1	
-Type	Categorical	2	2	2	1	
+Name	Is variable part	Type	Parts	Initial parts	Values	Interest	Description
+Char	False	Categorical	2	2	2	1	
+Type	False	Categorical	2	2	2	1	
 
 Coclustering stats
 Instances	20

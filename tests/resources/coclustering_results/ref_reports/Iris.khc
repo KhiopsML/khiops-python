@@ -1,10 +1,10 @@
 #Khiops 10.0.0.3i
 Short description	
 Dimensions	3
-Name	Type	Parts	Initial parts	Values	Interest	Description
-PetalLength	Numerical	3	3	150	1	
-PetalWidth	Numerical	3	3	150	1	
-Class	Categorical	3	3	3	1	
+Name	Is variable part	Type	Parts	Initial parts	Values	Interest	Description
+PetalLength	False	Numerical	3	3	150	1	
+PetalWidth	False	Numerical	3	3	150	1	
+Class	False	Categorical	3	3	3	1	
 
 Coclustering stats
 Instances	150
