@@ -791,7 +791,7 @@ class MockedRunnerContext:
         self.mock_context = mock.patch.object(
             self.mocked_runner,
             "_get_khiops_version",
-            return_value=KhiopsVersion("10.2.2"),
+            return_value=KhiopsVersion("10.6.0-b.0"),
         )
         self.mock_context.__enter__()
 
@@ -1923,7 +1923,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         self._write_version = False
 
     def _initialize_khiops_version(self):
-        self._khiops_version = KhiopsVersion("10.1.0")
+        self._khiops_version = KhiopsVersion("10.6.0-b.0")
 
     @property
     def ref_scenario_dir(self):
