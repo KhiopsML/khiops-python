@@ -796,6 +796,7 @@ class CoclusteringDimension:
             Output writer for the report file.
         """
         writer.write("Name\t")
+        writer.write("Is variable part\t")
         writer.write("Type\t")
         writer.write("Parts\t")
         writer.write("Initial parts\t")
