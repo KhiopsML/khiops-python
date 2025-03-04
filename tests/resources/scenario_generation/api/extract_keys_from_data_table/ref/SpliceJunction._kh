@@ -7,13 +7,13 @@ OK
 // Extract keys settings
 LearningTools.ExtractKeysFromDataTable
 ClassName SpliceJunction
-SourceDataTable.DatabaseName SpliceJunction.csv
-SourceDataTable.HeaderLineUsed true
-SourceDataTable.FieldSeparator 
-SourceDataTable.DatabaseFormatDetector.DetectFileFormat
-TargetDataTable.DatabaseName .\SpliceJunctionKeys.csv
-TargetDataTable.HeaderLineUsed true
-TargetDataTable.FieldSeparator 
+SourceDataTable.DatabaseSpec.Data.DatabaseName SpliceJunction.csv
+SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
+SourceDataTable.DatabaseSpec.Data.FieldSeparator
+SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+TargetDataTable.DatabaseSpec.Data.DatabaseName ./SpliceJunctionKeys.csv
+TargetDataTable.DatabaseSpec.Data.HeaderLineUsed true
+TargetDataTable.DatabaseSpec.Data.FieldSeparator
 ExtractKeysFromDataTable
 Exit
 

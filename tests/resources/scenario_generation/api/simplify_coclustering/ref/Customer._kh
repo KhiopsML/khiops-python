@@ -9,9 +9,7 @@ PostProcessingSpec.MaxCellNumber 0
 PostProcessingSpec.MaxTotalPartNumber 0
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\CustomerResults
-AnalysisResults.ResultFilesPrefix 
-AnalysisResults.PostProcessedCoclusteringFileName SimplifiedCustomer._khc
+PostProcessedCoclusteringFileName CustomerResults\SimplifiedCustomer._khcj
 
 // Simplify Coclustering
 PostProcessCoclustering

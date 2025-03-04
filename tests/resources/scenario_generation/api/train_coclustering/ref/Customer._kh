@@ -3,44 +3,43 @@
 ClassManagement.OpenFile
 ClassFileName Customer.kdic
 OK
-ClassManagement.ClassName Customer
 
 // Train database settings
-Database.DatabaseFiles.List.Key Customer
-Database.DatabaseFiles.DataTableName Customer.csv
-Database.DatabaseFiles.List.Key Customer`Services
-Database.DatabaseFiles.DataTableName ServicesBidon.csv
-Database.DatabaseFiles.List.Key Customer`Services`Usages
-Database.DatabaseFiles.DataTableName UsagesBidon.csv
-Database.DatabaseFiles.List.Key Customer`Address
-Database.DatabaseFiles.DataTableName AddressBidon.csv
-Database.DatabaseFiles.List.Key City
-Database.DatabaseFiles.DataTableName CityBidon.csv
-Database.DatabaseFiles.List.Key Country
-Database.DatabaseFiles.DataTableName CountryBidon.csv
-Database.DatabaseFiles.List.Key Product
-Database.DatabaseFiles.DataTableName ProductBidon.csv
-Database.HeaderLineUsed true
-Database.FieldSeparator 
-Database.DatabaseFormatDetector.DetectFileFormat
-Database.SampleNumberPercentage 100.0
-Database.SamplingMode Include sample
-Database.SelectionAttribute 
-Database.SelectionValue 
+Database.ClassName Customer
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key Services
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key Address
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key /City
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName CityBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key /Country
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName CountryBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key /Product
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName ProductBidon.csv
+Database.DatabaseSpec.Data.HeaderLineUsed true
+Database.DatabaseSpec.Data.FieldSeparator
+Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+Database.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+Database.DatabaseSpec.Sampling.SamplingMode Include sample
+Database.DatabaseSpec.Selection.SelectionAttribute
+Database.DatabaseSpec.Selection.SelectionValue
 
 // Coclustering variables settings
 AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
 AnalysisSpec.CoclusteringParameters.Attributes.Name id_customer
 AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
 AnalysisSpec.CoclusteringParameters.Attributes.Name Name
-AnalysisSpec.CoclusteringParameters.FrequencyAttribute 
+AnalysisSpec.CoclusteringParameters.FrequencyAttributeName
 
 // Minimum optimization time
 AnalysisSpec.SystemParameters.OptimizationTime 0
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\CustomerResults
-AnalysisResults.ResultFilesPrefix 
+AnalysisResults.CoclusteringFileName CustomerResults/CustomerCoclusteringResults._khcj
 
 // Train
 BuildCoclustering
