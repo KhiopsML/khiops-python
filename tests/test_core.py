@@ -2545,7 +2545,7 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                     dictionary_name="Iris",
                     data_table_path="/tmp/Iris.txt",
                     target_variable="Class",
-                    results_dir="/tmp",
+                    analysis_report_file_path="/tmp/IrisAnalysisResults.khj",
                     trace=True,
                 )
         expected_msg = (
