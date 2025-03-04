@@ -252,6 +252,8 @@ class DictionaryDomain(KhiopsJSONObject):
                 current_data_path.append(current_dictionary_alias)
             else:
                 current_data_path.append(current_dictionary.name)
+            if source_dictionary.name in current_data_path:
+                current_data_path.remove(source_dictionary.name)
             data_paths.append(current_data_path)
 
             # Analyze variables to extract additional data paths
@@ -280,6 +282,8 @@ class DictionaryDomain(KhiopsJSONObject):
         if source_dictionary.name in entity_dictionary_names:
             entity_dictionary_names.remove(source_dictionary.name)
 
+        # Remove
+
         # Extract the data paths recursively for the entity dictionaries found during
         # the first extraction
         # Recall that _extract_data_paths modifies the 'entity_dictionary_names' list;
@@ -289,10 +293,9 @@ class DictionaryDomain(KhiopsJSONObject):
             entity_dictionary_name = entity_dictionary_names[name_index]
             entity_dictionary = self.get_dictionary(entity_dictionary_name)
             name_index += 1
-            _extract_data_paths(entity_dictionary, [])
-
+            _extract_data_paths(entity_dictionary, [], f"/{entity_dictionary.name}")
         # Remove first data path (that of the source dictionary) before returning
-        return ["`".join(data_path) for data_path in data_paths[1:]]
+        return ["/".join(data_path) for data_path in data_paths[1:]]
 
     def get_dictionary_at_data_path(self, data_path):
         """Returns the dictionary name for the specified data path
@@ -313,15 +316,30 @@ class DictionaryDomain(KhiopsJSONObject):
         `ValueError`
             If the path is not found.
         """
-        data_path_parts = data_path.split("`")
-        source_dictionary_name = data_path_parts[0]
+        data_path_parts = data_path.lstrip("/").split("/")
 
+        # Attempt to get the first dictionary from the data path:
+        # - either it is found as such,
+        # - or it is a Table or Entity variable whose table needs to be looked-up
+        first_table_variable_name = data_path_parts[0]
         try:
-            dictionary = self.get_dictionary(source_dictionary_name)
+            dictionary = self.get_dictionary(first_table_variable_name)
         except KeyError as error:
-            raise ValueError(
-                f"Source dictionary not found: '{source_dictionary_name}'"
-            ) from error
+            for a_dictionary in self.dictionaries:
+                try:
+                    table_variable = a_dictionary.get_variable(
+                        first_table_variable_name
+                    )
+                    if table_variable.type not in ["Table", "Entity"]:
+                        raise ValueError
+                    dictionary = self.get_dictionary(table_variable.object_type)
+                    break
+                except (KeyError, ValueError):
+                    continue
+            else:
+                raise ValueError(
+                    f"Dictionary not found in data path: '{data_path}'"
+                ) from error
 
         for table_variable_name in data_path_parts[1:]:
             try:
