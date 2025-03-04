@@ -428,7 +428,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         f"Modeling{dataset}.kdic",
                         dataset,
                         f"{dataset}.csv",
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}AnalysisResults.khj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset]
@@ -474,7 +474,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         f"{dataset}._khc",
                         coclustering_variables[dataset][0],
                         coclustering_variables[dataset][1],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}CoclusteringResults.khcj",
                     ],
                     "kwargs": {
                         "max_part_numbers": max_part_numbers[dataset],
@@ -486,7 +486,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                 dataset: {
                     "args": [
                         f"{dataset}._khc",
-                        f"Simplified{dataset}._khc",
+                        f"Simplified{dataset}._khcj",
                         f"{dataset}Results",
                     ],
                     "kwargs": {
@@ -516,7 +516,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         dataset,
                         f"{dataset}.csv",
                         coclustering_variables[dataset],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}CoclusteringResults._khcj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset],
@@ -531,7 +531,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         dataset,
                         f"{dataset}.csv",
                         target_variables[dataset],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}AnalysisResults._khj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset],
@@ -548,7 +548,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         dataset,
                         f"{dataset}.csv",
                         target_variables[dataset],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}AnalysisResults._khj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset],
