@@ -11,7 +11,7 @@ import itertools
 from sklearn.model_selection import train_test_split
 
 from khiops.core.internals.common import is_dict_like, type_error_message
-from khiops.sklearn.dataset import Dataset, FileTable
+from khiops.sklearn.dataset import Dataset
 
 # Note: We build the splits with lists and itertools.chain avoid pylint warning about
 # unbalanced-tuple-unpacking. See issue https://github.com/pylint-dev/pylint/issues/5671
@@ -55,12 +55,6 @@ def train_test_split_dataset(ds_spec, y=None, test_size=0.25, **kwargs):
 
     # Build the dataset for the feature table
     ds = Dataset(ds_spec)
-
-    # Check the table type of the dataset
-    if isinstance(ds.main_table, FileTable):
-        raise ValueError(
-            "Only Pandas, NumPy, SciPy sparse datasets may be used in this method."
-        )
 
     # Obtain the keys for the other test_train_split function
     sklearn_split_params = {}
