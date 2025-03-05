@@ -11,7 +11,6 @@ import os
 import shutil
 import textwrap
 import unittest
-import warnings
 from pathlib import Path
 from unittest import mock
 
@@ -1832,7 +1831,6 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             "SpliceJunctionModeling": {"SpliceJunctionDNA": "SNB_SpliceJunctionDNA"},
             "Customer": {
                 "Services": "Service",
-                "Services/Usages": "Usage",
                 "Address": "Address",
                 "Services/Usages": "Usage",
             },
@@ -1877,8 +1875,6 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 domain.get_dictionary_at_data_path("INVALID DATA PATH")
             with self.assertRaises(ValueError):
                 domain.get_dictionary_at_data_path("Some/Path")
-            first_data_path = list(expected_dictionary_names_by_data_path.keys())[0]
-            data_path_parts = first_data_path.split("/")
             with self.assertRaises(ValueError):
                 domain.get_dictionary_at_data_path("Some/Path")
             with self.assertRaises(ValueError):
