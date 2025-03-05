@@ -172,22 +172,23 @@ class KhiopsRemoteAccessTestsContainer:
                 self.results_dir_root(),
                 f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
             )
+            report_file_path = fs.get_child_path(output_dir, "IrisAnalysisResults.khj")
 
             # When using `kh`, the log file will be by default
             # in the runner `root_temp_dir` folder that can be remote
-            kh.train_predictor(
+            _, model_file_path = kh.train_predictor(
                 fs.get_child_path(iris_data_dir, "Iris.kdic"),
                 dictionary_name="Iris",
                 data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
                 target_variable="Class",
-                results_dir=output_dir,
+                analysis_report_file_path=report_file_path,
                 temp_dir=self._khiops_temp_dir,
                 trace=True,
             )
 
             # Check the existence of the training files
-            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "AllReports.khj")))
-            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "Modeling.kdic")))
+            self.assertTrue(fs.exists(report_file_path))
+            self.assertTrue(fs.exists(model_file_path))
 
         def test_khiops_classifier_with_remote_access(self):
             """Test the training of a khiops_classifier with remote resources"""
@@ -212,8 +213,21 @@ class KhiopsRemoteAccessTestsContainer:
             # Test if the 'fit' output files were created
             classifier = KhiopsClassifier(output_dir=output_dir)
             classifier.fit(iris_dataset, "Class")
-            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "AllReports.khj")))
-            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "Modeling.kdic")))
+            self.assertTrue(
+                fs.exists(
+                    fs.get_child_path(
+                        output_dir, f"{iris_dataset.main_table.name}AnalysisResults.khj"
+                    )
+                )
+            )
+            self.assertTrue(
+                fs.exists(
+                    fs.get_child_path(
+                        output_dir,
+                        f"{iris_dataset.main_table.name}AnalysisResults.model.kdic",
+                    )
+                )
+            )
 
             # Test if the 'predict' output file was created
             with io.BytesIO(fs.read(iris_data_file_path)) as iris_data_file:
@@ -272,6 +286,10 @@ class KhiopsRemoteAccessTestsContainer:
                 self.results_dir_root(),
                 f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
             )
+            report_file_path = fs.get_child_path(
+                output_dir,
+                "IrisAnalysisResults.khj",
+            )
 
             iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
             with self.assertRaises(kh.KhiopsRuntimeError):
@@ -280,7 +298,7 @@ class KhiopsRemoteAccessTestsContainer:
                     dictionary_name="Iris",
                     data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
                     target_variable="Class",
-                    results_dir=output_dir,
+                    analysis_report_file_path=report_file_path,
                     log_file_path=log_file_path,
                 )
             # Check and remove log file
