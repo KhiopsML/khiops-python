@@ -53,7 +53,6 @@ from khiops.core.internals.common import (
 )
 from khiops.sklearn.dataset import (
     Dataset,
-    FileTable,
     get_khiops_variable_name,
     read_internal_data_table,
 )
@@ -149,7 +148,7 @@ def _check_categorical_target_type(ds):
     if ds.target_column is None:
         raise ValueError("Target vector is not specified.")
 
-    if ds.is_in_memory and not (
+    if not (
         isinstance(ds.target_column.dtype, pd.CategoricalDtype)
         or pd.api.types.is_string_dtype(ds.target_column.dtype)
         or pd.api.types.is_integer_dtype(ds.target_column.dtype)
@@ -160,15 +159,6 @@ def _check_categorical_target_type(ds):
             "Only string, integer, float and categorical types "
             "are accepted for the target."
         )
-    elif (
-        not ds.is_in_memory
-        and ds.main_table.khiops_types[ds.target_column_id] != "Categorical"
-    ):
-        raise ValueError(
-            "Target column has invalid type "
-            f"'{ds.main_table.khiops_types[ds.target_column_id]}'. "
-            "Only Categorical types are accepted for file datasets."
-        )
 
 
 def _check_numerical_target_type(ds):
@@ -176,26 +166,15 @@ def _check_numerical_target_type(ds):
     if ds.target_column is None:
         raise ValueError("Target vector is not specified.")
 
-    # If in-memory: Check that the column is numerical and that the values are finite
+    # Check that the column is numerical and that the values are finite
     # The latter is required by sklearn
-    if ds.is_in_memory:
-        if not pd.api.types.is_numeric_dtype(ds.target_column.dtype):
-            raise ValueError(
-                f"Unknown label type '{ds.target_column.dtype}'. "
-                "Expected a numerical type."
-            )
-        if ds.target_column is not None:
-            assert_all_finite(ds.target_column)
-    # Otherwise: Check the the Khiops type
-    elif (
-        not ds.is_in_memory
-        and ds.main_table.khiops_types[ds.target_column_id] != "Numerical"
-    ):
+    if not pd.api.types.is_numeric_dtype(ds.target_column.dtype):
         raise ValueError(
-            "Target column has invalid type "
-            f"'{ds.main_table.khiops_types[ds.target_column_id]}'. "
-            "Only Numerical types are accepted for file datasets."
+            f"Unknown label type '{ds.target_column.dtype}'. "
+            "Expected a numerical type."
         )
+    if ds.target_column is not None:
+        assert_all_finite(ds.target_column)
 
 
 def _check_pair_parameters(estimator):
@@ -472,9 +451,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
         ):
             raise TypeError(type_error_message("key", self.key, str, "list-like"))
 
-        if not ds.is_in_memory and self.output_dir is None:
-            raise ValueError("'output_dir' is not set but dataset is file-based")
-
     def _fit_check_dataset(self, ds):
         """Checks the pre-conditions of the tables to build the model"""
         if ds.main_table.n_samples is not None and ds.main_table.n_samples <= 1:
@@ -531,33 +507,28 @@ class KhiopsEstimator(ABC, BaseEstimator):
         )
 
         # Post-process to return the correct output type and order
-        if deployment_ds.is_in_memory:
-            # Load the table as a dataframe
-            with io.BytesIO(fs.read(output_table_path)) as output_table_stream:
-                output_table_df = read_internal_data_table(
-                    output_table_stream, column_dtypes=internal_table_column_dtypes
-                )
+        # Load the table as a dataframe
+        with io.BytesIO(fs.read(output_table_path)) as output_table_stream:
+            output_table_df = read_internal_data_table(
+                output_table_stream, column_dtypes=internal_table_column_dtypes
+            )
 
-            # On multi-table:
-            # - Reorder the table to the original table order
-            #     - Because transformed data table file is sorted by key
-            # - Drop the key columns if specified
-            if deployment_ds.is_multitable:
-                key_df = deployment_ds.main_table.data_source[
-                    deployment_ds.main_table.key
-                ]
-                output_table_df_or_path = key_df.merge(
-                    output_table_df, on=deployment_ds.main_table.key
+        # On multi-table:
+        # - Reorder the table to the original table order
+        #     - Because transformed data table file is sorted by key
+        # - Drop the key columns if specified
+        if deployment_ds.is_multitable:
+            key_df = deployment_ds.main_table.data_source[deployment_ds.main_table.key]
+            output_table_df_or_path = key_df.merge(
+                output_table_df, on=deployment_ds.main_table.key
+            )
+            if drop_key:
+                output_table_df_or_path.drop(
+                    deployment_ds.main_table.key, axis=1, inplace=True
                 )
-                if drop_key:
-                    output_table_df_or_path.drop(
-                        deployment_ds.main_table.key, axis=1, inplace=True
-                    )
-            # On mono-table: Return the read dataframe as-is
-            else:
-                output_table_df_or_path = output_table_df
+        # On mono-table: Return the read dataframe as-is
         else:
-            output_table_df_or_path = output_table_path
+            output_table_df_or_path = output_table_df
 
         return output_table_df_or_path
 
@@ -637,13 +608,9 @@ class KhiopsEstimator(ABC, BaseEstimator):
         log_file_path = fs.get_child_path(output_dir, "khiops.log")
         output_data_table_path = fs.get_child_path(output_dir, transformed_file_name)
 
-        # Set the format parameters depending on the type of dataset
-        if deployment_ds.is_in_memory:
-            field_separator = "\t"
-            header_line = True
-        else:
-            field_separator = deployment_ds.main_table.sep
-            header_line = deployment_ds.main_table.header
+        # Set the format parameters
+        field_separator = "\t"
+        header_line = True
 
         # Call to core function deploy_model
         kh.deploy_model(
@@ -662,11 +629,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
         )
 
         return output_data_table_path
-
-    def _transform_check_dataset(self, ds):
-        """Checks the dataset before deploying a model on them"""
-        if ds.table_type == FileTable and self.output_dir is None:
-            raise ValueError("'output_dir' is not set but dataset is file-based")
 
     def _create_computation_dir(self, method_name):
         """Creates a temporary computation directory"""
@@ -1296,9 +1258,8 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             self._cleanup_computation_dir(computation_dir)
             kh.get_runner().root_temp_dir = initial_runner_temp_dir
 
-        # Transform to numpy.array for in-memory inputs
-        if ds.is_in_memory:
-            y_pred = y_pred.to_numpy()
+        # Transform to numpy.array
+        y_pred = y_pred.to_numpy()
 
         return y_pred
 
@@ -1307,9 +1268,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         assert (
             len(self.model_.dictionaries) == 2
         ), "'model' does not have exactly 2 dictionaries"
-
-        # Call the parent method
-        super()._transform_check_dataset(ds)
 
         # Coclustering models are special:
         # - They are mono-table only
@@ -1338,58 +1296,24 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         deploy_dataset_spec = {}
         deploy_dataset_spec["main_table"] = keys_table_name
         deploy_dataset_spec["tables"] = {}
-        if ds.is_in_memory:
-            # Extract the keys from the main table
-            keys_table_dataframe = pd.DataFrame(
-                {
-                    self.model_id_column: ds.main_table.data_source[
-                        self.model_id_column
-                    ].unique()
-                }
-            )
+        # Extract the keys from the main table
+        keys_table_dataframe = pd.DataFrame(
+            {
+                self.model_id_column: ds.main_table.data_source[
+                    self.model_id_column
+                ].unique()
+            }
+        )
 
-            # Create the dataset with the keys table as the main one
-            deploy_dataset_spec["tables"][keys_table_name] = (
-                keys_table_dataframe,
-                self.model_id_column,
-            )
-            deploy_dataset_spec["tables"][ds.main_table.name] = (
-                ds.main_table.data_source,
-                self.model_id_column,
-            )
-        else:
-            # Create the table to extract the keys (sorted)
-            keyed_dataset = ds.copy()
-            keyed_dataset.main_table.key = [self.model_id_column]
-            main_table_path = keyed_dataset.main_table.create_table_file_for_khiops(
-                computation_dir, sort=self.auto_sort
-            )
-
-            # Create a table storing the main table keys
-            keys_table_name = f"keys_{ds.main_table.name}"
-            keys_table_file_path = fs.get_child_path(
-                computation_dir, f"raw_{keys_table_name}.txt"
-            )
-            kh.extract_keys_from_data_table(
-                keyed_dataset.create_khiops_dictionary_domain(),
-                keyed_dataset.main_table.name,
-                main_table_path,
-                keys_table_file_path,
-                header_line=ds.header,
-                field_separator=ds.sep,
-                output_header_line=ds.header,
-                output_field_separator=ds.sep,
-                trace=self.verbose,
-            )
-            deploy_dataset_spec["tables"][keys_table_name] = (
-                keys_table_file_path,
-                self.model_id_column,
-            )
-            deploy_dataset_spec["tables"][ds.main_table.name] = (
-                ds.main_table.data_source,
-                self.model_id_column,
-            )
-            deploy_dataset_spec["format"] = (ds.sep, ds.header)
+        # Create the dataset with the keys table as the main one
+        deploy_dataset_spec["tables"][keys_table_name] = (
+            keys_table_dataframe,
+            self.model_id_column,
+        )
+        deploy_dataset_spec["tables"][ds.main_table.name] = (
+            ds.main_table.data_source,
+            self.model_id_column,
+        )
 
         return Dataset(deploy_dataset_spec)
 
@@ -1486,11 +1410,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
 
         Returns
         -------
@@ -1596,12 +1515,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Set the format parameters depending on the type of dataset
         kwargs["detect_format"] = False
-        if ds.is_in_memory:
-            kwargs["field_separator"] = "\t"
-            kwargs["header_line"] = True
-        else:
-            kwargs["field_separator"] = ds.main_table.sep
-            kwargs["header_line"] = ds.main_table.header
+        kwargs["field_separator"] = "\t"
+        kwargs["header_line"] = True
 
         # Rename parameters to be compatible with khiops.core
         kwargs["max_constructed_variables"] = kwargs.pop("n_features")
@@ -1622,19 +1537,15 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         super()._fit_training_post_process(ds)
 
         # Save the target and key column dtype's
-        if ds.is_in_memory:
-            if self._original_target_dtype is None:
-                self._original_target_dtype = ds.target_column.dtype
-            if ds.main_table.key is not None:
-                self._original_key_dtypes = {}
-                for column_id in ds.main_table.key:
-                    self._original_key_dtypes[column_id] = (
-                        ds.main_table.get_column_dtype(column_id)
-                    )
-            else:
-                self._original_key_dtypes = None
+        if self._original_target_dtype is None:
+            self._original_target_dtype = ds.target_column.dtype
+        if ds.main_table.key is not None:
+            self._original_key_dtypes = {}
+            for column_id in ds.main_table.key:
+                self._original_key_dtypes[column_id] = ds.main_table.get_column_dtype(
+                    column_id
+                )
         else:
-            self._original_target_dtype = None
             self._original_key_dtypes = None
 
         # Set the target variable name
@@ -1716,9 +1627,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
     def _transform_check_dataset(self, ds):
         assert isinstance(ds, Dataset), "'ds' is not 'Dataset'"
-
-        # Call the parent method
-        super()._transform_check_dataset(ds)
 
         # Check the coherence between the input table and the model
         if self.is_multitable_model_ and not ds.is_multitable:
@@ -1892,17 +1800,14 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             model_dictionary.remove_variable(self.model_target_variable_name_)
 
         # Create the output column dtype dict
-        if ds.is_in_memory:
-            predicted_target_column_name = (
-                self._predicted_target_name_prefix + self.model_target_variable_name_
-            )
-            output_columns_dtype = {
-                predicted_target_column_name: self._original_target_dtype
-            }
-            if self.is_multitable_model_:
-                output_columns_dtype.update(self._original_key_dtypes)
-        else:
-            output_columns_dtype = None
+        predicted_target_column_name = (
+            self._predicted_target_name_prefix + self.model_target_variable_name_
+        )
+        output_columns_dtype = {
+            predicted_target_column_name: self._original_target_dtype
+        }
+        if self.is_multitable_model_:
+            output_columns_dtype.update(self._original_key_dtypes)
 
         return model_copy, output_columns_dtype
 
@@ -2181,11 +2086,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
-
         Returns
         -------
         self : `KhiopsClassifier`
@@ -2201,16 +2101,15 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         # Call the parent method
         super()._fit_check_dataset(ds)
 
-        # Check that the target is for classification in in_memory_tables
-        if ds.is_in_memory:
-            current_type_of_target = type_of_target(ds.target_column)
-            if current_type_of_target not in ["binary", "multiclass"]:
-                raise ValueError(
-                    f"Unknown label type: '{current_type_of_target}' "
-                    "for classification. Maybe you passed a floating point target?"
-                )
+        # Check that the target is for classification
+        current_type_of_target = type_of_target(ds.target_column)
+        if current_type_of_target not in ["binary", "multiclass"]:
+            raise ValueError(
+                f"Unknown label type: '{current_type_of_target}' "
+                "for classification. Maybe you passed a floating point target?"
+            )
         # Check if the target has more than 1 class
-        if ds.is_in_memory and len(np.unique(ds.target_column)) == 1:
+        if len(np.unique(ds.target_column)) == 1:
             raise ValueError(
                 f"{self.__class__.__name__} can't train when only one class is present."
             )
@@ -2228,7 +2127,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             for key in variable.meta_data.keys:
                 if key.startswith("TargetProb"):
                     self.classes_.append(variable.meta_data.get_value(key))
-        if ds.is_in_memory and self._is_real_target_dtype_integer():
+        if self._is_real_target_dtype_integer():
             self.classes_ = [int(class_value) for class_value in self.classes_]
             self.classes_.sort()
         self.classes_ = column_or_1d(self.classes_)
@@ -2329,8 +2228,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
                 - Dataframe or dataframe-based ``dict`` dataset specification:
                   `numpy.array`
-                - File-based ``dict`` dataset specification: A CSV file (the method
-                  returns its path).
 
             The key columns are added for multi-table tasks.
         """
@@ -2356,16 +2253,14 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             self._cleanup_computation_dir(computation_dir)
             kh.get_runner().root_temp_dir = initial_runner_temp_dir
 
-        # For in-memory datasets:
         # - Reorder the columns to that of self.classes_
         # - Transform to np.ndarray
-        if ds.is_in_memory:
-            assert isinstance(
-                y_probas, (pd.DataFrame, np.ndarray)
-            ), "y_probas is not a Pandas DataFrame nor Numpy array"
-            y_probas = y_probas.reindex(
-                self._sorted_prob_variable_names(), axis=1, copy=False
-            ).to_numpy(copy=False)
+        assert isinstance(
+            y_probas, (pd.DataFrame, np.ndarray)
+        ), "y_probas is not a Pandas DataFrame nor Numpy array"
+        y_probas = y_probas.reindex(
+            self._sorted_prob_variable_names(), axis=1, copy=False
+        ).to_numpy(copy=False)
 
         assert isinstance(y_probas, (str, np.ndarray)), "Expected str or np.ndarray"
         return y_probas
@@ -2393,15 +2288,12 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         if self.model_target_variable_name_ not in list(ds.main_table.column_ids):
             model_dictionary.remove_variable(self.model_target_variable_name_)
 
-        if ds.is_in_memory:
-            output_columns_dtype = {}
-            if self.is_multitable_model_:
-                output_columns_dtype.update(self._original_key_dtypes)
-            for variable in model_dictionary.variables:
-                if variable.used and variable.name not in model_dictionary.key:
-                    output_columns_dtype[variable.name] = np.float64
-        else:
-            output_columns_dtype = None
+        output_columns_dtype = {}
+        if self.is_multitable_model_:
+            output_columns_dtype.update(self._original_key_dtypes)
+        for variable in model_dictionary.variables:
+            if variable.used and variable.name not in model_dictionary.key:
+                output_columns_dtype[variable.name] = np.float64
 
         return model_copy, output_columns_dtype
 
@@ -2560,11 +2452,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
-
         Returns
         -------
         self : `KhiopsRegressor`
@@ -2656,7 +2543,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         # Call the parent's method
         y_pred = super().predict(X)
 
-        # Transform to np.ndarray for in-memory datasets
+        # Transform to np.ndarray
         if isinstance(y_pred, pd.DataFrame):
             y_pred = y_pred.astype("float64", copy=False).to_numpy(copy=False).ravel()
 
@@ -3005,11 +2892,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
-
         Returns
         -------
         self : `KhiopsEncoder`
@@ -3107,9 +2989,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         finally:
             self._cleanup_computation_dir(computation_dir)
             kh.get_runner().root_temp_dir = initial_runner_temp_dir
-        if ds.is_in_memory:
-            return X_transformed.to_numpy(copy=False)
-        return X_transformed
+        return X_transformed.to_numpy(copy=False)
 
     def _transform_prepare_deployment_for_transform(self, ds):
         assert hasattr(
@@ -3148,11 +3028,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
 
         Returns
         -------
