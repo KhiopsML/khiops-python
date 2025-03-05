@@ -1558,6 +1558,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def _fit_prepare_training_function_inputs(self, ds, computation_dir):
         # Set output path files
         output_dir = self._get_output_dir(computation_dir)
+        report_file_path = f"{ds.main_table.name}AnalysisResults.khj"
         log_file_path = fs.get_child_path(output_dir, "khiops.log")
 
         main_table_path, secondary_table_paths = ds.create_table_files_for_khiops(
@@ -1574,11 +1575,11 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Build the mandatory arguments
         args = [
-            ds.create_khiops_dictionary_domain(),
+            ds_domain,
             ds.main_table.name,
             main_table_path,
             get_khiops_variable_name(ds.target_column_id),
-            output_dir,
+            report_file_path,
         ]
 
         # Build the optional parameters from a copy of the estimator parameters
