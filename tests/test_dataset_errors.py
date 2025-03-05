@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from khiops.core.internals.common import type_error_message
-from khiops.sklearn.dataset import Dataset, FileTable, PandasTable
+from khiops.sklearn.dataset import Dataset, PandasTable
 
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
@@ -50,163 +50,74 @@ class DatasetSpecErrorsTests(unittest.TestCase):
     ####################
     # Helper functions #
     ####################
-    def create_fixture_dataset_spec(
-        self, data_type="df", multitable=True, schema="snowflake", output_dir=None
-    ):
+    def create_fixture_dataset_spec(self, multitable=True, schema="snowflake"):
         """Creates a fixture dataset specification
 
         Parameters
         ----------
 
-        data_type : ["df", "file"], default "df"
-            The desired type of the dataset tables.
         multitable : bool, default ``True``
             Whether the dataset is multitable or not.
         schema : ["snowflake", "star"], default "snowflake"
             The type of multi-table schema.
-        output_dir: str, optional
-            The output directory for file based datasets. Mandatory if ``data_type ==
-            "file"``.
         """
         if not multitable:
-            if data_type == "df":
-                reference_table = self.create_monotable_dataframe()
-                features = reference_table.drop(["class"], axis=1)
-                dataset_spec = {
-                    "main_table": "Reviews",
-                    "tables": {"Reviews": (features, "User_ID")},
-                }
-                label = reference_table["class"]
-            else:
-                assert data_type == "file"
-                assert isinstance(output_dir, str)
-                reference_table_path = os.path.join(output_dir, "Reviews.csv")
-                self.create_monotable_data_file(reference_table_path)
-                dataset_spec = {
-                    "main_table": "Reviews",
-                    "tables": {"Reviews": (reference_table_path, "User_ID")},
-                    "format": ("\t", True),
-                }
-                label = "class"
+            reference_table = self.create_monotable_dataframe()
+            features = reference_table.drop(["class"], axis=1)
+            dataset_spec = {
+                "main_table": "Reviews",
+                "tables": {"Reviews": (features, "User_ID")},
+            }
+            label = reference_table["class"]
 
         elif schema == "star":
-            if data_type == "df":
-                (
-                    reference_main_table,
-                    reference_secondary_table,
-                ) = self.create_multitable_star_dataframes()
-                features_reference_main_table = reference_main_table.drop(
-                    "class", axis=1
-                )
-                dataset_spec = {
-                    "main_table": "id_class",
-                    "tables": {
-                        "id_class": (features_reference_main_table, "User_ID"),
-                        "logs": (reference_secondary_table, "User_ID"),
-                    },
-                }
-                label = reference_main_table["class"]
-            else:
-                assert data_type == "file"
-                assert isinstance(output_dir, str)
-                reference_main_table_path = os.path.join(output_dir, "id_class.csv")
-                reference_secondary_table_path = os.path.join(output_dir, "logs.csv")
-                self.create_multitable_star_data_files(
-                    reference_main_table_path, reference_secondary_table_path
-                )
-                dataset_spec = {
-                    "main_table": "id_class",
-                    "tables": {
-                        "id_class": (reference_main_table_path, "User_ID"),
-                        "logs": (reference_secondary_table_path, "User_ID"),
-                    },
-                    "format": ("\t", True),
-                }
-                label = "class"
-
+            (
+                reference_main_table,
+                reference_secondary_table,
+            ) = self.create_multitable_star_dataframes()
+            features_reference_main_table = reference_main_table.drop("class", axis=1)
+            dataset_spec = {
+                "main_table": "id_class",
+                "tables": {
+                    "id_class": (features_reference_main_table, "User_ID"),
+                    "logs": (reference_secondary_table, "User_ID"),
+                },
+            }
+            label = reference_main_table["class"]
         else:
             assert schema == "snowflake"
-            if data_type == "df":
-                (
-                    reference_main_table,
-                    reference_secondary_table_1,
-                    reference_secondary_table_2,
-                    reference_tertiary_table,
-                    reference_quaternary_table,
-                ) = self.create_multitable_snowflake_dataframes()
+            (
+                reference_main_table,
+                reference_secondary_table_1,
+                reference_secondary_table_2,
+                reference_tertiary_table,
+                reference_quaternary_table,
+            ) = self.create_multitable_snowflake_dataframes()
 
-                features_reference_main_table = reference_main_table.drop(
-                    "class", axis=1
-                )
-                dataset_spec = {
-                    "main_table": "A",
-                    "tables": {
-                        "D": (
-                            reference_tertiary_table,
-                            ["User_ID", "VAR_1", "VAR_2"],
-                        ),
-                        "B": (reference_secondary_table_1, ["User_ID", "VAR_1"]),
-                        "E": (
-                            reference_quaternary_table,
-                            ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
-                        ),
-                        "C": (reference_secondary_table_2, "User_ID"),
-                        "A": (features_reference_main_table, "User_ID"),
-                    },
-                    "relations": [
-                        ("B", "D", False),
-                        ("A", "C", True),
-                        ("D", "E", False),
-                        ("A", "B"),
-                    ],
-                }
-                label = reference_main_table["class"]
-            else:
-                assert data_type == "file"
-                assert isinstance(output_dir, str)
-                reference_main_table_path = os.path.join(output_dir, "A.csv")
-                reference_secondary_table_path_1 = os.path.join(output_dir, "B.csv")
-                reference_secondary_table_path_2 = os.path.join(output_dir, "C.csv")
-                reference_tertiary_table_path = os.path.join(output_dir, "D.csv")
-                reference_quaternary_table_path = os.path.join(output_dir, "E.csv")
-
-                self.create_multitable_snowflake_data_files(
-                    reference_main_table_path,
-                    reference_secondary_table_path_1,
-                    reference_secondary_table_path_2,
-                    reference_tertiary_table_path,
-                    reference_quaternary_table_path,
-                )
-                dataset_spec = {
-                    "main_table": "A",
-                    "tables": {
-                        "B": (
-                            reference_secondary_table_path_1,
-                            ["User_ID", "VAR_1"],
-                        ),
-                        "E": (
-                            reference_quaternary_table_path,
-                            ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
-                        ),
-                        "C": (
-                            reference_secondary_table_path_2,
-                            "User_ID",
-                        ),
-                        "A": (reference_main_table_path, "User_ID"),
-                        "D": (
-                            reference_tertiary_table_path,
-                            ["User_ID", "VAR_1", "VAR_2"],
-                        ),
-                    },
-                    "relations": [
-                        ("B", "D"),
-                        ("A", "B", False),
-                        ("D", "E", False),
-                        ("A", "C", True),
-                    ],
-                    "format": ("\t", True),
-                }
-                label = "class"
+            features_reference_main_table = reference_main_table.drop("class", axis=1)
+            dataset_spec = {
+                "main_table": "A",
+                "tables": {
+                    "D": (
+                        reference_tertiary_table,
+                        ["User_ID", "VAR_1", "VAR_2"],
+                    ),
+                    "B": (reference_secondary_table_1, ["User_ID", "VAR_1"]),
+                    "E": (
+                        reference_quaternary_table,
+                        ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
+                    ),
+                    "C": (reference_secondary_table_2, "User_ID"),
+                    "A": (features_reference_main_table, "User_ID"),
+                },
+                "relations": [
+                    ("B", "D", False),
+                    ("A", "C", True),
+                    ("D", "E", False),
+                    ("A", "B"),
+                ],
+            }
+            label = reference_main_table["class"]
 
         return dataset_spec, label
 
@@ -431,30 +342,19 @@ class DatasetSpecErrorsTests(unittest.TestCase):
     # Basic X, y tests #
     ####################
 
-    def test_x_must_be_df_or_tuple_or_sequence_or_mapping(self):
+    def test_x_must_be_df_or_sequence_or_mapping(self):
         """Test that `.Dataset` init raises TypeError when X has a wrong type"""
         bad_spec = AnotherType()
         y = "class"
         expected_msg = type_error_message(
-            "X", bad_spec, "array-like", tuple, Sequence, Mapping
+            "X", bad_spec, "array-like", Sequence, Mapping
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
     def test_y_type_must_be_str_or_array_like_1d(self):
         """Test that `.Dataset` init raises TypeError when y has a wrong type"""
-        # Test when X is a tuple: expects str
-        table_path = os.path.join(self.output_dir, "Reviews.csv")
-        dataframe = self.create_monotable_dataframe()
-        dataframe.to_csv(table_path, sep="\t", index=False)
-        tuple_spec = (table_path, "\t")
-        bad_y = dataframe["class"]
-        expected_msg = (
-            type_error_message("y", bad_y, str)
-            + " (X's tables are of type str [file paths])"
-        )
-        self.assert_dataset_fails(tuple_spec, bad_y, TypeError, expected_msg)
-
         # Test when X is a dataframe: expects array-like
+        dataframe = self.create_monotable_dataframe()
         bad_y = "TargetColumn"
         expected_msg = (
             type_error_message("y", bad_y, "array-like")
@@ -473,17 +373,6 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg_prefix = (
             "Target column name 'Recommended IND' is already present in the main table."
         )
-        self.assertIn(expected_msg_prefix, output_error_msg)
-
-    def test_file_dataset_fails_if_table_does_not_contain_the_target_column(self):
-        """Test FileTable failing if the table does not contain the target column"""
-        table_path = os.path.join(self.output_dir, "table.csv")
-        table = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-        table.to_csv(table_path, sep="\t", index=False)
-        with self.assertRaises(ValueError) as context:
-            Dataset({"tables": {"main_table": (table_path, None)}}, y="TargetColumn")
-        output_error_msg = str(context.exception)
-        expected_msg_prefix = "Target column 'TargetColumn' not present in"
         self.assertIn(expected_msg_prefix, output_error_msg)
 
     #####################################
@@ -519,13 +408,6 @@ class DatasetSpecErrorsTests(unittest.TestCase):
             "'D' table entry", bad_spec["tables"]["D"], tuple
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-    def test_dict_spec_table_input_tuple_must_have_size_2(self):
-        """Test Dataset raising ValueError when a table entry is a tuple of size != 2"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        bad_spec["tables"]["D"] = (*bad_spec["tables"]["D"], "AnotherT", "YetAnotherT")
-        expected_msg = "'D' table entry must have size 2, not 4"
-        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
     def test_dict_spec_source_table_type_must_be_adequate(self):
         """Test Dataset raising TypeError when a table entry is not str nor DataFrame"""
@@ -619,19 +501,6 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         )
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
-    def test_dict_spec_secondary_tables_must_have_the_same_type_as_the_main_table(self):
-        """Test Dataset raising ValueError if main and sec. table's types don't match"""
-        bad_spec, _ = self.create_fixture_dataset_spec()
-        alt_spec, _ = self.create_fixture_dataset_spec(
-            data_type="file", output_dir=self.output_dir
-        )
-        bad_spec["tables"]["D"] = alt_spec["tables"]["D"]
-        expected_msg = (
-            "Secondary table 'D' has type 'str' which is different "
-            "from the main table's type 'DataFrame'."
-        )
-        self.assert_dataset_fails(bad_spec, None, ValueError, expected_msg)
-
     def test_dict_spec_format_must_be_tuple(self):
         """Test Dataset raising a TypeError if the format field is not a tuple"""
         bad_spec, y = self.create_fixture_dataset_spec()
@@ -657,10 +526,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
 
     def test_dict_spec_format_tuple_2nd_element_must_be_bool(self):
         """Test Dataset raising a TypeError if any of the format fields are not bool"""
-        bad_spec, y = self.create_fixture_dataset_spec(
-            output_dir=self.output_dir,
-            data_type="file",
-        )
+        bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["format"] = (",", AnotherType())
         expected_msg = type_error_message(
             "'format' tuple's 2nd element (header)", bad_spec["format"][1], bool
@@ -669,10 +535,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
 
     def test_dict_spec_format_tuple_1st_element_must_be_a_single_character(self):
         """Test Dataset raising a ValueError if the format sep. is not a single char"""
-        bad_spec, y = self.create_fixture_dataset_spec(
-            output_dir=self.output_dir,
-            data_type="file",
-        )
+        bad_spec, y = self.create_fixture_dataset_spec()
         bad_spec["format"] = (";;", True)
         expected_msg = "'format' separator must be a single char, got ';;'"
         self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
@@ -684,18 +547,6 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg = (
             type_error_message("y", bad_y, "array-like")
             + " (X's tables are of type pandas.DataFrame)"
-        )
-        self.assert_dataset_fails(spec, bad_y, TypeError, expected_msg)
-
-    def test_dict_spec_y_must_be_str_when_x_is_file_spec(self):
-        """Test Dataset raising TypeError for a file-dict-spec and y not a str"""
-        spec, _ = self.create_fixture_dataset_spec(
-            output_dir=self.output_dir, data_type="file"
-        )
-        bad_y = np.array([1, 2, 3])
-        expected_msg = (
-            type_error_message("y", bad_y, str)
-            + " (X's tables are of type str [file paths])"
         )
         self.assert_dataset_fails(spec, bad_y, TypeError, expected_msg)
 
@@ -902,81 +753,3 @@ class DatasetSpecErrorsTests(unittest.TestCase):
             "strings. Column id at index 0 ('1') is of type 'int'"
         )
         self.assertEqual(output_error_msg, expected_msg)
-
-    def test_file_table_fails_with_non_existent_table_file(self):
-        """Test FileTable failing when it is created with a non-existent file"""
-        with self.assertRaises(ValueError) as context:
-            FileTable("reviews", "Review.csv")
-        output_error_msg = str(context.exception)
-        expected_msg = "Non-existent data table file: Review.csv"
-        self.assertEqual(expected_msg, output_error_msg)
-
-    def test_file_table_internal_file_creation_fails_on_an_existing_path(self):
-        """Test FileTable failing to create an internal file to a existing path"""
-        spec, _ = self.create_fixture_dataset_spec(
-            output_dir=self.output_dir, data_type="file", multitable=False, schema=None
-        )
-        old_file_path = spec["tables"]["Reviews"][0]
-        new_file_path = old_file_path.replace("Reviews.csv", "copy_Reviews.txt")
-        os.rename(old_file_path, new_file_path)
-        file_table = FileTable("Reviews", new_file_path, key="User_ID")
-        with self.assertRaises(ValueError) as context:
-            file_table.create_table_file_for_khiops(self.output_dir, sort=False)
-        output_error_msg = str(context.exception)
-        expected_msg_prefix = "Cannot overwrite this table's path"
-        self.assertIn(expected_msg_prefix, output_error_msg)
-
-    ##########################################################
-    # Tests for tuple and sequence dataset spec (deprecated) #
-    ##########################################################
-
-    def test_tuple_spec_must_have_length_2(self):
-        """Test that `.Dataset` raises `ValueError` when the tuple is not of size 2"""
-        # Test pour la tuple de taille 3
-        bad_spec = ("a", "b", "\t")
-        y = "class"
-        self.assert_dataset_fails(
-            bad_spec, y, ValueError, "'X' tuple input must have length 2 not 3"
-        )
-
-        # Test pour une tuple de taille 1
-        bad_spec = ("a",)
-        self.assert_dataset_fails(
-            bad_spec, y, ValueError, "'X' tuple input must have length 2 not 1"
-        )
-
-    def test_tuple_spec_elements_must_be_str(self):
-        """Test Dataset raising TypeError when the tuple spec has non-strings"""
-        # Test for the first element
-        bad_spec = (AnotherType(), "/some/path")
-        y = "class"
-        expected_msg = type_error_message("X[0]", bad_spec[0], str)
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-        # Test for the second element
-        bad_spec = ("table-name", AnotherType())
-        expected_msg = type_error_message("X[1]", bad_spec[1], str)
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-    def test_sequence_spec_must_be_a_non_empty(self):
-        """Test that Datasets raises `ValueError` when X is an empty sequence"""
-        bad_spec = []
-        y = "class"
-        expected_msg = "'X' must be a non-empty sequence"
-        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
-
-    def test_sequence_spec_must_be_str_or_df(self):
-        """Test Dataset raising TypeError when it is a sequence with bad types"""
-        # Test that the first element is not str or df
-        bad_spec = [AnotherType(), "table_1"]
-        y = "class"
-        expected_msg = type_error_message("X[0]", bad_spec[0], str, pd.DataFrame)
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-        # Test that the second element is not str
-        bad_spec = ["table_1", AnotherType()]
-        expected_msg = (
-            type_error_message("Table at index 1", bad_spec[1], str)
-            + " as the first table in X"
-        )
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
