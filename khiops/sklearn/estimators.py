@@ -400,7 +400,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # Create the dataset, fit the model and reset in case of any failure
         try:
             categorical_target = kwargs.get("categorical_target", True)
-            dataset = Dataset(X, y, categorical_target=categorical_target, key=self.key)
+            dataset = Dataset(X, y, categorical_target=categorical_target)
             self._fit(dataset, computation_dir, **kwargs)
         # Undefine any attributes to pass to "not fitted"
         except:
@@ -1831,7 +1831,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
 
         try:
             # Create the input dataset
-            ds = Dataset(X, key=self.key)
+            ds = Dataset(X)
 
             # Call the template transform method
             y_pred = super()._transform(
@@ -2342,7 +2342,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         # Call the generic transform method
         try:
-            ds = Dataset(X, key=self.key)
+            ds = Dataset(X)
             y_probas = self._transform(
                 ds,
                 computation_dir,
@@ -3094,7 +3094,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         # Create and transform the dataset
         try:
-            ds = Dataset(X, key=self.key)
+            ds = Dataset(X)
             X_transformed = super()._transform(
                 ds,
                 computation_dir,
