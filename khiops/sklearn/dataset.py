@@ -427,7 +427,7 @@ class Dataset:
 
     Parameters
     ----------
-    X : `pandas.DataFrame` or dict (**Deprecated types**: tuple and list)
+    X : `pandas.DataFrame` or dict
         Either:
           - A single dataframe
           - A ``dict`` dataset specification
