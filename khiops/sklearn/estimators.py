@@ -878,13 +878,17 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         else:
             variables = list(ds.main_table.column_ids)
 
+        coclustering_file_path = fs.get_child_path(
+            output_dir, f"{ds.main_table.name}CoclusteringResults.khcj"
+        )
+
         # Train the coclustering model
         coclustering_file_path = kh.train_coclustering(
             ds.create_khiops_dictionary_domain(),
             ds.main_table.name,
             main_table_path,
             variables,
-            output_dir,
+            coclustering_file_path,
             log_file_path=train_log_file_path,
             trace=self.verbose,
         )
@@ -1000,13 +1004,16 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # Create the model by adding the coclustering variables
         # to the multi-table dictionary created before
         prepare_log_file_path = fs.get_child_path(output_dir, "khiops_prepare_cc.log")
+        deployed_coclustering_dictionary_file_path = fs.get_child_path(
+            output_dir, f"{self.model_main_dictionary_name_}_deployed.kdic"
+        )
         kh.prepare_coclustering_deployment(
             mt_domain,
             self.model_main_dictionary_name_,
             coclustering_file_path,
             self.model_secondary_table_variable_name,
             self.model_id_column,
-            output_dir,
+            deployed_coclustering_dictionary_file_path,
             build_cluster_variable=self.build_name_var,
             build_distance_variables=self.build_distance_vars,
             build_frequency_variables=self.build_frequency_vars,
@@ -1093,6 +1100,9 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         full_coclustering_file_path = fs.get_child_path(
             output_dir, "FullCoclustering.khcj"
         )
+        simplified_coclustering_file_path = fs.get_child_path(
+            output_dir, "Coclustering.khcj"
+        )
         self.model_report_.write_khiops_json_file(full_coclustering_file_path)
         kh.get_runner().root_temp_dir = computation_dir
         try:
@@ -1102,8 +1112,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             #   attribute accordingly
             kh.simplify_coclustering(
                 full_coclustering_file_path,
-                "Coclustering.khc",
-                output_dir,
+                simplified_coclustering_file_path,
                 max_preserved_information=max_preserved_information,
                 max_cells=max_cells,
                 max_total_parts=max_total_parts,
@@ -1456,7 +1465,9 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def _fit_prepare_training_function_inputs(self, ds, computation_dir):
         # Set output path files
         output_dir = self._get_output_dir(computation_dir)
-        report_file_path = f"{ds.main_table.name}AnalysisResults.khj"
+        report_file_path = fs.get_child_path(
+            output_dir, f"{ds.main_table.name}AnalysisResults.khj"
+        )
         log_file_path = fs.get_child_path(output_dir, "khiops.log")
 
         main_table_path, secondary_table_paths = ds.create_table_files_for_khiops(
