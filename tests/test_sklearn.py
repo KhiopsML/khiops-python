@@ -482,13 +482,19 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                     KhiopsCoclustering: {
                         "fit": {
                             ("khiops.core", "prepare_coclustering_deployment"): {
-                                2: os.path.join(cls.output_dir, "Coclustering.khcj"),
+                                2: os.path.join(
+                                    cls.output_dir, "main_tableCoclusteringResults.khcj"
+                                ),
                                 3: "CC_main_table",
                                 4: "SampleId",
-                                5: cls.output_dir,
+                                5: os.path.join(
+                                    cls.output_dir, "CC_Keys_main_table_deployed.kdic"
+                                ),
                             },
                             ("khiops.core", "read_coclustering_results_file"): {
-                                0: os.path.join(cls.output_dir, "Coclustering.khcj")
+                                0: os.path.join(
+                                    cls.output_dir, "main_tableCoclusteringResults.khcj"
+                                )
                             },
                             ("khiops.core", "train_coclustering"): {
                                 1: "main_table",
@@ -499,13 +505,17 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                         "simplify": {
                             ("khiops.core", "simplify_coclustering"): {
-                                2: cls.output_dir
+                                1: os.path.join(cls.output_dir, "Coclustering.khcj")
                             },
                             ("khiops.core", "prepare_coclustering_deployment"): {
-                                2: os.path.join(cls.output_dir, "Coclustering.khcj"),
+                                2: os.path.join(
+                                    cls.output_dir, "main_tableCoclusteringResults.khcj"
+                                ),
                                 3: "CC_main_table",
                                 4: "SampleId",
-                                5: cls.output_dir,
+                                5: os.path.join(
+                                    cls.output_dir, "CC_Keys_main_table_deployed.kdic"
+                                ),
                             },
                         },
                         "predict": {
