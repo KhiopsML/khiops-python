@@ -342,13 +342,11 @@ class DatasetSpecErrorsTests(unittest.TestCase):
     # Basic X, y tests #
     ####################
 
-    def test_x_must_be_df_or_sequence_or_mapping(self):
+    def test_x_must_be_df_or_mapping(self):
         """Test that `.Dataset` init raises TypeError when X has a wrong type"""
         bad_spec = AnotherType()
         y = "class"
-        expected_msg = type_error_message(
-            "X", bad_spec, "array-like", Sequence, Mapping
-        )
+        expected_msg = type_error_message("X", bad_spec, "array-like", Mapping)
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
     def test_y_type_must_be_str_or_array_like_1d(self):

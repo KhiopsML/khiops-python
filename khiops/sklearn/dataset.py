@@ -483,7 +483,7 @@ class Dataset:
             self._init_tables_from_mapping(X)
         # Fail if X is not recognized
         else:
-            raise TypeError(type_error_message("X", X, "array-like", Sequence, Mapping))
+            raise TypeError(type_error_message("X", X, "array-like", Mapping))
 
         # Initialization of the target column if any
         if y is not None:
@@ -572,7 +572,7 @@ class Dataset:
             )
             self.secondary_tables = []
         # Initialize a numpyarray dataset (monotable)
-        else:
+        elif hasattr(main_table_source, "__array__"):
             self.main_table = NumpyTable(
                 main_table_name,
                 main_table_source,
@@ -583,6 +583,12 @@ class Dataset:
                     "with pandas dataframe source tables"
                 )
             self.secondary_tables = []
+        else:
+            raise TypeError(
+                type_error_message(
+                    "X's main table", main_table_source, "array-like", Mapping
+                )
+            )
 
         # If the relations are not specified initialize to a star schema
         if "relations" not in X:
