@@ -303,17 +303,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                     ),
                     CoreApiFunctionMock(
                         module_name="khiops.core",
-                        function_name="build_multi_table_dictionary",
-                        fixture={
-                            "output_file_paths": {
-                                "kdic_path": resources["tmp_model_kdic_path"]
-                            },
-                            "extra_file_paths": {},
-                            "return_values": [],
-                        },
-                    ),
-                    CoreApiFunctionMock(
-                        module_name="khiops.core",
                         function_name="prepare_coclustering_deployment",
                         fixture={
                             "output_file_paths": {
@@ -367,12 +356,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             "not_applicable": {
                 ("dataframe",): {
                     KhiopsCoclustering: {
-                        "build_multi_table_dictionary": {
-                            "expected_n_dictionaries": 1,
-                            "expected_main_table_key": None,
-                            "expected_main_dictionary_name": "CC_main_table",
-                            "expected_additional_data_table_names": [],
-                        },
                         "train_coclustering": {
                             "expected_n_dictionaries": 1,
                             "expected_main_table_key": None,
@@ -480,13 +463,11 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "fit": [
                     ("khiops.core", "train_coclustering"),
                     ("khiops.core", "read_coclustering_results_file"),
-                    ("khiops.core", "build_multi_table_dictionary"),
                     ("khiops.core", "prepare_coclustering_deployment"),
                     ("khiops.core", "simplify_coclustering"),
                 ],
                 "simplify": [
                     ("khiops.core", "simplify_coclustering"),
-                    ("khiops.core", "build_multi_table_dictionary"),
                     ("khiops.core", "prepare_coclustering_deployment"),
                 ],
                 "predict": [
@@ -509,9 +490,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                             ("khiops.core", "read_coclustering_results_file"): {
                                 0: os.path.join(cls.output_dir, "Coclustering.khcj")
                             },
-                            ("khiops.core", "build_multi_table_dictionary"): {
-                                2: "CC_main_table"
-                            },
                             ("khiops.core", "train_coclustering"): {
                                 1: "main_table",
                                 3: ("SampleId", "Pos", "Char"),
@@ -528,9 +506,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 3: "CC_main_table",
                                 4: "SampleId",
                                 5: cls.output_dir,
-                            },
-                            ("khiops.core", "build_multi_table_dictionary"): {
-                                2: "CC_main_table"
                             },
                         },
                         "predict": {
@@ -713,9 +688,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "build_frequency_variables": False,
                             },
                             ("khiops.core", "read_coclustering_results_file"): {},
-                            ("khiops.core", "build_multi_table_dictionary"): {
-                                "overwrite_dictionary_file": True
-                            },
                             ("khiops.core", "train_coclustering"): {
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops_train_cc.log"
@@ -736,9 +708,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "build_cluster_variable": True,
                                 "build_distance_variables": False,
                                 "build_frequency_variables": False,
-                            },
-                            ("khiops.core", "build_multi_table_dictionary"): {
-                                "overwrite_dictionary_file": True
                             },
                         },
                         "predict": {
