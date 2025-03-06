@@ -218,35 +218,38 @@ class KhiopsMultitableFitTests(unittest.TestCase):
         KhiopsTestHelper.skip_expensive_test(self)
 
     def test_estimator_multiple_create_and_fit_does_not_raise_exception(self):
-        """Test if estimator can be fitted from paths several times"""
+        """Test if estimator can be fitted from dataframes several times"""
         # Set upt the file based dataset
-        dataset_name = "SpliceJunction"
-        samples_dir = kh.get_runner().samples_dir
+        (
+            root_table_data,
+            secondary_table_data,
+        ) = KhiopsTestHelper.get_two_table_data(
+            "SpliceJunction", "SpliceJunction", "SpliceJunctionDNA"
+        )
+        root_data, _ = KhiopsTestHelper.prepare_data(root_table_data, "Class")
+        secondary_data = KhiopsTestHelper.prepare_data(
+            secondary_table_data, "SampleId", primary_table=root_data[0]
+        )[0]
         dataset = {
             "main_table": "SpliceJunction",
             "tables": {
                 "SpliceJunction": (
-                    os.path.join(samples_dir, dataset_name, "SpliceJunction.txt"),
+                    root_data[0],
                     "SampleId",
                 ),
                 "SpliceJunctionDNA": (
-                    os.path.join(samples_dir, dataset_name, "SpliceJunctionDNA.txt"),
+                    secondary_data[0],
                     "SampleId",
                 ),
             },
-            "format": ("\t", True),
         }
 
         # Train classifier
         output_dir = os.path.join("resources", "tmp", "test_multitable_fit_predict")
+        khiops_classifier = KhiopsClassifier(output_dir=output_dir)
         try:
             for _ in range(2):
-                KhiopsTestHelper.fit_helper(
-                    KhiopsClassifier,
-                    data=(dataset, "Class"),
-                    pickled=False,
-                    output_dir=output_dir,
-                )
+                khiops_classifier.fit(X=dataset, y=root_data[1])
         # Remove data files created during the test
         finally:
             if os.path.exists(output_dir):
