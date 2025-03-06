@@ -431,7 +431,7 @@ class Dataset:
         Either:
           - A single dataframe
           - A ``dict`` dataset specification
-    y : `pandas.Series` or str, optional
+    y : `pandas.Series`, `pandas.DataFrame`, `numpy.ndarray` or str, optional
         The target column.
     categorical_target : bool, default True
         ``True`` if the vector ``y`` should be considered as a categorical variable. If
@@ -616,6 +616,7 @@ class Dataset:
         # - warn=True in column_or_1d is necessary to pass sklearn checks
         if isinstance(y, str):
             y_checked = y
+        # pandas.Series, pandas.DataFrame or numpy.ndarray
         else:
             y_checked = column_or_1d(y, warn=True)
 
