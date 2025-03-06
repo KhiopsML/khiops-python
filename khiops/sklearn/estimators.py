@@ -442,7 +442,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             self.is_multitable_model_ = ds.is_multitable
             self.n_features_in_ = ds.main_table.n_features()
 
-    def _fit_check_params(self, ds, **_):
+    def _fit_check_params(self, _ds, **_):
         """Check the model parameters including those data dependent (in kwargs)"""
         if (
             self.key is not None
@@ -1274,7 +1274,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
                     self.__class__.__name__,
                 )
 
-    def _transform_create_deployment_dataset(self, ds, computation_dir):
+    def _transform_create_deployment_dataset(self, ds, _):
         assert not ds.is_multitable, "'dataset' is multitable"
 
         # Build the multitable deployment dataset
