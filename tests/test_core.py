@@ -473,8 +473,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                 dataset: {
                     "args": [
                         f"{dataset}._khc",
-                        f"Simplified{dataset}._khcj",
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}SimplifiedCoclusteringResults.khcj",
                     ],
                     "kwargs": {
                         "max_part_numbers": max_part_numbers[dataset],

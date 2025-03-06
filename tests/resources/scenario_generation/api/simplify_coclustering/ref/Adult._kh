@@ -17,7 +17,7 @@ PostProcessingSpec.PostProcessedAttributes.List.Key sex
 PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 16
 
 // Output settings
-PostProcessedCoclusteringFileName AdultResults\SimplifiedAdult._khcj
+PostProcessedCoclusteringFileName AdultResults\AdultSimplifiedCoclusteringResults.khcj
 
 // Simplify Coclustering
 PostProcessCoclustering

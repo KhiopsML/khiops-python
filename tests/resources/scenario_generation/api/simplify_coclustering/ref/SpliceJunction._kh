@@ -13,7 +13,7 @@ PostProcessingSpec.PostProcessedAttributes.List.Key NonExistentVar
 PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 64
 
 // Output settings
-PostProcessedCoclusteringFileName SpliceJunctionResults\SimplifiedSpliceJunction._khcj
+PostProcessedCoclusteringFileName SpliceJunctionResults\SpliceJunctionSimplifiedCoclusteringResults.khcj
 
 // Simplify Coclustering
 PostProcessCoclustering
