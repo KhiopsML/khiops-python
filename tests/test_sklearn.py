@@ -6,7 +6,6 @@
 ######################################################################################
 """Tests parameter transfer between Khiops sklearn and core APIs"""
 import contextlib
-import copy
 import os
 import shutil
 import unittest
@@ -80,18 +79,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             os.makedirs(cls.output_dir)
 
         (
-            train_multitable_file_dataset_classif,
-            test_multitable_file_dataset_classif,
-        ) = cls._create_train_test_multitable_file_dataset()
-
-        (
-            train_multitable_file_dataset_reg,
-            test_multitable_file_dataset_reg,
-        ) = cls._create_train_test_multitable_file_dataset(
-            transform_for_regression=True
-        )
-
-        (
             X_train_multitable_dataframe_classif,
             y_train_multitable_dataframe_classif,
             X_test_multitable_dataframe_classif,
@@ -102,16 +89,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             y_train_multitable_dataframe_reg,
             X_test_multitable_dataframe_reg,
         ) = cls._create_train_test_multitable_dataframe(transform_for_regression=True)
-
-        (
-            train_monotable_file_dataset_classif,
-            test_monotable_file_dataset_classif,
-        ) = cls._create_train_test_monotable_file_dataset("class")
-
-        (
-            train_monotable_file_dataset_reg,
-            test_monotable_file_dataset_reg,
-        ) = cls._create_train_test_monotable_file_dataset("age")
 
         (
             X_train_monotable_dataframe_classif,
@@ -144,20 +121,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
         #   data)
         cls.datasets = {
             "multitable": {
-                "file_dataset": {
-                    KhiopsClassifier: {
-                        "train": train_multitable_file_dataset_classif,
-                        "test": test_multitable_file_dataset_classif,
-                    },
-                    KhiopsEncoder: {
-                        "train": train_multitable_file_dataset_classif,
-                        "test": test_multitable_file_dataset_classif,
-                    },
-                    KhiopsRegressor: {
-                        "train": train_multitable_file_dataset_reg,
-                        "test": test_multitable_file_dataset_reg,
-                    },
-                },
                 "dataframe": {
                     KhiopsClassifier: {
                         "X_train": X_train_multitable_dataframe_classif,
@@ -177,20 +140,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 },
             },
             "monotable": {
-                "file_dataset": {
-                    KhiopsClassifier: {
-                        "train": train_monotable_file_dataset_classif,
-                        "test": test_monotable_file_dataset_classif,
-                    },
-                    KhiopsEncoder: {
-                        "train": train_monotable_file_dataset_classif,
-                        "test": test_monotable_file_dataset_classif,
-                    },
-                    KhiopsRegressor: {
-                        "train": train_monotable_file_dataset_reg,
-                        "test": test_monotable_file_dataset_reg,
-                    },
-                },
                 "dataframe": {
                     KhiopsClassifier: {
                         "X_train": X_train_monotable_dataframe_classif,
@@ -444,34 +393,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     }
                 },
-                ("file_dataset",): {
-                    KhiopsCoclustering: {
-                        "build_multi_table_dictionary": {
-                            "expected_n_dictionaries": 1,
-                            "expected_main_table_key": None,
-                            "expected_main_dictionary_name": "CC_main_table",
-                            "expected_additional_data_table_names": [],
-                        },
-                        "train_coclustering": {
-                            "expected_n_dictionaries": 1,
-                            "expected_main_table_key": None,
-                            "expected_main_dictionary_name": "main_table",
-                            "expected_additional_data_table_names": [],
-                        },
-                        "deploy_model": {
-                            "expected_n_dictionaries": 2,
-                            "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": ("CC_Keys_main_table"),
-                            "expected_additional_data_table_names": ["CC_main_table"],
-                        },
-                        "extract_keys_from_data_table": {
-                            "expected_n_dictionaries": 1,
-                            "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "main_table",
-                            "expected_additional_data_table_names": [],
-                        },
-                    }
-                },
             },
             "monotable": {
                 ("dataframe", "dataframe_xy"): {
@@ -504,76 +425,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     },
                 },
-                ("file_dataset",): {
-                    KhiopsPredictor: {
-                        "train_predictor": {
-                            "expected_n_dictionaries": 1,
-                            "expected_main_table_key": None,
-                            "expected_main_dictionary_name": "main_table",
-                            "expected_additional_data_table_names": [],
-                        },
-                        "deploy_model": {
-                            "expected_n_dictionaries": 1,
-                            "expected_main_table_key": None,
-                            "expected_main_dictionary_name": "SNB_main_table",
-                            "expected_additional_data_table_names": [],
-                        },
-                    },
-                    KhiopsEncoder: {
-                        "train_recoder": {
-                            "expected_n_dictionaries": 1,
-                            "expected_main_table_key": None,
-                            "expected_main_dictionary_name": "main_table",
-                            "expected_additional_data_table_names": [],
-                        },
-                        "deploy_model": {
-                            "expected_n_dictionaries": 1,
-                            "expected_main_table_key": None,
-                            "expected_main_dictionary_name": "R_main_table",
-                            "expected_additional_data_table_names": [],
-                        },
-                    },
-                },
             },
             "multitable": {
-                ("file_dataset",): {
-                    KhiopsPredictor: {
-                        "train_predictor": {
-                            "expected_n_dictionaries": 2,
-                            "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "SpliceJunction",
-                            "expected_additional_data_table_names": [
-                                "SpliceJunctionDNA"
-                            ],
-                        },
-                        "deploy_model": {
-                            "expected_n_dictionaries": 2,
-                            "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "SNB_SpliceJunction",
-                            "expected_additional_data_table_names": [
-                                "SNB_SpliceJunctionDNA"
-                            ],
-                        },
-                    },
-                    KhiopsEncoder: {
-                        "train_recoder": {
-                            "expected_n_dictionaries": 2,
-                            "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "SpliceJunction",
-                            "expected_additional_data_table_names": [
-                                "SpliceJunctionDNA"
-                            ],
-                        },
-                        "deploy_model": {
-                            "expected_n_dictionaries": 2,
-                            "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "R_SpliceJunction",
-                            "expected_additional_data_table_names": [
-                                "R_SpliceJunctionDNA"
-                            ],
-                        },
-                    },
-                },
                 ("dataframe",): {
                     KhiopsPredictor: {
                         "train_predictor": {
@@ -693,40 +546,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     },
                 },
-                ("file_dataset",): {
-                    KhiopsCoclustering: {
-                        "fit": {
-                            ("khiops.core", "prepare_coclustering_deployment"): {
-                                2: os.path.join(cls.output_dir, "Coclustering.khcj"),
-                                3: "CC_main_table",
-                                4: "SampleId",
-                                5: cls.output_dir,
-                            },
-                            ("khiops.core", "read_coclustering_results_file"): {
-                                0: os.path.join(cls.output_dir, "Coclustering.khcj")
-                            },
-                            ("khiops.core", "build_multi_table_dictionary"): {
-                                2: "CC_main_table"
-                            },
-                            ("khiops.core", "train_coclustering"): {
-                                1: "main_table",
-                                3: ("SampleId", "Pos", "Char"),
-                                4: cls.output_dir,
-                            },
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                1: "CC_Keys_main_table",
-                                3: cls.output_dir,
-                            },
-                            ("khiops.core", "extract_keys_from_data_table"): {
-                                1: "main_table",
-                                2: "copy_main_table.txt",
-                                3: "keys_main_table.txt",
-                            },
-                        },
-                    },
-                },
             },
             "monotable": {
                 ("dataframe", "dataframe_xy"): {
@@ -777,57 +596,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     },
                 },
-                ("file_dataset",): {
-                    KhiopsRegressor: {
-                        "fit": {
-                            ("khiops.core", "train_predictor"): {
-                                1: "main_table",
-                                2: "main_table.txt",
-                                3: "age",
-                                4: cls.output_dir,
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                1: "SNB_main_table",
-                                2: "copy_main_table.txt",
-                                3: cls.output_dir,
-                            }
-                        },
-                    },
-                    KhiopsClassifier: {
-                        "fit": {
-                            ("khiops.core", "train_predictor"): {
-                                1: "main_table",
-                                2: "main_table.txt",
-                                3: "class",
-                                4: cls.output_dir,
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                1: "SNB_main_table",
-                                2: "copy_main_table.txt",
-                                3: cls.output_dir,
-                            }
-                        },
-                    },
-                    KhiopsEncoder: {
-                        "fit": {
-                            ("khiops.core", "train_recoder"): {
-                                1: "main_table",
-                                3: "class",
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                1: "R_main_table",
-                                2: "copy_main_table.txt",
-                                3: cls.output_dir,
-                            }
-                        },
-                    },
-                },
             },
             "multitable": {
                 ("dataframe",): {
@@ -873,55 +641,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                             ("khiops.core", "deploy_model"): {
                                 1: "R_SpliceJunction",
                                 2: "SpliceJunction.txt",
-                                3: cls.output_dir,
-                            }
-                        },
-                    },
-                },
-                ("file_dataset",): {
-                    KhiopsRegressor: {
-                        "fit": {
-                            ("khiops.core", "train_predictor"): {
-                                1: "SpliceJunction",
-                                3: "Class",
-                                4: cls.output_dir,
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                1: "SNB_SpliceJunction",
-                                2: "copy_SpliceJunction.txt",
-                                3: cls.output_dir,
-                            }
-                        },
-                    },
-                    KhiopsClassifier: {
-                        "fit": {
-                            ("khiops.core", "train_predictor"): {
-                                1: "SpliceJunction",
-                                3: "Class",
-                                4: cls.output_dir,
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                1: "SNB_SpliceJunction",
-                                2: "copy_SpliceJunction.txt",
-                                3: cls.output_dir,
-                            }
-                        },
-                    },
-                    KhiopsEncoder: {
-                        "fit": {
-                            ("khiops.core", "train_recoder"): {
-                                1: "SpliceJunction",
-                                3: "Class",
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                1: "R_SpliceJunction",
-                                2: "copy_SpliceJunction.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -1040,134 +759,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         },
                     },
                 },
-                ("file_dataset",): {
-                    KhiopsCoclustering: {
-                        "fit": {
-                            ("khiops.core", "prepare_coclustering_deployment"): {
-                                "build_cluster_variable": True,
-                                "build_distance_variables": False,
-                                "build_frequency_variables": False,
-                            },
-                            ("khiops.core", "read_coclustering_results_file"): {},
-                            ("khiops.core", "build_multi_table_dictionary"): {
-                                "overwrite_dictionary_file": True
-                            },
-                            ("khiops.core", "train_coclustering"): {
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops_train_cc.log"
-                                )
-                            },
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                "detect_format": False,
-                                "header_line": True,
-                                "additional_data_tables": {
-                                    "CC_Keys_main_table`CC_main_table"
-                                },
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
-                            },
-                            ("khiops.core", "extract_keys_from_data_table"): {
-                                "header_line": True,
-                                "output_header_line": True,
-                            },
-                        },
-                    },
-                },
             },
             "monotable": {
                 ("dataframe", "dataframe_xy"): {
-                    KhiopsClassifier: {
-                        "fit": {
-                            ("khiops.core", "train_predictor"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "max_pairs": 1,
-                                "max_trees": 5,
-                                "max_selected_variables": 1,
-                                "max_evaluated_variables": 3,
-                                "specific_pairs": [("age", "race")],
-                                "all_possible_pairs": False,
-                                "construction_rules": ["TableMode", "TableSelection"],
-                                "group_target_value": False,
-                                "additional_data_tables": {},
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
-                                "additional_data_tables": {},
-                            }
-                        },
-                    },
-                    KhiopsRegressor: {
-                        "fit": {
-                            ("khiops.core", "train_predictor"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "max_trees": 0,
-                                "max_selected_variables": 1,
-                                "max_evaluated_variables": 3,
-                                "construction_rules": ["TableMode", "TableSelection"],
-                                "additional_data_tables": {},
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
-                                "additional_data_tables": {},
-                            }
-                        },
-                    },
-                    KhiopsEncoder: {
-                        "fit": {
-                            ("khiops.core", "train_recoder"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "max_pairs": 1,
-                                "max_trees": 5,
-                                "specific_pairs": [("age", "race")],
-                                "all_possible_pairs": False,
-                                "construction_rules": ["TableMode", "TableSelection"],
-                                "informative_variables_only": True,
-                                "group_target_value": False,
-                                "keep_initial_categorical_variables": False,
-                                "keep_initial_numerical_variables": False,
-                                "categorical_recoding_method": "part Id",
-                                "numerical_recoding_method": "part Id",
-                                "pairs_recoding_method": "part Id",
-                                "additional_data_tables": {},
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
-                                "additional_data_tables": {},
-                            }
-                        },
-                    },
-                },
-                ("file_dataset",): {
                     KhiopsClassifier: {
                         "fit": {
                             ("khiops.core", "train_predictor"): {
@@ -1304,116 +898,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
                                 "construction_rules": ["TableMode", "TableSelection"],
-                                "additional_data_tables": {
-                                    "SpliceJunction`SpliceJunctionDNA"
-                                },
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
-                                "additional_data_tables": {
-                                    "SNB_SpliceJunction`SpliceJunctionDNA"
-                                },
-                            }
-                        },
-                    },
-                    KhiopsEncoder: {
-                        "fit": {
-                            ("khiops.core", "train_recoder"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "max_constructed_variables": 10,
-                                "max_pairs": 1,
-                                "max_trees": 5,
-                                "specific_pairs": [],
-                                "all_possible_pairs": False,
-                                "construction_rules": ["TableMode", "TableSelection"],
-                                "informative_variables_only": True,
-                                "group_target_value": False,
-                                "keep_initial_categorical_variables": False,
-                                "keep_initial_numerical_variables": False,
-                                "categorical_recoding_method": "part Id",
-                                "numerical_recoding_method": "part Id",
-                                "pairs_recoding_method": "part Id",
-                                "additional_data_tables": {
-                                    "SpliceJunction`SpliceJunctionDNA"
-                                },
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
-                                "additional_data_tables": {
-                                    "R_SpliceJunction`SpliceJunctionDNA"
-                                },
-                            }
-                        },
-                    },
-                },
-                ("file_dataset",): {
-                    KhiopsClassifier: {
-                        "fit": {
-                            ("khiops.core", "train_predictor"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "max_constructed_variables": 10,
-                                "max_pairs": 1,
-                                "max_trees": 5,
-                                "max_selected_variables": 1,
-                                "max_evaluated_variables": 3,
-                                "specific_pairs": [],
-                                "all_possible_pairs": False,
-                                "construction_rules": ["TableMode", "TableSelection"],
-                                "group_target_value": False,
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
-                                "additional_data_tables": {
-                                    "SpliceJunction`SpliceJunctionDNA"
-                                },
-                            }
-                        },
-                        "predict": {
-                            ("khiops.core", "deploy_model"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
-                                "additional_data_tables": {
-                                    "SNB_SpliceJunction`SpliceJunctionDNA"
-                                },
-                            }
-                        },
-                    },
-                    KhiopsRegressor: {
-                        "fit": {
-                            ("khiops.core", "train_predictor"): {
-                                "field_separator": "\t",
-                                "detect_format": False,
-                                "header_line": True,
-                                "max_constructed_variables": 10,
-                                "max_trees": 0,
-                                "max_selected_variables": 1,
-                                "max_evaluated_variables": 3,
-                                "construction_rules": ["TableMode", "TableSelection"],
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
                                 "additional_data_tables": {
                                     "SpliceJunction`SpliceJunctionDNA"
                                 },
@@ -1648,84 +1132,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 special_checker(self, actual_value, expected_value)
 
     @classmethod
-    def _create_train_test_multitable_file_dataset(cls, transform_for_regression=False):
-        (
-            root_table_data,
-            secondary_table_data,
-        ) = KhiopsTestHelper.get_two_table_data(
-            "SpliceJunction", "SpliceJunction", "SpliceJunctionDNA"
-        )
-        root_table_file_name_suffix = ""
-        if transform_for_regression:
-            root_table_data.replace({"Class": {"EI": 1, "IE": 2, "N": 3}}, inplace=True)
-            root_table_file_name_suffix = "_R"
-        (root_train_data, root_labels), (
-            root_test_data,
-            _,
-        ) = KhiopsTestHelper.prepare_data(root_table_data, "Class")
-        root_train_data["Class"] = root_labels
-        secondary_train_data = (
-            root_train_data["SampleId"]
-            .to_frame()
-            .merge(secondary_table_data, on="SampleId")
-        )
-        secondary_test_data = (
-            root_test_data["SampleId"]
-            .to_frame()
-            .merge(secondary_table_data, on="SampleId")
-        )
-        root_train_data_path = os.path.join(
-            cls.output_dir, f"SpliceJunction_train{root_table_file_name_suffix}.txt"
-        )
-        root_test_data_path = os.path.join(
-            cls.output_dir, f"SpliceJunction_test{root_table_file_name_suffix}.txt"
-        )
-        secondary_train_data_path = os.path.join(
-            cls.output_dir, "SpliceJunctionDNA_train.txt"
-        )
-        secondary_test_data_path = os.path.join(
-            cls.output_dir, "SpliceJunctionDNA_test.txt"
-        )
-        root_train_data.to_csv(root_train_data_path, sep="\t", header=True, index=False)
-        root_test_data.to_csv(root_test_data_path, sep="\t", header=True, index=False)
-        secondary_train_data.to_csv(
-            secondary_train_data_path, sep="\t", header=True, index=False
-        )
-        secondary_test_data.to_csv(
-            secondary_test_data_path, sep="\t", header=True, index=False
-        )
-        train_dataset = {
-            "main_table": "SpliceJunction",
-            "tables": {
-                "SpliceJunction": (
-                    root_train_data_path,
-                    "SampleId",
-                ),
-                "SpliceJunctionDNA": (
-                    secondary_train_data_path,
-                    "SampleId",
-                ),
-            },
-            "format": ("\t", True),
-        }
-        test_dataset = {
-            "main_table": "SpliceJunction",
-            "tables": {
-                "SpliceJunction": (
-                    root_test_data_path,
-                    "SampleId",
-                ),
-                "SpliceJunctionDNA": (
-                    secondary_test_data_path,
-                    "SampleId",
-                ),
-            },
-            "format": ("\t", True),
-        }
-
-        return (train_dataset, test_dataset)
-
-    @classmethod
     def _create_train_test_multitable_dataframe(cls, transform_for_regression=False):
         dataset_name = "SpliceJunction"
         (
@@ -1761,31 +1167,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             },
         }
         return (X_train_data, y_train_data, X_test_data)
-
-    @classmethod
-    def _create_train_test_monotable_file_dataset(cls, label):
-        data = KhiopsTestHelper.get_monotable_data("Adult")
-        (train_data, train_labels), (
-            test_data,
-            _,
-        ) = KhiopsTestHelper.prepare_data(data, label)
-
-        train_data_path = os.path.join(cls.output_dir, f"Adult_train_for_{label}.txt")
-        test_data_path = os.path.join(cls.output_dir, f"Adult_test_for_{label}.txt")
-        train_data[label] = train_labels
-        train_data.to_csv(train_data_path, sep="\t", header=True, index=False)
-        test_data.to_csv(test_data_path, sep="\t", header=True, index=False)
-        train_dataset = {
-            "main_table": "main_table",
-            "tables": {"main_table": (train_data_path, None)},
-            "format": ("\t", True),
-        }
-        test_dataset = {
-            "main_table": "main_table",
-            "tables": {"main_table": (test_data_path, None)},
-            "format": ("\t", True),
-        }
-        return (train_dataset, test_dataset)
 
     @classmethod
     def _create_train_test_monotable_dataframe(cls, label, y_as_dataframe=False):
@@ -1879,7 +1260,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
           - "dataframe": input data is a Pandas DataFrame, input labels are a Pandas
             Series,
           - "dataframe_xy": input data and labels are both Pandas DataFrames,
-          - "file_dataset": input data is specified as paths to files
 
         The template also takes custom keyword arguments that can be passed
         to specific estimator methods, viz. `fit` and `predict`.
@@ -1906,46 +1286,12 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 estimation_process=KhiopsClassifier,
             )
             # choose train and test sets according to the source type
-            if source_type == "dataframe":
-                X_train_data = data["X_train"]["tables"]["SpliceJunctionDNA"][
-                    0
-                ]  # XXX leaky
-                y_train_data = None
-                X_test_data = data["X_test"]["tables"]["SpliceJunctionDNA"][
-                    0
-                ]  # XXX leaky
-            else:
-                assert source_type == "file_dataset"
-                dataset = copy.deepcopy(data)
-                X_train_data = dataset["train"]
-                del X_train_data["tables"]["SpliceJunction"]  # XXX leaky
-
-                # set the key to None, as the dataset is monotable
-                X_train_data["tables"]["SpliceJunctionDNA"] = (
-                    X_train_data["tables"]["SpliceJunctionDNA"][0],
-                    None,
-                )
-                X_train_data["main_table"] = "main_table"
-                X_train_data["tables"]["main_table"] = X_train_data["tables"][
-                    "SpliceJunctionDNA"
-                ]
-                del X_train_data["tables"]["SpliceJunctionDNA"]
-
-                y_train_data = None
-
-                X_test_data = dataset["test"]
-                del X_test_data["tables"]["SpliceJunction"]  # XXX leaky
-
-                # set the key to None, as the dataset is monotable
-                X_test_data["tables"]["SpliceJunctionDNA"] = (
-                    X_test_data["tables"]["SpliceJunctionDNA"][0],
-                    None,
-                )
-                X_test_data["main_table"] = "main_table"
-                X_test_data["tables"]["main_table"] = X_test_data["tables"][
-                    "SpliceJunctionDNA"
-                ]
-                del X_test_data["tables"]["SpliceJunctionDNA"]
+            assert source_type == "dataframe"
+            X_train_data = data["X_train"]["tables"]["SpliceJunctionDNA"][
+                0
+            ]  # XXX leaky
+            y_train_data = None
+            X_test_data = data["X_test"]["tables"]["SpliceJunctionDNA"][0]  # XXX leaky
         else:
             assert issubclass(estimator_type, KhiopsSupervisedEstimator)
             data = self._retrieve_data(
@@ -1953,22 +1299,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 source_type=source_type,
                 estimation_process=estimator_type,
             )
-            if source_type in ("dataframe", "dataframe_xy"):
-                X_train_data = data["X_train"]
-                y_train_data = data["y_train"]
-                X_test_data = data["X_test"]
-            else:
-                assert source_type == "file_dataset"
-                X_train_data = data["train"]
-                if schema_type == "multitable":
-                    y_train_data = "Class"
-                else:
-                    assert schema_type == "monotable"
-                    if estimator_type == KhiopsRegressor:
-                        y_train_data = "age"
-                    else:
-                        y_train_data = "class"
-                X_test_data = data["test"]
+            X_train_data = data["X_train"]
+            y_train_data = data["y_train"]
+            X_test_data = data["X_test"]
         dataset = self.dataset_of_schema_type[schema_type]
 
         resources = self._define_resources(dataset, estimator_type, estimator_method)
@@ -2138,25 +1471,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             },
         )
 
-    def test_parameter_transfer_classifier_fit_from_monotable_file_dataset(self):
-        """Test parameter transfer from monotable file dataset fit to core API"""
-        self._test_template(
-            estimator_type=KhiopsClassifier,
-            estimator_method="fit",
-            schema_type="monotable",
-            source_type="file_dataset",
-            extra_estimator_kwargs={
-                "n_pairs": 1,
-                "n_trees": 5,
-                "n_selected_features": 1,
-                "n_evaluated_features": 3,
-                "specific_pairs": [("age", "race")],
-                "all_possible_pairs": False,
-                "construction_rules": ["TableMode", "TableSelection"],
-                "group_target_value": False,
-            },
-        )
-
     def test_parameter_transfer_classifier_fit_from_multitable_dataframe(self):
         """Test parameter transfer from multitable dataframe fit to core API"""
         self._test_template(
@@ -2164,26 +1478,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="multitable",
             source_type="dataframe",
-            extra_estimator_kwargs={
-                "n_features": 10,
-                "n_pairs": 1,
-                "n_trees": 5,
-                "n_selected_features": 1,
-                "n_evaluated_features": 3,
-                "specific_pairs": [],
-                "all_possible_pairs": False,
-                "construction_rules": ["TableMode", "TableSelection"],
-                "group_target_value": False,
-            },
-        )
-
-    def test_parameter_transfer_classifier_fit_from_multitable_file_dataset(self):
-        """Test parameter transfer from file dataset fit to core API"""
-        self._test_template(
-            estimator_type=KhiopsClassifier,
-            estimator_method="fit",
-            schema_type="multitable",
-            source_type="file_dataset",
             extra_estimator_kwargs={
                 "n_features": 10,
                 "n_pairs": 1,
@@ -2206,17 +1500,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             source_type="dataframe",
         )
 
-    def test_parameter_transfer_classifier_predict_from_monotable_file_dataset(
-        self,
-    ):
-        """Test parameter transfer from monotable file dataset predict to core api"""
-        self._test_template(
-            estimator_type=KhiopsClassifier,
-            estimator_method="predict",
-            schema_type="monotable",
-            source_type="file_dataset",
-        )
-
     def test_parameter_transfer_classifier_predict_from_multitable_dataframe(self):
         """Test parameter transfer from dataframe predict to core API"""
         self._test_template(
@@ -2224,17 +1507,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="predict",
             schema_type="multitable",
             source_type="dataframe",
-        )
-
-    def test_parameter_transfer_classifier_predict_from_multitable_file_dataset(
-        self,
-    ):
-        """Test parameter transfer from file dataset predict to core API"""
-        self._test_template(
-            estimator_type=KhiopsClassifier,
-            estimator_method="predict",
-            schema_type="multitable",
-            source_type="file_dataset",
         )
 
     def test_parameter_transfer_encoder_fit_from_monotable_dataframe(self):
@@ -2283,28 +1555,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             },
         )
 
-    def test_parameter_transfer_encoder_fit_from_monotable_file_dataset(self):
-        """Test parameter transfer from monotable file dataset fit to core API"""
-        self._test_template(
-            estimator_type=KhiopsEncoder,
-            estimator_method="fit",
-            schema_type="monotable",
-            source_type="file_dataset",
-            extra_estimator_kwargs={
-                "n_pairs": 1,
-                "n_trees": 5,
-                "specific_pairs": [("age", "race")],
-                "all_possible_pairs": False,
-                "construction_rules": ["TableMode", "TableSelection"],
-                "informative_features_only": True,
-                "group_target_value": False,
-                "keep_initial_variables": False,
-                "transform_type_categorical": "part_id",
-                "transform_type_numerical": "part_id",
-                "transform_type_pairs": "part_id",
-            },
-        )
-
     def test_parameter_transfer_encoder_fit_from_multitable_dataframe(self):
         """Test parameter transfer from multitable dataframe fit to core API"""
         self._test_template(
@@ -2312,29 +1562,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="multitable",
             source_type="dataframe",
-            extra_estimator_kwargs={
-                "n_features": 10,
-                "n_pairs": 1,
-                "n_trees": 5,
-                "specific_pairs": [],
-                "all_possible_pairs": False,
-                "construction_rules": ["TableMode", "TableSelection"],
-                "informative_features_only": True,
-                "group_target_value": False,
-                "keep_initial_variables": False,
-                "transform_type_categorical": "part_id",
-                "transform_type_numerical": "part_id",
-                "transform_type_pairs": "part_id",
-            },
-        )
-
-    def test_parameter_transfer_encoder_fit_from_multitable_file_dataset(self):
-        """Test parameter transfer from multitable file dataset fit to core API"""
-        self._test_template(
-            estimator_type=KhiopsEncoder,
-            estimator_method="fit",
-            schema_type="multitable",
-            source_type="file_dataset",
             extra_estimator_kwargs={
                 "n_features": 10,
                 "n_pairs": 1,
@@ -2360,15 +1587,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             source_type="dataframe",
         )
 
-    def test_parameter_transfer_encoder_predict_from_monotable_file_dataset(self):
-        """Test parameter transfer from monotable file dataset predict to core API"""
-        self._test_template(
-            estimator_type=KhiopsEncoder,
-            estimator_method="predict",
-            schema_type="monotable",
-            source_type="file_dataset",
-        )
-
     def test_parameter_transfer_encoder_predict_from_multitable_dataframe(self):
         """Test parameter transfer from dataframe predict to core API"""
         self._test_template(
@@ -2376,15 +1594,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="predict",
             schema_type="multitable",
             source_type="dataframe",
-        )
-
-    def test_parameter_transfer_encoder_predict_from_multitable_file_dataset(self):
-        """Test parameter transfer from file dataset predict to core API"""
-        self._test_template(
-            estimator_type=KhiopsEncoder,
-            estimator_method="predict",
-            schema_type="multitable",
-            source_type="file_dataset",
         )
 
     def test_parameter_transfer_regressor_fit_from_monotable_dataframe(self):
@@ -2417,20 +1626,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             },
         )
 
-    def test_parameter_transfer_regressor_fit_from_monotable_file_dataset(self):
-        """Test parameter transfer from monotable file dataset fit to core API"""
-        self._test_template(
-            estimator_type=KhiopsRegressor,
-            estimator_method="fit",
-            schema_type="monotable",
-            source_type="file_dataset",
-            extra_estimator_kwargs={
-                "n_selected_features": 1,
-                "n_evaluated_features": 3,
-                "construction_rules": ["TableMode", "TableSelection"],
-            },
-        )
-
     def test_parameter_transfer_regressor_fit_from_multitable_dataframe(self):
         """Test parameter transfer from multitable dataframe fit to core API"""
         self._test_template(
@@ -2438,22 +1633,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="multitable",
             source_type="dataframe",
-            extra_estimator_kwargs={
-                "n_features": 10,
-                "n_trees": 0,
-                "n_selected_features": 1,
-                "n_evaluated_features": 3,
-                "construction_rules": ["TableMode", "TableSelection"],
-            },
-        )
-
-    def test_parameter_transfer_regressor_fit_from_multitable_file_dataset(self):
-        """Test parameter transfer from file dataset fit to core API"""
-        self._test_template(
-            estimator_type=KhiopsRegressor,
-            estimator_method="fit",
-            schema_type="multitable",
-            source_type="file_dataset",
             extra_estimator_kwargs={
                 "n_features": 10,
                 "n_trees": 0,
@@ -2472,15 +1651,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             source_type="dataframe",
         )
 
-    def test_parameter_transfer_regressor_predict_from_monotable_file_dataset(self):
-        """Test parameter transfer from monotable file dataset predict to core API"""
-        self._test_template(
-            estimator_type=KhiopsRegressor,
-            estimator_method="predict",
-            schema_type="monotable",
-            source_type="file_dataset",
-        )
-
     def test_parameter_transfer_regressor_predict_from_multitable_dataframe(self):
         """Test parameter transfer from dataframe predict to core API"""
         self._test_template(
@@ -2488,17 +1658,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="predict",
             schema_type="multitable",
             source_type="dataframe",
-        )
-
-    def test_parameter_transfer_regressor_predict_from_multitable_file_dataset(
-        self,
-    ):
-        """Test parameter transfer from file dataset predict to core API"""
-        self._test_template(
-            estimator_type=KhiopsRegressor,
-            estimator_method="predict",
-            schema_type="multitable",
-            source_type="file_dataset",
         )
 
     def test_parameter_transfer_coclustering_fit_from_dataframe(self):
@@ -2513,21 +1672,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                     "columns": ("SampleId", "Pos", "Char"),
                     "id_column": "SampleId",
                     "max_part_numbers": {"SampleId": 2},
-                }
-            },
-        )
-
-    def test_parameter_transfer_coclustering_fit_from_file_dataset(self):
-        """Test parameter transfer from file dataset coclustering fit to core API"""
-        self._test_template(
-            estimator_type=KhiopsCoclustering,
-            estimator_method="fit",
-            schema_type="not_applicable",
-            source_type="file_dataset",
-            custom_kwargs={
-                "fit": {
-                    "columns": ("SampleId", "Pos", "Char"),
-                    "id_column": "SampleId",
                 }
             },
         )
@@ -2564,25 +1708,6 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="predict",
             schema_type="not_applicable",
             source_type="dataframe",
-            custom_kwargs={
-                "fit": {
-                    "columns": ("SampleId", "Pos", "Char"),
-                    "id_column": "SampleId",
-                }
-            },
-        )
-
-    def test_parameter_transfer_coclustering_predict_from_file_dataset(self):
-        # prepare two-table data for coclustering fit from file dataset
-        # wrap core coclustering predict with parameter trace
-        # (namely, two relevant core API methods)
-        # launch sklearn coclustering fit to build a coclustering model
-        # probe parameters passed to core's coclustering predict
-        self._test_template(
-            estimator_type=KhiopsCoclustering,
-            estimator_method="predict",
-            schema_type="not_applicable",
-            source_type="file_dataset",
             custom_kwargs={
                 "fit": {
                     "columns": ("SampleId", "Pos", "Char"),
