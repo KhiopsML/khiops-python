@@ -724,9 +724,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                             ("khiops.core", "deploy_model"): {
                                 "detect_format": False,
                                 "header_line": True,
-                                "additional_data_tables": {
-                                    "CC_Keys_main_table`CC_main_table"
-                                },
+                                "additional_data_tables": {"CC_main_table"},
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
                                 ),
@@ -847,9 +845,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
                                 "group_target_value": False,
-                                "additional_data_tables": {
-                                    "SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                         "predict": {
@@ -860,9 +856,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
                                 ),
-                                "additional_data_tables": {
-                                    "SNB_SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                     },
@@ -877,9 +871,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
                                 "construction_rules": ["TableMode", "TableSelection"],
-                                "additional_data_tables": {
-                                    "SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                         "predict": {
@@ -890,9 +882,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
                                 ),
-                                "additional_data_tables": {
-                                    "SNB_SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                     },
@@ -915,9 +905,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "categorical_recoding_method": "part Id",
                                 "numerical_recoding_method": "part Id",
                                 "pairs_recoding_method": "part Id",
-                                "additional_data_tables": {
-                                    "SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                         "predict": {
@@ -928,9 +916,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
                                 ),
-                                "additional_data_tables": {
-                                    "R_SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                     },
