@@ -46,22 +46,18 @@ class KhiopsCoreIOTests(unittest.TestCase):
         reports = [
             "Adult",
             "AdultEvaluation",
-            "AdultLegacy",
             "Ansi",
             "AnsiGreek",
             "AnsiLatin",
             "AnsiLatinGreek",
             "AnyChar",
-            "AnyCharLegacy",
             "BadTool",
             "Deft2017ChallengeNGrams1000",
             "EmptyDatabase",
             "Greek",
             "Iris2D",
-            "Iris2DLegacy",
             "IrisC",
             "IrisG",
-            "IrisMAPLegacy",
             "IrisR",
             "IrisU",
             "IrisU2D",
@@ -76,12 +72,8 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "XORRegression",
         ]
         reports_warn = [
-            "AdultLegacy",
             "AnsiLatin",
             "AnsiLatinGreek",
-            "AnyCharLegacy",
-            "Iris2DLegacy",
-            "IrisMAPLegacy",
         ]
         reports_ko = ["BadTool", "NoVersion"]
         for report in reports:
@@ -116,7 +108,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
         # Read then json reports, dump them as txt reports and compare to the reference
         reports = [
             "Adult",
-            "AdultLegacy",
             "Iris",
             "Ansi_Coclustering",
             "AnsiGreek_Coclustering",
@@ -128,7 +119,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "MushroomAnnotated",
         ]
         reports_warn = [
-            "AdultLegacy",
             "AnsiLatin_Coclustering",
             "AnsiLatinGreek_Coclustering",
         ]
@@ -228,7 +218,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "AIDSBondCounts",
             "Adult",
             "AdultKey",
-            "AdultLegacy",
             "AdultModeling",
             "Ansi",
             "AnsiGreek",
@@ -253,7 +242,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
         ]
 
         dictionaries_warn = [
-            "AdultLegacy",
             "AnsiLatin",
             "AnsiLatinGreek",
             "AnsiLatinGreek_Modeling",
