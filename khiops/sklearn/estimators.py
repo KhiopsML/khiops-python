@@ -655,10 +655,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         to speed up the processing. This affects the `predict` method.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    variables : list of str, optional
-        A list of column names/indexes to use in the coclustering.
-        **Deprecated** will be removed in Khiops 11. Use the ``columns`` parameter of
-        the `fit` method.
     key : str, optional
         *Multi-table only* : The name of the column to be used as key.
         **Deprecated** will be removed in Khiops 11. Use ``id_column`` parameter of
@@ -695,7 +691,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         build_distance_vars=False,
         build_frequency_vars=False,
         key=None,
-        variables=None,
     ):
         super().__init__(
             key=key,
@@ -707,7 +702,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         self.build_name_var = build_name_var
         self.build_distance_vars = build_distance_vars
         self.build_frequency_vars = build_frequency_vars
-        self.variables = variables
         self.model_id_column = None
 
         # Deprecation message for 'key' and 'variables' constructor parameter
@@ -717,15 +711,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
                     "'key' estimator parameter",
                     "11.0.0",
                     replacement="'id_column' parameter of the 'fit' method",
-                    quote=False,
-                )
-            )
-        if variables is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'variables' estimator parameter",
-                    "11.0.0",
-                    replacement="'columns' parameter of the 'fit' method",
                     quote=False,
                 )
             )
@@ -769,7 +754,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # If 'columns' specified check that:
         # - Is a sequence of string
         # - Is contained in the columns names of the main table
-        columns = kwargs.get("columns", self.variables)
+        columns = kwargs.get("columns")
         if columns is not None:
             if not is_list_like(columns):
                 raise TypeError(type_error_message("columns", columns, "list-like"))
@@ -809,8 +794,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # Set the 'variables' parameter
         if "columns" in kwargs:
             variables = kwargs["columns"]
-        elif self.variables is not None:
-            variables = self.variables
         else:
             variables = list(ds.main_table.column_ids)
 
