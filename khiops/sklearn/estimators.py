@@ -46,7 +46,6 @@ import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
 from khiops.core.helpers import build_multi_table_dictionary_domain
 from khiops.core.internals.common import (
-    deprecation_message,
     is_dict_like,
     is_list_like,
     type_error_message,
@@ -238,21 +237,16 @@ class KhiopsEstimator(ABC, BaseEstimator):
     auto_sort : bool, default ``True``
         *Advanced.*: See concrete estimator classes for information about this
         parameter.
-    key : str, optional
-        The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11.
     """
 
     def __init__(
         self,
-        key=None,
         verbose=False,
         output_dir=None,
         auto_sort=True,
     ):
         # Set the estimator parameters and internal variables
         self._khiops_model_prefix = None
-        self.key = key
         self.output_dir = output_dir
         self.verbose = verbose
 
@@ -436,12 +430,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     def _fit_check_params(self, _ds, **_):
         """Check the model parameters including those data dependent (in kwargs)"""
-        if (
-            self.key is not None
-            and not is_list_like(self.key)
-            and not isinstance(self.key, str)
-        ):
-            raise TypeError(type_error_message("key", self.key, str, "list-like"))
 
     def _fit_check_dataset(self, ds):
         """Checks the pre-conditions of the tables to build the model"""
@@ -655,10 +643,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         to speed up the processing. This affects the `predict` method.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    key : str, optional
-        *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11. Use ``id_column`` parameter of
-        the `fit` method.
 
     Attributes
     ----------
@@ -690,10 +674,8 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         build_name_var=True,
         build_distance_vars=False,
         build_frequency_vars=False,
-        key=None,
     ):
         super().__init__(
-            key=key,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -703,17 +685,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         self.build_distance_vars = build_distance_vars
         self.build_frequency_vars = build_frequency_vars
         self.model_id_column = None
-
-        # Deprecation message for 'key' and 'variables' constructor parameter
-        if key is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'key' estimator parameter",
-                    "11.0.0",
-                    replacement="'id_column' parameter of the 'fit' method",
-                    quote=False,
-                )
-            )
 
     def __sklearn_tags__(self):
         # If we don't implement this trivial method it's not found by the sklearn. This
@@ -771,7 +742,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # - Is specified
         # - Is a string
         # - Is contained in the columns names of the main table
-        id_column = kwargs.get("id_column", self.key)
+        id_column = kwargs.get("id_column")
         if id_column is None:
             raise ValueError("'id_column' is a mandatory parameter")
         if not isinstance(id_column, str):
@@ -831,8 +802,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # Save the id column
         if "id_column" in kwargs:
             self.model_id_column = kwargs["id_column"]
-        else:
-            self.model_id_column = self.key
 
         # Check that the id column was clustered
         try:
@@ -1248,10 +1217,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
     ):
         super().__init__(
-            key=key,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -1264,17 +1231,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self._original_target_dtype = None
         self._predicted_target_meta_data_tag = None
         self._khiops_baseline_model_prefix = None
-
-        # Deprecation message for 'key' constructor parameter
-        if key is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'key' estimator parameter",
-                    "11.0.0",
-                    replacement="dict dataset input",
-                    quote=False,
-                )
-            )
 
     def __sklearn_tags__(self):
         # If we don't implement this trivial method it's not found by the sklearn. This
@@ -1406,7 +1362,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         kwargs = self.get_params()
 
         # Remove non core.api params
-        del kwargs["key"]
         del kwargs["output_dir"]
         del kwargs["auto_sort"]
 
@@ -1612,7 +1567,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -1623,7 +1577,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            key=key,
         )
         # Data to be specified by inherited classes
         self._predicted_target_meta_data_tag = None
@@ -1814,10 +1767,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         affects the `fit`, `predict` and `predict_proba` methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    key : str, optional
-        *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
-        specifications in ``fit``, ``fit_predict``, ``predict`` and ``predict_proba``.
 
     Attributes
     ----------
@@ -1889,7 +1838,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -1900,7 +1848,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            key=key,
         )
         self.n_pairs = n_pairs
         self.specific_pairs = specific_pairs
@@ -2216,10 +2163,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         affects the `fit` and `predict` methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    key : str, optional
-        *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
-        specifications in ``fit``, ``fit_predict``  and ``predict``.
 
     Attributes
     ----------
@@ -2277,7 +2220,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2288,7 +2230,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            key=key,
         )
         self._khiops_model_prefix = "SNB_"
         self._khiops_baseline_model_prefix = "B_"
@@ -2488,10 +2429,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         affects the `fit` and `transform` methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    key : str, optional
-        *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
-        specifications in ``fit`` and ``transform``.
 
     Attributes
     ----------
@@ -2542,7 +2479,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2551,7 +2487,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            key=key,
         )
         self.n_pairs = n_pairs
         self.specific_pairs = specific_pairs
