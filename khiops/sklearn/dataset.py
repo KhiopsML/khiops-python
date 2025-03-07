@@ -481,9 +481,14 @@ class Dataset:
         # A a dataset dict spec
         elif is_dict_like(X):
             self._init_tables_from_mapping(X)
+        elif is_list_like(X):
+            # Transform to a numerical array with sklearn's check_array
+            X_checked = check_array(X, ensure_2d=True, force_all_finite=False)
+            self.main_table = NumpyTable("main_table", X_checked)
+            self.secondary_tables = []
         # Fail if X is not recognized
         else:
-            raise TypeError(type_error_message("X", X, "array-like", Mapping))
+            raise TypeError(type_error_message("X", X, "array-like", Mapping, Sequence))
 
         # Initialization of the target column if any
         if y is not None:
