@@ -848,75 +848,6 @@ def khiops_coclustering_simplify():
     print("---")
 
 
-######################
-# Deprecated samples #
-######################
-
-
-def khiops_classifier_multitable_list():
-    """Trains a KhiopsClassifier using a list dataset specification
-
-    .. warning::
-        This dataset input method is **Deprecated** and will be removed in Khiops 11.
-    """
-    # Imports
-    import os
-    import pandas as pd
-    from khiops import core as kh
-    from khiops.sklearn import KhiopsClassifier
-    from sklearn import metrics
-    from sklearn.model_selection import train_test_split
-
-    # Load the root table of the dataset into a pandas dataframe
-    accidents_data_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
-    accidents_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Accidents.txt"),
-        sep="\t",
-    )
-    X = accidents_df.drop("Gravity", axis=1)
-    y = accidents_df["Gravity"]
-
-    # Split the dataset into train and test
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.3, random_state=1
-    )
-
-    # Load the secondary table of the dataset into a pandas dataframe
-    vehicles_df = pd.read_csv(
-        os.path.join(accidents_data_dir, "Vehicles.txt"), sep="\t"
-    )
-
-    # Split the secondary dataframe with the keys of the split root dataframe
-    X_train_ids = X_train["AccidentId"].to_frame()
-    X_test_ids = X_test["AccidentId"].to_frame()
-    X_train_secondary = X_train_ids.merge(vehicles_df, on="AccidentId")
-    X_test_secondary = X_test_ids.merge(vehicles_df, on="AccidentId")
-
-    # Create the classifier specifying the key column name
-    khc = KhiopsClassifier(key="AccidentId")
-
-    # Train the classifier
-    khc.fit([X_train, X_train_secondary], y_train)
-
-    # Predict the class on the test dataset
-    y_test_pred = khc.predict([X_test, X_test_secondary])
-    print("Predicted classes (first 10):")
-    print(y_test_pred[:10])
-    print("---")
-
-    # Predict the class probability on the test dataset
-    y_test_probas = khc.predict_proba([X_test, X_test_secondary])
-    print("Predicted class probabilities (first 10):")
-    print(y_test_probas[:10])
-    print("---")
-
-    # Evaluate accuracy and auc metrics on the test dataset
-    test_accuracy = metrics.accuracy_score(y_test, y_test_pred)
-    test_auc = metrics.roc_auc_score(y_test, y_test_probas[:, 1])
-    print(f"Test accuracy = {test_accuracy}")
-    print(f"Test auc      = {test_auc}")
-
-
 exported_samples = [
     khiops_classifier,
     khiops_classifier_multiclass,
@@ -933,7 +864,6 @@ exported_samples = [
     khiops_encoder_with_hyperparameters,
     khiops_coclustering,
     khiops_coclustering_simplify,
-    khiops_classifier_multitable_list,
 ]
 
 
