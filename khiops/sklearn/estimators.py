@@ -655,13 +655,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         to speed up the processing. This affects the `predict` method.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    max_part_numbers : dict, optional
-        Maximum number of clusters for each of the co-clustered column. Specifically, a
-        key-value pair of this dictionary represents the column name and its respective
-        maximum number of clusters. If not specified there is no maximum number of
-        clusters is imposed on any column.
-        **Deprecated** will be removed in Khiops 11. Use the ``max_part_number``
-        parameter of the `fit` method.
     variables : list of str, optional
         A list of column names/indexes to use in the coclustering.
         **Deprecated** will be removed in Khiops 11. Use the ``columns`` parameter of
@@ -701,7 +694,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         build_name_var=True,
         build_distance_vars=False,
         build_frequency_vars=False,
-        max_part_numbers=None,
         key=None,
         variables=None,
     ):
@@ -716,7 +708,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         self.build_distance_vars = build_distance_vars
         self.build_frequency_vars = build_frequency_vars
         self.variables = variables
-        self.max_part_numbers = max_part_numbers
         self.model_id_column = None
 
         # Deprecation message for 'key' and 'variables' constructor parameter
@@ -738,15 +729,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
                     quote=False,
                 )
             )
-        if max_part_numbers is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'max_part_numbers' estimator parameter",
-                    "11.0.0",
-                    replacement="'max_part_numbers' parameter of the 'simplify' method",
-                    quote=False,
-                )
-            )
 
     def __sklearn_tags__(self):
         # If we don't implement this trivial method it's not found by the sklearn. This
@@ -762,25 +744,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
-
         id_column : str
             The column that contains the id of the instance.
         columns : list, optional
             The columns to be co-clustered. If not specified it uses all columns.
-        max_part_numbers : dict, optional
-            Maximum number of clusters for each of the co-clustered column.
-            Specifically, a key-value pair of this dictionary represents the column name
-            and its respective maximum number of clusters. If not specified, then no
-            maximum number of clusters is imposed on any column.
-            **Deprecated** (will be removed in Khiops 11). Use the ``simplify``
-            method instead.
 
         Returns
         -------
@@ -826,18 +793,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             raise TypeError(type_error_message("key_columns", id_column, str))
         if id_column not in ds.main_table.column_ids:
             raise ValueError(f"id column '{id_column}' not found in X")
-
-        # Deprecate the 'max_part_numbers' parameter
-        max_part_numbers = kwargs.get("max_part_numbers", self.max_part_numbers)
-        if max_part_numbers is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'max_part_numbers' 'fit' parameter",
-                    "11.0.0",
-                    replacement="'max_part_numbers' parameter of the 'simplify' method",
-                    quote=False,
-                )
-            )
 
     def _fit_train_model(self, ds, computation_dir, **kwargs):
         assert not ds.is_multitable, "Coclustering not available in multitable"
@@ -930,17 +885,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
                 output_dir, f"{self.model_main_dictionary_name_}_deployed.kdic"
             )
         )
-
-        # If the deprecated `max_part_numbers` is not None, then call `simplify`
-        max_part_numbers = kwargs.get("max_part_numbers", self.max_part_numbers)
-        if max_part_numbers is not None:
-            # Get simplified estimator
-            simplified_cc = self._simplify(max_part_numbers=max_part_numbers)
-
-            # Update main estimator model and report according to the simplified model
-            self.model_ = simplified_cc.model_
-            self.model_report_ = simplified_cc.model_report_
-            self.model_report_raw_ = self.model_report_.json_data
 
     def _fit_training_post_process(self, ds):
         assert (
