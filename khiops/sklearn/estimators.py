@@ -316,6 +316,19 @@ class KhiopsEstimator(ABC, BaseEstimator):
         self._assert_is_fitted()
         return self.model_.get_dictionary(self.model_main_dictionary_name_)
 
+    def _read_model_from_dictionary_file(self, model_dictionary_file_path):
+        """
+        Only keep dictionaries that have _khiops_model_prefix in their name
+        Thus, baseline-model dictionaries (present in regression) are removed.
+        """
+        model = kh.read_dictionary_file(model_dictionary_file_path)
+        if self._khiops_model_prefix is not None:
+            for dictionary in model.dictionaries[:]:
+                if not dictionary.name.startswith(self._khiops_model_prefix):
+                    # delete dictionary from model
+                    model.dictionaries.remove(dictionary)
+        return model
+
     def export_report_file(self, report_file_path):
         """Exports the model report to a JSON file
 
@@ -341,7 +354,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     def _import_model(self, kdic_path):
         """Sets model instance attribute by importing model from ``.kdic``"""
-        self.model_ = kh.read_dictionary_file(kdic_path)
+        self.model_ = self._read_model_from_dictionary_file(kdic_path)
 
     def _get_output_dir(self, fallback_dir):
         if self.output_dir:
@@ -944,8 +957,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         # Update the `model_` attribute of the coclustering estimator to the
         # new coclustering model
-        self.model_ = kh.read_dictionary_file(
-            fs.get_child_path(output_dir, "Coclustering.kdic")
+        self.model_ = self._read_model_from_dictionary_file(
+            fs.get_child_path(
+                output_dir, f"{self.model_main_dictionary_name_}_deployed.kdic"
+            )
         )
 
         # If the deprecated `max_part_numbers` is not None, then call `simplify`
@@ -1167,8 +1182,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
             # Set the `model_` attribute of the new coclustering estimator to
             # the new coclustering model
-            simplified_cc.model_ = kh.read_dictionary_file(
-                fs.get_child_path(output_dir, "Coclustering.kdic")
+            simplified_cc.model_ = self._read_model_from_dictionary_file(
+                fs.get_child_path(
+                    output_dir, f"{self.model_main_dictionary_name_}_deployed.kdic"
+                )
             )
         finally:
             self._cleanup_computation_dir(computation_dir)
@@ -1353,6 +1370,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self.construction_rules = construction_rules
         self._original_target_dtype = None
         self._predicted_target_meta_data_tag = None
+        self._khiops_baseline_model_prefix = None
 
         # Deprecation message for 'key' constructor parameter
         if key is not None:
@@ -1454,7 +1472,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             return
 
         # Save the model domain object and report
-        self.model_ = kh.read_dictionary_file(model_kdic_file_path)
+        self.model_ = self._read_model_from_dictionary_file(model_kdic_file_path)
         self.model_report_ = kh.read_analysis_results_file(report_file_path)
         self.model_report_raw_ = self.model_report_.json_data
 
@@ -1546,15 +1564,26 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             self.model_main_dictionary_name_ = self.model_.dictionaries[0].name
         else:
             for dictionary in self.model_.dictionaries:
-                assert dictionary.name.startswith(self._khiops_model_prefix), (
+
+                # The baseline model is mandatory for regression;
+                # absent for classification and encoding
+                assert (
+                    dictionary.name.startswith(self._khiops_model_prefix)
+                    or self._khiops_baseline_model_prefix is not None
+                    and dictionary.name.startswith(self._khiops_baseline_model_prefix)
+                ), (
                     f"Dictionary '{dictionary.name}' "
-                    f"does not have prefix '{self._khiops_model_prefix}'"
+                    f"does not have prefix '{self._khiops_model_prefix}' "
+                    f"or '{self._khiops_baseline_model_prefix}'."
                 )
-                initial_dictionary_name = dictionary.name.replace(
-                    self._khiops_model_prefix, "", 1
-                )
-                if initial_dictionary_name == ds.main_table.name:
-                    self.model_main_dictionary_name_ = dictionary.name
+
+                # Skip baseline model
+                if dictionary.name.startswith(self._khiops_model_prefix):
+                    initial_dictionary_name = dictionary.name.replace(
+                        self._khiops_model_prefix, "", 1
+                    )
+                    if initial_dictionary_name == ds.main_table.name:
+                        self.model_main_dictionary_name_ = dictionary.name
         if self.model_main_dictionary_name_ is None:
             raise ValueError("No model dictionary after Khiops call")
 
@@ -2394,6 +2423,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
             internal_sort=internal_sort,
         )
         self._khiops_model_prefix = "SNB_"
+        self._khiops_baseline_model_prefix = "B_"
         self._predicted_target_meta_data_tag = "Mean"
         self._predicted_target_name_prefix = "M"
         self._original_target_dtype = np.float64
