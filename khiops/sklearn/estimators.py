@@ -241,11 +241,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
     key : str, optional
         The name of the column to be used as key.
         **Deprecated** will be removed in Khiops 11.
-    internal_sort : bool, optional
-        *Advanced*: See concrete estimator classes for information about this
-        parameter.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        estimator parameter instead.
     """
 
     def __init__(
@@ -254,7 +249,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        internal_sort=None,
     ):
         # Set the estimator parameters and internal variables
         self._khiops_model_prefix = None
@@ -262,22 +256,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         self.output_dir = output_dir
         self.verbose = verbose
 
-        # Set auto_sort and show a deprecation message for internal_sort
-        if internal_sort is not None:
-            self.auto_sort = internal_sort
-            warnings.warn(
-                deprecation_message(
-                    "the 'internal_sort' estimator parameter",
-                    "11.0.0",
-                    replacement="the 'auto_sort' estimator parameter",
-                    quote=False,
-                )
-            )
-        else:
-            self.auto_sort = auto_sort
-
-        # Make sklearn get_params happy
-        self.internal_sort = internal_sort
+        self.auto_sort = auto_sort
 
     def __sklearn_tags__(self):
         # We disable this because this import is only available for scikit-learn>=1.6
@@ -691,15 +670,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         *Multi-table only* : The name of the column to be used as key.
         **Deprecated** will be removed in Khiops 11. Use ``id_column`` parameter of
         the `fit` method.
-    internal_sort : bool, optional
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are
-        automatically sorted by their key before executing Khiops. If the input
-        tables are already sorted by their keys set this parameter to ``False``
-        to speed up the processing. This affects the `predict` method.
-        *Note* The sort by key is performed in a left-to-right, hierarchical,
-        lexicographic manner.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        parameter of the estimator instead.
 
     Attributes
     ----------
@@ -734,14 +704,12 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         max_part_numbers=None,
         key=None,
         variables=None,
-        internal_sort=None,
     ):
         super().__init__(
             key=key,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            internal_sort=internal_sort,
         )
         self._khiops_model_prefix = "CC_"
         self.build_name_var = build_name_var
@@ -1354,14 +1322,12 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         output_dir=None,
         auto_sort=True,
         key=None,
-        internal_sort=None,
     ):
         super().__init__(
             key=key,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            internal_sort=internal_sort,
         )
         self.n_features = n_features
         self.n_trees = n_trees
@@ -1516,7 +1482,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         del kwargs["key"]
         del kwargs["output_dir"]
         del kwargs["auto_sort"]
-        del kwargs["internal_sort"]
 
         # Set the sampling percentage to a 100%
         kwargs["sample_percentage"] = 100
@@ -1721,7 +1686,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         output_dir=None,
         auto_sort=True,
         key=None,
-        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -1733,7 +1697,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             output_dir=output_dir,
             auto_sort=auto_sort,
             key=key,
-            internal_sort=internal_sort,
         )
         # Data to be specified by inherited classes
         self._predicted_target_meta_data_tag = None
@@ -1928,15 +1891,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         *Multi-table only* : The name of the column to be used as key.
         **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
         specifications in ``fit``, ``fit_predict``, ``predict`` and ``predict_proba``.
-    internal_sort : bool, optional
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
-        by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `fit`, `predict` and `predict_proba` methods.
-        *Note* The sort by key is performed in a left-to-right, hierarchical,
-        lexicographic manner.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        estimator parameter instead.
 
     Attributes
     ----------
@@ -2009,7 +1963,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         output_dir=None,
         auto_sort=True,
         key=None,
-        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2021,7 +1974,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             output_dir=output_dir,
             auto_sort=auto_sort,
             key=key,
-            internal_sort=internal_sort,
         )
         self.n_pairs = n_pairs
         self.specific_pairs = specific_pairs
@@ -2341,15 +2293,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         *Multi-table only* : The name of the column to be used as key.
         **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
         specifications in ``fit``, ``fit_predict``  and ``predict``.
-    internal_sort : bool, optional
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
-        by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `fit` and `predict` methods.
-        *Note* The sort by key is performed in a left-to-right, hierarchical,
-        lexicographic manner.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        estimator parameter instead.
 
     Attributes
     ----------
@@ -2408,7 +2351,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         output_dir=None,
         auto_sort=True,
         key=None,
-        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2420,7 +2362,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
             output_dir=output_dir,
             auto_sort=auto_sort,
             key=key,
-            internal_sort=internal_sort,
         )
         self._khiops_model_prefix = "SNB_"
         self._khiops_baseline_model_prefix = "B_"
@@ -2624,15 +2565,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         *Multi-table only* : The name of the column to be used as key.
         **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
         specifications in ``fit`` and ``transform``.
-    internal_sort : bool, optional
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
-        by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `fit` and `transform` methods.
-        *Note* The sort by key is performed in a left-to-right, hierarchical,
-        lexicographic manner.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        estimator parameter instead.
 
     Attributes
     ----------
@@ -2684,7 +2616,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         output_dir=None,
         auto_sort=True,
         key=None,
-        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2694,7 +2625,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             output_dir=output_dir,
             auto_sort=auto_sort,
             key=key,
-            internal_sort=internal_sort,
         )
         self.n_pairs = n_pairs
         self.specific_pairs = specific_pairs
