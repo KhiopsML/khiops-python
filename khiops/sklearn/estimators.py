@@ -45,11 +45,7 @@ import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
 from khiops.core.helpers import build_multi_table_dictionary_domain
-from khiops.core.internals.common import (
-    is_dict_like,
-    is_list_like,
-    type_error_message,
-)
+from khiops.core.internals.common import is_dict_like, is_list_like, type_error_message
 from khiops.sklearn.dataset import (
     Dataset,
     get_khiops_variable_name,
@@ -446,7 +442,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         - self.model_
         - self.model_report_
-        - self.model_report_raw_ (deprecated)
         """
 
     @abstractmethod
@@ -655,10 +650,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         The name of the main Khiops dictionary within the ``model_`` domain.
     model_report_ : `.CoclusteringResults`
         The Khiops report object.
-    model_report_raw_ : dict
-        JSON object of the Khiops report.
-        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
-        attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
     --------
@@ -797,7 +788,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         # Save the report file
         self.model_report_ = kh.read_coclustering_results_file(coclustering_file_path)
-        self.model_report_raw_ = self.model_report_.json_data
 
         # Save the id column
         if "id_column" in kwargs:
@@ -1037,7 +1027,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             simplified_cc.model_report_ = kh.read_coclustering_results_file(
                 simplified_coclustering_file_path
             )
-            simplified_cc.model_report_raw_ = simplified_cc.model_report_.json_data
 
             # Build the individual-variable coclustering model
             self._create_coclustering_model_domain(
@@ -1323,7 +1312,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         # Save the model domain object and report
         self.model_ = self._read_model_from_dictionary_file(model_kdic_file_path)
         self.model_report_ = kh.read_analysis_results_file(report_file_path)
-        self.model_report_raw_ = self.model_report_.json_data
 
     @abstractmethod
     def _fit_core_training_function(self, *args, **kwargs):
@@ -1451,10 +1439,10 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         else:
             pair_feature_evaluated_names_ = []
             pair_feature_evaluated_levels_ = []
-        if "treePreparationReport" in self.model_report_raw_:
-            tree_preparation_report = self.model_report_raw_["treePreparationReport"][
-                "variablesStatistics"
-            ]
+        if "treePreparationReport" in self.model_report_.json_data:
+            tree_preparation_report = self.model_report_.json_data[
+                "treePreparationReport"
+            ]["variablesStatistics"]
             tree_feature_evaluated_names_ = [
                 tree_preparation_report[i]["name"]
                 for i in range(0, len(tree_preparation_report))
@@ -1807,10 +1795,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         The name of the main Khiops dictionary within the ``model_`` domain.
     model_report_ : `.AnalysisResults`
         The Khiops report object.
-    model_report_raw_ : dict
-        JSON object of the Khiops report.
-        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
-        attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
     --------
@@ -2198,10 +2182,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         The name of the main Khiops dictionary within the ``model_`` domain.
     model_report_ : `.AnalysisResults`
         The Khiops report object.
-    model_report_raw_ : dict
-        JSON object of the Khiops report.
-        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
-        attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
     --------
@@ -2448,10 +2428,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         The name of the main Khiops dictionary within the ``model_`` domain.
     model_report_ : `.AnalysisResults`
         The Khiops report object.
-    model_report_raw_ : dict
-        JSON object of the Khiops report.
-        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
-        attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
     --------
