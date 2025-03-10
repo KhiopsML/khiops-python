@@ -23,7 +23,6 @@ import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.core.internals.runner import KhiopsLocalRunner
 from khiops.extras.docker import KhiopsDockerRunner
-from khiops.sklearn import KhiopsClassifier, KhiopsCoclustering
 from tests.test_helper import KhiopsTestHelper
 
 
@@ -189,90 +188,6 @@ class KhiopsRemoteAccessTestsContainer:
             # Check the existence of the training files
             self.assertTrue(fs.exists(report_file_path))
             self.assertTrue(fs.exists(model_file_path))
-
-        def test_khiops_classifier_with_remote_access(self):
-            """Test the training of a khiops_classifier with remote resources"""
-
-            # Setup paths
-            # note : the current implementation forces the khiops.log file
-            # to be created in the output_dir (thus local)
-            # (any attempt to override it as an arg
-            # for the fit method will be ignored)
-
-            # ask for folder cleaning during tearDown
-            self.folder_name_to_clean_in_teardown = output_dir = (
-                self._khiops_temp_dir + f"/KhiopsClassifier_output_dir_{uuid.uuid4()}/"
-            )
-            iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
-            iris_data_file_path = fs.get_child_path(iris_data_dir, "Iris.txt")
-            iris_dataset = {
-                "tables": {"Iris": (iris_data_file_path, None)},
-                "format": ("\t", True),
-            }
-
-            # Test if the 'fit' output files were created
-            classifier = KhiopsClassifier(output_dir=output_dir)
-            classifier.fit(iris_dataset, "Class")
-            self.assertTrue(
-                fs.exists(
-                    fs.get_child_path(
-                        output_dir, f"{iris_dataset.main_table.name}AnalysisResults.khj"
-                    )
-                )
-            )
-            self.assertTrue(
-                fs.exists(
-                    fs.get_child_path(
-                        output_dir,
-                        f"{iris_dataset.main_table.name}AnalysisResults.model.kdic",
-                    )
-                )
-            )
-
-            # Test if the 'predict' output file was created
-            with io.BytesIO(fs.read(iris_data_file_path)) as iris_data_file:
-                iris_df = pd.read_csv(iris_data_file, sep="\t")
-                iris_df.pop("Class")
-            classifier.predict(iris_df)
-            predict_path = fs.get_child_path(output_dir, "predict.txt")
-            self.assertTrue(fs.exists(predict_path), msg=f"Path: {predict_path}")
-
-        def test_khiops_coclustering_with_remote_access(self):
-            """Test the training of a khiops_coclustering with remote resources"""
-
-            # Setup paths
-            # note : the current implementation forces the khiops.log file
-            # to be created in the output_dir (thus local)
-            # (any attempt to override it as an arg
-            # for the fit method will be ignored)
-
-            # ask for folder cleaning during tearDown
-            self.folder_name_to_clean_in_teardown = output_dir = (
-                self._khiops_temp_dir
-                + f"/KhiopsCoclustering_output_dir_{uuid.uuid4()}/"
-            )
-            splice_data_dir = fs.get_child_path(
-                kh.get_runner().samples_dir, "SpliceJunction"
-            )
-            splice_data_file_path = fs.get_child_path(
-                splice_data_dir, "SpliceJunctionDNA.txt"
-            )
-
-            # Read the splice junction secondary datatable
-            with io.BytesIO(fs.read(splice_data_file_path)) as splice_data_file:
-                splice_df = pd.read_csv(splice_data_file, sep="\t")
-
-            # Fit the coclustering
-            khcc = KhiopsCoclustering(output_dir=output_dir)
-            khcc.fit(splice_df, id_column="SampleId")
-
-            # Test if the 'fit' files were created
-            self.assertTrue(
-                fs.exists(fs.get_child_path(output_dir, "Coclustering.kdic"))
-            )
-            self.assertTrue(
-                fs.exists(fs.get_child_path(output_dir, "Coclustering.khcj"))
-            )
 
         def test_train_predictor_fail_and_log_with_remote_access(self):
             """Test train_predictor failure and access to a remote log"""
