@@ -184,6 +184,7 @@ jobs:
             $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
           done
       - name: Display Test Reports
+        if: success() || failure()
         uses: dorny/test-reporter@v1
         with:
           name: Run Tests ${{ matrix.python-version }}
