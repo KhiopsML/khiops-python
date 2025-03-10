@@ -5,7 +5,6 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Integration tests with remote filesystems and Khiops runners"""
-import io
 import os
 import shutil
 import signal
@@ -16,8 +15,6 @@ import unittest
 import uuid
 from contextlib import suppress
 from urllib.request import Request, urlopen
-
-import pandas as pd
 
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
@@ -171,6 +168,16 @@ class KhiopsRemoteAccessTestsContainer:
                 self.results_dir_root(),
                 f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
             )
+
+            # Attempt to make directory if not existing:
+            # - make dir if local
+            # - else, write "dir-like" object
+            if not fs.exists(output_dir):
+                if fs.is_local_resource(output_dir):
+                    fs.make_dir(output_dir)
+                else:
+                    fs.write(f"{output_dir}/", "")
+
             report_file_path = fs.get_child_path(output_dir, "IrisAnalysisResults.khj")
 
             # When using `kh`, the log file will be by default
@@ -197,10 +204,20 @@ class KhiopsRemoteAccessTestsContainer:
 
             # no cleaning required as an exception would be raised
             # without any result produced
-            output_dir = fs.get_child_path(
+            self.folder_name_to_clean_in_teardown = output_dir = fs.get_child_path(
                 self.results_dir_root(),
                 f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
             )
+
+            # Attempt to make directory if not existing:
+            # - make dir if local
+            # - else, write "dir-like" object
+            if not fs.exists(output_dir):
+                if fs.is_local_resource(output_dir):
+                    fs.make_dir(output_dir)
+                else:
+                    fs.write(f"{output_dir}/", "")
+
             report_file_path = fs.get_child_path(
                 output_dir,
                 "IrisAnalysisResults.khj",
