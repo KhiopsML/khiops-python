@@ -108,8 +108,10 @@ class KhiopsParallelRunningTests(TestCase, KhiopsTestHelper):
             callback=partial(
                 KhiopsTestHelper.fit_helper,
                 KhiopsCoclustering,
-                key="SampleId",
-                variables=["SampleId", "Pos", "Char"],
+                fit_kwargs={
+                    "id_column": "SampleId",
+                    "columns": ["SampleId", "Pos", "Char"],
+                },
             ),
             arg_sequence=(secondary_train_data,) * n_clusterers,
             n_cpus=self._n_cpus,
@@ -201,8 +203,10 @@ class KhiopsParallelRunningTests(TestCase, KhiopsTestHelper):
             callback=partial(
                 KhiopsTestHelper.fit_helper,
                 KhiopsCoclustering,
-                key="SampleId",
-                variables=["SampleId", "Pos", "Char"],
+                fit_kwargs={
+                    "id_column": "SampleId",
+                    "columns": ["SampleId", "Pos", "Char"],
+                },
             ),
             arg_sequence=(secondary_train_data,) * n_clusterers,
             n_cpus=self._n_cpus,
