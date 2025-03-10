@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "extract_keys_from_data_table",
         "khiops",
-        "10.0.0",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
@@ -43,16 +43,16 @@ TASKS = [
         // Extract keys settings
         LearningTools.ExtractKeysFromDataTable
         ClassName __dictionary_name__
-        SourceDataTable.DatabaseName __data_table_path__
-        SourceDataTable.HeaderLineUsed __header_line__
-        SourceDataTable.FieldSeparator __field_separator__
+        SourceDataTable.DatabaseSpec.Data.DatabaseName __data_table_path__
+        SourceDataTable.DatabaseSpec.Data.HeaderLineUsed __header_line__
+        SourceDataTable.DatabaseSpec.Data.FieldSeparator __field_separator__
         __OPT__
         __detect_format__
-        SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+        SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         __END_OPT__
-        TargetDataTable.DatabaseName __output_data_table_path__
-        TargetDataTable.HeaderLineUsed __output_header_line__
-        TargetDataTable.FieldSeparator __output_field_separator__
+        TargetDataTable.DatabaseSpec.Data.DatabaseName __output_data_table_path__
+        TargetDataTable.DatabaseSpec.Data.HeaderLineUsed __output_header_line__
+        TargetDataTable.DatabaseSpec.Data.FieldSeparator __output_field_separator__
         ExtractKeysFromDataTable
         Exit
         """,

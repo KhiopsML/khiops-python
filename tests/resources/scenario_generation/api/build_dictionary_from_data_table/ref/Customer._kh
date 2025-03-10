@@ -1,10 +1,11 @@
 // Scenario for task build_dictionary_from_data_table
 // Dictionary building settings
-ClassManagement.BuildClassDefButton
-SourceDataTable.DatabaseName Customer.csv
-SourceDataTable.HeaderLineUsed true
-SourceDataTable.FieldSeparator 
-SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+ClassManagement.ManageClasses
+BuildClassDefButton
+SourceDataTable.DatabaseSpec.Data.DatabaseName Customer.csv
+SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
+SourceDataTable.DatabaseSpec.Data.FieldSeparator
+SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 BuildClassDef
 ClassName Customer
 OK
@@ -13,6 +14,7 @@ Exit
 // Save dictionary
 ClassFileName Customer.kdic
 OK
+Exit
 
 // End of scenario for task build_dictionary_from_data_table
 

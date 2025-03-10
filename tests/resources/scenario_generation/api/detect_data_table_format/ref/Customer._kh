@@ -1,9 +1,8 @@
 // Scenario for task detect_data_table_format
 // Detect format on the "Build Dictionary" window
-ClassManagement.BuildClassDefButton
-SourceDataTable.DatabaseName Customer.csv
-SourceDataTable.DatabaseFormatDetector.DetectFileFormat
-Exit
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key       // List item selection
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 
 // End of scenario for task detect_data_table_format
 

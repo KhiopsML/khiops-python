@@ -105,10 +105,10 @@ class EstimatorAttributesTests(unittest.TestCase):
         else:
             pair_feature_evaluated_names_ = []
             pair_feature_evaluated_levels_ = []
-        if "treePreparationReport" in model.model_report_raw_:
-            tree_preparation_report = model.model_report_raw_["treePreparationReport"][
-                "variablesStatistics"
-            ]
+        if "treePreparationReport" in model.model_report_.json_data:
+            tree_preparation_report = model.model_report_.json_data[
+                "treePreparationReport"
+            ]["variablesStatistics"]
             tree_feature_evaluated_names_ = [
                 tree_preparation_report[i]["name"]
                 for i in range(0, len(tree_preparation_report))

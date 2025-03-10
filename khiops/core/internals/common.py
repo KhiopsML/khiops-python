@@ -99,20 +99,15 @@ class CommandLineOptions:
     task_file_path : str, default ""
         Path of the task file for the Khiops process (command line option ``-p`` of the
         desktop app). If equal to "" then it writes no task file.
-    batch_mode : bool, default True
-        *Deprecated* Will be removed in Khiops 11. If ``True`` activates batch mode
-        (command line option ``-b`` of the app).
     """
 
     def __init__(
         self,
-        batch_mode=True,
         log_file_path="",
         task_file_path="",
         output_scenario_path="",
     ):
         """See class docstring"""
-        self.batch_mode = batch_mode
         self.log_file_path = log_file_path
         self.task_file_path = task_file_path
         self.output_scenario_path = output_scenario_path
@@ -127,9 +122,8 @@ class CommandLineOptions:
                 repr_str = string.decode("utf8", errors="replace")
             return repr_str
 
-        command_line_options = []
-        if self.batch_mode:
-            command_line_options += ["-b"]
+        # Enable batch execution by default
+        command_line_options = ["-b"]
         if self.output_scenario_path:
             command_line_options += ["-o", to_str(self.output_scenario_path)]
         if self.log_file_path:
@@ -140,9 +134,8 @@ class CommandLineOptions:
         return "Khiops command line options: " + " ".join(command_line_options)
 
     def build_command_line_options(self, scenario_path):
-        command_line_options = []
-        if self.batch_mode:
-            command_line_options += ["-b"]
+        # Enable batch execution
+        command_line_options = ["-b"]
         command_line_options += ["-i", scenario_path]
         if self.output_scenario_path:
             command_line_options += ["-o", self.output_scenario_path]
@@ -161,8 +154,6 @@ class CommandLineOptions:
         `TypeError`
             If any of the command line options does not have the proper type.
         """
-        if not isinstance(self.batch_mode, bool):
-            raise TypeError(type_error_message("batch_mode", self.batch_mode, bool))
         if self.output_scenario_path and not is_string_like(self.output_scenario_path):
             raise TypeError(
                 type_error_message(
@@ -278,21 +269,6 @@ def type_error_message(variable_name, variable, *target_types):
         f"{variable_name_str} type must be {target_type_str}, "
         f"not '{type(variable).__name__}'"
     )
-
-
-def removal_message(removed_feature, since, replacement=None):
-    """Formats a feature removal message"""
-    message = f"'{removed_feature}' removed since {since}. "
-    if replacement:
-        message += f"Use '{replacement}'."
-    else:
-        message += "There is no replacement."
-    return message
-
-
-def renaming_message(renamed_feature, new_name, since):
-    """Formats a feature renaming message"""
-    return f"Ignoring '{renamed_feature}': renamed to '{new_name}' since {since}."
 
 
 def invalid_keys_message(kwargs):

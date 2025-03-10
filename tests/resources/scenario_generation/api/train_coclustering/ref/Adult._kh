@@ -3,18 +3,18 @@
 ClassManagement.OpenFile
 ClassFileName Adult.kdic
 OK
-ClassManagement.ClassName Adult
 
 // Train database settings
-Database.DatabaseFiles.List.Key Adult
-Database.DatabaseFiles.DataTableName Adult.csv
-Database.HeaderLineUsed true
-Database.FieldSeparator 
-Database.DatabaseFormatDetector.DetectFileFormat
-Database.SampleNumberPercentage 100.0
-Database.SamplingMode Include sample
-Database.SelectionAttribute 
-Database.SelectionValue 
+Database.ClassName Adult
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv
+Database.DatabaseSpec.Data.HeaderLineUsed true
+Database.DatabaseSpec.Data.FieldSeparator
+Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+Database.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+Database.DatabaseSpec.Sampling.SamplingMode Include sample
+Database.DatabaseSpec.Selection.SelectionAttribute
+Database.DatabaseSpec.Selection.SelectionValue
 
 // Coclustering variables settings
 AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
@@ -25,14 +25,13 @@ AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
 AnalysisSpec.CoclusteringParameters.Attributes.Name race
 AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
 AnalysisSpec.CoclusteringParameters.Attributes.Name sex
-AnalysisSpec.CoclusteringParameters.FrequencyAttribute 
+AnalysisSpec.CoclusteringParameters.FrequencyAttributeName
 
 // Minimum optimization time
 AnalysisSpec.SystemParameters.OptimizationTime 0
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\AdultResults
-AnalysisResults.ResultFilesPrefix 
+AnalysisResults.CoclusteringFileName AdultResults/AdultCoclusteringResults._khcj
 
 // Train
 BuildCoclustering

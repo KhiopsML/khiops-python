@@ -881,6 +881,9 @@ class KhiopsLocalRunner(KhiopsRunner):
                 else:
                     os.environ[var_name] = var_value
 
+                # Set KHIOPS_API_MODE to `true`
+                os.environ["KHIOPS_API_MODE"] = "true"
+
         # Check the tools exist and are executable
         self._check_tools()
 

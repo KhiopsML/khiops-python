@@ -4,7 +4,7 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""check_database task family"""
+"""train_instance_variable_coclustering task family"""
 from khiops.core.internals import task as tm
 from khiops.core.internals.types import (
     BoolType,
@@ -18,13 +18,14 @@ from khiops.core.internals.types import (
 # pylint: disable=line-too-long
 TASKS = [
     tm.KhiopsTask(
-        "check_database",
-        "khiops",
+        "train_instance_variable_coclustering",
+        "khiops_coclustering",
         "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
             ("data_table_path", StringLikeType),
+            ("coclustering_report_file_path", StringLikeType),
         ],
         [
             ("detect_format", BoolType, True),
@@ -35,9 +36,14 @@ TASKS = [
             ("selection_variable", StringLikeType, ""),
             ("selection_value", StringLikeType, ""),
             ("additional_data_tables", DictType(StringLikeType, StringLikeType), None),
-            ("max_messages", IntType, 20),
+            ("min_optimization_time", IntType, 0),
         ],
-        ["dictionary_file_path", "data_table_path", "additional_data_tables"],
+        [
+            "dictionary_file_path",
+            "data_table_path",
+            "coclustering_report_file_path",
+            "additional_data_tables",
+        ],
         # fmt: off
         """
         // Dictionary file and class settings
@@ -46,30 +52,36 @@ TASKS = [
         OK
 
         // Train database settings
-        TrainDatabase.ClassName __dictionary_name__
-        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
+        Database.ClassName __dictionary_name__
+        Database.DatabaseSpec.Data.DatabaseFiles.List.Key
+        Database.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
         __DICT__
         __additional_data_tables__
-        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName
+        Database.DatabaseSpec.Data.DatabaseFiles.List.Key
+        Database.DatabaseSpec.Data.DatabaseFiles.DataTableName
         __END_DICT__
-        TrainDatabase.DatabaseSpec.Data.HeaderLineUsed __header_line__
-        TrainDatabase.DatabaseSpec.Data.FieldSeparator __field_separator__
+        Database.DatabaseSpec.Data.HeaderLineUsed __header_line__
+        Database.DatabaseSpec.Data.FieldSeparator __field_separator__
         __OPT__
         __detect_format__
-        TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+        Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         __END_OPT__
-        TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage __sample_percentage__
-        TrainDatabase.DatabaseSpec.Sampling.SamplingMode __sampling_mode__
-        TrainDatabase.DatabaseSpec.Selection.SelectionAttribute __selection_variable__
-        TrainDatabase.DatabaseSpec.Selection.SelectionValue __selection_value__
+        Database.DatabaseSpec.Sampling.SampleNumberPercentage __sample_percentage__
+        Database.DatabaseSpec.Sampling.SamplingMode __sampling_mode__
+        Database.DatabaseSpec.Selection.SelectionAttribute __selection_variable__
+        Database.DatabaseSpec.Selection.SelectionValue __selection_value__
 
-        // Log messages limit
-        AnalysisSpec.SystemParameters.MaxErrorMessageNumberInLog __max_messages__
+        // Enforce instance x variable coclustering
+        AnalysisSpec.CoclusteringType Instances x Variables coclustering
 
-        // Execute check database
-        LearningTools.CheckData
+        // Minimum optimization time
+        AnalysisSpec.SystemParameters.OptimizationTime __min_optimization_time__
+
+        // Output settings
+        AnalysisResults.CoclusteringFileName __coclustering_report_file_path__
+
+        // Train
+        BuildCoclustering
         """,
         # fmt: on
     ),
