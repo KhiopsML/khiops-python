@@ -21,7 +21,6 @@ import warnings
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain, read_dictionary_file
 from khiops.core.exceptions import KhiopsRuntimeError
-from khiops.core.helpers import build_multi_table_dictionary_domain
 from khiops.core.internals.common import (
     CommandLineOptions,
     SystemSettings,
@@ -1915,86 +1914,6 @@ def detect_data_table_format(
         fs.remove(log_file_path)
 
     return header_line, field_separator
-
-
-# pylint: enable=unused-argument
-
-########################
-# Deprecated functions #
-########################
-
-
-# pylint: disable=unused-argument
-
-
-def build_multi_table_dictionary(
-    dictionary_file_path_or_domain,
-    root_dictionary_name,
-    secondary_table_variable_name,
-    output_dictionary_file_path,
-    overwrite_dictionary_file=False,
-    batch_mode=True,
-    log_file_path=None,
-    output_scenario_path=None,
-    task_file_path=None,
-    trace=False,
-):
-    """Builds a multi-table dictionary from a dictionary with a key
-
-    .. warning::
-        This method is *deprecated* since Khiops 10.1.3 and will be removed in Khiops
-        11. Use the `.build_multi_table_dictionary_domain` helper function to
-        the same effect.
-
-    Parameters
-    ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
-        Path of a Khiops dictionary file or a `.DictionaryDomain` object.
-    root_dictionary_name : str
-        Name for the new root dictionary
-    secondary_table_variable_name : str
-        Name, in the root dictionary, for the "table" variable of the secondary table.
-    output_dictionary_file_path : str
-        Path of the output dictionary path.
-    overwrite_dictionary_file : bool, default ``False``
-        If ``True`` it will overwrite an input dictionary file.
-    ... :
-        See :ref:`core-api-common-params`.
-
-    Raises
-    ------
-    `ValueError`
-        Invalid values of an argument
-    """
-    # Warn the user that this API function is deprecated and will be removed
-    warnings.warn(deprecation_message("build_multi_table_dictionary", "11.0.0"))
-
-    # Create the execution dictionary domain if it is a file
-    _check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
-    if isinstance(dictionary_file_path_or_domain, str):
-        dictionary_domain = read_dictionary_file(dictionary_file_path_or_domain)
-    else:
-        dictionary_domain = dictionary_file_path_or_domain
-
-    # Generate multi-table domain by using the eponymous helper function
-    # Honor exception API:
-    try:
-        multi_table_domain = build_multi_table_dictionary_domain(
-            dictionary_domain, root_dictionary_name, secondary_table_variable_name
-        )
-    except TypeError as error:
-        raise ValueError from error
-
-    # If overwrite_dictionary_file is set and the input is a path to a dictionary,
-    # then the output path is set to the input path
-    if overwrite_dictionary_file and isinstance(dictionary_file_path_or_domain, str):
-        output_dictionary_file_path = dictionary_file_path_or_domain
-
-    # Write multi-table domain to file
-    with io.BytesIO() as stream:
-        writer = KhiopsOutputWriter(stream)
-        multi_table_domain.write(writer)
-        fs.write(output_dictionary_file_path, stream.getvalue())
 
 
 # pylint: enable=unused-argument

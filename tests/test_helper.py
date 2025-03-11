@@ -81,12 +81,6 @@ class CoreApiFunctionMock:
             "output_file_keys": ["deploy_kdic_path"],
             "return_value_number": 0,
         },
-        ("khiops.core", "build_multi_table_dictionary"): {
-            "output_path_arg_index": 3,
-            "output_path_is_dir": False,
-            "output_file_keys": ["kdic_path"],
-            "return_value_number": 0,
-        },
         ("khiops.core", "extract_keys_from_data_table"): {
             "output_path_arg_index": 3,
             "output_path_is_dir": False,

@@ -2283,62 +2283,6 @@ class KhiopsCoreVariousTests(unittest.TestCase):
             "output_dictionary_file_path": multi_table_dict_out_path,
         }
 
-    def test_build_multi_table_dictionary_deprecation(self):
-        """Test that `api.build_multi_table_dictionary` raises deprecation warning"""
-        in_args = KhiopsCoreVariousTests._build_multi_table_dictionary_args()
-
-        with warnings.catch_warnings(record=True) as warning_list:
-            kh.build_multi_table_dictionary(**in_args)
-
-        self.assertEqual(len(warning_list), 1)
-        warning = warning_list[0]
-        self.assertTrue(issubclass(warning.category, UserWarning))
-        warning_message = warning.message
-        self.assertEqual(len(warning_message.args), 1)
-        message = warning_message.args[0]
-        self.assertTrue(
-            "'build_multi_table_dictionary'" in message and "deprecated" in message
-        )
-
-    def test_build_multi_table_dictionary_behavior(self):
-        """Test that the helper function is called with the right parameters"""
-        parameter_trace = KhiopsTestHelper.create_parameter_trace()
-
-        in_args = KhiopsCoreVariousTests._build_multi_table_dictionary_args()
-        helper_name = "build_multi_table_dictionary_domain"
-        KhiopsTestHelper.wrap_with_parameter_trace(
-            "khiops.core.api", helper_name, parameter_trace
-        )
-        with self.assertWarns(UserWarning):
-            kh.build_multi_table_dictionary(**in_args)
-        # Test that at least one trace has been created, so that the assertions can fail
-        self.assertTrue(any(True for _ in parameter_trace.items()))
-        for _, function_parameters in parameter_trace.items():
-            # Test that at least a traced function has been called
-            self.assertTrue(any(True for _ in function_parameters.items()))
-            for function_name, parameters in function_parameters.items():
-                # Test that the helper has been called
-                self.assertEqual(function_name, helper_name)
-                first_call_parameters = parameters[0]
-                args = first_call_parameters["args"]
-
-                # Test that the parameters have been passed
-                self.assertEqual(args[1], in_args["root_dictionary_name"])
-                self.assertEqual(args[2], in_args["secondary_table_variable_name"])
-
-                # Test that the first argument passed is a DictionaryDomain
-                domain = args[0]
-                self.assertTrue(isinstance(domain, kh.DictionaryDomain))
-
-                # Shallowly test that the domain passed to the helper reflects
-                # the source dictionary
-                # N.B. We do not test the function for reading a dictionary file
-                # into a domain here
-                self.assertEqual(len(domain.dictionaries), 1)
-                dictionary = domain.dictionaries[0]
-                self.assertEqual(dictionary.name, "SpliceJunctionDNA")
-                self.assertEqual(dictionary.key, ["SampleId"])
-
     def test_scenario_generation(self):
         """Test the scenario generation from template and arguments"""
         templates = {
