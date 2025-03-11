@@ -189,6 +189,25 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             self.assertTrue(os.path.isfile(mpiexec_path))
             self.assertTrue(os.access(mpiexec_path, os.X_OK))
 
+        # Check that runner creation sets `KHIOPS_API_MODE` to `true`
+        # Store original KHIOPS_API_MODE if any, then delete it from the
+        # environment if present
+        original_khiops_api_mode = os.environ.get("KHIOPS_API_MODE")
+        if original_khiops_api_mode is not None:
+            del os.environ["KHIOPS_API_MODE"]
+
+        # Create fresh runner
+        _ = KhiopsLocalRunner()
+
+        # Get KHIOPS_API_MODE as set after runner initialization
+        env_khiops_api_mode = os.environ.get("KHIOPS_API_MODE")
+
+        # Restore original KHIOPS_API_MODE, if any
+        if original_khiops_api_mode is not None:
+            os.environ["KHIOPS_API_MODE"] = original_khiops_api_mode
+
+        self.assertEqual(env_khiops_api_mode, "true")
+
 
 class KhiopsMultitableFitTests(unittest.TestCase):
     """Test if Khiops estimator can be fitted on multi-table data"""

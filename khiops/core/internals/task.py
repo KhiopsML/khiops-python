@@ -7,10 +7,7 @@
 """Core API functions abstractions"""
 import textwrap
 
-from khiops.core.internals.common import (
-    create_unambiguous_khiops_path,
-    type_error_message,
-)
+from khiops.core.internals.common import type_error_message
 from khiops.core.internals.io import encode_file_path
 from khiops.core.internals.scenario import ConfigurableKhiopsScenario
 from khiops.core.internals.types import (
@@ -287,28 +284,6 @@ class KhiopsTask:
         for arg_name in self._kwargs_signature_by_name:
             if arg_name not in args:
                 absent_kwarg_names.append(arg_name)
-
-        # Disambiguate path parameters affected of Khiops silently
-        # changing its working directory to that of the data tables
-        for path_arg_name in [
-            "results_dir",
-            "evaluation_report_path",
-            "output_data_table_path",
-        ]:
-            if path_arg_name in args:
-                args[path_arg_name] = create_unambiguous_khiops_path(
-                    args[path_arg_name]
-                )
-        if (
-            "output_additional_data_tables" in args
-            and args["output_additional_data_tables"] is not None
-        ):
-            for data_path in args["output_additional_data_tables"].keys():
-                args["output_additional_data_tables"][data_path] = (
-                    create_unambiguous_khiops_path(
-                        args["output_additional_data_tables"][data_path]
-                    )
-                )
 
         # Transform to string-like parameters
         # Path-valued parameters are encoded differently depending on the platform

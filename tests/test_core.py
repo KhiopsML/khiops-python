@@ -18,7 +18,6 @@ from unittest import mock
 import khiops
 import khiops.core as kh
 from khiops.core import KhiopsRuntimeError
-from khiops.core.internals.common import create_unambiguous_khiops_path
 from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import KhiopsLocalRunner, KhiopsRunner
 from khiops.core.internals.scenario import ConfigurableKhiopsScenario
@@ -1926,26 +1925,6 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         dictionary_from_legacy_data_path,
                         domain.get_dictionary_at_data_path(data_path),
                     )
-
-
-class KhiopsCoreSimpleUnitTests(unittest.TestCase):
-    """Test simple testable functions in the core package"""
-
-    def test_create_unambiguous_khiops_path(self):
-        """Test the create_unambiguous_khiops_path function"""
-        expected_outputs = {
-            "/normal/path": "/normal/path",
-            "./relative/path": "./relative/path",
-            "relative/path": os.path.join(".", "relative/path"),
-            ".": ".",
-            "./": "./",
-            ".\\": ".\\",
-            "C:/Normal/Path": "C:/Normal/Path",
-            "C:\\Normal\\Path": "C:\\Normal\\Path",
-            "s3://host/some/path": "s3://host/some/path",
-        }
-        for path, unambiguous_path in expected_outputs.items():
-            self.assertEqual(create_unambiguous_khiops_path(path), unambiguous_path)
 
 
 class ScenarioWriterRunner(KhiopsRunner):

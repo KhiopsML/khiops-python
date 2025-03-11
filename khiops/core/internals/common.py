@@ -5,9 +5,7 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Common utility functions and classes"""
-import os
 from collections.abc import Iterable, Mapping, Sequence
-from urllib.parse import urlparse
 
 
 class SystemSettings:
@@ -168,44 +166,6 @@ class CommandLineOptions:
             raise TypeError(
                 type_error_message("task_file_path", self.task_file_path, str, bytes)
             )
-
-
-def create_unambiguous_khiops_path(path):
-    """Creates a path that is unambiguous for Khiops
-
-    Khiops needs that a non absolute path starts with "." so that it does not use the
-    path of an internally saved state as reference point.
-
-    For example: if we open the data table "/some/path/to/data.txt" and then set the
-    results directory simply as "results" the effective location of the results
-    directory will be "/some/path/to/results" instead of "$CWD/results". This behavior
-    is a feature in the Khiops GUI but it is undesirable when using it as a library.
-
-    This function returns a path so that the library behaves as expected: a path
-    relative to the $CWD if it is a non absolute path.
-    """
-    # Check for string
-    if not isinstance(path, (str, bytes)):
-        raise TypeError(type_error_message("path", path, str, bytes))
-
-    # Empty path returned as-is
-    if not path:
-        return path
-
-    # Add a "." to a local path if necessary. It is *not* necessary when:
-    # - `path` is an URI
-    # - `path` is an absolute path
-    # - `path` is a path starting with "."
-    dot = "."
-    empty = ""
-    if isinstance(path, bytes):
-        dot = bytes(dot, encoding="ascii")
-        empty = bytes(empty, encoding="ascii")
-    uri_info = urlparse(path, allow_fragments=False)
-    if os.path.isabs(path) or path.startswith(dot) or uri_info.scheme != empty:
-        return path
-    else:
-        return os.path.join(dot, path)
 
 
 ############
