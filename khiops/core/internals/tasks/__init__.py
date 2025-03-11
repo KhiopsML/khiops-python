@@ -25,6 +25,7 @@ from khiops.core.internals.tasks import (
     simplify_coclustering,
     sort_data_table,
     train_coclustering,
+    train_instance_variable_coclustering,
     train_predictor,
     train_recoder,
 )
@@ -46,6 +47,7 @@ task_modules = [
     simplify_coclustering,
     sort_data_table,
     train_coclustering,
+    train_instance_variable_coclustering,
     train_predictor,
     train_recoder,
 ]

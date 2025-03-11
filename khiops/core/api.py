@@ -1586,6 +1586,109 @@ def train_coclustering(
     return coclustering_report_file_path
 
 
+def train_instance_variable_coclustering(
+    dictionary_file_path_or_domain,
+    dictionary_name,
+    data_table_path,
+    coclustering_report_file_path,
+    detect_format=True,
+    header_line=None,
+    field_separator=None,
+    sample_percentage=100.0,
+    sampling_mode="Include sample",
+    selection_variable="",
+    selection_value="",
+    additional_data_tables=None,
+    min_optimization_time=0,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
+    trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
+    **kwargs,
+):
+    r"""Trains an instance-variable coclustering model from a data table
+    .. note::
+
+        If keys are available in the input dictionary, they are used as instance
+        identifiers. Otherwise, line numbers in the instance data table are used as
+        instance idenfitiers.
+
+    Parameters
+    ----------
+    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+        Path of a Khiops dictionary file or a DictionaryDomain object.
+    dictionary_name : str
+        Name of the dictionary to be analyzed.
+    data_table_path : str
+        Path of the data table file.
+    coclustering_report_file_path : str
+        Path to the coclustering report file in the JSON format.
+    detect_format : bool, default ``True``
+        If ``True`` detects automatically whether the data table file has a header and
+        its field separator. It is set to ``False`` if ``header_line`` or
+        ``field_separator`` are set.
+    header_line : bool, optional (default ``True``)
+        If ``True`` it uses the first line of the data as column names. Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    field_separator : str, optional (default "\\t")
+        A field separator character. "" has the same effect as "\\t". Sets
+        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
+        is ``True``.
+    sample_percentage : float, default 100.0
+        See ``sampling_mode`` option below.
+    sampling_mode : "Include sample" or "Exclude sample"
+        If equal to "Include sample" it trains the coclustering estimator on
+        ``sample_percentage`` percent of the data. If equal to "Exclude sample" it
+        trains the coclustering estimator on the complement of the data selected with
+        "Include sample". See also :ref:`core-api-sampling-mode`.
+    selection_variable : str, default ""
+        It trains with only the records such that the value of ``selection_variable`` is
+        equal to ``selection_value``. Ignored if equal to "".
+    selection_value: str or int or float, default ""
+        See ``selection_variable`` option above. Ignored if equal to "".
+    additional_data_tables : dict, optional
+        A dictionary containing the data paths and file paths for a multi-table
+        dictionary file. For more details see :doc:`/multi_table_primer`.
+    min_optimization_time : int, default 0
+        Minimum optimization time in seconds.
+    ... :
+        See :ref:`core-api-common-params`.
+
+    Returns
+    -------
+    str
+        The path of the of the resulting coclustering file.
+
+    Raises
+    ------
+    `ValueError`
+        Number of coclustering variables out of the range 2-10.
+    `TypeError`
+        Invalid type of an argument.
+
+    Examples
+    --------
+    See the following function of the ``samples.py`` documentation script:
+        - `samples.train_instance_variable_coclustering()`
+    """
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
+
+    # Run the task
+    _run_task("train_instance_variable_coclustering", task_args)
+
+    # Return the path of the coclustering file
+    return coclustering_report_file_path
+
+
 def simplify_coclustering(
     coclustering_file_path,
     simplified_coclustering_file_path,
