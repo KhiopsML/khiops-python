@@ -7,8 +7,6 @@
 """Classes for handling diverse data tables"""
 import csv
 import io
-import json
-import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, Sequence
 
@@ -429,11 +427,11 @@ class Dataset:
 
     Parameters
     ----------
-    X : `pandas.DataFrame` or dict (**Deprecated types**: tuple and list)
+    X : `pandas.DataFrame` or dict
         Either:
           - A single dataframe
           - A ``dict`` dataset specification
-    y : `pandas.Series` or str, optional
+    y : `pandas.Series`, `pandas.DataFrame` or `numpy.ndarray`, optional
         The target column.
     categorical_target : bool, default True
         ``True`` if the vector ``y`` should be considered as a categorical variable. If
@@ -499,17 +497,6 @@ class Dataset:
             table.name: table for table in [self.main_table] + self.secondary_tables
         }
 
-        # Deprecation warning for file-based datasets
-        if isinstance(self.main_table, FileTable):
-            warnings.warn(
-                deprecation_message(
-                    "File-based dataset spec",
-                    "11.0.0",
-                    "dataframe-based dataset or khiops.core API",
-                    quote=False,
-                ),
-            )
-
         # Post-conditions
         assert self.main_table is not None, "'main_table' is 'None' after init"
         assert isinstance(
@@ -566,39 +553,8 @@ class Dataset:
             main_table_name = X["main_table"]
             main_table_source, main_table_key = X["tables"][main_table_name]
 
-        # Initialize a file dataset
-        if isinstance(main_table_source, str):
-            # Obtain the file format parameters
-            if "format" in X:
-                self.sep, self.header = X["format"]
-            else:
-                self.sep = "\t"
-                self.header = True
-
-            # Initialize the tables
-            self.main_table = FileTable(
-                main_table_name,
-                main_table_source,
-                key=main_table_key,
-                sep=self.sep,
-                header=self.header,
-            )
-            self.secondary_tables = []
-            for table_name, (table_source, table_key) in X["tables"].items():
-                if isinstance(table_key, str):
-                    table_key = [table_key]
-                if table_name != main_table_name:
-                    self.secondary_tables.append(
-                        FileTable(
-                            table_name,
-                            table_source,
-                            key=table_key,
-                            sep=self.sep,
-                            header=self.header,
-                        )
-                    )
         # Initialize a Pandas dataset
-        elif isinstance(main_table_source, pd.DataFrame):
+        if isinstance(main_table_source, pd.DataFrame):
             self.main_table = PandasTable(
                 main_table_name,
                 main_table_source,
@@ -619,7 +575,7 @@ class Dataset:
             )
             self.secondary_tables = []
         # Initialize a numpyarray dataset (monotable)
-        else:
+        elif hasattr(main_table_source, "__array__"):
             self.main_table = NumpyTable(
                 main_table_name,
                 main_table_source,
@@ -630,6 +586,12 @@ class Dataset:
                     "with pandas dataframe source tables"
                 )
             self.secondary_tables = []
+        else:
+            raise TypeError(
+                type_error_message(
+                    "X's main table", main_table_source, "array-like", Mapping
+                )
+            )
 
         # If the relations are not specified initialize to a star schema
         if "relations" not in X:
@@ -657,6 +619,7 @@ class Dataset:
         # - warn=True in column_or_1d is necessary to pass sklearn checks
         if isinstance(y, str):
             y_checked = y
+        # pandas.Series, pandas.DataFrame or numpy.ndarray
         else:
             y_checked = column_or_1d(y, warn=True)
 
@@ -673,13 +636,6 @@ class Dataset:
             raise TypeError(
                 type_error_message("y", y, "array-like")
                 + f" (X's tables are of type {type_message})"
-            )
-        if isinstance(self.main_table.data_source, str) and not isinstance(
-            y_checked, str
-        ):
-            raise TypeError(
-                type_error_message("y", y, str)
-                + " (X's tables are of type str [file paths])"
             )
 
         # Initialize the members related to the target
@@ -726,16 +682,6 @@ class Dataset:
                 self.main_table.khiops_types[self.target_column_id] = "Numerical"
 
     @property
-    def is_in_memory(self):
-        """bool : ``True`` if the dataset is in-memory
-
-        A dataset is in-memory if it is constituted either of only pandas.DataFrame
-        tables, numpy.ndarray, or scipy.sparse.spmatrix tables.
-        """
-
-        return isinstance(self.main_table, (PandasTable, NumpyTable, SparseTable))
-
-    @property
     def table_type(self):
         """type : The table type of this dataset's tables
 
@@ -744,7 +690,6 @@ class Dataset:
         - `PandasTable`
         - `NumpyTable`
         - `SparseTable`
-        - `FileTable`
         """
         return type(self.main_table)
 
@@ -767,8 +712,6 @@ class Dataset:
         if self.relations:
             ds_spec["relations"] = []
             ds_spec["relations"].extend(self.relations)
-        if self.table_type == FileTable:
-            ds_spec["format"] = (self.sep, self.header)
 
         return ds_spec
 
@@ -815,8 +758,8 @@ class Dataset:
         main_dictionary = self.main_table.create_khiops_dictionary()
         dictionary_domain.add_dictionary(main_dictionary)
 
-        # For in-memory datasets: Add the target variable if available
-        if self.is_in_memory and self.target_column is not None:
+        # Add the target variable if available
+        if self.target_column is not None:
             variable = kh.Variable()
             variable.name = get_khiops_variable_name(self.target_column_id)
             if self.categorical_target:
@@ -884,20 +827,13 @@ class Dataset:
             self.is_multitable or self.main_table.key is not None
         )
 
-        # In-memory dataset: Create the table files and add the target column
-        if self.is_in_memory:
-            main_table_path = self.main_table.create_table_file_for_khiops(
-                output_dir,
-                sort=sort_main_table,
-                target_column=self.target_column,
-                target_column_id=self.target_column_id,
-            )
-        # File dataset: Create the table files (the target column is in the file)
-        else:
-            main_table_path = self.main_table.create_table_file_for_khiops(
-                output_dir,
-                sort=sort_main_table,
-            )
+        # Create the table files and add the target column
+        main_table_path = self.main_table.create_table_file_for_khiops(
+            output_dir,
+            sort=sort_main_table,
+            target_column=self.target_column,
+            target_column_id=self.target_column_id,
+        )
 
         # Create a copy of each secondary table
         secondary_table_paths = {}
@@ -1346,120 +1282,3 @@ class SparseTable(DatasetTable):
             )
 
         return output_table_path
-
-
-class FileTable(DatasetTable):
-    """DatasetTable encapsulating a delimited text data file
-
-    Parameters
-    ----------
-    name : str
-        Name for the table.
-    path : str
-        Path of the file containing the table.
-    key : list-like of str, optional
-        The names of the columns composing the key.
-    sep : str, optional
-        Field separator character. If not specified it will be inferred from the file.
-    header : bool, optional
-        Indicates if the table.
-    """
-
-    def __init__(
-        self,
-        name,
-        path,
-        key=None,
-        sep="\t",
-        header=True,
-    ):
-        # Initialize parameters
-        super().__init__(name=name, key=key)
-
-        # Check the parameters specific to this sub-class
-        if not isinstance(path, str):
-            raise TypeError(type_error_message("path", path, str))
-        if not fs.exists(path):
-            raise ValueError(f"Non-existent data table file: {path}")
-
-        # Initialize members specific to this sub-class
-        self.data_source = path
-        self.sep = sep
-        self.header = header
-
-        # Build a dictionary file from the input data table
-        # Note: We use export_dictionary_as_json instead of read_dictionary_file
-        #       because it makes fail the sklearn mocked tests (this is technical debt)
-        try:
-            tmp_kdic_path = kh.get_runner().create_temp_file("file_table_", ".kdic")
-            tmp_kdicj_path = kh.get_runner().create_temp_file("file_table_", ".kdicj")
-            kh.build_dictionary_from_data_table(
-                self.data_source,
-                self.name,
-                tmp_kdic_path,
-                field_separator=self.sep,
-                header_line=header,
-            )
-            kh.export_dictionary_as_json(tmp_kdic_path, tmp_kdicj_path)
-            json_domain = json.loads(fs.read(tmp_kdicj_path))
-        finally:
-            fs.remove(tmp_kdic_path)
-            fs.remove(tmp_kdicj_path)
-
-        # Alert the user if the parsing failed
-        if len(json_domain["dictionaries"]) == 0:
-            raise KhiopsRuntimeError(
-                f"Failed to build a dictionary "
-                f"from data table file: {self.data_source}"
-            )
-
-        # Set the column names and types
-        variables = json_domain["dictionaries"][0]["variables"]
-        self.column_ids = [var["name"] for var in variables]
-        self.khiops_types = {var["name"]: var["type"] for var in variables}
-
-        # Check key integrity
-        self.check_key()
-
-    def create_table_file_for_khiops(self, output_dir, sort=True):
-        assert not sort or self.key is not None, "key is 'None'"
-
-        # Create the input and output file resources
-        if sort:
-            output_table_file_path = fs.get_child_path(
-                output_dir, f"sorted_{self.name}.txt"
-            )
-        else:
-            output_table_file_path = fs.get_child_path(
-                output_dir, f"copy_{self.name}.txt"
-            )
-
-        # Fail if they have the same path
-        if output_table_file_path == self.data_source:
-            raise ValueError(f"Cannot overwrite this table's path: {self.data_source}")
-
-        # Create a sorted copy if requested
-        if sort:
-            # Create the sorting dictionary domain
-            sort_dictionary_domain = kh.DictionaryDomain()
-            sort_dictionary_domain.add_dictionary(self.create_khiops_dictionary())
-
-            # Delegate the sorting and copy to khiops.core.sort_data_table
-            # We use the same input format of the original table
-            kh.sort_data_table(
-                sort_dictionary_domain,
-                self.name,
-                self.data_source,
-                output_table_file_path,
-                self.key,
-                field_separator=self.sep,
-                header_line=self.header,
-                output_field_separator=self.sep,
-                output_header_line=self.header,
-            )
-
-        # Otherwise copy the contents to the output file
-        else:
-            fs.write(output_table_file_path, fs.read(self.data_source))
-
-        return output_table_file_path

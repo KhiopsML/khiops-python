@@ -8,7 +8,6 @@
 import os
 import shutil
 import unittest
-import warnings
 
 import numpy as np
 import pandas as pd
@@ -258,141 +257,67 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         tertiary_table.to_csv(tertiary_table_path, sep="\t", index=False)
         quaternary_table.to_csv(quaternary_table_path, sep="\t", index=False)
 
-    def create_fixture_ds_spec(self, output_dir, data_type, multitable, schema):
+    def create_fixture_ds_spec(self, multitable, schema):
         if not multitable:
-            if data_type == "df":
-                ref_table = self.create_monotable_dataframe()
-                features = ref_table.drop(["class"], axis=1)
-                ds_spec = {
-                    "main_table": "Reviews",
-                    "tables": {"Reviews": (features, "User_ID")},
-                }
-                label = ref_table["class"]
-            else:
-                assert data_type == "file"
-                ref_table_path = os.path.join(output_dir, "Reviews.csv")
-                self.create_monotable_data_file(ref_table_path)
-                ds_spec = {
-                    "main_table": "Reviews",
-                    "tables": {"Reviews": (ref_table_path, "User_ID")},
-                    "format": ("\t", True),
-                }
-                label = "class"
+            ref_table = self.create_monotable_dataframe()
+            features = ref_table.drop(["class"], axis=1)
+            ds_spec = {
+                "main_table": "Reviews",
+                "tables": {"Reviews": (features, "User_ID")},
+            }
+            label = ref_table["class"]
         elif schema == "star":
-            if data_type == "df":
-                (
-                    ref_main_table,
-                    ref_secondary_table,
-                ) = self.create_multitable_star_dataframes()
-                features_ref_main_table = ref_main_table.drop("class", axis=1)
-                ds_spec = {
-                    "main_table": "id_class",
-                    "tables": {
-                        "id_class": (features_ref_main_table, "User_ID"),
-                        "logs": (ref_secondary_table, "User_ID"),
-                    },
-                }
-                label = ref_main_table["class"]
-            else:
-                assert data_type == "file"
-                ref_main_table_path = os.path.join(output_dir, "id_class.csv")
-                ref_secondary_table_path = os.path.join(output_dir, "logs.csv")
-                self.create_multitable_star_data_files(
-                    ref_main_table_path, ref_secondary_table_path
-                )
-                ds_spec = {
-                    "main_table": "id_class",
-                    "tables": {
-                        "id_class": (ref_main_table_path, "User_ID"),
-                        "logs": (ref_secondary_table_path, "User_ID"),
-                    },
-                    "format": ("\t", True),
-                }
-                label = "class"
+            (
+                ref_main_table,
+                ref_secondary_table,
+            ) = self.create_multitable_star_dataframes()
+            features_ref_main_table = ref_main_table.drop("class", axis=1)
+            ds_spec = {
+                "main_table": "id_class",
+                "tables": {
+                    "id_class": (features_ref_main_table, "User_ID"),
+                    "logs": (ref_secondary_table, "User_ID"),
+                },
+            }
+            label = ref_main_table["class"]
         else:
             assert schema == "snowflake"
-            if data_type == "df":
-                (
-                    ref_main_table,
-                    ref_secondary_table_1,
-                    ref_secondary_table_2,
-                    ref_tertiary_table,
-                    ref_quaternary_table,
-                ) = self.create_multitable_snowflake_dataframes()
+            (
+                ref_main_table,
+                ref_secondary_table_1,
+                ref_secondary_table_2,
+                ref_tertiary_table,
+                ref_quaternary_table,
+            ) = self.create_multitable_snowflake_dataframes()
 
-                features_ref_main_table = ref_main_table.drop("class", axis=1)
-                ds_spec = {
-                    "main_table": "A",
-                    "tables": {
-                        "D": (
-                            ref_tertiary_table,
-                            ["User_ID", "VAR_1", "VAR_2"],
-                        ),
-                        "B": (ref_secondary_table_1, ["User_ID", "VAR_1"]),
-                        "E": (
-                            ref_quaternary_table,
-                            ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
-                        ),
-                        "C": (ref_secondary_table_2, ["User_ID"]),
-                        "A": (features_ref_main_table, "User_ID"),
-                    },
-                    "relations": [
-                        ("B", "D", False),
-                        ("A", "C", True),
-                        ("D", "E"),
-                        ("A", "B", False),
-                    ],
-                }
-                label = ref_main_table["class"]
-            else:
-                assert data_type == "file"
-                ref_main_table_path = os.path.join(output_dir, "A.csv")
-                ref_secondary_table_path_1 = os.path.join(output_dir, "B.csv")
-                ref_secondary_table_path_2 = os.path.join(output_dir, "C.csv")
-                ref_tertiary_table_path = os.path.join(output_dir, "D.csv")
-                ref_quaternary_table_path = os.path.join(output_dir, "E.csv")
-
-                self.create_multitable_snowflake_data_files(
-                    ref_main_table_path,
-                    ref_secondary_table_path_1,
-                    ref_secondary_table_path_2,
-                    ref_tertiary_table_path,
-                    ref_quaternary_table_path,
-                )
-                ds_spec = {
-                    "main_table": "A",
-                    "tables": {
-                        "B": (
-                            ref_secondary_table_path_1,
-                            ["User_ID", "VAR_1"],
-                        ),
-                        "E": (
-                            ref_quaternary_table_path,
-                            ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
-                        ),
-                        "C": (
-                            ref_secondary_table_path_2,
-                            ["User_ID"],
-                        ),
-                        "A": (ref_main_table_path, "User_ID"),
-                        "D": (
-                            ref_tertiary_table_path,
-                            ["User_ID", "VAR_1", "VAR_2"],
-                        ),
-                    },
-                    "relations": [
-                        ("B", "D", False),
-                        ("A", "B", False),
-                        ("D", "E"),
-                        ("A", "C", True),
-                    ],
-                    "format": ("\t", True),
-                }
-                label = "class"
+            features_ref_main_table = ref_main_table.drop("class", axis=1)
+            ds_spec = {
+                "main_table": "A",
+                "tables": {
+                    "D": (
+                        ref_tertiary_table,
+                        ["User_ID", "VAR_1", "VAR_2"],
+                    ),
+                    "B": (ref_secondary_table_1, ["User_ID", "VAR_1"]),
+                    "E": (
+                        ref_quaternary_table,
+                        ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
+                    ),
+                    "C": (ref_secondary_table_2, ["User_ID"]),
+                    "A": (features_ref_main_table, "User_ID"),
+                },
+                "relations": [
+                    ("B", "D", False),
+                    ("A", "C", True),
+                    ("D", "E"),
+                    ("A", "B", False),
+                ],
+            }
+            label = ref_main_table["class"]
 
         return ds_spec, label
 
-    def get_ref_var_types(self, multitable, data_type="df", schema=None):
+    def get_ref_var_types(self, multitable, schema=None):
         ref_var_types = {}
         if not multitable:
             ref_var_types["Reviews"] = {
@@ -406,14 +331,6 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                 "Positive Feedback average": "Numerical",
                 "class": "Categorical",
             }
-            # Special type changes for file datasets:
-            #  - "Date" field from "Timestamp" to "Date", the type Khiops detects
-            #  - "Recommended IND" field from "Numerical" to "Categorical" because
-            #    Khiops doesn't parse it well
-            if data_type == "file":
-                ref_var_types["Reviews"]["Date"] = "Date"
-                ref_var_types["Reviews"]["Recommended IND"] = "Categorical"
-                warnings.warn("Changed field `Recommended IND` to avoid a Khiops bug")
         elif schema == "star":
             ref_var_types["id_class"] = {
                 "User_ID": "Categorical",
@@ -427,10 +344,6 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                 "VAR_3": "Numerical",
                 "VAR_4": "Numerical",
             }
-            # Special change for the file type:
-            # - logs.VAR_3 is binary and detected as "Categorical" by Khiops
-            if data_type == "file":
-                ref_var_types["logs"]["VAR_3"] = "Categorical"
         else:
             assert (
                 schema == "snowflake"
@@ -470,19 +383,13 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                 "VAR_3": "Categorical",
                 "VAR_4": "Categorical",
             }
-            # Special change for the file type:
-            # - B.VAR_3 is binary and detected as "Categorical" by Khiops
-            # - C.VAR_3 is binary and detected as "Categorical" by Khiops
-            if data_type == "file":
-                ref_var_types["B"]["VAR_3"] = "Categorical"
-                ref_var_types["C"]["VAR_3"] = "Categorical"
 
         return ref_var_types
 
     def test_dataset_is_correctly_built(self):
         """Test that the dataset structure is consistent with the input spec"""
         ds_spec, label = self.create_fixture_ds_spec(
-            output_dir=None, data_type="df", multitable=True, schema="snowflake"
+            multitable=True, schema="snowflake"
         )
         dataset = Dataset(ds_spec, label)
 
@@ -509,9 +416,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         to that of the csv file created by khiops.sklearn.
         """
         # Create a monotable dataset object from fixture data
-        spec, y = self.create_fixture_ds_spec(
-            output_dir=None, data_type="df", multitable=False, schema=None
-        )
+        spec, y = self.create_fixture_ds_spec(multitable=False, schema=None)
         dataset = Dataset(spec, y=y)
 
         # Create and load the intermediary Khiops file
@@ -654,30 +559,6 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             ),
         )
 
-    def test_out_file_from_data_file_monotable(self):
-        """Test consistency of the created data file with the input data file
-
-         - This test verifies that the content of the input data file is equal
-        to that of the csv file created by khiops.sklearn.
-        """
-        # Create the test dataset
-        ds_spec, label = self.create_fixture_ds_spec(
-            output_dir=self.output_dir, data_type="file", multitable=False, schema=None
-        )
-        dataset = Dataset(ds_spec, label)
-
-        out_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
-        out_table = pd.read_csv(out_table_path, sep="\t")
-
-        ref_table_path = ds_spec["tables"]["Reviews"][0]
-        ref_table = pd.read_csv(ref_table_path, sep="\t")
-
-        # Check that the dataframes are equal
-        assert_frame_equal(
-            ref_table.sort_values(by="User_ID").reset_index(drop=True),
-            out_table,
-        )
-
     def test_out_files_from_dataframes_multitable_star(self):
         """Test consistency of the created data files with the input dataframes
 
@@ -686,9 +567,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
           schema of the dataset is "star".
         """
         # Create the test dataset
-        ds_spec, label = self.create_fixture_ds_spec(
-            output_dir=None, data_type="df", multitable=True, schema="star"
-        )
+        ds_spec, label = self.create_fixture_ds_spec(multitable=True, schema="star")
         dataset = Dataset(ds_spec, label)
 
         # Create the Khiops intermediary files
@@ -722,47 +601,6 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             ).reset_index(drop=True),
         )
 
-    def test_out_files_from_data_files_multitable_star(self):
-        """Test consistency of the created data files with the input data files
-
-         - This test verifies that the content of the input data files, defined
-        through a dictionary, is equal to that of the csv files created by
-        khiops.sklearn. The schema of the dataset is "star".
-        """
-        ds_spec, label = self.create_fixture_ds_spec(
-            output_dir=self.output_dir, data_type="file", multitable=True, schema="star"
-        )
-
-        dataset = Dataset(ds_spec, label)
-        main_table_path, dico_secondary_table = dataset.create_table_files_for_khiops(
-            self.output_dir
-        )
-        secondary_table_path = dico_secondary_table["logs"]
-        out_main_table = pd.read_csv(main_table_path, sep="\t")
-        out_secondary_table = pd.read_csv(secondary_table_path, sep="\t")
-
-        ref_table_path = ds_spec["tables"]["id_class"][0]
-        ref_main_table = pd.read_csv(ref_table_path, sep="\t")
-        ref_secondary_table_path = ds_spec["tables"]["logs"][0]
-        ref_secondary_table = pd.read_csv(ref_secondary_table_path, sep="\t")
-
-        # assertions
-        assert_frame_equal(
-            ref_main_table.sort_values(by="User_ID", ascending=True).reset_index(
-                drop=True
-            ),
-            out_main_table,
-        )
-
-        assert_frame_equal(
-            ref_secondary_table.sort_values(
-                by=ref_secondary_table.columns.tolist(), ascending=True
-            ).reset_index(drop=True),
-            out_secondary_table.sort_values(
-                by=out_secondary_table.columns.tolist(), ascending=True
-            ).reset_index(drop=True),
-        )
-
     def test_out_files_from_dataframes_multitable_snowflake(self):
         """Test consistency of the created data files with the input dataframes
 
@@ -771,7 +609,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         khiops.sklearn. The schema of the dataset is "snowflake".
         """
         ds_spec, label = self.create_fixture_ds_spec(
-            output_dir=None, data_type="df", multitable=True, schema="snowflake"
+            multitable=True, schema="snowflake"
         )
         dataset = Dataset(ds_spec, label)
 
@@ -806,88 +644,18 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                 ).reset_index(drop=True),
             )
 
-    def test_out_files_from_data_files_multitable_snowflake(self):
-        """Test consistency of the created  s with the input data files
-
-         - This test verifies that the content of the input data files, defined
-        through a dictionary, is equal to that of the csv files created
-        by khiops.sklearn. The schema of the dataset is "snowflake".
-        """
-        ds_spec, label = self.create_fixture_ds_spec(
-            output_dir=self.output_dir,
-            data_type="file",
-            multitable=True,
-            schema="snowflake",
-        )
-
-        dataset = Dataset(ds_spec, label)
-        main_table_path, additional_table_paths = dataset.create_table_files_for_khiops(
-            self.output_dir
-        )
-
-        out_main_table = pd.read_csv(main_table_path, sep="\t")
-        ref_main_table_path = ds_spec["tables"]["A"][0]
-        ref_main_table = pd.read_csv(ref_main_table_path, sep="\t")
-
-        # assertions
-        assert_frame_equal(
-            ref_main_table.sort_values(by="User_ID", ascending=True).reset_index(
-                drop=True
-            ),
-            out_main_table,
-        )
-
-        additional_table_names = list(additional_table_paths.keys())
-        for name in additional_table_names:
-            additional_table_path = additional_table_paths[name]
-            out_additional_table = pd.read_csv(additional_table_path, sep="\t")
-            ref_additional_table_path = ds_spec["tables"][name][0]
-            ref_additional_table = pd.read_csv(ref_additional_table_path, sep="\t")
-            assert_frame_equal(
-                out_additional_table.sort_values(
-                    by=out_additional_table.columns.tolist(), ascending=True
-                ).reset_index(drop=True),
-                ref_additional_table.sort_values(
-                    by=ref_additional_table.columns.tolist(), ascending=True
-                ).reset_index(drop=True),
-            )
-
     def test_create_khiops_domain(self):
         """Test consistency of the dataset method create_khiops_domain"""
         fixtures = [
             {
-                "output_dir": None,
-                "data_type": "df",
                 "multitable": False,
                 "schema": None,
             },
             {
-                "output_dir": self.output_dir,
-                "data_type": "file",
-                "multitable": False,
-                "schema": None,
-            },
-            {
-                "output_dir": None,
-                "data_type": "df",
                 "multitable": True,
                 "schema": "star",
             },
             {
-                "output_dir": self.output_dir,
-                "data_type": "file",
-                "multitable": True,
-                "schema": "star",
-            },
-            {
-                "output_dir": None,
-                "data_type": "df",
-                "multitable": True,
-                "schema": "snowflake",
-            },
-            {
-                "output_dir": self.output_dir,
-                "data_type": "file",
                 "multitable": True,
                 "schema": "snowflake",
             },
@@ -898,7 +666,6 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                 ds = Dataset(*self.create_fixture_ds_spec(**fixture))
                 ref_var_types = self.get_ref_var_types(
                     multitable=fixture["multitable"],
-                    data_type=fixture["data_type"],
                     schema=fixture["schema"],
                 )
                 self._test_domain_coherence(ds, ref_var_types)
