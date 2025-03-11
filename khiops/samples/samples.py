@@ -317,7 +317,7 @@ def train_predictor_mt():
         accidents_table_path,
         "Gravity",
         report_file_path,
-        additional_data_tables={"Accident`Vehicles": vehicles_table_path},
+        additional_data_tables={"Vehicles": vehicles_table_path},
         max_trees=0,
     )
 
@@ -355,7 +355,7 @@ def train_predictor_mt_with_specific_rules():
         accidents_table_path,
         "Gravity",
         report_file_path,
-        additional_data_tables={"Accident`Vehicles": vehicles_table_path},
+        additional_data_tables={"Vehicles": vehicles_table_path},
         max_constructed_variables=1000,
         construction_rules=["TableMode", "TableSelection"],
         max_trees=0,
@@ -390,9 +390,9 @@ def train_predictor_mt_snowflake():
         "Gravity",
         report_file_path,
         additional_data_tables={
-            "Accident`Vehicles": vehicles_table_path,
-            "Accident`Vehicles`Users": users_table_path,
-            "Accident`Place": places_table_path,
+            "Vehicles": vehicles_table_path,
+            "Vehicles/Users": users_table_path,
+            "Place": places_table_path,
         },
         max_trees=0,
     )
@@ -1012,7 +1012,7 @@ def train_recoder_mt_flatten():
         accidents_table_path,
         "Gravity",
         report_file_path,
-        additional_data_tables={"Accident`Vehicles": vehicles_table_path},
+        additional_data_tables={"Vehicles": vehicles_table_path},
         max_constructed_variables=1000,
         informative_variables_only=False,
         categorical_recoding_method="none",
@@ -1089,7 +1089,7 @@ def deploy_model_mt():
         accidents_table_path,
         "Gravity",
         report_file_path,
-        additional_data_tables={"Accident`Vehicles": vehicles_table_path},
+        additional_data_tables={"Vehicles": vehicles_table_path},
         max_trees=0,
     )
 
@@ -1101,7 +1101,7 @@ def deploy_model_mt():
         "SNB_Accident",
         accidents_table_path,
         output_data_table_path,
-        additional_data_tables={"SNB_Accident`Vehicles": vehicles_table_path},
+        additional_data_tables={"Vehicles": vehicles_table_path},
     )
 
 
@@ -1138,7 +1138,7 @@ def deploy_model_mt_with_interpretation():
         accidents_table_path,
         "Gravity",
         report_file_path,
-        additional_data_tables={"Accident`Vehicles": vehicles_table_path},
+        additional_data_tables={"Vehicles": vehicles_table_path},
         max_trees=0,
         max_evaluated_variables=10,
     )
@@ -1159,7 +1159,7 @@ def deploy_model_mt_with_interpretation():
         "Interpretation_SNB_Accident",
         accidents_table_path,
         output_data_table_path,
-        additional_data_tables={"SNB_Accident`Vehicles": vehicles_table_path},
+        additional_data_tables={"Vehicles": vehicles_table_path},
     )
 
 
@@ -1191,9 +1191,9 @@ def deploy_model_mt_snowflake():
         "Gravity",
         report_file_path,
         additional_data_tables={
-            "Accident`Vehicles": vehicles_table_path,
-            "Accident`Vehicles`Users": users_table_path,
-            "Accident`Place": places_table_path,
+            "Vehicles": vehicles_table_path,
+            "Vehicles/Users": users_table_path,
+            "Place": places_table_path,
         },
         max_trees=0,
     )
@@ -1207,9 +1207,9 @@ def deploy_model_mt_snowflake():
         accidents_table_path,
         output_data_table_path,
         additional_data_tables={
-            "SNB_Accident`Vehicles": vehicles_table_path,
-            "SNB_Accident`Vehicles`Users": users_table_path,
-            "SNB_Accident`Place": places_table_path,
+            "Vehicles": vehicles_table_path,
+            "Vehicles/Users": users_table_path,
+            "Place": places_table_path,
         },
     )
 
@@ -1717,7 +1717,7 @@ def deploy_coclustering_expert():
         "SpliceJunction",
         data_table_path,
         output_data_table_path,
-        additional_data_tables={"SpliceJunction`DNA": secondary_data_table_path},
+        additional_data_tables={"DNA": secondary_data_table_path},
     )
 
     deployed_dictionary_file_path = os.path.join(

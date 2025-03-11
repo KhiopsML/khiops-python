@@ -194,14 +194,14 @@ The functions in `khiops.core` that allow using multi-table datasets have the op
 ``additional_data_tables``. This dictionary links the secondary tables to their data file paths and
 it's indexed by their **data paths** which are specified as the regular expression::
 
-    root_table_name(`table_variable_name)*
+    (/external_entity_table_name)?(/table_variable_name)*
 
 Specifically:
 
-- the data path for a root table is its name
-- the data path for a secondary table is composed of the name of its source root table followed by
-  the chain of *table variable* names leading to it. The path parts are separated by a backtick
-  `````.
+- the data path for an *external entity* table (see below) is its name, preceded by a forward slash
+- the data path for a secondary table is composed of the data path of its source root table if it
+  is an external entity table followed by the chain of *table variable* names leading to it.
+  The path parts are separated by a forward slash ``/``.
 
 Types of secondary tables include:
 
@@ -279,7 +279,7 @@ In this case the ``additional_data_tables`` argument consists of only one path: 
 secondary table ``Vehicle``. Since it is pointed by the main table ``Accident`` via the table
 variable ``Vehicle`` the ``additional_data_tables`` parameter should be set as::
 
-    additional_data_tables = {"Accident`Vehicles": f"{kh.get_samples_dir()}/Vehicles.txt"}
+    additional_data_tables = {"Vehicles": f"{kh.get_samples_dir()}/Vehicles.txt"}
 
 
 Snowflake Schema
@@ -348,8 +348,8 @@ This time, the relational schema is as follows:
 The ``additional_data_tables`` parameter must be set as::
 
     additional_data_tables = {
-        "Accident`Place": "/path/to/Places.txt",
-        "Accident`Vehicles": "/path/to/Vehicles.txt",
-        "Accident`Vehicles`Users": "/path/to/Users.txt"
+        "Place": "/path/to/Places.txt",
+        "Vehicles": "/path/to/Vehicles.txt",
+        "Vehicles/Users": "/path/to/Users.txt"
     }
 
