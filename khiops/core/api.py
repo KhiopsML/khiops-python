@@ -315,7 +315,7 @@ def _preprocess_task_arguments(task_args):
         if task_args["max_variable_importances"] is not None:
             warnings.warn(
                 "The 'max_variable_importances' parameter of the "
-                "'khiops.core.api.intepret_predictor' function is not supported "
+                "'khiops.core.api.interpret_predictor' function is not supported "
                 " yet. All model variables' importances are computed."
             )
         del task_args["max_variable_importances"]
@@ -803,6 +803,70 @@ def train_predictor(
     return (analysis_report_file_path, modeling_dictionary_file_path)
 
 
+def interpret_predictor(
+    dictionary_file_path_or_domain,
+    predictor_dictionary_name,
+    interpretor_file_path,
+    max_variable_importances=None,
+    reinforcement_target_value="",
+    reinforcement_lever_variables=None,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
+    trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
+    **kwargs,
+):
+    r"""Builds an interpretation dictionary from a predictor
+
+    Parameters
+    ----------
+    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+        Path of a Khiops dictionary file or a DictionaryDomain object.
+    predictor_dictionary_name : str
+        Name of the predictor dictionary used while building the interpretation model.
+    interpretor_file_path : str
+        Path to the interpretor dictionary file.
+    max_variable_importances : int, optional
+        Maximum number of variable importances to be selected in the interpretation
+        model. If not set, then all the variables in the prediction model are
+        considered.
+        ..note:: Not currently supported; not taken into account if set.
+    reinforcement_target_value : str, default ""
+        If this target value is specified, then its probability of occurrence is
+        tentatively increased.
+    reinforcement_lever_variables : list of str, optional
+        The names of variables to use as lever variables while building the
+        interpretation model. Min length: 0. Max length: the total number of variables
+        in the prediction model. If not specified, all variables are used.
+    ... :
+        See :ref:`core-api-common-params`.
+
+    Raises
+    ------
+    `ValueError`
+        Invalid values of an argument
+    `TypeError`
+        Invalid type of an argument
+
+    Examples
+    --------
+    See the following functions of the ``samples.py`` documentation script:
+        - `samples.interpret_predictor()`
+    """
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
+
+    # Run the task
+    _run_task("interpret_predictor", task_args)
+
+
 def evaluate_predictor(
     dictionary_file_path_or_domain,
     train_dictionary_name,
@@ -1205,6 +1269,7 @@ def deploy_model(
     See the following functions of the ``samples.py`` documentation script:
         - `samples.deploy_model()`
         - `samples.deploy_model_mt()`
+        - `samples.deploy_model_mt_with_interpretation()`
         - `samples.deploy_model_mt_snowflake()`
         - `samples.deploy_model_expert()`
 
