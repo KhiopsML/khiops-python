@@ -1,13 +1,13 @@
 #Khiops 10.0.0.3i
 Short description	
 Dimensions	6
-Name	Type	Parts	Initial parts	Values	Interest	Description
-age	Numerical	6	6	48842	1	
-occupation	Categorical	7	7	14	1	
-education_num	Numerical	4	4	48842	1	
-hours_per_week	Numerical	3	3	48842	1	
-marital_status	Categorical	3	3	7	1	
-sex	Categorical	2	2	2	1	
+Name	Is variable part	Type	Parts	Initial parts	Values	Interest	Description
+age	False	Numerical	6	6	48842	1	
+occupation	False	Categorical	7	7	14	1	
+education_num	False	Numerical	4	4	48842	1	
+hours_per_week	False	Numerical	3	3	48842	1	
+marital_status	False	Categorical	3	3	7	1	
+sex	False	Categorical	2	2	2	1	
 
 Coclustering stats
 Instances	48842

@@ -11,6 +11,7 @@ import subprocess
 
 import khiops.core.internals.filesystems as fs
 from khiops.core import api
+from khiops.core.coclustering_results import read_coclustering_results_file
 from khiops.core.dictionary import (
     Dictionary,
     DictionaryDomain,
@@ -215,12 +216,25 @@ def deploy_coclustering(
         Invalid type ``dictionary_file_path_or_domain`` or ``key_variable_names``
     `ValueError`
         If the type of the dictionary key variables is not equal to ``Categorical``
+    `NotImplementedError`
+        If the coclustering to be deployed is of the instance-variable type
 
     Examples
     --------
     See the following function of the ``samples.py`` documentation script:
         - `samples.deploy_coclustering()`
     """
+    # Fail early for instance-variable coclustering, which is not supported
+    if any(
+        dimension.is_variable_part
+        for dimension in read_coclustering_results_file(
+            coclustering_file_path
+        ).coclustering_report.dimensions
+    ):
+        raise NotImplementedError(
+            "Instance-variable coclustering deployment is not yet implemented."
+        )
+
     # Obtain the dictionary of the table where the coclustering variables are
     api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
