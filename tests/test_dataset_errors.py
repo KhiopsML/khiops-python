@@ -431,12 +431,12 @@ class DatasetSpecErrorsTests(unittest.TestCase):
     # Basic X, y tests #
     ####################
 
-    def test_x_must_be_df_or_tuple_or_sequence_or_mapping(self):
+    def test_x_must_be_df_or_sequence_or_mapping(self):
         """Test that `.Dataset` init raises TypeError when X has a wrong type"""
         bad_spec = AnotherType()
         y = "class"
         expected_msg = type_error_message(
-            "X", bad_spec, "array-like", tuple, Sequence, Mapping
+            "X", bad_spec, "array-like", Mapping, Sequence
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
 
@@ -519,13 +519,6 @@ class DatasetSpecErrorsTests(unittest.TestCase):
             "'D' table entry", bad_spec["tables"]["D"], tuple
         )
         self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-    def test_dict_spec_table_input_tuple_must_have_size_2(self):
-        """Test Dataset raising ValueError when a table entry is a tuple of size != 2"""
-        bad_spec, y = self.create_fixture_dataset_spec()
-        bad_spec["tables"]["D"] = (*bad_spec["tables"]["D"], "AnotherT", "YetAnotherT")
-        expected_msg = "'D' table entry must have size 2, not 4"
-        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
 
     def test_dict_spec_source_table_type_must_be_adequate(self):
         """Test Dataset raising TypeError when a table entry is not str nor DataFrame"""
@@ -926,57 +919,3 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         expected_msg_prefix = "Cannot overwrite this table's path"
         self.assertIn(expected_msg_prefix, output_error_msg)
 
-    ##########################################################
-    # Tests for tuple and sequence dataset spec (deprecated) #
-    ##########################################################
-
-    def test_tuple_spec_must_have_length_2(self):
-        """Test that `.Dataset` raises `ValueError` when the tuple is not of size 2"""
-        # Test pour la tuple de taille 3
-        bad_spec = ("a", "b", "\t")
-        y = "class"
-        self.assert_dataset_fails(
-            bad_spec, y, ValueError, "'X' tuple input must have length 2 not 3"
-        )
-
-        # Test pour une tuple de taille 1
-        bad_spec = ("a",)
-        self.assert_dataset_fails(
-            bad_spec, y, ValueError, "'X' tuple input must have length 2 not 1"
-        )
-
-    def test_tuple_spec_elements_must_be_str(self):
-        """Test Dataset raising TypeError when the tuple spec has non-strings"""
-        # Test for the first element
-        bad_spec = (AnotherType(), "/some/path")
-        y = "class"
-        expected_msg = type_error_message("X[0]", bad_spec[0], str)
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-        # Test for the second element
-        bad_spec = ("table-name", AnotherType())
-        expected_msg = type_error_message("X[1]", bad_spec[1], str)
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-    def test_sequence_spec_must_be_a_non_empty(self):
-        """Test that Datasets raises `ValueError` when X is an empty sequence"""
-        bad_spec = []
-        y = "class"
-        expected_msg = "'X' must be a non-empty sequence"
-        self.assert_dataset_fails(bad_spec, y, ValueError, expected_msg)
-
-    def test_sequence_spec_must_be_str_or_df(self):
-        """Test Dataset raising TypeError when it is a sequence with bad types"""
-        # Test that the first element is not str or df
-        bad_spec = [AnotherType(), "table_1"]
-        y = "class"
-        expected_msg = type_error_message("X[0]", bad_spec[0], str, pd.DataFrame)
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)
-
-        # Test that the second element is not str
-        bad_spec = ["table_1", AnotherType()]
-        expected_msg = (
-            type_error_message("Table at index 1", bad_spec[1], str)
-            + " as the first table in X"
-        )
-        self.assert_dataset_fails(bad_spec, y, TypeError, expected_msg)

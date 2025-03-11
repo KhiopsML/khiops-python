@@ -21,13 +21,7 @@ from sklearn.utils.validation import column_or_1d
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import VariableBlock
-from khiops.core.exceptions import KhiopsRuntimeError
-from khiops.core.internals.common import (
-    deprecation_message,
-    is_dict_like,
-    is_list_like,
-    type_error_message,
-)
+from khiops.core.internals.common import is_dict_like, is_list_like, type_error_message
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
@@ -466,7 +460,7 @@ class Dataset:
             self.main_table = PandasTable("main_table", X)
             self.secondary_tables = []
         # A single numpy array (or compatible object)
-        elif hasattr(X, "__array__"):
+        elif hasattr(X, "__array__") or is_list_like(X):
             self.main_table = NumpyTable("main_table", X)
             self.secondary_tables = []
         # A scipy.sparse.spmatrix
@@ -489,57 +483,12 @@ class Dataset:
             ),
         ):
             check_array(X, accept_sparse=False)
-        # A tuple spec
-        elif isinstance(X, tuple):
-            warnings.warn(
-                deprecation_message(
-                    "Tuple dataset input",
-                    "11.0.0",
-                    replacement="dict dataset spec",
-                    quote=False,
-                ),
-                stacklevel=3,
-            )
-            # Check the input tuple
-            self._check_input_tuple(X)
-
-            # Obtain path and separator
-            path, sep = X
-
-            # Initialization
-            self.main_table = FileTable("main_table", path=path, sep=sep)
-            self.secondary_tables = []
-
-        # A dataset sequence spec
-        # We try first for compatible python arrays then the deprecated sequences spec
-        elif is_list_like(X):
-            # Try to transform to a numerical array with sklearn's check_array
-            # On failure we try the old deprecated sequence interface
-            # When the old list interface is eliminated this will considerably reduce
-            # this branch's code
-            try:
-                X_checked = check_array(X, ensure_2d=True, force_all_finite=False)
-                self.main_table = NumpyTable("main_table", X_checked)
-                self.secondary_tables = []
-            except ValueError:
-                warnings.warn(
-                    deprecation_message(
-                        "List dataset input",
-                        "11.0.0",
-                        replacement="dict dataset spec",
-                        quote=False,
-                    ),
-                    stacklevel=3,
-                )
-                self._init_tables_from_sequence(X, key=key)
         # A a dataset dict spec
         elif is_dict_like(X):
             self._init_tables_from_mapping(X)
         # Fail if X is not recognized
         else:
-            raise TypeError(
-                type_error_message("X", X, "array-like", tuple, Sequence, Mapping)
-            )
+            raise TypeError(type_error_message("X", X, "array-like", Mapping, Sequence))
 
         # Initialization of the target column if any
         if y is not None:
@@ -580,35 +529,6 @@ class Dataset:
             raise TypeError(type_error_message("X[0]", X[0], str))
         if not isinstance(X[1], str):
             raise TypeError(type_error_message("X[1]", X[1], str))
-
-    def _init_tables_from_sequence(self, X, key=None):
-        """Initializes the spec from a list-like 'X'"""
-        assert is_list_like(X), "'X' must be a list-like"
-
-        # Check the input sequence
-        self._check_input_sequence(X, key=key)
-
-        # Initialize the tables
-        if isinstance(X[0], pd.DataFrame):
-            self.main_table = PandasTable("main_table", X[0], key=key)
-            self.secondary_tables = []
-            for index, dataframe in enumerate(X[1:], start=1):
-                self.secondary_tables.append(
-                    PandasTable(f"secondary_table_{index:02d}", dataframe, key=key)
-                )
-        else:
-            self.main_table = FileTable("main_table", X[0], key=key)
-            self.secondary_tables = []
-            for index, table_path in enumerate(X[1:], start=1):
-                self.secondary_tables.append(
-                    FileTable(f"secondary_table_{index:02d}", table_path, key=key)
-                )
-
-        # Create a list of relations
-        main_table_name = self.main_table.name
-        self.relations = [
-            (main_table_name, table.name, False) for table in self.secondary_tables
-        ]
 
     def _check_input_sequence(self, X, key=None):
         # Check the first table
@@ -1206,7 +1126,7 @@ class NumpyTable(DatasetTable):
     ----------
     name : str
         Name for the table.
-    array : `numpy.ndarray` of shape (n_samples, n_features_in)
+    array : `numpy.ndarray` of shape (n_samples, n_features_in) or Sequence
         The data frame to be encapsulated.
     key : :external:term`array-like` of int, optional
         The names of the columns composing the key.
@@ -1217,8 +1137,8 @@ class NumpyTable(DatasetTable):
         super().__init__(name, key=key)
 
         # Check the array's types and shape
-        if not hasattr(array, "__array__"):
-            raise TypeError(type_error_message("array", array, np.ndarray))
+        if not hasattr(array, "__array__") and not is_list_like(array):
+            raise TypeError(type_error_message("array", array, np.ndarray, Sequence))
 
         # Initialize the members
         self.data_source = check_array(array, ensure_2d=True, force_all_finite=False)
