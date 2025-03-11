@@ -483,7 +483,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         "fit": {
                             ("khiops.core", "prepare_coclustering_deployment"): {
                                 2: os.path.join(
-                                    cls.output_dir, "main_tableCoclusteringResults.khcj"
+                                    cls.output_dir, "main_table_Coclustering.khcj"
                                 ),
                                 3: "CC_main_table",
                                 4: "SampleId",
@@ -493,7 +493,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                             },
                             ("khiops.core", "read_coclustering_results_file"): {
                                 0: os.path.join(
-                                    cls.output_dir, "main_tableCoclusteringResults.khcj"
+                                    cls.output_dir, "main_table_Coclustering.khcj"
                                 )
                             },
                             ("khiops.core", "train_coclustering"): {
@@ -509,7 +509,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                             },
                             ("khiops.core", "prepare_coclustering_deployment"): {
                                 2: os.path.join(
-                                    cls.output_dir, "main_tableCoclusteringResults.khcj"
+                                    cls.output_dir, "main_table_Coclustering.khcj"
                                 ),
                                 3: "CC_main_table",
                                 4: "SampleId",

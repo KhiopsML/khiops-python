@@ -45,12 +45,7 @@ import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
 from khiops.core.helpers import build_multi_table_dictionary_domain
-from khiops.core.internals.common import (
-    deprecation_message,
-    is_dict_like,
-    is_list_like,
-    type_error_message,
-)
+from khiops.core.internals.common import is_dict_like, is_list_like, type_error_message
 from khiops.sklearn.dataset import (
     Dataset,
     get_khiops_variable_name,
@@ -238,46 +233,19 @@ class KhiopsEstimator(ABC, BaseEstimator):
     auto_sort : bool, default ``True``
         *Advanced.*: See concrete estimator classes for information about this
         parameter.
-    key : str, optional
-        The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11.
-    internal_sort : bool, optional
-        *Advanced*: See concrete estimator classes for information about this
-        parameter.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        estimator parameter instead.
     """
 
     def __init__(
         self,
-        key=None,
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        internal_sort=None,
     ):
         # Set the estimator parameters and internal variables
         self._khiops_model_prefix = None
-        self.key = key
         self.output_dir = output_dir
         self.verbose = verbose
-
-        # Set auto_sort and show a deprecation message for internal_sort
-        if internal_sort is not None:
-            self.auto_sort = internal_sort
-            warnings.warn(
-                deprecation_message(
-                    "the 'internal_sort' estimator parameter",
-                    "11.0.0",
-                    replacement="the 'auto_sort' estimator parameter",
-                    quote=False,
-                )
-            )
-        else:
-            self.auto_sort = auto_sort
-
-        # Make sklearn get_params happy
-        self.internal_sort = internal_sort
+        self.auto_sort = auto_sort
 
     def __sklearn_tags__(self):
         # We disable this because this import is only available for scikit-learn>=1.6
@@ -379,7 +347,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # Create the dataset, fit the model and reset in case of any failure
         try:
             categorical_target = kwargs.get("categorical_target", True)
-            dataset = Dataset(X, y, categorical_target=categorical_target, key=self.key)
+            dataset = Dataset(X, y, categorical_target=categorical_target)
             self._fit(dataset, computation_dir, **kwargs)
         # Undefine any attributes to pass to "not fitted"
         except:
@@ -444,12 +412,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     def _fit_check_params(self, _ds, **_):
         """Check the model parameters including those data dependent (in kwargs)"""
-        if (
-            self.key is not None
-            and not is_list_like(self.key)
-            and not isinstance(self.key, str)
-        ):
-            raise TypeError(type_error_message("key", self.key, str, "list-like"))
 
     def _fit_check_dataset(self, ds):
         """Checks the pre-conditions of the tables to build the model"""
@@ -466,7 +428,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         - self.model_
         - self.model_report_
-        - self.model_report_raw_ (deprecated)
         """
 
     @abstractmethod
@@ -559,13 +520,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter
 
         root_name : str
             Name of root table in trained Khiops model .kdic
@@ -668,30 +622,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         to speed up the processing. This affects the `predict` method.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    max_part_numbers : dict, optional
-        Maximum number of clusters for each of the co-clustered column. Specifically, a
-        key-value pair of this dictionary represents the column name and its respective
-        maximum number of clusters. If not specified there is no maximum number of
-        clusters is imposed on any column.
-        **Deprecated** will be removed in Khiops 11. Use the ``max_part_number``
-        parameter of the `fit` method.
-    variables : list of str, optional
-        A list of column names/indexes to use in the coclustering.
-        **Deprecated** will be removed in Khiops 11. Use the ``columns`` parameter of
-        the `fit` method.
-    key : str, optional
-        *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11. Use ``id_column`` parameter of
-        the `fit` method.
-    internal_sort : bool, optional
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are
-        automatically sorted by their key before executing Khiops. If the input
-        tables are already sorted by their keys set this parameter to ``False``
-        to speed up the processing. This affects the `predict` method.
-        *Note* The sort by key is performed in a left-to-right, hierarchical,
-        lexicographic manner.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        parameter of the estimator instead.
 
     Attributes
     ----------
@@ -704,10 +634,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         The name of the main Khiops dictionary within the ``model_`` domain.
     model_report_ : `.CoclusteringResults`
         The Khiops report object.
-    model_report_raw_ : dict
-        JSON object of the Khiops report.
-        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
-        attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
     --------
@@ -723,54 +649,17 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         build_name_var=True,
         build_distance_vars=False,
         build_frequency_vars=False,
-        max_part_numbers=None,
-        key=None,
-        variables=None,
-        internal_sort=None,
     ):
         super().__init__(
-            key=key,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            internal_sort=internal_sort,
         )
         self._khiops_model_prefix = "CC_"
         self.build_name_var = build_name_var
         self.build_distance_vars = build_distance_vars
         self.build_frequency_vars = build_frequency_vars
-        self.variables = variables
-        self.max_part_numbers = max_part_numbers
         self.model_id_column = None
-
-        # Deprecation message for 'key' and 'variables' constructor parameter
-        if key is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'key' estimator parameter",
-                    "11.0.0",
-                    replacement="'id_column' parameter of the 'fit' method",
-                    quote=False,
-                )
-            )
-        if variables is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'variables' estimator parameter",
-                    "11.0.0",
-                    replacement="'columns' parameter of the 'fit' method",
-                    quote=False,
-                )
-            )
-        if max_part_numbers is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'max_part_numbers' estimator parameter",
-                    "11.0.0",
-                    replacement="'max_part_numbers' parameter of the 'simplify' method",
-                    quote=False,
-                )
-            )
 
     def __sklearn_tags__(self):
         # If we don't implement this trivial method it's not found by the sklearn. This
@@ -786,25 +675,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
-
         id_column : str
             The column that contains the id of the instance.
         columns : list, optional
             The columns to be co-clustered. If not specified it uses all columns.
-        max_part_numbers : dict, optional
-            Maximum number of clusters for each of the co-clustered column.
-            Specifically, a key-value pair of this dictionary represents the column name
-            and its respective maximum number of clusters. If not specified, then no
-            maximum number of clusters is imposed on any column.
-            **Deprecated** (will be removed in Khiops 11). Use the ``simplify``
-            method instead.
 
         Returns
         -------
@@ -826,7 +700,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # If 'columns' specified check that:
         # - Is a sequence of string
         # - Is contained in the columns names of the main table
-        columns = kwargs.get("columns", self.variables)
+        columns = kwargs.get("columns")
         if columns is not None:
             if not is_list_like(columns):
                 raise TypeError(type_error_message("columns", columns, "list-like"))
@@ -843,25 +717,13 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # - Is specified
         # - Is a string
         # - Is contained in the columns names of the main table
-        id_column = kwargs.get("id_column", self.key)
+        id_column = kwargs.get("id_column")
         if id_column is None:
             raise ValueError("'id_column' is a mandatory parameter")
         if not isinstance(id_column, str):
             raise TypeError(type_error_message("key_columns", id_column, str))
         if id_column not in ds.main_table.column_ids:
             raise ValueError(f"id column '{id_column}' not found in X")
-
-        # Deprecate the 'max_part_numbers' parameter
-        max_part_numbers = kwargs.get("max_part_numbers", self.max_part_numbers)
-        if max_part_numbers is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'max_part_numbers' 'fit' parameter",
-                    "11.0.0",
-                    replacement="'max_part_numbers' parameter of the 'simplify' method",
-                    quote=False,
-                )
-            )
 
     def _fit_train_model(self, ds, computation_dir, **kwargs):
         assert not ds.is_multitable, "Coclustering not available in multitable"
@@ -878,10 +740,12 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # Set the 'variables' parameter
         if "columns" in kwargs:
             variables = kwargs["columns"]
-        elif self.variables is not None:
-            variables = self.variables
         else:
             variables = list(ds.main_table.column_ids)
+
+        coclustering_file_path = fs.get_child_path(
+            output_dir, f"{ds.main_table.name}_Coclustering.khcj"
+        )
 
         # Train the coclustering model
         coclustering_file_path = kh.train_coclustering(
@@ -889,7 +753,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             ds.main_table.name,
             main_table_path,
             variables,
-            output_dir,
+            coclustering_file_path,
             log_file_path=train_log_file_path,
             trace=self.verbose,
         )
@@ -908,13 +772,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         # Save the report file
         self.model_report_ = kh.read_coclustering_results_file(coclustering_file_path)
-        self.model_report_raw_ = self.model_report_.json_data
 
         # Save the id column
         if "id_column" in kwargs:
             self.model_id_column = kwargs["id_column"]
-        else:
-            self.model_id_column = self.key
 
         # Check that the id column was clustered
         try:
@@ -946,19 +807,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # Update the `model_` attribute of the coclustering estimator to the
         # new coclustering model
         self.model_ = kh.read_dictionary_file(
-            fs.get_child_path(output_dir, "Coclustering.kdic")
+            fs.get_child_path(
+                output_dir, f"{self.model_main_dictionary_name_}_deployed.kdic"
+            )
         )
-
-        # If the deprecated `max_part_numbers` is not None, then call `simplify`
-        max_part_numbers = kwargs.get("max_part_numbers", self.max_part_numbers)
-        if max_part_numbers is not None:
-            # Get simplified estimator
-            simplified_cc = self._simplify(max_part_numbers=max_part_numbers)
-
-            # Update main estimator model and report according to the simplified model
-            self.model_ = simplified_cc.model_
-            self.model_report_ = simplified_cc.model_report_
-            self.model_report_raw_ = self.model_report_.json_data
 
     def _fit_training_post_process(self, ds):
         assert (
@@ -1005,13 +857,16 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # Create the model by adding the coclustering variables
         # to the multi-table dictionary created before
         prepare_log_file_path = fs.get_child_path(output_dir, "khiops_prepare_cc.log")
+        deployed_coclustering_dictionary_file_path = fs.get_child_path(
+            output_dir, f"{self.model_main_dictionary_name_}_deployed.kdic"
+        )
         kh.prepare_coclustering_deployment(
             mt_domain,
             self.model_main_dictionary_name_,
             coclustering_file_path,
             self.model_secondary_table_variable_name,
             self.model_id_column,
-            output_dir,
+            deployed_coclustering_dictionary_file_path,
             build_cluster_variable=self.build_name_var,
             build_distance_variables=self.build_distance_vars,
             build_frequency_variables=self.build_frequency_vars,
@@ -1098,6 +953,9 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         full_coclustering_file_path = fs.get_child_path(
             output_dir, "FullCoclustering.khcj"
         )
+        simplified_coclustering_file_path = fs.get_child_path(
+            output_dir, "Coclustering.khcj"
+        )
         self.model_report_.write_khiops_json_file(full_coclustering_file_path)
         kh.get_runner().root_temp_dir = computation_dir
         try:
@@ -1107,8 +965,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             #   attribute accordingly
             kh.simplify_coclustering(
                 full_coclustering_file_path,
-                "Coclustering.khc",
-                output_dir,
+                simplified_coclustering_file_path,
                 max_preserved_information=max_preserved_information,
                 max_cells=max_cells,
                 max_total_parts=max_total_parts,
@@ -1154,7 +1011,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             simplified_cc.model_report_ = kh.read_coclustering_results_file(
                 simplified_coclustering_file_path
             )
-            simplified_cc.model_report_raw_ = simplified_cc.model_report_.json_data
 
             # Build the individual-variable coclustering model
             self._create_coclustering_model_domain(
@@ -1164,7 +1020,9 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             # Set the `model_` attribute of the new coclustering estimator to
             # the new coclustering model
             simplified_cc.model_ = kh.read_dictionary_file(
-                fs.get_child_path(output_dir, "Coclustering.kdic")
+                fs.get_child_path(
+                    output_dir, f"{self.model_main_dictionary_name_}_deployed.kdic"
+                )
             )
         finally:
             self._cleanup_computation_dir(computation_dir)
@@ -1220,13 +1078,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
 
         Returns
         -------
@@ -1286,7 +1137,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
                     self.__class__.__name__,
                 )
 
-    def _transform_create_deployment_dataset(self, ds, computation_dir):
+    def _transform_create_deployment_dataset(self, ds, _):
         assert not ds.is_multitable, "'dataset' is multitable"
 
         # Build the multitable deployment dataset
@@ -1340,15 +1191,11 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
-        internal_sort=None,
     ):
         super().__init__(
-            key=key,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            internal_sort=internal_sort,
         )
         self.n_features = n_features
         self.n_trees = n_trees
@@ -1357,17 +1204,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self.construction_rules = construction_rules
         self._original_target_dtype = None
         self._predicted_target_meta_data_tag = None
-
-        # Deprecation message for 'key' constructor parameter
-        if key is not None:
-            warnings.warn(
-                deprecation_message(
-                    "'key' estimator parameter",
-                    "11.0.0",
-                    replacement="dict dataset input",
-                    quote=False,
-                )
-            )
 
     def __sklearn_tags__(self):
         # If we don't implement this trivial method it's not found by the sklearn. This
@@ -1400,20 +1236,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
-
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
 
         Returns
         -------
@@ -1472,7 +1296,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         # Save the model domain object and report
         self.model_ = kh.read_dictionary_file(model_kdic_file_path)
         self.model_report_ = kh.read_analysis_results_file(report_file_path)
-        self.model_report_raw_ = self.model_report_.json_data
 
     @abstractmethod
     def _fit_core_training_function(self, *args, **kwargs):
@@ -1481,6 +1304,9 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def _fit_prepare_training_function_inputs(self, ds, computation_dir):
         # Set output path files
         output_dir = self._get_output_dir(computation_dir)
+        report_file_path = fs.get_child_path(
+            output_dir, f"{ds.main_table.name}_AnalysisResults.khj"
+        )
         log_file_path = fs.get_child_path(output_dir, "khiops.log")
 
         main_table_path, secondary_table_paths = ds.create_table_files_for_khiops(
@@ -1586,10 +1412,10 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         else:
             pair_feature_evaluated_names_ = []
             pair_feature_evaluated_levels_ = []
-        if "treePreparationReport" in self.model_report_raw_:
-            tree_preparation_report = self.model_report_raw_["treePreparationReport"][
-                "variablesStatistics"
-            ]
+        if "treePreparationReport" in self.model_report_.json_data:
+            tree_preparation_report = self.model_report_.json_data[
+                "treePreparationReport"
+            ]["variablesStatistics"]
             tree_feature_evaluated_names_ = [
                 tree_preparation_report[i]["name"]
                 for i in range(0, len(tree_preparation_report))
@@ -1668,7 +1494,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                 f"Dictionary '{dictionary.name}' "
                 f"does not have prefix '{self._khiops_model_prefix}'"
             )
-
             if dictionary.name != self.model_main_dictionary_name_:
                 initial_dictionary_name = dictionary.name.replace(
                     self._khiops_model_prefix, "", 1
@@ -1702,8 +1527,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
-        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -1714,8 +1537,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            key=key,
-            internal_sort=internal_sort,
         )
         # Data to be specified by inherited classes
         self._predicted_target_meta_data_tag = None
@@ -1741,7 +1562,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
 
         try:
             # Create the input dataset
-            ds = Dataset(X, key=self.key)
+            ds = Dataset(X)
 
             # Call the template transform method
             y_pred = super()._transform(
@@ -1906,19 +1727,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         affects the `fit`, `predict` and `predict_proba` methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    key : str, optional
-        *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
-        specifications in ``fit``, ``fit_predict``, ``predict`` and ``predict_proba``.
-    internal_sort : bool, optional
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
-        by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `fit`, `predict` and `predict_proba` methods.
-        *Note* The sort by key is performed in a left-to-right, hierarchical,
-        lexicographic manner.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        estimator parameter instead.
 
     Attributes
     ----------
@@ -1959,10 +1767,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         The name of the main Khiops dictionary within the ``model_`` domain.
     model_report_ : `.AnalysisResults`
         The Khiops report object.
-    model_report_raw_ : dict
-        JSON object of the Khiops report.
-        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
-        attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
     --------
@@ -1989,8 +1793,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
-        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2001,8 +1803,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            key=key,
-            internal_sort=internal_sort,
         )
         self.n_pairs = n_pairs
         self.specific_pairs = specific_pairs
@@ -2076,20 +1876,8 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
-
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
 
         Returns
         -------
@@ -2177,13 +1965,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
-
         Returns
         -------
         `ndarray <numpy.ndarray>`
@@ -2217,13 +1998,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
-
         Returns
         -------
         `numpy.array` or str
@@ -2245,7 +2019,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         # Call the generic transform method
         try:
-            ds = Dataset(X, key=self.key)
+            ds = Dataset(X)
             y_probas = self._transform(
                 ds,
                 computation_dir,
@@ -2344,19 +2118,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         affects the `fit` and `predict` methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    key : str, optional
-        *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
-        specifications in ``fit``, ``fit_predict``  and ``predict``.
-    internal_sort : bool, optional
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
-        by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `fit` and `predict` methods.
-        *Note* The sort by key is performed in a left-to-right, hierarchical,
-        lexicographic manner.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        estimator parameter instead.
 
     Attributes
     ----------
@@ -2392,10 +2153,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         The name of the main Khiops dictionary within the ``model_`` domain.
     model_report_ : `.AnalysisResults`
         The Khiops report object.
-    model_report_raw_ : dict
-        JSON object of the Khiops report.
-        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
-        attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
     --------
@@ -2414,8 +2171,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
-        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2426,8 +2181,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            key=key,
-            internal_sort=internal_sort,
         )
         self._khiops_model_prefix = "SNB_"
         self._predicted_target_meta_data_tag = "Mean"
@@ -2447,20 +2200,8 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
-
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
 
         Returns
         -------
@@ -2529,13 +2270,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
 
         Returns
         -------
@@ -2645,19 +2379,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         affects the `fit` and `transform` methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
-    key : str, optional
-        *Multi-table only* : The name of the column to be used as key.
-        **Deprecated** will be removed in Khiops 11. Use ``dict`` dataset
-        specifications in ``fit`` and ``transform``.
-    internal_sort : bool, optional
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
-        by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `fit` and `transform` methods.
-        *Note* The sort by key is performed in a left-to-right, hierarchical,
-        lexicographic manner.
-        **Deprecated** will be removed in Khiops 11. Use the ``auto_sort``
-        estimator parameter instead.
 
     Attributes
     ----------
@@ -2677,10 +2398,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         The name of the main Khiops dictionary within the ``model_`` domain.
     model_report_ : `.AnalysisResults`
         The Khiops report object.
-    model_report_raw_ : dict
-        JSON object of the Khiops report.
-        **Deprecated** will be removed in Khiops 11. Use the ``json_data``
-        attribute of the ``model_report_`` estimator attribute instead.
 
     Examples
     --------
@@ -2708,8 +2425,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
-        key=None,
-        internal_sort=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2718,8 +2433,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
-            key=key,
-            internal_sort=internal_sort,
         )
         self.n_pairs = n_pairs
         self.specific_pairs = specific_pairs
@@ -2892,20 +2605,8 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
-
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
 
         Returns
         -------
@@ -2972,13 +2673,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator parameter.
-
         Returns
         -------
         `ndarray <numpy.ndarray>`
@@ -2992,7 +2686,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         # Create and transform the dataset
         try:
-            ds = Dataset(X, key=self.key)
+            ds = Dataset(X)
             X_transformed = super()._transform(
                 ds,
                 computation_dir,
@@ -3033,21 +2727,8 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             Training dataset. Either an :external:term:`array-like` or a ``dict``
             specification for multi-table datasets (see :doc:`/multi_table_primer`).
 
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - tuple: A pair (``path_to_file``, ``separator``).
-            - list: A sequence of dataframes or paths, or pairs path-separator. The
-              first element of the list is the main table and the following are
-              secondary ones joined to the main table using ``key`` estimator
-              parameter.
-
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
-
-            **Deprecated input types** (will be removed in Khiops 11):
-
-            - str: A path to a data table file for file-based ``dict`` dataset
-              specifications.
 
         Returns
         -------

@@ -436,12 +436,9 @@ class Dataset:
     categorical_target : bool, default True
         ``True`` if the vector ``y`` should be considered as a categorical variable. If
         ``False`` it is considered as numeric. Ignored if ``y`` is ``None``.
-    key : str
-        The name of the key column for all tables.
-        **Deprecated:** Will be removed in khiops-python 11.
     """
 
-    def __init__(self, X, y=None, categorical_target=True, key=None):
+    def __init__(self, X, y=None, categorical_target=True):
         # Initialize members
         self.main_table = None
         self.secondary_tables = None
