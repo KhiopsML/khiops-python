@@ -482,13 +482,19 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                     KhiopsCoclustering: {
                         "fit": {
                             ("khiops.core", "prepare_coclustering_deployment"): {
-                                2: os.path.join(cls.output_dir, "Coclustering.khcj"),
+                                2: os.path.join(
+                                    cls.output_dir, "main_tableCoclusteringResults.khcj"
+                                ),
                                 3: "CC_main_table",
                                 4: "SampleId",
-                                5: cls.output_dir,
+                                5: os.path.join(
+                                    cls.output_dir, "CC_Keys_main_table_deployed.kdic"
+                                ),
                             },
                             ("khiops.core", "read_coclustering_results_file"): {
-                                0: os.path.join(cls.output_dir, "Coclustering.khcj")
+                                0: os.path.join(
+                                    cls.output_dir, "main_tableCoclusteringResults.khcj"
+                                )
                             },
                             ("khiops.core", "train_coclustering"): {
                                 1: "main_table",
@@ -718,20 +724,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                             ("khiops.core", "deploy_model"): {
                                 "detect_format": False,
                                 "header_line": True,
-                                "additional_data_tables": {
-                                    "CC_Keys_main_table`CC_main_table"
-                                },
-                                "log_file_path": os.path.join(
-                                    cls.output_dir, "khiops.log"
-                                ),
-                            },
-                            ("khiops.core", "extract_keys_from_data_table"): {
-                                "header_line": True,
-                                "output_header_line": True,
-                            },
-                        },
-                    },
-                },
+                                "additional_data_tables": {"CC_main_table"},
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
                                 ),
@@ -852,9 +845,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
                                 "group_target_value": False,
-                                "additional_data_tables": {
-                                    "SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                         "predict": {
@@ -865,9 +856,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
                                 ),
-                                "additional_data_tables": {
-                                    "SNB_SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                     },
@@ -882,9 +871,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
                                 "construction_rules": ["TableMode", "TableSelection"],
-                                "additional_data_tables": {
-                                    "SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                         "predict": {
@@ -895,9 +882,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
                                 ),
-                                "additional_data_tables": {
-                                    "SNB_SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                     },
@@ -920,9 +905,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "categorical_recoding_method": "part Id",
                                 "numerical_recoding_method": "part Id",
                                 "pairs_recoding_method": "part Id",
-                                "additional_data_tables": {
-                                    "SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                         "predict": {
@@ -933,9 +916,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
                                 ),
-                                "additional_data_tables": {
-                                    "R_SpliceJunction`SpliceJunctionDNA"
-                                },
+                                "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
                     },
