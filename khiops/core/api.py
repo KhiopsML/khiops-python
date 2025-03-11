@@ -1757,6 +1757,9 @@ def detect_data_table_format(
     data_table_path,
     dictionary_file_path_or_domain=None,
     dictionary_name=None,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
     trace=False,
     stdout_file_path="",
     stderr_file_path="",
@@ -1764,6 +1767,7 @@ def detect_data_table_format(
     memory_limit_mb=None,
     temp_dir="",
     scenario_prologue="",
+    **kwargs,
 ):
     """Detects the format of a data table
 
