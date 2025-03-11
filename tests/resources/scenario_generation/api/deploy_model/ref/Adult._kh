@@ -9,21 +9,21 @@ LearningTools.TransferDatabase
 ClassName Adult
 
 // Input database settings
-SourceDatabase.DatabaseFiles.List.Key Adult
-SourceDatabase.DatabaseFiles.DataTableName Adult.csv
-SourceDatabase.HeaderLineUsed true
-SourceDatabase.FieldSeparator 
-SourceDatabase.DatabaseFormatDetector.DetectFileFormat
-SourceDatabase.SampleNumberPercentage 100.0
-SourceDatabase.SamplingMode Include sample
-SourceDatabase.SelectionAttribute 
-SourceDatabase.SelectionValue 
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv
+SourceDatabase.DatabaseSpec.Data.HeaderLineUsed true
+SourceDatabase.DatabaseSpec.Data.FieldSeparator
+SourceDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+SourceDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+SourceDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+SourceDatabase.DatabaseSpec.Selection.SelectionAttribute
+SourceDatabase.DatabaseSpec.Selection.SelectionValue
 
 // Output database settings
-TargetDatabase.DatabaseFiles.List.Key Adult
-TargetDatabase.DatabaseFiles.DataTableName .\AdultDeployed.csv
-TargetDatabase.HeaderLineUsed true
-TargetDatabase.FieldSeparator 
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ./AdultDeployed.csv
+TargetDatabase.DatabaseSpec.Data.HeaderLineUsed true
+TargetDatabase.DatabaseSpec.Data.FieldSeparator
 
 // Transfer
 TransferDatabase

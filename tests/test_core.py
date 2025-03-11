@@ -11,7 +11,6 @@ import os
 import shutil
 import textwrap
 import unittest
-import warnings
 from pathlib import Path
 from unittest import mock
 
@@ -430,7 +429,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         f"Modeling{dataset}.kdic",
                         dataset,
                         f"{dataset}.csv",
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}AnalysisResults.khj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset]
@@ -448,7 +447,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "extract_clusters": {
                 dataset: {
                     "args": [
-                        f"{dataset}Coclustering.khc",
+                        f"{dataset}Coclustering.khcj",
                         coclustering_variables[dataset][0],
                         f"{dataset}Clusters.txt",
                     ],
@@ -473,10 +472,10 @@ class KhiopsCoreIOTests(unittest.TestCase):
                     "args": [
                         f"{dataset}.kdic",
                         dataset,
-                        f"{dataset}._khc",
+                        f"{dataset}._khcj",
                         coclustering_variables[dataset][0],
                         coclustering_variables[dataset][1],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}CoclusteringResults.khcj",
                     ],
                     "kwargs": {
                         "max_part_numbers": max_part_numbers[dataset],
@@ -487,9 +486,8 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "simplify_coclustering": {
                 dataset: {
                     "args": [
-                        f"{dataset}._khc",
-                        f"Simplified{dataset}._khc",
-                        f"{dataset}Results",
+                        f"{dataset}._khcj",
+                        f"{dataset}Results/{dataset}SimplifiedCoclusteringResults.khcj",
                     ],
                     "kwargs": {
                         "max_part_numbers": max_part_numbers[dataset],
@@ -518,7 +516,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         dataset,
                         f"{dataset}.csv",
                         coclustering_variables[dataset],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}CoclusteringResults._khcj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset],
@@ -533,7 +531,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         dataset,
                         f"{dataset}.csv",
                         target_variables[dataset],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}AnalysisResults._khj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset],
@@ -550,7 +548,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         dataset,
                         f"{dataset}.csv",
                         target_variables[dataset],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}AnalysisResults._khj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset],
@@ -793,7 +791,7 @@ class MockedRunnerContext:
         self.mock_context = mock.patch.object(
             self.mocked_runner,
             "_get_khiops_version",
-            return_value=KhiopsVersion("10.2.2"),
+            return_value=KhiopsVersion("10.6.0-b.0"),
         )
         self.mock_context.__enter__()
 
@@ -1928,7 +1926,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         self._write_version = False
 
     def _initialize_khiops_version(self):
-        self._khiops_version = KhiopsVersion("10.1.0")
+        self._khiops_version = KhiopsVersion("10.6.0-b.0")
 
     @property
     def ref_scenario_dir(self):
@@ -2075,12 +2073,21 @@ PATH_STATEMENTS = [
     "ClassFileName",
     "EvaluationFileName",
     "ImportFileName",
-    "InputCoclusteringName",
+    "InputCoclusteringFileName",
+    "CoclusteringDictionaryFileName",
+    "ClusterFileName",
     "JSONFileName",
     "PostProcessedCoclusteringFileName",
-    "ResultFilesDirectory",
     "TargetDataTable.DatabaseName",
     "TargetDatabase.DatabaseFiles.DataTableName",
+    "AnalysisResults.ReportFileName",
+    "AnalysisResults.CoclusteringFileName",
+    "SourceDataTable.DatabaseSpec.Data.DatabaseName",
+    "TargetDataTable.DatabaseSpec.Data.DatabaseName",
+    "TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName",
+    "SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName",
+    "TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName",
+    "EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName",
 ]
 
 
@@ -2550,7 +2557,7 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                     dictionary_name="Iris",
                     data_table_path="/tmp/Iris.txt",
                     target_variable="Class",
-                    results_dir="/tmp",
+                    analysis_report_file_path="/tmp/IrisAnalysisResults.khj",
                     trace=True,
                 )
         expected_msg = (

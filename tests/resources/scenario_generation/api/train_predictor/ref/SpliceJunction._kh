@@ -3,43 +3,42 @@
 ClassManagement.OpenFile
 ClassFileName SpliceJunction.kdic
 OK
-ClassManagement.ClassName SpliceJunction
 
 // Train/test database settings
-TrainDatabase.DatabaseFiles.List.Key SpliceJunction
-TrainDatabase.DatabaseFiles.DataTableName SpliceJunction.csv
-TrainDatabase.DatabaseFiles.List.Key SpliceJunction`DNA
-TrainDatabase.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
-TrainDatabase.HeaderLineUsed true
-TrainDatabase.FieldSeparator 
-TrainDatabase.DatabaseFormatDetector.DetectFileFormat
-TrainDatabase.SampleNumberPercentage 70.0
-TrainDatabase.SamplingMode Include sample
-TrainDatabase.SelectionAttribute 
-TrainDatabase.SelectionValue 
+TrainDatabase.ClassName SpliceJunction
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key DNA
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
+TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
+TrainDatabase.DatabaseSpec.Data.FieldSeparator
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 70.0
+TrainDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+TrainDatabase.DatabaseSpec.Selection.SelectionAttribute
+TrainDatabase.DatabaseSpec.Selection.SelectionValue
 TrainDatabase.TestDatabaseSpecificationMode Complementary
 
 // Target variable
 AnalysisSpec.TargetAttributeName Class
-AnalysisSpec.MainTargetModality 
+AnalysisSpec.MainTargetModality
 
-// Predictors to train
-AnalysisSpec.PredictorsSpec.SelectiveNaiveBayesPredictor true
-AnalysisSpec.PredictorsSpec.AdvancedSpec.UnivariatePredictorNumber 0
+// Do data preparation only
+AnalysisSpec.PredictorsSpec.AdvancedSpec.DataPreparationOnly false
 
 // Selective Naive Bayes settings
-AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectSelectiveNaiveBayesParameters
-TrainParameters.MaxEvaluatedAttributeNumber 0
-SelectionParameters.MaxSelectedAttributeNumber 0
-Exit
+AnalysisSpec.PredictorsSpec.AdvancedSpec.SelectiveNaiveBayesParameters.TrainParameters.MaxEvaluatedAttributeNumber 0
+AnalysisSpec.PredictorsSpec.AdvancedSpec.SelectiveNaiveBayesParameters.SelectionParameters.MaxSelectedAttributeNumber 0
 
 // Feature engineering
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTextFeatureNumber 10000
 AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber 10
 AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxAttributePairNumber 0
 AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectAttributePairsParameters
 AllAttributePairs true
 Exit
-AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxConstructedAttributeNumber 100
+AnalysisSpec.PredictorsSpec.ConstructionSpec.KeepSelectedAttributesOnly true
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxConstructedAttributeNumber 1000
 AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectConstructionDomain
 UnselectAll
 ConstructionRules.List.Key TableMode
@@ -48,20 +47,24 @@ ConstructionRules.List.Key TableSelection
 ConstructionRules.Used true
 Exit
 
+//  Text feature parameters
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectTextFeaturesParameters
+TextFeatures words
+Exit
+
+
 // Data preparation (discretization & grouping) settings
 AnalysisSpec.PreprocessingSpec.TargetGrouped false
-AnalysisSpec.PreprocessingSpec.DiscretizerSpec.SupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.DiscretizerSpec.UnsupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MinIntervalFrequency 0
-AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MaxIntervalNumber 0
-AnalysisSpec.PreprocessingSpec.GrouperSpec.SupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.GrouperSpec.UnsupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.GrouperSpec.MinGroupFrequency 0
-AnalysisSpec.PreprocessingSpec.GrouperSpec.MaxGroupNumber 0
+AnalysisSpec.PreprocessingSpec.InspectAdvancedParameters
+DiscretizerUnsupervisedMethodName MODL
+GrouperUnsupervisedMethodName MODL
+Exit
+
+// Max parts
+AnalysisSpec.PreprocessingSpec.MaxPartNumber 0
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\SpliceJunctionResults
-AnalysisResults.ResultFilesPrefix 
+AnalysisResults.ReportFileName SpliceJunctionResults/SpliceJunctionAnalysisResults._khj
 
 // Build model
 ComputeStats

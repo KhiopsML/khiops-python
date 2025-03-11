@@ -20,7 +20,7 @@ TASKS = [
     tm.KhiopsTask(
         "check_database",
         "khiops",
-        "10.0.0",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
@@ -44,26 +44,26 @@ TASKS = [
         ClassManagement.OpenFile
         ClassFileName __dictionary_file_path__
         OK
-        ClassManagement.ClassName __dictionary_name__
 
         // Train database settings
-        TrainDatabase.DatabaseFiles.List.Key __dictionary_name__
-        TrainDatabase.DatabaseFiles.DataTableName __data_table_path__
+        TrainDatabase.ClassName __dictionary_name__
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
         __DICT__
         __additional_data_tables__
-        TrainDatabase.DatabaseFiles.List.Key
-        TrainDatabase.DatabaseFiles.DataTableName
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName
         __END_DICT__
-        TrainDatabase.HeaderLineUsed __header_line__
-        TrainDatabase.FieldSeparator __field_separator__
+        TrainDatabase.DatabaseSpec.Data.HeaderLineUsed __header_line__
+        TrainDatabase.DatabaseSpec.Data.FieldSeparator __field_separator__
         __OPT__
         __detect_format__
-        TrainDatabase.DatabaseFormatDetector.DetectFileFormat
+        TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         __END_OPT__
-        TrainDatabase.SampleNumberPercentage __sample_percentage__
-        TrainDatabase.SamplingMode __sampling_mode__
-        TrainDatabase.SelectionAttribute __selection_variable__
-        TrainDatabase.SelectionValue __selection_value__
+        TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage __sample_percentage__
+        TrainDatabase.DatabaseSpec.Sampling.SamplingMode __sampling_mode__
+        TrainDatabase.DatabaseSpec.Selection.SelectionAttribute __selection_variable__
+        TrainDatabase.DatabaseSpec.Selection.SelectionValue __selection_value__
 
         // Log messages limit
         AnalysisSpec.SystemParameters.MaxErrorMessageNumberInLog __max_messages__

@@ -19,20 +19,17 @@ import os
 import warnings
 
 import khiops.core.internals.filesystems as fs
-from khiops.core.dictionary import DictionaryDomain, read_dictionary_file
+from khiops.core.dictionary import DictionaryDomain
 from khiops.core.exceptions import KhiopsRuntimeError
 from khiops.core.internals.common import (
     CommandLineOptions,
     SystemSettings,
-    create_unambiguous_khiops_path,
     deprecation_message,
     is_string_like,
     type_error_message,
 )
-from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import get_runner
 from khiops.core.internals.task import get_task_registry
-from khiops.core.internals.version import KhiopsVersion
 
 # List of all available construction rules in the Khiops tool
 all_construction_rules = [
@@ -163,7 +160,6 @@ def _preprocess_arguments(args):
 
     # Create a command line options object
     command_line_options = CommandLineOptions(
-        batch_mode=args["batch_mode"] if "batch_mode" in args else True,
         log_file_path=(args["log_file_path"] if "log_file_path" in args else ""),
         output_scenario_path=(
             args["output_scenario_path"] if "output_scenario_path" in args else ""
@@ -215,6 +211,40 @@ def _preprocess_task_arguments(task_args):
     bool
         ``True`` if the task was called with an input `.DictionaryDomain`.
     """
+    # Process the output path
+    # if path is dir, then generate full report path according to GUI defaults
+    file_path_arg_names = {
+        "analysis_report_file_path": "AnalysisResults.khj",
+        "evaluation_report_file_path": "EvaluationReport.khj",
+        "coclustering_report_file_path": "Coclustering.khcj",
+        "coclustering_dictionary_file_path": "Coclustering.kdic",
+    }
+    for file_path_arg_name, default_file_name in file_path_arg_names.items():
+        if file_path_arg_name in task_args:
+            file_path = task_args[file_path_arg_name]
+
+            # If path ends with path separator or exists as a dir, then consider
+            # it is dir and concatenate default report file name to it
+            if file_path.endswith(os.path.sep) or (
+                fs.is_local_resource(file_path) and os.path.isdir(file_path)
+            ):
+                # Add deprecation warning
+                warnings.warn(
+                    deprecation_message(
+                        "'results_dir'",
+                        "11.0.1",
+                        replacement=file_path_arg_name,
+                        quote=False,
+                    )
+                )
+                # Update the path
+                if fs.is_local_resource(file_path):
+                    norm_file_path = os.path.normpath(file_path)
+                else:
+                    norm_file_path = file_path
+                full_file_path = fs.get_child_path(norm_file_path, default_file_name)
+                task_args[file_path_arg_name] = full_file_path
+
     # Process the input dictionary domain if any
     # build_frequency_variables and detect_format are processed differently below
     task_called_with_domain = False
@@ -226,54 +256,33 @@ def _preprocess_task_arguments(task_args):
             task_args["dictionary_file_path_or_domain"], task_args["trace"]
         )
 
-    # Set the discretization/grouping default values
-    if "discretization_method" in task_args:
-        # Set the default values if the discretization method is not specified
+    # Set the default discretization method for unsupervised analysis
+    # "target_variable" is mandatory if "discretization_method" or
+    # "grouping_method" are present
+    if "discretization_method" in task_args and task_args["target_variable"] == "":
         if task_args["discretization_method"] is None:
-            if task_args["target_variable"]:
-                task_args["discretization_method"] = "MODL"
-            else:
-                task_args["discretization_method"] = "EqualWidth"
-        # Otherwise raise an error if the values are not in the range to avoid a khiops
-        # segmentation fault. This won't be necessary from version 11 on.
-        else:
-            if not task_args["target_variable"] and task_args[
-                "discretization_method"
-            ] not in ("EqualWidth", "EqualFrequency", "None"):
-                raise ValueError(
-                    "'discretization_method' must be either "
-                    "'EqualWidth', 'EqualFrequency' or 'None'."
-                )
+            task_args["discretization_method"] = "MODL"
 
-    if "grouping_method" in task_args:
-        # Set the default values if the grouping method is not specified
+    # Remove discretization method if specified for supervised analysis:
+    # it is always MODL
+    if "discretization_method" in task_args and task_args["target_variable"] != "":
+        del task_args["discretization_method"]
+
+    # Set the default grouping method for unsupervised analysis
+    if "grouping_method" in task_args and task_args["target_variable"] == "":
         if task_args["grouping_method"] is None:
-            if task_args["target_variable"]:
-                task_args["grouping_method"] = "MODL"
-            else:
-                task_args["grouping_method"] = "BasicGrouping"
-        # Otherwise raise an error if the values are not in the range to avoid a khiops
-        # segmentation fault. This won't be necessary from version 11 on.
-        else:
-            if not task_args["target_variable"] and task_args[
-                "grouping_method"
-            ] not in ("BasicGrouping", "None"):
-                raise ValueError(
-                    "'grouping_method' must be either 'BasicGrouping' or 'None'."
-                )
+            task_args["grouping_method"] = "MODL"
+
+    # Remove grouping method if specified for supervised analysis: it is always MODL
+    if "grouping_method" in task_args and task_args["target_variable"] != "":
+        del task_args["grouping_method"]
 
     # Transform the use_complement_as_test bool parameter to its string counterpart
     if "use_complement_as_test" in task_args:
         if task_args["use_complement_as_test"]:
-            if get_khiops_version() < KhiopsVersion("10.0.0"):
-                task_args["fill_test_database_settings"] = True
-            else:
-                task_args["test_database_mode"] = "Complementary"
+            task_args["test_database_mode"] = "Complementary"
         else:
-            if get_khiops_version() < KhiopsVersion("10"):
-                task_args["fill_test_database_settings"] = False
-            else:
-                task_args["test_database_mode"] = "None"
+            task_args["test_database_mode"] = "None"
         del task_args["use_complement_as_test"]
 
     # Preprocess the database format parameters
@@ -301,43 +310,15 @@ def _preprocess_task_arguments(task_args):
         if isinstance(task_args["selection_value"], (int, float)):
             task_args["selection_value"] = str(task_args["selection_value"])
 
-    # Warn the simple deprecations for Khiops 11
-    simple_khiops_11_deprecations = [
-        ("max_groups", "the upcoming 'max_parts' parameter", 0),
-        ("max_intervals", "the upcoming 'max_parts' parameter", 0),
-        ("min_group_frequency", None, 0),
-        ("min_interval_frequency", None, 0),
-        ("results_prefix", None, ""),
-        ("snb_predictor", None, True),
-        ("univariate_predictor_number", None, 0),
-    ]
-    for param, replacement_param, param_default_value in simple_khiops_11_deprecations:
-        if param in task_args and task_args[param] != param_default_value:
+    # Discard the max_variable_importances interpretation parameters
+    if "max_variable_importances" in task_args:
+        if task_args["max_variable_importances"] is not None:
             warnings.warn(
-                deprecation_message(
-                    f"'{param}'", "11.0.0", replacement=replacement_param, quote=False
-                )
+                "The 'max_variable_importances' parameter of the "
+                "'khiops.core.api.intepret_predictor' function is not supported "
+                " yet. All model variables' importances are computed."
             )
-
-    # Warn the grouping/interval supervised method deprecation values for Khiops 11
-    if "target_variable" in task_args and task_args["target_variable"] != "":
-        if "grouping_method" in task_args and task_args["grouping_method"] != "MODL":
-            warnings.warn(
-                deprecation_message(
-                    "'grouping_method' on supervised learning", "11.0.0", quote=False
-                )
-            )
-        if (
-            "discretization_method" in task_args
-            and task_args["discretization_method"] != "MODL"
-        ):
-            warnings.warn(
-                deprecation_message(
-                    "'discretization_method' on supervised learning",
-                    "11.0.0",
-                    quote=False,
-                )
-            )
+        del task_args["max_variable_importances"]
 
     # Flatten kwargs
     if "kwargs" in task_args:
@@ -389,7 +370,6 @@ def _clean_task_args(task_args):
     """
     # Remove non-task parameters
     command_line_arg_names = [
-        "batch_mode",
         "log_file_path",
         "output_scenario_path",
         "task_file_path",
@@ -455,7 +435,6 @@ def get_samples_dir():
 def export_dictionary_as_json(
     dictionary_file_path_or_domain,
     json_dictionary_file_path,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -496,7 +475,6 @@ def build_dictionary_from_data_table(
     detect_format=True,
     header_line=None,
     field_separator=None,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -555,7 +533,6 @@ def check_database(
     selection_value="",
     additional_data_tables=None,
     max_messages=20,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -627,7 +604,7 @@ def train_predictor(
     dictionary_name,
     data_table_path,
     target_variable,
-    results_dir,
+    analysis_report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -637,26 +614,23 @@ def train_predictor(
     selection_variable="",
     selection_value="",
     additional_data_tables=None,
+    do_data_preparation_only=False,
     main_target_value="",
-    snb_predictor=True,
-    univariate_predictor_number=0,
+    keep_selected_variables_only=True,
     max_evaluated_variables=0,
     max_selected_variables=0,
-    max_constructed_variables=100,
+    max_constructed_variables=1000,
     construction_rules=None,
+    max_text_features=10000,
+    text_features="words",
     max_trees=10,
     max_pairs=0,
     all_possible_pairs=True,
     specific_pairs=None,
     group_target_value=False,
     discretization_method=None,
-    min_interval_frequency=0,
-    max_intervals=0,
     grouping_method=None,
-    min_group_frequency=0,
-    max_groups=0,
-    results_prefix="",
-    batch_mode=True,
+    max_parts=0,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -683,8 +657,10 @@ def train_predictor(
         Name of the target variable. If the specified variable is categorical it
         constructs a classifier and if it is numerical a regressor. If equal to "" it
         performs an unsupervised analysis.
-    results_dir : str
-        Path of the results directory.
+    analysis_report_file_path : str
+        Path to the analysis report file in the JSON format. An additional dictionary
+        file with the same name and extension ``.model.kdic`` is built, which contains
+        the trained models.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -708,9 +684,6 @@ def train_predictor(
     use_complement_as_test : bool, default ``True``
         Uses the complement of the sampled database as test database for
         computing the model's performance metrics.
-    fill_test_database_settings : bool, default ``False``
-        It creates a test database as the complement of the train database.
-        **Deprecated** will be removed in Khiops 11, use ``use_complement_as_test``
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -719,33 +692,36 @@ def train_predictor(
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see :doc:`/multi_table_primer`.
+    do_data_preparation_only : bool, default ``False``
+        If ``True`` it only does data preparation via MODL preprocessing without
+        training a Selective Naive Bayes Predictor.
     main_target_value : str, default ""
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
-    snb_predictor : bool, default ``True``
-        If ``True`` it trains a Selective Naive Bayes predictor. **Deprecated** will be
-        removed in Khiops 11.
-    univariate_predictor_number : int, default 0
-        Number of univariate predictors to train.**Deprecated** will be removed in
-        Khiops 11.
-    map_predictor : bool, default ``False``
-        If ``True`` trains a Maximum a Posteriori Naive Bayes predictor.
-        **Deprecated** will be removed in Khiops Python 11.
+    keep_selected_variables_only : bool, default ``True``
+        Keeps only predictor-selected variables in the supervised analysis report.
     max_evaluated_variables : int, default 0
         Maximum number of variables to be evaluated in the SNB predictor training. If
         equal to 0 it evaluates all informative variables.
     max_selected_variables : int, default 0
         Maximum number of variables to be selected in the SNB predictor. If equal to
         0 it selects all the variables kept in the training.
-    max_constructed_variables : int, default 100
+    max_constructed_variables : int, default 1000
         Maximum number of variables to construct.
     construction_rules : list of str, optional
         Allowed rules for the automatic variable construction. If not set it uses all
         possible rules.
+    max_text_features : int, default 10000
+        Maximum number of text features to construct.
+    text_features : str, default "words"
+        Type of the text features. Can be either one of:
+        - "words": sequences of non-space characters
+        - "ngrams": sequences of bytes
+        - "tokens": user-defined
     max_trees : int, default 10
-        Maximum number of trees to construct. Not yet available in regression.
+        Maximum number of trees to construct.
     max_pairs : int, default 0
-        Maximum number of variables pairs to construct.
+        Maximum number of variable pairs to construct.
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
@@ -755,35 +731,23 @@ def train_predictor(
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
-    only_pairs_with : str, default ""
-        Constructs only pairs with the specified variable name. If equal to the empty
-        string "" it considers all variables to make pairs.
-        **Deprecated** will be removed in Khiops Python 11, use ``specific_pairs``.
     group_target_value : bool, default ``False``
         Allows grouping of the target variable values in classification. It can
         substantially increase the training time.
     discretization_method : str
-        Name of the discretization method. Its valid values depend on the task:
-            - Supervised: "MODL" (default), "EqualWidth" or "EqualFrequency"
-            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or "None"
-    min_interval_frequency : int, default 0
-        Minimum number of instances in an interval. If equal to 0 it is
-        automatically calculated. **Deprecated** will be removed in Khiops 11.
-    max_intervals : int, default 0
-        Maximum number of intervals to construct. If equal to 0 it is automatically
-        calculated. **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
+        Name of the discretization method, for unsupervised analysis only.
+        Its valid values are: "MODL" (default), "EqualWidth", "EqualFrequency"
+        or "None". Ignored for supervised analysis.
     grouping_method : str
-        Name of the grouping method. Its valid values depend on the task:
-            - Supervised: "MODL" (default) or "BasicGrouping"
-            - Unsupervised: "BasicGrouping" (default) or "None"
-    min_group_frequency : int, default 0
-        Minimum number of instances for a group. **Deprecated** will be removed in
-        Khiops 11.
-    max_groups : int, default 0
-        Maximum number of groups. If equal to 0 it is automatically calculated.
-        **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
-    results_prefix : str, default ""
-        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
+        Name of the grouping method, for unsupervised analysis only.
+        Its valid values are: "MODL" (default), "BasicGrouping" or "None".
+        Ignored for supervised analysis.
+    max_parts : int, default 0
+        Maximum number of variable parts produced by preprocessing methods. If equal
+        to 0 it is automatically calculated.
+        Special default values for unsupervised analysis:
+        - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
+        - If ``grouping_method`` is "BasicGrouping": 10
     ... :
         See :ref:`core-api-common-params`.
 
@@ -825,28 +789,25 @@ def train_predictor(
     _run_task("train_predictor", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
-    reports_file_name = results_prefix
-    if get_runner().khiops_version < KhiopsVersion("10.0.0"):
-        reports_file_name += "AllReports.json"
-    else:
-        reports_file_name += "AllReports.khj"
-    reports_file_path = fs.get_child_path(results_dir, reports_file_name)
-
     if target_variable != "":
+        current_dir = fs.parent_path(analysis_report_file_path)
+        report_file_name, _ = os.path.splitext(
+            os.path.basename(analysis_report_file_path)
+        )
         modeling_dictionary_file_path = fs.get_child_path(
-            results_dir, f"{results_prefix}Modeling.kdic"
+            current_dir, f"{report_file_name}.model.kdic"
         )
     else:
         modeling_dictionary_file_path = None
 
-    return (reports_file_path, modeling_dictionary_file_path)
+    return (analysis_report_file_path, modeling_dictionary_file_path)
 
 
 def evaluate_predictor(
     dictionary_file_path_or_domain,
     train_dictionary_name,
     data_table_path,
-    results_dir,
+    evaluation_report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -856,8 +817,6 @@ def evaluate_predictor(
     selection_value="",
     additional_data_tables=None,
     main_target_value="",
-    results_prefix="",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -880,8 +839,8 @@ def evaluate_predictor(
         Name of the main dictionary used while training the models.
     data_table_path : str
         Path of the evaluation data table file.
-    results_dir : str
-        Path of the results directory.
+    evaluation_report_file_path : str
+        Path to the evaluation report file, in the JSON format.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -915,8 +874,6 @@ def evaluate_predictor(
     main_target_value : str, default ""
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
-    results_prefix : str, default ""
-        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -941,24 +898,11 @@ def evaluate_predictor(
     # WARNING: Do not move this line, see the top of the "tasks" section for details
     task_args = locals()
 
-    # Create the evaluation file path and remove the directory and prefix arguments
-    task_args["evaluation_report_path"] = fs.get_child_path(
-        task_args["results_dir"], f"{task_args['results_prefix']}EvaluationReport.xls"
-    )
-    del task_args["results_dir"]
-    del task_args["results_prefix"]
-
     # Run the task
     _run_task("evaluate_predictor", task_args)
 
     # Return the path of the JSON report
-    report_file_name = results_prefix
-    if get_runner().khiops_version < KhiopsVersion("10.0.0"):
-        report_file_name += "EvaluationReport.json"
-    else:
-        report_file_name += "EvaluationReport.khj"
-
-    return fs.get_child_path(results_dir, report_file_name)
+    return evaluation_report_file_path
 
 
 def train_recoder(
@@ -966,7 +910,7 @@ def train_recoder(
     dictionary_name,
     data_table_path,
     target_variable,
-    results_dir,
+    analysis_report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -977,7 +921,9 @@ def train_recoder(
     additional_data_tables=None,
     max_constructed_variables=100,
     construction_rules=None,
-    max_trees=0,
+    max_text_features=10000,
+    text_features="words",
+    max_trees=10,
     max_pairs=0,
     all_possible_pairs=True,
     specific_pairs=None,
@@ -990,13 +936,8 @@ def train_recoder(
     pairs_recoding_method="part Id",
     group_target_value=False,
     discretization_method=None,
-    min_interval_frequency=0,
-    max_intervals=0,
     grouping_method=None,
-    min_group_frequency=0,
-    max_groups=0,
-    results_prefix="",
-    batch_mode=True,
+    max_parts=0,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1034,8 +975,10 @@ def train_recoder(
         Path of the data table file.
     target_variable : str
         Name of the target variable. If equal to "" it trains an unsupervised recoder.
-    results_dir : str
-        Path of the results directory.
+    analysis_report_file_path : str
+        Path to the analysis report file in the JSON format. An additional dictionary
+        file with the same name and extension ``.model.kdic`` is built, which contains
+        the trained recoding model.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1068,8 +1011,15 @@ def train_recoder(
     construction_rules : list of str, optional
         Allowed rules for the automatic variable construction. If not set it uses all
         possible rules.
-    max_trees : int, default 0
-        Maximum number of trees to construct. Not yet available in regression.
+    max_text_features : int, default 10000
+        Maximum number of text features to construct.
+    text_features : str, default "words"
+        Type of the text features. Can be either one of:
+        - "words": sequences of non-space characters
+        - "ngrams": sequences of bytes
+        - "tokens": user-defined
+    max_trees : int, default 10
+        Maximum number of trees to construct.
     max_pairs : int, default 0
         Maximum number of variables pairs to construct.
     specific_pairs : list of tuple, optional
@@ -1081,23 +1031,9 @@ def train_recoder(
         If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
-    only_pairs_with : str, default ""
-        Constructs only pairs with the specified variable name. If equal to the empty
-        string "" it considers all variables to make pairs.
-        **Deprecated** will be removed in Khiops Python 11, use ``specific_pairs``.
     group_target_value : bool, default ``False``
         Allows grouping of the target variable values in classification. It can
         substantially increase the training time.
-    discretization_method : str
-        Name of the discretization method. Its valid values depend on the task:
-            - Supervised: "MODL" (default), "EqualWidth" or "EqualFrequency"
-            - Unsupervised: "EqualWidth" (default), "EqualFrequency" or "None"
-    min_interval_frequency : int, default 0
-        Minimum number of instances in an interval. If equal to 0 it is
-        automatically calculated. **Deprecated** will be removed in Khiops 11.
-    max_intervals : int, default 0
-        Maximum number of intervals to construct. If equal to 0 it is automatically
-        calculated. **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
     informative_variables_only : bool, default ``True``
         If ``True`` keeps only informative variables.
     max_variables : int, default 0
@@ -1131,18 +1067,20 @@ def train_recoder(
             - "0-1 binarization": A 0's and 1's coding the interval/group id
             - "conditional info": Conditional information of the interval/group
             - "none": Keeps the variable as-is
+    discretization_method : str
+        Name of the discretization method, for unsupervised analysis only.
+        Its valid values are: "MODL" (default), "EqualWidth", "EqualFrequency"
+        or "None". Ignored for supervised analysis.
     grouping_method : str
-        Name of the grouping method. Its valid values depend on the task:
-            - Supervised: "MODL" (default) or "BasicGrouping"
-            - Unsupervised: "BasicGrouping" (default) or "None"
-    min_group_frequency : int, default 0
-        Minimum number of instances for a group. **Deprecated** will be removed in
-        Khiops 11.
-    max_groups : int, default 0
-        Maximum number of groups. If equal to 0 it is automatically calculated.
-        **Deprecated** will be replaced by ``max_parts`` in Khiops 11.
-    results_prefix : str, default ""
-        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
+        Name of the grouping method, for unsupervised analysis only.
+        Its valid values are: "MODL" (default), "BasicGrouping" or "None".
+        Ignored for supervised analysis.
+    max_parts : int, default 0
+        Maximum number of variable parts produced by preprocessing methods. If equal
+        to 0 it is automatically calculated.
+        Special default values for unsupervised analysis:
+        - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
+        - If ``grouping_method`` is "BasicGrouping": 10
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1168,17 +1106,14 @@ def train_recoder(
     _run_task("train_recoder", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
-    reports_file_name = f"{results_prefix}AllReports"
-    if get_runner().khiops_version < KhiopsVersion("10.0.0"):
-        reports_file_name += ".json"
-    else:
-        reports_file_name += ".khj"
-    reports_file_path = fs.get_child_path(results_dir, reports_file_name)
+    current_dir = fs.parent_path(analysis_report_file_path)
+    report_file_name, _ = os.path.splitext(os.path.basename(analysis_report_file_path))
+
     modeling_dictionary_file_path = fs.get_child_path(
-        results_dir, f"{results_prefix}Modeling.kdic"
+        current_dir, f"{report_file_name}.model.kdic"
     )
 
-    return (reports_file_path, modeling_dictionary_file_path)
+    return (analysis_report_file_path, modeling_dictionary_file_path)
 
 
 def deploy_model(
@@ -1197,7 +1132,6 @@ def deploy_model(
     output_header_line=True,
     output_field_separator="\t",
     output_additional_data_tables=None,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1258,8 +1192,6 @@ def deploy_model(
     output_additional_data_tables : dict, optional
         A dictionary containing the output data paths and file paths for a multi-table
         dictionary file. For more details see :doc:`/multi_table_primer`.
-    results_prefix : str, default ""
-        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1289,7 +1221,6 @@ def build_deployed_dictionary(
     dictionary_file_path_or_domain,
     dictionary_name,
     output_dictionary_file_path,
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1344,7 +1275,6 @@ def sort_data_table(
     field_separator=None,
     output_header_line=True,
     output_field_separator="\t",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1420,7 +1350,6 @@ def extract_keys_from_data_table(
     field_separator=None,
     output_header_line=True,
     output_field_separator="\t",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1487,7 +1416,7 @@ def train_coclustering(
     dictionary_name,
     data_table_path,
     coclustering_variables,
-    results_dir,
+    coclustering_report_file_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -1498,8 +1427,6 @@ def train_coclustering(
     additional_data_tables=None,
     frequency_variable="",
     min_optimization_time=0,
-    results_prefix="",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1524,8 +1451,8 @@ def train_coclustering(
         Path of the data table file.
     coclustering_variables : list of str
         The names of variables to use in coclustering. Min length: 2. Max length: 10.
-    results_dir : str
-        Path of the results directory.
+    coclustering_report_file_path : str
+        Path to the coclustering report file in the JSON format.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1557,8 +1484,6 @@ def train_coclustering(
         Name of frequency variable.
     min_optimization_time : int, default 0
         Minimum optimization time in seconds.
-    results_prefix : str, default ""
-        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1593,19 +1518,17 @@ def train_coclustering(
     _run_task("train_coclustering", task_args)
 
     # Return the path of the coclustering file
-    return fs.get_child_path(results_dir, results_prefix + "Coclustering.khcj")
+    return coclustering_report_file_path
 
 
 def simplify_coclustering(
     coclustering_file_path,
     simplified_coclustering_file_path,
-    results_dir,
+    results_dir=None,
     max_preserved_information=0,
     max_cells=0,
     max_total_parts=0,
     max_part_numbers=None,
-    results_prefix="",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1626,8 +1549,6 @@ def simplify_coclustering(
         Path of the coclustering file (extension ``.khc``, or ``.khcj``).
     simplified_coclustering_file_path : str
         Path of the output coclustering file.
-    results_dir : str
-        Path of the results directory.
     max_preserved_information : int, default 0
         Maximum information preserve in the simplified coclustering. If equal to 0
         there is no limit.
@@ -1640,8 +1561,6 @@ def simplify_coclustering(
     max_part_numbers : dict, optional
       Dictionary that associate variable names to their maximum number of parts to
       preserve in the simplified coclustering. If not set there is no limit.
-    results_prefix : str, default ""
-        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1659,6 +1578,34 @@ def simplify_coclustering(
     # WARNING: Do not move this line, see the top of the "tasks" section for details
     task_args = locals()
 
+    # Special processing for the case when:
+    # - simplified_coclustering_file_path which does not start with the path separator
+    #   (i.e. is a file name or a relative path), and
+    # - results_dir which is not None.
+    # Steps:
+    # 1. concatenate simplified_coclustering_file_path to results_dir
+    # 2. issue deprecation warning for results_dir
+    # 3. remove 'results_dir' from the task arguments
+
+    if results_dir is not None and not simplified_coclustering_file_path.startswith(
+        os.path.sep
+    ):
+        warnings.warn(
+            deprecation_message(
+                results_dir,
+                "11.0.1",
+                replacement="simplified_coclustering_file_path",
+                quote=False,
+            )
+        )
+        task_args["simplified_coclustering_file_path"] = os.path.join(
+            results_dir, simplified_coclustering_file_path
+        )
+
+    # Remove results_dir from the task arguments in all cases
+    # Note: it is ignored if None or if simplified_coclustering_file_path is absolute
+    del task_args["results_dir"]
+
     # Run the task
     _run_task("simplify_coclustering", task_args)
 
@@ -1669,16 +1616,15 @@ def prepare_coclustering_deployment(
     coclustering_file_path,
     table_variable,
     deployed_variable_name,
-    results_dir,
+    coclustering_dictionary_file_path,
     max_preserved_information=0,
     max_cells=0,
+    max_total_parts=0,
     max_part_numbers=None,
     build_cluster_variable=True,
     build_distance_variables=False,
     build_frequency_variables=False,
     variables_prefix="",
-    results_prefix="",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1705,14 +1651,17 @@ def prepare_coclustering_deployment(
         Name of the table variable in the dictionary.
     deployed_variable_name : str
         Name of the coclustering variable to deploy.
-    results_dir : str
-        Path of the results directory.
+    coclustering_dictionary_file_path : str
+        Path of the coclustering dictionary file for deployment.
     max_preserved_information : int, default 0
         Maximum information preserve in the simplified coclustering. If equal to 0
         there is no limit.
     max_cells : int, default 0
         Maximum number of cells in the simplified coclustering. If equal to 0 there
         is no limit.
+    max_total_parts : int, default 0
+        Maximum number of parts totaled over all variables. If equal to 0 there is no
+        limit.
     max_part_numbers : dict, optional
       Dictionary associating variable names to their maximum number of parts to
       preserve in the simplified coclustering. For variables not present in
@@ -1725,8 +1674,6 @@ def prepare_coclustering_deployment(
         If ``True`` includes the frequency variables in the deployment.
     variables_prefix : str, default ""
         Prefix for the variables in the deployment dictionary.
-    results_prefix : str, default ""
-        Prefix of the result files. **Deprecated** will be removed in Khiops 11.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1754,7 +1701,8 @@ def extract_clusters(
     clusters_file_path,
     max_preserved_information=0,
     max_cells=0,
-    batch_mode=True,
+    max_total_parts=0,
+    max_part_numbers=None,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -1783,6 +1731,12 @@ def extract_clusters(
     max_cells : int, default 0
         Maximum number of cells in the simplified coclustering. If equal to 0 there is
         no limit.
+    max_total_parts : int, default 0
+        Maximum number of parts totaled over all variables. If equal to 0 there is no
+        limit.
+    max_part_numbers : dict, optional
+      Dictionary that associate variable names to their maximum number of parts to
+      preserve in the simplified coclustering. If not set there is no limit.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1794,17 +1748,6 @@ def extract_clusters(
     # Save the task arguments
     # WARNING: Do not move this line, see the top of the "tasks" section for details
     task_args = locals()
-
-    # Obtain the directory and name of the clusters file
-    clusters_file_path = create_unambiguous_khiops_path(task_args["clusters_file_path"])
-    clusters_file_name = os.path.basename(clusters_file_path)
-    clusters_file_dir_path = fs.get_parent_path(clusters_file_path)
-    clusters_file_dir = create_unambiguous_khiops_path(clusters_file_dir_path)
-    task_args["clusters_file_name"] = clusters_file_name
-    task_args["results_dir"] = clusters_file_dir
-
-    # Delete the clusters_file_path argument
-    del task_args["clusters_file_path"]
 
     # Run the task
     _run_task("extract_clusters", task_args)

@@ -105,7 +105,7 @@ class KhiopsRemoteAccessTestsContainer:
             return ""
 
         def should_skip_in_a_conda_env(self):
-            """To be overriden by descendants"""
+            """To be overridden by descendants"""
             return True
 
         def print_test_title(self):
@@ -173,21 +173,28 @@ class KhiopsRemoteAccessTestsContainer:
                 f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
             )
 
+            # Attempt to make local directory if not existing
+            if not fs.exists(output_dir) and fs.is_local_resource(output_dir):
+                fs.make_dir(output_dir)
+
+            # Set output report file path
+            report_file_path = fs.get_child_path(output_dir, "IrisAnalysisResults.khj")
+
             # When using `kh`, the log file will be by default
             # in the runner `root_temp_dir` folder that can be remote
-            kh.train_predictor(
+            _, model_file_path = kh.train_predictor(
                 fs.get_child_path(iris_data_dir, "Iris.kdic"),
                 dictionary_name="Iris",
                 data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
                 target_variable="Class",
-                results_dir=output_dir,
+                analysis_report_file_path=report_file_path,
                 temp_dir=self._khiops_temp_dir,
                 trace=True,
             )
 
             # Check the existence of the training files
-            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "AllReports.khj")))
-            self.assertTrue(fs.exists(fs.get_child_path(output_dir, "Modeling.kdic")))
+            self.assertTrue(fs.exists(report_file_path))
+            self.assertTrue(fs.exists(model_file_path))
 
         def test_khiops_classifier_with_remote_access(self):
             """Test the training of a khiops_classifier with remote resources"""
@@ -268,19 +275,27 @@ class KhiopsRemoteAccessTestsContainer:
 
             # no cleaning required as an exception would be raised
             # without any result produced
-            output_dir = fs.get_child_path(
+            self.folder_name_to_clean_in_teardown = output_dir = fs.get_child_path(
                 self.results_dir_root(),
                 f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
             )
 
+            # Attempt to make local directory if not existing
+            if not fs.exists(output_dir) and fs.is_local_resource(output_dir):
+                fs.make_dir(output_dir)
+
+            # Set paths
+            report_file_path = fs.get_child_path(output_dir, "IrisAnalysisResults.khj")
             iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
+
+            # Run the test
             with self.assertRaises(kh.KhiopsRuntimeError):
                 kh.train_predictor(
                     fs.get_child_path(iris_data_dir, "NONEXISTENT.kdic"),
                     dictionary_name="Iris",
                     data_table_path=fs.get_child_path(iris_data_dir, "Iris.txt"),
                     target_variable="Class",
-                    results_dir=output_dir,
+                    analysis_report_file_path=report_file_path,
                     log_file_path=log_file_path,
                 )
             # Check and remove log file
