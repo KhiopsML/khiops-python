@@ -184,6 +184,7 @@ jobs:
             $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
           done
       - name: Display Test Reports
+        if: success() || failure()
         uses: dorny/test-reporter@v1
         with:
           name: Run Tests ${{ matrix.python-version }}
@@ -192,7 +193,9 @@ jobs:
             reports/py${{ matrix.python-version }}_conda/TEST-tests.*.*.xml
           reporter: java-junit
           path-replace-backslashes: 'true'  # Necessary for windows paths
+          fail-on-error: 'false'
       - name: Upload Test Reports as Artifacts
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports-${{ matrix.python-version }}
