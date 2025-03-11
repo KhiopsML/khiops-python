@@ -1803,9 +1803,13 @@ def detect_data_table_format(
     # WARNING: Do not move this line, see the top of the "tasks" section for details
     task_args = locals()
 
-    # Create log file to save the detect format output
-    log_file_path = get_runner().create_temp_file("_detect_data_table_format_", ".log")
-    task_args["log_file_path"] = log_file_path
+    # If not defined, create log file to save the detect format output
+    run_log_file_path = log_file_path
+    if log_file_path is None:
+        run_log_file_path = get_runner().create_temp_file(
+            "_detect_data_table_format_", ".log"
+        )
+        task_args["log_file_path"] = run_log_file_path
 
     # Run the task without dictionary
     if dictionary_file_path_or_domain is None:
@@ -1827,7 +1831,7 @@ def detect_data_table_format(
     # - If there is an error the run method will raise an exception; so at this stage we
     #   have a warning in the worst case.
     # - The contents of this Khiops execution are always ASCII
-    log_file_contents = io.BytesIO(fs.read(log_file_path))
+    log_file_contents = io.BytesIO(fs.read(run_log_file_path))
     with io.TextIOWrapper(log_file_contents, encoding="ascii") as log_file:
         log_file_lines = log_file.readlines()
 
@@ -1856,9 +1860,9 @@ def detect_data_table_format(
 
     # Clean up the log file if necessary
     if trace:
-        print(f"detect_format log file: {log_file_path}")
-    else:
-        fs.remove(log_file_path)
+        print(f"detect_format log file: {run_log_file_path}")
+    elif log_file_path is None:
+        fs.remove(run_log_file_path)
 
     return header_line, field_separator
 
