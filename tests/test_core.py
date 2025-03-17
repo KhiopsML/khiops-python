@@ -2116,8 +2116,7 @@ def scenario_line_comparator(
     for path_statement in PATH_STATEMENTS:
         bytes_path_statement = bytes(path_statement, encoding="ascii")
         if bytes_path_statement in ref_line:
-            equal_path_statement(ref_line, output_line, line_number)
-            return
+            return equal_path_statement(ref_line, output_line, line_number)
 
     default_line_comparator(
         ref_line, output_line, ref_file_path, output_file_path, line_number
@@ -2178,14 +2177,14 @@ def equal_path_statement(ref_line, output_line, line_number):
     ref_tokens = ref_line.strip().split()
     output_tokens = output_line.strip().split()
 
-    if len(ref_tokens) > 2 or len(ref_tokens) == 0:
-        print(f"line {line_number} must have either 1 or 2 tokens")
-        print("> " + ref_line)
+    if len(ref_tokens) > 3 or len(ref_tokens) <= 1:
+        print(f"line {line_number} must have either 2 or 3 tokens")
+        print(b"> " + ref_line)
         return False
 
-    if len(output_tokens) > 2 or len(output_tokens) == 0:
-        print(f"line {line_number} must have either 1 or 2 tokens")
-        print("> " + output_line)
+    if len(output_tokens) > 3 or len(output_tokens) <= 1:
+        print(f"line {line_number} must have either 2 or 3 tokens")
+        print(b"> " + output_line)
         return False
 
     if len(ref_tokens) != len(output_tokens):
@@ -2193,6 +2192,7 @@ def equal_path_statement(ref_line, output_line, line_number):
             f"line {line_number} in output has different number of tokens: "
             f"{len(output_tokens)} instead of {len(ref_tokens)}"
         )
+        return False
 
     if ref_tokens[0] != output_tokens[0]:
         print(f"line {line_number} has different operators")

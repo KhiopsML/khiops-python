@@ -1,12 +1,12 @@
 // Scenario for task export_dictionary_as_json
 // Dictionary file settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunction.kdic
+ClassFileName SpliceJunction.kdic //
 OK
 
 // Export dictionary as JSON file
 ClassManagement.ExportAsJSON
-JSONFileName SpliceJunction.kdicj
+JSONFileName SpliceJunction.kdicj //
 OK
 
 // End of scenario for task export_dictionary_as_json

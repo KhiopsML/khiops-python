@@ -1,7 +1,7 @@
 // Scenario for task prepare_coclustering_deployment
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunction.kdic
+ClassFileName SpliceJunction.kdic //
 OK
 
 // Prepare deployment window
@@ -9,7 +9,7 @@ LearningTools.PrepareDeployment
 
 // Coclustering file
 SelectInputCoclustering
-InputCoclusteringFileName SpliceJunction._khc
+InputCoclusteringFileName SpliceJunction._khc //
 OK
 
 // Simplification settings
@@ -31,7 +31,7 @@ DeploymentSpec.BuildFrequencyRecodingAttributes false
 DeploymentSpec.OutputAttributesPrefix
 
 // Output settings
-CoclusteringDictionaryFileName SpliceJunctionResults/SpliceJunctionCoclusteringResults.khcj
+CoclusteringDictionaryFileName SpliceJunctionResults/SpliceJunctionCoclusteringResults.khcj //
 
 // Execute prepare deployment
 PrepareDeployment

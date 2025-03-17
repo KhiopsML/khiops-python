@@ -1,17 +1,17 @@
 // Scenario for task extract_keys_from_data_table
 // Dictionary file
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
 
 // Extract keys settings
 LearningTools.ExtractKeysFromDataTable
 ClassName Adult
-SourceDataTable.DatabaseSpec.Data.DatabaseName Adult.csv
+SourceDataTable.DatabaseSpec.Data.DatabaseName Adult.csv //
 SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
 SourceDataTable.DatabaseSpec.Data.FieldSeparator
 SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
-TargetDataTable.DatabaseSpec.Data.DatabaseName ./AdultKeys.csv
+TargetDataTable.DatabaseSpec.Data.DatabaseName ./AdultKeys.csv //
 TargetDataTable.DatabaseSpec.Data.HeaderLineUsed true
 TargetDataTable.DatabaseSpec.Data.FieldSeparator
 ExtractKeysFromDataTable

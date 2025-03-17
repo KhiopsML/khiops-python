@@ -1,25 +1,25 @@
 // Scenario for task check_database
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Customer.kdic
+ClassFileName Customer.kdic //
 OK
 
 // Train database settings
 TrainDatabase.ClassName Customer
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv //
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv //
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv //
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Address
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv //
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /City
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CityBidon.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CityBidon.csv //
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Country
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CountryBidon.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CountryBidon.csv //
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Product
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ProductBidon.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ProductBidon.csv //
 TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
 TrainDatabase.DatabaseSpec.Data.FieldSeparator
 TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat

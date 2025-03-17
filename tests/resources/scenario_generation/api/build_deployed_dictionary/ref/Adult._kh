@@ -1,14 +1,14 @@
 // Scenario for task build_deployed_dictionary
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
 
 // Transfer settings
 LearningTools.TransferDatabase
 ClassName Adult
 BuildTransferredClass
-ClassFileName AdultDeployed.kdic
+ClassFileName AdultDeployed.kdic //
 OK
 Exit
 

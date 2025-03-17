@@ -2,7 +2,7 @@
 // Extract cluster settings
 LearningTools.ExtractClusters
 SelectInputCoclustering
-InputCoclusteringFileName AdultCoclustering.khc
+InputCoclusteringFileName AdultCoclustering.khc //
 OK
 CoclusteringAttribute age
 PostProcessingSpec.MaxPreservedInformation 0
@@ -10,7 +10,7 @@ PostProcessingSpec.MaxCellNumber 0
 PostProcessingSpec.MaxTotalPartNumber 0
 
 // Output settings
-ClusterFileName AdultClusters.txt
+ClusterFileName AdultClusters.txt //
 
 // Extract clusters
 ExtractClusters

@@ -1,14 +1,14 @@
 // Scenario for task evaluate_predictor
 // Dictionary file settings
 ClassManagement.OpenFile
-ClassFileName ModelingAdult.kdic
+ClassFileName ModelingAdult.kdic //
 OK
 
 // Evaluate predictor settings
 LearningTools.EvaluatePredictors
 MainTargetModality
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv //
 EvaluationDatabase.DatabaseSpec.Data.HeaderLineUsed true
 EvaluationDatabase.DatabaseSpec.Data.FieldSeparator
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -18,7 +18,7 @@ EvaluatedPredictors.List.Key Adult
 EvaluationDatabase.DatabaseSpec.Selection.SelectionAttribute
 EvaluationDatabase.DatabaseSpec.Selection.SelectionValue
 ExportAsXls false
-EvaluationFileName AdultResults\AdultAnalysisResults.khj
+EvaluationFileName AdultResults\AdultAnalysisResults.khj //
 
 // Evaluate predictor
 EvaluatePredictors

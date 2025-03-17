@@ -1,7 +1,7 @@
 // Scenario for task sort_data_table
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunction.kdic
+ClassFileName SpliceJunction.kdic //
 OK
 
 // Sort table settings
@@ -22,14 +22,14 @@ SortAttributes.InsertItemAfter
 SortAttributes.Name SampleId
 
 // Source table settings
-SourceDataTable.DatabaseSpec.Data.DatabaseName SpliceJunction.csv
+SourceDataTable.DatabaseSpec.Data.DatabaseName SpliceJunction.csv //
 SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
 SourceDataTable.DatabaseSpec.Data.FieldSeparator
 SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 
 // Target table settings
 TargetDataTable.DatabaseSpec.Data.HeaderLineUsed true
-TargetDataTable.DatabaseSpec.Data.DatabaseName ./SpliceJunctionSorted.csv
+TargetDataTable.DatabaseSpec.Data.DatabaseName ./SpliceJunctionSorted.csv //
 TargetDataTable.DatabaseSpec.Data.FieldSeparator
 
 // Sort table

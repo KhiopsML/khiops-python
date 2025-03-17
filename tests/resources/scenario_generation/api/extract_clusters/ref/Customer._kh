@@ -2,7 +2,7 @@
 // Extract cluster settings
 LearningTools.ExtractClusters
 SelectInputCoclustering
-InputCoclusteringFileName CustomerCoclustering.khc
+InputCoclusteringFileName CustomerCoclustering.khc //
 OK
 CoclusteringAttribute id_customer
 PostProcessingSpec.MaxPreservedInformation 0
@@ -10,7 +10,7 @@ PostProcessingSpec.MaxCellNumber 0
 PostProcessingSpec.MaxTotalPartNumber 0
 
 // Output settings
-ClusterFileName CustomerClusters.txt
+ClusterFileName CustomerClusters.txt //
 
 // Extract clusters
 ExtractClusters

@@ -1,14 +1,14 @@
 // Scenario for task detect_data_table_format_with_dictionary
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunctionDNA.kdic
+ClassFileName SpliceJunctionDNA.kdic //
 OK
 
 TrainDatabase.ClassName SpliceJunctionDNA
 
 // Detect format the data table format on the "Extract Keys" window
 LearningTools.ExtractKeysFromDataTable
-SourceDataTable.DatabaseSpec.Data.DatabaseName SpliceJunction.csv
+SourceDataTable.DatabaseSpec.Data.DatabaseName SpliceJunction.csv //
 SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 Exit
 

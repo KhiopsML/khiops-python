@@ -1,7 +1,7 @@
 // Scenario for task prepare_coclustering_deployment
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
 
 // Prepare deployment window
@@ -9,7 +9,7 @@ LearningTools.PrepareDeployment
 
 // Coclustering file
 SelectInputCoclustering
-InputCoclusteringFileName Adult._khc
+InputCoclusteringFileName Adult._khc //
 OK
 
 // Simplification settings
@@ -35,7 +35,7 @@ DeploymentSpec.BuildFrequencyRecodingAttributes false
 DeploymentSpec.OutputAttributesPrefix
 
 // Output settings
-CoclusteringDictionaryFileName AdultResults/AdultCoclusteringResults.khcj
+CoclusteringDictionaryFileName AdultResults/AdultCoclusteringResults.khcj //
 
 // Execute prepare deployment
 PrepareDeployment

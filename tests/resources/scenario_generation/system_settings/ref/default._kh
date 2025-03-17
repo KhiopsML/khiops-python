@@ -9,13 +9,13 @@ AnalysisSpec.SystemParameters.TemporaryDirectoryName /another/tmp
 // Scenario for task check_database
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName a.kdic
+ClassFileName a.kdic //
 OK
 
 // Train database settings
 TrainDatabase.ClassName dict_name
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName data.txt
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName data.txt //
 TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
 TrainDatabase.DatabaseSpec.Data.FieldSeparator
 TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat

@@ -1,15 +1,15 @@
 // Scenario for task train_predictor
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunction.kdic
+ClassFileName SpliceJunction.kdic //
 OK
 
 // Train/test database settings
 TrainDatabase.ClassName SpliceJunction
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv //
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key DNA
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv //
 TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
 TrainDatabase.DatabaseSpec.Data.FieldSeparator
 TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -64,7 +64,7 @@ Exit
 AnalysisSpec.PreprocessingSpec.MaxPartNumber 0
 
 // Output settings
-AnalysisResults.ReportFileName SpliceJunctionResults/SpliceJunctionAnalysisResults._khj
+AnalysisResults.ReportFileName SpliceJunctionResults/SpliceJunctionAnalysisResults._khj //
 
 // Build model
 ComputeStats

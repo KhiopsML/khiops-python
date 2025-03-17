@@ -1,14 +1,14 @@
 // Scenario for task detect_data_table_format_with_dictionary
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
 
 TrainDatabase.ClassName Adult
 
 // Detect format the data table format on the "Extract Keys" window
 LearningTools.ExtractKeysFromDataTable
-SourceDataTable.DatabaseSpec.Data.DatabaseName Adult.csv
+SourceDataTable.DatabaseSpec.Data.DatabaseName Adult.csv //
 SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 Exit
 

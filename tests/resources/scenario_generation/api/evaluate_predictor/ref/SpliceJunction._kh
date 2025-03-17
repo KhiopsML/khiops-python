@@ -1,16 +1,16 @@
 // Scenario for task evaluate_predictor
 // Dictionary file settings
 ClassManagement.OpenFile
-ClassFileName ModelingSpliceJunction.kdic
+ClassFileName ModelingSpliceJunction.kdic //
 OK
 
 // Evaluate predictor settings
 LearningTools.EvaluatePredictors
 MainTargetModality
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv //
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key DNA
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv //
 EvaluationDatabase.DatabaseSpec.Data.HeaderLineUsed true
 EvaluationDatabase.DatabaseSpec.Data.FieldSeparator
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -20,7 +20,7 @@ EvaluatedPredictors.List.Key SpliceJunction
 EvaluationDatabase.DatabaseSpec.Selection.SelectionAttribute
 EvaluationDatabase.DatabaseSpec.Selection.SelectionValue
 ExportAsXls false
-EvaluationFileName SpliceJunctionResults\SpliceJunctionAnalysisResults.khj
+EvaluationFileName SpliceJunctionResults\SpliceJunctionAnalysisResults.khj //
 
 // Evaluate predictor
 EvaluatePredictors

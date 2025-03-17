@@ -1,26 +1,26 @@
 // Scenario for task evaluate_predictor
 // Dictionary file settings
 ClassManagement.OpenFile
-ClassFileName ModelingCustomer.kdic
+ClassFileName ModelingCustomer.kdic //
 OK
 
 // Evaluate predictor settings
 LearningTools.EvaluatePredictors
 MainTargetModality
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv //
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv //
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv //
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Address
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv //
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /City
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CityBidon.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CityBidon.csv //
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Country
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CountryBidon.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CountryBidon.csv //
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Product
-EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ProductBidon.csv
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ProductBidon.csv //
 EvaluationDatabase.DatabaseSpec.Data.HeaderLineUsed true
 EvaluationDatabase.DatabaseSpec.Data.FieldSeparator
 EvaluationDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -30,7 +30,7 @@ EvaluatedPredictors.List.Key Customer
 EvaluationDatabase.DatabaseSpec.Selection.SelectionAttribute
 EvaluationDatabase.DatabaseSpec.Selection.SelectionValue
 ExportAsXls false
-EvaluationFileName CustomerResults\CustomerAnalysisResults.khj
+EvaluationFileName CustomerResults\CustomerAnalysisResults.khj //
 
 // Evaluate predictor
 EvaluatePredictors

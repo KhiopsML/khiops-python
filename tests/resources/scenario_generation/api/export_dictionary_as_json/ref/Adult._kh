@@ -1,12 +1,12 @@
 // Scenario for task export_dictionary_as_json
 // Dictionary file settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
 
 // Export dictionary as JSON file
 ClassManagement.ExportAsJSON
-JSONFileName Adult.kdicj
+JSONFileName Adult.kdicj //
 OK
 
 // End of scenario for task export_dictionary_as_json

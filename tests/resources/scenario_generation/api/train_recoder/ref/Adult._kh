@@ -1,13 +1,13 @@
 // Scenario for task train_recoder
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
 TrainDatabase.ClassName Adult
 
 // Train/test database settings
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv //
 TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
 TrainDatabase.DatabaseSpec.Data.FieldSeparator
 TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -70,7 +70,7 @@ AnalysisSpec.RecodersSpec.RecodingSpec.RecodeContinuousAttributes part Id
 AnalysisSpec.RecodersSpec.RecodingSpec.RecodeBivariateAttributes part Id
 
 // Output settings
-AnalysisResults.ReportFileName AdultResults/AdultAnalysisResults._khj
+AnalysisResults.ReportFileName AdultResults/AdultAnalysisResults._khj //
 
 // Train recoder
 ComputeStats

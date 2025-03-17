@@ -1,13 +1,13 @@
 // Scenario for task train_coclustering
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
 
 // Train database settings
 Database.ClassName Adult
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv //
 Database.DatabaseSpec.Data.HeaderLineUsed true
 Database.DatabaseSpec.Data.FieldSeparator
 Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -31,7 +31,7 @@ AnalysisSpec.CoclusteringParameters.FrequencyAttributeName
 AnalysisSpec.SystemParameters.OptimizationTime 0
 
 // Output settings
-AnalysisResults.CoclusteringFileName AdultResults/AdultCoclusteringResults._khcj
+AnalysisResults.CoclusteringFileName AdultResults/AdultCoclusteringResults._khcj //
 
 // Train
 BuildCoclustering

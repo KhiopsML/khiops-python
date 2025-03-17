@@ -2,7 +2,7 @@
 // Extract cluster settings
 LearningTools.ExtractClusters
 SelectInputCoclustering
-InputCoclusteringFileName SpliceJunctionCoclustering.khc
+InputCoclusteringFileName SpliceJunctionCoclustering.khc //
 OK
 CoclusteringAttribute SampleId
 PostProcessingSpec.MaxPreservedInformation 0
@@ -10,7 +10,7 @@ PostProcessingSpec.MaxCellNumber 0
 PostProcessingSpec.MaxTotalPartNumber 0
 
 // Output settings
-ClusterFileName SpliceJunctionClusters.txt
+ClusterFileName SpliceJunctionClusters.txt //
 
 // Extract clusters
 ExtractClusters

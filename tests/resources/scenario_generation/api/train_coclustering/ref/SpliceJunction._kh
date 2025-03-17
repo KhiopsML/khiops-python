@@ -1,15 +1,15 @@
 // Scenario for task train_coclustering
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunction.kdic
+ClassFileName SpliceJunction.kdic //
 OK
 
 // Train database settings
 Database.ClassName SpliceJunction
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv //
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key DNA
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv //
 Database.DatabaseSpec.Data.HeaderLineUsed true
 Database.DatabaseSpec.Data.FieldSeparator
 Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -29,7 +29,7 @@ AnalysisSpec.CoclusteringParameters.FrequencyAttributeName
 AnalysisSpec.SystemParameters.OptimizationTime 0
 
 // Output settings
-AnalysisResults.CoclusteringFileName SpliceJunctionResults/SpliceJunctionCoclusteringResults._khcj
+AnalysisResults.CoclusteringFileName SpliceJunctionResults/SpliceJunctionCoclusteringResults._khcj //
 
 // Train
 BuildCoclustering

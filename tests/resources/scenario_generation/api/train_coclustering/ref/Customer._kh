@@ -1,25 +1,25 @@
 // Scenario for task train_coclustering
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Customer.kdic
+ClassFileName Customer.kdic //
 OK
 
 // Train database settings
 Database.ClassName Customer
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv //
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key Services
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv //
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv //
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key Address
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv //
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key /City
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName CityBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName CityBidon.csv //
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key /Country
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName CountryBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName CountryBidon.csv //
 Database.DatabaseSpec.Data.DatabaseFiles.List.Key /Product
-Database.DatabaseSpec.Data.DatabaseFiles.DataTableName ProductBidon.csv
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName ProductBidon.csv //
 Database.DatabaseSpec.Data.HeaderLineUsed true
 Database.DatabaseSpec.Data.FieldSeparator
 Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -39,7 +39,7 @@ AnalysisSpec.CoclusteringParameters.FrequencyAttributeName
 AnalysisSpec.SystemParameters.OptimizationTime 0
 
 // Output settings
-AnalysisResults.CoclusteringFileName CustomerResults/CustomerCoclusteringResults._khcj
+AnalysisResults.CoclusteringFileName CustomerResults/CustomerCoclusteringResults._khcj //
 
 // Train
 BuildCoclustering

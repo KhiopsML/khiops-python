@@ -1,15 +1,15 @@
 // Scenario for task train_recoder
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunction.kdic
+ClassFileName SpliceJunction.kdic //
 OK
 TrainDatabase.ClassName SpliceJunction
 
 // Train/test database settings
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv //
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key DNA
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv //
 TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
 TrainDatabase.DatabaseSpec.Data.FieldSeparator
 TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -67,7 +67,7 @@ AnalysisSpec.RecodersSpec.RecodingSpec.RecodeContinuousAttributes part Id
 AnalysisSpec.RecodersSpec.RecodingSpec.RecodeBivariateAttributes part Id
 
 // Output settings
-AnalysisResults.ReportFileName SpliceJunctionResults/SpliceJunctionAnalysisResults._khj
+AnalysisResults.ReportFileName SpliceJunctionResults/SpliceJunctionAnalysisResults._khj //
 
 // Train recoder
 ComputeStats

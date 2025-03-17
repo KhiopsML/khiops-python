@@ -2,7 +2,7 @@
 // Dictionary building settings
 ClassManagement.ManageClasses
 BuildClassDefButton
-SourceDataTable.DatabaseSpec.Data.DatabaseName Adult.csv
+SourceDataTable.DatabaseSpec.Data.DatabaseName Adult.csv //
 SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
 SourceDataTable.DatabaseSpec.Data.FieldSeparator
 SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -12,7 +12,7 @@ OK
 Exit
 
 // Save dictionary
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
 Exit
 

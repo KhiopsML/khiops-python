@@ -1,14 +1,14 @@
 // Scenario for task build_deployed_dictionary
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunction.kdic
+ClassFileName SpliceJunction.kdic //
 OK
 
 // Transfer settings
 LearningTools.TransferDatabase
 ClassName SpliceJunction
 BuildTransferredClass
-ClassFileName SpliceJunctionDeployed.kdic
+ClassFileName SpliceJunctionDeployed.kdic //
 OK
 Exit
 

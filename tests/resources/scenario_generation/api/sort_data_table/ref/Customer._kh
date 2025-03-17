@@ -1,7 +1,7 @@
 // Scenario for task sort_data_table
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Customer.kdic
+ClassFileName Customer.kdic //
 OK
 
 // Sort table settings
@@ -10,14 +10,14 @@ ClassName Customer
 SortAttributes.SelectDefaultKeyAttributes
 
 // Source table settings
-SourceDataTable.DatabaseSpec.Data.DatabaseName Customer.csv
+SourceDataTable.DatabaseSpec.Data.DatabaseName Customer.csv //
 SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
 SourceDataTable.DatabaseSpec.Data.FieldSeparator
 SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 
 // Target table settings
 TargetDataTable.DatabaseSpec.Data.HeaderLineUsed true
-TargetDataTable.DatabaseSpec.Data.DatabaseName ./CustomerSorted.csv
+TargetDataTable.DatabaseSpec.Data.DatabaseName ./CustomerSorted.csv //
 TargetDataTable.DatabaseSpec.Data.FieldSeparator
 
 // Sort table

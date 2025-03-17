@@ -1,13 +1,13 @@
 // Scenario for task train_predictor
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
 
 // Train/test database settings
 TrainDatabase.ClassName Adult
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv //
 TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
 TrainDatabase.DatabaseSpec.Data.FieldSeparator
 TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
@@ -67,7 +67,7 @@ Exit
 AnalysisSpec.PreprocessingSpec.MaxPartNumber 0
 
 // Output settings
-AnalysisResults.ReportFileName AdultResults/AdultAnalysisResults._khj
+AnalysisResults.ReportFileName AdultResults/AdultAnalysisResults._khj //
 
 // Build model
 ComputeStats

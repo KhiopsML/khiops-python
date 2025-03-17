@@ -1,15 +1,15 @@
 // Scenario for task check_database
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunction.kdic
+ClassFileName SpliceJunction.kdic //
 OK
 
 // Train database settings
 TrainDatabase.ClassName SpliceJunction
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv //
 TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key DNA
-TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv //
 TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
 TrainDatabase.DatabaseSpec.Data.FieldSeparator
 TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat

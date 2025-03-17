@@ -22,6 +22,7 @@ from khiops.core.internals.version import KhiopsVersion
 
 def encode_path_valued_arg(arg, arg_name, arg_type):
     """Encodes an argument containing paths (str or dict)
+    Adds trailing comment for ensuring URI parsing by Khiops.
 
     Parameters
     ----------
@@ -43,11 +44,11 @@ def encode_path_valued_arg(arg, arg_name, arg_type):
     ):
         raise TypeError(type_error_message(arg_name, arg, str, bytes, "dict-str-str"))
     if issubclass(arg_type, StringLikeType):
-        encoded_arg = encode_file_path(arg)
+        encoded_arg = encode_file_path(arg) + b" //"
     else:
         encoded_arg = {}
         for key in arg.keys():
-            encoded_arg[key] = encode_file_path(arg[key])
+            encoded_arg[key] = encode_file_path(arg[key]) + b" //"
     return encoded_arg
 
 

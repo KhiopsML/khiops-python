@@ -1,14 +1,14 @@
 // Scenario for task build_deployed_dictionary
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Customer.kdic
+ClassFileName Customer.kdic //
 OK
 
 // Transfer settings
 LearningTools.TransferDatabase
 ClassName Customer
 BuildTransferredClass
-ClassFileName CustomerDeployed.kdic
+ClassFileName CustomerDeployed.kdic //
 OK
 Exit
 
