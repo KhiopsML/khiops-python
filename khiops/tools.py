@@ -21,7 +21,6 @@ import warnings
 import zipfile
 
 import khiops.core as kh
-from khiops.core.internals.common import deprecation_message
 from khiops.samples import samples as samples_core
 
 # We deactivate the warnings to not show a deprecation warning from sklearn
@@ -33,21 +32,6 @@ warnings.resetwarnings()
 # pylint: enable=wrong-import-position
 
 # Note: We dont include these tools in coverage
-
-
-def pk_status_entry_point():  # pragma: no cover
-    """Entry point of the pk-status command
-
-    **Deprecated** will be removed in Khiops 11, use `kh_status_entry_point` instead.
-    """
-    warnings.warn(
-        deprecation_message(
-            deprecated_feature="pk-status",
-            replacement="kh-status",
-            deadline_version="11.0.0",
-        )
-    )
-    kh_status_entry_point()
 
 
 def kh_status_entry_point():  # pragma: no cover

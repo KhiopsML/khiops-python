@@ -1,20 +1,20 @@
 // Scenario for task check_database
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
-ClassManagement.ClassName Adult
 
 // Train database settings
-TrainDatabase.DatabaseFiles.List.Key Adult
-TrainDatabase.DatabaseFiles.DataTableName Adult.csv
-TrainDatabase.HeaderLineUsed true
-TrainDatabase.FieldSeparator 
-TrainDatabase.DatabaseFormatDetector.DetectFileFormat
-TrainDatabase.SampleNumberPercentage 100.0
-TrainDatabase.SamplingMode Include sample
-TrainDatabase.SelectionAttribute 
-TrainDatabase.SelectionValue 
+TrainDatabase.ClassName Adult
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv //
+TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
+TrainDatabase.DatabaseSpec.Data.FieldSeparator
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+TrainDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+TrainDatabase.DatabaseSpec.Selection.SelectionAttribute
+TrainDatabase.DatabaseSpec.Selection.SelectionValue
 
 // Log messages limit
 AnalysisSpec.SystemParameters.MaxErrorMessageNumberInLog 20

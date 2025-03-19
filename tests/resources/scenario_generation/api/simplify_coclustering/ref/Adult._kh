@@ -2,7 +2,7 @@
 // Simplify coclustering settings
 LearningTools.PostProcessCoclustering
 SelectInputCoclustering
-InputCoclusteringFileName Adult._khc
+InputCoclusteringFileName Adult._khc //
 OK
 PostProcessingSpec.MaxPreservedInformation 0
 PostProcessingSpec.MaxCellNumber 0
@@ -17,9 +17,7 @@ PostProcessingSpec.PostProcessedAttributes.List.Key sex
 PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 16
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\AdultResults
-AnalysisResults.ResultFilesPrefix 
-AnalysisResults.PostProcessedCoclusteringFileName SimplifiedAdult._khc
+PostProcessedCoclusteringFileName AdultResults\AdultSimplifiedCoclusteringResults.khcj //
 
 // Simplify Coclustering
 PostProcessCoclustering

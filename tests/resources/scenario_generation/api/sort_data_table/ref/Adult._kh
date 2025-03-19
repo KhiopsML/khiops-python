@@ -1,12 +1,12 @@
 // Scenario for task sort_data_table
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
-ClassManagement.ClassName Adult
 
 // Sort table settings
 LearningTools.SortDataTableByKey
+ClassName Adult
 SortAttributes.SelectDefaultKeyAttributes
 SortAttributes.RemoveItem
 SortAttributes.RemoveItem
@@ -26,15 +26,15 @@ SortAttributes.InsertItemAfter
 SortAttributes.Name race
 
 // Source table settings
-SourceDataTable.DatabaseName Adult.csv
-SourceDataTable.HeaderLineUsed true
-SourceDataTable.FieldSeparator 
-SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+SourceDataTable.DatabaseSpec.Data.DatabaseName Adult.csv //
+SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
+SourceDataTable.DatabaseSpec.Data.FieldSeparator
+SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 
 // Target table settings
-TargetDataTable.HeaderLineUsed true
-TargetDataTable.DatabaseName .\AdultSorted.csv
-TargetDataTable.FieldSeparator 
+TargetDataTable.DatabaseSpec.Data.HeaderLineUsed true
+TargetDataTable.DatabaseSpec.Data.DatabaseName ./AdultSorted.csv //
+TargetDataTable.DatabaseSpec.Data.FieldSeparator
 
 // Sort table
 SortDataTableByKey

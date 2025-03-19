@@ -18,7 +18,6 @@ from unittest import mock
 import khiops
 import khiops.core as kh
 from khiops.core import KhiopsRuntimeError
-from khiops.core.internals.common import create_unambiguous_khiops_path
 from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import KhiopsLocalRunner, KhiopsRunner
 from khiops.core.internals.scenario import ConfigurableKhiopsScenario
@@ -47,22 +46,18 @@ class KhiopsCoreIOTests(unittest.TestCase):
         reports = [
             "Adult",
             "AdultEvaluation",
-            "AdultLegacy",
             "Ansi",
             "AnsiGreek",
             "AnsiLatin",
             "AnsiLatinGreek",
             "AnyChar",
-            "AnyCharLegacy",
             "BadTool",
             "Deft2017ChallengeNGrams1000",
             "EmptyDatabase",
             "Greek",
             "Iris2D",
-            "Iris2DLegacy",
             "IrisC",
             "IrisG",
-            "IrisMAPLegacy",
             "IrisR",
             "IrisU",
             "IrisU2D",
@@ -77,12 +72,8 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "XORRegression",
         ]
         reports_warn = [
-            "AdultLegacy",
             "AnsiLatin",
             "AnsiLatinGreek",
-            "AnyCharLegacy",
-            "Iris2DLegacy",
-            "IrisMAPLegacy",
         ]
         reports_ko = ["BadTool", "NoVersion"]
         for report in reports:
@@ -117,7 +108,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
         # Read then json reports, dump them as txt reports and compare to the reference
         reports = [
             "Adult",
-            "AdultLegacy",
             "Iris",
             "Ansi_Coclustering",
             "AnsiGreek_Coclustering",
@@ -129,7 +119,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "MushroomAnnotated",
         ]
         reports_warn = [
-            "AdultLegacy",
             "AnsiLatin_Coclustering",
             "AnsiLatinGreek_Coclustering",
         ]
@@ -229,7 +218,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "AIDSBondCounts",
             "Adult",
             "AdultKey",
-            "AdultLegacy",
             "AdultModeling",
             "Ansi",
             "AnsiGreek",
@@ -254,7 +242,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
         ]
 
         dictionaries_warn = [
-            "AdultLegacy",
             "AnsiLatin",
             "AnsiLatinGreek",
             "AnsiLatinGreek_Modeling",
@@ -284,28 +271,26 @@ class KhiopsCoreIOTests(unittest.TestCase):
         datasets = ["Adult", "SpliceJunction", "Customer"]
         additional_data_tables = {
             "Adult": None,
-            "SpliceJunction": {"SpliceJunction`DNA": "SpliceJunctionDNABidon.csv"},
+            "SpliceJunction": {"DNA": "SpliceJunctionDNABidon.csv"},
             "Customer": {
-                "Customer`Services": "ServicesBidon.csv",
-                "Customer`Services`Usages": "UsagesBidon.csv",
-                "Customer`Address": "AddressBidon.csv",
-                "City": "CityBidon.csv",
-                "Country": "CountryBidon.csv",
-                "Product": "ProductBidon.csv",
+                "Services": "ServicesBidon.csv",
+                "Services/Usages": "UsagesBidon.csv",
+                "Address": "AddressBidon.csv",
+                "/City": "CityBidon.csv",
+                "/Country": "CountryBidon.csv",
+                "/Product": "ProductBidon.csv",
             },
         }
         output_additional_data_tables = {
             "Adult": None,
-            "SpliceJunction": {
-                "SpliceJunction`DNA": "TransferSpliceJunctionDNABidon.csv"
-            },
+            "SpliceJunction": {"DNA": "TransferSpliceJunctionDNABidon.csv"},
             "Customer": {
-                "Customer`Services": "TransferServicesBidon.csv",
-                "Customer`Services`Usages": "TransferUsagesBidon.csv",
-                "Customer`Address": "TransferAddressBidon.csv",
-                "City": "TransferCityBidon.csv",
-                "Country": "TransferCountryBidon.csv",
-                "Product": "TransferProductBidon.csv",
+                "Services": "TransferServicesBidon.csv",
+                "Services/Usages": "TransferUsagesBidon.csv",
+                "Address": "TransferAddressBidon.csv",
+                "/City": "TransferCityBidon.csv",
+                "/Country": "TransferCountryBidon.csv",
+                "/Product": "TransferProductBidon.csv",
             },
         }
         target_variables = {"Adult": "class", "SpliceJunction": "Class", "Customer": ""}
@@ -430,7 +415,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         f"Modeling{dataset}.kdic",
                         dataset,
                         f"{dataset}.csv",
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}AnalysisResults.khj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset]
@@ -448,7 +433,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "extract_clusters": {
                 dataset: {
                     "args": [
-                        f"{dataset}Coclustering.khc",
+                        f"{dataset}Coclustering.khcj",
                         coclustering_variables[dataset][0],
                         f"{dataset}Clusters.txt",
                     ],
@@ -473,10 +458,10 @@ class KhiopsCoreIOTests(unittest.TestCase):
                     "args": [
                         f"{dataset}.kdic",
                         dataset,
-                        f"{dataset}._khc",
+                        f"{dataset}._khcj",
                         coclustering_variables[dataset][0],
                         coclustering_variables[dataset][1],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}CoclusteringResults.khcj",
                     ],
                     "kwargs": {
                         "max_part_numbers": max_part_numbers[dataset],
@@ -487,9 +472,8 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "simplify_coclustering": {
                 dataset: {
                     "args": [
-                        f"{dataset}._khc",
-                        f"Simplified{dataset}._khc",
-                        f"{dataset}Results",
+                        f"{dataset}._khcj",
+                        f"{dataset}Results/{dataset}SimplifiedCoclusteringResults.khcj",
                     ],
                     "kwargs": {
                         "max_part_numbers": max_part_numbers[dataset],
@@ -518,7 +502,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         dataset,
                         f"{dataset}.csv",
                         coclustering_variables[dataset],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}CoclusteringResults._khcj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset],
@@ -533,7 +517,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         dataset,
                         f"{dataset}.csv",
                         target_variables[dataset],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}AnalysisResults._khj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset],
@@ -550,7 +534,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         dataset,
                         f"{dataset}.csv",
                         target_variables[dataset],
-                        f"{dataset}Results",
+                        f"{dataset}Results/{dataset}AnalysisResults._khj",
                     ],
                     "kwargs": {
                         "additional_data_tables": additional_data_tables[dataset],
@@ -793,7 +777,7 @@ class MockedRunnerContext:
         self.mock_context = mock.patch.object(
             self.mocked_runner,
             "_get_khiops_version",
-            return_value=KhiopsVersion("10.2.2"),
+            return_value=KhiopsVersion("10.6.0-b.0"),
         )
         self.mock_context.__enter__()
 
@@ -1754,38 +1738,38 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         expected_data_paths = {
             "Adult": {"Adult": []},
             "SpliceJunction": {
-                "SpliceJunction": ["SpliceJunction`DNA"],
+                "SpliceJunction": ["DNA"],
                 "SpliceJunctionDNA": [],
             },
             "SpliceJunctionModeling": {
-                "SNB_SpliceJunction": ["SNB_SpliceJunction`SpliceJunctionDNA"],
+                "SNB_SpliceJunction": ["SpliceJunctionDNA"],
                 "SNB_SpliceJunctionDNA": [],
             },
             "Customer": {
                 "Address": [],
                 "Customer": [
-                    "Customer`Services",
-                    "Customer`Services`Usages",
-                    "Customer`Address",
+                    "Services",
+                    "Services/Usages",
+                    "Address",
                 ],
-                "Service": ["Service`Usages"],
+                "Service": ["Usages"],
                 "Usage": [],
             },
             "CustomerExtended": {
-                "Address": ["City", "Country"],
-                "City": ["Country"],
+                "Address": ["/City", "/Country"],
+                "City": ["/Country"],
                 "Country": [],
                 "Customer": [
-                    "Customer`Services",
-                    "Customer`Services`Usages",
-                    "Customer`Address",
-                    "City",
-                    "Country",
-                    "Product",
+                    "Services",
+                    "Services/Usages",
+                    "Address",
+                    "/City",
+                    "/Country",
+                    "/Product",
                 ],
                 "Product": [],
-                "Service": ["Service`Usages", "Product"],
-                "Usage": ["Product"],
+                "Service": ["Usages", "/Product"],
+                "Usage": ["/Product"],
             },
         }
         dictionaries_by_domain = {
@@ -1830,24 +1814,22 @@ class KhiopsCoreServicesTests(unittest.TestCase):
 
         # Set the expected outputs
         expected_dictionary_names = {
-            "SpliceJunction": {"SpliceJunction`DNA": "SpliceJunctionDNA"},
-            "SpliceJunctionModeling": {
-                "SNB_SpliceJunction`SpliceJunctionDNA": "SNB_SpliceJunctionDNA"
-            },
+            "SpliceJunction": {"DNA": "SpliceJunctionDNA"},
+            "SpliceJunctionModeling": {"SpliceJunctionDNA": "SNB_SpliceJunctionDNA"},
             "Customer": {
-                "Customer`Services": "Service",
-                "Customer`Services`Usages": "Usage",
-                "Customer`Address": "Address",
-                "Service`Usages": "Usage",
+                "Services": "Service",
+                "Address": "Address",
+                "Services/Usages": "Usage",
+                "Service/Usages": "Usage",
             },
             "CustomerExtended": {
-                "City": "City",
-                "Country": "Country",
-                "Customer`Services": "Service",
-                "Customer`Services`Usages": "Usage",
-                "Customer`Address": "Address",
-                "Product": "Product",
-                "Service`Usages": "Usage",
+                "/City": "City",
+                "/Country": "Country",
+                "Services": "Service",
+                "Address": "Address",
+                "/Product": "Product",
+                "Services/Usages": "Usage",
+                "Service/Usages": "Usage",
             },
         }
 
@@ -1881,35 +1863,68 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 domain.get_dictionary_at_data_path("INVALID DATA PATH")
             with self.assertRaises(ValueError):
-                domain.get_dictionary_at_data_path("InexistentDictionary`Some`Path")
-            first_data_path = list(expected_dictionary_names_by_data_path.keys())[0]
-            data_path_parts = first_data_path.split("`")
+                domain.get_dictionary_at_data_path("Some/Path")
             with self.assertRaises(ValueError):
-                domain.get_dictionary_at_data_path(f"{data_path_parts[0]}`Some`Path")
+                domain.get_dictionary_at_data_path("Some/Path")
             with self.assertRaises(ValueError):
                 domain.get_dictionary_at_data_path(
-                    f"{data_path_parts[0]}`{valid_non_table_vars[domain_name]}`Path"
+                    f"{valid_non_table_vars[domain_name]}/Path"
                 )
 
+    def test_dictionary_get_dictionary_at_legacy_data_path_deprecation(self):
+        # Set the paths
+        test_resources_dir = os.path.join(resources_dir(), "dictionary")
+        ref_kdicj_dir = os.path.join(test_resources_dir, "ref_kdicj")
 
-class KhiopsCoreSimpleUnitTests(unittest.TestCase):
-    """Test simple testable functions in the core package"""
-
-    def test_create_unambiguous_khiops_path(self):
-        """Test the create_unambiguous_khiops_path function"""
-        expected_outputs = {
-            "/normal/path": "/normal/path",
-            "./relative/path": "./relative/path",
-            "relative/path": os.path.join(".", "relative/path"),
-            ".": ".",
-            "./": "./",
-            ".\\": ".\\",
-            "C:/Normal/Path": "C:/Normal/Path",
-            "C:\\Normal\\Path": "C:\\Normal\\Path",
-            "s3://host/some/path": "s3://host/some/path",
+        # Set the data paths (current and legacy) by domain
+        data_paths_by_domain = {
+            "SpliceJunction": [("DNA", "SpliceJunction`DNA")],
+            "SpliceJunctionModeling": [
+                (
+                    "SpliceJunctionDNA",
+                    "SNB_SpliceJunction`SpliceJunctionDNA",
+                )
+            ],
+            "Customer": [
+                ("Services", "Customer`Services"),
+                ("Address", "Customer`Address"),
+                ("Services/Usages", "Customer`Services`Usages"),
+                ("Service/Usages", "Service`Usages"),
+            ],
         }
-        for path, unambiguous_path in expected_outputs.items():
-            self.assertEqual(create_unambiguous_khiops_path(path), unambiguous_path)
+
+        # Test the method for various dictionary files
+        for domain_name, data_paths in data_paths_by_domain.items():
+            domain = kh.read_dictionary_file(
+                os.path.join(ref_kdicj_dir, f"{domain_name}.kdicj")
+            )
+            for data_path, legacy_data_path in data_paths:
+                with self.subTest(domain_name=domain_name, data_path=data_path):
+
+                    # Test that accessing a dictionary via a legacy path entails
+                    # a deprecation warning
+                    with warnings.catch_warnings(record=True) as warning_list:
+                        dictionary_from_legacy_data_path = (
+                            domain.get_dictionary_at_data_path(legacy_data_path)
+                        )
+
+                    self.assertEqual(len(warning_list), 1)
+                    warning = warning_list[0]
+                    self.assertTrue(issubclass(warning.category, UserWarning))
+                    warning_message = warning.message
+                    self.assertEqual(len(warning_message.args), 1)
+                    message = warning_message.args[0]
+                    self.assertTrue(
+                        "'`'-based dictionary data path convention" in message
+                        and "deprecated" in message
+                    )
+
+                    # Test that the dictionary accessed via a legacy path is
+                    # identical to the dictionary accessed via a current path
+                    self.assertEqual(
+                        dictionary_from_legacy_data_path,
+                        domain.get_dictionary_at_data_path(data_path),
+                    )
 
 
 class ScenarioWriterRunner(KhiopsRunner):
@@ -1928,7 +1943,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         self._write_version = False
 
     def _initialize_khiops_version(self):
-        self._khiops_version = KhiopsVersion("10.1.0")
+        self._khiops_version = KhiopsVersion("10.6.0-b.0")
 
     @property
     def ref_scenario_dir(self):
@@ -2075,12 +2090,21 @@ PATH_STATEMENTS = [
     "ClassFileName",
     "EvaluationFileName",
     "ImportFileName",
-    "InputCoclusteringName",
+    "InputCoclusteringFileName",
+    "CoclusteringDictionaryFileName",
+    "ClusterFileName",
     "JSONFileName",
     "PostProcessedCoclusteringFileName",
-    "ResultFilesDirectory",
     "TargetDataTable.DatabaseName",
     "TargetDatabase.DatabaseFiles.DataTableName",
+    "AnalysisResults.ReportFileName",
+    "AnalysisResults.CoclusteringFileName",
+    "SourceDataTable.DatabaseSpec.Data.DatabaseName",
+    "TargetDataTable.DatabaseSpec.Data.DatabaseName",
+    "TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName",
+    "SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName",
+    "TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName",
+    "EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName",
 ]
 
 
@@ -2092,8 +2116,7 @@ def scenario_line_comparator(
     for path_statement in PATH_STATEMENTS:
         bytes_path_statement = bytes(path_statement, encoding="ascii")
         if bytes_path_statement in ref_line:
-            equal_path_statement(ref_line, output_line, line_number)
-            return
+            return equal_path_statement(ref_line, output_line, line_number)
 
     default_line_comparator(
         ref_line, output_line, ref_file_path, output_file_path, line_number
@@ -2154,14 +2177,14 @@ def equal_path_statement(ref_line, output_line, line_number):
     ref_tokens = ref_line.strip().split()
     output_tokens = output_line.strip().split()
 
-    if len(ref_tokens) > 2 or len(ref_tokens) == 0:
-        print(f"line {line_number} must have either 1 or 2 tokens")
-        print("> " + ref_line)
+    if len(ref_tokens) > 3 or len(ref_tokens) <= 1:
+        print(f"line {line_number} must have either 2 or 3 tokens")
+        print(b"> " + ref_line)
         return False
 
-    if len(output_tokens) > 2 or len(output_tokens) == 0:
-        print(f"line {line_number} must have either 1 or 2 tokens")
-        print("> " + output_line)
+    if len(output_tokens) > 3 or len(output_tokens) <= 1:
+        print(f"line {line_number} must have either 2 or 3 tokens")
+        print(b"> " + output_line)
         return False
 
     if len(ref_tokens) != len(output_tokens):
@@ -2169,6 +2192,7 @@ def equal_path_statement(ref_line, output_line, line_number):
             f"line {line_number} in output has different number of tokens: "
             f"{len(output_tokens)} instead of {len(ref_tokens)}"
         )
+        return False
 
     if ref_tokens[0] != output_tokens[0]:
         print(f"line {line_number} has different operators")
@@ -2282,62 +2306,6 @@ class KhiopsCoreVariousTests(unittest.TestCase):
             "secondary_table_variable_name": secondary_table_variable_name,
             "output_dictionary_file_path": multi_table_dict_out_path,
         }
-
-    def test_build_multi_table_dictionary_deprecation(self):
-        """Test that `api.build_multi_table_dictionary` raises deprecation warning"""
-        in_args = KhiopsCoreVariousTests._build_multi_table_dictionary_args()
-
-        with warnings.catch_warnings(record=True) as warning_list:
-            kh.build_multi_table_dictionary(**in_args)
-
-        self.assertEqual(len(warning_list), 1)
-        warning = warning_list[0]
-        self.assertTrue(issubclass(warning.category, UserWarning))
-        warning_message = warning.message
-        self.assertEqual(len(warning_message.args), 1)
-        message = warning_message.args[0]
-        self.assertTrue(
-            "'build_multi_table_dictionary'" in message and "deprecated" in message
-        )
-
-    def test_build_multi_table_dictionary_behavior(self):
-        """Test that the helper function is called with the right parameters"""
-        parameter_trace = KhiopsTestHelper.create_parameter_trace()
-
-        in_args = KhiopsCoreVariousTests._build_multi_table_dictionary_args()
-        helper_name = "build_multi_table_dictionary_domain"
-        KhiopsTestHelper.wrap_with_parameter_trace(
-            "khiops.core.api", helper_name, parameter_trace
-        )
-        with self.assertWarns(UserWarning):
-            kh.build_multi_table_dictionary(**in_args)
-        # Test that at least one trace has been created, so that the assertions can fail
-        self.assertTrue(any(True for _ in parameter_trace.items()))
-        for _, function_parameters in parameter_trace.items():
-            # Test that at least a traced function has been called
-            self.assertTrue(any(True for _ in function_parameters.items()))
-            for function_name, parameters in function_parameters.items():
-                # Test that the helper has been called
-                self.assertEqual(function_name, helper_name)
-                first_call_parameters = parameters[0]
-                args = first_call_parameters["args"]
-
-                # Test that the parameters have been passed
-                self.assertEqual(args[1], in_args["root_dictionary_name"])
-                self.assertEqual(args[2], in_args["secondary_table_variable_name"])
-
-                # Test that the first argument passed is a DictionaryDomain
-                domain = args[0]
-                self.assertTrue(isinstance(domain, kh.DictionaryDomain))
-
-                # Shallowly test that the domain passed to the helper reflects
-                # the source dictionary
-                # N.B. We do not test the function for reading a dictionary file
-                # into a domain here
-                self.assertEqual(len(domain.dictionaries), 1)
-                dictionary = domain.dictionaries[0]
-                self.assertEqual(dictionary.name, "SpliceJunctionDNA")
-                self.assertEqual(dictionary.key, ["SampleId"])
 
     def test_scenario_generation(self):
         """Test the scenario generation from template and arguments"""
@@ -2606,7 +2574,7 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                     dictionary_name="Iris",
                     data_table_path="/tmp/Iris.txt",
                     target_variable="Class",
-                    results_dir="/tmp",
+                    analysis_report_file_path="/tmp/IrisAnalysisResults.khj",
                     trace=True,
                 )
         expected_msg = (

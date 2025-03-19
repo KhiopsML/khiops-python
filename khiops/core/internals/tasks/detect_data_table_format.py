@@ -14,7 +14,7 @@ TASKS = [
     tm.KhiopsTask(
         "detect_data_table_format",
         "khiops",
-        "10.0.1",
+        "10.6.0-b.0",
         [
             ("data_table_path", StringLikeType),
         ],
@@ -23,10 +23,9 @@ TASKS = [
         # fmt: off
         """
         // Detect format on the "Build Dictionary" window
-        ClassManagement.BuildClassDefButton
-        SourceDataTable.DatabaseName __data_table_path__
-        SourceDataTable.DatabaseFormatDetector.DetectFileFormat
-        Exit
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+        TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
+        TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         """,
         # fmt: on
     ),

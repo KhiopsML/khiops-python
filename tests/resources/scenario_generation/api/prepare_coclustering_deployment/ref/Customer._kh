@@ -1,33 +1,33 @@
 // Scenario for task prepare_coclustering_deployment
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Customer.kdic
+ClassFileName Customer.kdic //
 OK
-ClassManagement.ClassName Customer
 
 // Prepare deployment window
 LearningTools.PrepareDeployment
 
 // Coclustering file
 SelectInputCoclustering
-InputCoclusteringFileName Customer._khc
+InputCoclusteringFileName Customer._khc //
 OK
 
 // Simplification settings
 PostProcessingSpec.MaxPreservedInformation 0
 PostProcessingSpec.MaxCellNumber 0
+PostProcessingSpec.MaxTotalPartNumber 0
 
 // Deployment dictionary settings
+DeploymentSpec.InputClassName Customer
 DeploymentSpec.InputObjectArrayAttributeName id_customer
 DeploymentSpec.DeployedAttributeName Name
 DeploymentSpec.BuildPredictedClusterAttribute true
 DeploymentSpec.BuildClusterDistanceAttributes false
 DeploymentSpec.BuildFrequencyRecodingAttributes false
-DeploymentSpec.OutputAttributesPrefix 
+DeploymentSpec.OutputAttributesPrefix
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\CustomerResults
-AnalysisResults.ResultFilesPrefix 
+CoclusteringDictionaryFileName CustomerResults/CustomerCoclusteringResults.khcj //
 
 // Execute prepare deployment
 PrepareDeployment

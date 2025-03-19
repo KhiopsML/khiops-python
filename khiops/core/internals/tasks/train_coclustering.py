@@ -21,13 +21,13 @@ TASKS = [
     tm.KhiopsTask(
         "train_coclustering",
         "khiops_coclustering",
-        "10.0.0",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
             ("data_table_path", StringLikeType),
             ("coclustering_variables", ListType(StringLikeType)),
-            ("results_dir", StringLikeType),
+            ("coclustering_report_file_path", StringLikeType),
         ],
         [
             ("detect_format", BoolType, True),
@@ -40,12 +40,11 @@ TASKS = [
             ("additional_data_tables", DictType(StringLikeType, StringLikeType), None),
             ("frequency_variable", StringLikeType, ""),
             ("min_optimization_time", IntType, 0),
-            ("results_prefix", StringLikeType, ""),
         ],
         [
             "dictionary_file_path",
             "data_table_path",
-            "results_dir",
+            "coclustering_report_file_path",
             "additional_data_tables",
         ],
         # fmt: off
@@ -54,26 +53,26 @@ TASKS = [
         ClassManagement.OpenFile
         ClassFileName __dictionary_file_path__
         OK
-        ClassManagement.ClassName __dictionary_name__
 
         // Train database settings
-        Database.DatabaseFiles.List.Key __dictionary_name__
-        Database.DatabaseFiles.DataTableName __data_table_path__
+        Database.ClassName __dictionary_name__
+        Database.DatabaseSpec.Data.DatabaseFiles.List.Key
+        Database.DatabaseSpec.Data.DatabaseFiles.DataTableName __data_table_path__
         __DICT__
         __additional_data_tables__
-        Database.DatabaseFiles.List.Key
-        Database.DatabaseFiles.DataTableName
+        Database.DatabaseSpec.Data.DatabaseFiles.List.Key
+        Database.DatabaseSpec.Data.DatabaseFiles.DataTableName
         __END_DICT__
-        Database.HeaderLineUsed __header_line__
-        Database.FieldSeparator __field_separator__
+        Database.DatabaseSpec.Data.HeaderLineUsed __header_line__
+        Database.DatabaseSpec.Data.FieldSeparator __field_separator__
         __OPT__
         __detect_format__
-        Database.DatabaseFormatDetector.DetectFileFormat
+        Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         __END_OPT__
-        Database.SampleNumberPercentage __sample_percentage__
-        Database.SamplingMode __sampling_mode__
-        Database.SelectionAttribute __selection_variable__
-        Database.SelectionValue __selection_value__
+        Database.DatabaseSpec.Sampling.SampleNumberPercentage __sample_percentage__
+        Database.DatabaseSpec.Sampling.SamplingMode __sampling_mode__
+        Database.DatabaseSpec.Selection.SelectionAttribute __selection_variable__
+        Database.DatabaseSpec.Selection.SelectionValue __selection_value__
 
         // Coclustering variables settings
         __LIST__
@@ -81,14 +80,13 @@ TASKS = [
         AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
         AnalysisSpec.CoclusteringParameters.Attributes.Name
         __END_LIST__
-        AnalysisSpec.CoclusteringParameters.FrequencyAttribute __frequency_variable__
+        AnalysisSpec.CoclusteringParameters.FrequencyAttributeName __frequency_variable__
 
         // Minimum optimization time
         AnalysisSpec.SystemParameters.OptimizationTime __min_optimization_time__
 
         // Output settings
-        AnalysisResults.ResultFilesDirectory __results_dir__
-        AnalysisResults.ResultFilesPrefix __results_prefix__
+        AnalysisResults.CoclusteringFileName __coclustering_report_file_path__
 
         // Train
         BuildCoclustering

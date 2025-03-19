@@ -1,18 +1,20 @@
 // Scenario for task build_dictionary_from_data_table
 // Dictionary building settings
-ClassManagement.BuildClassDefButton
-SourceDataTable.DatabaseName Adult.csv
-SourceDataTable.HeaderLineUsed true
-SourceDataTable.FieldSeparator 
-SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+ClassManagement.ManageClasses
+BuildClassDefButton
+SourceDataTable.DatabaseSpec.Data.DatabaseName Adult.csv //
+SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
+SourceDataTable.DatabaseSpec.Data.FieldSeparator
+SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 BuildClassDef
 ClassName Adult
 OK
 Exit
 
 // Save dictionary
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
+Exit
 
 // End of scenario for task build_dictionary_from_data_table
 

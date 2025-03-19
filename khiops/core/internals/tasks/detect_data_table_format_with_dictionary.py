@@ -14,26 +14,27 @@ TASKS = [
     tm.KhiopsTask(
         "detect_data_table_format_with_dictionary",
         "khiops",
-        "10.0.1",
+        "10.6.0-b.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("dictionary_name", StringLikeType),
             ("data_table_path", StringLikeType),
         ],
         [],
-        ["data_table_path"],
+        ["dictionary_file_path", "data_table_path"],
         # fmt: off
         """
         // Dictionary file and class settings
         ClassManagement.OpenFile
         ClassFileName __dictionary_file_path__
         OK
-        ClassManagement.ClassName __dictionary_name__
+
+        TrainDatabase.ClassName __dictionary_name__
 
         // Detect format the data table format on the "Extract Keys" window
         LearningTools.ExtractKeysFromDataTable
-        SourceDataTable.DatabaseName __data_table_path__
-        SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+        SourceDataTable.DatabaseSpec.Data.DatabaseName __data_table_path__
+        SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
         Exit
         """,
         # fmt: on

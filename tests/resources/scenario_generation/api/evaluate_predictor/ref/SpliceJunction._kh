@@ -1,24 +1,26 @@
 // Scenario for task evaluate_predictor
 // Dictionary file settings
 ClassManagement.OpenFile
-ClassFileName ModelingSpliceJunction.kdic
+ClassFileName ModelingSpliceJunction.kdic //
 OK
 
 // Evaluate predictor settings
 LearningTools.EvaluatePredictors
-MainTargetModality 
-EvaluationDatabase.DatabaseFiles.List.Key SpliceJunction
-EvaluationDatabase.DatabaseFiles.DataTableName SpliceJunction.csv
-EvaluationDatabase.DatabaseFiles.List.Key SpliceJunction`DNA
-EvaluationDatabase.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv
-EvaluationDatabase.HeaderLineUsed true
-EvaluationDatabase.FieldSeparator 
-EvaluationDatabase.DatabaseFormatDetector.DetectFileFormat
-EvaluationDatabase.SampleNumberPercentage 100.0
-EvaluationDatabase.SamplingMode Include sample
-EvaluationDatabase.SelectionAttribute 
-EvaluationDatabase.SelectionValue 
-EvaluationFileName .\SpliceJunctionResults\EvaluationReport.xls
+MainTargetModality
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunction.csv //
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key DNA
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName SpliceJunctionDNABidon.csv //
+EvaluationDatabase.DatabaseSpec.Data.HeaderLineUsed true
+EvaluationDatabase.DatabaseSpec.Data.FieldSeparator
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+EvaluationDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+EvaluationDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+EvaluatedPredictors.List.Key SpliceJunction
+EvaluationDatabase.DatabaseSpec.Selection.SelectionAttribute
+EvaluationDatabase.DatabaseSpec.Selection.SelectionValue
+ExportAsXls false
+EvaluationFileName SpliceJunctionResults\SpliceJunctionAnalysisResults.khj //
 
 // Evaluate predictor
 EvaluatePredictors

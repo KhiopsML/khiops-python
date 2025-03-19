@@ -7,10 +7,7 @@
 """Core API functions abstractions"""
 import textwrap
 
-from khiops.core.internals.common import (
-    create_unambiguous_khiops_path,
-    type_error_message,
-)
+from khiops.core.internals.common import type_error_message
 from khiops.core.internals.io import encode_file_path
 from khiops.core.internals.scenario import ConfigurableKhiopsScenario
 from khiops.core.internals.types import (
@@ -25,6 +22,7 @@ from khiops.core.internals.version import KhiopsVersion
 
 def encode_path_valued_arg(arg, arg_name, arg_type):
     """Encodes an argument containing paths (str or dict)
+    Adds trailing comment for ensuring URI parsing by Khiops.
 
     Parameters
     ----------
@@ -46,11 +44,11 @@ def encode_path_valued_arg(arg, arg_name, arg_type):
     ):
         raise TypeError(type_error_message(arg_name, arg, str, bytes, "dict-str-str"))
     if issubclass(arg_type, StringLikeType):
-        encoded_arg = encode_file_path(arg)
+        encoded_arg = encode_file_path(arg) + b" //"
     else:
         encoded_arg = {}
         for key in arg.keys():
-            encoded_arg[key] = encode_file_path(arg[key])
+            encoded_arg[key] = encode_file_path(arg[key]) + b" //"
     return encoded_arg
 
 
@@ -287,28 +285,6 @@ class KhiopsTask:
         for arg_name in self._kwargs_signature_by_name:
             if arg_name not in args:
                 absent_kwarg_names.append(arg_name)
-
-        # Disambiguate path parameters affected of Khiops silently
-        # changing its working directory to that of the data tables
-        for path_arg_name in [
-            "results_dir",
-            "evaluation_report_path",
-            "output_data_table_path",
-        ]:
-            if path_arg_name in args:
-                args[path_arg_name] = create_unambiguous_khiops_path(
-                    args[path_arg_name]
-                )
-        if (
-            "output_additional_data_tables" in args
-            and args["output_additional_data_tables"] is not None
-        ):
-            for data_path in args["output_additional_data_tables"].keys():
-                args["output_additional_data_tables"][data_path] = (
-                    create_unambiguous_khiops_path(
-                        args["output_additional_data_tables"][data_path]
-                    )
-                )
 
         # Transform to string-like parameters
         # Path-valued parameters are encoded differently depending on the platform

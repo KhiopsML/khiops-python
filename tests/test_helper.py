@@ -41,56 +41,42 @@ class CoreApiFunctionMock:
     api_function_specs = {
         ("khiops.core.api", "export_dictionary_as_json"): {
             "output_path_arg_index": 1,
-            "output_path_is_dir": False,
-            "output_file_keys": ["kdicj_path"],
+            "output_file_key": "kdicj_path",
             "return_value_number": 1,
         },
         ("khiops.core", "train_predictor"): {
             "output_path_arg_index": 4,
-            "output_path_is_dir": True,
-            "output_file_keys": ["report_path", "predictor_kdic_path"],
+            "output_file_key": "report_path",
             "return_value_number": 2,
         },
         ("khiops.core", "train_recoder"): {
             "output_path_arg_index": 4,
-            "output_path_is_dir": True,
-            "output_file_keys": ["report_path", "predictor_kdic_path"],
+            "output_file_key": "report_path",
             "return_value_number": 2,
         },
         ("khiops.core", "deploy_model"): {
             "output_path_arg_index": 3,
-            "output_path_is_dir": False,
-            "output_file_keys": ["output_data_table"],
+            "output_file_key": "output_data_table",
             "return_value_number": 0,
         },
         ("khiops.core", "train_coclustering"): {
             "output_path_arg_index": 4,
-            "output_path_is_dir": True,
-            "output_file_keys": ["report_path"],
+            "output_file_key": "report_path",
             "return_value_number": 1,
         },
         ("khiops.core", "simplify_coclustering"): {
-            "output_path_arg_index": 2,
-            "output_path_is_dir": True,
-            "output_file_keys": ["report_path"],
+            "output_path_arg_index": 1,
+            "output_file_key": "report_path",
             "return_value_number": 0,
         },
         ("khiops.core", "prepare_coclustering_deployment"): {
             "output_path_arg_index": 5,
-            "output_path_is_dir": True,
-            "output_file_keys": ["deploy_kdic_path"],
-            "return_value_number": 0,
-        },
-        ("khiops.core", "build_multi_table_dictionary"): {
-            "output_path_arg_index": 3,
-            "output_path_is_dir": False,
-            "output_file_keys": ["kdic_path"],
+            "output_file_key": "deploy_kdic_path",
             "return_value_number": 0,
         },
         ("khiops.core", "extract_keys_from_data_table"): {
             "output_path_arg_index": 3,
-            "output_path_is_dir": False,
-            "output_file_keys": ["keys_table_path"],
+            "output_file_key": "keys_table_path",
             "return_value_number": 0,
         },
     }
@@ -130,13 +116,12 @@ class CoreApiFunctionMock:
             raise ValueError("Missing 'output_file_paths' key in fixture")
 
         # Check contents of containers
-        for output_file_key in self.output_file_keys:
-            if output_file_key not in self.fixture["output_file_paths"]:
-                raise ValueError(
-                    f"Missing output file key '{output_file_key}' "
-                    f"for function '{self.function_name}' "
-                    f"of module '{self.module_name}'."
-                )
+        if self.output_file_key not in self.fixture["output_file_paths"]:
+            raise ValueError(
+                f"Missing output file key '{self.output_file_key}' "
+                f"for function '{self.function_name}' "
+                f"of module '{self.module_name}'."
+            )
         if len(self.fixture["return_values"]) != self.return_value_number:
             raise ValueError(
                 f"Found {len(self.fixture['return_values'])} "
@@ -162,9 +147,9 @@ class CoreApiFunctionMock:
         ]
 
     @property
-    def output_file_keys(self):
+    def output_file_key(self):
         return self.api_function_specs[(self.module_name, self.function_name)][
-            "output_file_keys"
+            "output_file_key"
         ]
 
     @property
@@ -187,27 +172,26 @@ class CoreApiFunctionMock:
         def function_mock(_mocked, _instance, args, kwargs):
             # Function with output dir: Copy the output_files to the specified directory
             copied_output_file_paths = {}
-            if self.output_path_is_dir:
-                # Create the directory if non-existent
-                output_dir = args[self.output_path_arg_index]
-                os.makedirs(output_dir, exist_ok=True)
+            output_file_path = args[self.output_path_arg_index]
+            resource_file_path = self.fixture["output_file_paths"][self.output_file_key]
+            shutil.copyfile(resource_file_path, output_file_path)
+            copied_output_file_paths[self.output_file_key] = output_file_path
 
-                # Copy the output files from the fixture
-                for output_file_key in self.output_file_keys:
-                    resource_file_path = self.fixture["output_file_paths"][
-                        output_file_key
-                    ]
-                    output_file_name = os.path.basename(resource_file_path)
-                    output_file_path = os.path.join(output_dir, output_file_name)
-                    shutil.copyfile(resource_file_path, output_file_path)
-                    copied_output_file_paths[output_file_key] = output_file_path
-            # Function with output file: Copy the only resource to the specified path
-            else:
-                output_file_key = self.output_file_keys[0]
-                output_file_path = args[self.output_path_arg_index]
-                resource_file_path = self.fixture["output_file_paths"][output_file_key]
-                shutil.copyfile(resource_file_path, output_file_path)
-                copied_output_file_paths[output_file_key] = output_file_path
+            # Attempt to copy resource predictor file
+            if "predictor_kdic_path" in self.fixture["output_file_paths"]:
+                resource_predictor_file_path = self.fixture["output_file_paths"][
+                    "predictor_kdic_path"
+                ]
+                if os.path.exists(resource_predictor_file_path):
+                    output_predictor_file_path = (
+                        KhiopsTestHelper.model_path_of_report_path(output_file_path)
+                    )
+                    shutil.copyfile(
+                        resource_predictor_file_path, output_predictor_file_path
+                    )
+                    copied_output_file_paths["predictor_kdic_path"] = (
+                        output_predictor_file_path
+                    )
 
             # Copy the log file if specified in the fixture
             if "log_file_path" in self.fixture["extra_file_paths"]:
@@ -437,3 +421,7 @@ class KhiopsTestHelper:
                 "and data should be an iterable of two elements"
             )
         return predictions
+
+    @staticmethod
+    def model_path_of_report_path(report_path):
+        return f"{os.path.splitext(report_path)[0]}.model.kdic"

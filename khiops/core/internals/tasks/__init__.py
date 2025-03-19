@@ -12,7 +12,6 @@ from khiops.core.internals.task import KhiopsTask, get_task_registry
 from khiops.core.internals.tasks import (
     build_deployed_dictionary,
     build_dictionary_from_data_table,
-    build_multi_table_dictionary,
     check_database,
     deploy_model,
     detect_data_table_format,
@@ -21,10 +20,12 @@ from khiops.core.internals.tasks import (
     export_dictionary_as_json,
     extract_clusters,
     extract_keys_from_data_table,
+    interpret_predictor,
     prepare_coclustering_deployment,
     simplify_coclustering,
     sort_data_table,
     train_coclustering,
+    train_instance_variable_coclustering,
     train_predictor,
     train_recoder,
 )
@@ -33,7 +34,6 @@ from khiops.core.internals.tasks import (
 task_modules = [
     build_deployed_dictionary,
     build_dictionary_from_data_table,
-    build_multi_table_dictionary,
     check_database,
     deploy_model,
     detect_data_table_format,
@@ -42,10 +42,12 @@ task_modules = [
     export_dictionary_as_json,
     extract_clusters,
     extract_keys_from_data_table,
+    interpret_predictor,
     prepare_coclustering_deployment,
     simplify_coclustering,
     sort_data_table,
     train_coclustering,
+    train_instance_variable_coclustering,
     train_predictor,
     train_recoder,
 ]
@@ -55,5 +57,3 @@ for task_module in task_modules:
         assert isinstance(task, KhiopsTask)
         task_registry = get_task_registry()
         task_registry.register_task(task)
-
-task_registry.set_task_end_version("build_multi_table_dictionary", "11.0.0")

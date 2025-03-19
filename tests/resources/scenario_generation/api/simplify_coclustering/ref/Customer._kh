@@ -2,16 +2,14 @@
 // Simplify coclustering settings
 LearningTools.PostProcessCoclustering
 SelectInputCoclustering
-InputCoclusteringFileName Customer._khc
+InputCoclusteringFileName Customer._khc //
 OK
 PostProcessingSpec.MaxPreservedInformation 0
 PostProcessingSpec.MaxCellNumber 0
 PostProcessingSpec.MaxTotalPartNumber 0
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\CustomerResults
-AnalysisResults.ResultFilesPrefix 
-AnalysisResults.PostProcessedCoclusteringFileName SimplifiedCustomer._khc
+PostProcessedCoclusteringFileName CustomerResults\CustomerSimplifiedCoclusteringResults.khcj //
 
 // Simplify Coclustering
 PostProcessCoclustering

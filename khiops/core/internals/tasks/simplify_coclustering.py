@@ -14,23 +14,20 @@ TASKS = [
     tm.KhiopsTask(
         "simplify_coclustering",
         "khiops_coclustering",
-        "10.1.0",
+        "10.6.0-b.0",
         [
             ("coclustering_file_path", StringLikeType),
             ("simplified_coclustering_file_path", StringLikeType),
-            ("results_dir", StringLikeType),
         ],
         [
             ("max_preserved_information", IntType, 0),
             ("max_cells", IntType, 0),
             ("max_total_parts", IntType, 0),
             ("max_part_numbers", DictType(StringLikeType, IntType), None),
-            ("results_prefix", StringLikeType, ""),
         ],
         [
             "coclustering_file_path",
             "simplified_coclustering_file_path",
-            "results_dir",
         ],
         # fmt: off
         """
@@ -49,9 +46,7 @@ TASKS = [
         __END_DICT__
 
         // Output settings
-        AnalysisResults.ResultFilesDirectory __results_dir__
-        AnalysisResults.ResultFilesPrefix __results_prefix__
-        AnalysisResults.PostProcessedCoclusteringFileName __simplified_coclustering_file_path__
+        PostProcessedCoclusteringFileName __simplified_coclustering_file_path__
 
         // Simplify Coclustering
         PostProcessCoclustering

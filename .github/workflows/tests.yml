@@ -2,7 +2,7 @@
 name: Tests
 env:
   DEFAULT_SAMPLES_REVISION: 10.2.4
-  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.2.4
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.6.0-b.0
 on:
   workflow_dispatch:
     inputs:
@@ -10,10 +10,10 @@ on:
         default: 10.2.4
         description: Git Tag/Branch/Commit for the khiops-samples Repo
       image-tag:
-        default: latest
+        default: 10.6.0-b.0.0
         description: Development Docker Image Tag
       khiops-desktop-revision:
-        default: 10.2.4
+        default: 10.6.0-b.0
         description: Khiops Windows Desktop Application Version
       run-expensive-tests:
         type: boolean
@@ -43,7 +43,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.6.0-b.0.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -184,6 +184,7 @@ jobs:
             $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
           done
       - name: Display Test Reports
+        if: success() || failure()
         uses: dorny/test-reporter@v1
         with:
           name: Run Tests ${{ matrix.python-version }}
@@ -192,7 +193,9 @@ jobs:
             reports/py${{ matrix.python-version }}_conda/TEST-tests.*.*.xml
           reporter: java-junit
           path-replace-backslashes: 'true'  # Necessary for windows paths
+          fail-on-error: 'false'
       - name: Upload Test Reports as Artifacts
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports-${{ matrix.python-version }}
@@ -312,7 +315,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.6.0-b.0.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}

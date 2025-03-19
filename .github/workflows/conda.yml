@@ -3,13 +3,13 @@ name: Conda Package
 env:
   # Note: The default Khiops version must never be an alpha release as they are
   #       ephemeral. To test alpha versions run the workflow manually.
-  DEFAULT_KHIOPS_CORE_VERSION: 10.2.4
+  DEFAULT_KHIOPS_CORE_VERSION: 10.6.0b.0
   DEFAULT_SAMPLES_VERSION: 10.2.4
 on:
   workflow_dispatch:
     inputs:
       khiops-core-version:
-        default: 10.2.4
+        default: 10.6.0b.0
         description: khiops-core version for testing
       khiops-samples-version:
         default: 10.2.4
@@ -240,9 +240,9 @@ jobs:
           if [[ "$ANACONDA_CHANNEL" == "khiops" ]]
           then
             anaconda --token "${{ secrets.KHIOPS_ANACONDA_CHANNEL_TOKEN }}" upload \
-              --user "$ANACONDA_CHANNEL" ./khiops-conda/noarch/*.tar.bz2
+              --user "$ANACONDA_CHANNEL" ./khiops-conda/noarch/*.conda
           # For the dev channel: upload with forcing
           else
             anaconda --token "${{ secrets.KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN }}" upload \
-              --user "$ANACONDA_CHANNEL" --force ./khiops-conda/noarch/*.tar.bz2
+              --user "$ANACONDA_CHANNEL" --force ./khiops-conda/noarch/*.conda
           fi

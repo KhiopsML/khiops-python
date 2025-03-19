@@ -1,31 +1,31 @@
 // Scenario for task train_recoder
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Adult.kdic
+ClassFileName Adult.kdic //
 OK
-ClassManagement.ClassName Adult
+TrainDatabase.ClassName Adult
 
 // Train/test database settings
-TrainDatabase.DatabaseFiles.List.Key Adult
-TrainDatabase.DatabaseFiles.DataTableName Adult.csv
-TrainDatabase.HeaderLineUsed true
-TrainDatabase.FieldSeparator 
-TrainDatabase.DatabaseFormatDetector.DetectFileFormat
-TrainDatabase.SampleNumberPercentage 100.0
-TrainDatabase.SamplingMode Include sample
-TrainDatabase.SelectionAttribute 
-TrainDatabase.SelectionValue 
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult.csv //
+TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
+TrainDatabase.DatabaseSpec.Data.FieldSeparator
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+TrainDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+TrainDatabase.DatabaseSpec.Selection.SelectionAttribute
+TrainDatabase.DatabaseSpec.Selection.SelectionValue
 
 // Target variable
 AnalysisSpec.TargetAttributeName class
 
-// Disable predictors
-AnalysisSpec.PredictorsSpec.SelectiveNaiveBayesPredictor false
-AnalysisSpec.PredictorsSpec.NaiveBayesPredictor false
-AnalysisSpec.PredictorsSpec.AdvancedSpec.UnivariatePredictorNumber 0
+// Disable predictors: do data preparation only
+AnalysisSpec.PredictorsSpec.AdvancedSpec.DataPreparationOnly true
+
 
 // Feature engineering
-AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber 0
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTextFeatureNumber 10000
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber 10
 AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxAttributePairNumber 0
 AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectAttributePairsParameters
 AllAttributePairs true
@@ -34,9 +34,9 @@ SpecificAttributePairs.FirstName age
 SpecificAttributePairs.SecondName rage
 SpecificAttributePairs.InsertItemAfter
 SpecificAttributePairs.FirstName Label
-SpecificAttributePairs.SecondName 
+SpecificAttributePairs.SecondName
 SpecificAttributePairs.InsertItemAfter
-SpecificAttributePairs.FirstName 
+SpecificAttributePairs.FirstName
 SpecificAttributePairs.SecondName capital_gain
 Exit
 AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxConstructedAttributeNumber 100
@@ -44,16 +44,20 @@ AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectConstructionDomain
 UnselectAll
 Exit
 
+//  Text feature parameters
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectTextFeaturesParameters
+TextFeatures words
+Exit
+
 // Data preparation (discretization & grouping) settings
 AnalysisSpec.PreprocessingSpec.TargetGrouped false
-AnalysisSpec.PreprocessingSpec.DiscretizerSpec.SupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.DiscretizerSpec.UnsupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MinIntervalFrequency 0
-AnalysisSpec.PreprocessingSpec.DiscretizerSpec.MaxIntervalNumber 0
-AnalysisSpec.PreprocessingSpec.GrouperSpec.SupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.GrouperSpec.UnsupervisedMethodName MODL
-AnalysisSpec.PreprocessingSpec.GrouperSpec.MinGroupFrequency 0
-AnalysisSpec.PreprocessingSpec.GrouperSpec.MaxGroupNumber 0
+
+AnalysisSpec.PreprocessingSpec.MaxPartNumber 0
+AnalysisSpec.PreprocessingSpec.InspectAdvancedParameters
+DiscretizerUnsupervisedMethodName MODL
+GrouperUnsupervisedMethodName MODL
+Exit
+
 
 // Recoder Settings
 AnalysisSpec.RecodersSpec.Recoder true
@@ -66,8 +70,7 @@ AnalysisSpec.RecodersSpec.RecodingSpec.RecodeContinuousAttributes part Id
 AnalysisSpec.RecodersSpec.RecodingSpec.RecodeBivariateAttributes part Id
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\AdultResults
-AnalysisResults.ResultFilesPrefix 
+AnalysisResults.ReportFileName AdultResults/AdultAnalysisResults._khj //
 
 // Train recoder
 ComputeStats

@@ -1,37 +1,37 @@
 // Scenario for task prepare_coclustering_deployment
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName SpliceJunction.kdic
+ClassFileName SpliceJunction.kdic //
 OK
-ClassManagement.ClassName SpliceJunction
 
 // Prepare deployment window
 LearningTools.PrepareDeployment
 
 // Coclustering file
 SelectInputCoclustering
-InputCoclusteringFileName SpliceJunction._khc
+InputCoclusteringFileName SpliceJunction._khc //
 OK
 
 // Simplification settings
 PostProcessingSpec.MaxPreservedInformation 0
 PostProcessingSpec.MaxCellNumber 0
+PostProcessingSpec.MaxTotalPartNumber 0
 PostProcessingSpec.PostProcessedAttributes.List.Key SampleId
 PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 32
 PostProcessingSpec.PostProcessedAttributes.List.Key NonExistentVar
 PostProcessingSpec.PostProcessedAttributes.MaxPartNumber 64
 
 // Deployment dictionary settings
+DeploymentSpec.InputClassName SpliceJunction
 DeploymentSpec.InputObjectArrayAttributeName SampleId
 DeploymentSpec.DeployedAttributeName NonExistentVar
 DeploymentSpec.BuildPredictedClusterAttribute true
 DeploymentSpec.BuildClusterDistanceAttributes false
 DeploymentSpec.BuildFrequencyRecodingAttributes false
-DeploymentSpec.OutputAttributesPrefix 
+DeploymentSpec.OutputAttributesPrefix
 
 // Output settings
-AnalysisResults.ResultFilesDirectory .\SpliceJunctionResults
-AnalysisResults.ResultFilesPrefix 
+CoclusteringDictionaryFileName SpliceJunctionResults/SpliceJunctionCoclusteringResults.khcj //
 
 // Execute prepare deployment
 PrepareDeployment

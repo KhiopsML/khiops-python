@@ -11,17 +11,15 @@ import subprocess
 
 import khiops.core.internals.filesystems as fs
 from khiops.core import api
+from khiops.core.coclustering_results import read_coclustering_results_file
 from khiops.core.dictionary import (
     Dictionary,
     DictionaryDomain,
     Variable,
     read_dictionary_file,
 )
-from khiops.core.internals.common import (
-    create_unambiguous_khiops_path,
-    is_list_like,
-    type_error_message,
-)
+from khiops.core.internals.common import is_list_like, type_error_message
+from khiops.core.internals.runner import get_runner
 
 
 def build_multi_table_dictionary_domain(
@@ -117,7 +115,8 @@ def deploy_coclustering(
     coclustering_file_path,
     key_variable_names,
     deployed_variable_name,
-    results_dir,
+    coclustering_dictionary_file_path,
+    output_data_table_path,
     detect_format=True,
     header_line=None,
     field_separator=None,
@@ -125,26 +124,23 @@ def deploy_coclustering(
     output_field_separator="\t",
     max_preserved_information=0,
     max_cells=0,
+    max_total_parts=0,
     max_part_numbers=None,
     build_cluster_variable=True,
     build_distance_variables=False,
     build_frequency_variables=False,
     variables_prefix="",
-    results_prefix="",
-    batch_mode=True,
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
     trace=False,
 ):
-    r"""Deploys an *individual-variable* coclustering on a data table
+    r"""Deploys a coclustering on a data table
 
-    This procedure generates the following files in ``results_dir``:
-        - ``Coclustering.kdic``: A multi-table dictionary file for further deployments
-          of the coclustering with deploy_model
-        - ``Keys<data_table_file_name>``: A data table file containing only the keys of
-          individual
-        - ``Deployed<data_table_file_name>``: A data table file containing the deployed
+    This procedure generates the following files:
+        - ``coclustering_dictionary_file_path``: A multi-table dictionary file for
+          further deployments of the coclustering with deploy_model
+        - ``output_data_table_path``: A data table file containing the deployed
           coclustering model
 
     Parameters
@@ -156,13 +152,19 @@ def deploy_coclustering(
     data_table_path : str
         Path of the data table file.
     coclustering_file_path : str
-        Path of the coclustering model file (extension ``.khc`` or ``.khcj``)
+        Path of the coclustering model file (extension ``.khc`` or ``.khcj``).
+        .. note::
+
+            Instance-variable coclustering is not currently supported.
+
     key_variable_names : list of str
         Names of the variables forming the unique keys of the individuals.
     deployed_variable_name : str
         Name of the coclustering variable to deploy.
-    results_dir : str
-        Path of the results directory.
+    coclustering_dictionary_file_path : str
+        Path of the coclustering dictionary file to deploy.
+    output_data_table_path : str
+        Path of the output data file.
     detect_format : bool, default ``True``
         If True detects automatically whether the data table file has a header and its
         field separator. It's ignored if ``header_line`` or ``field_separator`` are set.
@@ -182,6 +184,9 @@ def deploy_coclustering(
     max_cells : int, default 0
         Maximum number of cells in the simplified coclustering. If equal to 0 there is
         no limit.
+    max_total_parts : int, default 0
+        Maximum number of parts totaled over all variables. If equal to 0 there is no
+        limit.
     max_part_numbers : dict, optional
       Dictionary associating variable names to their maximum number of parts to
       preserve in the simplified coclustering. For variables not present in
@@ -194,8 +199,6 @@ def deploy_coclustering(
         If True includes the frequency variables in the deployment.
     variables_prefix : str, default ""
         Prefix for the variables in the deployment dictionary.
-    results_prefix : str, default ""
-        Prefix of the result files.
     ... :
         Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
 
@@ -213,21 +216,31 @@ def deploy_coclustering(
         Invalid type ``dictionary_file_path_or_domain`` or ``key_variable_names``
     `ValueError`
         If the type of the dictionary key variables is not equal to ``Categorical``
+    `NotImplementedError`
+        If the coclustering to be deployed is of the instance-variable type
 
     Examples
     --------
     See the following function of the ``samples.py`` documentation script:
         - `samples.deploy_coclustering()`
     """
+    # Fail early for instance-variable coclustering, which is not supported
+    if any(
+        dimension.is_variable_part
+        for dimension in read_coclustering_results_file(
+            coclustering_file_path
+        ).coclustering_report.dimensions
+    ):
+        raise NotImplementedError(
+            "Instance-variable coclustering deployment is not yet implemented."
+        )
+
     # Obtain the dictionary of the table where the coclustering variables are
     api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
     if isinstance(dictionary_file_path_or_domain, DictionaryDomain):
         domain = dictionary_file_path_or_domain
     else:
         domain = read_dictionary_file(dictionary_file_path_or_domain)
-
-    # Disambiguate the results directory path if necessary
-    results_dir = create_unambiguous_khiops_path(results_dir)
 
     # Check the type of non basic keyword arguments specific to this function
     if not is_list_like(key_variable_names):
@@ -277,16 +290,15 @@ def deploy_coclustering(
         coclustering_file_path,
         table_variable_name,
         deployed_variable_name,
-        results_dir,
+        coclustering_dictionary_file_path,
         max_preserved_information=max_preserved_information,
         max_cells=max_cells,
+        max_total_parts=max_total_parts,
         max_part_numbers=max_part_numbers,
         build_cluster_variable=build_cluster_variable,
         build_distance_variables=build_distance_variables,
         build_frequency_variables=build_frequency_variables,
         variables_prefix=variables_prefix,
-        results_prefix=results_prefix,
-        batch_mode=batch_mode,
         log_file_path=log_file_path,
         output_scenario_path=output_scenario_path,
         task_file_path=task_file_path,
@@ -295,7 +307,9 @@ def deploy_coclustering(
 
     # Extract the keys from the tables to a temporary file
     data_table_file_name = os.path.basename(data_table_path)
-    keys_table_file_path = fs.get_child_path(results_dir, f"Keys{data_table_file_name}")
+    keys_table_file_path = get_runner().create_temp_file(
+        prefix="Keys", suffix=data_table_file_name
+    )
     api.extract_keys_from_data_table(
         domain,
         dictionary_name,
@@ -308,16 +322,7 @@ def deploy_coclustering(
         trace=trace,
     )
 
-    # Deploy the coclustering model
-    coclustering_dictionary_file_path = fs.get_child_path(
-        results_dir, "Coclustering.kdic"
-    )
-    output_data_table_path = fs.get_child_path(
-        results_dir, f"Deployed{data_table_file_name}"
-    )
-    additional_data_tables = {
-        f"{root_dictionary_name}`{table_variable_name}": data_table_path
-    }
+    additional_data_tables = {table_variable_name: data_table_path}
     api.deploy_model(
         coclustering_dictionary_file_path,
         root_dictionary_name,
@@ -330,6 +335,11 @@ def deploy_coclustering(
         additional_data_tables=additional_data_tables,
         trace=trace,
     )
+
+    # Delete auxiliary file, no longer useful
+    if fs.exists(keys_table_file_path):
+        fs.remove(keys_table_file_path)
+
     return output_data_table_path, coclustering_dictionary_file_path
 
 
@@ -381,7 +391,7 @@ def deploy_predictor_for_metrics(
         as "\\t").
     sample_percentage : int, default 70
         See ``sampling_mode`` option below.
-    sampling_mode : "Include sample" or "Exclude sample"
+    sampling_mode : "Include sample" or "Exclude sample", default "Include sample"
         If equal to "Include sample" deploys the predictor on ``sample_percentage``
         percent of data and if equal to "Exclude sample" on the complementary ``100 -
         sample_percentage`` percent of data.

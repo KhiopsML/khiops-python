@@ -1,24 +1,24 @@
 // Scenario for task sort_data_table
 // Dictionary file and class settings
 ClassManagement.OpenFile
-ClassFileName Customer.kdic
+ClassFileName Customer.kdic //
 OK
-ClassManagement.ClassName Customer
 
 // Sort table settings
 LearningTools.SortDataTableByKey
+ClassName Customer
 SortAttributes.SelectDefaultKeyAttributes
 
 // Source table settings
-SourceDataTable.DatabaseName Customer.csv
-SourceDataTable.HeaderLineUsed true
-SourceDataTable.FieldSeparator 
-SourceDataTable.DatabaseFormatDetector.DetectFileFormat
+SourceDataTable.DatabaseSpec.Data.DatabaseName Customer.csv //
+SourceDataTable.DatabaseSpec.Data.HeaderLineUsed true
+SourceDataTable.DatabaseSpec.Data.FieldSeparator
+SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
 
 // Target table settings
-TargetDataTable.HeaderLineUsed true
-TargetDataTable.DatabaseName .\CustomerSorted.csv
-TargetDataTable.FieldSeparator 
+TargetDataTable.DatabaseSpec.Data.HeaderLineUsed true
+TargetDataTable.DatabaseSpec.Data.DatabaseName ./CustomerSorted.csv //
+TargetDataTable.DatabaseSpec.Data.FieldSeparator
 
 // Sort table
 SortDataTableByKey

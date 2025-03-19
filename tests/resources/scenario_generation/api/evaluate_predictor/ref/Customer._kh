@@ -1,34 +1,36 @@
 // Scenario for task evaluate_predictor
 // Dictionary file settings
 ClassManagement.OpenFile
-ClassFileName ModelingCustomer.kdic
+ClassFileName ModelingCustomer.kdic //
 OK
 
 // Evaluate predictor settings
 LearningTools.EvaluatePredictors
-MainTargetModality 
-EvaluationDatabase.DatabaseFiles.List.Key Customer
-EvaluationDatabase.DatabaseFiles.DataTableName Customer.csv
-EvaluationDatabase.DatabaseFiles.List.Key Customer`Services
-EvaluationDatabase.DatabaseFiles.DataTableName ServicesBidon.csv
-EvaluationDatabase.DatabaseFiles.List.Key Customer`Services`Usages
-EvaluationDatabase.DatabaseFiles.DataTableName UsagesBidon.csv
-EvaluationDatabase.DatabaseFiles.List.Key Customer`Address
-EvaluationDatabase.DatabaseFiles.DataTableName AddressBidon.csv
-EvaluationDatabase.DatabaseFiles.List.Key City
-EvaluationDatabase.DatabaseFiles.DataTableName CityBidon.csv
-EvaluationDatabase.DatabaseFiles.List.Key Country
-EvaluationDatabase.DatabaseFiles.DataTableName CountryBidon.csv
-EvaluationDatabase.DatabaseFiles.List.Key Product
-EvaluationDatabase.DatabaseFiles.DataTableName ProductBidon.csv
-EvaluationDatabase.HeaderLineUsed true
-EvaluationDatabase.FieldSeparator 
-EvaluationDatabase.DatabaseFormatDetector.DetectFileFormat
-EvaluationDatabase.SampleNumberPercentage 100.0
-EvaluationDatabase.SamplingMode Include sample
-EvaluationDatabase.SelectionAttribute 
-EvaluationDatabase.SelectionValue 
-EvaluationFileName .\CustomerResults\EvaluationReport.xls
+MainTargetModality
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv //
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv //
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv //
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Address
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv //
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /City
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CityBidon.csv //
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Country
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName CountryBidon.csv //
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key /Product
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ProductBidon.csv //
+EvaluationDatabase.DatabaseSpec.Data.HeaderLineUsed true
+EvaluationDatabase.DatabaseSpec.Data.FieldSeparator
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+EvaluationDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+EvaluationDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+EvaluatedPredictors.List.Key Customer
+EvaluationDatabase.DatabaseSpec.Selection.SelectionAttribute
+EvaluationDatabase.DatabaseSpec.Selection.SelectionValue
+ExportAsXls false
+EvaluationFileName CustomerResults\CustomerAnalysisResults.khj //
 
 // Evaluate predictor
 EvaluatePredictors
