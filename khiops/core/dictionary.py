@@ -325,17 +325,21 @@ class DictionaryDomain(KhiopsJSONObject):
         `ValueError`
             If the path is not found.
         """
-        # If data_path includes "`" but not "/", assume legacy data path
-        if "`" in data_path and not "/" in data_path:
-            warnings.warn(
-                deprecation_message(
-                    "'`'-based dictionary data path convention",
-                    "11.0.1",
-                    replacement="'/'-based dictionary data path convention",
-                    quote=False,
+        # If data_path includes "`" and starts with an existing dictionary,
+        # assume legacy data path
+        if "`" in data_path:
+            data_path_parts = data_path.split("`")
+            source_dictionary_name = data_path_parts[0]
+            if any(kdic.name == source_dictionary_name for kdic in self.dictionaries):
+                warnings.warn(
+                    deprecation_message(
+                        "'`'-based dictionary data path convention",
+                        "11.0.1",
+                        replacement="'/'-based dictionary data path convention",
+                        quote=False,
+                    )
                 )
-            )
-            return self._get_dictionary_at_data_path_legacy(data_path)
+                return self._get_dictionary_at_data_path_legacy(data_path)
         return self._get_dictionary_at_data_path(data_path)
 
     def _get_dictionary_at_data_path_legacy(self, data_path):
