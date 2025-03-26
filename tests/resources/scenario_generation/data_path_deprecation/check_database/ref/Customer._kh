@@ -1,0 +1,35 @@
+// Scenario for task check_database
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Customer.kdic //
+OK
+
+// Train database settings
+TrainDatabase.ClassName Customer
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv //
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv //
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv //
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Address
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv //
+TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
+TrainDatabase.DatabaseSpec.Data.FieldSeparator
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+TrainDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+TrainDatabase.DatabaseSpec.Selection.SelectionAttribute
+TrainDatabase.DatabaseSpec.Selection.SelectionValue
+
+// Log messages limit
+AnalysisSpec.SystemParameters.MaxErrorMessageNumberInLog 20
+
+// Execute check database
+LearningTools.CheckData
+
+// End of scenario for task check_database
+
+// Exit Khiops
+ClassManagement.Quit
+OK

@@ -1,0 +1,45 @@
+// Scenario for task train_coclustering
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Customer.kdic //
+OK
+
+// Train database settings
+Database.ClassName Customer
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv //
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key Services
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv //
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv //
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key Address
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv //
+Database.DatabaseSpec.Data.HeaderLineUsed true
+Database.DatabaseSpec.Data.FieldSeparator
+Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+Database.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+Database.DatabaseSpec.Sampling.SamplingMode Include sample
+Database.DatabaseSpec.Selection.SelectionAttribute
+Database.DatabaseSpec.Selection.SelectionValue
+
+// Coclustering variables settings
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name id_customer
+AnalysisSpec.CoclusteringParameters.Attributes.InsertItemAfter
+AnalysisSpec.CoclusteringParameters.Attributes.Name Name
+AnalysisSpec.CoclusteringParameters.FrequencyAttributeName
+
+// Minimum optimization time
+AnalysisSpec.SystemParameters.OptimizationTime 0
+
+// Output settings
+AnalysisResults.CoclusteringFileName CustomerResults/CustomerCoclusteringResults._khcj //
+
+// Train
+BuildCoclustering
+
+// End of scenario for task train_coclustering
+
+// Exit Khiops
+ClassManagement.Quit
+OK

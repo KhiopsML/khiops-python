@@ -12,6 +12,7 @@ import shutil
 import textwrap
 import unittest
 import warnings
+from copy import copy
 from pathlib import Path
 from unittest import mock
 
@@ -265,6 +266,99 @@ class KhiopsCoreIOTests(unittest.TestCase):
                 domain_copy = domain.copy()
                 domain_copy.export_khiops_dictionary_file(copy_output_kdic)
                 assert_files_equal(self, ref_kdic, copy_output_kdic)
+
+    def _build_mock_deprecated_data_path_api_method_parameters(self):
+        # Mock data to test the update of legacy data paths in the created
+        # scenarios
+        additional_data_tables = {
+            "Customer`Services": "ServicesBidon.csv",
+            "Customer`Services`Usages": "UsagesBidon.csv",
+            "Customer`Address": "AddressBidon.csv",
+        }
+        output_additional_data_tables = {
+            "Customer`Services": "TransferServicesBidon.csv",
+            "Customer`Services`Usages": "TransferUsagesBidon.csv",
+            "Customer`Address": "TransferAddressBidon.csv",
+        }
+
+        # Store the relation method_name -> mock args and kwargs
+        # Copy `additional_data_tables` as it is mutated by each function
+        method_test_args = {
+            "check_database": {
+                "args": ["Customer.kdic", "Customer", "Customer.csv"],
+                "kwargs": {"additional_data_tables": copy(additional_data_tables)},
+            },
+            # Test byte strings in the `deploy_model` test
+            "deploy_model": {
+                "args": [
+                    bytes("Customer.kdic", encoding="ascii"),
+                    bytes("Customer", encoding="ascii"),
+                    bytes("Customer.csv", encoding="ascii"),
+                    bytes("CustomerDeployed.csv", encoding="ascii"),
+                ],
+                "kwargs": {
+                    "additional_data_tables": (
+                        {
+                            bytes(key, encoding="ascii"): bytes(value, encoding="ascii")
+                            for key, value in additional_data_tables.items()
+                        }
+                    ),
+                    "output_additional_data_tables": (
+                        {
+                            bytes(key, encoding="ascii"): bytes(value, encoding="ascii")
+                            for key, value in output_additional_data_tables.items()
+                        }
+                    ),
+                },
+            },
+            "evaluate_predictor": {
+                "args": [
+                    "ModelingCustomer.kdic",
+                    "Customer",
+                    "Customer.csv",
+                    "CustomerResults/CustomerAnalysisResults.khj",
+                ],
+                "kwargs": {"additional_data_tables": copy(additional_data_tables)},
+            },
+            "train_coclustering": {
+                "args": [
+                    "Customer.kdic",
+                    "Customer",
+                    "Customer.csv",
+                    ["id_customer", "Name"],
+                    "CustomerResults/CustomerCoclusteringResults._khcj",
+                ],
+                "kwargs": {
+                    "additional_data_tables": copy(additional_data_tables),
+                },
+            },
+            "train_predictor": {
+                "args": [
+                    "Customer.kdic",
+                    "Customer",
+                    "Customer.csv",
+                    "",
+                    "CustomerResults/CustomerAnalysisResults._khj",
+                ],
+                "kwargs": {
+                    "additional_data_tables": copy(additional_data_tables),
+                },
+            },
+            "train_recoder": {
+                "args": [
+                    "Customer.kdic",
+                    "Customer",
+                    "Customer.csv",
+                    "",
+                    "CustomerResults/CustomerAnalysisResults._khj",
+                ],
+                "kwargs": {
+                    "additional_data_tables": copy(additional_data_tables),
+                },
+            },
+        }
+
+        return method_test_args
 
     def _build_mock_api_method_parameters(self):
         # Pseudo-mock data to test the creation of scenarios
@@ -589,6 +683,66 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         test_runner.output_scenario_path,
                         line_comparator=scenario_line_comparator,
                     )
+
+        # Restore the default runner
+        kh.set_runner(default_runner)
+
+    def test_data_path_deprecation_in_api_method(self):
+        """Tests if the core.api deprecates legacy data paths"""
+        # Set the root directory of these tests
+        test_resources_dir = os.path.join(
+            resources_dir(), "scenario_generation", "data_path_deprecation"
+        )
+
+        # Use the test runner that only compares the scenarios
+        default_runner = kh.get_runner()
+        test_runner = ScenarioWriterRunner(self, test_resources_dir)
+        kh.set_runner(test_runner)
+
+        # Obtain mock arguments for each API call
+        method_test_args = self._build_mock_deprecated_data_path_api_method_parameters()
+
+        # Test for each dataset mock parameters
+        for method_name, method_full_args in method_test_args.items():
+            # Set the runners test name
+            test_runner.test_name = method_name
+
+            # Clean the directory for this method's tests
+            cleanup_dir(test_runner.output_scenario_dir, "*/output/*._kh", verbose=True)
+            test_runner.subtest_name = "Customer"
+            with self.subTest(method=method_name):
+                # Get the API function and its args and kwargs
+                method = getattr(kh, method_name)
+                args = method_full_args["args"]
+                kwargs = method_full_args["kwargs"]
+
+                # Test that using legacy paths entails a deprecation warning
+                with warnings.catch_warnings(record=True) as warning_list:
+                    method(*args, **kwargs)
+
+                # Check that there is at least one deprecation warning message
+                # related to the data paths
+                self.assertTrue(len(warning_list) > 0)
+                deprecation_warning_found = False
+                for warning in warning_list:
+                    warning_message = warning.message
+                    if (
+                        issubclass(warning.category, UserWarning)
+                        and len(warning_message.args) == 1
+                        and "'`'-based dictionary data path" in warning_message.args[0]
+                        and "deprecated" in warning_message.args[0]
+                    ):
+                        deprecation_warning_found = True
+                        break
+                self.assertTrue(deprecation_warning_found)
+
+                # Compare the reference with the output
+                assert_files_equal(
+                    self,
+                    test_runner.ref_scenario_path,
+                    test_runner.output_scenario_path,
+                    line_comparator=scenario_line_comparator,
+                )
 
         # Restore the default runner
         kh.set_runner(default_runner)
