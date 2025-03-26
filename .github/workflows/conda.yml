@@ -77,6 +77,7 @@ jobs:
         env:
           - {os: ubuntu-20.04, json-image: '{"image": null}'}
           - {os: ubuntu-22.04, json-image: '{"image": null}'}
+          - {os: ubuntu-24.04, json-image: '{"image": null}'}
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:8"}'}
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
           - {os: windows-2019, json-image: '{"image": null}'}
