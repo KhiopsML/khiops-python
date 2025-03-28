@@ -11,6 +11,9 @@
 ### Added
 - (`sklearn`) Support for boolean and float targets in `KhiopsClassifier`.
 
+### Fixed
+- (`sklearn`) Crash when there were no informative trees in predictors.
+
 ## 10.3.0.0 - 2025-02-10
 
 ### Fixed
