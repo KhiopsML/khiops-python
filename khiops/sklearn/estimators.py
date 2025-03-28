@@ -1435,7 +1435,11 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         else:
             pair_feature_evaluated_names_ = []
             pair_feature_evaluated_levels_ = []
-        if "treePreparationReport" in self.model_report_.json_data:
+        if (
+            "treePreparationReport" in self.model_report_.json_data
+            and "variablesStatistics"
+            in self.model_report_.json_data["treePreparationReport"]
+        ):
             tree_preparation_report = self.model_report_.json_data[
                 "treePreparationReport"
             ]["variablesStatistics"]
