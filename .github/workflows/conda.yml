@@ -75,8 +75,9 @@ jobs:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
         env:
-          - {os: ubuntu-20.04, json-image: '{"image": null}'}
+          - {os: ubuntu-22.04, json-image: '{"image": "ubuntu:20.04"}'}
           - {os: ubuntu-22.04, json-image: '{"image": null}'}
+          - {os: ubuntu-24.04, json-image: '{"image": null}'}
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:8"}'}
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
           - {os: windows-2019, json-image: '{"image": null}'}
