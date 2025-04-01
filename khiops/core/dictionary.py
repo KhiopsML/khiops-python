@@ -1081,6 +1081,7 @@ class Variable:
             "Time",
             "Date",
             "Timestamp",
+            "TimestampTZ",
             "Text",
             "TextList",
         ]
