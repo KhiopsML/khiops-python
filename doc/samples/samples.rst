@@ -212,6 +212,35 @@ Samples
 
     # If you have Khiops Visualization installed you may open the report as follows
     # kh.visualize_report(report_file_path)
+.. autofunction:: train_predictor_text
+.. code-block:: python
+
+    # Imports
+    import os
+    from khiops import core as kh
+
+    # Set the file paths
+    dictionary_file_path = os.path.join(
+        kh.get_samples_dir(), "NegativeAirlineTweets", "NegativeAirlineTweets.kdic"
+    )
+    data_table_path = os.path.join(
+        kh.get_samples_dir(), "NegativeAirlineTweets", "NegativeAirlineTweets.txt"
+    )
+    report_file_path = os.path.join(
+        "kh_samples", "train_predictor_text", "AnalysisResults.khj"
+    )
+
+    # Train the predictor
+    kh.train_predictor(
+        dictionary_file_path,
+        "FlightNegativeTweets",
+        data_table_path,
+        "negativereason",
+        report_file_path,
+        max_trees=5,
+        max_text_features=1000,
+        text_features="words",
+    )
 .. autofunction:: train_predictor_error_handling
 .. code-block:: python
 
@@ -947,6 +976,44 @@ Samples
     # It will score it according to the trained predictor
     kh.deploy_model(
         model_dictionary_file_path, "SNB_Adult", data_table_path, output_data_table_path
+    )
+.. autofunction:: deploy_model_text
+.. code-block:: python
+
+    # Imports
+    import os
+    from khiops import core as kh
+
+    # Set the file paths
+    dictionary_file_path = os.path.join(
+        kh.get_samples_dir(), "NegativeAirlineTweets", "NegativeAirlineTweets.kdic"
+    )
+    data_table_path = os.path.join(
+        kh.get_samples_dir(), "NegativeAirlineTweets", "NegativeAirlineTweets.txt"
+    )
+    output_dir = os.path.join("kh_samples", "deploy_model_text")
+    report_file_path = os.path.join(output_dir, "AnalysisResults.khj")
+    output_data_table_path = os.path.join(output_dir, "ScoresNegativeAirlineTweets.txt")
+
+    # Train the predictor
+    _, model_dictionary_file_path = kh.train_predictor(
+        dictionary_file_path,
+        "FlightNegativeTweets",
+        data_table_path,
+        "negativereason",
+        report_file_path,
+        max_trees=5,
+        max_text_features=1000,
+        text_features="words",
+    )
+
+    # Deploy the model on the database
+    # It will score it according to the trained predictor
+    kh.deploy_model(
+        model_dictionary_file_path,
+        "SNB_FlightNegativeTweets",
+        data_table_path,
+        output_data_table_path,
     )
 .. autofunction:: deploy_model_mt
 .. code-block:: python
