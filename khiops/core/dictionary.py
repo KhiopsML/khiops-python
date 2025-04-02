@@ -70,7 +70,7 @@ def _format_name(name):
 def _quote_value(value):
     """Double-quotes a string
 
-    Categorical and metadata values are quoted with this method.
+    Categorical, Text and metadata values are quoted with this method.
     """
     if isinstance(value, str):
         quoted_value = '"' + value.replace('"', '""') + '"'
@@ -1075,7 +1075,16 @@ class Variable:
             ``True`` if a variables comes directly from a data column.
 
         """
-        base_types = ["Categorical", "Numerical", "Time", "Date", "Timestamp"]
+        base_types = [
+            "Categorical",
+            "Numerical",
+            "Time",
+            "Date",
+            "Timestamp",
+            "TimestampTZ",
+            "Text",
+            "TextList",
+        ]
         if self.variable_block is None:
             return self.rule == "" and self.type in base_types
         return self.variable_block.rule == ""

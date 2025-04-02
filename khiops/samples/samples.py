@@ -233,6 +233,36 @@ def train_predictor_file_paths():
     # kh.visualize_report(report_file_path)
 
 
+def train_predictor_text():
+    """Trains a predictor with just text-specific parameters"""
+    # Imports
+    import os
+    from khiops import core as kh
+
+    # Set the file paths
+    dictionary_file_path = os.path.join(
+        kh.get_samples_dir(), "NegativeAirlineTweets", "NegativeAirlineTweets.kdic"
+    )
+    data_table_path = os.path.join(
+        kh.get_samples_dir(), "NegativeAirlineTweets", "NegativeAirlineTweets.txt"
+    )
+    report_file_path = os.path.join(
+        "kh_samples", "train_predictor_text", "AnalysisResults.khj"
+    )
+
+    # Train the predictor
+    kh.train_predictor(
+        dictionary_file_path,
+        "FlightNegativeTweets",
+        data_table_path,
+        "negativereason",
+        report_file_path,
+        max_trees=5,
+        max_text_features=1000,
+        text_features="words",
+    )
+
+
 def train_predictor_error_handling():
     """Shows how to handle errors when training a predictor
 
@@ -1059,6 +1089,52 @@ def deploy_model():
     )
 
 
+def deploy_model_text():
+    """Deploys a model learned on textual data
+    It is a call to `~.api.deploy_model` with its mandatory parameters, plus
+    text-specific parameters.
+
+    In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
+    associated dictionary to the input database. The model predictions are written to
+    the output database.
+    """
+    # Imports
+    import os
+    from khiops import core as kh
+
+    # Set the file paths
+    dictionary_file_path = os.path.join(
+        kh.get_samples_dir(), "NegativeAirlineTweets", "NegativeAirlineTweets.kdic"
+    )
+    data_table_path = os.path.join(
+        kh.get_samples_dir(), "NegativeAirlineTweets", "NegativeAirlineTweets.txt"
+    )
+    output_dir = os.path.join("kh_samples", "deploy_model_text")
+    report_file_path = os.path.join(output_dir, "AnalysisResults.khj")
+    output_data_table_path = os.path.join(output_dir, "ScoresNegativeAirlineTweets.txt")
+
+    # Train the predictor
+    _, model_dictionary_file_path = kh.train_predictor(
+        dictionary_file_path,
+        "FlightNegativeTweets",
+        data_table_path,
+        "negativereason",
+        report_file_path,
+        max_trees=5,
+        max_text_features=1000,
+        text_features="words",
+    )
+
+    # Deploy the model on the database
+    # It will score it according to the trained predictor
+    kh.deploy_model(
+        model_dictionary_file_path,
+        "SNB_FlightNegativeTweets",
+        data_table_path,
+        output_data_table_path,
+    )
+
+
 def deploy_model_mt():
     """Deploys a multi-table classifier in the simplest way possible
 
@@ -1811,6 +1887,7 @@ exported_samples = [
     export_dictionary_files,
     train_predictor,
     train_predictor_file_paths,
+    train_predictor_text,
     train_predictor_error_handling,
     train_predictor_mt,
     train_predictor_mt_with_specific_rules,
@@ -1829,6 +1906,7 @@ exported_samples = [
     train_recoder_with_multiple_parameters,
     train_recoder_mt_flatten,
     deploy_model,
+    deploy_model_text,
     deploy_model_mt,
     deploy_model_mt_with_interpretation,
     deploy_model_mt_snowflake,
