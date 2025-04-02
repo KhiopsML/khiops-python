@@ -1,0 +1,78 @@
+// Scenario for task train_recoder
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Customer.kdic //
+OK
+TrainDatabase.ClassName Customer
+
+// Train/test database settings
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Customer.csv //
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName ServicesBidon.csv //
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Services/Usages
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName UsagesBidon.csv //
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key Address
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName AddressBidon.csv //
+TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
+TrainDatabase.DatabaseSpec.Data.FieldSeparator
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 100.0
+TrainDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+TrainDatabase.DatabaseSpec.Selection.SelectionAttribute
+TrainDatabase.DatabaseSpec.Selection.SelectionValue
+
+// Target variable
+AnalysisSpec.TargetAttributeName
+
+// Disable predictors: do data preparation only
+AnalysisSpec.PredictorsSpec.AdvancedSpec.DataPreparationOnly true
+
+
+// Feature engineering
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTextFeatureNumber 10000
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber 10
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxAttributePairNumber 0
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectAttributePairsParameters
+AllAttributePairs true
+Exit
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxConstructedAttributeNumber 100
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectConstructionDomain
+Exit
+
+//  Text feature parameters
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectTextFeaturesParameters
+TextFeatures words
+Exit
+
+// Data preparation (discretization & grouping) settings
+AnalysisSpec.PreprocessingSpec.TargetGrouped false
+
+AnalysisSpec.PreprocessingSpec.MaxPartNumber 0
+AnalysisSpec.PreprocessingSpec.InspectAdvancedParameters
+DiscretizerUnsupervisedMethodName MODL
+GrouperUnsupervisedMethodName MODL
+Exit
+
+
+// Recoder Settings
+AnalysisSpec.RecodersSpec.Recoder true
+AnalysisSpec.RecodersSpec.RecodingSpec.FilterAttributes true
+AnalysisSpec.RecodersSpec.RecodingSpec.MaxFilteredAttributeNumber 0
+AnalysisSpec.RecodersSpec.RecodingSpec.KeepInitialSymbolAttributes false
+AnalysisSpec.RecodersSpec.RecodingSpec.KeepInitialContinuousAttributes false
+AnalysisSpec.RecodersSpec.RecodingSpec.RecodeSymbolAttributes part Id
+AnalysisSpec.RecodersSpec.RecodingSpec.RecodeContinuousAttributes part Id
+AnalysisSpec.RecodersSpec.RecodingSpec.RecodeBivariateAttributes part Id
+
+// Output settings
+AnalysisResults.ReportFileName CustomerResults/CustomerAnalysisResults._khj //
+
+// Train recoder
+ComputeStats
+
+// End of scenario for task train_recoder
+
+// Exit Khiops
+ClassManagement.Quit
+OK

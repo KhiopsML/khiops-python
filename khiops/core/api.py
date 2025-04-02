@@ -198,6 +198,71 @@ def _preprocess_arguments(args):
     return command_line_options, system_settings, task_is_called_with_domain
 
 
+def _deprecate_legacy_data_path(data_path_task_arg_name, task_args):
+    """Detect and replace legacy data path with the current syntax
+
+    .. note:: The function mutates task_args.
+    """
+    if (
+        data_path_task_arg_name in task_args
+        and task_args[data_path_task_arg_name] is not None
+    ):
+        assert "dictionary_name" in task_args or "train_dictionary_name" in task_args
+        if "dictionary_name" in task_args:
+            current_dictionary_name = task_args["dictionary_name"]
+        else:
+            current_dictionary_name = task_args["train_dictionary_name"]
+
+        for kdic_path in task_args[data_path_task_arg_name].keys():
+            if isinstance(kdic_path, str):
+                deprecated_data_path_separator = "`"
+                data_path_separator = "/"
+                kdic_path_for_warning = kdic_path
+            else:
+                assert isinstance(kdic_path, bytes)
+                deprecated_data_path_separator = b"`"
+                data_path_separator = b"/"
+                if isinstance(current_dictionary_name, str):
+                    current_dictionary_name = bytes(
+                        current_dictionary_name, encoding="ascii"
+                    )
+                kdic_path_for_warning = kdic_path.decode("ascii")
+
+            # Path split "`" yields non-empty fragments; the first fragment
+            # starts with the current dictionary name
+            kdic_path_parts = kdic_path.split(deprecated_data_path_separator)
+            if all(len(path_part) > 0 for path_part in kdic_path_parts):
+                source_dictionary_name = kdic_path_parts[0]
+                if source_dictionary_name == current_dictionary_name:
+                    # Escape any "/" char in the path parts except for the
+                    # current dictionary, which is is skipped from the new path
+                    new_kdic_path_parts = []
+                    for kdic_path_part in kdic_path_parts[1:]:
+                        new_kdic_path_parts.append(
+                            kdic_path_part.replace(
+                                data_path_separator,
+                                deprecated_data_path_separator + data_path_separator,
+                            )
+                        )
+
+                    # Replace the legacy data path with the current data path
+                    new_kdic_path = data_path_separator.join(new_kdic_path_parts)
+                    kdic_file_path = task_args[data_path_task_arg_name].pop(kdic_path)
+                    task_args[data_path_task_arg_name][new_kdic_path] = kdic_file_path
+                    warnings.warn(
+                        deprecation_message(
+                            "'`'-based dictionary data path: "
+                            f"'{kdic_path_for_warning}'",
+                            "11.0.1",
+                            replacement=(
+                                "'/'-based dictionary data path "
+                                f"convention: '{new_kdic_path}'"
+                            ),
+                            quote=False,
+                        )
+                    )
+
+
 def _preprocess_task_arguments(task_args):
     """Preprocessing of task arguments common to various tasks
 
@@ -319,6 +384,14 @@ def _preprocess_task_arguments(task_args):
                 " yet. All model variables' importances are computed."
             )
         del task_args["max_variable_importances"]
+
+    # Detect and replace deprecated data-path syntax on additional_data_tables
+    # Mutate task_args in the process
+    for data_path_task_arg_name in (
+        "additional_data_tables",
+        "output_additional_data_tables",
+    ):
+        _deprecate_legacy_data_path(data_path_task_arg_name, task_args)
 
     # Flatten kwargs
     if "kwargs" in task_args:
