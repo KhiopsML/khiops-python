@@ -45,6 +45,7 @@ tests/resources/*/output_reports
 tests/resources/*/output_kdic
 tests/resources/dictionary/copy_output_kdic
 tests/resources/scenario_generation/api/*/output
+tests/resources/scenario_generation/data_path_deprecation/*/output
 tests/resources/scenario_generation/general_options/output
 tests/resources/scenario_generation/runner_version/output
 tests/resources/*/copy_output_kdic
