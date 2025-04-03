@@ -4,7 +4,7 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""Tests for executing fit multiple times on multi-table data"""
+"""Various integration tests"""
 
 import os
 import platform
@@ -13,8 +13,10 @@ import stat
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import MagicMock, patch
 
 import khiops.core as kh
+import khiops.core.internals.filesystems as fs
 from khiops.core.exceptions import KhiopsEnvironmentError
 from khiops.core.internals.runner import KhiopsLocalRunner
 from khiops.extras.docker import KhiopsDockerRunner
@@ -207,6 +209,67 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             os.environ["KHIOPS_API_MODE"] = original_khiops_api_mode
 
         self.assertEqual(env_khiops_api_mode, "true")
+
+    def test_khiops_and_khiops_coclustering_are_run_with_mpi(self):
+        """Test that MODL and MODL_Coclustering are run with MPI"""
+
+        # Get current runner
+        runner = kh.get_runner()
+
+        # Get path to the Iris dataset
+        iris_data_dir = fs.get_child_path(runner.samples_dir, "Iris")
+
+        # Create the subprocess.Popen mock
+        mock_popen = MagicMock()
+        mock_popen.return_value.__enter__.return_value.communicate.return_value = (
+            b"",
+            b"",
+        )
+        mock_popen.return_value.__enter__.return_value.returncode = 0
+
+        # Run Khiops through an API function, using the mocked Popen, to capture
+        # its arguments
+        with patch("subprocess.Popen", mock_popen):
+            kh.check_database(
+                fs.get_child_path(iris_data_dir, "Iris.kdic"),
+                "Iris",
+                fs.get_child_path(iris_data_dir, "Iris.txt"),
+            )
+
+        # Check that the mocked Popen call arguments list starts with the MPI
+        # arguments, followed by the Khiops command
+        expected_command_args = runner.mpi_command_args + [runner.khiops_path]
+        self.assertTrue(len(mock_popen.call_args.args) > 0)
+        self.assertTrue(len(mock_popen.call_args.args[0]) > len(expected_command_args))
+        self.assertEqual(
+            mock_popen.call_args.args[0][: len(expected_command_args)],
+            expected_command_args,
+        )
+
+        # Run Khiops Coclustering through an API function, using the mocked Popen
+        # to capture its arguments
+        # Nest context managers for Python 3.8 compatibility
+        with patch("subprocess.Popen", mock_popen):
+            with tempfile.TemporaryDirectory() as temp_dir:
+                kh.train_coclustering(
+                    fs.get_child_path(iris_data_dir, "Iris.kdic"),
+                    "Iris",
+                    fs.get_child_path(iris_data_dir, "Iris.txt"),
+                    ["SepalLength", "PetalLength"],
+                    fs.get_child_path(temp_dir, "IrisCoclusteringResults.khcj"),
+                )
+
+        # Check that the mocked Popen call arguments list starts with the MPI
+        # arguments, followed by the Khiops Coclustering command
+        expected_command_args = runner.mpi_command_args + [
+            runner.khiops_coclustering_path
+        ]
+        self.assertTrue(len(mock_popen.call_args.args) > 0)
+        self.assertTrue(len(mock_popen.call_args.args[0]) > len(expected_command_args))
+        self.assertEqual(
+            mock_popen.call_args.args[0][: len(expected_command_args)],
+            expected_command_args,
+        )
 
 
 class KhiopsMultitableFitTests(unittest.TestCase):

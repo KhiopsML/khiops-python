@@ -1119,9 +1119,8 @@ class KhiopsLocalRunner(KhiopsRunner):
             )
 
         # Build command line arguments
-        # Nota: Khiops Coclustering is executed without MPI
         khiops_process_args = []
-        if tool_name == "khiops" and use_mpi:
+        if use_mpi:
             khiops_process_args += self._mpi_command_args
         khiops_process_args += [self._tool_path(tool_name)]
         if command_line_args:
