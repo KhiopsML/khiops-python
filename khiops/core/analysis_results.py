@@ -92,8 +92,8 @@ class AnalysisResults(KhiopsJSONObject):
         specified it returns an empty instance.
 
         .. note::
-            See also the `.read_analysis_results_file` function from the core API to
-            obtain an instance of this class from a Khiops JSON file.
+            See also the `.read_analysis_results_file` function to obtain an instance
+            of this class from a Khiops JSON file.
 
     Attributes
     ----------
@@ -157,6 +157,11 @@ class AnalysisResults(KhiopsJSONObject):
             self.bivariate_preparation_report = BivariatePreparationReport(
                 json_data["bivariatePreparationReport"]
             )
+        self.text_preparation_report = None
+        if "textPreparationReport" in json_data:
+            self.text_preparation_report = PreparationReport(
+                json_data["textPreparationReport"]
+            )
         self.modeling_report = None
         if "modelingReport" in json_data:
             self.modeling_report = ModelingReport(json_data["modelingReport"])
@@ -185,6 +190,8 @@ class AnalysisResults(KhiopsJSONObject):
         reports = []
         if self.preparation_report is not None:
             reports.append(self.preparation_report)
+        if self.text_preparation_report is not None:
+            reports.append(self.text_preparation_report)
         if self.bivariate_preparation_report is not None:
             reports.append(self.bivariate_preparation_report)
         if self.modeling_report is not None:
@@ -305,6 +312,8 @@ class PreparationReport:
         Name of the variable used to select training instances.
     selection_value : str
         Value of ``selection_variable`` to select training instance.
+    constructed_variable_number : int
+        Number of constructed variables.
     instance_number : int
         Number of training instances.
     learning_task : str
@@ -325,7 +334,10 @@ class PreparationReport:
     target_stats_std_dev : float
         Standard deviation of a numerical target variable.
     target_stats_missing_number : int
-        Number of missing values for a numerical target variable.
+        Number of missing values for a numerical or categorical target variable.
+    target_stats_sparse_missing_number : int
+        Number of missing values for a sparse block of numerical or categorical target
+        variables.
     target_stats_mode : str
         Mode of a categorical target variable.
     target_stats_mode_frequency : int
@@ -338,8 +350,14 @@ class PreparationReport:
         Number of variables analyzed.
     informative_variable_number : int
         *Supervised analysis only:* Number of informative variables.
+    selected_variable_number : int
+        Number of selected variables.
+    native_variable_number : int
+        Number of native variables.
     max_constructed_variables : int
         Maximum number of constructed variable specified for the analysis.
+    max_text_features : int
+        Maximum number of text features specified for the analysis.
     max_trees : int
         Maximum number of constructed trees specified for the analysis.
     max_pairs : int
@@ -396,6 +414,8 @@ class PreparationReport:
         self.sampling_mode = json_summary.get("samplingMode", "")
         self.selection_variable = json_summary.get("selectionVariable")
         self.selection_value = json_summary.get("selectionValue")
+        self.constructed_variable_number = json_summary.get("constructedVariables")
+        self.native_variable_number = json_summary.get("nativeVariables")
 
         # Initialize target descriptive stats for supervised tasks
         json_stats = json_summary.get("targetDescriptiveStats", {})
@@ -403,13 +423,14 @@ class PreparationReport:
         json_target_values = json_summary.get("targetValues", {})
         self.target_values = json_target_values.get("values")
         self.target_value_frequencies = json_target_values.get("frequencies")
+        self.target_stats_missing_number = json_stats.get("missingNumber")
+        self.target_stats_sparse_missing_number = json_stats.get("sparseMissingNumber")
 
         # Initialize regression only target stats
         self.target_stats_min = json_stats.get("min")
         self.target_stats_max = json_stats.get("max")
         self.target_stats_mean = json_stats.get("mean")
         self.target_stats_std_dev = json_stats.get("stdDev")
-        self.target_stats_missing_number = json_stats.get("missingNumber")
 
         # Initialize classification only target stats
         self.main_target_value = json_summary.get("mainTargetValue")
@@ -419,10 +440,12 @@ class PreparationReport:
         # Initialize other summary attributes
         self.evaluated_variable_number = json_summary.get("evaluatedVariables", 0)
         self.informative_variable_number = json_summary.get("informativeVariables", 0)
+        self.selected_variable_number = json_summary.get("selectedVariables")
         json_feature_eng = json_summary.get("featureEngineering", {})
         self.max_constructed_variables = json_feature_eng.get(
             "maxNumberOfConstructedVariables"
         )
+        self.max_text_features = json_feature_eng.get("maxNumberOfTextFeatures")
         self.max_trees = json_feature_eng.get("maxNumberOfTrees")
         self.max_pairs = json_feature_eng.get("maxNumberOfVariablePairs")
         self.discretization = json_summary.get("discretization", "")
@@ -513,6 +536,14 @@ class PreparationReport:
         writer.writeln(f"Instances\t{self.instance_number}")
         writer.writeln(f"Learning task\t{self.learning_task}")
 
+        # Write common attributes for classification and regression
+        if self.target_stats_missing_number is not None:
+            writer.writeln(f"\tMissing number\t{self.target_stats_missing_number}")
+        if self.target_stats_sparse_missing_number is not None:
+            writer.writeln(
+                f"\tSparse missing number\t{self.target_stats_sparse_missing_number}"
+            )
+
         # Write classification specific attributes
         if "Classification" in self.learning_task:
             writer.writeln(f"Target variable\t{self.target_variable}")
@@ -536,7 +567,6 @@ class PreparationReport:
             writer.writeln(f"\tMax\t{self.target_stats_max}")
             writer.writeln(f"\tMean\t{self.target_stats_mean}")
             writer.writeln(f"\tStd dev\t{self.target_stats_std_dev}")
-            writer.writeln(f"\tMissing number\t{self.target_stats_missing_number}")
         # Write variable preparation summary attributes
         if len(self.variable_types) > 0 and self.instance_number > 0:
             writer.writeln(f"Evaluated variables\t{self.evaluated_variable_number}")
@@ -545,6 +575,10 @@ class PreparationReport:
                 writer.writeln(
                     "Max number of constructed variables\t"
                     f"{self.max_constructed_variables}"
+                )
+            if self.max_text_features is not None:
+                writer.writeln(
+                    "Max number of text features\t" f"{self.max_text_features}"
                 )
             if self.max_trees is not None:
                 writer.writeln(f"Max number of trees\t{self.max_trees}")
@@ -633,6 +667,8 @@ class BivariatePreparationReport:
         Frequencies for each value in ``target_values`` (synchronized lists).
     evaluated_pair_number : int
         Number of variable pairs evaluated.
+    selected_pair_number : int
+        Number of variable pairs selected.
     informative_pair_number : int
         Number of informative variable pairs. A pair is considered informative if its
         level is greater than the sum of its components' levels.
@@ -693,9 +729,12 @@ class BivariatePreparationReport:
         json_target_values = json_summary.get("targetValues", {})
         self.target_values = json_target_values.get("values")
         self.target_value_frequencies = json_target_values.get("frequencies")
+        self.target_stats_missing_number = json_stats.get("missingNumber")
+        self.target_stats_sparse_missing_number = json_stats.get("sparseMissingNumber")
 
         # Initialize the information of the pair evaluations
         self.evaluated_pair_number = json_summary.get("evaluatedVariablePairs")
+        self.selected_pair_number = json_summary.get("selectedVariablePairs")
         self.informative_pair_number = json_summary.get("informativeVariablePairs")
 
         # Initialize main attributes for all variables
@@ -1458,6 +1497,8 @@ class VariableStatistics:
         Standard deviation of the variable.
     missing_number : int
         Number of missing values of the variable.
+    sparse_missing_number : int
+        Number of sparse missing values of the variable.
     mode : float
         Most common value.
     mode_frequency : int
@@ -1499,13 +1540,14 @@ class VariableStatistics:
         self.target_part_number = json_data.get("targetParts")
         self.part_number = json_data.get("parts")
         self.value_number = json_data.get("values", 0)
+        self.missing_number = json_data.get("missingNumber")
+        self.sparse_missing_number = json_data.get("sparseMissingNumber")
 
         # Initialize numerical variable attributes
         self.min = json_data.get("min")
         self.max = json_data.get("max")
         self.mean = json_data.get("mean")
         self.std_dev = json_data.get("stdDev")
-        self.missing_number = json_data.get("missingNumber")
 
         # Initialize categorical variable attributes
         self.mode = json_data.get("mode")
@@ -1593,6 +1635,7 @@ class VariableStatistics:
         writer.write("Mean\t")
         writer.write("StdDev\t")
         writer.write("Missing number\t")
+        writer.write("Sparse missing number\t")
         writer.write("Mode\t")
         writer.write("Mode frequency\t")
         writer.write("Construction cost\t")
@@ -1639,15 +1682,19 @@ class VariableStatistics:
             writer.write(f"{self.mean}\t")
             writer.write(f"{self.std_dev}\t")
             writer.write(f"{self.missing_number}\t")
+            writer.write(f"{self.sparse_missing_number}\t")
         else:
-            writer.write("\t" * 5)
+            writer.write("\t" * 6)
 
         # Write attributes available only for categorical variables
         if self.type == "Categorical":
+            writer.write(f"{self.missing_number}\t")
+            writer.write(f"{self.sparse_missing_number}\t")
             writer.write(f"{self.mode}\t")
             writer.write(f"{self.mode_frequency}\t")
         else:
-            writer.write("\t\t")
+            writer.write("\t" * 2)
+
         writer.write(f"{self.construction_cost}\t")
 
         # Write preparation cost only for the supervised case
@@ -2465,18 +2512,16 @@ class TrainedPredictor:
 
     Attributes
     ----------
-    type : str
-        Predictor type. Valid values are found in the ``predictor_types`` class
-        attribute. They are:
-
-        - "Selective Naive Bayes"
-        - "MAP Naive Bayes" **Deprecated**
-        - "Naive Bayes"
-        - "Univariate"
-
-    family : "Classifier" or "Regressor"
+    family : str
         Predictor family name. Valid values are found in the ``predictor_families``
-        class variable.
+        class variable. They are:
+
+        - "Baseline": for regression only,
+        - "Selective Naive Bayes": in all other cases.
+
+    type : "Classifier" or "Regressor"
+        Predictor type. Valid values are found in the ``predictor_types`` class
+        attribute.
     name : str
         Human readable predictor name.
     variable_number : int
@@ -2487,12 +2532,7 @@ class TrainedPredictor:
     """
 
     predictor_types = ["Classifier", "Regressor"]
-    predictor_families = [
-        "Selective Naive Bayes",
-        "MAP Naive Bayes",
-        "Naive Bayes",
-        "Univariate",
-    ]
+    predictor_families = ["Selective Naive Bayes", "Baseline"]
 
     def __init__(self, json_data=None):
         """See class docstring"""

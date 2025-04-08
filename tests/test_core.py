@@ -1256,22 +1256,21 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             },
             "ModelingReport": {
                 "get_predictor_names": {
-                    "Adult": ["Selective Naive Bayes", "Univariate relationship"],
-                    "Iris2D": ["Selective Naive Bayes", "Univariate SPetalLength"],
-                    "IrisC": ["Selective Naive Bayes", "Univariate SPetalLength"],
-                    "IrisR": ["Selective Naive Bayes", "Univariate SPetalLength"],
+                    "Adult": ["Selective Naive Bayes"],
+                    "Iris2D": ["Selective Naive Bayes"],
+                    "IrisC": ["Selective Naive Bayes"],
+                    "IrisR": ["Selective Naive Bayes"]
                 }
             },
             "EvaluationReport": {
                 "get_predictor_names": {
-                    "Adult": ["Selective Naive Bayes", "Univariate relationship"],
+                    "Adult": ["Selective Naive Bayes"],
                     "AdultEvaluation": [
                         "Selective Naive Bayes",
-                        "Univariate relationship",
                     ],
-                    "Iris2D": ["Selective Naive Bayes", "Univariate SPetalLength"],
-                    "IrisC": ["Selective Naive Bayes", "Univariate SPetalLength"],
-                    "IrisR": ["Selective Naive Bayes", "Univariate SPetalLength"],
+                    "Iris2D": ["Selective Naive Bayes"],
+                    "IrisC": ["Selective Naive Bayes"],
+                    "IrisR": ["Selective Naive Bayes"],
                 }
             },
             "PredictorPerformance": {

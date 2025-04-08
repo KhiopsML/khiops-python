@@ -26,9 +26,9 @@ Discretization	EqualWidth
 Value grouping	BasicGrouping
 
 Variable statistics
-Rank	Name	Type	Level	Target parts	Parts	Values	Min	Max	Mean	StdDev	Missing number	Mode	Mode frequency	Construction cost	Preparation cost	Data cost	Derivation rule
-R1	Var1	Numerical				2	1	2	1.5	0.5	0			1.38629			
-R2	Var2	Categorical				2						A	1	1.38629			
+Rank	Name	Type	Level	Target parts	Parts	Values	Min	Max	Mean	StdDev	Missing number	Sparse missing number	Mode	Mode frequency	Construction cost	Preparation cost	Data cost	Derivation rule
+R1	Var1	Numerical				2	1	2	1.5	0.5	0	0			1.38629			
+R2	Var2	Categorical				2							0	0	A	1	1.38629			
 
 Detailed variable statistics
 
