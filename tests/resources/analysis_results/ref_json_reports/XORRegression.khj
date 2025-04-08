@@ -134,6 +134,7 @@
 				"mean": 1.279411765,
 				"stdDev": 1.198597075,
 				"missingNumber": 0
+				"sparseMissingNumber": 0
 			},
 			"evaluatedVariables": 1,
 			"informativeVariables": 1,
@@ -164,6 +165,7 @@
 				"mean": 1.308823529,
 				"stdDev": 1.127951722,
 				"missingNumber": 0,
+				"sparseMissingNumber": 0
 				"constructionCost": 0.693147,
 				"preparationCost": 8.5745,
 				"dataCost": 177.889
