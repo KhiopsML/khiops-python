@@ -294,7 +294,7 @@ class KhiopsRunner(ABC):
                     )
             else:
                 os.makedirs(real_dir_path)
-        # There are no checks for non local filesystems (no `else` statement)
+        # There are no checks for non-local filesystems (no `else` statement)
         self._root_temp_dir = dir_path
 
     def create_temp_file(self, prefix, suffix):
@@ -397,16 +397,19 @@ class KhiopsRunner(ABC):
         Returns
         -------
         tuple
-            A 2-tuple containing:
+            A 3-tuple containing in this order :
             - The status message
-            - A list of warning messages
+            - A list of error messages (str)
+            - A list of warning messages (WarningMessage)
         """
-        # Capture the status of the the samples dir
+        # Capture the status of the samples dir
         warning_list = []
         with warnings.catch_warnings(record=True) as caught_warnings:
             samples_dir_path = self.samples_dir
         if caught_warnings is not None:
             warning_list += caught_warnings
+
+        errors_list = []
 
         status_msg = "Khiops Python library settings\n"
         status_msg += f"version             : {khiops.__version__}\n"
@@ -414,29 +417,34 @@ class KhiopsRunner(ABC):
         status_msg += f"root temp dir       : {self.root_temp_dir}\n"
         status_msg += f"sample datasets dir : {samples_dir_path}\n"
         status_msg += f"package dir         : {Path(__file__).parents[2]}\n"
-        return status_msg, warning_list
+
+        return status_msg, errors_list, warning_list
 
     def print_status(self):
         """Prints the status of the runner to stdout"""
         # Obtain the status_msg, errors and warnings
-        try:
-            status_msg, warning_list = self._build_status_message()
-        except (KhiopsEnvironmentError, KhiopsRuntimeError) as error:
-            print(f"Khiops Python library status KO: {error}")
-            return 1
+
+        status_msg, errors_list, warnings_list = self._build_status_message()
 
         # Print status details
         print(status_msg, end="")
 
-        # Print status
-        print("Khiops Python library status OK", end="")
-        if warning_list:
-            print(", with warnings:")
-            for warning in warning_list:
+        # Print the errors (if any)
+        if errors_list:
+            print("Errors were detected and need to be fixed:")
+            for error in errors_list:
+                print(f"error: {error}")
+
+        # Print the warnings (if any)
+        if warnings_list:
+            print("Warnings:")
+            for warning in warnings_list:
                 print(f"warning: {warning.message}")
+
+        if len(errors_list) == 0:
+            return 0
         else:
-            print("")
-        return 0
+            return 1
 
     @abstractmethod
     def _initialize_khiops_version(self):
@@ -955,21 +963,28 @@ class KhiopsLocalRunner(KhiopsRunner):
 
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
-        # Warn if the khiops version is too far from the Khiops Python library version
+        # Warn if the khiops version does not match the Khiops Python library version
+        # Currently the check is very strict
+        # (major.minor.patch must be the same), it could be relaxed later
         compatible_khiops_version = khiops.get_compatible_khiops_version()
-        if self._khiops_version.major > compatible_khiops_version.major:
+        if (
+            (self._khiops_version.major != compatible_khiops_version.major)
+            or (self._khiops_version.minor != compatible_khiops_version.minor)
+            or (self._khiops_version.patch != compatible_khiops_version.patch)
+        ):
             warnings.warn(
-                f"Khiops version '{self._khiops_version}' is ahead of "
-                f"the Khiops Python library version '{khiops.__version__}'. "
+                f"Khiops version '{self._khiops_version}' does not match "
+                f"the Khiops Python library version '{khiops.__version__}' "
+                "(different major.minor.patch version).\n"
                 "There may be compatibility errors and "
-                "we recommend you to update to the latest Khiops Python "
-                "library version. See https://khiops.org for more information.",
+                "we recommend to update either Khiops or the Khiops Python library.\n"
+                "See https://khiops.org for more information.",
                 stacklevel=3,
             )
 
     def _build_status_message(self):
         # Call the parent's method
-        status_msg, warning_list = super()._build_status_message()
+        status_msg, errors_list, warnings_list = super()._build_status_message()
 
         # Build the messages for install type and mpi
         install_type_msg = _infer_khiops_installation_method()
@@ -997,10 +1012,10 @@ class KhiopsLocalRunner(KhiopsRunner):
         if return_code == 0:
             status_msg += stdout
         else:
-            warning_list.append(stderr)
+            errors_list.append(stderr)
         status_msg += "\n"
 
-        return status_msg, warning_list
+        return status_msg, errors_list, warnings_list
 
     def _get_khiops_version(self):
         # Initialize the first time it is called
