@@ -1,5 +1,7 @@
 ---
 name: API Docs
+env:
+  DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION: main
 on:
   workflow_dispatch:
     inputs:
@@ -8,6 +10,9 @@ on:
         required: true
         type: boolean
         default: false
+      khiops-python-tutorial-revision:
+        default: main
+        description: khiops-python-tutorial repo revision
       image-tag:
         default: 10.7.0-b.0.0
         description: Development Docker Image Tag
@@ -44,6 +49,10 @@ jobs:
       # https://github.com/actions/runner/issues/2033#issuecomment-1598547465
       options: --user 1001
     steps:
+      - name: Set parameters as env
+        run: |
+          KHIOPS_PYTHON_TUTORIAL_REVISION=${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
+          echo "KHIOPS_PYTHON_TUTORIAL_REVISION=$KHIOPS_PYTHON_TUTORIAL_REVISION" >> "$GITHUB_ENV"
       - name: Checkout khiops-python
         uses: actions/checkout@v4
         with:
@@ -52,6 +61,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: khiopsml/khiops-python-tutorial
+          ref: ${{ env.KHIOPS_PYTHON_TUTORIAL_REVISION }}
           path: doc/khiops-python-tutorial
       - name: Add pip scripts directory to path
         run: echo PATH="$PATH:/github/home/.local/bin" >> "$GITHUB_ENV"
