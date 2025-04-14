@@ -1,7 +1,7 @@
 ---
 name: API Docs
 env:
-  DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION: main
+  DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION: 10.3.1.0
 on:
   workflow_dispatch:
     inputs:
@@ -11,7 +11,7 @@ on:
         type: boolean
         default: false
       khiops-python-tutorial-revision:
-        default: main
+        default: 10.3.1.0
         description: khiops-python-tutorial repo revision
       image-tag:
         default: latest
