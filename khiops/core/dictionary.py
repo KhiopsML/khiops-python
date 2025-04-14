@@ -191,7 +191,7 @@ class DictionaryDomain(KhiopsJSONObject):
 
         Parameters
         ----------
-        dictionary : `DictionaryDomain`
+        dictionary : `Dictionary`
             The dictionary to be added.
 
         Raises
