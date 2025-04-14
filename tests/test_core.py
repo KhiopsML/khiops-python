@@ -2305,7 +2305,7 @@ class KhiopsCoreVariousTests(unittest.TestCase):
         parameter_trace = KhiopsTestHelper.create_parameter_trace()
 
         in_args = KhiopsCoreVariousTests._build_multi_table_dictionary_args()
-        helper_name = "build_multi_table_dictionary_domain"
+        helper_name = "_build_multi_table_dictionary_domain"
         KhiopsTestHelper.wrap_with_parameter_trace(
             "khiops.core.api", helper_name, parameter_trace
         )
