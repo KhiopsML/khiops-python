@@ -22,6 +22,7 @@ import tempfile
 import uuid
 import warnings
 from abc import ABC, abstractmethod
+from importlib.metadata import PackageNotFoundError, files
 from pathlib import Path
 
 import khiops
@@ -179,7 +180,18 @@ def _check_conda_env_bin_dir(conda_env_bin_dir):
 
 
 def _infer_khiops_installation_method(trace=False):
-    """Return the Khiops installation method"""
+    """Return the Khiops installation method
+
+    Definitions :
+    - 'conda' environment will contain binaries, shared libraries and python modules
+    - 'conda-based' environment is quite similar to 'conda' except that
+       it will not be activated previously nor during the execution
+       and thus the CONDA_PREFIX environment variable will remain undefined
+    - 'binary+pip' installs the binaries and the shared libraries system-wide
+      but will keep the python modules
+      in the python system folder or in a virtual environment (if one is used)
+
+    """
     # We are in a conda environment if
     # - if the CONDA_PREFIX environment variable exists and,
     # - if MODL, MODL_Coclustering and mpiexec files exists in
@@ -216,6 +228,29 @@ def _check_executable(bin_path):
         raise KhiopsEnvironmentError(
             f"Executable has no execution rights. Path: {bin_path}"
         )
+
+
+def _get_current_module_installer():
+    """Tells how the python module was installed
+    in order to detect installation incompatibilities
+
+    Returns
+    str
+        'pip'
+        'conda'
+        or 'unknown'
+    """
+
+    try:
+        # Each time a python module is installed a 'dist-info' folder is created
+        # Normalized files can be found in this folder
+        installer_files = [path for path in files("khiops") if path.name == "INSTALLER"]
+        if len(installer_files) > 0:
+            return installer_files[0].read_text().strip()
+    except PackageNotFoundError:
+        # The python module is not installed via standard tools like conda, pip...
+        pass
+    return "unknown"
 
 
 class KhiopsRunner(ABC):
@@ -294,7 +329,7 @@ class KhiopsRunner(ABC):
                     )
             else:
                 os.makedirs(real_dir_path)
-        # There are no checks for non local filesystems (no `else` statement)
+        # There are no checks for non-local filesystems (no `else` statement)
         self._root_temp_dir = dir_path
 
     def create_temp_file(self, prefix, suffix):
@@ -397,46 +432,86 @@ class KhiopsRunner(ABC):
         Returns
         -------
         tuple
-            A 2-tuple containing:
+            A 3-tuple containing in this order :
             - The status message
-            - A list of warning messages
+            - A list of error messages (str)
+            - A list of warning messages (WarningMessage)
         """
-        # Capture the status of the the samples dir
+        # Capture the status of the samples dir
         warning_list = []
         with warnings.catch_warnings(record=True) as caught_warnings:
             samples_dir_path = self.samples_dir
         if caught_warnings is not None:
             warning_list += caught_warnings
 
+        package_dir = Path(__file__).parents[2]
+
         status_msg = "Khiops Python library settings\n"
         status_msg += f"version             : {khiops.__version__}\n"
         status_msg += f"runner class        : {self.__class__.__name__}\n"
         status_msg += f"root temp dir       : {self.root_temp_dir}\n"
         status_msg += f"sample datasets dir : {samples_dir_path}\n"
-        status_msg += f"package dir         : {Path(__file__).parents[2]}\n"
-        return status_msg, warning_list
+        status_msg += f"package dir         : {package_dir}\n"
+
+        errors_list = []
+
+        # Detect known incompatible installations with a conda environment
+        if "CONDA_PREFIX" in os.environ:
+            # If a conda environment is detected it must match the module installation
+            # This check may be superfluous because a mismatch is highly improbable
+            if not package_dir.as_posix().startswith(os.environ["CONDA_PREFIX"]):
+                error = (
+                    f"Khiops Python library installation path '{package_dir}' "
+                    f"does not match the current Conda environment "
+                    f"'{os.environ['CONDA_PREFIX']}'. "
+                    f"Please install the Khiops Python library "
+                    f"in the current Conda environment.\n"
+                )
+                errors_list.append(error)
+            # Ensure no mix between conda and pip exists within a conda environment
+            current_module_installer = _get_current_module_installer()
+            if current_module_installer != "conda":
+                error = (
+                    f"Khiops Python library installation was installed by "
+                    f"'{current_module_installer}' "
+                    f"while running in the Conda environment "
+                    f"'{os.environ['CONDA_PREFIX']}'. "
+                    f"Please install the Khiops Python library "
+                    f"using a Conda installer.\n"
+                )
+                errors_list.append(error)
+
+        return status_msg, errors_list, warning_list
 
     def print_status(self):
         """Prints the status of the runner to stdout"""
         # Obtain the status_msg, errors and warnings
-        try:
-            status_msg, warning_list = self._build_status_message()
-        except (KhiopsEnvironmentError, KhiopsRuntimeError) as error:
-            print(f"Khiops Python library status KO: {error}")
-            return 1
+
+        status_msg, errors_list, warnings_list = self._build_status_message()
 
         # Print status details
         print(status_msg, end="")
 
-        # Print status
-        print("Khiops Python library status OK", end="")
-        if warning_list:
-            print(", with warnings:")
-            for warning in warning_list:
-                print(f"warning: {warning.message}")
+        if errors_list or warnings_list:
+            print("Installation issues were detected:\n")
+            print("---\n")
+
+        # Print the errors (if any)
+        if errors_list:
+            print("Errors to be fixed:")
+            for error in errors_list:
+                print(f"\tError: {error}\n")
+
+        # Print the warnings (if any)
+        if warnings_list:
+            print("Warnings:")
+            for warning in warnings_list:
+                print(f"\tWarning: {warning.message}\n")
+
+        if len(errors_list) == 0:
+            return 0
         else:
-            print("")
-        return 0
+            return 1
 
     @abstractmethod
     def _initialize_khiops_version(self):
@@ -955,21 +1030,28 @@ class KhiopsLocalRunner(KhiopsRunner):
 
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
-        # Warn if the khiops version is too far from the Khiops Python library version
+        # Warn if the khiops version does not match the Khiops Python library version
+        # Currently the check is very strict
+        # (major.minor.patch must be the same), it could be relaxed later
         compatible_khiops_version = khiops.get_compatible_khiops_version()
-        if self._khiops_version.major > compatible_khiops_version.major:
+        if (
+            (self._khiops_version.major != compatible_khiops_version.major)
+            or (self._khiops_version.minor != compatible_khiops_version.minor)
+            or (self._khiops_version.patch != compatible_khiops_version.patch)
+        ):
             warnings.warn(
-                f"Khiops version '{self._khiops_version}' is ahead of "
-                f"the Khiops Python library version '{khiops.__version__}'. "
+                f"Khiops version '{self._khiops_version}' does not match "
+                f"the Khiops Python library version '{khiops.__version__}' "
+                "(different major.minor.patch version). "
                 "There may be compatibility errors and "
-                "we recommend you to update to the latest Khiops Python "
-                "library version. See https://khiops.org for more information.",
+                "we recommend to update either Khiops or the Khiops Python library. "
+                "See https://khiops.org for more information.",
                 stacklevel=3,
             )
 
     def _build_status_message(self):
         # Call the parent's method
-        status_msg, warning_list = super()._build_status_message()
+        status_msg, errors_list, warnings_list = super()._build_status_message()
 
         # Build the messages for install type and mpi
         install_type_msg = _infer_khiops_installation_method()
@@ -979,28 +1061,36 @@ class KhiopsLocalRunner(KhiopsRunner):
             mpi_command_args_msg = "<empty>"
 
         # Build the message
-        status_msg += "\n\n"
-        status_msg += "khiops local installation settings\n"
-        status_msg += f"version             : {self.khiops_version}\n"
-        status_msg += f"Khiops path         : {self.khiops_path}\n"
-        status_msg += f"Khiops CC path      : {self.khiops_coclustering_path}\n"
-        status_msg += f"install type        : {install_type_msg}\n"
-        status_msg += f"MPI command         : {mpi_command_args_msg}\n"
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            status_msg += "\n\n"
+            status_msg += "khiops local installation settings\n"
+            status_msg += f"version             : {self.khiops_version}\n"
+            status_msg += f"Khiops path         : {self.khiops_path}\n"
+            status_msg += f"Khiops CC path      : {self.khiops_coclustering_path}\n"
+            status_msg += f"install type        : {install_type_msg}\n"
+            status_msg += f"MPI command         : {mpi_command_args_msg}\n"
 
-        # Add output of khiops -s which gives the MODL_* binary status
-        status_msg += "\n\n"
-        khiops_executable = os.path.join(os.path.dirname(self.khiops_path), "khiops")
-        status_msg += f"Khiops executable status (output of '{khiops_executable} -s')\n"
-        stdout, stderr, return_code = self.raw_run("khiops", ["-s"], use_mpi=True)
+            # Add output of khiops -s which gives the MODL_* binary status
+            status_msg += "\n\n"
+            khiops_executable = os.path.join(
+                os.path.dirname(self.khiops_path), "khiops"
+            )
+            status_msg += (
+                f"Khiops executable status (output of '{khiops_executable} -s')\n"
+            )
+            stdout, stderr, return_code = self.raw_run("khiops", ["-s"], use_mpi=True)
 
-        # On success retrieve the status and added to the message
-        if return_code == 0:
-            status_msg += stdout
-        else:
-            warning_list.append(stderr)
-        status_msg += "\n"
+            # On success retrieve the status and added to the message
+            if return_code == 0:
+                status_msg += stdout
+            else:
+                errors_list.append(stderr)
+            status_msg += "\n"
 
-        return status_msg, warning_list
+        if caught_warnings is not None:
+            warnings_list += caught_warnings
+
+        return status_msg, errors_list, warnings_list
 
     def _get_khiops_version(self):
         # Initialize the first time it is called
