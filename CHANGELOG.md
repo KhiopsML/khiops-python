@@ -6,7 +6,7 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
+## 10.3.1.0 - 2025-04-16
 
 ### Added
 - (`sklearn`) Support for boolean and float targets in `KhiopsClassifier`.
@@ -15,8 +15,7 @@
 - (`sklearn`) Crash when there were no informative trees in predictors.
 
 ### Deprecated
-- `core`:
-  - The `build_multi_table_dictionary_domain` helper function.
+- (`core`) The `build_multi_table_dictionary_domain` helper function.
 
 ## 10.3.0.0 - 2025-02-10
 
