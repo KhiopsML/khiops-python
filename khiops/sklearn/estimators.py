@@ -44,7 +44,7 @@ from sklearn.utils.validation import assert_all_finite, check_is_fitted, column_
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
-from khiops.core.helpers import build_multi_table_dictionary_domain
+from khiops.core.helpers import _build_multi_table_dictionary_domain
 from khiops.core.internals.common import (
     deprecation_message,
     is_dict_like,
@@ -1037,7 +1037,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         assert isinstance(output_dir, str)
 
         # Build multi-table dictionary domain out of the input domain
-        mt_domain = build_multi_table_dictionary_domain(
+        mt_domain = _build_multi_table_dictionary_domain(
             domain,
             self.model_main_dictionary_name_,
             self.model_secondary_table_variable_name,

@@ -11,6 +11,7 @@ import pathlib
 import platform
 import stat
 import unittest
+import warnings
 
 import pandas as pd
 
@@ -22,10 +23,9 @@ from khiops.sklearn import train_test_split_dataset
 class KhiopsHelperFunctions(unittest.TestCase):
     """Tests for checking the behaviour of the helper functions"""
 
-    def test_build_multi_table_dictionary_domain(self):
-        """Test that the multi-table dictionary domain built is as expected"""
-        # Build monotable_domain, with one dictionary, holding three variables
-        monotable_domain_specification = {
+    @staticmethod
+    def _build_monotable_domain_specification():
+        return {
             "tool": "Khiops Dictionary",
             "version": "10.0",
             "khiops_encoding": "ascii",
@@ -42,6 +42,42 @@ class KhiopsHelperFunctions(unittest.TestCase):
                 }
             ],
         }
+
+    def test_build_multi_table_dictionary_domain_deprecation(self):
+        """Test that `core.helpers.build_multi_table_dictionary_domain` raises
+        deprecation warning
+        """
+        # Build monotable_domain, with one dictionary, holding three variables
+        monotable_domain_specification = (
+            KhiopsHelperFunctions._build_monotable_domain_specification()
+        )
+        monotable_domain = DictionaryDomain(monotable_domain_specification)
+
+        # Build multi-table dictionary domain from the montable dictionary domain
+        with warnings.catch_warnings(record=True) as warning_list:
+            build_multi_table_dictionary_domain(
+                monotable_domain,
+                "A_Prefix_SpliceJunctionDNA",
+                "A_Name_SpliceJunctionDNA",
+            )
+
+        self.assertEqual(len(warning_list), 1)
+        warning = warning_list[0]
+        self.assertTrue(issubclass(warning.category, UserWarning))
+        warning_message = warning.message
+        self.assertEqual(len(warning_message.args), 1)
+        message = warning_message.args[0]
+        self.assertTrue(
+            "'build_multi_table_dictionary_domain'" in message
+            and "deprecated" in message
+        )
+
+    def test_build_multi_table_dictionary_domain(self):
+        """Test that the multi-table dictionary domain built is as expected"""
+        # Build monotable_domain, with one dictionary, holding three variables
+        monotable_domain_specification = (
+            KhiopsHelperFunctions._build_monotable_domain_specification()
+        )
         monotable_domain = DictionaryDomain(monotable_domain_specification)
 
         # Build reference multi-table domain, with two dictionaries, one root
