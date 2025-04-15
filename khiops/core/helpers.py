@@ -22,11 +22,10 @@ from khiops.core.internals.common import is_list_like, type_error_message
 from khiops.core.internals.runner import get_runner
 
 
-def build_multi_table_dictionary_domain(
+def _build_multi_table_dictionary_domain(
     dictionary_domain, root_dictionary_name, secondary_table_variable_name
 ):
     """Builds a multi-table dictionary domain from a dictionary with a key
-
     Parameters
     ----------
     dictionary_domain : `.DictionaryDomain`
@@ -35,6 +34,11 @@ def build_multi_table_dictionary_domain(
         Name for the new root dictionary
     secondary_table_variable_name : str
         Name, in the root dictionary, for the "table" variable of the secondary table.
+
+    Returns
+    -------
+    `.DictionaryDomain`
+        The new dictionary domain
 
     Raises
     ------
@@ -45,6 +49,16 @@ def build_multi_table_dictionary_domain(
         - the dictionary domain doesn't contain at least a dictionary
         - the dictionary domain's root dictionary doesn't have a key set
     """
+
+    # This is a special-purpose function whose goal is to assist in preparing the
+    # coclustering deployment.
+    # This function builds a new root dictionary and adds it to an existing dictionary
+    # domain.
+    # The new root dictionary only contains one field, which references a preexisting
+    # dictionary from the input dictionary domain as a new (secondary) Table variable.
+    # The preexisting dictionary must have a key set on it, as this is the join key
+    # with the new root table.
+
     # Check that `dictionary_domain` is a `DictionaryDomain`
     if not isinstance(dictionary_domain, DictionaryDomain):
         raise TypeError(
@@ -279,7 +293,7 @@ def deploy_coclustering(
     # Create a root dictionary containing the keys
     root_dictionary_name = "CC_" + dictionary_name
     table_variable_name = "Table_" + dictionary_name
-    domain = build_multi_table_dictionary_domain(
+    domain = _build_multi_table_dictionary_domain(
         tmp_domain, root_dictionary_name, table_variable_name
     )
 
