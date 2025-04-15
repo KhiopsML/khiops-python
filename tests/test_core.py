@@ -23,7 +23,6 @@ from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import KhiopsLocalRunner, KhiopsRunner
 from khiops.core.internals.scenario import ConfigurableKhiopsScenario
 from khiops.core.internals.version import KhiopsVersion
-from tests.test_helper import KhiopsTestHelper
 
 # Disable warning about access to protected member: These are tests
 # pylint: disable=protected-access
@@ -2433,33 +2432,6 @@ class KhiopsCoreVariousTests(unittest.TestCase):
         ]:
             with self.assertRaises(ValueError):
                 KhiopsVersion(version)
-
-    @staticmethod
-    def _build_multi_table_dictionary_args():
-        resources_directory = KhiopsTestHelper.get_resources_dir()
-        dictionaries_dir = os.path.join(resources_directory, "dictionary", "ref_kdic")
-        splice_domain = kh.read_dictionary_file(
-            os.path.join(dictionaries_dir, "SpliceJunction.kdic")
-        )
-        monotable_domain = kh.DictionaryDomain()
-        monotable_domain.add_dictionary(
-            splice_domain.get_dictionary("SpliceJunctionDNA")
-        )
-        output_directory = os.path.join(
-            resources_directory, "dictionary", "output_kdic"
-        )
-        root_dict_name = "SpliceJunction"
-        secondary_table_variable_name = "DNA"
-        multi_table_dict_out_path = os.path.join(
-            output_directory, "SpliceJunctionTest.kdic"
-        )
-
-        return {
-            "dictionary_file_path_or_domain": monotable_domain,
-            "root_dictionary_name": root_dict_name,
-            "secondary_table_variable_name": secondary_table_variable_name,
-            "output_dictionary_file_path": multi_table_dict_out_path,
-        }
 
     def test_scenario_generation(self):
         """Test the scenario generation from template and arguments"""

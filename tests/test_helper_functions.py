@@ -15,7 +15,7 @@ import unittest
 import pandas as pd
 
 from khiops.core.dictionary import DictionaryDomain
-from khiops.core.helpers import build_multi_table_dictionary_domain, visualize_report
+from khiops.core.helpers import _build_multi_table_dictionary_domain, visualize_report
 from khiops.sklearn import train_test_split_dataset
 
 
@@ -78,7 +78,7 @@ class KhiopsHelperFunctions(unittest.TestCase):
         ref_multi_table_domain = DictionaryDomain(ref_multi_table_domain_specification)
 
         # Build multi-table dictionary domain from the montable dictionary domain
-        multi_table_domain = build_multi_table_dictionary_domain(
+        multi_table_domain = _build_multi_table_dictionary_domain(
             monotable_domain, "A_Prefix_SpliceJunctionDNA", "A_Name_SpliceJunctionDNA"
         )
 
