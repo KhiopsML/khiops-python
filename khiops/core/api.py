@@ -21,7 +21,7 @@ import warnings
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain, read_dictionary_file
 from khiops.core.exceptions import KhiopsRuntimeError
-from khiops.core.helpers import build_multi_table_dictionary_domain
+from khiops.core.helpers import _build_multi_table_dictionary_domain
 from khiops.core.internals.common import (
     CommandLineOptions,
     SystemSettings,
@@ -1943,8 +1943,7 @@ def build_multi_table_dictionary(
 
     .. warning::
         This method is *deprecated* since Khiops 10.1.3 and will be removed in Khiops
-        11. Use the `.build_multi_table_dictionary_domain` helper function to
-        the same effect.
+        11.
 
     Parameters
     ----------
@@ -1979,7 +1978,7 @@ def build_multi_table_dictionary(
     # Generate multi-table domain by using the eponymous helper function
     # Honor exception API:
     try:
-        multi_table_domain = build_multi_table_dictionary_domain(
+        multi_table_domain = _build_multi_table_dictionary_domain(
             dictionary_domain, root_dictionary_name, secondary_table_variable_name
         )
     except TypeError as error:

@@ -44,7 +44,7 @@ from sklearn.utils.validation import assert_all_finite, check_is_fitted, column_
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
-from khiops.core.helpers import build_multi_table_dictionary_domain
+from khiops.core.helpers import _build_multi_table_dictionary_domain
 from khiops.core.internals.common import (
     deprecation_message,
     is_dict_like,
@@ -154,6 +154,7 @@ def _check_categorical_target_type(ds):
         or pd.api.types.is_string_dtype(ds.target_column.dtype)
         or pd.api.types.is_integer_dtype(ds.target_column.dtype)
         or pd.api.types.is_float_dtype(ds.target_column.dtype)
+        or pd.api.types.is_bool_dtype(ds.target_column.dtype)
     ):
         raise ValueError(
             f"'y' has invalid type '{ds.target_column_type}'. "
@@ -1036,7 +1037,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         assert isinstance(output_dir, str)
 
         # Build multi-table dictionary domain out of the input domain
-        mt_domain = build_multi_table_dictionary_domain(
+        mt_domain = _build_multi_table_dictionary_domain(
             domain,
             self.model_main_dictionary_name_,
             self.model_secondary_table_variable_name,
@@ -1673,10 +1674,14 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         else:
             pair_feature_evaluated_names_ = []
             pair_feature_evaluated_levels_ = []
-        if "treePreparationReport" in self.model_report_raw_:
-            tree_preparation_report = self.model_report_raw_["treePreparationReport"][
-                "variablesStatistics"
-            ]
+        if (
+            "treePreparationReport" in self.model_report_.json_data
+            and "variablesStatistics"
+            in self.model_report_.json_data["treePreparationReport"]
+        ):
+            tree_preparation_report = self.model_report_.json_data[
+                "treePreparationReport"
+            ]["variablesStatistics"]
             tree_feature_evaluated_names_ = [
                 tree_preparation_report[i]["name"]
                 for i in range(0, len(tree_preparation_report))
@@ -2123,6 +2128,24 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             )
         )
 
+    def _is_real_target_dtype_float(self):
+        return self._original_target_dtype is not None and (
+            pd.api.types.is_float_dtype(self._original_target_dtype)
+            or (
+                isinstance(self._original_target_dtype, pd.CategoricalDtype)
+                and pd.api.types.is_float_dtype(self._original_target_dtype.categories)
+            )
+        )
+
+    def _is_real_target_dtype_bool(self):
+        return self._original_target_dtype is not None and (
+            pd.api.types.is_bool_dtype(self._original_target_dtype)
+            or (
+                isinstance(self._original_target_dtype, pd.CategoricalDtype)
+                and pd.api.types.is_bool_dtype(self._original_target_dtype.categories)
+            )
+        )
+
     def _sorted_prob_variable_names(self):
         """Returns the model probability variable names in the order of self.classes_"""
         self._assert_is_fitted()
@@ -2227,8 +2250,13 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             for key in variable.meta_data.keys:
                 if key.startswith("TargetProb"):
                     self.classes_.append(variable.meta_data.get_value(key))
-        if ds.is_in_memory and self._is_real_target_dtype_integer():
-            self.classes_ = [int(class_value) for class_value in self.classes_]
+        if ds.is_in_memory:
+            if self._is_real_target_dtype_integer():
+                self.classes_ = [int(class_value) for class_value in self.classes_]
+            elif self._is_real_target_dtype_float():
+                self.classes_ = [float(class_value) for class_value in self.classes_]
+            elif self._is_real_target_dtype_bool():
+                self.classes_ = [class_value == "True" for class_value in self.classes_]
             self.classes_.sort()
         self.classes_ = column_or_1d(self.classes_)
 
@@ -2283,9 +2311,10 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         -------
         `ndarray <numpy.ndarray>`
             An array containing the encoded columns. A first column containing key
-            column ids is added in multi-table mode. The `numpy.dtype` of the array is
-            integer if the classifier was learned with an integer ``y``. Otherwise it
-            will be ``str``.
+            column ids is added in multi-table mode. The `numpy.dtype` of the array
+            matches the type of ``y`` used during training. It will be integer, float,
+            or boolean if the classifier was trained with a ``y`` of the corresponding
+            type. Otherwise it will be ``str``.
 
             The key columns are added for multi-table tasks.
         """

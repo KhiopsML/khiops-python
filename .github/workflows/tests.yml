@@ -2,7 +2,7 @@
 name: Tests
 env:
   DEFAULT_SAMPLES_REVISION: 10.2.4
-  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.3.0
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.3.1
 on:
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
         default: latest
         description: Development Docker Image Tag
       khiops-desktop-revision:
-        default: 10.3.0
+        default: 10.3.1
         description: Khiops Windows Desktop Application Version
       run-expensive-tests:
         type: boolean
@@ -109,8 +109,9 @@ jobs:
             $CONDA install -y -n "$CONDA_ENV" `grep -v "^\[" khiops.egg-info/requires.txt`
             rm -rf khiops.egg-info
           done
-      - name: Prepare Tests Environment
-        if: github.ref != 'dev' && github.rev != 'dev-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
+      - name: Configure Expensive Tests Setting
+        # Skip expensive tests by default, unless on the `dev`, `dev-v10` or `main` branches
+        if: github.ref != 'dev' && github.ref != 'dev-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
         run: echo "SKIP_EXPENSIVE_TESTS=true" >> "$GITHUB_ENV"
       - name: Prepare Integration Tests on remote files
         env:
