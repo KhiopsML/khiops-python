@@ -1,4 +1,0 @@
-Hierarchical structure	sex
-                         {Female}
-        F3
-                         {Male}

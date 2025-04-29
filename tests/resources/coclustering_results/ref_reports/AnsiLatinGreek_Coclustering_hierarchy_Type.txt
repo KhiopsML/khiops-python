@@ -1,8 +1,0 @@
-Hierarchical structure	Type
-        {UTF8 Greek}
-     B4
-        {UTF8 Latin}
-   B2
-        {ANSI}
-       B6
-        {ASCII}

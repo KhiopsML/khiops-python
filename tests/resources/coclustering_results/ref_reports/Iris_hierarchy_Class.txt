@@ -1,6 +1,0 @@
-Hierarchical structure	Class
-         {Iris-setosa}
-   C1
-         {Iris-versicolor}
-      C4
-         {Iris-virginica}

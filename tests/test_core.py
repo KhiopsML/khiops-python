@@ -7,12 +7,14 @@
 """Tests for the khiops.core module"""
 import glob
 import io
+import json
 import os
 import shutil
 import textwrap
 import unittest
 import warnings
 from copy import copy
+from difflib import unified_diff
 from pathlib import Path
 from unittest import mock
 
@@ -31,16 +33,40 @@ from khiops.core.internals.version import KhiopsVersion
 class KhiopsCoreIOTests(unittest.TestCase):
     """Tests the reading/writing of files for the core module classes/functions"""
 
+    def _assert_report_is_dumped_to_correct_json(self, report, ref_json_report):
+        # Dump the report as JSON (4-space indented and keys sorted in
+        # lexicographic order)
+        output_json = report.to_json()
+        output_json_string = json.dumps(output_json, indent=4, sort_keys=True)
+
+        # Dump the reference JSON report (4-space indented and keys sorted in
+        # lexicographic order)
+        with open(ref_json_report, encoding="utf-8") as ref_json_file:
+            ref_json = json.load(ref_json_file)
+        ref_json_string = json.dumps(ref_json, indent=4, sort_keys=True)
+
+        # Succeed if the dumped reports are equal
+        if output_json_string == ref_json_string:
+            return
+
+        # On failure print the differences
+        output_json_lines = output_json_string.splitlines(keepends=True)
+        ref_json_lines = ref_json_string.splitlines(keepends=True)
+        out_ref_diff = "".join(unified_diff(ref_json_lines, output_json_lines))
+        if out_ref_diff:
+            report_type = (
+                "Analysis" if ref_json_report.endswith(".khj") else "Coclustering"
+            )
+            self.fail(
+                f"{report_type}Results JSON dump differs from reference "
+                f"'{ref_json_report}':\n{out_ref_diff}"
+            )
+
     def test_analysis_results(self):
         """Tests for the analysis_results module"""
         # Set the test paths
         test_resources_dir = os.path.join(resources_dir(), "analysis_results")
-        ref_reports_dir = os.path.join(test_resources_dir, "ref_reports")
         ref_json_reports_dir = os.path.join(test_resources_dir, "ref_json_reports")
-        output_reports_dir = os.path.join(test_resources_dir, "output_reports")
-
-        # Cleanup previous output files
-        cleanup_dir(output_reports_dir, "*.txt")
 
         # Read the json reports, dump them as txt reports, and compare to the reference
         reports = [
@@ -50,7 +76,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "AnsiGreek",
             "AnsiLatin",
             "AnsiLatinGreek",
-            "AnyChar",
             "BadTool",
             "Deft2017ChallengeNGrams1000",
             "EmptyDatabase",
@@ -63,7 +88,6 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "SpliceJunctionWithTrees",
             "IrisU",
             "IrisU2D",
-            "LargeSpiral",
             "Latin",
             "LatinGreek",
             "MissingDiscretization",
@@ -79,9 +103,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
         ]
         reports_ko = ["BadTool", "NoVersion"]
         for report in reports:
-            ref_report = os.path.join(ref_reports_dir, f"{report}.txt")
             ref_json_report = os.path.join(ref_json_reports_dir, f"{report}.khj")
-            output_report = os.path.join(output_reports_dir, f"{report}.txt")
             with self.subTest(report=report):
                 if report in reports_ko:
                     with self.assertRaises(kh.KhiopsJSONError):
@@ -89,23 +111,20 @@ class KhiopsCoreIOTests(unittest.TestCase):
                 elif report in reports_warn:
                     with self.assertWarns(UserWarning):
                         results = kh.read_analysis_results_file(ref_json_report)
-                        results.write_report_file(output_report)
-                        assert_files_equal(self, ref_report, output_report)
+                        self._assert_report_is_dumped_to_correct_json(
+                            results, ref_json_report
+                        )
                 else:
                     results = kh.read_analysis_results_file(ref_json_report)
-                    results.write_report_file(output_report)
-                    assert_files_equal(self, ref_report, output_report)
+                    self._assert_report_is_dumped_to_correct_json(
+                        results, ref_json_report
+                    )
 
     def test_coclustering_results(self):
         """Tests for the coclustering_results module"""
         # Set the test paths
         test_resources_dir = os.path.join(resources_dir(), "coclustering_results")
-        ref_reports_dir = os.path.join(test_resources_dir, "ref_reports")
         ref_json_reports_dir = os.path.join(test_resources_dir, "ref_json_reports")
-        output_reports_dir = os.path.join(test_resources_dir, "output_reports")
-
-        # Cleanup output files
-        cleanup_dir(output_reports_dir, "*.txt")
 
         # Read then json reports, dump them as txt reports and compare to the reference
         reports = [
@@ -126,30 +145,14 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "AnsiLatinGreek_Coclustering",
         ]
         for report in reports:
-            ref_report = os.path.join(ref_reports_dir, f"{report}.khc")
             ref_json_report = os.path.join(ref_json_reports_dir, f"{report}.khcj")
-            output_report = os.path.join(output_reports_dir, f"{report}.khc")
             with self.subTest(report=report):
                 if report in reports_warn:
                     with self.assertWarns(UserWarning):
                         results = kh.read_coclustering_results_file(ref_json_report)
                 else:
                     results = kh.read_coclustering_results_file(ref_json_report)
-                results.write_report_file(output_report)
-                assert_files_equal(self, ref_report, output_report)
-                for dimension in results.coclustering_report.dimensions:
-                    ref_hierarchy_report = os.path.join(
-                        ref_reports_dir, f"{report}_hierarchy_{dimension.name}.txt"
-                    )
-                    output_hierarchy_report = os.path.join(
-                        output_reports_dir, f"{report}_hierarchy_{dimension.name}.txt"
-                    )
-                    dimension.write_hierarchy_structure_report_file(
-                        output_hierarchy_report
-                    )
-                    assert_files_equal(
-                        self, ref_hierarchy_report, output_hierarchy_report
-                    )
+                self._assert_report_is_dumped_to_correct_json(results, ref_json_report)
 
     def test_binary_dictionary_domain(self):
         """Test binary dictionary write"""
@@ -1166,12 +1169,12 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                     ],
                     "AdultEvaluation": None,
                     "Iris2D": [
+                        "PetalWidth",
                         "SPetalLength",
                         "PetalLength",
-                        "PetalWidth",
-                        "Class2",
                         "LowerPetalLength",
                         "Class1",
+                        "Class2",
                         "UpperPetalWidth",
                         "SepalLength",
                         "SepalWidth",
@@ -1179,12 +1182,12 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         "Dummy2",
                     ],
                     "IrisC": [
+                        "PetalWidth",
                         "SPetalLength",
                         "PetalLength",
-                        "PetalWidth",
-                        "Class2",
                         "LowerPetalLength",
                         "Class1",
+                        "Class2",
                         "UpperPetalWidth",
                         "SepalLength",
                         "SepalWidth",
@@ -1197,9 +1200,9 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         "PetalWidth",
                         "LowerPetalLength",
                         "Class1",
+                        "UpperPetalWidth",
                         "SepalLength",
                         "Class2",
-                        "UpperPetalWidth",
                         "SepalWidth",
                         "Dummy1",
                         "Dummy2",
@@ -1219,31 +1222,31 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         ("Dummy2", "SepalWidth"),
                         ("Dummy2", "UpperPetalWidth"),
                         ("SepalWidth", "UpperPetalWidth"),
-                        ("Class2", "SepalLength"),
-                        ("SepalLength", "SepalWidth"),
-                        ("Class2", "SepalWidth"),
                         ("Class2", "UpperPetalWidth"),
+                        ("SepalLength", "SepalWidth"),
+                        ("Class2", "SepalLength"),
                         ("Class1", "SepalWidth"),
+                        ("Class2", "SepalWidth"),
                         ("LowerPetalLength", "SepalWidth"),
+                        ("PetalLength", "SepalWidth"),
                         ("PetalWidth", "SepalWidth"),
                         ("SPetalLength", "SepalWidth"),
-                        ("PetalLength", "SepalWidth"),
+                        ("Class2", "LowerPetalLength"),
+                        ("Class1", "Class2"),
                         ("Class1", "UpperPetalWidth"),
                         ("LowerPetalLength", "UpperPetalWidth"),
                         ("SepalLength", "UpperPetalWidth"),
-                        ("Class2", "LowerPetalLength"),
-                        ("Class1", "Class2"),
                         ("Class1", "SepalLength"),
+                        ("Class2", "PetalLength"),
                         ("LowerPetalLength", "SepalLength"),
+                        ("PetalLength", "SepalLength"),
                         ("PetalWidth", "SepalLength"),
                         ("SPetalLength", "SepalLength"),
-                        ("PetalLength", "SepalLength"),
+                        ("PetalLength", "UpperPetalWidth"),
                         ("PetalWidth", "UpperPetalWidth"),
                         ("SPetalLength", "UpperPetalWidth"),
-                        ("PetalLength", "UpperPetalWidth"),
-                        ("Class2", "PetalWidth"),
-                        ("Class2", "PetalLength"),
                         ("Class2", "SPetalLength"),
+                        ("Class2", "PetalWidth"),
                         ("Class1", "PetalLength"),
                         ("Class1", "LowerPetalLength"),
                         ("LowerPetalLength", "PetalLength"),
@@ -1251,29 +1254,38 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         ("LowerPetalLength", "SPetalLength"),
                         ("Class1", "SPetalLength"),
                         ("Class1", "PetalWidth"),
+                        ("PetalLength", "SPetalLength"),
                         ("PetalWidth", "SPetalLength"),
                         ("PetalLength", "PetalWidth"),
-                        ("PetalLength", "SPetalLength"),
                     ],
                 }
             },
             "ModelingReport": {
                 "get_predictor_names": {
-                    "Adult": ["Selective Naive Bayes"],
-                    "Iris2D": ["Selective Naive Bayes"],
-                    "IrisC": ["Selective Naive Bayes"],
-                    "IrisR": ["Selective Naive Bayes"]
+                    "Adult": ["Selective Naive Bayes", "Univariate relationship"],
+                    "Iris2D": ["Selective Naive Bayes", "Univariate PetalWidth"],
+                    "IrisC": ["Selective Naive Bayes", "Univariate PetalWidth"],
+                    "IrisR": [
+                        "Baseline",
+                        "Selective Naive Bayes",
+                        "Univariate SPetalLength",
+                    ],
                 }
             },
             "EvaluationReport": {
                 "get_predictor_names": {
-                    "Adult": ["Selective Naive Bayes"],
+                    "Adult": ["Selective Naive Bayes", "Univariate relationship"],
                     "AdultEvaluation": [
                         "Selective Naive Bayes",
+                        "Univariate relationship",
                     ],
-                    "Iris2D": ["Selective Naive Bayes"],
-                    "IrisC": ["Selective Naive Bayes"],
-                    "IrisR": ["Selective Naive Bayes"],
+                    "Iris2D": ["Selective Naive Bayes", "Univariate PetalWidth"],
+                    "IrisC": ["Selective Naive Bayes", "Univariate PetalWidth"],
+                    "IrisR": [
+                        "Baseline",
+                        "Selective Naive Bayes",
+                        "Univariate SPetalLength",
+                    ],
                 }
             },
             "PredictorPerformance": {

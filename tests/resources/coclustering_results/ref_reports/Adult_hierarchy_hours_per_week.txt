@@ -1,6 +1,0 @@
-Hierarchical structure	hours_per_week
-                         ]-inf;36.5]
-             ]-inf;+inf[
-                         ]36.5;43.5]
-               ]36.5;+inf[
-                         ]43.5;+inf[
