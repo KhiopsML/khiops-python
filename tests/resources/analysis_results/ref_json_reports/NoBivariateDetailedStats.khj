@@ -26,6 +26,7 @@
 			"evaluatedVariables": 2,
 			"featureEngineering": {
 				"maxNumberOfConstructedVariables": 0,
+				"maxNumberOfTextFeatures": 0,
 				"maxNumberOfTrees": 0,
 				"maxNumberOfVariablePairs": 1
 			},

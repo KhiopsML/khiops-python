@@ -196,6 +196,7 @@
 			"featureEngineering": {
 				"maxNumberOfConstructedVariables": 100,
 				"maxNumberOfTrees": 0,
+				"maxNumberOfTextFeatures": 0,
 				"maxNumberOfVariablePairs": 0
 			},
 			"discretization": "MODL",

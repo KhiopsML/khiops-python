@@ -1,6 +1,6 @@
 {
 	"tool": "Khiops",
-	"version": "10.0.0.3i",
+	"version": "VERSION",
 	"shortDescription": "",
 	"modelingReport": {
 		"reportType": "Modeling",
@@ -139,7 +139,9 @@
 			"targetDescriptiveStats": {
 				"values": 3,
 				"mode": "ANSI",
-				"modeFrequency": 10
+				"modeFrequency": 10,
+				"missingNumber": 0,
+				"sparseMissingNumber": 0
 			},
 			"targetValues": {
 				"values": ["ANSI","ASCII","UTF8 Greek"],
@@ -147,8 +149,10 @@
 			},
 			"evaluatedVariables": 1,
 			"informativeVariables": 1,
+			"selectedVariables": 1,
 			"featureEngineering": {
 				"maxNumberOfConstructedVariables": 0,
+				"maxNumberOfTextFeatures": 0,
 				"maxNumberOfTrees": 0,
 				"maxNumberOfVariablePairs": 0
 			},
@@ -170,6 +174,8 @@
 				"values": 3,
 				"mode": "<a>",
 				"modeFrequency": 10,
+				"missingNumber": 0,
+				"sparseMissingNumber": 0,
 				"constructionCost": 0.693147,
 				"preparationCost": 16.6153,
 				"dataCost": 0
