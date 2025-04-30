@@ -209,6 +209,29 @@ class AnalysisResults(KhiopsJSONObject):
             report_file_writer = self.create_output_file_writer(report_file)
             self.write_report(report_file_writer)
 
+    def to_json(self):
+        report = {
+            "tool": self.tool,
+            "version": self.version,
+            "shortDescription": self.short_description,
+            "khiops_encoding": "ascii",
+        }
+        if self.preparation_report:
+            report["preparationReport"] = self.preparation_report.to_json()
+        if self.bivariate_preparation_report:
+            report["bivariatePreparationReport"] = (
+                self.bivariate_preparation_report.to_json()
+            )
+        if self.modeling_report:
+            report["modelingReport"] = self.modeling_report.to_json()
+        if self.train_evaluation_report:
+            report["trainEvaluationReport"] = self.train_evaluation_report.to_json()
+        if self.test_evaluation_report:
+            report["testEvaluationReport"] = self.test_evaluation_report.to_json()
+        if self.evaluation_report:
+            report["evaluationReport"] = self.evaluation_report.to_json()
+        return report
+
     def write_report(self, stream_or_writer):
         """Writes the instance's TSV report into a writer object
 
@@ -489,6 +512,131 @@ class PreparationReport:
         """
         return self._variables_statistics_by_name[variable_name]
 
+    def to_json(self):
+        report = {
+            "reportType": "Preparation",
+            "summary": {
+                "dictionary": self.dictionary,
+                "variables": {
+                    "types": self.variable_types,
+                    "numbers": self.variable_numbers,
+                },
+                "database": self.database,
+                "instances": self.instance_number,
+                "learningTask": self.learning_task,
+            },
+        }
+        if self.sampling_mode != "":
+            # |= is not available for Python 3.8
+            report["summary"].update(
+                {
+                    "samplePercentage": self.sample_percentage,
+                    "samplingMode": self.sampling_mode,
+                    "selectionVariable": self.selection_variable,
+                    "selectionValue": self.selection_value,
+                }
+            )
+
+        # Write classification specific attributes
+        if "Classification" in self.learning_task:
+            report["summary"].update(
+                {
+                    "targetVariable": self.target_variable,
+                    "targetDescriptiveStats": {
+                        "values": self.target_stats_values,
+                        "mode": self.target_stats_mode,
+                        "modeFrequency": self.target_stats_mode_frequency,
+                    },
+                    "targetValues": {
+                        "values": self.target_values,
+                        "frequencies": self.target_value_frequencies,
+                    },
+                }
+            )
+            if self.main_target_value is not None:
+                report["summary"]["mainTargetValue"] = self.main_target_value
+
+        # Write regression specific attributes
+        if "Regression" in self.learning_task:
+            report["summary"].update(
+                {
+                    "targetVariable": self.target_variable,
+                    "targetDescriptiveStats": {
+                        "values": self.target_stats_values,
+                        "min": self.target_stats_min,
+                        "max": self.target_stats_max,
+                        "mean": self.target_stats_mean,
+                        "stdDev": self.target_stats_std_dev,
+                    },
+                    "targetValues": {
+                        "values": self.target_values,
+                        "frequencies": self.target_value_frequencies,
+                    },
+                }
+            )
+            if self.main_target_value is not None:
+                report["summary"]["mainTargetValue"] = self.main_target_value
+
+        # Write common classification and regression specific attributes
+        if "Classification" in self.learning_task or "Regression" in self.learning_task:
+            if self.target_stats_missing_number is not None:
+                report["summary"]["targetDescriptiveStats"][
+                    "missingNumber"
+                ] = self.target_stats_missing_number
+            if self.target_stats_sparse_missing_number is not None:
+                report["summary"]["targetDescriptiveStats"][
+                    "sparseMissingNumber"
+                ] = self.target_stats_sparse_missing_number
+
+        # Write variable preparation summary attributes
+        if len(self.variable_types) > 0 and self.instance_number > 0:
+            report["summary"].update(
+                {
+                    "evaluatedVariables": self.evaluated_variable_number,
+                    "informativeVariables": self.informative_variable_number,
+                    "discretization": self.discretization,
+                    "valueGrouping": self.value_grouping,
+                    "featureEngineering": {
+                        "maxNumberOfConstructedVariables": (
+                            self.max_constructed_variables or 0
+                        ),
+                        "maxNumberOfTextFeatures": self.max_text_features or 0,
+                        "maxNumberOfTrees": self.max_trees or 0,
+                        "maxNumberOfVariablePairs": self.max_pairs or 0,
+                    },
+                }
+            )
+
+        # Write preparation cost information
+        if (
+            "Unsupervised" not in self.learning_task
+            and self.null_model_construction_cost is not None
+        ):
+            report["summary"]["nullModel"] = {
+                "constructionCost": self.null_model_construction_cost,
+                "preparationCost": self.null_model_preparation_cost,
+                "dataCost": self.null_model_data_cost,
+            }
+
+        # Write variables' statistics
+        if len(self.variables_statistics) > 0:
+            report.update(
+                {
+                    "variablesStatistics": [
+                        variable_statistics.to_json()
+                        for variable_statistics in self.variables_statistics
+                    ],
+                    "variablesDetailedStatistics": {
+                        variable_statistics.rank: variable_statistics.to_json(
+                            details=True
+                        )
+                        for variable_statistics in self.variables_statistics
+                        if variable_statistics.is_detailed()
+                    },
+                }
+            )
+        return report
+
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
 
@@ -524,7 +672,9 @@ class PreparationReport:
         if self.target_stats_missing_number is not None:
             writer.writeln(f"\tMissing number\t{self.target_stats_missing_number}")
         if self.target_stats_sparse_missing_number is not None:
-            writer.writeln(f"\tSparse missing number\t{self.target_stats_sparse_missing_number}")
+            writer.writeln(
+                f"\tSparse missing number\t{self.target_stats_sparse_missing_number}"
+            )
 
         # Write classification specific attributes
         if "Classification" in self.learning_task:
@@ -560,8 +710,7 @@ class PreparationReport:
                 )
             if self.max_text_features is not None:
                 writer.writeln(
-                "Max number of text features\t"
-                f"{self.max_text_features}"
+                    "Max number of text features\t" f"{self.max_text_features}"
                 )
             if self.max_trees is not None:
                 writer.writeln(f"Max number of trees\t{self.max_trees}")
@@ -777,6 +926,69 @@ class BivariatePreparationReport:
             (variable_name_1, variable_name_2)
         ]
 
+    def to_json(self):
+        report = {
+            "reportType": "BivariatePreparation",
+            "summary": {
+                "dictionary": self.dictionary,
+                "variables": {
+                    "types": self.variable_types,
+                    "numbers": self.variable_numbers,
+                },
+                "database": self.database,
+                "instances": self.instance_number,
+                "learningTask": self.learning_task,
+                "variablesPairsStatistics": [
+                    variable_pair_statistics.to_json()
+                    for variable_pair_statistics in self.variables_pairs_statistics
+                ],
+                "variablesPairsDetailedStatistics": {
+                    variable_pair_statistics.rank: variable_pair_statistics.to_json(
+                        details=True
+                    )
+                    for variable_pair_statistics in self.variables_pairs_statistics
+                    if variable_pair_statistics.is_detailed()
+                },
+            },
+        }
+
+        if self.sampling_mode != "":
+            report["summary"].update(
+                {
+                    "samplePercentage": self.sample_percentage,
+                    "samplingMode": self.sampling_mode,
+                    "selectionVariable": self.selection_variable,
+                    "selectionValue": self.selection_value,
+                }
+            )
+
+        # Write specific summary attributes for a classification task
+        if self.learning_task == "Classification analysis":
+            report["summary"].update(
+                {
+                    "targetVariable": self.target_variable,
+                    "targetDescriptiveStats": {
+                        "values": self.target_stats_values,
+                        "mode": self.target_stats_mode,
+                        "modeFrequency": self.target_stats_mode_frequency,
+                        "targetValues": {
+                            "values": self.target_values,
+                            "frequecies": self.target_value_frequencies,
+                        },
+                    },
+                }
+            )
+            if self.main_target_value is not None:
+                report["summary"]["mainTargetValue"] = self.main_target_value
+
+        if self.evaluated_pair_number is not None:
+            report["summary"]["evaluatedVariablePairs"] = self.evaluated_pair_number
+
+        if self.informative_pair_number is not None:
+            report["summary"]["informativeVariablePairs"] = self.informative_pair_number
+
+        return report
+
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
 
@@ -969,6 +1181,39 @@ class ModelingReport:
 
         """
         return list(self._trained_predictors_by_name.keys())
+
+    def to_json(self):
+        report = {
+            "reportType": "Modeling",
+            "summary": {
+                "dictionary": self.dictionary,
+                "database": self.database,
+                "learningTask": self.learning_task,
+                "targetVariable": self.target_variable,
+            },
+            "trainedPredictors": [
+                predictor.to_json() for predictor in self.trained_predictors
+            ],
+            "trainedPredictorsDetails": {
+                predictor.rank: predictor.to_json(details=True)
+                for predictor in self.trained_predictors
+                if predictor.is_detailed()
+            },
+        }
+        if self.sampling_mode != "":
+            report["summary"].update(
+                {
+                    "samplePercentage": self.sample_percentage,
+                    "samplingMode": self.sampling_mode,
+                    "selectionVariable": self.selection_variable,
+                    "selectionValue": self.selection_value,
+                }
+            )
+
+        if self.main_target_value is not None:
+            report["summary"]["mainTargetValue"] = self.main_target_value
+
+        return report
 
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
@@ -1322,6 +1567,73 @@ class EvaluationReport:
                 )
         raise KeyError(target_value)
 
+    def to_json(self):
+        report = {
+            "reportType": "Evaluation",
+            "evaluationType": self.evaluation_type,
+            "summary": {
+                "dictionary": self.dictionary,
+                "database": self.database,
+                "instances": self.instance_number,
+                "learningTask": self.learning_task,
+                "targetVariable": self.target_variable,
+            },
+            "predictorsPerformance": [
+                predictor_performance.to_json()
+                for predictor_performance in self.predictors_performance
+            ],
+            "predictorsDetailedPerformance": {
+                predictor_performance.rank: predictor_performance.to_json(details=True)
+                for predictor_performance in self.predictors_performance
+                if predictor_performance.is_detailed()
+            },
+        }
+
+        if self.sampling_mode != "":
+            report["summary"].update(
+                {
+                    "samplePercentage": self.sample_percentage,
+                    "samplingMode": self.sampling_mode,
+                    "selectionVariable": self.selection_variable,
+                    "selectionValue": self.selection_value,
+                }
+            )
+
+        if self.main_target_value is not None:
+            report["summary"]["mainTargetValue"] = self.main_target_value
+
+        # Write lift curves, one per target value and per classifier
+        if (
+            self.learning_task.startswith("Classification")
+            and self.classification_target_values is not None
+        ):
+            report["liftCurves"] = []
+            for i, target_value in enumerate(self.classification_target_values):
+                lift_curves = self.classification_lift_curves[i]
+                report["liftCurves"].append(
+                    {
+                        "targetValue": target_value,
+                        "curves": [
+                            {
+                                "classifier": lift_curve.name,
+                                "values": lift_curve.values,
+                            }
+                            for lift_curve in lift_curves
+                        ],
+                    }
+                )
+
+        # Write REC curves, one per regressor
+        if (
+            self.learning_task.startswith("Regression")
+            and self.regression_rec_curves is not None
+        ):
+            report["recCurves"] = [
+                {"regressor": rec_curve.name, "values": rec_curve.values}
+                for rec_curve in self.regression_rec_curves
+            ]
+        return report
+
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
 
@@ -1590,6 +1902,78 @@ class VariableStatistics:
         return self.data_grid is not None or (
             self.input_values is not None and self.input_value_frequencies is not None
         )
+
+    def to_json(self, details=False):
+        # Write report details if required and applicable
+        if details is True and self.is_detailed():
+            report = {}
+
+            # Write data grid
+            if self.data_grid is not None:
+                report["dataGrid"] = self.data_grid.to_json()
+
+            # Write input values and their frequencies
+            if self.input_values is not None:
+                report["inputValues"] = {
+                    "values": [str(input_value) for input_value in self.input_values],
+                    "frequencies": self.input_value_frequencies,
+                }
+            return report
+        elif details is False:
+            report = {
+                "rank": self.rank,
+                "name": self.name,
+                "type": self.type,
+                "values": self.value_number,
+                "constructionCost": self.construction_cost,
+            }
+
+            # Write level if available
+            if self.level is not None:
+                report["level"] = self.level
+
+            # Write target part number if available
+            if self.target_part_number is not None:
+                report["targetParts"] = self.target_part_number
+
+            # Write part number if available
+            if self.part_number is not None:
+                report["parts"] = self.part_number
+
+            # Write missing number if available
+            if self.missing_number is not None:
+                report["missingNumber"] = self.missing_number
+
+            # Write sparse missing number if available
+            if self.sparse_missing_number is not None:
+                report["sparseMissingNumber"] = self.sparse_missing_number
+
+            # Write attributes specific to Numerical / Categorical types
+            if self.type == "Numerical":
+                report.update(
+                    {
+                        "min": self.min,
+                        "max": self.max,
+                        "mean": self.mean,
+                        "stdDev": self.std_dev,
+                    }
+                )
+            elif self.type == "Categorical":
+                report.update({"mode": self.mode, "modeFrequency": self.mode_frequency})
+
+            # Write preparation cost only for the supervised case
+            if self.preparation_cost is not None:
+                report.update(
+                    {
+                        "preparationCost": self.preparation_cost,
+                        "dataCost": self.data_cost,
+                    }
+                )
+
+            # Write derivation rule if available
+            if self.derivation_rule is not None:
+                report["derivationRule"] = self.derivation_rule
+            return report
 
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
@@ -2023,6 +2407,41 @@ class DataGrid:
             self.cell_target_frequencies = json_data.get("cellTargetFrequencies")
             self.cell_interests = json_data.get("cellInterests")
 
+    def to_json(self):
+        # Write data grid type and dimensions
+        report = {
+            "isSupervised": self.is_supervised,
+            "dimensions": [dimension.to_json() for dimension in self.dimensions],
+        }
+
+        # Write data grid cells
+        # Univariate unsupervised data grid: Write frequencies per part
+        if not self.is_supervised and len(self.dimensions) == 1:
+            report["frequencies"] = self.frequencies
+
+        # Multivariate unsupervised data grid: Write frequencies per cell
+        elif not self.is_supervised and len(self.dimensions) > 1:
+            report["cellIds"] = self.cell_ids
+            report["cellPartIndexes"] = self.cell_part_indexes
+            report["cellFrequencies"] = self.cell_frequencies
+
+        # Supervised data grid with one input variable:
+        # Write frequencies for each input part and for each target part
+        elif self.is_supervised and len(self.dimensions) == 2:
+            report["partTargetFrequencies"] = self.part_target_frequencies
+            report["partInterests"] = self.part_interests
+
+        # Supervised data grid with several input variables
+        # Write frequencies per input cell part, for each target part
+        elif self.is_supervised and len(self.dimensions) > 2:
+            report["cellIds"] = self.cell_ids
+            report["cellPartIndexes"] = self.cell_part_indexes
+            report["cellFrequencies"] = self.cell_frequencies
+            report["cellTargetFrequencies"] = self.cell_target_frequencies
+            report["cellInterests"] = self.cell_interests
+
+        return report
+
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
 
@@ -2233,6 +2652,25 @@ class DataGridDimension:
             default_group_index = json_data["defaultGroupIndex"]
             self.partition[default_group_index].is_default_part = True
 
+    def to_json(self):
+        report = {
+            "variable": self.variable,
+            "type": self.type,
+            "partitionType": self.partition_type,
+            "partition": [part.to_json() for part in self.partition],
+        }
+
+        if self.partition_type == "Value groups":
+            default_group_index = None
+            for i, part in enumerate(self.partition):
+                if part.is_default_part is True:
+                    default_group_index = i
+                    break
+            if default_group_index is not None:
+                report["defaultGroupIndex"] = default_group_index
+
+        return report
+
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
 
@@ -2330,6 +2768,11 @@ class PartInterval:
         """
         return "Interval"
 
+    def to_json(self):
+        if not self.is_missing:
+            return [self.lower_bound, self.upper_bound]
+        return "Missing"
+
     def write_report_line(self, writer):
         """Writes a line of the TSV report into a writer object
 
@@ -2389,6 +2832,9 @@ class PartValue:
 
         """
         return "Value"
+
+    def to_json(self):
+        return self.value
 
     def write_report_line(self, writer):
         """Writes a line of the TSV report into a writer object
@@ -2452,6 +2898,9 @@ class PartValueGroup:
 
         """
         return "Value group"
+
+    def to_json(self):
+        return self.values
 
     def write_report_line(self, writer):
         """Writes a line of the TSV report into a writer object
@@ -2571,6 +3020,28 @@ class TrainedPredictor:
         """
         return self.selected_variables is not None
 
+    def to_json(self, details=False):
+        if (
+            details is True
+            and self.is_detailed()
+            and self.selected_variables is not None
+        ):
+            return {
+                "selectedVariables": [
+                    selected_variable.to_json()
+                    for selected_variable in self.selected_variables
+                ]
+            }
+
+        # details is False:
+        return {
+            "rank": self.rank,
+            "type": self.type,
+            "family": self.family,
+            "name": self.name,
+            "variables": str(self.variable_number),
+        }
+
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
 
@@ -2669,6 +3140,18 @@ class SelectedVariable:
         self.weight = json_data.get("weight")
         self.importance = json_data.get("importance")
         self.map = json_data.get("map")
+
+    def to_json(self):
+        report = {
+            "preparedName": self.prepared_name,
+            "name": self.name,
+            "level": str(self.level),
+            "weight": str(self.weight),
+        }
+        if self.importance is not None:
+            report["importance"] = self.importance
+
+        return report
 
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
@@ -2871,6 +3354,42 @@ class PredictorPerformance:
             )
         return metric
 
+    def to_json(self, details=False):
+        if details is True and self.is_detailed():
+            report = {}
+            if self.data_grid is not None:
+                report["dataGrid"] = self.data_grid.to_json()
+            if self.confusion_matrix is not None:
+                report["confusionMatrix"] = self.confusion_matrix.to_json()
+        else:
+            report = {
+                "rank": self.rank,
+                "type": self.type,
+                "family": self.family,
+                "name": self.name,
+            }
+
+            if self.type == "Classifier":
+                report.update(
+                    {
+                        "accuracy": self.accuracy,
+                        "compression": self.compression,
+                        "auc": self.auc,
+                    }
+                )
+            elif self.type == "Regressor":
+                report.update(
+                    {
+                        "rmse": self.rmse,
+                        "mae": self.mae,
+                        "nlpd": self.nlpd,
+                        "rankRmse": self.rank_rmse,
+                        "rankMae": self.rank_mae,
+                        "rankNlpd": self.rank_nlpd,
+                    }
+                )
+        return report
+
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
 
@@ -2971,6 +3490,10 @@ class ConfusionMatrix:
         # Initialize fields
         self.values = json_data.get("values", [])
         self.matrix = json_data.get("matrix", [])
+
+    def to_json(self):
+
+        return {"values": self.values, "matrix": self.matrix}
 
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
