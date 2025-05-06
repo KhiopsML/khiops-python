@@ -3072,8 +3072,7 @@ class TrainedPredictor:
     variable_number : int
         Number of variables used by the predictor.
     selected_variables : list of `SelectedVariable`
-        Variables used by the predictor. Only for types "Selective Naive Bayes" and "MAP
-        Naive Bayes".
+        Variables used by the predictor. Only for type "Selective Naive Bayes".
     """
 
     predictor_types = ["Classifier", "Regressor"]
@@ -3231,9 +3230,6 @@ class SelectedVariable:
     importance : float
         A measure of overall importance of the variable in the model. It is the
         geometric mean of the level and weight.
-    map : bool
-         True if the variable is in the MAP model.
-         **Deprecated**: Will be removed in Khiops Python 11.
     """
 
     def __init__(self, json_data=None):
@@ -3252,7 +3248,6 @@ class SelectedVariable:
         self.level = json_data.get("level", "")
         self.weight = json_data.get("weight")
         self.importance = json_data.get("importance")
-        self.map = json_data.get("map")
 
     def to_json(self):
         """Serialize object instance to the Khiops JSON format"""
@@ -3283,8 +3278,6 @@ class SelectedVariable:
         writer.write("\tWeight")
         if self.importance is not None:
             writer.write("\tImportance")
-        if self.map is not None:
-            writer.write("\tMAP")
         writer.writeln("")
 
     def write_report_line(self, writer):
@@ -3301,8 +3294,6 @@ class SelectedVariable:
         writer.write(f"\t{self.weight}")
         if self.importance is not None:
             writer.write(f"\t{self.importance}")
-        elif self.map is not None:
-            writer.write("\t1")
 
         writer.writeln("")
 
