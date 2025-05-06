@@ -3139,7 +3139,6 @@ class SelectedVariable:
         self.level = json_data.get("level", "")
         self.weight = json_data.get("weight")
         self.importance = json_data.get("importance")
-        self.map = json_data.get("map")
 
     def to_json(self):
         report = {
@@ -3169,8 +3168,6 @@ class SelectedVariable:
         writer.write("\tWeight")
         if self.importance is not None:
             writer.write("\tImportance")
-        if self.map is not None:
-            writer.write("\tMAP")
         writer.writeln("")
 
     def write_report_line(self, writer):
@@ -3187,8 +3184,6 @@ class SelectedVariable:
         writer.write(f"\t{self.weight}")
         if self.importance is not None:
             writer.write(f"\t{self.importance}")
-        elif self.map is not None:
-            writer.write("\t1")
 
         writer.writeln("")
 
