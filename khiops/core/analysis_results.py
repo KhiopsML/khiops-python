@@ -103,6 +103,8 @@ class AnalysisResults(KhiopsJSONObject):
         Version of the Khiops tool that generated the report.
     short_description : str
         Short description defined by the user.
+    khiops_encoding : str
+        Encoding of the Khiops report file.
     logs : list of tuples
         2-tuples linking each sub-task name to a list containing the warnings and errors
         found during the execution of that sub-task. Available only if there were errors
@@ -142,7 +144,8 @@ class AnalysisResults(KhiopsJSONObject):
             )
 
         # Initialize report basic data
-        self.short_description = json_data.get("shortDescription", "")
+        self.short_description = json_data.get("shortDescription")
+        self.khiops_encoding = json_data.get("khiops_encoding")
         json_logs = json_data.get("logs", [])
         self.logs = []
         for log in json_logs:
@@ -156,6 +159,11 @@ class AnalysisResults(KhiopsJSONObject):
         if "bivariatePreparationReport" in json_data:
             self.bivariate_preparation_report = BivariatePreparationReport(
                 json_data["bivariatePreparationReport"]
+            )
+        self.text_preparation_report = None
+        if "textPreparationReport" in json_data:
+            self.text_preparation_report = PreparationReport(
+                json_data["textPreparationReport"]
             )
         self.modeling_report = None
         if "modelingReport" in json_data:
@@ -328,6 +336,8 @@ class PreparationReport:
         Name of the variable used to select training instances.
     selection_value : str
         Value of ``selection_variable`` to select training instance.
+    constructed_variable_number : int
+        Number of constructed variables.
     instance_number : int
         Number of training instances.
     learning_task : str
@@ -364,6 +374,10 @@ class PreparationReport:
         Number of variables analyzed.
     informative_variable_number : int
         *Supervised analysis only:* Number of informative variables.
+    selected_variable_number : int
+        Number of selected variables.
+    native_variable_number : int
+        Number of native variables.
     max_constructed_variables : int
         Maximum number of constructed variable specified for the analysis.
     max_text_features : int
@@ -424,6 +438,8 @@ class PreparationReport:
         self.sampling_mode = json_summary.get("samplingMode", "")
         self.selection_variable = json_summary.get("selectionVariable")
         self.selection_value = json_summary.get("selectionValue")
+        self.constructed_variable_number = json_summary.get("constructedVariables")
+        self.native_variable_number = json_summary.get("nativeVariables")
 
         # Initialize target descriptive stats for supervised tasks
         json_stats = json_summary.get("targetDescriptiveStats", {})
@@ -447,7 +463,8 @@ class PreparationReport:
 
         # Initialize other summary attributes
         self.evaluated_variable_number = json_summary.get("evaluatedVariables", 0)
-        self.informative_variable_number = json_summary.get("informativeVariables", 0)
+        self.informative_variable_number = json_summary.get("informativeVariables")
+        self.selected_variable_number = json_summary.get("selectedVariables")
         json_feature_eng = json_summary.get("featureEngineering", {})
         self.max_constructed_variables = json_feature_eng.get(
             "maxNumberOfConstructedVariables"
@@ -455,8 +472,8 @@ class PreparationReport:
         self.max_text_features = json_feature_eng.get("maxNumberOfTextFeatures")
         self.max_trees = json_feature_eng.get("maxNumberOfTrees")
         self.max_pairs = json_feature_eng.get("maxNumberOfVariablePairs")
-        self.discretization = json_summary.get("discretization", "")
-        self.value_grouping = json_summary.get("valueGrouping", "")
+        self.discretization = json_summary.get("discretization")
+        self.value_grouping = json_summary.get("valueGrouping")
 
         # Cost of model (supervised case and non empty database)
         json_null_model = json_summary.get("nullModel", {})
@@ -799,6 +816,8 @@ class BivariatePreparationReport:
         Frequencies for each value in ``target_values`` (synchronized lists).
     evaluated_pair_number : int
         Number of variable pairs evaluated.
+    selected_pair_number : int
+        Number of variable pairs selected.
     informative_pair_number : int
         Number of informative variable pairs. A pair is considered informative if its
         level is greater than the sum of its components' levels.
@@ -859,9 +878,12 @@ class BivariatePreparationReport:
         json_target_values = json_summary.get("targetValues", {})
         self.target_values = json_target_values.get("values")
         self.target_value_frequencies = json_target_values.get("frequencies")
+        self.target_stats_missing_number = json_stats.get("missingNumber")
+        self.target_stats_sparse_missing_number = json_stats.get("sparseMissingNumber")
 
         # Initialize the information of the pair evaluations
         self.evaluated_pair_number = json_summary.get("evaluatedVariablePairs")
+        self.selected_pair_number = json_summary.get("selectedVariablePairs")
         self.informative_pair_number = json_summary.get("informativeVariablePairs")
 
         # Initialize main attributes for all variables
