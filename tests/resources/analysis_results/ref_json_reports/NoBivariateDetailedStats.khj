@@ -26,6 +26,7 @@
 			"evaluatedVariables": 2,
 			"featureEngineering": {
 				"maxNumberOfConstructedVariables": 0,
+				"maxNumberOfTextFeatures": 0,
 				"maxNumberOfTrees": 0,
 				"maxNumberOfVariablePairs": 1
 			},
@@ -43,6 +44,7 @@
 				"mean": 1.5,
 				"stdDev": 0.5,
 				"missingNumber": 0,
+				"sparseMissingNumber": 0,
 				"constructionCost": 1.38629
 			},
 			{
@@ -52,6 +54,8 @@
 				"values": 2,
 				"mode": "A",
 				"modeFrequency": 1,
+				"missingNumber": 0,
+				"sparseMissingNumber": 0,
 				"constructionCost": 1.38629
 			}
 		],
