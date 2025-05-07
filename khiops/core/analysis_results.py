@@ -221,11 +221,18 @@ class AnalysisResults(KhiopsJSONObject):
         report = {
             "tool": self.tool,
             "version": self.version,
-            "shortDescription": self.short_description,
-            "khiops_encoding": "ascii",
+            "khiops_encoding": self.khiops_encoding,
         }
+        if self.short_description is not None:
+            report["shortDescription"] = self.short_description
+        if self.logs:
+            report["logs"] = []
+            for task_name, messages in self.logs:
+                report["logs"].append({"taskName": task_name, "messages": messages})
         if self.preparation_report:
             report["preparationReport"] = self.preparation_report.to_json()
+        if self.text_preparation_report is not None:
+            report["textPreparationReport"] = self.text_preparation_report.to_json()
         if self.bivariate_preparation_report:
             report["bivariatePreparationReport"] = (
                 self.bivariate_preparation_report.to_json()
@@ -564,12 +571,13 @@ class PreparationReport:
                         "mode": self.target_stats_mode,
                         "modeFrequency": self.target_stats_mode_frequency,
                     },
-                    "targetValues": {
-                        "values": self.target_values,
-                        "frequencies": self.target_value_frequencies,
-                    },
                 }
             )
+            if self.target_values is not None:
+                report["summary"]["targetValues"] = {
+                    "values": self.target_values,
+                    "frequencies": self.target_value_frequencies,
+                }
             if self.main_target_value is not None:
                 report["summary"]["mainTargetValue"] = self.main_target_value
 
@@ -585,12 +593,13 @@ class PreparationReport:
                         "mean": self.target_stats_mean,
                         "stdDev": self.target_stats_std_dev,
                     },
-                    "targetValues": {
-                        "values": self.target_values,
-                        "frequencies": self.target_value_frequencies,
-                    },
                 }
             )
+            if self.target_values is not None:
+                report["summary"]["targetValues"] = {
+                    "values": self.target_values,
+                    "frequencies": self.target_value_frequencies,
+                }
             if self.main_target_value is not None:
                 report["summary"]["mainTargetValue"] = self.main_target_value
 
@@ -604,25 +613,40 @@ class PreparationReport:
                 report["summary"]["targetDescriptiveStats"][
                     "sparseMissingNumber"
                 ] = self.target_stats_sparse_missing_number
+            if self.selected_variable_number is not None:
+                report["summary"]["selectedVariables"] = self.selected_variable_number
 
         # Write variable preparation summary attributes
         if len(self.variable_types) > 0 and self.instance_number > 0:
-            report["summary"].update(
-                {
-                    "evaluatedVariables": self.evaluated_variable_number,
-                    "informativeVariables": self.informative_variable_number,
-                    "discretization": self.discretization,
-                    "valueGrouping": self.value_grouping,
-                    "featureEngineering": {
-                        "maxNumberOfConstructedVariables": (
-                            self.max_constructed_variables or 0
-                        ),
-                        "maxNumberOfTextFeatures": self.max_text_features or 0,
-                        "maxNumberOfTrees": self.max_trees or 0,
-                        "maxNumberOfVariablePairs": self.max_pairs or 0,
-                    },
+            report["summary"]["evaluatedVariables"] = self.evaluated_variable_number
+            if not (
+                self.max_constructed_variables is None
+                and self.max_text_features is None
+                and self.max_trees is None
+                and self.max_pairs is None
+            ):
+                report["summary"]["featureEngineering"] = {
+                    "maxNumberOfConstructedVariables": (
+                        self.max_constructed_variables or 0
+                    ),
+                    "maxNumberOfTextFeatures": self.max_text_features or 0,
+                    "maxNumberOfTrees": self.max_trees or 0,
+                    "maxNumberOfVariablePairs": self.max_pairs or 0,
                 }
-            )
+            if self.informative_variable_number is not None:
+                report["summary"][
+                    "informativeVariables"
+                ] = self.informative_variable_number
+            if self.discretization is not None:
+                report["summary"]["discretization"] = self.discretization
+            if self.value_grouping is not None:
+                report["summary"]["valueGrouping"] = self.value_grouping
+            if self.constructed_variable_number is not None:
+                report["summary"][
+                    "constructedVariables"
+                ] = self.constructed_variable_number
+            if self.native_variable_number is not None:
+                report["summary"]["nativeVariables"] = self.native_variable_number
 
         # Write preparation cost information
         if (
@@ -637,21 +661,25 @@ class PreparationReport:
 
         # Write variables' statistics
         if len(self.variables_statistics) > 0:
-            report.update(
-                {
-                    "variablesStatistics": [
-                        variable_statistics.to_json()
-                        for variable_statistics in self.variables_statistics
-                    ],
-                    "variablesDetailedStatistics": {
-                        variable_statistics.rank: variable_statistics.to_json(
-                            details=True
-                        )
+            report["variablesStatistics"] = [
+                variable_statistics.to_json()
+                for variable_statistics in self.variables_statistics
+            ]
+            if (
+                len(
+                    [
+                        variable_statistics
                         for variable_statistics in self.variables_statistics
                         if variable_statistics.is_detailed()
-                    },
+                    ]
+                )
+                > 0
+            ):
+                report["variablesDetailedStatistics"] = {
+                    variable_statistics.rank: variable_statistics.to_json(details=True)
+                    for variable_statistics in self.variables_statistics
+                    if variable_statistics.is_detailed()
                 }
-            )
         return report
 
     def write_report(self, writer):
@@ -960,17 +988,6 @@ class BivariatePreparationReport:
                 "database": self.database,
                 "instances": self.instance_number,
                 "learningTask": self.learning_task,
-                "variablesPairsStatistics": [
-                    variable_pair_statistics.to_json()
-                    for variable_pair_statistics in self.variables_pairs_statistics
-                ],
-                "variablesPairsDetailedStatistics": {
-                    variable_pair_statistics.rank: variable_pair_statistics.to_json(
-                        details=True
-                    )
-                    for variable_pair_statistics in self.variables_pairs_statistics
-                    if variable_pair_statistics.is_detailed()
-                },
             },
         }
 
@@ -993,21 +1010,57 @@ class BivariatePreparationReport:
                         "values": self.target_stats_values,
                         "mode": self.target_stats_mode,
                         "modeFrequency": self.target_stats_mode_frequency,
-                        "targetValues": {
-                            "values": self.target_values,
-                            "frequecies": self.target_value_frequencies,
-                        },
                     },
                 }
             )
+            if self.target_values is not None:
+                report["summary"]["targetValues"] = {
+                    "values": self.target_values,
+                    "frequencies": self.target_value_frequencies,
+                }
+            if self.target_stats_missing_number is not None:
+                report["summary"]["targetDescriptiveStats"][
+                    "missingNumber"
+                ] = self.target_stats_missing_number
+            if self.target_stats_sparse_missing_number is not None:
+                report["summary"]["targetDescriptiveStats"][
+                    "sparseMissingNumber"
+                ] = self.target_stats_sparse_missing_number
             if self.main_target_value is not None:
                 report["summary"]["mainTargetValue"] = self.main_target_value
 
         if self.evaluated_pair_number is not None:
             report["summary"]["evaluatedVariablePairs"] = self.evaluated_pair_number
 
+        if self.selected_pair_number is not None:
+            report["summary"]["selectedVariablePairs"] = self.selected_pair_number
+
         if self.informative_pair_number is not None:
             report["summary"]["informativeVariablePairs"] = self.informative_pair_number
+
+        # Write variables pairs' statistics
+        if len(self.variables_pairs_statistics) > 0:
+            report["variablesPairsStatistics"] = [
+                variable_pair_statistics.to_json()
+                for variable_pair_statistics in self.variables_pairs_statistics
+            ]
+            if (
+                len(
+                    [
+                        variable_pair_statistics
+                        for variable_pair_statistics in self.variables_pairs_statistics
+                        if variable_pair_statistics.is_detailed()
+                    ]
+                )
+                > 0
+            ):
+                report["variablesPairsDetailedStatistics"] = {
+                    variable_pair_statistics.rank: variable_pair_statistics.to_json(
+                        details=True
+                    )
+                    for variable_pair_statistics in self.variables_pairs_statistics
+                    if variable_pair_statistics.is_detailed()
+                }
 
         return report
 
@@ -1216,12 +1269,22 @@ class ModelingReport:
             "trainedPredictors": [
                 predictor.to_json() for predictor in self.trained_predictors
             ],
-            "trainedPredictorsDetails": {
+        }
+        if (
+            len(
+                [
+                    predictor
+                    for predictor in self.trained_predictors
+                    if predictor.is_detailed()
+                ]
+            )
+            > 0
+        ):
+            report["trainedPredictorsDetails"] = {
                 predictor.rank: predictor.to_json(details=True)
                 for predictor in self.trained_predictors
                 if predictor.is_detailed()
-            },
-        }
+            }
         if self.sampling_mode != "":
             report["summary"].update(
                 {
@@ -1604,12 +1667,22 @@ class EvaluationReport:
                 predictor_performance.to_json()
                 for predictor_performance in self.predictors_performance
             ],
-            "predictorsDetailedPerformance": {
+        }
+        if (
+            len(
+                [
+                    predictor_performance
+                    for predictor_performance in self.predictors_performance
+                    if predictor_performance.is_detailed()
+                ]
+            )
+            > 0
+        ):
+            report["predictorsDetailedPerformance"] = {
                 predictor_performance.rank: predictor_performance.to_json(details=True)
                 for predictor_performance in self.predictors_performance
                 if predictor_performance.is_detailed()
-            },
-        }
+            }
 
         if self.sampling_mode != "":
             report["summary"].update(
@@ -1937,7 +2010,7 @@ class VariableStatistics:
             # Write input values and their frequencies
             if self.input_values is not None:
                 report["inputValues"] = {
-                    "values": [str(input_value) for input_value in self.input_values],
+                    "values": self.input_values,
                     "frequencies": self.input_value_frequencies,
                 }
             return report
@@ -2243,6 +2316,40 @@ class VariablePairStatistics:
         """
         return self.data_grid is not None
 
+    def to_json(self, details=False):
+        report = {}
+        if details is True and self.is_detailed():
+            # write detailed report
+            report["dataGrid"] = self.data_grid.to_json()
+        elif details is False:
+            report.update(
+                {
+                    "rank": self.rank,
+                    "name1": self.name1,
+                    "name2": self.name2,
+                    "level": self.level,
+                    "variables": self.variable_number,
+                    "parts1": self.part_number1,
+                    "parts2": self.part_number2,
+                    "cells": self.cell_number,
+                    "constructionCost": self.construction_cost,
+                    "preparationCost": self.preparation_cost,
+                    "dataCost": self.data_cost,
+                }
+            )
+
+            # Supervised case: write level attributes
+            if self.delta_level is not None:
+                report.update(
+                    {
+                        "deltaLevel": self.delta_level,
+                        "level1": self.level1,
+                        "level2": self.level2,
+                    }
+                )
+
+        return report
+
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
 
@@ -2445,7 +2552,8 @@ class DataGrid:
         elif not self.is_supervised and len(self.dimensions) > 1:
             report["cellIds"] = self.cell_ids
             report["cellPartIndexes"] = self.cell_part_indexes
-            report["cellFrequencies"] = self.cell_frequencies
+            if self.cell_frequencies is not None:
+                report["cellFrequencies"] = self.cell_frequencies
 
         # Supervised data grid with one input variable:
         # Write frequencies for each input part and for each target part
@@ -2458,7 +2566,8 @@ class DataGrid:
         elif self.is_supervised and len(self.dimensions) > 2:
             report["cellIds"] = self.cell_ids
             report["cellPartIndexes"] = self.cell_part_indexes
-            report["cellFrequencies"] = self.cell_frequencies
+            if self.cell_frequencies is not None:
+                report["cellFrequencies"] = self.cell_frequencies
             report["cellTargetFrequencies"] = self.cell_target_frequencies
             report["cellInterests"] = self.cell_interests
 
@@ -2793,7 +2902,7 @@ class PartInterval:
     def to_json(self):
         if not self.is_missing:
             return [self.lower_bound, self.upper_bound]
-        return "Missing"
+        return []
 
     def write_report_line(self, writer):
         """Writes a line of the TSV report into a writer object
@@ -3061,7 +3170,7 @@ class TrainedPredictor:
             "type": self.type,
             "family": self.family,
             "name": self.name,
-            "variables": str(self.variable_number),
+            "variables": self.variable_number,
         }
 
     def write_report_header_line(self, writer):
@@ -3166,8 +3275,8 @@ class SelectedVariable:
         report = {
             "preparedName": self.prepared_name,
             "name": self.name,
-            "level": str(self.level),
-            "weight": str(self.weight),
+            "level": self.level,
+            "weight": self.weight,
         }
         if self.importance is not None:
             report["importance"] = self.importance
