@@ -1885,6 +1885,9 @@ class VariableStatistics:
         Otherwise is set to ``None``.
     data_grid : `DataGrid`
         A density estimation of the partitioned variable with respect to the target.
+    modl_histograms : `ModlHistogram`
+        MODL optimal histograms for for numerical variables. Only for unsupervised
+        analysis.
     """
 
     def __init__(self, json_data=None):
@@ -1932,6 +1935,9 @@ class VariableStatistics:
         # Data grid for density estimation
         self.data_grid = None
 
+        # MODL optimal histograms for numerical data in unsupervised analysis
+        self.modl_histograms = None
+
         # Input values and their frequencies in case of categorical variables
         # The input values may not be the exhaustive list of all the values
         # For scalability reasons, the least frequent values are not always present
@@ -1964,6 +1970,11 @@ class VariableStatistics:
             self.input_values = json_input_values.get("values")
             self.input_value_frequencies = json_input_values.get("frequencies")
 
+            # Initialize MODL histograms if present in the JSON report
+            json_modl_histograms = json_data.get("modlHistograms")
+            if json_modl_histograms is not None:
+                self.modl_histograms = ModlHistogram(json_modl_histograms)
+
         return self
 
     def is_detailed(self):
@@ -1994,6 +2005,10 @@ class VariableStatistics:
                     "values": self.input_values,
                     "frequencies": self.input_value_frequencies,
                 }
+
+            # Write MODL histograms (unsupervised analysis)
+            if self.modl_histograms is not None:
+                report["modlHistograms"] = self.modl_histograms.to_json()
             return report
         elif details is False:
             report = {
@@ -2415,6 +2430,171 @@ class VariablePairStatistics:
             writer.writeln(f"Rank\t{self.rank}")
             writer.writeln("")
             self.data_grid.write_report(writer)
+
+
+class ModlHistogram:
+    """A histogram density estimation for numerical data
+
+    A MODL histogram is a regularized piecewise-constant estimation of the probability
+    density for numerical data. It has various refinement levels to ease exploratory
+    analysis tasks.
+
+    Parameters
+    ----------
+    json_data : dict, optional
+        JSON data at a ``modlHistograms`` field of an element of the list found at the
+        ``variablesDetailedStatistics`` field within the ``preparationReport`` field
+        of a Khiops JSON report file. If not specified, it returns an empty instance.
+
+    Attributes
+    ----------
+    histogram_number : int
+        Number of available histograms.
+    interpretable_histogram_number : int
+        Number of interpretable histograms. Can be equal to either
+        ``histogram_number`` or ``histogram_number - 1``.
+    truncation_epsilon : float
+        Truncation epsilon used by the truncation heuristic implemented in Khiops.
+        Equals 0 if no truncation is detected in the input data.
+    removed_singular_interval_number : int
+        Number of singular intervals removed from the finest-grained histogram to
+        obtain the first interpretable histogram.
+    granularities : list of int
+        Histogram granularities, sorted in increasing order.
+        Synchronized with ``histograms``.
+    interval_numbers : list of int
+        Histogram interval numbers, sorted in increasing order.
+        Synchronized with ``histograms``.
+    peak_interval_numbers : list of int
+        Histogram peak interval numbers, sorted in increasing order.
+        Synchronized with ``histograms``.
+    spike_interval_numbers : list of int
+        Histogram spike interval numbers, sorted in increasing order.
+        Synchronized with ``histograms``.
+    empty_interval_numbers : list of int
+        Histogram empty interval numbers, sorted in increasing order.
+        Synchronized with ``histograms``.
+    levels : list of float
+        List of histogram levels, sorted in increasing order.
+        Synchronized with ``histograms``.
+    information_rates : list of float
+        Histogram information rates, sorted in increasing order. Between 0 and
+        100 for interpretable histograms.
+        Synchronized with ``histograms``.
+    histograms : list of `Histogram`
+        The MODL histograms.
+
+    """
+
+    def __init__(self, json_data=None):
+        """See class docstring"""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialize histogram number
+        self.histogram_number = json_data.get("histogramNumber")
+
+        # Initialize interpretable_histogram_number
+        self.interpretable_histogram_number = json_data.get(
+            "interpretableHistogramNumber"
+        )
+
+        # Initialize truncation_epsilon
+        self.truncation_epsilon = json_data.get("truncationEpsilon")
+
+        # Initialize removed_singular_interval_number
+        self.removed_singular_interval_number = json_data.get(
+            "removedSingularIntervalNumber"
+        )
+
+        # Initialize histogram granularities
+        self.granularities = json_data.get("granularities")
+
+        # Initialize histogram interval numbers
+        self.interval_numbers = json_data.get("intervalNumbers")
+
+        # Initialize histogram peak interval numbers
+        self.peak_interval_numbers = json_data.get("peakIntervalNumbers")
+
+        # Initialize histogram spike interval numbers
+        self.spike_interval_numbers = json_data.get("spikeIntervalNumbers")
+
+        # Initialize histogram empty interval numbers
+        self.empty_interval_numbers = json_data.get("emptyIntervalNumbers")
+
+        # Initialize histogram levels
+        self.levels = json_data.get("levels")
+
+        # Initialize histogram information rates
+        self.information_rates = json_data.get("informationRates")
+
+        # Initialize histograms
+        self.histograms = [
+            Histogram(json_histogram)
+            for json_histogram in json_data.get("histograms", [])
+        ]
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        return {
+            "emptyIntervalNumbers": self.empty_interval_numbers,
+            "granularities": self.granularities,
+            "histogramNumber": self.histogram_number,
+            "histograms": [histogram.to_json() for histogram in self.histograms],
+            "informationRates": self.information_rates,
+            "interpretableHistogramNumber": self.interpretable_histogram_number,
+            "intervalNumbers": self.interval_numbers,
+            "levels": self.levels,
+            "peakIntervalNumbers": self.peak_interval_numbers,
+            "removedSingularIntervalNumber": self.removed_singular_interval_number,
+            "spikeIntervalNumbers": self.spike_interval_numbers,
+            "truncationEpsilon": self.truncation_epsilon,
+        }
+
+
+class Histogram:
+    """A histogram
+
+    Represents one of the refinement levels of a `ModlHistogram` object.
+
+    Parameters
+    ----------
+    json_data : dict, optional
+        JSON data of an element at the ``histograms`` field of a ``modlHistograms``
+        field of an element of the list found at the ``variablesDetailedStatistics``
+        field within the ``preparationReport`` field of a Khiops JSON report file.
+        If not specified it returns an empty instance.
+
+    Attributes
+    ----------
+    bounds : list of float
+        Interval bounds.
+    frequencies : list of int
+        Interval frequencies.
+    """
+
+    def __init__(self, json_data=None):
+        """See class docstring"""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialize basic attributes
+        self.bounds = json_data.get("bounds")
+        self.frequencies = json_data.get("frequencies")
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        return {"bounds": self.bounds, "frequencies": self.frequencies}
 
 
 class DataGrid:
