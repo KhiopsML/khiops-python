@@ -83,7 +83,6 @@ class CoclusteringResults(KhiopsJSONObject):
         # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
             json_data = {}
-
         # Initialize empty report attributes
         self.short_description = json_data.get("shortDescription", "")
 
@@ -94,6 +93,15 @@ class CoclusteringResults(KhiopsJSONObject):
             )
         else:
             self.coclustering_report = None
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = super().to_json()
+        if self.short_description is not None:
+            report["shortDescription"] = self.short_description
+        if self.coclustering_report is not None:
+            report["coclusteringReport"] = self.coclustering_report.to_json()
+        return report
 
     def write_report_file(self, report_file_path):
         """Writes a TSV report file with the object's information
@@ -341,6 +349,55 @@ class CoclusteringReport:
             If no dimension with the specified names exist.
         """
         return self._dimensions_by_name[dimension_name]
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        # Compute cellPartIndexes
+        cell_parts_indexes = []
+        for cell in self.cells:
+            cell_part_indexes = []
+            for cell_part in cell.parts:
+                for dimension in self.dimensions:
+                    for dimension_part_index, dimension_part in enumerate(
+                        dimension.parts
+                    ):
+                        if cell_part == dimension_part:
+                            cell_part_indexes.append(dimension_part_index)
+                            break
+            cell_parts_indexes.append(cell_part_indexes)
+        report_summary = {
+            "instances": self.instance_number,
+            "cells": self.cell_number,
+            "nullCost": self.null_cost,
+            "cost": self.cost,
+            "level": self.level,
+            "initialDimensions": self.initial_dimension_number,
+            "frequencyVariable": self.frequency_variable,
+            "dictionary": self.dictionary,
+            "database": self.database,
+            "samplePercentage": self.sample_percentage,
+            "samplingMode": self.sampling_mode,
+            "selectionVariable": self.selection_variable,
+            "selectionValue": self.selection_value,
+        }
+        report = {
+            "summary": report_summary,
+            "dimensionSummaries": [
+                dimension.to_json(report_type="summary")
+                for dimension in self.dimensions
+            ],
+            "dimensionPartitions": [
+                dimension.to_json(report_type="partition")
+                for dimension in self.dimensions
+            ],
+            "dimensionHierarchies": [
+                dimension.to_json(report_type="hierarchy")
+                for dimension in self.dimensions
+            ],
+            "cellPartIndexes": cell_parts_indexes,
+            "cellFrequencies": [cell.frequency for cell in self.cells],
+        }
+        return report
 
     def write_report(self, writer):
         """Writes the instance's TSV report to a writer object
@@ -787,6 +844,57 @@ class CoclusteringDimension:
         """
         return self._clusters_by_name[cluster_name]
 
+    def to_json(self, report_type):
+        """Serialize object instance to the Khiops JSON format
+
+        Parameters
+        ----------
+        report_type : str
+            Type of the report. Can be either one of "summary", "dimension", and
+            "hierarchy".
+        """
+        if report_type == "summary":
+            report = {
+                "name": self.name,
+                "type": self.type,
+                "parts": self.part_number,
+                "initialParts": self.initial_part_number,
+                "values": self.value_number,
+                "interest": self.interest,
+                "description": self.description,
+            }
+            if self.type == "Numerical":
+                report.update({"min": self.min, "max": self.max})
+            if self.is_variable_part:
+                report["isVarPart"] = self.is_variable_part
+            return report
+        elif report_type == "partition":
+            report = {
+                "name": self.name,
+                "type": self.type,
+            }
+            if self.type == "Numerical":
+                report["intervals"] = [part.to_json() for part in self.parts]
+            elif self.type == "Categorical":
+                report["valueGroups"] = [part.to_json() for part in self.parts]
+
+                # Get default group index
+                for i, part in enumerate(self.parts):
+                    if part.is_default_part is True:
+                        default_group_index = i
+                        break
+                report["defaultGroupIndex"] = default_group_index
+            return report
+        elif report_type == "hierarchy":
+            report = {
+                "name": self.name,
+                "type": self.type,
+                "clusters": [cluster.to_json() for cluster in self.clusters],
+            }
+            return report
+        else:
+            raise ValueError(f"Unknown 'report_type 'value: '{report_type}'")
+
     def write_dimension_header_line(self, writer):
         """Writes the "dimensions" section header to a writer object
 
@@ -1022,6 +1130,15 @@ class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
         self.is_left_open = False
         self.is_right_open = False
 
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = {
+            "cluster": self.cluster_name,
+        }
+        if not self.is_missing:
+            report["bounds"] = [self.lower_bound, self.upper_bound]
+        return report
+
     def __str__(self):
         """Returns a human-readable string representation"""
         if self.is_missing:
@@ -1121,6 +1238,14 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
             label += value.value
         label += "}"
         return label
+
+    def to_json(self):
+        return {
+            "cluster": self.cluster_name,
+            "values": [value.value for value in self.values],
+            "valueFrequencies": [value.frequency for value in self.values],
+            "valueTypicalities": [value.typicality for value in self.values],
+        }
 
     def part_type(self):
         """Part type of this instance
@@ -1228,8 +1353,8 @@ class CoclusteringCluster:
         self.rank = json_data.get("rank", 0)
         self.hierarchical_rank = json_data.get("hierarchicalRank", 0)
         self.is_leaf = json_data.get("isLeaf", False)
-        self.short_description = json_data.get("shortDescription", "")
-        self.description = json_data.get("description", "")
+        self.short_description = json_data.get("shortDescription")
+        self.description = json_data.get("description")
 
         # Link to child clusters, None for the leaves of the hierarchy
         # The user must specify the CoclusteringCluster references parent_cluster
@@ -1238,6 +1363,24 @@ class CoclusteringCluster:
         self.child_cluster1 = None
         self.child_cluster2 = None
         self.leaf_part = None
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = {
+            "cluster": self.name,
+            "parentCluster": self.parent_cluster_name,
+            "frequency": self.frequency,
+            "interest": self.interest,
+            "hierarchicalLevel": self.hierarchical_level,
+            "rank": self.rank,
+            "hierarchicalRank": self.hierarchical_rank,
+            "isLeaf": self.is_leaf,
+        }
+        if self.short_description is not None:
+            report["shortDescription"] = self.short_description
+        if self.description is not None:
+            report["description"] = self.description
+        return report
 
     def write_hierarchy_header_line(self, writer):
         """Writes the "hierarchy" section's header to a writer object
