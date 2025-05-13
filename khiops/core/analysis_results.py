@@ -164,6 +164,11 @@ class AnalysisResults(KhiopsJSONObject):
             self.text_preparation_report = PreparationReport(
                 json_data["textPreparationReport"]
             )
+        self.tree_preparation_report = None
+        if "treePreparationReport" in json_data:
+            self.tree_preparation_report = PreparationReport(
+                json_data["treePreparationReport"]
+            )
         self.modeling_report = None
         if "modelingReport" in json_data:
             self.modeling_report = ModelingReport(json_data["modelingReport"])
@@ -194,6 +199,8 @@ class AnalysisResults(KhiopsJSONObject):
             reports.append(self.preparation_report)
         if self.text_preparation_report is not None:
             reports.append(self.text_preparation_report)
+        if self.tree_preparation_report is not None:
+            reports.append(self.tree_preparation_report)
         if self.bivariate_preparation_report is not None:
             reports.append(self.bivariate_preparation_report)
         if self.modeling_report is not None:
@@ -231,6 +238,8 @@ class AnalysisResults(KhiopsJSONObject):
             report["preparationReport"] = self.preparation_report.to_json()
         if self.text_preparation_report is not None:
             report["textPreparationReport"] = self.text_preparation_report.to_json()
+        if self.tree_preparation_report is not None:
+            report["treePreparationReport"] = self.tree_preparation_report.to_json()
         if self.bivariate_preparation_report is not None:
             report["bivariatePreparationReport"] = (
                 self.bivariate_preparation_report.to_json()
@@ -403,6 +412,8 @@ class PreparationReport:
         Coding length of the data given the null model.
     variables_statistics : list of `VariableStatistics`
         Variable statistics for each variable analyzed.
+    trees : list of `Tree`
+        Tree details for each tree built.
     """
 
     def __init__(self, json_data=None):
@@ -503,6 +514,35 @@ class PreparationReport:
         for stats in self.variables_statistics:
             json_detailed_data = json_variables_detailed_statistics.get(stats.rank)
             stats.init_details(json_detailed_data)
+
+        # Initialize tree details
+        self.trees = []
+        self._trees_by_name = {}
+        json_tree_details = json_data.get("treeDetails", {}).values()
+        for json_tree_detail in json_tree_details:
+            tree = Tree(json_tree_detail)
+            self.trees.append(tree)
+            self._trees_by_name[tree.name] = tree
+
+    def get_tree(self, tree_name):
+        """Returns the tree with the specified name
+
+        Parameters
+        ----------
+        tree_name : str
+            Name of the tree.
+
+        Returns
+        -------
+        `Tree`
+            The tree which has the specified name.
+
+        Raises
+        ------
+        `KeyError`
+            If no tree with the specified name exists.
+        """
+        return self._trees_by_name[tree_name]
 
     def get_variable_names(self):
         """Returns the names of the variables analyzed during the preparation
@@ -674,6 +714,13 @@ class PreparationReport:
                     for variable_statistics in self.variables_statistics
                     if variable_statistics.is_detailed()
                 }
+
+        # Write trees
+        if len(self.trees) > 0:
+            report["treeDetails"] = {
+                self.get_variable_statistics(tree.name).rank: tree.to_dict()
+                for tree in self.trees
+            }
         return report
 
     def write_report(self, writer):
@@ -2430,6 +2477,258 @@ class VariablePairStatistics:
             writer.writeln(f"Rank\t{self.rank}")
             writer.writeln("")
             self.data_grid.write_report(writer)
+
+
+class Tree:
+    """A decision tree feature
+
+    Parameters
+    ----------
+    json_data : dict, optional
+        JSON data of a value associated to the rank key in the object found at the
+        ``treeDetails`` field within the ``treePreparationReport`` field of a Khiops
+        JSON report file. If not specified, it returns an empty instance.
+
+    Attributes
+    ----------
+    name : str
+        Name of the tree.
+    variable_number : int
+        Number of variables in the tree.
+    depth : int
+        Depth of the tree.
+    target_partition : `TargetPartition`
+        Summary of the target partition. For regression only.
+    nodes: list of `TreeNode`
+        Nodes of the tree.
+    """
+
+    def __init__(self, json_data=None):
+        """ "See class docstring"""
+        self.name = json_data.get("name")
+        self.variable_number = json_data.get("variableNumber")
+        self.depth = json_data.get("depth")
+        self.target_partition = None
+        if "targetPartition" in json_data:
+            self.target_partition = TargetPartition(json_data["targetPartition"])
+
+        # Initialize tree nodes as empty list
+        self.nodes = []
+
+        # Update node tree structure
+        json_tree_nodes = json_data.get("treeNodes")
+        self._update_nodes(json_tree_nodes, root=None)
+
+    def _update_nodes(self, json_data, root=None):
+        self.nodes.append(TreeNode(json_data, parent_id=root))
+        for json_node in json_data.get("childNodes", []):
+            self._update_nodes(json_node, root=json_data.get("nodeId"))
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = {
+            "name": self.name,
+            "variableNumber": self.variable_number,
+            "depth": self.depth,
+        }
+        if self.target_partition is not None:
+            report["targetPartition"] = self.target_partition.to_json()
+        if self.nodes:
+            report["treeNodes"] = self._nodes_to_json(
+                root_node=self.nodes[0], past_nodes=[]
+            )
+            return report
+
+    def _nodes_to_json(self, root_node, past_nodes):
+        report = root_node.to_json()
+        past_nodes = [root_node]
+        json_child_nodes = []
+        for node in self.nodes:
+            if node in past_nodes:
+                continue
+            if node.parent_id == root_node.id:
+                past_nodes.append(node)
+                json_child_nodes.append(
+                    self._nodes_to_json(root_node=node, past_nodes=past_nodes)
+                )
+        if json_child_nodes:
+            report["childNodes"] = json_child_nodes
+        return report
+
+
+class TargetPartition:
+    """Target partition details (for regression trees only)
+
+    Parameters
+    ----------
+    json_data : dict, optional
+        JSON data of the ``targetPartition`` field of the ``treeDetails`` field of the
+        ``treePreparationReport`` field of a Khiops JSON report file. If not specified
+        it returns an empty instance.
+
+    Attributes
+    ----------
+    variable : str
+        Variable name.
+    type : "Numerical" (only possible value)
+        Variable type.
+    partition_type : "Intervals" (only possible value)
+        Partition type.
+    partition : list
+        The dimension parts. The list objects are of type `PartInterval`, as
+        ``partition_type`` is "Intervals"
+    frequencies : list of int
+        Frequencies of the intervals in the target partition.
+    """
+
+    def __init__(self, json_data=None):
+        """See class docstring"""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Initialize basic attributes
+        self.variable = json_data.get("variable", "")
+        self.type = json_data.get("type", "")
+        self.partition_type = json_data.get("partitionType", "")
+
+        # Initialize partition
+        self.partition = []
+        if "partition" in json_data:
+            json_partition = json_data["partition"]
+            if not isinstance(json_partition, list):
+                raise KhiopsJSONError("'partition' must be a list")
+        else:
+            json_partition = []
+
+        # Numerical partition
+        if self.partition_type == "Intervals":
+            # Check the length of the partition
+            if len(json_partition) < 1:
+                raise KhiopsJSONError(
+                    "'partition' for interval must have length at least 1"
+                )
+
+            # Initialize intervals
+            self.partition = [PartInterval(json_part) for json_part in json_partition]
+
+            # Initialize open interval flags
+            first_interval = self.partition[0]
+            if first_interval.is_missing:
+                first_interval = self.partition[1]
+            first_interval.is_left_open = True
+            last_interval = self.partition[-1]
+            last_interval.is_right_open = True
+
+        else:
+            raise KhiopsJSONError("'partitionType' must be 'Intervals'")
+
+        # Set partition element frequencies
+        self.frequencies = json_data.get("frequencies", [])
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = {
+            "variable": self.variable,
+            "type": self.type,
+            "partitionType": self.partition_type,
+            "partition": [part.to_json() for part in self.partition],
+        }
+        if self.frequencies:
+            report["frequencies"] = self.frequencies
+        return report
+
+
+class TreeNode:
+    """A decision tree node
+
+    Parameters
+    ----------
+    json_data : dict, optional
+        JSON data of either:
+
+        - the ``treeNodes`` field of the ``treeDetails`` field of the
+          ``treePreparationReport`` field of a Khiops JSON report file, or
+        - an element of the ``childNodes`` field of the ``treeNodes`` field of the
+          ``treeDetails`` field of the ``treePreparationReport`` field of a Khiops
+          JSON report file.
+
+        If not specified it returns an empty instance
+    parent_id : str, optional
+        Identifier of the parent ``TreeNode`` instance. Not set for "root" nodes.
+
+    Attributes
+    ----------
+    id : str
+        Identifier of the ``TreeNode`` instance.
+    parent_id : str, optional
+        Value of the ``id`` field of another ``TreeNode`` instance. Not set for "root"
+        nodes.
+    variable : str
+        Name of the tree variable.
+    type : str
+        Khiops type of the tree variable.
+    partition : list
+        The tree variable partition.
+    default_group_index : int
+        The index of the default variable group.
+    target_values : list of str
+        Values of a categorical tree target variable.
+    target_value_frequencies : list of int
+        Frequencies of each tree target value. Synchronized with ``target_values``.
+    """
+
+    def __init__(self, json_data=None, parent_id=None):
+        """See class docstring"""
+        # Check the type of json_data
+        if json_data is not None and not isinstance(json_data, dict):
+            raise TypeError(type_error_message("json_data", json_data, dict))
+
+        # Transform to an empty dictionary if json_data is not specified
+        if json_data is None:
+            json_data = {}
+
+        # Set the parent node ID
+        self.parent_id = parent_id
+
+        # Set the target values if applicable
+        json_target_values = json_data.get("targetValues")
+        if json_target_values is not None:
+            self.target_values = json_target_values.get("values")
+            self.target_value_frequencies = json_target_values.get("frequencies")
+        else:
+            self.target_values = None
+            self.target_value_frequencies = None
+
+        # Set the remainder of the node attributes
+        self.id = json_data.get("nodeId")
+        self.variable = json_data.get("variable")
+        self.type = json_data.get("type")
+        self.partition = json_data.get("partition")
+        self.default_group_index = json_data.get("defaultGroupIndex")
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+
+        report = {"nodeId": self.id}
+        if self.variable is not None:
+            report["variable"] = self.variable
+        if self.type is not None:
+            report["type"] = self.type
+        if self.partition is not None:
+            report["partition"] = self.partition
+        if self.default_group_index is not None:
+            report["defaultGroupIndex"] = self.default_group_index
+        if self.target_values is not None:
+            report["targetValues"] = {
+                "values": self.target_values,
+                "frequencies": self.target_value_frequencies,
+            }
+        return report
 
 
 class ModlHistogram:

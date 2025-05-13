@@ -1436,25 +1436,17 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         else:
             pair_feature_evaluated_names_ = []
             pair_feature_evaluated_levels_ = []
-        if (
-            "treePreparationReport" in self.model_report_.json_data
-            and "variablesStatistics"
-            in self.model_report_.json_data["treePreparationReport"]
-        ):
-            tree_preparation_report = self.model_report_.json_data[
-                "treePreparationReport"
-            ]["variablesStatistics"]
-            tree_feature_evaluated_names_ = [
-                tree_preparation_report[i]["name"]
-                for i in range(0, len(tree_preparation_report))
-            ]
+        if self.model_report_.tree_preparation_report is not None:
+            tree_preparation_report = self.model_report_.tree_preparation_report
+            tree_feature_evaluated_names_ = tree_preparation_report.get_variable_names()
             tree_feature_evaluated_levels_ = [
-                tree_preparation_report[i]["level"]
-                for i in range(0, len(tree_preparation_report))
+                tree_preparation_report.get_variable_statistics(var).level
+                for var in tree_preparation_report.get_variable_names()
             ]
         else:
             tree_feature_evaluated_names_ = []
             tree_feature_evaluated_levels_ = []
+
         feature_evaluated_names_ = (
             univariate_preparation_report.get_variable_names()
             + pair_feature_evaluated_names_

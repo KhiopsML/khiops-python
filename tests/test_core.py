@@ -59,6 +59,8 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "IrisC",
             "IrisG",
             "IrisR",
+            "IrisRWithTrees",
+            "SpliceJunctionWithTrees",
             "IrisU",
             "IrisU2D",
             "LargeSpiral",
