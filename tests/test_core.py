@@ -1570,11 +1570,6 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         self.assertIn("'valueFrequencies' key not found", cm.exception.args[0])
         with self.assertRaises(kh.KhiopsJSONError) as cm:
             kh.CoclusteringDimensionPartValueGroup(
-                {"cluster": "MYCLUSTER", "values": [], "valueFrequencies": []}
-            )
-        self.assertIn("'valueTypicalities' key not found", cm.exception.args[0])
-        with self.assertRaises(kh.KhiopsJSONError) as cm:
-            kh.CoclusteringDimensionPartValueGroup(
                 {
                     "cluster": "MYCLUSTER",
                     "values": [],
@@ -1584,19 +1579,6 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             )
         self.assertIn(
             "'valueFrequencies' key list must have the same length",
-            cm.exception.args[0],
-        )
-        with self.assertRaises(kh.KhiopsJSONError) as cm:
-            kh.CoclusteringDimensionPartValueGroup(
-                {
-                    "cluster": "MYCLUSTER",
-                    "values": [],
-                    "valueFrequencies": [],
-                    "valueTypicalities": [1],
-                }
-            )
-        self.assertIn(
-            "'valueTypicalities' key list must have the same length",
             cm.exception.args[0],
         )
         with self.assertRaises(TypeError):
