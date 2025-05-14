@@ -585,6 +585,9 @@ class CoclusteringDimension:
         Maximum value of a numerical dimension/variable.
     parts : list of `CoclusteringDimensionPart`
         Partition of this dimension.
+    variable_part_dimensions : list of `CoclusteringDimension`
+        Variable part instance-variable coclustering dimensions. ``None`` for
+        variable-variable clustering.
     clusters : list of `CoclusteringCluster`
         Clusters of this dimension's hierarchy. Note that includes intermediary
         clusters.
@@ -623,6 +626,9 @@ class CoclusteringDimension:
 
         # Clusters internal dictionary
         self._clusters_by_name = {}
+
+        # Variable part dimensions
+        self.variable_part_dimensions = None
 
     def init_summary(self, json_data=None):
         """Initializes the summary attributes from a Python JSON object
@@ -736,6 +742,42 @@ class CoclusteringDimension:
             default_group_index = json_data.get("defaultGroupIndex")
             self.default_group = self.parts[default_group_index]
             self.default_group.is_default_part = True
+
+            # Instance-variable coclustering: initialize inner variables
+            if self.is_variable_part:
+
+                # Create inner variables dimensions (subpartition)
+                if "innerVariables" not in json_data:
+                    raise KhiopsJSONError("'innerVariables' key not found")
+                self.variable_part_dimensions = []
+                json_inner_variables = json_data["innerVariables"]
+                if "dimensionSummaries" in json_inner_variables:
+                    for json_dimension_summary in json_inner_variables[
+                        "dimensionSummaries"
+                    ]:
+                        dimension = CoclusteringDimension().init_summary(
+                            json_dimension_summary
+                        )
+                        self.variable_part_dimensions.append(dimension)
+
+                # Initialize inner variables dimensions' partitions
+                if "dimensionPartitions" in json_inner_variables:
+                    json_dimension_partitions = json_inner_variables[
+                        "dimensionPartitions"
+                    ]
+                    if len(self.variable_part_dimensions) != len(
+                        json_dimension_partitions
+                    ):
+                        raise KhiopsJSONError(
+                            "'ineerVariables/dimensionPartitions' list has length "
+                            f"{len(json_dimension_partitions)} instead of "
+                            f"{len(self.variable_part_dimensions)}"
+                        )
+                    for i, json_dimension_partition in enumerate(
+                        json_dimension_partitions
+                    ):
+                        dimension = self.variable_part_dimensions[i]
+                        dimension.init_partition(json_dimension_partition)
 
         return self
 
@@ -880,10 +922,23 @@ class CoclusteringDimension:
 
                 # Get default group index
                 for i, part in enumerate(self.parts):
-                    if part.is_default_part is True:
+                    if part.is_default_part:
                         default_group_index = i
                         break
                 report["defaultGroupIndex"] = default_group_index
+
+                # Inner variables dimensions for instance-variable coclustering
+                if self.is_variable_part:
+                    report["innerVariables"] = {
+                        "dimensionSummaries": [
+                            dimension.to_json(report_type="summary")
+                            for dimension in self.variable_part_dimensions
+                        ],
+                        "dimensionPartitions": [
+                            dimension.to_json(report_type="partition")
+                            for dimension in self.variable_part_dimensions
+                        ],
+                    }
             return report
         elif report_type == "hierarchy":
             report = {
@@ -1200,7 +1255,9 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
             json_data = {}
         # Otherwise raise an error if the relevant keys are not found
         else:
-            mandatory_keys = ("values", "valueFrequencies", "valueTypicalities")
+            # Value typicalities are absent for variable parts dimensions in
+            # instance-variable coclustering
+            mandatory_keys = ("values", "valueFrequencies")
             for key in mandatory_keys:
                 if key not in json_data:
                     raise KhiopsJSONError(f"'{key}' key not found")
@@ -1221,7 +1278,12 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
             self.values.append(value)
             value.value = json_value
             value.frequency = json_value_frequencies[i]
-            value.typicality = json_value_typicalities[i]
+
+            # valueTypicalities are absent for variable part dimension parts,
+            # as used in instance-variable coclustering
+            value.typicality = (
+                json_value_typicalities[i] if i < len(json_value_typicalities) else None
+            )
 
         # Initialize default values (set for real from another class)
         self.is_default_part = False
@@ -1240,12 +1302,18 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
         return label
 
     def to_json(self):
-        return {
+        """Serialize object instance to the Khiops JSON format"""
+        report = {
             "cluster": self.cluster_name,
             "values": [value.value for value in self.values],
             "valueFrequencies": [value.frequency for value in self.values],
-            "valueTypicalities": [value.typicality for value in self.values],
         }
+        typicalities = [
+            value.typicality for value in self.values if value.typicality is not None
+        ]
+        if typicalities:
+            report["valueTypicalities"] = typicalities
+        return report
 
     def part_type(self):
         """Part type of this instance
