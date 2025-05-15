@@ -40,10 +40,12 @@ To have a complete illustration of the access to the information of all classes 
 module look at their ``write_report`` methods which write TSV (tab separated values)
 reports.
 """
+import inspect
 import io
+import warnings
 
 from khiops.core.exceptions import KhiopsJSONError
-from khiops.core.internals.common import type_error_message
+from khiops.core.internals.common import deprecation_message, type_error_message
 from khiops.core.internals.io import (
     KhiopsJSONObject,
     KhiopsOutputWriter,
@@ -103,26 +105,47 @@ class CoclusteringResults(KhiopsJSONObject):
             report["coclusteringReport"] = self.coclustering_report.to_json()
         return report
 
-    def write_report_file(self, report_file_path):
+    def write_report_file(self, report_file_path):  # pragma: no cover
         """Writes a TSV report file with the object's information
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         report_file_path : str
             Path of the output TSV report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(inspect.currentframe().f_code.co_name, "12.0.0")
+        )
+
+        # Write report to file
         with open(report_file_path, "wb") as report_file:
             writer = self.create_output_file_writer(report_file)
             self.write_report(writer)
 
-    def write_report(self, stream_or_writer):
+    def write_report(self, stream_or_writer):  # pragma: no cover
         """Writes the instance's TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         stream_or_writer : `io.IOBase` or `.KhiopsOutputWriter`
             Output stream or writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Check input writer/stream type
         if isinstance(stream_or_writer, io.IOBase):
             writer = self.create_output_file_writer(stream_or_writer)
@@ -399,14 +422,25 @@ class CoclusteringReport:
         }
         return report
 
-    def write_report(self, writer):
+    def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output stream or writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write each section
         self.write_dimensions(writer)
         self.write_coclustering_stats(writer)
@@ -416,28 +450,52 @@ class CoclusteringReport:
         self.write_cells(writer)
         self.write_annotations(writer)
 
-    def write_dimensions(self, writer):
+    def write_dimensions(self, writer):  # pragma: no cover
         """Writes the "dimensions" section of the TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write dimension report
         writer.writeln(f"Dimensions\t{len(self.dimensions)}")
         for i, cc_dimension in enumerate(self.dimensions):
             if i == 0:
                 cc_dimension.write_dimension_header_line(writer)
             cc_dimension.write_dimension_line(writer)
 
-    def write_coclustering_stats(self, writer):
+    def write_coclustering_stats(self, writer):  # pragma: no cover
         """Writes the "stats" section of the TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report
         writer.writeln("")
         writer.writeln("Coclustering stats")
         writer.writeln(f"Instances\t{self.instance_number}")
@@ -454,14 +512,25 @@ class CoclusteringReport:
         writer.writeln(f"Selection variable\t{self.selection_variable}")
         writer.writeln(f"Selection value\t{self.selection_value}")
 
-    def write_bounds(self, writer):
+    def write_bounds(self, writer):  # pragma: no cover
         """Writes the "bounds" section of the TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Compute number of numerical dimensions
         numerical_dimension_number = 0
         for cc_dimension in self.dimensions:
@@ -479,36 +548,71 @@ class CoclusteringReport:
                     writer.write(f"{cc_dimension.min}\t")
                     writer.writeln(str(cc_dimension.max))
 
-    def write_hierarchies(self, writer):
+    def write_hierarchies(self, writer):  # pragma: no cover
         """Writes the dimension reports' "hierarchy" sections to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write dimension hierarchy report for each dimension
         for cc_dimension in self.dimensions:
             cc_dimension.write_hierarchy(writer)
 
-    def write_compositions(self, writer):
+    def write_compositions(self, writer):  # pragma: no cover
         """Writes the dimensions' "composition" sections to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write dimension composition report for each dimension
         for cc_dimension in self.dimensions:
             cc_dimension.write_composition(writer)
 
-    def write_cells(self, writer):
+    def write_cells(self, writer):  # pragma: no cover
         """Writes the "cells" section of the TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write header
         writer.writeln("")
         writer.writeln("Cells")
@@ -522,14 +626,25 @@ class CoclusteringReport:
         for cc_cell in self.cells:
             cc_cell.write_line(writer)
 
-    def write_annotations(self, writer):
+    def write_annotations(self, writer):  # pragma: no cover
         """Writes the dimensions' "annotation" sections to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Decide whether annotation sections need to be reported
         need_report = False
         for cc_dimension in self.dimensions:
@@ -950,14 +1065,26 @@ class CoclusteringDimension:
         else:
             raise ValueError(f"Unknown 'report_type 'value: '{report_type}'")
 
-    def write_dimension_header_line(self, writer):
+    def write_dimension_header_line(self, writer):  # pragma: no cover
         """Writes the "dimensions" section header to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write dimension report header
         writer.write("Name\t")
         writer.write("Is variable part\t")
         writer.write("Type\t")
@@ -967,14 +1094,26 @@ class CoclusteringDimension:
         writer.write("Interest\t")
         writer.writeln("Description")
 
-    def write_dimension_line(self, writer):
+    def write_dimension_line(self, writer):  # pragma: no cover
         """Writes the "dimensions" section line to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write dimension report line
         writer.write(f"{self.name}\t")
         writer.write(f"{self.is_variable_part}\t")
         writer.write(f"{self.type}\t")
@@ -984,14 +1123,25 @@ class CoclusteringDimension:
         writer.write(f"{self.interest}\t")
         writer.writeln(self.description)
 
-    def write_hierarchy(self, writer):
+    def write_hierarchy(self, writer):  # pragma: no cover
         """Writes the "hierarchy" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write header
         writer.writeln("")
         writer.writeln(f"Hierarchy\t{self.name}")
@@ -1002,14 +1152,25 @@ class CoclusteringDimension:
                 cluster.write_hierarchy_header_line(writer)
             cluster.write_hierarchy_line(writer)
 
-    def write_composition(self, writer):
+    def write_composition(self, writer):  # pragma: no cover
         """Writes the "composition" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write only categorical dimensions
         if self.type == "Categorical":
             # Write header
@@ -1036,14 +1197,25 @@ class CoclusteringDimension:
                     writer.write(f"{0}\t")
                     writer.writeln(str(0))
 
-    def write_annotation(self, writer):
+    def write_annotation(self, writer):  # pragma: no cover
         """Writes the "annotation" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write header
         writer.writeln("")
         writer.writeln(f"Annotation\t{self.name}")
@@ -1068,16 +1240,30 @@ class CoclusteringDimension:
                 return True
         return False
 
-    def write_hierarchy_structure_report_file(self, report_file_path):
+    def write_hierarchy_structure_report_file(
+        self, report_file_path
+    ):  # pragma: no cover
         """Writes the hierarchical structure of the clusters to a file
 
         This method is mainly a test of the encoding of the cluster hierarchy.
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         report_file_path : str
             Path of the output file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report to file
         with open(report_file_path, "wb") as report_file:
             writer = KhiopsOutputWriter(report_file)
             writer.writeln(f"Hierarchical structure\t{self.name}")
@@ -1450,14 +1636,26 @@ class CoclusteringCluster:
             report["description"] = self.description
         return report
 
-    def write_hierarchy_header_line(self, writer):
+    def write_hierarchy_header_line(self, writer):  # pragma: no cover
         """Writes the "hierarchy" section's header to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report header
         writer.write("Cluster\t")
         writer.write("ParentCluster\t")
         writer.write("Frequency\t")
@@ -1466,14 +1664,26 @@ class CoclusteringCluster:
         writer.write("Rank\t")
         writer.writeln("HierarchicalRank")
 
-    def write_hierarchy_line(self, writer):
+    def write_hierarchy_line(self, writer):  # pragma: no cover
         """Writes a line of the "hierarchy" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write hierarchy report line
         writer.write(f"{self.name}\t")
         writer.write(f"{self.parent_cluster_name}\t")
         writer.write(f"{self.frequency}\t")
@@ -1482,28 +1692,52 @@ class CoclusteringCluster:
         writer.write(f"{self.rank}\t")
         writer.writeln(str(self.hierarchical_rank))
 
-    def write_annotation_header_line(self, writer):
+    def write_annotation_header_line(self, writer):  # pragma: no cover
         """Writes the "annotation" section's header to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write annotation report header
         writer.write("Cluster\t")
         writer.write("Expand\t")
         writer.write("Selected\t")
         writer.write("ShortDescription\t")
         writer.writeln("Description")
 
-    def write_annotation_line(self, writer):
+    def write_annotation_line(self, writer):  # pragma: no cover
         """Writes a line of the "annotation" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write annotation report line
         writer.write(f"{self.name}\t")
         # TODO: Why "Expand" and "Selected" are not available?
         writer.write("FALSE\t")
@@ -1511,16 +1745,27 @@ class CoclusteringCluster:
         writer.write(f"{self.short_description}\t")
         writer.writeln(self.description)
 
-    def write_hierarchy_structure_report(self, writer):
+    def write_hierarchy_structure_report(self, writer):  # pragma: no cover
         """Writes the hierarchical structure from this instance to a writer object
 
         This method is mainly a test of the encoding of the cluster hierarchy.
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write first child cluster
         if self.child_cluster1 is not None:
             self.child_cluster1.write_hierarchy_structure_report(writer)
@@ -1555,14 +1800,24 @@ class CoclusteringCell:
         self.parts = []
         self.frequency = 0
 
-    def write_line(self, writer):
+    def write_line(self, writer):  # pragma: no cover
         """Writes a line of the instance's report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(inspect.currentframe().f_code.co_name, "12.0.0")
+        )
+
+        # Write part report line
         for part in self.parts:
             writer.write(f"{part.cluster_name}\t")
         writer.writeln(str(self.frequency))

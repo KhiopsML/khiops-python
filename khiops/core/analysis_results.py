@@ -69,10 +69,12 @@ To have a complete illustration of the access to the information of all classes 
 module look at their ``write_report`` methods which write TSV (tab separated values)
 reports.
 """
+import inspect
 import io
+import warnings
 
 from khiops.core.exceptions import KhiopsJSONError
-from khiops.core.internals.common import type_error_message
+from khiops.core.internals.common import deprecation_message, type_error_message
 from khiops.core.internals.io import (
     KhiopsJSONObject,
     KhiopsOutputWriter,
@@ -213,14 +215,24 @@ class AnalysisResults(KhiopsJSONObject):
             reports.append(self.evaluation_report)
         return reports
 
-    def write_report_file(self, report_file_path):
+    def write_report_file(self, report_file_path):  # pragma: no cover
         """Writes a TSV report file with the object's information
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         report_file_path : str
             Path of the output TSV report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(inspect.currentframe().f_code.co_name, "12.0.0")
+        )
+
+        # Write report to file
         with open(report_file_path, "wb") as report_file:
             report_file_writer = self.create_output_file_writer(report_file)
             self.write_report(report_file_writer)
@@ -254,14 +266,25 @@ class AnalysisResults(KhiopsJSONObject):
             report["evaluationReport"] = self.evaluation_report.to_json()
         return report
 
-    def write_report(self, stream_or_writer):
+    def write_report(self, stream_or_writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
 
         Parameters
         ----------
         stream_or_writer : `io.IOBase` or `.KhiopsOutputWriter`
             Output stream or writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Check input writer/stream type
         if isinstance(stream_or_writer, io.IOBase):
             writer = self.create_output_file_writer(stream_or_writer)
@@ -723,14 +746,26 @@ class PreparationReport:
             }
         return report
 
-    def write_report(self, writer):
+    def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write header
         writer.writeln("Report\tPreparation")
         writer.writeln("")
@@ -1102,14 +1137,26 @@ class BivariatePreparationReport:
 
         return report
 
-    def write_report(self, writer):
+    def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write header
         writer.writeln("Report\tBivariate preparation")
         writer.writeln("")
@@ -1331,14 +1378,26 @@ class ModelingReport:
 
         return report
 
-    def write_report(self, writer):
+    def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write header
         writer.writeln("Report\tModeling")
         writer.writeln("")
@@ -1756,14 +1815,26 @@ class EvaluationReport:
             ]
         return report
 
-    def write_report(self, writer):
+    def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer object.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write report header
         writer.write("Report\t")
         writer.writeln(f"Evaluation\t{self.evaluation_type}")
@@ -2113,16 +2184,29 @@ class VariableStatistics:
                 report["derivationRule"] = self.derivation_rule
             return report
 
-    def write_report_header_line(self, writer):
+    def write_report_header_line(self, writer):  # pragma: no cover
         """Writes the header line of a TSV report into a writer object
 
         The header is the same for all variable types.
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report header
         writer.write("Rank\t")
         writer.write("Name\t")
         writer.write("Type\t")
@@ -2143,14 +2227,26 @@ class VariableStatistics:
         writer.write("Data cost\t")
         writer.writeln("Derivation rule")
 
-    def write_report_line(self, writer):
+    def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write common attributes
         writer.write(f"{self.rank}\t")
         writer.write(f"{self.name}\t")
@@ -2209,14 +2305,27 @@ class VariableStatistics:
             writer.write(self.derivation_rule)
         writer.writeln("")
 
-    def write_report_details(self, writer):
+    def write_report_details(self, writer):  # pragma: no cover
         """Writes the details' attributes into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report if detailed report is available
         if self.is_detailed():
             # Write header line
             writer.writeln("")
@@ -2394,16 +2503,28 @@ class VariablePairStatistics:
 
         return report
 
-    def write_report_header_line(self, writer):
+    def write_report_header_line(self, writer):  # pragma: no cover
         """Writes the header line of a TSV report into a writer object
 
         The header is the same for all variable types.
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write identifier column names
         writer.write("Rank\t")
         writer.write("Name 1\t")
@@ -2430,14 +2551,26 @@ class VariablePairStatistics:
         writer.write("Preparation cost\t")
         writer.writeln("Data cost")
 
-    def write_report_line(self, writer):
+    def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write identifier attributes
         writer.write(f"{self.rank}\t")
         writer.write(f"{self.name1}\t")
@@ -2464,14 +2597,27 @@ class VariablePairStatistics:
         writer.write(f"{self.preparation_cost}\t")
         writer.writeln(str(self.data_cost))
 
-    def write_report_details(self, writer):
+    def write_report_details(self, writer):  # pragma: no cover
         """Writes the details' attributes into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report if detailed report is available
         if self.is_detailed():
             writer.writeln("")
             writer.writeln(f"Rank\t{self.rank}")
@@ -3035,14 +3181,26 @@ class DataGrid:
 
         return report
 
-    def write_report(self, writer):
+    def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write data grid type
         writer.write("Data grid\t")
         if self.is_supervised:
@@ -3265,14 +3423,27 @@ class DataGridDimension:
 
         return report
 
-    def write_report(self, writer):
+    def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report
         writer.write(f"{self.variable}\t")
         writer.write(f"{self.type}\t")
         writer.writeln(self.partition_type)
@@ -3368,14 +3539,26 @@ class PartInterval:
             return [self.lower_bound, self.upper_bound]
         return []
 
-    def write_report_line(self, writer):
+    def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write part label
         writer.write(str(self))
 
@@ -3432,14 +3615,27 @@ class PartValue:
         """Serialize object instance to the Khiops JSON format"""
         return self.value
 
-    def write_report_line(self, writer):
+    def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write object value
         writer.writeln(str(self))
 
 
@@ -3499,14 +3695,26 @@ class PartValueGroup:
         """Serialize object instance to the Khiops JSON format"""
         return self.values
 
-    def write_report_line(self, writer):
+    def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write part label
         writer.write(str(self))
 
@@ -3633,8 +3841,13 @@ class TrainedPredictor:
             "variables": self.variable_number,
         }
 
-    def write_report_header_line(self, writer):
+    def write_report_header_line(self, writer):  # pragma: no cover
         """Writes the header line of a TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         The header is the same for all variable types.
 
@@ -3643,34 +3856,68 @@ class TrainedPredictor:
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report header line
         writer.write("Rank\t")
         writer.write("Type\t")
         writer.write("Family\t")
         writer.write("Name\t")
         writer.writeln("Variables")
 
-    def write_report_line(self, writer):
+    def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report line
         writer.write(f"{self.rank}\t")
         writer.write(f"{self.type}\t")
         writer.write(f"{self.family}\t")
         writer.write(f"{self.name}\t")
         writer.writeln(str(self.variable_number))
 
-    def write_report_details(self, writer):
+    def write_report_details(self, writer):  # pragma: no cover
         """Writes the details of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write detailed report header if available
         if self.is_detailed():
             # Header line
             writer.writeln("")
@@ -3741,16 +3988,29 @@ class SelectedVariable:
 
         return report
 
-    def write_report_header_line(self, writer):
+    def write_report_header_line(self, writer):  # pragma: no cover
         """Writes the header line of a TSV report into a writer object
 
         The header is the same for all variable types.
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report header
         writer.write("Prepared name\t")
         writer.write("Name\t")
         writer.write("Level")
@@ -3759,14 +4019,27 @@ class SelectedVariable:
             writer.write("\tImportance")
         writer.writeln("")
 
-    def write_report_line(self, writer):
+    def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report line
         writer.write(f"{self.prepared_name}\t")
         writer.write(f"{self.name}\t")
         writer.write(str(self.level))
@@ -3975,16 +4248,29 @@ class PredictorPerformance:
                 )
         return report
 
-    def write_report_header_line(self, writer):
+    def write_report_header_line(self, writer):  # pragma: no cover
         """Writes the header line of a TSV report into a writer object
 
         The header is the same for all variable types.
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report header
         writer.write("Rank\t")
         writer.write("Type\t")
         writer.write("Family\t")
@@ -4001,14 +4287,27 @@ class PredictorPerformance:
             writer.write("RankMAE\t")
             writer.writeln("RankNLPD")
 
-    def write_report_line(self, writer):
+    def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write report line
         writer.write(f"{self.rank}\t")
         writer.write(f"{self.type}\t")
         writer.write(f"{self.family}\t")
@@ -4017,14 +4316,27 @@ class PredictorPerformance:
         metrics = [str(self.get_metric(name)) for name in self.get_metric_names()]
         writer.writeln("\t".join(metrics))
 
-    def write_report_details(self, writer):
+    def write_report_details(self, writer):  # pragma: no cover
         """Writes the details of the TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
+        # Write detailed report if available
         if self.is_detailed():
             # Write header line
             writer.writeln("")
@@ -4081,14 +4393,26 @@ class ConfusionMatrix:
 
         return {"values": self.values, "matrix": self.matrix}
 
-    def write_report(self, writer):
+    def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_json` method instead.
+
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+            )
+        )
+
         # Write header
         writer.writeln("Confusion matrix")
 
