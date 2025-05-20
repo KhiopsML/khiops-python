@@ -246,7 +246,7 @@ class KhiopsJSONObject:
             else:
                 return KhiopsOutputWriter(stream, force_ansi=True)
 
-    def to_json(self):
+    def to_dict(self):
         """Serialize object instance to the Khiops JSON format"""
         report = {
             "tool": self.tool,
@@ -271,7 +271,7 @@ class KhiopsJSONObject:
         """
         # Serialize JSON data to string
         # Do not escape non-ASCII Unicode characters
-        json_string = json.dumps(self.to_json(), ensure_ascii=False)
+        json_string = json.dumps(self.to_dict(), ensure_ascii=False)
         with io.BytesIO() as json_stream:
             writer = self.create_output_file_writer(json_stream)
             writer.write(json_string)

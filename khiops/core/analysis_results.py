@@ -16,7 +16,9 @@ The main class of this module is `AnalysisResults` and it is largely a
 composition of sub-reports objects given by the following structure::
 
     AnalysisResults
-    |- preparation_report            ->  PreparationReport
+    |- preparation_report           |
+    |- text_preparation_report      |->  PreparationReport
+    |- tree_preparation_report      |
     |- bivariate_preparation_report  ->  BivariatePreparationReport
     |- modeling_report               ->  ModelingReport
     |- train_evaluation_report      |
@@ -28,19 +30,31 @@ pieces of each report. The dependencies for the classes `PreparationReport` and
 `BivariatePreparationReport` are::
 
     PreparationReport
-    |- variable_statistics -> list of VariableStatistics
+    |- variables_statistics -> list of VariableStatistics
+    |- trees                -> list of Tree (only for tree_preparation_report)
 
     BivariatePreparationReport
     |- variable_pair_statistics -> list of VariablePairStatistics
 
     VariableStatistics
-    |- data_grid -> DataGrid
+    |- data_grid       -> DataGrid
+    |- modl_histograms -> ModlHistograms
 
     VariablePairStatistics
     |- data_grid -> DataGrid
 
+    Tree
+    |- target_partition -> TargetPartition
+    |- nodes -> list of TreeNode
+
+    TargetPartition
+    |- partition -> list of PartInterval
+
     DataGrid
     |- dimensions -> list of DataGridDimension
+
+    ModlHistograms
+    |- histograms -> list of Histogram
 
     DataGridDimension
     |- partition -> list of PartInterval OR
@@ -66,8 +80,8 @@ and for class `EvaluationReport`::
     |- confusion_matrix -> ConfusionMatrix (classification only)
 
 To have a complete illustration of the access to the information of all classes in this
-module look at their ``write_report`` methods which write TSV (tab separated values)
-reports.
+module look at their ``to_dict`` methods which write Python dictionaries in the
+same format as the Khiops JSON reports.
 """
 import inspect
 import io
@@ -220,7 +234,7 @@ class AnalysisResults(KhiopsJSONObject):
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -237,9 +251,9 @@ class AnalysisResults(KhiopsJSONObject):
             report_file_writer = self.create_output_file_writer(report_file)
             self.write_report(report_file_writer)
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
-        report = super().to_json()
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
+        report = super().to_dict()
         if self.short_description is not None:
             report["shortDescription"] = self.short_description
         if self.logs:
@@ -247,23 +261,23 @@ class AnalysisResults(KhiopsJSONObject):
             for task_name, messages in self.logs:
                 report["logs"].append({"taskName": task_name, "messages": messages})
         if self.preparation_report is not None:
-            report["preparationReport"] = self.preparation_report.to_json()
+            report["preparationReport"] = self.preparation_report.to_dict()
         if self.text_preparation_report is not None:
-            report["textPreparationReport"] = self.text_preparation_report.to_json()
+            report["textPreparationReport"] = self.text_preparation_report.to_dict()
         if self.tree_preparation_report is not None:
-            report["treePreparationReport"] = self.tree_preparation_report.to_json()
+            report["treePreparationReport"] = self.tree_preparation_report.to_dict()
         if self.bivariate_preparation_report is not None:
             report["bivariatePreparationReport"] = (
-                self.bivariate_preparation_report.to_json()
+                self.bivariate_preparation_report.to_dict()
             )
         if self.modeling_report is not None:
-            report["modelingReport"] = self.modeling_report.to_json()
+            report["modelingReport"] = self.modeling_report.to_dict()
         if self.train_evaluation_report is not None:
-            report["trainEvaluationReport"] = self.train_evaluation_report.to_json()
+            report["trainEvaluationReport"] = self.train_evaluation_report.to_dict()
         if self.test_evaluation_report is not None:
-            report["testEvaluationReport"] = self.test_evaluation_report.to_json()
+            report["testEvaluationReport"] = self.test_evaluation_report.to_dict()
         if self.evaluation_report is not None:
-            report["evaluationReport"] = self.evaluation_report.to_json()
+            report["evaluationReport"] = self.evaluation_report.to_dict()
         return report
 
     def write_report(self, stream_or_writer):  # pragma: no cover
@@ -271,7 +285,7 @@ class AnalysisResults(KhiopsJSONObject):
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -281,7 +295,7 @@ class AnalysisResults(KhiopsJSONObject):
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -597,8 +611,8 @@ class PreparationReport:
         """
         return self._variables_statistics_by_name[variable_name]
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report_summary = {
             "dictionary": self.dictionary,
             "variables": {
@@ -725,7 +739,7 @@ class PreparationReport:
         # Write variables' statistics
         if len(self.variables_statistics) > 0:
             report["variablesStatistics"] = [
-                variable_statistics.to_json()
+                variable_statistics.to_dict()
                 for variable_statistics in self.variables_statistics
             ]
             if any(
@@ -733,7 +747,7 @@ class PreparationReport:
                 for variable_statistics in self.variables_statistics
             ):
                 report["variablesDetailedStatistics"] = {
-                    variable_statistics.rank: variable_statistics.to_json(details=True)
+                    variable_statistics.rank: variable_statistics.to_dict(details=True)
                     for variable_statistics in self.variables_statistics
                     if variable_statistics.is_detailed()
                 }
@@ -751,7 +765,7 @@ class PreparationReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -762,7 +776,7 @@ class PreparationReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1052,8 +1066,8 @@ class BivariatePreparationReport:
             (variable_name_1, variable_name_2)
         ]
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report_summary = {
             "dictionary": self.dictionary,
             "variables": {
@@ -1120,7 +1134,7 @@ class BivariatePreparationReport:
         # Write variables pairs' statistics
         if len(self.variables_pairs_statistics) > 0:
             report["variablesPairsStatistics"] = [
-                variable_pair_statistics.to_json()
+                variable_pair_statistics.to_dict()
                 for variable_pair_statistics in self.variables_pairs_statistics
             ]
             if any(
@@ -1128,7 +1142,7 @@ class BivariatePreparationReport:
                 for variable_pair_statistics in self.variables_pairs_statistics
             ):
                 report["variablesPairsDetailedStatistics"] = {
-                    variable_pair_statistics.rank: variable_pair_statistics.to_json(
+                    variable_pair_statistics.rank: variable_pair_statistics.to_dict(
                         details=True
                     )
                     for variable_pair_statistics in self.variables_pairs_statistics
@@ -1142,7 +1156,7 @@ class BivariatePreparationReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -1153,7 +1167,7 @@ class BivariatePreparationReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1342,8 +1356,8 @@ class ModelingReport:
         """
         return list(self._trained_predictors_by_name.keys())
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report_summary = {
             "dictionary": self.dictionary,
             "database": self.database,
@@ -1354,12 +1368,12 @@ class ModelingReport:
             "reportType": "Modeling",
             "summary": report_summary,
             "trainedPredictors": [
-                predictor.to_json() for predictor in self.trained_predictors
+                predictor.to_dict() for predictor in self.trained_predictors
             ],
         }
         if any(predictor.is_detailed() for predictor in self.trained_predictors):
             report["trainedPredictorsDetails"] = {
-                predictor.rank: predictor.to_json(details=True)
+                predictor.rank: predictor.to_dict(details=True)
                 for predictor in self.trained_predictors
                 if predictor.is_detailed()
             }
@@ -1383,7 +1397,7 @@ class ModelingReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -1394,7 +1408,7 @@ class ModelingReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1742,8 +1756,8 @@ class EvaluationReport:
                 )
         raise KeyError(target_value)
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report_summary = {
             "dictionary": self.dictionary,
             "database": self.database,
@@ -1756,7 +1770,7 @@ class EvaluationReport:
             "evaluationType": self.evaluation_type,
             "summary": report_summary,
             "predictorsPerformance": [
-                predictor_performance.to_json()
+                predictor_performance.to_dict()
                 for predictor_performance in self.predictors_performance
             ],
         }
@@ -1765,7 +1779,7 @@ class EvaluationReport:
             for predictor_performance in self.predictors_performance
         ):
             report["predictorsDetailedPerformance"] = {
-                predictor_performance.rank: predictor_performance.to_json(details=True)
+                predictor_performance.rank: predictor_performance.to_dict(details=True)
                 for predictor_performance in self.predictors_performance
                 if predictor_performance.is_detailed()
             }
@@ -1820,7 +1834,7 @@ class EvaluationReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -1831,7 +1845,7 @@ class EvaluationReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -2107,15 +2121,15 @@ class VariableStatistics:
             self.input_values is not None and self.input_value_frequencies is not None
         )
 
-    def to_json(self, details=False):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self, details=False):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         # Write report details if required and applicable
         if details and self.is_detailed():
             report = {}
 
             # Write data grid
             if self.data_grid is not None:
-                report["dataGrid"] = self.data_grid.to_json()
+                report["dataGrid"] = self.data_grid.to_dict()
 
             # Write input values and their frequencies
             if self.input_values is not None:
@@ -2126,7 +2140,7 @@ class VariableStatistics:
 
             # Write MODL histograms (unsupervised analysis)
             if self.modl_histograms is not None:
-                report["modlHistograms"] = self.modl_histograms.to_json()
+                report["modlHistograms"] = self.modl_histograms.to_dict()
             return report
         elif details is False:
             report = {
@@ -2191,7 +2205,7 @@ class VariableStatistics:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -2202,7 +2216,7 @@ class VariableStatistics:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -2232,7 +2246,7 @@ class VariableStatistics:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -2243,7 +2257,7 @@ class VariableStatistics:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -2310,7 +2324,7 @@ class VariableStatistics:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -2321,7 +2335,7 @@ class VariableStatistics:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -2468,12 +2482,12 @@ class VariablePairStatistics:
         """
         return self.data_grid is not None
 
-    def to_json(self, details=False):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self, details=False):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report = {}
         if details and self.is_detailed():
             # write detailed report
-            report["dataGrid"] = self.data_grid.to_json()
+            report["dataGrid"] = self.data_grid.to_dict()
         elif details is False:
             report.update(
                 {
@@ -2510,7 +2524,7 @@ class VariablePairStatistics:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -2521,7 +2535,7 @@ class VariablePairStatistics:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -2556,7 +2570,7 @@ class VariablePairStatistics:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -2567,7 +2581,7 @@ class VariablePairStatistics:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -2602,7 +2616,7 @@ class VariablePairStatistics:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -2613,7 +2627,7 @@ class VariablePairStatistics:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -2670,15 +2684,15 @@ class Tree:
         for json_node in json_data.get("childNodes", []):
             self._update_nodes(json_node, root=json_data.get("nodeId"))
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report = {
             "name": self.name,
             "variableNumber": self.variable_number,
             "depth": self.depth,
         }
         if self.target_partition is not None:
-            report["targetPartition"] = self.target_partition.to_json()
+            report["targetPartition"] = self.target_partition.to_dict()
         if self.nodes:
             report["treeNodes"] = self._nodes_to_json(
                 root_node=self.nodes[0], past_nodes=[]
@@ -2686,7 +2700,7 @@ class Tree:
             return report
 
     def _nodes_to_json(self, root_node, past_nodes):
-        report = root_node.to_json()
+        report = root_node.to_dict()
         past_nodes = [root_node]
         json_child_nodes = []
         for node in self.nodes:
@@ -2776,13 +2790,13 @@ class TargetPartition:
         # Set partition element frequencies
         self.frequencies = json_data.get("frequencies", [])
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report = {
             "variable": self.variable,
             "type": self.type,
             "partitionType": self.partition_type,
-            "partition": [part.to_json() for part in self.partition],
+            "partition": [part.to_dict() for part in self.partition],
         }
         if self.frequencies:
             report["frequencies"] = self.frequencies
@@ -2857,8 +2871,8 @@ class TreeNode:
         self.partition = json_data.get("partition")
         self.default_group_index = json_data.get("defaultGroupIndex")
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
 
         report = {"nodeId": self.id}
         if self.variable is not None:
@@ -2984,13 +2998,13 @@ class ModlHistograms:
             for json_histogram in json_data.get("histograms", [])
         ]
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         return {
             "emptyIntervalNumbers": self.empty_interval_numbers,
             "granularities": self.granularities,
             "histogramNumber": self.histogram_number,
-            "histograms": [histogram.to_json() for histogram in self.histograms],
+            "histograms": [histogram.to_dict() for histogram in self.histograms],
             "informationRates": self.information_rates,
             "interpretableHistogramNumber": self.interpretable_histogram_number,
             "intervalNumbers": self.interval_numbers,
@@ -3037,8 +3051,8 @@ class Histogram:
         self.bounds = json_data.get("bounds")
         self.frequencies = json_data.get("frequencies")
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         return {"bounds": self.bounds, "frequencies": self.frequencies}
 
 
@@ -3143,12 +3157,12 @@ class DataGrid:
             self.cell_target_frequencies = json_data.get("cellTargetFrequencies")
             self.cell_interests = json_data.get("cellInterests")
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         # Write data grid type and dimensions
         report = {
             "isSupervised": self.is_supervised,
-            "dimensions": [dimension.to_json() for dimension in self.dimensions],
+            "dimensions": [dimension.to_dict() for dimension in self.dimensions],
         }
 
         # Write data grid cells
@@ -3186,7 +3200,7 @@ class DataGrid:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -3197,7 +3211,7 @@ class DataGrid:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -3403,13 +3417,13 @@ class DataGridDimension:
             default_group_index = json_data["defaultGroupIndex"]
             self.partition[default_group_index].is_default_part = True
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report = {
             "variable": self.variable,
             "type": self.type,
             "partitionType": self.partition_type,
-            "partition": [part.to_json() for part in self.partition],
+            "partition": [part.to_dict() for part in self.partition],
         }
 
         if self.partition_type == "Value groups":
@@ -3428,7 +3442,7 @@ class DataGridDimension:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -3439,7 +3453,7 @@ class DataGridDimension:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -3533,8 +3547,8 @@ class PartInterval:
         """
         return "Interval"
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         if not self.is_missing:
             return [self.lower_bound, self.upper_bound]
         return []
@@ -3544,7 +3558,7 @@ class PartInterval:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -3555,7 +3569,7 @@ class PartInterval:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -3611,8 +3625,8 @@ class PartValue:
         """
         return "Value"
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         return self.value
 
     def write_report_line(self, writer):  # pragma: no cover
@@ -3620,7 +3634,7 @@ class PartValue:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -3631,7 +3645,7 @@ class PartValue:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -3691,8 +3705,8 @@ class PartValueGroup:
         """
         return "Value group"
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         return self.values
 
     def write_report_line(self, writer):  # pragma: no cover
@@ -3700,7 +3714,7 @@ class PartValueGroup:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -3711,7 +3725,7 @@ class PartValueGroup:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -3822,12 +3836,12 @@ class TrainedPredictor:
         """
         return self.selected_variables is not None
 
-    def to_json(self, details=False):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self, details=False):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         if details and self.is_detailed() and self.selected_variables is not None:
             return {
                 "selectedVariables": [
-                    selected_variable.to_json()
+                    selected_variable.to_dict()
                     for selected_variable in self.selected_variables
                 ]
             }
@@ -3846,7 +3860,7 @@ class TrainedPredictor:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         The header is the same for all variable types.
@@ -3859,7 +3873,7 @@ class TrainedPredictor:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -3875,7 +3889,7 @@ class TrainedPredictor:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -3886,7 +3900,7 @@ class TrainedPredictor:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -3902,7 +3916,7 @@ class TrainedPredictor:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -3913,7 +3927,7 @@ class TrainedPredictor:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -3975,8 +3989,8 @@ class SelectedVariable:
         self.weight = json_data.get("weight")
         self.importance = json_data.get("importance")
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report = {
             "preparedName": self.prepared_name,
             "name": self.name,
@@ -3995,7 +4009,7 @@ class SelectedVariable:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -4006,7 +4020,7 @@ class SelectedVariable:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -4024,7 +4038,7 @@ class SelectedVariable:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -4035,7 +4049,7 @@ class SelectedVariable:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -4211,14 +4225,14 @@ class PredictorPerformance:
             )
         return metric
 
-    def to_json(self, details=False):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self, details=False):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         if details and self.is_detailed():
             report = {}
             if self.data_grid is not None:
-                report["dataGrid"] = self.data_grid.to_json()
+                report["dataGrid"] = self.data_grid.to_dict()
             if self.confusion_matrix is not None:
-                report["confusionMatrix"] = self.confusion_matrix.to_json()
+                report["confusionMatrix"] = self.confusion_matrix.to_dict()
         else:
             report = {
                 "rank": self.rank,
@@ -4255,7 +4269,7 @@ class PredictorPerformance:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -4266,7 +4280,7 @@ class PredictorPerformance:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -4292,7 +4306,7 @@ class PredictorPerformance:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -4303,7 +4317,7 @@ class PredictorPerformance:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -4321,7 +4335,7 @@ class PredictorPerformance:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -4332,7 +4346,7 @@ class PredictorPerformance:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -4388,8 +4402,8 @@ class ConfusionMatrix:
         self.values = json_data.get("values", [])
         self.matrix = json_data.get("matrix", [])
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
 
         return {"values": self.values, "matrix": self.matrix}
 
@@ -4398,7 +4412,7 @@ class ConfusionMatrix:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
 
         Parameters
@@ -4409,7 +4423,7 @@ class ConfusionMatrix:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 

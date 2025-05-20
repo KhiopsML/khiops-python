@@ -36,7 +36,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
     def _assert_report_is_dumped_to_correct_json(self, report, ref_json_report):
         # Dump the report as JSON (4-space indented and keys sorted in
         # lexicographic order)
-        output_json = report.to_json()
+        output_json = report.to_dict()
         output_json_string = json.dumps(output_json, indent=4, sort_keys=True)
 
         # Dump the reference JSON report (4-space indented and keys sorted in

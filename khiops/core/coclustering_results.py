@@ -23,9 +23,10 @@ of sub-reports objects given by the following structure::
     |- cells      -> list of CoclusteringCell
 
     CoclusteringDimension
-    |- parts        -> list of CoclusteringDimensionPart
-    |- clusters     -> list of CoclusteringCluster
-    |- root_cluster -> CoclusteringCluster
+    |- parts                    -> list of CoclusteringDimensionPart
+    |- variable_part_dimensions -> list of CoclusteringDimension
+    |- clusters                 -> list of CoclusteringCluster
+    |- root_cluster             -> CoclusteringCluster
 
     CoclusteringDimensionPartValueGroup
     |- values -> list of CoclusteringDimensionPartValue
@@ -37,8 +38,8 @@ of sub-reports objects given by the following structure::
     |- child_cluster2  |
 
 To have a complete illustration of the access to the information of all classes in this
-module look at their ``write_report`` methods which write TSV (tab separated values)
-reports.
+module look at their ``to_dict`` methods which write Python dictionaries in the
+same format as the Khiops JSON reports.
 """
 import inspect
 import io
@@ -96,13 +97,13 @@ class CoclusteringResults(KhiopsJSONObject):
         else:
             self.coclustering_report = None
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
-        report = super().to_json()
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
+        report = super().to_dict()
         if self.short_description is not None:
             report["shortDescription"] = self.short_description
         if self.coclustering_report is not None:
-            report["coclusteringReport"] = self.coclustering_report.to_json()
+            report["coclusteringReport"] = self.coclustering_report.to_dict()
         return report
 
     def write_report_file(self, report_file_path):  # pragma: no cover
@@ -110,7 +111,7 @@ class CoclusteringResults(KhiopsJSONObject):
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -132,7 +133,7 @@ class CoclusteringResults(KhiopsJSONObject):
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -142,7 +143,7 @@ class CoclusteringResults(KhiopsJSONObject):
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -373,8 +374,8 @@ class CoclusteringReport:
         """
         return self._dimensions_by_name[dimension_name]
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         # Compute cellPartIndexes
         cell_parts_indexes = []
         for cell in self.cells:
@@ -406,15 +407,15 @@ class CoclusteringReport:
         report = {
             "summary": report_summary,
             "dimensionSummaries": [
-                dimension.to_json(report_type="summary")
+                dimension.to_dict(report_type="summary")
                 for dimension in self.dimensions
             ],
             "dimensionPartitions": [
-                dimension.to_json(report_type="partition")
+                dimension.to_dict(report_type="partition")
                 for dimension in self.dimensions
             ],
             "dimensionHierarchies": [
-                dimension.to_json(report_type="hierarchy")
+                dimension.to_dict(report_type="hierarchy")
                 for dimension in self.dimensions
             ],
             "cellPartIndexes": cell_parts_indexes,
@@ -427,7 +428,7 @@ class CoclusteringReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -437,7 +438,7 @@ class CoclusteringReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -455,7 +456,7 @@ class CoclusteringReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -465,7 +466,7 @@ class CoclusteringReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -481,7 +482,7 @@ class CoclusteringReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -491,7 +492,7 @@ class CoclusteringReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -517,7 +518,7 @@ class CoclusteringReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -527,7 +528,7 @@ class CoclusteringReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -553,7 +554,7 @@ class CoclusteringReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -563,7 +564,7 @@ class CoclusteringReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -576,7 +577,7 @@ class CoclusteringReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -586,7 +587,7 @@ class CoclusteringReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -599,7 +600,7 @@ class CoclusteringReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -609,7 +610,7 @@ class CoclusteringReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -631,7 +632,7 @@ class CoclusteringReport:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -641,7 +642,7 @@ class CoclusteringReport:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1001,8 +1002,8 @@ class CoclusteringDimension:
         """
         return self._clusters_by_name[cluster_name]
 
-    def to_json(self, report_type):
-        """Serialize object instance to the Khiops JSON format
+    def to_dict(self, report_type):
+        """Transforms this instance to a dict with the Khiops JSON file structure
 
         Parameters
         ----------
@@ -1031,9 +1032,9 @@ class CoclusteringDimension:
                 "type": self.type,
             }
             if self.type == "Numerical":
-                report["intervals"] = [part.to_json() for part in self.parts]
+                report["intervals"] = [part.to_dict() for part in self.parts]
             elif self.type == "Categorical":
-                report["valueGroups"] = [part.to_json() for part in self.parts]
+                report["valueGroups"] = [part.to_dict() for part in self.parts]
 
                 # Get default group index
                 for i, part in enumerate(self.parts):
@@ -1046,11 +1047,11 @@ class CoclusteringDimension:
                 if self.is_variable_part:
                     report["innerVariables"] = {
                         "dimensionSummaries": [
-                            dimension.to_json(report_type="summary")
+                            dimension.to_dict(report_type="summary")
                             for dimension in self.variable_part_dimensions
                         ],
                         "dimensionPartitions": [
-                            dimension.to_json(report_type="partition")
+                            dimension.to_dict(report_type="partition")
                             for dimension in self.variable_part_dimensions
                         ],
                     }
@@ -1059,7 +1060,7 @@ class CoclusteringDimension:
             report = {
                 "name": self.name,
                 "type": self.type,
-                "clusters": [cluster.to_json() for cluster in self.clusters],
+                "clusters": [cluster.to_dict() for cluster in self.clusters],
             }
             return report
         else:
@@ -1070,7 +1071,7 @@ class CoclusteringDimension:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1080,7 +1081,7 @@ class CoclusteringDimension:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1099,7 +1100,7 @@ class CoclusteringDimension:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1109,7 +1110,7 @@ class CoclusteringDimension:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1128,7 +1129,7 @@ class CoclusteringDimension:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1138,7 +1139,7 @@ class CoclusteringDimension:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1157,7 +1158,7 @@ class CoclusteringDimension:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1167,7 +1168,7 @@ class CoclusteringDimension:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1202,7 +1203,7 @@ class CoclusteringDimension:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1212,7 +1213,7 @@ class CoclusteringDimension:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1249,7 +1250,7 @@ class CoclusteringDimension:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1259,7 +1260,7 @@ class CoclusteringDimension:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1371,8 +1372,8 @@ class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
         self.is_left_open = False
         self.is_right_open = False
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report = {
             "cluster": self.cluster_name,
         }
@@ -1487,8 +1488,8 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
         label += "}"
         return label
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report = {
             "cluster": self.cluster_name,
             "values": [value.value for value in self.values],
@@ -1618,8 +1619,8 @@ class CoclusteringCluster:
         self.child_cluster2 = None
         self.leaf_part = None
 
-    def to_json(self):
-        """Serialize object instance to the Khiops JSON format"""
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
         report = {
             "cluster": self.name,
             "parentCluster": self.parent_cluster_name,
@@ -1641,7 +1642,7 @@ class CoclusteringCluster:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1651,7 +1652,7 @@ class CoclusteringCluster:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1669,7 +1670,7 @@ class CoclusteringCluster:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1679,7 +1680,7 @@ class CoclusteringCluster:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1697,7 +1698,7 @@ class CoclusteringCluster:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1707,7 +1708,7 @@ class CoclusteringCluster:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1723,7 +1724,7 @@ class CoclusteringCluster:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1733,7 +1734,7 @@ class CoclusteringCluster:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
@@ -1752,7 +1753,7 @@ class CoclusteringCluster:
 
         .. warning::
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_json` method instead.
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
@@ -1762,7 +1763,7 @@ class CoclusteringCluster:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_json"
+                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
             )
         )
 
