@@ -14,7 +14,11 @@ import warnings
 
 import khiops.core.internals.filesystems as fs
 from khiops.core.exceptions import KhiopsJSONError
-from khiops.core.internals.common import is_string_like, type_error_message
+from khiops.core.internals.common import (
+    deprecation_message,
+    is_string_like,
+    type_error_message,
+)
 
 
 def encode_file_path(file_path):
@@ -141,6 +145,9 @@ class KhiopsJSONObject:
     sub_tool : str, optional
         Identifies the tool that originated the JSON file. Used by tools of the Khiops
         family such as PataText or Enneade.
+    json_data : dict
+        Python dictionary extracted from the Khiops JSON report file.
+        **Deprecated** will be removed in Khiops 12.
     """
 
     def __init__(self, json_data=None):
@@ -209,7 +216,12 @@ class KhiopsJSONObject:
             self.colliding_utf8_chars = []
 
         # Store a copy of the data to be able to write copies of it
-        self.json_data = copy.deepcopy(json_data)
+        self._json_data = copy.deepcopy(json_data)
+
+    @property
+    def json_data(self):
+        warnings.warn(deprecation_message("'json_data'", "12.0.0", quote=False))
+        return self._json_data
 
     def create_output_file_writer(self, stream):
         """Creates an output file with the proper encoding settings
@@ -257,14 +269,13 @@ class KhiopsJSONObject:
         json_file_path : str
             Path to the Khiops JSON file.
         """
-        if self.json_data is not None:
-            # Serialize JSON data to string
-            # Do not escape non-ASCII Unicode characters
-            json_string = json.dumps(self.json_data, ensure_ascii=False)
-            with io.BytesIO() as json_stream:
-                writer = self.create_output_file_writer(json_stream)
-                writer.write(json_string)
-                fs.write(uri_or_path=json_file_path, data=json_stream.getvalue())
+        # Serialize JSON data to string
+        # Do not escape non-ASCII Unicode characters
+        json_string = json.dumps(self.to_json(), ensure_ascii=False)
+        with io.BytesIO() as json_stream:
+            writer = self.create_output_file_writer(json_stream)
+            writer.write(json_string)
+            fs.write(uri_or_path=json_file_path, data=json_stream.getvalue())
 
 
 class KhiopsOutputWriter:
