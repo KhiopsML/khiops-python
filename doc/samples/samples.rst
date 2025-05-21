@@ -1064,7 +1064,7 @@ Samples
     dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
     accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
     vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
-    output_dir = os.path.join("kh_samples", "deploy_model_mt")
+    output_dir = os.path.join("kh_samples", "deploy_model_mt_with_interpretation")
     report_file_path = os.path.join(output_dir, "AnalysisResults.khj")
     interpretor_file_path = os.path.join(output_dir, "InterpretationModel.kdic")
     output_data_table_path = os.path.join(output_dir, "InterpretedAccidents.txt")
@@ -1088,7 +1088,8 @@ Samples
         model_dictionary_file_path,
         "SNB_Accident",
         interpretor_file_path,
-        reinforcement_target_value="NonLethal",
+        max_variable_importances=3,
+        importance_ranking="Individual",
     )
 
     # Deploy the interpretation model on the database

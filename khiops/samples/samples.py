@@ -1184,8 +1184,8 @@ def deploy_model_mt():
 def deploy_model_mt_with_interpretation():
     """Deploys a multi-table interpretor in the simplest way possible
 
-    It is a call to `~.api.deploy_model` with additional parameters to handle
-    multi-table deployment.
+    It is a call to `~.api.deploy_model` with additional parameters related to
+    the variable importances.
 
     In this example, a Selective Naive Bayes (SNB) interpretation model is
     deployed by applying its associated dictionary to the input database.
@@ -1200,7 +1200,7 @@ def deploy_model_mt_with_interpretation():
     dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
     accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
     vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
-    output_dir = os.path.join("kh_samples", "deploy_model_mt")
+    output_dir = os.path.join("kh_samples", "deploy_model_mt_with_interpretation")
     report_file_path = os.path.join(output_dir, "AnalysisResults.khj")
     interpretor_file_path = os.path.join(output_dir, "InterpretationModel.kdic")
     output_data_table_path = os.path.join(output_dir, "InterpretedAccidents.txt")
@@ -1224,7 +1224,8 @@ def deploy_model_mt_with_interpretation():
         model_dictionary_file_path,
         "SNB_Accident",
         interpretor_file_path,
-        reinforcement_target_value="NonLethal",
+        max_variable_importances=3,
+        importance_ranking="Individual",
     )
 
     # Deploy the interpretation model on the database

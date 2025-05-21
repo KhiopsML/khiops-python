@@ -6,7 +6,7 @@
 ######################################################################################
 """interpret_predictor task family"""
 from khiops.core.internals import task as tm
-from khiops.core.internals.types import ListType, StringLikeType
+from khiops.core.internals.types import IntType, StringLikeType
 
 # Disable long lines to have readable scenarios
 # pylint: disable=line-too-long
@@ -21,8 +21,8 @@ TASKS = [
             ("interpretor_file_path", StringLikeType),
         ],
         [
-            ("reinforcement_target_value", StringLikeType, ""),
-            ("reinforcement_lever_variables", ListType(StringLikeType), None),
+            ("max_variable_importances", IntType, 100),
+            ("importance_ranking", StringLikeType, "Global"),
         ],
         ["dictionary_file_path", "interpretor_file_path"],
         # pylint: disable=line-too-long
@@ -38,14 +38,12 @@ TASKS = [
 
         // Interpret model
         LearningTools.InterpretPredictor
-        HowParameter.HowClass __reinforcement_target_value__
 
-        __DICT__
-        __reinforcement_lever_variables__
-        HowParameter.leverVariablesSpecView.UnselectAll
-        HowParameter.leverVariablesSpecView.AttributeSpecs.List.Key
-        HowParameter.leverVariablesSpecView.AttributeSpecs.Used
-        __END_DICT__
+        // Number of predictor variables exploited in the interpretation model
+        ContributionAttributeNumber __max_variable_importances__
+
+        // Ranking of the Shapley value produced by the interpretation model
+        ShapleyValueRanking __importance_ranking__
 
         // Build interpretation dictionary
         BuildInterpretationClass
