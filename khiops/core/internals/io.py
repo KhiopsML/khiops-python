@@ -234,6 +234,21 @@ class KhiopsJSONObject:
             else:
                 return KhiopsOutputWriter(stream, force_ansi=True)
 
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = {
+            "tool": self.tool,
+            "version": self.version,
+            "khiops_encoding": self.khiops_encoding,
+        }
+        if self.ansi_chars is not None:
+            report["ansi_chars"] = self.ansi_chars
+        if self.colliding_utf8_chars is not None:
+            report["colliding_utf8_chars"] = self.colliding_utf8_chars
+        if self.sub_tool is not None:
+            report["subTool"] = self.sub_tool
+        return report
+
     def write_khiops_json_file(self, json_file_path):
         """Write the JSON data of the object to a Khiops JSON file
 

@@ -103,6 +103,8 @@ class AnalysisResults(KhiopsJSONObject):
         Version of the Khiops tool that generated the report.
     short_description : str
         Short description defined by the user.
+    khiops_encoding : str
+        Encoding of the Khiops report file.
     logs : list of tuples
         2-tuples linking each sub-task name to a list containing the warnings and errors
         found during the execution of that sub-task. Available only if there were errors
@@ -142,7 +144,7 @@ class AnalysisResults(KhiopsJSONObject):
             )
 
         # Initialize report basic data
-        self.short_description = json_data.get("shortDescription", "")
+        self.short_description = json_data.get("shortDescription")
         json_logs = json_data.get("logs", [])
         self.logs = []
         for log in json_logs:
@@ -215,6 +217,33 @@ class AnalysisResults(KhiopsJSONObject):
         with open(report_file_path, "wb") as report_file:
             report_file_writer = self.create_output_file_writer(report_file)
             self.write_report(report_file_writer)
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = super().to_json()
+        if self.short_description is not None:
+            report["shortDescription"] = self.short_description
+        if self.logs:
+            report["logs"] = []
+            for task_name, messages in self.logs:
+                report["logs"].append({"taskName": task_name, "messages": messages})
+        if self.preparation_report is not None:
+            report["preparationReport"] = self.preparation_report.to_json()
+        if self.text_preparation_report is not None:
+            report["textPreparationReport"] = self.text_preparation_report.to_json()
+        if self.bivariate_preparation_report is not None:
+            report["bivariatePreparationReport"] = (
+                self.bivariate_preparation_report.to_json()
+            )
+        if self.modeling_report is not None:
+            report["modelingReport"] = self.modeling_report.to_json()
+        if self.train_evaluation_report is not None:
+            report["trainEvaluationReport"] = self.train_evaluation_report.to_json()
+        if self.test_evaluation_report is not None:
+            report["testEvaluationReport"] = self.test_evaluation_report.to_json()
+        if self.evaluation_report is not None:
+            report["evaluationReport"] = self.evaluation_report.to_json()
+        return report
 
     def write_report(self, stream_or_writer):
         """Writes the instance's TSV report into a writer object
@@ -439,7 +468,7 @@ class PreparationReport:
 
         # Initialize other summary attributes
         self.evaluated_variable_number = json_summary.get("evaluatedVariables", 0)
-        self.informative_variable_number = json_summary.get("informativeVariables", 0)
+        self.informative_variable_number = json_summary.get("informativeVariables")
         self.selected_variable_number = json_summary.get("selectedVariables")
         json_feature_eng = json_summary.get("featureEngineering", {})
         self.max_constructed_variables = json_feature_eng.get(
@@ -448,8 +477,8 @@ class PreparationReport:
         self.max_text_features = json_feature_eng.get("maxNumberOfTextFeatures")
         self.max_trees = json_feature_eng.get("maxNumberOfTrees")
         self.max_pairs = json_feature_eng.get("maxNumberOfVariablePairs")
-        self.discretization = json_summary.get("discretization", "")
-        self.value_grouping = json_summary.get("valueGrouping", "")
+        self.discretization = json_summary.get("discretization")
+        self.value_grouping = json_summary.get("valueGrouping")
 
         # Cost of model (supervised case and non empty database)
         json_null_model = json_summary.get("nullModel", {})
@@ -504,6 +533,148 @@ class PreparationReport:
             If no variable with the specified names exist.
         """
         return self._variables_statistics_by_name[variable_name]
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report_summary = {
+            "dictionary": self.dictionary,
+            "variables": {
+                "types": self.variable_types,
+                "numbers": self.variable_numbers,
+            },
+            "database": self.database,
+            "instances": self.instance_number,
+            "learningTask": self.learning_task,
+        }
+        report = {
+            "reportType": "Preparation",
+            "summary": report_summary,
+        }
+        if self.sampling_mode != "":
+            # Note: We use `update` because |= is not available for Python 3.8
+            report_summary.update(
+                {
+                    "samplePercentage": self.sample_percentage,
+                    "samplingMode": self.sampling_mode,
+                    "selectionVariable": self.selection_variable,
+                    "selectionValue": self.selection_value,
+                }
+            )
+
+        # Write classification specific attributes
+        if "Classification" in self.learning_task:
+            report_summary.update(
+                {
+                    "targetVariable": self.target_variable,
+                    "targetDescriptiveStats": {
+                        "values": self.target_stats_values,
+                        "mode": self.target_stats_mode,
+                        "modeFrequency": self.target_stats_mode_frequency,
+                    },
+                }
+            )
+            if self.target_values is not None:
+                report_summary["targetValues"] = {
+                    "values": self.target_values,
+                    "frequencies": self.target_value_frequencies,
+                }
+            if self.main_target_value is not None:
+                report_summary["mainTargetValue"] = self.main_target_value
+
+        # Write regression specific attributes
+        if "Regression" in self.learning_task:
+            report_summary.update(
+                {
+                    "targetVariable": self.target_variable,
+                    "targetDescriptiveStats": {
+                        "values": self.target_stats_values,
+                        "min": self.target_stats_min,
+                        "max": self.target_stats_max,
+                        "mean": self.target_stats_mean,
+                        "stdDev": self.target_stats_std_dev,
+                    },
+                }
+            )
+            if self.target_values is not None:
+                report_summary["targetValues"] = {
+                    "values": self.target_values,
+                    "frequencies": self.target_value_frequencies,
+                }
+            if self.main_target_value is not None:
+                report_summary["mainTargetValue"] = self.main_target_value
+
+        # Write common classification and regression specific attributes
+        if "Classification" in self.learning_task or "Regression" in self.learning_task:
+            if self.target_stats_missing_number is not None:
+                report_summary["targetDescriptiveStats"][
+                    "missingNumber"
+                ] = self.target_stats_missing_number
+            if self.target_stats_sparse_missing_number is not None:
+                report_summary["targetDescriptiveStats"][
+                    "sparseMissingNumber"
+                ] = self.target_stats_sparse_missing_number
+            if self.selected_variable_number is not None:
+                report_summary["selectedVariables"] = self.selected_variable_number
+
+        # Write variable preparation summary attributes
+        if len(self.variable_types) > 0 and self.instance_number > 0:
+            report_summary["evaluatedVariables"] = self.evaluated_variable_number
+            if not (
+                self.max_constructed_variables is None
+                and self.max_text_features is None
+                and self.max_trees is None
+                and self.max_pairs is None
+            ):
+                report_summary["featureEngineering"] = {
+                    "maxNumberOfConstructedVariables": (
+                        self.max_constructed_variables or 0
+                    ),
+                    "maxNumberOfTextFeatures": self.max_text_features or 0,
+                    "maxNumberOfTrees": self.max_trees or 0,
+                    "maxNumberOfVariablePairs": self.max_pairs or 0,
+                }
+            if self.informative_variable_number is not None:
+                report_summary["informativeVariables"] = (
+                    self.informative_variable_number
+                )
+            if self.discretization is not None:
+                report_summary["discretization"] = self.discretization
+            if self.value_grouping is not None:
+                report_summary["valueGrouping"] = self.value_grouping
+            if self.constructed_variable_number is not None:
+                report_summary["constructedVariables"] = (
+                    self.constructed_variable_number
+                )
+            if self.native_variable_number is not None:
+                report_summary["nativeVariables"] = self.native_variable_number
+
+        # Write preparation cost information
+        if (
+            "Unsupervised" not in self.learning_task
+            and self.null_model_construction_cost is not None
+        ):
+            report_summary["nullModel"] = {
+                "constructionCost": self.null_model_construction_cost,
+                "preparationCost": self.null_model_preparation_cost,
+                "dataCost": self.null_model_data_cost,
+            }
+
+        # Write variables' statistics
+        if len(self.variables_statistics) > 0:
+            report["variablesStatistics"] = [
+                variable_statistics.to_json()
+                for variable_statistics in self.variables_statistics
+            ]
+            if any(
+                variable_statistics.is_detailed()
+                for variable_statistics in self.variables_statistics
+            ):
+                report["variablesDetailedStatistics"] = {
+                    variable_statistics.rank: variable_statistics.to_json(details=True)
+                    for variable_statistics in self.variables_statistics
+                    if variable_statistics.is_detailed()
+                }
+        return report
 
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
@@ -799,6 +970,91 @@ class BivariatePreparationReport:
             (variable_name_1, variable_name_2)
         ]
 
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report_summary = {
+            "dictionary": self.dictionary,
+            "variables": {
+                "types": self.variable_types,
+                "numbers": self.variable_numbers,
+            },
+            "database": self.database,
+            "instances": self.instance_number,
+            "learningTask": self.learning_task,
+        }
+        report = {
+            "reportType": "BivariatePreparation",
+            "summary": report_summary,
+        }
+
+        # Update report with data sampling specifications if available
+        if self.sampling_mode != "":
+            report_summary.update(
+                {
+                    "samplePercentage": self.sample_percentage,
+                    "samplingMode": self.sampling_mode,
+                    "selectionVariable": self.selection_variable,
+                    "selectionValue": self.selection_value,
+                }
+            )
+
+        # Write specific summary attributes for a classification task
+        if self.learning_task == "Classification analysis":
+            report_summary.update(
+                {
+                    "targetVariable": self.target_variable,
+                    "targetDescriptiveStats": {
+                        "values": self.target_stats_values,
+                        "mode": self.target_stats_mode,
+                        "modeFrequency": self.target_stats_mode_frequency,
+                    },
+                }
+            )
+            if self.target_values is not None:
+                report_summary["targetValues"] = {
+                    "values": self.target_values,
+                    "frequencies": self.target_value_frequencies,
+                }
+            if self.target_stats_missing_number is not None:
+                report_summary["targetDescriptiveStats"][
+                    "missingNumber"
+                ] = self.target_stats_missing_number
+            if self.target_stats_sparse_missing_number is not None:
+                report_summary["targetDescriptiveStats"][
+                    "sparseMissingNumber"
+                ] = self.target_stats_sparse_missing_number
+            if self.main_target_value is not None:
+                report_summary["mainTargetValue"] = self.main_target_value
+
+        if self.evaluated_pair_number is not None:
+            report_summary["evaluatedVariablePairs"] = self.evaluated_pair_number
+
+        if self.selected_pair_number is not None:
+            report_summary["selectedVariablePairs"] = self.selected_pair_number
+
+        if self.informative_pair_number is not None:
+            report_summary["informativeVariablePairs"] = self.informative_pair_number
+
+        # Write variables pairs' statistics
+        if len(self.variables_pairs_statistics) > 0:
+            report["variablesPairsStatistics"] = [
+                variable_pair_statistics.to_json()
+                for variable_pair_statistics in self.variables_pairs_statistics
+            ]
+            if any(
+                variable_pair_statistics.is_detailed()
+                for variable_pair_statistics in self.variables_pairs_statistics
+            ):
+                report["variablesPairsDetailedStatistics"] = {
+                    variable_pair_statistics.rank: variable_pair_statistics.to_json(
+                        details=True
+                    )
+                    for variable_pair_statistics in self.variables_pairs_statistics
+                    if variable_pair_statistics.is_detailed()
+                }
+
+        return report
+
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
 
@@ -991,6 +1247,42 @@ class ModelingReport:
 
         """
         return list(self._trained_predictors_by_name.keys())
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report_summary = {
+            "dictionary": self.dictionary,
+            "database": self.database,
+            "learningTask": self.learning_task,
+            "targetVariable": self.target_variable,
+        }
+        report = {
+            "reportType": "Modeling",
+            "summary": report_summary,
+            "trainedPredictors": [
+                predictor.to_json() for predictor in self.trained_predictors
+            ],
+        }
+        if any(predictor.is_detailed() for predictor in self.trained_predictors):
+            report["trainedPredictorsDetails"] = {
+                predictor.rank: predictor.to_json(details=True)
+                for predictor in self.trained_predictors
+                if predictor.is_detailed()
+            }
+        if self.sampling_mode != "":
+            report_summary.update(
+                {
+                    "samplePercentage": self.sample_percentage,
+                    "samplingMode": self.sampling_mode,
+                    "selectionVariable": self.selection_variable,
+                    "selectionValue": self.selection_value,
+                }
+            )
+
+        if self.main_target_value is not None:
+            report_summary["mainTargetValue"] = self.main_target_value
+
+        return report
 
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
@@ -1344,6 +1636,79 @@ class EvaluationReport:
                 )
         raise KeyError(target_value)
 
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report_summary = {
+            "dictionary": self.dictionary,
+            "database": self.database,
+            "instances": self.instance_number,
+            "learningTask": self.learning_task,
+            "targetVariable": self.target_variable,
+        }
+        report = {
+            "reportType": "Evaluation",
+            "evaluationType": self.evaluation_type,
+            "summary": report_summary,
+            "predictorsPerformance": [
+                predictor_performance.to_json()
+                for predictor_performance in self.predictors_performance
+            ],
+        }
+        if any(
+            predictor_performance.is_detailed()
+            for predictor_performance in self.predictors_performance
+        ):
+            report["predictorsDetailedPerformance"] = {
+                predictor_performance.rank: predictor_performance.to_json(details=True)
+                for predictor_performance in self.predictors_performance
+                if predictor_performance.is_detailed()
+            }
+
+        if self.sampling_mode != "":
+            report_summary.update(
+                {
+                    "samplePercentage": self.sample_percentage,
+                    "samplingMode": self.sampling_mode,
+                    "selectionVariable": self.selection_variable,
+                    "selectionValue": self.selection_value,
+                }
+            )
+
+        if self.main_target_value is not None:
+            report_summary["mainTargetValue"] = self.main_target_value
+
+        # Write lift curves, one per target value and per classifier
+        if (
+            self.learning_task.startswith("Classification")
+            and self.classification_target_values is not None
+        ):
+            report["liftCurves"] = []
+            for i, target_value in enumerate(self.classification_target_values):
+                lift_curves = self.classification_lift_curves[i]
+                report["liftCurves"].append(
+                    {
+                        "targetValue": target_value,
+                        "curves": [
+                            {
+                                "classifier": lift_curve.name,
+                                "values": lift_curve.values,
+                            }
+                            for lift_curve in lift_curves
+                        ],
+                    }
+                )
+
+        # Write REC curves, one per regressor
+        if (
+            self.learning_task.startswith("Regression")
+            and self.regression_rec_curves is not None
+        ):
+            report["recCurves"] = [
+                {"regressor": rec_curve.name, "values": rec_curve.values}
+                for rec_curve in self.regression_rec_curves
+            ]
+        return report
+
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
 
@@ -1613,6 +1978,79 @@ class VariableStatistics:
             self.input_values is not None and self.input_value_frequencies is not None
         )
 
+    def to_json(self, details=False):
+        """Serialize object instance to the Khiops JSON format"""
+        # Write report details if required and applicable
+        if details and self.is_detailed():
+            report = {}
+
+            # Write data grid
+            if self.data_grid is not None:
+                report["dataGrid"] = self.data_grid.to_json()
+
+            # Write input values and their frequencies
+            if self.input_values is not None:
+                report["inputValues"] = {
+                    "values": self.input_values,
+                    "frequencies": self.input_value_frequencies,
+                }
+            return report
+        elif details is False:
+            report = {
+                "rank": self.rank,
+                "name": self.name,
+                "type": self.type,
+                "values": self.value_number,
+                "constructionCost": self.construction_cost,
+            }
+
+            # Write level if available
+            if self.level is not None:
+                report["level"] = self.level
+
+            # Write target part number if available
+            if self.target_part_number is not None:
+                report["targetParts"] = self.target_part_number
+
+            # Write part number if available
+            if self.part_number is not None:
+                report["parts"] = self.part_number
+
+            # Write missing number if available
+            if self.missing_number is not None:
+                report["missingNumber"] = self.missing_number
+
+            # Write sparse missing number if available
+            if self.sparse_missing_number is not None:
+                report["sparseMissingNumber"] = self.sparse_missing_number
+
+            # Write attributes specific to Numerical / Categorical types
+            if self.type == "Numerical":
+                report.update(
+                    {
+                        "min": self.min,
+                        "max": self.max,
+                        "mean": self.mean,
+                        "stdDev": self.std_dev,
+                    }
+                )
+            elif self.type == "Categorical":
+                report.update({"mode": self.mode, "modeFrequency": self.mode_frequency})
+
+            # Write preparation cost only for the supervised case
+            if self.preparation_cost is not None:
+                report.update(
+                    {
+                        "preparationCost": self.preparation_cost,
+                        "dataCost": self.data_cost,
+                    }
+                )
+
+            # Write derivation rule if available
+            if self.derivation_rule is not None:
+                report["derivationRule"] = self.derivation_rule
+            return report
+
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
 
@@ -1859,6 +2297,41 @@ class VariablePairStatistics:
         """
         return self.data_grid is not None
 
+    def to_json(self, details=False):
+        """Serialize object instance to the Khiops JSON format"""
+        report = {}
+        if details and self.is_detailed():
+            # write detailed report
+            report["dataGrid"] = self.data_grid.to_json()
+        elif details is False:
+            report.update(
+                {
+                    "rank": self.rank,
+                    "name1": self.name1,
+                    "name2": self.name2,
+                    "level": self.level,
+                    "variables": self.variable_number,
+                    "parts1": self.part_number1,
+                    "parts2": self.part_number2,
+                    "cells": self.cell_number,
+                    "constructionCost": self.construction_cost,
+                    "preparationCost": self.preparation_cost,
+                    "dataCost": self.data_cost,
+                }
+            )
+
+            # Supervised case: write level attributes
+            if self.delta_level is not None:
+                report.update(
+                    {
+                        "deltaLevel": self.delta_level,
+                        "level1": self.level1,
+                        "level2": self.level2,
+                    }
+                )
+
+        return report
+
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
 
@@ -2044,6 +2517,44 @@ class DataGrid:
             self.cell_frequencies = json_data.get("cellFrequencies")
             self.cell_target_frequencies = json_data.get("cellTargetFrequencies")
             self.cell_interests = json_data.get("cellInterests")
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        # Write data grid type and dimensions
+        report = {
+            "isSupervised": self.is_supervised,
+            "dimensions": [dimension.to_json() for dimension in self.dimensions],
+        }
+
+        # Write data grid cells
+        # Univariate unsupervised data grid: Write frequencies per part
+        if not self.is_supervised and len(self.dimensions) == 1:
+            report["frequencies"] = self.frequencies
+
+        # Multivariate unsupervised data grid: Write frequencies per cell
+        elif not self.is_supervised and len(self.dimensions) > 1:
+            report["cellIds"] = self.cell_ids
+            report["cellPartIndexes"] = self.cell_part_indexes
+            if self.cell_frequencies is not None:
+                report["cellFrequencies"] = self.cell_frequencies
+
+        # Supervised data grid with one input variable:
+        # Write frequencies for each input part and for each target part
+        elif self.is_supervised and len(self.dimensions) == 2:
+            report["partTargetFrequencies"] = self.part_target_frequencies
+            report["partInterests"] = self.part_interests
+
+        # Supervised data grid with several input variables
+        # Write frequencies per input cell part, for each target part
+        elif self.is_supervised and len(self.dimensions) > 2:
+            report["cellIds"] = self.cell_ids
+            report["cellPartIndexes"] = self.cell_part_indexes
+            if self.cell_frequencies is not None:
+                report["cellFrequencies"] = self.cell_frequencies
+            report["cellTargetFrequencies"] = self.cell_target_frequencies
+            report["cellInterests"] = self.cell_interests
+
+        return report
 
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
@@ -2255,6 +2766,26 @@ class DataGridDimension:
             default_group_index = json_data["defaultGroupIndex"]
             self.partition[default_group_index].is_default_part = True
 
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = {
+            "variable": self.variable,
+            "type": self.type,
+            "partitionType": self.partition_type,
+            "partition": [part.to_json() for part in self.partition],
+        }
+
+        if self.partition_type == "Value groups":
+            default_group_index = None
+            for i, part in enumerate(self.partition):
+                if part.is_default_part:
+                    default_group_index = i
+                    break
+            if default_group_index is not None:
+                report["defaultGroupIndex"] = default_group_index
+
+        return report
+
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
 
@@ -2352,6 +2883,12 @@ class PartInterval:
         """
         return "Interval"
 
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        if not self.is_missing:
+            return [self.lower_bound, self.upper_bound]
+        return []
+
     def write_report_line(self, writer):
         """Writes a line of the TSV report into a writer object
 
@@ -2411,6 +2948,10 @@ class PartValue:
 
         """
         return "Value"
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        return self.value
 
     def write_report_line(self, writer):
         """Writes a line of the TSV report into a writer object
@@ -2474,6 +3015,10 @@ class PartValueGroup:
 
         """
         return "Value group"
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        return self.values
 
     def write_report_line(self, writer):
         """Writes a line of the TSV report into a writer object
@@ -2591,6 +3136,25 @@ class TrainedPredictor:
         """
         return self.selected_variables is not None
 
+    def to_json(self, details=False):
+        """Serialize object instance to the Khiops JSON format"""
+        if details and self.is_detailed() and self.selected_variables is not None:
+            return {
+                "selectedVariables": [
+                    selected_variable.to_json()
+                    for selected_variable in self.selected_variables
+                ]
+            }
+
+        # details is False:
+        return {
+            "rank": self.rank,
+            "type": self.type,
+            "family": self.family,
+            "name": self.name,
+            "variables": self.variable_number,
+        }
+
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
 
@@ -2689,6 +3253,19 @@ class SelectedVariable:
         self.weight = json_data.get("weight")
         self.importance = json_data.get("importance")
         self.map = json_data.get("map")
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = {
+            "preparedName": self.prepared_name,
+            "name": self.name,
+            "level": self.level,
+            "weight": self.weight,
+        }
+        if self.importance is not None:
+            report["importance"] = self.importance
+
+        return report
 
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
@@ -2891,6 +3468,43 @@ class PredictorPerformance:
             )
         return metric
 
+    def to_json(self, details=False):
+        """Serialize object instance to the Khiops JSON format"""
+        if details and self.is_detailed():
+            report = {}
+            if self.data_grid is not None:
+                report["dataGrid"] = self.data_grid.to_json()
+            if self.confusion_matrix is not None:
+                report["confusionMatrix"] = self.confusion_matrix.to_json()
+        else:
+            report = {
+                "rank": self.rank,
+                "type": self.type,
+                "family": self.family,
+                "name": self.name,
+            }
+
+            if self.type == "Classifier":
+                report.update(
+                    {
+                        "accuracy": self.accuracy,
+                        "compression": self.compression,
+                        "auc": self.auc,
+                    }
+                )
+            elif self.type == "Regressor":
+                report.update(
+                    {
+                        "rmse": self.rmse,
+                        "mae": self.mae,
+                        "nlpd": self.nlpd,
+                        "rankRmse": self.rank_rmse,
+                        "rankMae": self.rank_mae,
+                        "rankNlpd": self.rank_nlpd,
+                    }
+                )
+        return report
+
     def write_report_header_line(self, writer):
         """Writes the header line of a TSV report into a writer object
 
@@ -2991,6 +3605,11 @@ class ConfusionMatrix:
         # Initialize fields
         self.values = json_data.get("values", [])
         self.matrix = json_data.get("matrix", [])
+
+    def to_json(self):
+        """Serialize object instance to the Khiops JSON format"""
+
+        return {"values": self.values, "matrix": self.matrix}
 
     def write_report(self, writer):
         """Writes the instance's TSV report into a writer object
