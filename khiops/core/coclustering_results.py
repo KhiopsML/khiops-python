@@ -41,7 +41,6 @@ To have a complete illustration of the access to the information of all classes 
 module look at their ``to_dict`` methods which write Python dictionaries in the
 same format as the Khiops JSON reports.
 """
-import inspect
 import io
 import warnings
 
@@ -119,9 +118,7 @@ class CoclusteringResults(KhiopsJSONObject):
             Path of the output TSV report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(inspect.currentframe().f_code.co_name, "12.0.0")
-        )
+        warnings.warn(deprecation_message("write_report_file", "12.0.0"))
 
         # Write report to file
         with open(report_file_path, "wb") as report_file:
@@ -141,11 +138,7 @@ class CoclusteringResults(KhiopsJSONObject):
             Output stream or writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Check input writer/stream type
         if isinstance(stream_or_writer, io.IOBase):
@@ -436,11 +429,7 @@ class CoclusteringReport:
             Output stream or writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Write each section
         self.write_dimensions(writer)
@@ -464,11 +453,7 @@ class CoclusteringReport:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_dimensions", "12.0.0", "to_dict"))
 
         # Write dimension report
         writer.writeln(f"Dimensions\t{len(self.dimensions)}")
@@ -491,9 +476,7 @@ class CoclusteringReport:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_coclustering_stats", "12.0.0", "to_dict")
         )
 
         # Write report
@@ -526,11 +509,7 @@ class CoclusteringReport:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_bounds", "12.0.0", "to_dict"))
 
         # Compute number of numerical dimensions
         numerical_dimension_number = 0
@@ -562,11 +541,7 @@ class CoclusteringReport:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_hierarchies", "12.0.0", "to_dict"))
 
         # Write dimension hierarchy report for each dimension
         for cc_dimension in self.dimensions:
@@ -585,11 +560,7 @@ class CoclusteringReport:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_compositions", "12.0.0", "to_dict"))
 
         # Write dimension composition report for each dimension
         for cc_dimension in self.dimensions:
@@ -608,11 +579,7 @@ class CoclusteringReport:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_cells", "12.0.0", "to_dict"))
 
         # Write header
         writer.writeln("")
@@ -640,11 +607,7 @@ class CoclusteringReport:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_annotations", "12.0.0", "to_dict"))
 
         # Decide whether annotation sections need to be reported
         need_report = False
@@ -1080,9 +1043,7 @@ class CoclusteringDimension:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_dimension_header_line", "12.0.0", "to_dict")
         )
 
         # Write dimension report header
@@ -1108,11 +1069,7 @@ class CoclusteringDimension:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_dimension_line", "12.0.0", "to_dict"))
 
         # Write dimension report line
         writer.write(f"{self.name}\t")
@@ -1137,11 +1094,7 @@ class CoclusteringDimension:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_hierarchy", "12.0.0", "to_dict"))
 
         # Write header
         writer.writeln("")
@@ -1166,11 +1119,7 @@ class CoclusteringDimension:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_composition", "12.0.0", "to_dict"))
 
         # Write only categorical dimensions
         if self.type == "Categorical":
@@ -1211,11 +1160,7 @@ class CoclusteringDimension:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_annotation", "12.0.0", "to_dict"))
 
         # Write header
         writer.writeln("")
@@ -1260,7 +1205,7 @@ class CoclusteringDimension:
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
             deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
+                "write_hierarchy_structure_report_file", "12.0.0", "to_dict"
             )
         )
 
@@ -1651,9 +1596,7 @@ class CoclusteringCluster:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_hierarchy_header_line", "12.0.0", "to_dict")
         )
 
         # Write report header
@@ -1678,11 +1621,7 @@ class CoclusteringCluster:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_hierarchy_line", "12.0.0", "to_dict"))
 
         # Write hierarchy report line
         writer.write(f"{self.name}\t")
@@ -1707,9 +1646,7 @@ class CoclusteringCluster:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_annotation_header_line", "12.0.0", "to_dict")
         )
 
         # Write annotation report header
@@ -1732,11 +1669,7 @@ class CoclusteringCluster:
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_annotation_line", "12.0.0", "to_dict"))
 
         # Write annotation report line
         writer.write(f"{self.name}\t")
@@ -1762,9 +1695,7 @@ class CoclusteringCluster:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_hierarchy_structure_report", "12.0.0", "to_dict")
         )
 
         # Write first child cluster
@@ -1814,9 +1745,7 @@ class CoclusteringCell:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(inspect.currentframe().f_code.co_name, "12.0.0")
-        )
+        warnings.warn(deprecation_message("write_line", "12.0.0"))
 
         # Write part report line
         for part in self.parts:

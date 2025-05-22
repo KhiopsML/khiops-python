@@ -83,7 +83,6 @@ To have a complete illustration of the access to the information of all classes 
 module look at their ``to_dict`` methods which write Python dictionaries in the
 same format as the Khiops JSON reports.
 """
-import inspect
 import io
 import warnings
 
@@ -242,9 +241,7 @@ class AnalysisResults(KhiopsJSONObject):
             Path of the output TSV report file.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(inspect.currentframe().f_code.co_name, "12.0.0")
-        )
+        warnings.warn(deprecation_message("write_report_file", "12.0.0"))
 
         # Write report to file
         with open(report_file_path, "wb") as report_file:
@@ -293,11 +290,7 @@ class AnalysisResults(KhiopsJSONObject):
             Output stream or writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Check input writer/stream type
         if isinstance(stream_or_writer, io.IOBase):
@@ -774,11 +767,7 @@ class PreparationReport:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Write header
         writer.writeln("Report\tPreparation")
@@ -1165,11 +1154,7 @@ class BivariatePreparationReport:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Write header
         writer.writeln("Report\tBivariate preparation")
@@ -1406,11 +1391,7 @@ class ModelingReport:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Write header
         writer.writeln("Report\tModeling")
@@ -1843,11 +1824,7 @@ class EvaluationReport:
             Output writer object.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Write report header
         writer.write("Report\t")
@@ -2215,9 +2192,7 @@ class VariableStatistics:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_report_header_line", "12.0.0", "to_dict")
         )
 
         # Write report header
@@ -2255,11 +2230,7 @@ class VariableStatistics:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_line", "12.0.0", "to_dict"))
 
         # Write common attributes
         writer.write(f"{self.rank}\t")
@@ -2333,11 +2304,7 @@ class VariableStatistics:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_details", "12.0.0", "to_dict"))
 
         # Write report if detailed report is available
         if self.is_detailed():
@@ -2534,9 +2501,7 @@ class VariablePairStatistics:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_report_header_line", "12.0.0", "to_dict")
         )
 
         # Write identifier column names
@@ -2579,11 +2544,7 @@ class VariablePairStatistics:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_line", "12.0.0", "to_dict"))
 
         # Write identifier attributes
         writer.write(f"{self.rank}\t")
@@ -2625,11 +2586,7 @@ class VariablePairStatistics:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_details", "12.0.0", "to_dict"))
 
         # Write report if detailed report is available
         if self.is_detailed():
@@ -3209,11 +3166,7 @@ class DataGrid:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Write data grid type
         writer.write("Data grid\t")
@@ -3451,11 +3404,7 @@ class DataGridDimension:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Write report
         writer.write(f"{self.variable}\t")
@@ -3567,11 +3516,7 @@ class PartInterval:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_line", "12.0.0", "to_dict"))
 
         # Write part label
         writer.write(str(self))
@@ -3643,11 +3588,7 @@ class PartValue:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_line", "12.0.0", "to_dict"))
 
         # Write object value
         writer.writeln(str(self))
@@ -3723,11 +3664,7 @@ class PartValueGroup:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_line", "12.0.0", "to_dict"))
 
         # Write part label
         writer.write(str(self))
@@ -3872,9 +3809,7 @@ class TrainedPredictor:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_report_header_line", "12.0.0", "to_dict")
         )
 
         # Write report header line
@@ -3898,11 +3833,7 @@ class TrainedPredictor:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_line", "12.0.0", "to_dict"))
 
         # Write report line
         writer.write(f"{self.rank}\t")
@@ -3925,11 +3856,7 @@ class TrainedPredictor:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_details", "12.0.0", "to_dict"))
 
         # Write detailed report header if available
         if self.is_detailed():
@@ -4019,9 +3946,7 @@ class SelectedVariable:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_report_header_line", "12.0.0", "to_dict")
         )
 
         # Write report header
@@ -4047,11 +3972,7 @@ class SelectedVariable:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_line", "12.0.0", "to_dict"))
 
         # Write report line
         writer.write(f"{self.prepared_name}\t")
@@ -4279,9 +4200,7 @@ class PredictorPerformance:
         """
         # Warn the user that this method is deprecated and will be removed
         warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
+            deprecation_message("write_report_header_line", "12.0.0", "to_dict")
         )
 
         # Write report header
@@ -4315,11 +4234,7 @@ class PredictorPerformance:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_line", "12.0.0", "to_dict"))
 
         # Write report line
         writer.write(f"{self.rank}\t")
@@ -4344,11 +4259,7 @@ class PredictorPerformance:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report_details", "12.0.0", "to_dict"))
 
         # Write detailed report if available
         if self.is_detailed():
@@ -4421,11 +4332,7 @@ class ConfusionMatrix:
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
-        warnings.warn(
-            deprecation_message(
-                inspect.currentframe().f_code.co_name, "12.0.0", "to_dict"
-            )
-        )
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
 
         # Write header
         writer.writeln("Confusion matrix")
