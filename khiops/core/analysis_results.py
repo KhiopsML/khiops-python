@@ -561,26 +561,6 @@ class PreparationReport:
             self.trees.append(tree)
             self._trees_by_name[tree.name] = tree
 
-    def get_tree(self, tree_name):
-        """Returns the tree with the specified name
-
-        Parameters
-        ----------
-        tree_name : str
-            Name of the tree.
-
-        Returns
-        -------
-        `Tree`
-            The tree which has the specified name.
-
-        Raises
-        ------
-        `KeyError`
-            If no tree with the specified name exists.
-        """
-        return self._trees_by_name[tree_name]
-
     def get_variable_names(self):
         """Returns the names of the variables analyzed during the preparation
 
@@ -610,6 +590,26 @@ class PreparationReport:
             If no variable with the specified names exist.
         """
         return self._variables_statistics_by_name[variable_name]
+
+    def get_tree(self, tree_name):
+        """Returns the tree with the specified name
+
+        Parameters
+        ----------
+        tree_name : str
+            Name of the tree.
+
+        Returns
+        -------
+        `Tree`
+            The tree which has the specified name.
+
+        Raises
+        ------
+        `KeyError`
+            If no tree with the specified name exists.
+        """
+        return self._trees_by_name[tree_name]
 
     def to_dict(self):
         """Transforms this instance to a dict with the Khiops JSON file structure"""
