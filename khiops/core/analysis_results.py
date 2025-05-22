@@ -1932,7 +1932,7 @@ class VariableStatistics:
         Otherwise is set to ``None``.
     data_grid : `DataGrid`
         A density estimation of the partitioned variable with respect to the target.
-    modl_histograms : `ModlHistogram`
+    modl_histograms : `ModlHistograms`
         MODL optimal histograms for for numerical variables. Only for unsupervised
         analysis.
     """
@@ -2020,7 +2020,7 @@ class VariableStatistics:
             # Initialize MODL histograms if present in the JSON report
             json_modl_histograms = json_data.get("modlHistograms")
             if json_modl_histograms is not None:
-                self.modl_histograms = ModlHistogram(json_modl_histograms)
+                self.modl_histograms = ModlHistograms(json_modl_histograms)
 
         return self
 
@@ -2731,7 +2731,7 @@ class TreeNode:
         return report
 
 
-class ModlHistogram:
+class ModlHistograms:
     """A histogram density estimation for numerical data
 
     A MODL histogram is a regularized piecewise-constant estimation of the probability
@@ -2859,7 +2859,7 @@ class ModlHistogram:
 class Histogram:
     """A histogram
 
-    Represents one of the refinement levels of a `ModlHistogram` object.
+    Represents one of the refinement levels of a `ModlHistograms` object.
 
     Parameters
     ----------
