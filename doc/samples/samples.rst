@@ -686,6 +686,37 @@ Samples
     kh.interpret_predictor(predictor_file_path, "SNB_Adult", interpretor_file_path)
 
     print(f"The interpretation model is '{interpretor_file_path}'")
+.. autofunction:: reinforce_predictor
+.. code-block:: python
+
+    # Imports
+    import os
+    from khiops import core as kh
+
+    dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+    data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+    output_dir = os.path.join("kh_samples", "reinforce_predictor")
+    analysis_report_file_path = os.path.join(output_dir, "AnalysisResults.khj")
+    reinforced_predictor_file_path = os.path.join(output_dir, "ReinforcedAdultModel.kdic")
+
+    # Build prediction model
+    _, predictor_file_path = kh.train_predictor(
+        dictionary_file_path,
+        "Adult",
+        data_table_path,
+        "class",
+        analysis_report_file_path,
+    )
+
+    # Build reinforced predictor
+    kh.reinforce_predictor(
+        predictor_file_path,
+        "SNB_Adult",
+        reinforced_predictor_file_path,
+        reinforcement_lever_variables=["occupation"],
+    )
+
+    print(f"The reinforced predictor is '{reinforced_predictor_file_path}'")
 .. autofunction:: multiple_train_predictor
 .. code-block:: python
 
@@ -1098,6 +1129,53 @@ Samples
     kh.deploy_model(
         interpretor_file_path,
         "Interpretation_SNB_Accident",
+        accidents_table_path,
+        output_data_table_path,
+        additional_data_tables={"Vehicles": vehicles_table_path},
+    )
+.. autofunction:: deploy_reinforced_model_mt
+.. code-block:: python
+
+    # Imports
+    import os
+    from khiops import core as kh
+
+    # Set the file paths
+    accidents_dir = os.path.join(kh.get_samples_dir(), "AccidentsSummary")
+    dictionary_file_path = os.path.join(accidents_dir, "Accidents.kdic")
+    accidents_table_path = os.path.join(accidents_dir, "Accidents.txt")
+    vehicles_table_path = os.path.join(accidents_dir, "Vehicles.txt")
+    output_dir = os.path.join("kh_samples", "deploy_reinforced_model_mt")
+    report_file_path = os.path.join(output_dir, "AnalysisResults.khj")
+    reinforced_predictor_file_path = os.path.join(output_dir, "ReinforcedModel.kdic")
+    output_data_table_path = os.path.join(output_dir, "ReinforcedAccidents.txt")
+
+    # Train the predictor (see train_predictor_mt for details)
+    _, model_dictionary_file_path = kh.train_predictor(
+        dictionary_file_path,
+        "Accident",
+        accidents_table_path,
+        "Gravity",
+        report_file_path,
+        additional_data_tables={"Vehicles": vehicles_table_path},
+        max_trees=0,
+    )
+
+    # Reinforce the predictor
+    kh.reinforce_predictor(
+        model_dictionary_file_path,
+        "SNB_Accident",
+        reinforced_predictor_file_path,
+        reinforcement_target_value="NonLethal",
+        reinforcement_lever_variables=["InAgglomeration", "CollisionType"],
+    )
+
+    # Deploy the reinforced model on the database
+    # Besides the mandatory parameters, it is specified:
+    # - A python dictionary linking data paths to file paths for non-root tables
+    kh.deploy_model(
+        reinforced_predictor_file_path,
+        "Reinforcement_SNB_Accident",
         accidents_table_path,
         output_data_table_path,
         additional_data_tables={"Vehicles": vehicles_table_path},
