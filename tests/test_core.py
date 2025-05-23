@@ -10,6 +10,7 @@ import io
 import json
 import os
 import shutil
+import tempfile
 import textwrap
 import unittest
 import warnings
@@ -33,7 +34,45 @@ from khiops.core.internals.version import KhiopsVersion
 class KhiopsCoreIOTests(unittest.TestCase):
     """Tests the reading/writing of files for the core module classes/functions"""
 
-    def _assert_report_is_dumped_to_correct_json(self, report, ref_json_report):
+    def _assert_coclustering_report_is_written_to_sorted_json_file(
+        self, cc_report, ref_json_report
+    ):
+        # Write the coclustering report to a JSON file, sorted according to
+        # the spec defined in the CoclusteringResults class
+        # Set _ensure_ascii, as non-ASCII characters are escaped in the reference
+        # reports
+        tmp_dir = tempfile.mkdtemp()
+        output_report = os.path.join(tmp_dir, "TestCoclustering.khcj")
+        cc_report.write_khiops_json_file(output_report, _ensure_ascii=True)
+
+        # Load JSON Khiops reports into Python dictionaries
+        with open(ref_json_report, encoding="utf-8") as ref_json_file:
+            ref_json = json.load(ref_json_file)
+        with open(output_report, encoding="utf-8") as output_json_file:
+            output_json = json.load(output_json_file)
+
+        # Dump reports with consistent indentation
+        ref_json_string = json.dumps(ref_json, indent=4)
+        output_json_string = json.dumps(output_json, indent=4)
+
+        # Succeed if the dumped reports are equal
+        if output_json_string == ref_json_string:
+            shutil.rmtree(tmp_dir)
+            return
+
+        # On failure print the differences
+        output_json_lines = output_json_string.splitlines(keepends=True)
+        ref_json_lines = ref_json_string.splitlines(keepends=True)
+        out_ref_diff = "".join(unified_diff(ref_json_lines, output_json_lines))
+        if out_ref_diff:
+            self.fail(
+                "CoclusteringResults JSON dump differs from reference "
+                f"'{ref_json_report}':\n{out_ref_diff}"
+            )
+
+    def _assert_analysis_report_is_dumped_to_correct_json(
+        self, report, ref_json_report
+    ):
         # Dump the report as JSON (4-space indented and keys sorted in
         # lexicographic order)
         output_json = report.to_dict()
@@ -54,11 +93,8 @@ class KhiopsCoreIOTests(unittest.TestCase):
         ref_json_lines = ref_json_string.splitlines(keepends=True)
         out_ref_diff = "".join(unified_diff(ref_json_lines, output_json_lines))
         if out_ref_diff:
-            report_type = (
-                "Analysis" if ref_json_report.endswith(".khj") else "Coclustering"
-            )
             self.fail(
-                f"{report_type}Results JSON dump differs from reference "
+                f"AnalysisResults JSON dump differs from reference "
                 f"'{ref_json_report}':\n{out_ref_diff}"
             )
 
@@ -111,12 +147,12 @@ class KhiopsCoreIOTests(unittest.TestCase):
                 elif report in reports_warn:
                     with self.assertWarns(UserWarning):
                         results = kh.read_analysis_results_file(ref_json_report)
-                        self._assert_report_is_dumped_to_correct_json(
+                        self._assert_analysis_report_is_dumped_to_correct_json(
                             results, ref_json_report
                         )
                 else:
                     results = kh.read_analysis_results_file(ref_json_report)
-                    self._assert_report_is_dumped_to_correct_json(
+                    self._assert_analysis_report_is_dumped_to_correct_json(
                         results, ref_json_report
                     )
 
@@ -152,7 +188,9 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         results = kh.read_coclustering_results_file(ref_json_report)
                 else:
                     results = kh.read_coclustering_results_file(ref_json_report)
-                self._assert_report_is_dumped_to_correct_json(results, ref_json_report)
+                self._assert_coclustering_report_is_written_to_sorted_json_file(
+                    results, ref_json_report
+                )
 
     def test_binary_dictionary_domain(self):
         """Test binary dictionary write"""

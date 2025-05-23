@@ -77,6 +77,127 @@ class CoclusteringResults(KhiopsJSONObject):
         Coclustering modeling report.
     """
 
+    # Set coclustering report order key specification
+    # pylint: disable=line-too-long
+    json_key_sort_spec = {
+        "tool": None,
+        "version": None,
+        "shortDescription": None,
+        "coclusteringReport": {
+            "summary": {
+                "instances": None,
+                "cells": None,
+                "nullCost": None,
+                "cost": None,
+                "level": None,
+                "initialDimensions": None,
+                "frequencyVariable": None,
+                "dictionary": None,
+                "database": None,
+                "samplePercentage": None,
+                "samplingMode": None,
+                "selectionVariable": None,
+                "selectionValue": None,
+            },
+            "dimensionSummaries": [
+                {
+                    "name": None,
+                    "isVarPart": None,
+                    "type": None,
+                    "parts": None,
+                    "initialParts": None,
+                    "values": None,
+                    "interest": None,
+                    "description": None,
+                    "min": None,
+                    "max": None,
+                },
+            ],
+            "dimensionPartitions": [
+                {
+                    "name": None,
+                    "type": None,
+                    "innerVariables": {
+                        "dimensionSummaries": [
+                            {
+                                "name": None,
+                                "type": None,
+                                "parts": None,
+                                "initialParts": None,
+                                "values": None,
+                                "interest": None,
+                                "description": None,
+                                "min": None,
+                                "max": None,
+                            }
+                        ],
+                        "dimensionPartitions": [
+                            {
+                                "name": None,
+                                "type": None,
+                                "intervals": [
+                                    {
+                                        "cluster": None,
+                                        "bounds": None,
+                                    }
+                                ],
+                                "valueGroups": [
+                                    {
+                                        "cluster": None,
+                                        "values": None,
+                                        "valueFrequencies": None,
+                                    }
+                                ],
+                                "defaultGroupIndex": None,
+                            }
+                        ],
+                    },
+                    "intervals": [
+                        {
+                            "cluster": None,
+                            "bounds": None,
+                        }
+                    ],
+                    "valueGroups": [
+                        {
+                            "cluster": None,
+                            "values": None,
+                            "valueFrequencies": None,
+                            "valueTypicalities": None,
+                        }
+                    ],
+                    "defaultGroupIndex": None,
+                },
+            ],
+            "dimensionHierarchies": [
+                {
+                    "name": None,
+                    "type": None,
+                    "clusters": [
+                        {
+                            "cluster": None,
+                            "parentCluster": None,
+                            "frequency": None,
+                            "interest": None,
+                            "hierarchicalLevel": None,
+                            "rank": None,
+                            "hierarchicalRank": None,
+                            "isLeaf": None,
+                            "shortDescription": None,
+                            "description": None,
+                        }
+                    ],
+                }
+            ],
+            "cellPartIndexes": None,
+            "cellFrequencies": None,
+        },
+        "khiops_encoding": None,
+        "ansi_chars": None,
+        "colliding_utf8_chars": None,
+    }
+    # pylint: enable=line-too-long
+
     def __init__(self, json_data=None):
         """See class docstring"""
         # Initialize super class
