@@ -1,6 +1,0 @@
-Hierarchical structure	Char
-      {<é>}
-  A1
-      {<a>}
-    A3
-      {<θ>}

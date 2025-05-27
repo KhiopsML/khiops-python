@@ -1,8 +1,0 @@
-Hierarchical structure	education_num
-                        ]12.5;+inf[
-           ]-inf;+inf[
-                        ]9.5;12.5]
-                   ]-inf;12.5]
-                        ]-inf;8.5]
-                      ]-inf;9.5]
-                        ]8.5;9.5]

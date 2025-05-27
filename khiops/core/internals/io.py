@@ -14,7 +14,11 @@ import warnings
 
 import khiops.core.internals.filesystems as fs
 from khiops.core.exceptions import KhiopsJSONError
-from khiops.core.internals.common import is_string_like, type_error_message
+from khiops.core.internals.common import (
+    deprecation_message,
+    is_string_like,
+    type_error_message,
+)
 
 
 def encode_file_path(file_path):
@@ -141,10 +145,31 @@ class KhiopsJSONObject:
     sub_tool : str, optional
         Identifies the tool that originated the JSON file. Used by tools of the Khiops
         family such as PataText or Enneade.
+    json_key_sort_spec : dict, optional
+        Dictionary that specifies the order of the keys in the Khiops JSON report.
+        Its values are `None`, except when they are dictionaries themselves.
+
+        .. note::
+            This is a class attribute that can be set in subclasses, to specify
+            a key order when serializing the report in a JSON file, via the
+            ``write_khiops_json_file`` method.
+
+    json_data : dict
+        Python dictionary extracted from the Khiops JSON report file.
+        **Deprecated** will be removed in Khiops 12.
     """
+
+    # Set default JSON key sort specification attribute
+    # Can be set in classes that specialize this class
+    json_key_sort_spec = None
 
     def __init__(self, json_data=None):
         """See class docstring"""
+        # Check the type of the json_key_sort_spec class attribute
+        assert self.json_key_sort_spec is None or isinstance(
+            self.json_key_sort_spec, dict
+        ), type_error_message("key_sort_spec", self.json_key_sort_spec, dict)
+
         # Check the type of json_data
         if json_data is not None and not isinstance(json_data, dict):
             raise TypeError(type_error_message("json_data", json_data, dict))
@@ -209,7 +234,12 @@ class KhiopsJSONObject:
             self.colliding_utf8_chars = []
 
         # Store a copy of the data to be able to write copies of it
-        self.json_data = copy.deepcopy(json_data)
+        self._json_data = copy.deepcopy(json_data)
+
+    @property
+    def json_data(self):
+        warnings.warn(deprecation_message("'json_data'", "12.0.0", quote=False))
+        return self._json_data
 
     def create_output_file_writer(self, stream):
         """Creates an output file with the proper encoding settings
@@ -234,22 +264,95 @@ class KhiopsJSONObject:
             else:
                 return KhiopsOutputWriter(stream, force_ansi=True)
 
-    def write_khiops_json_file(self, json_file_path):
+    def to_dict(self):
+        """Serialize object instance to the Khiops JSON format"""
+        report = {
+            "tool": self.tool,
+            "version": self.version,
+            "khiops_encoding": self.khiops_encoding,
+        }
+        if self.ansi_chars is not None:
+            report["ansi_chars"] = self.ansi_chars
+        if self.colliding_utf8_chars is not None:
+            report["colliding_utf8_chars"] = self.colliding_utf8_chars
+        if self.sub_tool is not None:
+            report["subTool"] = self.sub_tool
+        return report
+
+    def _json_key_sort_by_spec(self, jdict, key_sort_spec=None):
+        # json_key_sort_spec must be set before using this method
+        assert self.json_key_sort_spec is not None
+
+        # Handle the base case with non-None key_sort_spec
+        sorted_jdict = {}
+        if key_sort_spec is None:
+            key_sort_spec = self.json_key_sort_spec
+
+        # Iterate over the current fields and recurse if necessary
+        for spec_key, spec_value in key_sort_spec.items():
+            if not (spec_value is None or isinstance(spec_value, (dict, list))):
+                raise ValueError(
+                    type_error_message(
+                        "specification value",
+                        spec_value,
+                        "'None' or dict or list",
+                    )
+                )
+            if spec_key in jdict:
+                json_value = jdict[spec_key]
+
+                # If json_value is not a dict, then:
+                # - if not list-like, then add it as such to the output dict
+                # - else, iterate on the list-like value
+                # else, recurse on the dict structure
+                if not isinstance(json_value, dict):
+                    if not isinstance(json_value, list):
+                        sorted_jdict[spec_key] = json_value
+                    else:
+                        sorted_jdict[spec_key] = []
+                        for json_el in json_value:
+                            if not isinstance(json_el, dict):
+                                sorted_jdict[spec_key].append(json_el)
+                            else:
+                                if isinstance(spec_value, list):
+                                    sorted_jdict[spec_key].append(
+                                        self._json_key_sort_by_spec(
+                                            json_el, key_sort_spec=spec_value[0]
+                                        )
+                                    )
+                else:
+                    sorted_jdict[spec_key] = self._json_key_sort_by_spec(
+                        json_value, key_sort_spec=spec_value
+                    )
+        return sorted_jdict
+
+    def write_khiops_json_file(self, json_file_path, _ensure_ascii=False):
         """Write the JSON data of the object to a Khiops JSON file
+
+        The JSON keys are sorted according to the
+        ``KhiopsJSONObject.json_key_sort_spec`` class attribute, if set.
+        Otherwise, the JSON keys are not sorted.
 
         Parameters
         ----------
         json_file_path : str
             Path to the Khiops JSON file.
+        _ensure_ascii : bool, default False
+            If True, then non-ASCII characters in the report are escaped. Otherwise,
+            they are dumped as-is.
         """
-        if self.json_data is not None:
-            # Serialize JSON data to string
-            # Do not escape non-ASCII Unicode characters
-            json_string = json.dumps(self.json_data, ensure_ascii=False)
-            with io.BytesIO() as json_stream:
-                writer = self.create_output_file_writer(json_stream)
-                writer.write(json_string)
-                fs.write(uri_or_path=json_file_path, data=json_stream.getvalue())
+        # Serialize JSON data to string
+        # Do not escape non-ASCII Unicode characters
+        json_dict = self.to_dict()
+        if self.json_key_sort_spec is not None:
+            json_dict = self._json_key_sort_by_spec(json_dict)
+            json_string = json.dumps(json_dict, indent=4, ensure_ascii=_ensure_ascii)
+        else:
+            json_string = json.dumps(json_dict, indent=4, ensure_ascii=_ensure_ascii)
+        with io.BytesIO() as json_stream:
+            writer = self.create_output_file_writer(json_stream)
+            writer.write(json_string)
+            fs.write(uri_or_path=json_file_path, data=json_stream.getvalue())
 
 
 class KhiopsOutputWriter:

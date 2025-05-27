@@ -1,4 +1,0 @@
-Hierarchical structure	Type
-    {ANSI}
-   B2
-    {ASCII}

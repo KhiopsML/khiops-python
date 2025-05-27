@@ -1,4 +1,0 @@
-Hierarchical structure	Char
-    {<a>}
-  A1
-    {<é>}

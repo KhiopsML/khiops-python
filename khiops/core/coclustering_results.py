@@ -23,9 +23,10 @@ of sub-reports objects given by the following structure::
     |- cells      -> list of CoclusteringCell
 
     CoclusteringDimension
-    |- parts        -> list of CoclusteringDimensionPart
-    |- clusters     -> list of CoclusteringCluster
-    |- root_cluster -> CoclusteringCluster
+    |- parts                    -> list of CoclusteringDimensionPart
+    |- variable_part_dimensions -> list of CoclusteringDimension
+    |- clusters                 -> list of CoclusteringCluster
+    |- root_cluster             -> CoclusteringCluster
 
     CoclusteringDimensionPartValueGroup
     |- values -> list of CoclusteringDimensionPartValue
@@ -37,13 +38,14 @@ of sub-reports objects given by the following structure::
     |- child_cluster2  |
 
 To have a complete illustration of the access to the information of all classes in this
-module look at their ``write_report`` methods which write TSV (tab separated values)
-reports.
+module look at their ``to_dict`` methods which write Python dictionaries in the
+same format as the Khiops JSON reports.
 """
 import io
+import warnings
 
 from khiops.core.exceptions import KhiopsJSONError
-from khiops.core.internals.common import type_error_message
+from khiops.core.internals.common import deprecation_message, type_error_message
 from khiops.core.internals.io import (
     KhiopsJSONObject,
     KhiopsOutputWriter,
@@ -75,6 +77,127 @@ class CoclusteringResults(KhiopsJSONObject):
         Coclustering modeling report.
     """
 
+    # Set coclustering report order key specification
+    # pylint: disable=line-too-long
+    json_key_sort_spec = {
+        "tool": None,
+        "version": None,
+        "shortDescription": None,
+        "coclusteringReport": {
+            "summary": {
+                "instances": None,
+                "cells": None,
+                "nullCost": None,
+                "cost": None,
+                "level": None,
+                "initialDimensions": None,
+                "frequencyVariable": None,
+                "dictionary": None,
+                "database": None,
+                "samplePercentage": None,
+                "samplingMode": None,
+                "selectionVariable": None,
+                "selectionValue": None,
+            },
+            "dimensionSummaries": [
+                {
+                    "name": None,
+                    "isVarPart": None,
+                    "type": None,
+                    "parts": None,
+                    "initialParts": None,
+                    "values": None,
+                    "interest": None,
+                    "description": None,
+                    "min": None,
+                    "max": None,
+                },
+            ],
+            "dimensionPartitions": [
+                {
+                    "name": None,
+                    "type": None,
+                    "innerVariables": {
+                        "dimensionSummaries": [
+                            {
+                                "name": None,
+                                "type": None,
+                                "parts": None,
+                                "initialParts": None,
+                                "values": None,
+                                "interest": None,
+                                "description": None,
+                                "min": None,
+                                "max": None,
+                            }
+                        ],
+                        "dimensionPartitions": [
+                            {
+                                "name": None,
+                                "type": None,
+                                "intervals": [
+                                    {
+                                        "cluster": None,
+                                        "bounds": None,
+                                    }
+                                ],
+                                "valueGroups": [
+                                    {
+                                        "cluster": None,
+                                        "values": None,
+                                        "valueFrequencies": None,
+                                    }
+                                ],
+                                "defaultGroupIndex": None,
+                            }
+                        ],
+                    },
+                    "intervals": [
+                        {
+                            "cluster": None,
+                            "bounds": None,
+                        }
+                    ],
+                    "valueGroups": [
+                        {
+                            "cluster": None,
+                            "values": None,
+                            "valueFrequencies": None,
+                            "valueTypicalities": None,
+                        }
+                    ],
+                    "defaultGroupIndex": None,
+                },
+            ],
+            "dimensionHierarchies": [
+                {
+                    "name": None,
+                    "type": None,
+                    "clusters": [
+                        {
+                            "cluster": None,
+                            "parentCluster": None,
+                            "frequency": None,
+                            "interest": None,
+                            "hierarchicalLevel": None,
+                            "rank": None,
+                            "hierarchicalRank": None,
+                            "isLeaf": None,
+                            "shortDescription": None,
+                            "description": None,
+                        }
+                    ],
+                }
+            ],
+            "cellPartIndexes": None,
+            "cellFrequencies": None,
+        },
+        "khiops_encoding": None,
+        "ansi_chars": None,
+        "colliding_utf8_chars": None,
+    }
+    # pylint: enable=line-too-long
+
     def __init__(self, json_data=None):
         """See class docstring"""
         # Initialize super class
@@ -83,7 +206,6 @@ class CoclusteringResults(KhiopsJSONObject):
         # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
             json_data = {}
-
         # Initialize empty report attributes
         self.short_description = json_data.get("shortDescription", "")
 
@@ -95,26 +217,50 @@ class CoclusteringResults(KhiopsJSONObject):
         else:
             self.coclustering_report = None
 
-    def write_report_file(self, report_file_path):
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
+        report = super().to_dict()
+        if self.short_description is not None:
+            report["shortDescription"] = self.short_description
+        if self.coclustering_report is not None:
+            report["coclusteringReport"] = self.coclustering_report.to_dict()
+        return report
+
+    def write_report_file(self, report_file_path):  # pragma: no cover
         """Writes a TSV report file with the object's information
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         report_file_path : str
             Path of the output TSV report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_report_file", "12.0.0"))
+
+        # Write report to file
         with open(report_file_path, "wb") as report_file:
             writer = self.create_output_file_writer(report_file)
             self.write_report(writer)
 
-    def write_report(self, stream_or_writer):
+    def write_report(self, stream_or_writer):  # pragma: no cover
         """Writes the instance's TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         stream_or_writer : `io.IOBase` or `.KhiopsOutputWriter`
             Output stream or writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
+
         # Check input writer/stream type
         if isinstance(stream_or_writer, io.IOBase):
             writer = self.create_output_file_writer(stream_or_writer)
@@ -342,14 +488,70 @@ class CoclusteringReport:
         """
         return self._dimensions_by_name[dimension_name]
 
-    def write_report(self, writer):
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
+        # Compute cellPartIndexes
+        cell_parts_indexes = []
+        for cell in self.cells:
+            cell_part_indexes = []
+            for cell_part in cell.parts:
+                for dimension in self.dimensions:
+                    for dimension_part_index, dimension_part in enumerate(
+                        dimension.parts
+                    ):
+                        if cell_part == dimension_part:
+                            cell_part_indexes.append(dimension_part_index)
+                            break
+            cell_parts_indexes.append(cell_part_indexes)
+        report_summary = {
+            "instances": self.instance_number,
+            "cells": self.cell_number,
+            "nullCost": self.null_cost,
+            "cost": self.cost,
+            "level": self.level,
+            "initialDimensions": self.initial_dimension_number,
+            "frequencyVariable": self.frequency_variable,
+            "dictionary": self.dictionary,
+            "database": self.database,
+            "samplePercentage": self.sample_percentage,
+            "samplingMode": self.sampling_mode,
+            "selectionVariable": self.selection_variable,
+            "selectionValue": self.selection_value,
+        }
+        report = {
+            "summary": report_summary,
+            "dimensionSummaries": [
+                dimension.to_dict(report_type="summary")
+                for dimension in self.dimensions
+            ],
+            "dimensionPartitions": [
+                dimension.to_dict(report_type="partition")
+                for dimension in self.dimensions
+            ],
+            "dimensionHierarchies": [
+                dimension.to_dict(report_type="hierarchy")
+                for dimension in self.dimensions
+            ],
+            "cellPartIndexes": cell_parts_indexes,
+            "cellFrequencies": [cell.frequency for cell in self.cells],
+        }
+        return report
+
+    def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output stream or writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_report", "12.0.0", "to_dict"))
+
         # Write each section
         self.write_dimensions(writer)
         self.write_coclustering_stats(writer)
@@ -359,28 +561,46 @@ class CoclusteringReport:
         self.write_cells(writer)
         self.write_annotations(writer)
 
-    def write_dimensions(self, writer):
+    def write_dimensions(self, writer):  # pragma: no cover
         """Writes the "dimensions" section of the TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_dimensions", "12.0.0", "to_dict"))
+
+        # Write dimension report
         writer.writeln(f"Dimensions\t{len(self.dimensions)}")
         for i, cc_dimension in enumerate(self.dimensions):
             if i == 0:
                 cc_dimension.write_dimension_header_line(writer)
             cc_dimension.write_dimension_line(writer)
 
-    def write_coclustering_stats(self, writer):
+    def write_coclustering_stats(self, writer):  # pragma: no cover
         """Writes the "stats" section of the TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message("write_coclustering_stats", "12.0.0", "to_dict")
+        )
+
+        # Write report
         writer.writeln("")
         writer.writeln("Coclustering stats")
         writer.writeln(f"Instances\t{self.instance_number}")
@@ -397,14 +617,21 @@ class CoclusteringReport:
         writer.writeln(f"Selection variable\t{self.selection_variable}")
         writer.writeln(f"Selection value\t{self.selection_value}")
 
-    def write_bounds(self, writer):
+    def write_bounds(self, writer):  # pragma: no cover
         """Writes the "bounds" section of the TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_bounds", "12.0.0", "to_dict"))
+
         # Compute number of numerical dimensions
         numerical_dimension_number = 0
         for cc_dimension in self.dimensions:
@@ -422,36 +649,59 @@ class CoclusteringReport:
                     writer.write(f"{cc_dimension.min}\t")
                     writer.writeln(str(cc_dimension.max))
 
-    def write_hierarchies(self, writer):
+    def write_hierarchies(self, writer):  # pragma: no cover
         """Writes the dimension reports' "hierarchy" sections to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_hierarchies", "12.0.0", "to_dict"))
+
+        # Write dimension hierarchy report for each dimension
         for cc_dimension in self.dimensions:
             cc_dimension.write_hierarchy(writer)
 
-    def write_compositions(self, writer):
+    def write_compositions(self, writer):  # pragma: no cover
         """Writes the dimensions' "composition" sections to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_compositions", "12.0.0", "to_dict"))
+
+        # Write dimension composition report for each dimension
         for cc_dimension in self.dimensions:
             cc_dimension.write_composition(writer)
 
-    def write_cells(self, writer):
+    def write_cells(self, writer):  # pragma: no cover
         """Writes the "cells" section of the TSV report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_cells", "12.0.0", "to_dict"))
+
         # Write header
         writer.writeln("")
         writer.writeln("Cells")
@@ -465,14 +715,21 @@ class CoclusteringReport:
         for cc_cell in self.cells:
             cc_cell.write_line(writer)
 
-    def write_annotations(self, writer):
+    def write_annotations(self, writer):  # pragma: no cover
         """Writes the dimensions' "annotation" sections to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_annotations", "12.0.0", "to_dict"))
+
         # Decide whether annotation sections need to be reported
         need_report = False
         for cc_dimension in self.dimensions:
@@ -528,6 +785,9 @@ class CoclusteringDimension:
         Maximum value of a numerical dimension/variable.
     parts : list of `CoclusteringDimensionPart`
         Partition of this dimension.
+    variable_part_dimensions : list of `CoclusteringDimension`
+        Variable part instance-variable coclustering dimensions. ``None`` for
+        variable-variable clustering.
     clusters : list of `CoclusteringCluster`
         Clusters of this dimension's hierarchy. Note that includes intermediary
         clusters.
@@ -566,6 +826,9 @@ class CoclusteringDimension:
 
         # Clusters internal dictionary
         self._clusters_by_name = {}
+
+        # Variable part dimensions
+        self.variable_part_dimensions = None
 
     def init_summary(self, json_data=None):
         """Initializes the summary attributes from a Python JSON object
@@ -680,6 +943,42 @@ class CoclusteringDimension:
             self.default_group = self.parts[default_group_index]
             self.default_group.is_default_part = True
 
+            # Instance-variable coclustering: initialize inner variables
+            if self.is_variable_part:
+
+                # Create inner variables dimensions (subpartition)
+                if "innerVariables" not in json_data:
+                    raise KhiopsJSONError("'innerVariables' key not found")
+                self.variable_part_dimensions = []
+                json_inner_variables = json_data["innerVariables"]
+                if "dimensionSummaries" in json_inner_variables:
+                    for json_dimension_summary in json_inner_variables[
+                        "dimensionSummaries"
+                    ]:
+                        dimension = CoclusteringDimension().init_summary(
+                            json_dimension_summary
+                        )
+                        self.variable_part_dimensions.append(dimension)
+
+                # Initialize inner variables dimensions' partitions
+                if "dimensionPartitions" in json_inner_variables:
+                    json_dimension_partitions = json_inner_variables[
+                        "dimensionPartitions"
+                    ]
+                    if len(self.variable_part_dimensions) != len(
+                        json_dimension_partitions
+                    ):
+                        raise KhiopsJSONError(
+                            "'ineerVariables/dimensionPartitions' list has length "
+                            f"{len(json_dimension_partitions)} instead of "
+                            f"{len(self.variable_part_dimensions)}"
+                        )
+                    for i, json_dimension_partition in enumerate(
+                        json_dimension_partitions
+                    ):
+                        dimension = self.variable_part_dimensions[i]
+                        dimension.init_partition(json_dimension_partition)
+
         return self
 
     def init_hierarchy(self, json_data):
@@ -787,14 +1086,88 @@ class CoclusteringDimension:
         """
         return self._clusters_by_name[cluster_name]
 
-    def write_dimension_header_line(self, writer):
+    def to_dict(self, report_type):
+        """Transforms this instance to a dict with the Khiops JSON file structure
+
+        Parameters
+        ----------
+        report_type : str
+            Type of the report. Can be either one of "summary", "dimension", and
+            "hierarchy".
+        """
+        if report_type == "summary":
+            report = {
+                "name": self.name,
+                "type": self.type,
+                "parts": self.part_number,
+                "initialParts": self.initial_part_number,
+                "values": self.value_number,
+                "interest": self.interest,
+                "description": self.description,
+            }
+            if self.type == "Numerical":
+                report.update({"min": self.min, "max": self.max})
+            if self.is_variable_part:
+                report["isVarPart"] = self.is_variable_part
+            return report
+        elif report_type == "partition":
+            report = {
+                "name": self.name,
+                "type": self.type,
+            }
+            if self.type == "Numerical":
+                report["intervals"] = [part.to_dict() for part in self.parts]
+            elif self.type == "Categorical":
+                report["valueGroups"] = [part.to_dict() for part in self.parts]
+
+                # Get default group index
+                for i, part in enumerate(self.parts):
+                    if part.is_default_part:
+                        default_group_index = i
+                        break
+                report["defaultGroupIndex"] = default_group_index
+
+                # Inner variables dimensions for instance-variable coclustering
+                if self.is_variable_part:
+                    report["innerVariables"] = {
+                        "dimensionSummaries": [
+                            dimension.to_dict(report_type="summary")
+                            for dimension in self.variable_part_dimensions
+                        ],
+                        "dimensionPartitions": [
+                            dimension.to_dict(report_type="partition")
+                            for dimension in self.variable_part_dimensions
+                        ],
+                    }
+            return report
+        elif report_type == "hierarchy":
+            report = {
+                "name": self.name,
+                "type": self.type,
+                "clusters": [cluster.to_dict() for cluster in self.clusters],
+            }
+            return report
+        else:
+            raise ValueError(f"Unknown 'report_type 'value: '{report_type}'")
+
+    def write_dimension_header_line(self, writer):  # pragma: no cover
         """Writes the "dimensions" section header to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message("write_dimension_header_line", "12.0.0", "to_dict")
+        )
+
+        # Write dimension report header
         writer.write("Name\t")
         writer.write("Is variable part\t")
         writer.write("Type\t")
@@ -804,14 +1177,22 @@ class CoclusteringDimension:
         writer.write("Interest\t")
         writer.writeln("Description")
 
-    def write_dimension_line(self, writer):
+    def write_dimension_line(self, writer):  # pragma: no cover
         """Writes the "dimensions" section line to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_dimension_line", "12.0.0", "to_dict"))
+
+        # Write dimension report line
         writer.write(f"{self.name}\t")
         writer.write(f"{self.is_variable_part}\t")
         writer.write(f"{self.type}\t")
@@ -821,14 +1202,21 @@ class CoclusteringDimension:
         writer.write(f"{self.interest}\t")
         writer.writeln(self.description)
 
-    def write_hierarchy(self, writer):
+    def write_hierarchy(self, writer):  # pragma: no cover
         """Writes the "hierarchy" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_hierarchy", "12.0.0", "to_dict"))
+
         # Write header
         writer.writeln("")
         writer.writeln(f"Hierarchy\t{self.name}")
@@ -839,14 +1227,21 @@ class CoclusteringDimension:
                 cluster.write_hierarchy_header_line(writer)
             cluster.write_hierarchy_line(writer)
 
-    def write_composition(self, writer):
+    def write_composition(self, writer):  # pragma: no cover
         """Writes the "composition" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_composition", "12.0.0", "to_dict"))
+
         # Write only categorical dimensions
         if self.type == "Categorical":
             # Write header
@@ -873,14 +1268,21 @@ class CoclusteringDimension:
                     writer.write(f"{0}\t")
                     writer.writeln(str(0))
 
-    def write_annotation(self, writer):
+    def write_annotation(self, writer):  # pragma: no cover
         """Writes the "annotation" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_annotation", "12.0.0", "to_dict"))
+
         # Write header
         writer.writeln("")
         writer.writeln(f"Annotation\t{self.name}")
@@ -905,16 +1307,30 @@ class CoclusteringDimension:
                 return True
         return False
 
-    def write_hierarchy_structure_report_file(self, report_file_path):
+    def write_hierarchy_structure_report_file(
+        self, report_file_path
+    ):  # pragma: no cover
         """Writes the hierarchical structure of the clusters to a file
 
         This method is mainly a test of the encoding of the cluster hierarchy.
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         report_file_path : str
             Path of the output file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message(
+                "write_hierarchy_structure_report_file", "12.0.0", "to_dict"
+            )
+        )
+
+        # Write report to file
         with open(report_file_path, "wb") as report_file:
             writer = KhiopsOutputWriter(report_file)
             writer.writeln(f"Hierarchical structure\t{self.name}")
@@ -1022,6 +1438,15 @@ class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
         self.is_left_open = False
         self.is_right_open = False
 
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
+        report = {
+            "cluster": self.cluster_name,
+        }
+        if not self.is_missing:
+            report["bounds"] = [self.lower_bound, self.upper_bound]
+        return report
+
     def __str__(self):
         """Returns a human-readable string representation"""
         if self.is_missing:
@@ -1083,7 +1508,9 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
             json_data = {}
         # Otherwise raise an error if the relevant keys are not found
         else:
-            mandatory_keys = ("values", "valueFrequencies", "valueTypicalities")
+            # Value typicalities are absent for variable parts dimensions in
+            # instance-variable coclustering
+            mandatory_keys = ("values", "valueFrequencies")
             for key in mandatory_keys:
                 if key not in json_data:
                     raise KhiopsJSONError(f"'{key}' key not found")
@@ -1104,7 +1531,12 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
             self.values.append(value)
             value.value = json_value
             value.frequency = json_value_frequencies[i]
-            value.typicality = json_value_typicalities[i]
+
+            # valueTypicalities are absent for variable part dimension parts,
+            # as used in instance-variable coclustering
+            value.typicality = (
+                json_value_typicalities[i] if i < len(json_value_typicalities) else None
+            )
 
         # Initialize default values (set for real from another class)
         self.is_default_part = False
@@ -1121,6 +1553,20 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
             label += value.value
         label += "}"
         return label
+
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
+        report = {
+            "cluster": self.cluster_name,
+            "values": [value.value for value in self.values],
+            "valueFrequencies": [value.frequency for value in self.values],
+        }
+        typicalities = [
+            value.typicality for value in self.values if value.typicality is not None
+        ]
+        if typicalities:
+            report["valueTypicalities"] = typicalities
+        return report
 
     def part_type(self):
         """Part type of this instance
@@ -1228,8 +1674,8 @@ class CoclusteringCluster:
         self.rank = json_data.get("rank", 0)
         self.hierarchical_rank = json_data.get("hierarchicalRank", 0)
         self.is_leaf = json_data.get("isLeaf", False)
-        self.short_description = json_data.get("shortDescription", "")
-        self.description = json_data.get("description", "")
+        self.short_description = json_data.get("shortDescription")
+        self.description = json_data.get("description")
 
         # Link to child clusters, None for the leaves of the hierarchy
         # The user must specify the CoclusteringCluster references parent_cluster
@@ -1239,14 +1685,42 @@ class CoclusteringCluster:
         self.child_cluster2 = None
         self.leaf_part = None
 
-    def write_hierarchy_header_line(self, writer):
+    def to_dict(self):
+        """Transforms this instance to a dict with the Khiops JSON file structure"""
+        report = {
+            "cluster": self.name,
+            "parentCluster": self.parent_cluster_name,
+            "frequency": self.frequency,
+            "interest": self.interest,
+            "hierarchicalLevel": self.hierarchical_level,
+            "rank": self.rank,
+            "hierarchicalRank": self.hierarchical_rank,
+            "isLeaf": self.is_leaf,
+        }
+        if self.short_description is not None:
+            report["shortDescription"] = self.short_description
+        if self.description is not None:
+            report["description"] = self.description
+        return report
+
+    def write_hierarchy_header_line(self, writer):  # pragma: no cover
         """Writes the "hierarchy" section's header to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message("write_hierarchy_header_line", "12.0.0", "to_dict")
+        )
+
+        # Write report header
         writer.write("Cluster\t")
         writer.write("ParentCluster\t")
         writer.write("Frequency\t")
@@ -1255,14 +1729,22 @@ class CoclusteringCluster:
         writer.write("Rank\t")
         writer.writeln("HierarchicalRank")
 
-    def write_hierarchy_line(self, writer):
+    def write_hierarchy_line(self, writer):  # pragma: no cover
         """Writes a line of the "hierarchy" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_hierarchy_line", "12.0.0", "to_dict"))
+
+        # Write hierarchy report line
         writer.write(f"{self.name}\t")
         writer.write(f"{self.parent_cluster_name}\t")
         writer.write(f"{self.frequency}\t")
@@ -1271,28 +1753,46 @@ class CoclusteringCluster:
         writer.write(f"{self.rank}\t")
         writer.writeln(str(self.hierarchical_rank))
 
-    def write_annotation_header_line(self, writer):
+    def write_annotation_header_line(self, writer):  # pragma: no cover
         """Writes the "annotation" section's header to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message("write_annotation_header_line", "12.0.0", "to_dict")
+        )
+
+        # Write annotation report header
         writer.write("Cluster\t")
         writer.write("Expand\t")
         writer.write("Selected\t")
         writer.write("ShortDescription\t")
         writer.writeln("Description")
 
-    def write_annotation_line(self, writer):
+    def write_annotation_line(self, writer):  # pragma: no cover
         """Writes a line of the "annotation" section to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_annotation_line", "12.0.0", "to_dict"))
+
+        # Write annotation report line
         writer.write(f"{self.name}\t")
         # TODO: Why "Expand" and "Selected" are not available?
         writer.write("FALSE\t")
@@ -1300,16 +1800,25 @@ class CoclusteringCluster:
         writer.write(f"{self.short_description}\t")
         writer.writeln(self.description)
 
-    def write_hierarchy_structure_report(self, writer):
+    def write_hierarchy_structure_report(self, writer):  # pragma: no cover
         """Writes the hierarchical structure from this instance to a writer object
 
         This method is mainly a test of the encoding of the cluster hierarchy.
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12. Use the `.to_dict` method instead.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer for the report file.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(
+            deprecation_message("write_hierarchy_structure_report", "12.0.0", "to_dict")
+        )
+
         # Write first child cluster
         if self.child_cluster1 is not None:
             self.child_cluster1.write_hierarchy_structure_report(writer)
@@ -1344,14 +1853,22 @@ class CoclusteringCell:
         self.parts = []
         self.frequency = 0
 
-    def write_line(self, writer):
+    def write_line(self, writer):  # pragma: no cover
         """Writes a line of the instance's report to a writer object
+
+        .. warning::
+            This method is *deprecated* since Khiops 11.0.0 and will be removed in
+            Khiops 12.
 
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
             Output writer.
         """
+        # Warn the user that this method is deprecated and will be removed
+        warnings.warn(deprecation_message("write_line", "12.0.0"))
+
+        # Write part report line
         for part in self.parts:
             writer.write(f"{part.cluster_name}\t")
         writer.writeln(str(self.frequency))
