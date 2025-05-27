@@ -128,7 +128,7 @@ Samples
 
     # Set the file paths
     dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
-    output_dir = os.path.join("kh_samples", "export_dictionary_file")
+    output_dir = os.path.join("kh_samples", "export_dictionary_files")
     output_dictionary_file_path = os.path.join(output_dir, "ModifiedAdult.kdic")
     output_dictionary_json_path = os.path.join(output_dir, "ModifiedAdult.kdicj")
     alt_output_dictionary_json_path = os.path.join(output_dir, "AltModifiedAdult.kdicj")
