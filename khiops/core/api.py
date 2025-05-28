@@ -321,27 +321,6 @@ def _preprocess_task_arguments(task_args):
             task_args["dictionary_file_path_or_domain"], task_args["trace"]
         )
 
-    # Set the default discretization method for unsupervised analysis
-    # "target_variable" is mandatory if "discretization_method" or
-    # "grouping_method" are present
-    if "discretization_method" in task_args and task_args["target_variable"] == "":
-        if task_args["discretization_method"] is None:
-            task_args["discretization_method"] = "MODL"
-
-    # Remove discretization method if specified for supervised analysis:
-    # it is always MODL
-    if "discretization_method" in task_args and task_args["target_variable"] != "":
-        del task_args["discretization_method"]
-
-    # Set the default grouping method for unsupervised analysis
-    if "grouping_method" in task_args and task_args["target_variable"] == "":
-        if task_args["grouping_method"] is None:
-            task_args["grouping_method"] = "MODL"
-
-    # Remove grouping method if specified for supervised analysis: it is always MODL
-    if "grouping_method" in task_args and task_args["target_variable"] != "":
-        del task_args["grouping_method"]
-
     # Transform the use_complement_as_test bool parameter to its string counterpart
     if "use_complement_as_test" in task_args:
         if task_args["use_complement_as_test"]:
@@ -691,8 +670,8 @@ def train_predictor(
     all_possible_pairs=True,
     specific_pairs=None,
     group_target_value=False,
-    discretization_method=None,
-    grouping_method=None,
+    discretization_method="MODL",
+    grouping_method="MODL",
     max_parts=0,
     log_file_path=None,
     output_scenario_path=None,
@@ -797,13 +776,13 @@ def train_predictor(
     group_target_value : bool, default ``False``
         Allows grouping of the target variable values in classification. It can
         substantially increase the training time.
-    discretization_method : str
-        Name of the discretization method, for unsupervised analysis only.
-        Its valid values are: "MODL" (default), "EqualWidth", "EqualFrequency"
-        or "None". Ignored for supervised analysis.
-    grouping_method : str
-        Name of the grouping method, for unsupervised analysis only.
-        Its valid values are: "MODL" (default), "BasicGrouping" or "None".
+    discretization_method : str, default "MODL"
+        Name of the discretization method in case of unsupervised analysis.
+        Its valid values are: "MODL", "EqualWidth", "EqualFrequency" or "none".
+        Ignored for supervised analysis.
+    grouping_method : str, default "MODL"
+        Name of the grouping method in case of unsupervised analysis.
+        Its valid values are: "MODL", "BasicGrouping" or "none".
         Ignored for supervised analysis.
     max_parts : int, default 0
         Maximum number of variable parts produced by preprocessing methods. If equal
@@ -1124,8 +1103,8 @@ def train_recoder(
     numerical_recoding_method="part Id",
     pairs_recoding_method="part Id",
     group_target_value=False,
-    discretization_method=None,
-    grouping_method=None,
+    discretization_method="MODL",
+    grouping_method="MODL",
     max_parts=0,
     log_file_path=None,
     output_scenario_path=None,
@@ -1227,9 +1206,9 @@ def train_recoder(
         If ``True`` keeps only informative variables.
     max_variables : int, default 0
         Maximum number of variables to keep. If equal to 0 keeps all variables.
-    keep_initial_categorical_variables : bool, default ``True``
+    keep_initial_categorical_variables : bool, default ``False``
         If ``True`` keeps the initial categorical variables.
-    keep_initial_numerical_variables : bool, default ``True``
+    keep_initial_numerical_variables : bool, default ``False``
         If ``True`` keeps initial numerical variables.
     categorical_recoding_method : str
         Type of recoding for categorical variables. Types available:
@@ -1256,13 +1235,13 @@ def train_recoder(
             - "0-1 binarization": A 0's and 1's coding the interval/group id
             - "conditional info": Conditional information of the interval/group
             - "none": Keeps the variable as-is
-    discretization_method : str
-        Name of the discretization method, for unsupervised analysis only.
-        Its valid values are: "MODL" (default), "EqualWidth", "EqualFrequency"
-        or "None". Ignored for supervised analysis.
-    grouping_method : str
-        Name of the grouping method, for unsupervised analysis only.
-        Its valid values are: "MODL" (default), "BasicGrouping" or "None".
+    discretization_method : str, default "MODL"
+        Name of the discretization method in case of unsupervised analysis.
+        Its valid values are: "MODL", "EqualWidth", "EqualFrequency" or "none".
+        Ignored for supervised analysis.
+    grouping_method : str, default "MODL"
+        Name of the grouping method in case of unsupervised analysis.
+        Its valid values are: "MODL", "BasicGrouping" or "none".
         Ignored for supervised analysis.
     max_parts : int, default 0
         Maximum number of variable parts produced by preprocessing methods. If equal
