@@ -375,16 +375,6 @@ def _preprocess_task_arguments(task_args):
         if isinstance(task_args["selection_value"], (int, float)):
             task_args["selection_value"] = str(task_args["selection_value"])
 
-    # Discard the max_variable_importances interpretation parameters
-    if "max_variable_importances" in task_args:
-        if task_args["max_variable_importances"] is not None:
-            warnings.warn(
-                "The 'max_variable_importances' parameter of the "
-                "'khiops.core.api.interpret_predictor' function is not supported "
-                " yet. All model variables' importances are computed."
-            )
-        del task_args["max_variable_importances"]
-
     # Detect and replace deprecated data-path syntax on additional_data_tables
     # Mutate task_args in the process
     for data_path_task_arg_name in (
@@ -880,9 +870,8 @@ def interpret_predictor(
     dictionary_file_path_or_domain,
     predictor_dictionary_name,
     interpretor_file_path,
-    max_variable_importances=None,
-    reinforcement_target_value="",
-    reinforcement_lever_variables=None,
+    max_variable_importances=100,
+    importance_ranking="Global",
     log_file_path=None,
     output_scenario_path=None,
     task_file_path=None,
@@ -905,18 +894,17 @@ def interpret_predictor(
         Name of the predictor dictionary used while building the interpretation model.
     interpretor_file_path : str
         Path to the interpretor dictionary file.
-    max_variable_importances : int, optional
+    max_variable_importances : int, default 100
         Maximum number of variable importances to be selected in the interpretation
-        model. If not set, then all the variables in the prediction model are
-        considered.
-        ..note:: Not currently supported; not taken into account if set.
-    reinforcement_target_value : str, default ""
-        If this target value is specified, then its probability of occurrence is
-        tentatively increased.
-    reinforcement_lever_variables : list of str, optional
-        The names of variables to use as lever variables while building the
-        interpretation model. Min length: 0. Max length: the total number of variables
-        in the prediction model. If not specified, all variables are used.
+        model. If the predictor contains fewer variables than this number, then
+        all the variables of the predictor are considered.
+    importance_ranking : str, default "Global"
+        Ranking of the Shapley values produced by the interpretor. Ca be one of:
+
+        - "Global": predictor variables are ranked by decreasing global importance.
+
+        - "Individual": predictor variables are ranked by decreasing individual
+          Shapley value.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -931,6 +919,7 @@ def interpret_predictor(
     --------
     See the following functions of the ``samples.py`` documentation script:
         - `samples.interpret_predictor()`
+        - `samples.deploy_model_mt_with_interpretation()`
     """
     # Save the task arguments
     # WARNING: Do not move this line, see the top of the "tasks" section for details
@@ -938,6 +927,69 @@ def interpret_predictor(
 
     # Run the task
     _run_task("interpret_predictor", task_args)
+
+
+def reinforce_predictor(
+    dictionary_file_path_or_domain,
+    predictor_dictionary_name,
+    reinforced_predictor_file_path,
+    reinforcement_target_value="",
+    reinforcement_lever_variables=None,
+    log_file_path=None,
+    output_scenario_path=None,
+    task_file_path=None,
+    trace=False,
+    stdout_file_path="",
+    stderr_file_path="",
+    max_cores=None,
+    memory_limit_mb=None,
+    temp_dir="",
+    scenario_prologue="",
+    **kwargs,
+):
+    r"""Builds a reinforced predictor from a predictor
+
+    A reinforced predictor is a model which increases the importance of specified lever
+    variables in order to increase the probability of occurrence of the specified target
+    value.
+
+    Parameters
+    ----------
+    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+        Path of a Khiops dictionary file or a DictionaryDomain object.
+    predictor_dictionary_name : str
+        Name of the predictor dictionary used while building the reinforced predictor.
+    reinforced_predictor_file_path : str
+        Path to the reinforced predictor dictionary file.
+    reinforcement_target_value : str, default ""
+        If this target value is specified, then its probability of occurrence is
+        tentatively increased.
+    reinforcement_lever_variables : list of str
+        The names of variables to use as lever variables while building the
+        reinforced predictor. Min length: 1. Max length: the total number of variables
+        in the prediction model.
+    ... :
+        See :ref:`core-api-common-params`.
+
+    Raises
+    ------
+    `ValueError`
+        Invalid values of an argument
+    `TypeError`
+        Invalid type of an argument
+
+    Examples
+    --------
+    See the following functions of the ``samples.py`` documentation script:
+        - `samples.reinforce_predictor()`
+        - `samples.deploy_reinforced_model_mt()`
+    """
+    # Save the task arguments
+    # WARNING: Do not move this line, see the top of the "tasks" section for details
+    task_args = locals()
+
+    # Run the task
+    _run_task("reinforce_predictor", task_args)
 
 
 def evaluate_predictor(

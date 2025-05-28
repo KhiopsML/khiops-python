@@ -4,27 +4,27 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""interpret_predictor task family"""
+"""reinforce_predictor task family"""
 from khiops.core.internals import task as tm
-from khiops.core.internals.types import IntType, StringLikeType
+from khiops.core.internals.types import ListType, StringLikeType
 
 # Disable long lines to have readable scenarios
 # pylint: disable=line-too-long
 TASKS = [
     tm.KhiopsTask(
-        "interpret_predictor",
+        "reinforce_predictor",
         "khiops",
-        "10.6.0-b.0",
+        "10.7.3-a.0",
         [
             ("dictionary_file_path", StringLikeType),
             ("predictor_dictionary_name", StringLikeType),
-            ("interpretor_file_path", StringLikeType),
+            ("reinforced_predictor_file_path", StringLikeType),
         ],
         [
-            ("max_variable_importances", IntType, 100),
-            ("importance_ranking", StringLikeType, "Global"),
+            ("reinforcement_target_value", StringLikeType, ""),
+            ("reinforcement_lever_variables", ListType(StringLikeType), None),
         ],
-        ["dictionary_file_path", "interpretor_file_path"],
+        ["dictionary_file_path", "reinforced_predictor_file_path"],
         # pylint: disable=line-too-long
         # fmt: off
         """
@@ -33,23 +33,25 @@ TASKS = [
         ClassFileName __dictionary_file_path__
         OK
 
-        // interpretation settings
+        // Reinforcement settings
         TrainDatabase.ClassName __predictor_dictionary_name__
 
-        // Interpret model
-        LearningTools.InterpretPredictor
+        // Reinforce model
+        LearningTools.ReinforcePredictor
+        ReinforcedTargetValue __reinforcement_target_value__
 
-        // Number of predictor variables exploited in the interpretation model
-        ContributionAttributeNumber __max_variable_importances__
+        LeverAttributes.UnselectAll
+        __DICT__
+        __reinforcement_lever_variables__
+        LeverAttributes.List.Key
+        LeverAttributes.Used
+        __END_DICT__
 
-        // Ranking of the Shapley value produced by the interpretation model
-        ShapleyValueRanking __importance_ranking__
-
-        // Build interpretation dictionary
-        BuildInterpretationClass
+        // Build reinforced predictor
+        BuildReinforcementClass
 
         // Output settings
-        ClassFileName __interpretor_file_path__
+        ClassFileName __reinforced_predictor_file_path__
         OK
         Exit
         """,
