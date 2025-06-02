@@ -14,7 +14,7 @@ on:
         default: main
         description: khiops-python-tutorial repo revision
       image-tag:
-        default: 10.7.0-b.0.0
+        default: 10.7.3-a.0.0
         description: Development Docker Image Tag
   pull_request:
     paths:
@@ -44,7 +44,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.7.0-b.0.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '10.7.3-a.0.0' }}
       # Use the 'runner' user (1001) from github so checkout actions work properly
       # https://github.com/actions/runner/issues/2033#issuecomment-1598547465
       options: --user 1001
