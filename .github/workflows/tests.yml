@@ -2,7 +2,7 @@
 name: Tests
 env:
   DEFAULT_SAMPLES_REVISION: 11.0.0
-  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.7.0-b.0
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.7.3-a.0
 on:
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
         default: 10.7.3-a.0.0
         description: Development Docker Image Tag
       khiops-desktop-revision:
-        default: 10.7.0-b.0
+        default: 10.7.3-a.0
         description: Khiops Windows Desktop Application Version
       run-expensive-tests:
         type: boolean
