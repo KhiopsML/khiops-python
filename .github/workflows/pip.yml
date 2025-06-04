@@ -45,8 +45,14 @@ jobs:
           # This is needed so that the Git tag is parsed and the version is retrieved
           git config --global --add safe.directory $(realpath .)
 
+          # Upgrade Pip
+          pip install --upgrade pip
+
+          # Install required Python build dependency
+          pip install build
+
           # Build the package
-          python3 setup.py sdist
+          python3 -m build --sdist
       - name: Upload package as artifact
         uses: actions/upload-artifact@v4
         with:
@@ -82,7 +88,9 @@ jobs:
         with:
           name: pip-package
       - name: Install package
-        run: pip install $(ls khiops*.tar.gz)
+        run: |
+          pip install --upgrade pip
+          pip install $(ls khiops*.tar.gz)
       - name: Run tests
         env:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples

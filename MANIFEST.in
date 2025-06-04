@@ -4,10 +4,8 @@ recursive-exclude doc *
 exclude .git*
 exclude CONTRIBUTING.md
 exclude MANIFEST.in
-exclude pyproject.toml
 exclude sonar-project.properties
 exclude test-requirements.txt
 include khiops/samples/*.ipynb
 include khiops/_version.py
 include khiops/core/scenarios/**/*._kh*
-include versioneer.py
