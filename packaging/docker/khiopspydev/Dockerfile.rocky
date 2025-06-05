@@ -25,11 +25,13 @@ RUN true \
        dnf install -y \
        python3.11 \
        python3.11-pip \
-       python3.11-setuptools ; \
+       python3.11-setuptools \
+       python3.11-devel ; \
      else \
        dnf install -y \
        python3-setuptools \
-       python3-pip ; \
+       python3-pip \
+       python3-devel ; \
      fi \
   # Get Linux distribution codename \
   && if [ -f /etc/os-release ]; then . /etc/os-release; fi \
