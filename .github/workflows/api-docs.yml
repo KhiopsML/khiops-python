@@ -67,14 +67,19 @@ jobs:
         run: echo PATH="$PATH:/github/home/.local/bin" >> "$GITHUB_ENV"
       - name: Install doc build requirements
         run: |
+          pip install setuptools --upgrade
+
+          # Install tomli so that pyproject.toml can be parsed
+          pip install tomli
+
           # Install package itself to install the samples datasets
-          pip3 install .
+          pip install .
           kh-download-datasets --force-overwrite
           kh-status
 
           # Install the doc python requirements
           cd doc
-          pip3 install -U -r requirements.txt
+          pip install -U -r requirements.txt
       - name: Build Sphinx Documentation
         run: |
           cd doc
