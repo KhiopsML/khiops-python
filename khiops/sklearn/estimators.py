@@ -556,7 +556,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # Create the table files to be used by Khiops
         (
             main_table_path,
-            secondary_table_paths,
+            additional_data_table_paths,
         ) = deployment_ds.create_table_files_for_khiops(
             computation_dir, sort=self.auto_sort
         )
@@ -565,20 +565,12 @@ class KhiopsEstimator(ABC, BaseEstimator):
         secondary_data_paths = model_dictionary_domain.extract_data_paths(
             model_dictionary_name
         )
-        additional_data_tables = {}
         for data_path in secondary_data_paths:
             dictionary = model_dictionary_domain.get_dictionary_at_data_path(data_path)
             assert dictionary.name.startswith(self._khiops_model_prefix), (
                 f"Dictionary '{dictionary.name}' "
                 f"does not have prefix '{self._khiops_model_prefix}'"
             )
-            initial_dictionary_name = dictionary.name.replace(
-                self._khiops_model_prefix, "", 1
-            )
-
-            additional_data_tables[data_path] = secondary_table_paths[
-                initial_dictionary_name
-            ]
 
         # Set output path files
         output_dir = self._get_output_dir(computation_dir)
@@ -591,7 +583,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             model_dictionary_name,
             main_table_path,
             output_data_table_path,
-            additional_data_tables=additional_data_tables,
+            additional_data_tables=additional_data_table_paths,
             detect_format=False,
             field_separator="\t",
             header_line=True,
@@ -816,10 +808,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             main_table_dictionary.key = [self.model_id_column]
         main_table_dictionary.name = f"{self._khiops_model_prefix}{ds.main_table.name}"
         self.model_main_dictionary_name_ = (
-            f"{self._khiops_model_prefix}Keys_{ds.main_table.name}"
+            f"{self._khiops_model_prefix}{ds.main_table.name}"
         )
         self.model_secondary_table_variable_name = (
-            f"{self._khiops_model_prefix}{ds.main_table.name}"
+            f"{self._khiops_model_prefix}original_{ds.main_table.name}"
         )
         self._create_coclustering_model_domain(
             tmp_domain, coclustering_file_path, output_dir
@@ -873,6 +865,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             domain,
             self.model_main_dictionary_name_,
             self.model_secondary_table_variable_name,
+            update_secondary_table_name=True,
         )
 
         # Create the model by adding the coclustering variables
@@ -1162,10 +1155,8 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         assert not ds.is_multitable, "'dataset' is multitable"
 
         # Build the multitable deployment dataset
-        keys_table_name = f"keys_{ds.main_table.name}"
         deploy_dataset_spec = {}
-        deploy_dataset_spec["main_table"] = keys_table_name
-        deploy_dataset_spec["tables"] = {}
+        deploy_dataset_spec["additional_data_tables"] = {}
 
         # Extract the keys from the main table
         keys_table_dataframe = pd.DataFrame(
@@ -1177,13 +1168,15 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         )
 
         # Create the dataset with the keys table as the main one
-        deploy_dataset_spec["tables"][keys_table_name] = (
+        deploy_dataset_spec["main_table"] = (
             keys_table_dataframe,
-            self.model_id_column,
+            [self.model_id_column],
         )
-        deploy_dataset_spec["tables"][ds.main_table.name] = (
+        deploy_dataset_spec["additional_data_tables"][
+            f"{self._khiops_model_prefix}original_main_table"
+        ] = (
             ds.main_table.data_source,
-            self.model_id_column,
+            [self.model_id_column],
         )
 
         return Dataset(deploy_dataset_spec)
@@ -1340,8 +1333,18 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         secondary_data_paths = ds_domain.extract_data_paths(ds.main_table.name)
         additional_data_tables = {}
         for data_path in secondary_data_paths:
-            dictionary = ds_domain.get_dictionary_at_data_path(data_path)
-            additional_data_tables[data_path] = secondary_table_paths[dictionary.name]
+            path_bits = []
+            data_path_fragments = data_path.split("/")
+            for path_fragment in data_path_fragments:
+                path_subfragments = path_fragment.split("§")
+                for path_subfragment in path_subfragments:
+                    if path_subfragment not in path_bits:
+                        path_bits.append(path_subfragment)
+            simplified_data_path = "/".join(path_bits)
+
+            additional_data_tables[data_path] = secondary_table_paths[
+                simplified_data_path
+            ]
 
         # Build the mandatory arguments
         args = [
@@ -1415,7 +1418,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                     f"does not have prefix '{self._khiops_model_prefix}' "
                     f"or '{self._khiops_baseline_model_prefix}'."
                 )
-
                 # Skip baseline model
                 if dictionary.name.startswith(self._khiops_model_prefix):
                     initial_dictionary_name = dictionary.name.replace(
@@ -1514,7 +1516,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Multi-table model: Check name and dictionary coherence of secondary tables
         dataset_secondary_tables_by_name = {
-            table.name: table for table in ds.secondary_tables
+            table.name: table for table in ds.additional_data_tables
         }
         for dictionary in self.model_.dictionaries:
             assert dictionary.name.startswith(self._khiops_model_prefix), (

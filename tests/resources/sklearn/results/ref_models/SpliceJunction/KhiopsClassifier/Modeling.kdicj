@@ -3,11 +3,11 @@
 	"version": "10.0",
 	"dictionaries": [
 		{
-			"name": "SNB_SpliceJunction",
+			"name": "SNB_main_table",
 			"root": true,
 			"key": ["SampleId"],
 			"metaData": {
-				"InitialDictionary": "SpliceJunction",
+				"InitialDictionary": "main_table",
 				"PredictorLabel": "Selective Naive Bayes",
 				"PredictorType": "Classifier"
 			},

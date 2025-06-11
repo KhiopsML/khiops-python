@@ -107,13 +107,11 @@ class KhiopsHelperFunctions(unittest.TestCase):
         calls_df = pd.read_csv(io.StringIO(CALLS_CSV))
         connections_df = pd.read_csv(io.StringIO(CONNECTIONS_CSV))
         ds_spec = {
-            "main_table": "clients",
-            "tables": {
-                "clients": (clients_df.drop("class", axis=1), ["id"]),
-                "calls": (calls_df, ["id", "call_id"]),
-                "connections": (connections_df, ["id", "call_id"]),
+            "main_table": (clients_df.drop("class", axis=1), ["id"]),
+            "additional_data_tables": {
+                "calls": (calls_df, ["id", "call_id"], False),
+                "calls/connections": (connections_df, ["id", "call_id"], False),
             },
-            "relations": [("clients", "calls", False), ("calls", "connections", False)],
         }
         y = clients_df["class"]
 
@@ -150,13 +148,18 @@ class KhiopsHelperFunctions(unittest.TestCase):
             },
         }
         for split, ref_tables in ref_table_dfs.items():
-            for table_name in ds_spec["tables"]:
-                with self.subTest(split=split, table_name=table_name):
+            for table_path in ds_spec["additional_data_tables"]:
+                with self.subTest(split=split, table_path=table_path):
                     self._assert_frame_equal(
-                        split_ds_specs[split]["tables"][table_name][0].reset_index(
-                            drop=True
-                        ),
-                        ref_tables[table_name].reset_index(drop=True),
+                        split_ds_specs[split]["additional_data_tables"][table_path][
+                            0
+                        ].reset_index(drop=True),
+                        ref_tables[table_path.split("/")[-1]].reset_index(drop=True),
+                    )
+
+                    self._assert_frame_equal(
+                        split_ds_specs[split]["main_table"][0].reset_index(drop=True),
+                        ref_tables["clients"].reset_index(drop=True),
                     )
 
     def _assert_dataset_keeps_structure(self, ds_spec, ref_ds_spec):
@@ -166,18 +169,18 @@ class KhiopsHelperFunctions(unittest.TestCase):
         """
         # Check that the spec dictionary is the same excluding the tables
         self.assertIn("main_table", ref_ds_spec)
-        self.assertIn("tables", ref_ds_spec)
-        self.assertIn("relations", ref_ds_spec)
-        self.assertEqual(ds_spec["main_table"], ref_ds_spec["main_table"])
-        self.assertEqual(ds_spec["relations"], ref_ds_spec["relations"])
-        self.assertEqual(ds_spec["tables"].keys(), ref_ds_spec["tables"].keys())
-        if "format" in ref_ds_spec:
-            self.assertIn("format", ds_spec)
-            self.assertEqual(ds_spec["format"], ref_ds_spec["format"])
+        self.assertIn("additional_data_tables", ref_ds_spec)
+        self.assertEqual(
+            ds_spec["additional_data_tables"].keys(),
+            ref_ds_spec["additional_data_tables"].keys(),
+        )
 
         # Check that the table keys are equal
-        for table_name, table_spec in ds_spec["tables"].items():
-            self.assertEqual(table_spec[1], ref_ds_spec["tables"][table_name][1])
+        self.assertEqual(ds_spec["main_table"][1], ref_ds_spec["main_table"][1])
+        for table_path, table_spec in ds_spec["additional_data_tables"].items():
+            self.assertEqual(
+                table_spec[1], ref_ds_spec["additional_data_tables"][table_path][1]
+            )
 
     def _assert_frame_equal(self, ref_df, out_df):
         """Wrapper for the assert_frame_equal pandas function

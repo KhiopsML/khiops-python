@@ -1,7 +1,7 @@
 #Khiops 10.0.3
 
 // Recoding dictionary
-Root	Dictionary	R_SpliceJunction	(SampleId)
+Root	Dictionary	R_main_table	(SampleId)
 {
 Unused	Categorical	SampleId		; <Cost=1.09861> <Level=0>	
 	Categorical	Class		;	

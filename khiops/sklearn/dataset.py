@@ -48,65 +48,69 @@ def check_dataset_spec(ds_spec):
     if not is_dict_like(ds_spec):
         raise TypeError(type_error_message("ds_spec", ds_spec, Mapping))
 
-    # Check the "tables" field
-    if "tables" not in ds_spec:
-        raise ValueError("'tables' entry missing from dataset dict spec")
-    if not is_dict_like(ds_spec["tables"]):
+    # Check the "main_table" field
+    if "main_table" not in ds_spec:
+        raise ValueError("'main_table' entry missing from dataset dict spec")
+    if not isinstance(ds_spec["main_table"], tuple):
         raise TypeError(
-            type_error_message("'tables' entry", ds_spec["tables"], Mapping)
+            type_error_message("'main_table' entry", ds_spec["main_table"], tuple)
         )
-    if len(ds_spec["tables"]) == 0:
-        raise ValueError("'tables' dictionary cannot be empty")
-    for table_name, table_entry in ds_spec["tables"].items():
-        _check_table_entry(table_name, table_entry)
+    if len(ds_spec["main_table"]) != 2:
+        raise ValueError("'main_table' must be a 2-element tuple")
 
     # Multi-table specific table checks
-    if len(ds_spec["tables"]) > 1:
+    if "additional_data_tables" in ds_spec:
         _check_multitable_spec(ds_spec)
 
-    # Check the 'format' field
-    if "format" in ds_spec:
-        _check_format_entry(ds_spec["format"])
 
-
-def _check_table_entry(table_name, table_spec):
+def _check_table_entry(table_path, table_spec):
+    if not isinstance(table_path, str):
+        raise TypeError(type_error_message("Table path", table_path, str))
     if not isinstance(table_spec, tuple):
         raise TypeError(
-            type_error_message(f"'{table_name}' table entry", table_spec, tuple)
+            type_error_message(f"'{table_path}' table entry", table_spec, tuple)
         )
-    if len(table_spec) != 2:
+    if len(table_spec) not in (2, 3):
         raise ValueError(
-            f"'{table_name}' table entry must have size 2, not {len(table_spec)}"
+            f"'{table_path}' table entry must have size 2 or 3, not {len(table_spec)}"
         )
-    source, key = table_spec
+    if len(table_spec) == 3 and not isinstance(table_spec[2], bool):
+        raise TypeError(
+            type_error_message(
+                f"Table at data path {table_path} 1-1 flag",
+                table_spec[2],
+                bool,
+            )
+        )
+    source, key = table_spec[:2]
     if not isinstance(source, (pd.DataFrame, sp.spmatrix, str)) and not hasattr(
         source, "__array__"
     ):
         raise TypeError(
             type_error_message(
-                f"'{table_name}' table's source",
+                f"Source of table at data path '{table_path}'",
                 source,
                 "array-like",
                 "scipy.sparse.spmatrix",
                 str,
             )
         )
-    _check_table_key(table_name, key)
+    _check_table_key(table_path, key)
 
 
-def _check_table_key(table_name, key):
+def _check_table_key(table_path, key):
     if key is not None:
-        if not is_list_like(key) and not isinstance(key, str):
+        if not is_list_like(key):
             raise TypeError(
-                type_error_message(f"'{table_name}' table's key", key, str, Sequence)
+                type_error_message(f"'{table_path}' table's key", key, Sequence)
             )
         if len(key) == 0:
-            raise ValueError(f"'{table_name}' table's key is empty")
+            raise ValueError(f"'{table_path}' table's key is empty")
         for column_name in key:
             if not isinstance(column_name, str):
                 raise TypeError(
                     type_error_message(
-                        f"'{table_name}' table's key column name",
+                        f"'{table_path}' table's key column name",
                         column_name,
                         str,
                     )
@@ -114,192 +118,57 @@ def _check_table_key(table_name, key):
 
 
 def _check_multitable_spec(ds_spec):
-    # Check the main table
-    if "main_table" not in ds_spec:
-        raise ValueError(
-            "'main_table' entry must be specified for multi-table datasets"
-        )
-    if not isinstance(ds_spec["main_table"], str):
-        raise TypeError(
-            type_error_message("'main_table' entry", ds_spec["main_table"], str)
-        )
-    if ds_spec["main_table"] not in ds_spec["tables"]:
-        raise ValueError(
-            f"A table entry with the main table's name ('{ds_spec['main_table']}') "
-            f"must be present in the 'tables' dictionary"
-        )
+    # Check that "additional_data_tables" is present
+    assert "additional_data_tables" in ds_spec
 
-    # Check that all tables have non-None keys
-    for table_name, (_, table_key) in ds_spec["tables"].items():
-        if table_key is None:
-            table_kind = "main" if ds_spec["main_table"] == table_name else "secondary"
-            raise ValueError(
-                f"key of {table_kind} table '{table_name}' is 'None': "
-                "table keys must be specified in multi-table datasets"
+    # Check the "additional_data_tables" field
+    if not is_dict_like(ds_spec["additional_data_tables"]):
+        raise TypeError(
+            type_error_message(
+                "'additional_data_tables' entry",
+                ds_spec["additional_data_tables"],
+                Mapping,
             )
+        )
+    for table_path, table_entry in ds_spec["additional_data_tables"].items():
+        _check_table_entry(table_path, table_entry)
 
     # Check that all the tables have the same type as the main
-    main_table_type = type(ds_spec["tables"][ds_spec["main_table"]][0])
-    for table_name, (table_source, _) in ds_spec["tables"].items():
-        if table_name != ds_spec["main_table"]:
-            if not isinstance(table_source, main_table_type):
-                raise ValueError(
-                    f"Secondary table '{table_name}' has type "
-                    f"'{type(table_source).__name__}' which is different from the "
-                    f"main table's type '{main_table_type.__name__}'."
-                )
-
-    # If the 'relations' entry exists check it
-    if "relations" in ds_spec:
-        relations_spec = ds_spec["relations"]
-    # Otherwise build a star schema relations spec and check it
-    else:
-        relations_spec = [
-            (ds_spec["main_table"], table)
-            for table in ds_spec["tables"].keys()
-            if table != ds_spec["main_table"]
-        ]
-    _check_relations_entry(ds_spec["main_table"], ds_spec["tables"], relations_spec)
-
-
-def _check_relations_entry(main_table_name, tables_spec, relations_spec):
-    # Check the types and size of the relation entries
-    if not is_list_like(relations_spec):
-        raise TypeError(
-            type_error_message("'relations' entry", relations_spec, "list-like")
-        )
-    for i, relation in enumerate(relations_spec, 1):
-        # Check that the relation is a 2 or 3 tuple
-        if not isinstance(relation, tuple):
-            raise TypeError(type_error_message("Relation", relation, tuple))
-        if len(relation) not in (2, 3):
-            raise ValueError(f"A relation must be of size 2 or 3, not {len(relation)}")
-
-        # Check the types of the tuple contents
-        parent_table, child_table = relation[:2]
-        if not isinstance(parent_table, str):
-            raise TypeError(
-                type_error_message(f"Relation #{i}'s parent table", parent_table, str)
-            )
-        if not isinstance(child_table, str):
-            raise TypeError(
-                type_error_message(f"Relation #{i}'s child table", child_table, str)
-            )
-        if len(relation) == 3 and not isinstance(relation[2], bool):
-            raise TypeError(
-                type_error_message(
-                    f"Relation #{i} ({parent_table}, {child_table}) 1-1 flag",
-                    relation[2],
-                    bool,
-                )
-            )
-
-    # Check structure and coherence with the rest of the spec
-    parents_and_children = [relation[:2] for relation in relations_spec]
-    for i, relation in enumerate(relations_spec, 1):
-        parent_table, child_table = relation[:2]
-        if parent_table == child_table:
-            raise ValueError(
-                f"Relation #{i}'s tables are equal: ({parent_table}, {child_table}). "
-                "They must be different."
-            )
-        for table in (parent_table, child_table):
-            if not table in tables_spec.keys():
-                raise ValueError(
-                    f"Relation #{i} ({parent_table}, {child_table}) contains "
-                    f"non-existent table '{table}'. All relation tables must exist "
-                    "in the 'tables' entry."
-                )
-        if parents_and_children.count(relation[:2]) > 1:
-            raise ValueError(
-                f"Relation #{i} ({parent_table}, {child_table}) occurs "
-                f"{parents_and_children.count(relation[:2])} times. "
-                f"Each relation must be unique."
-            )
-
-        # Check hierarchical keys
-        _check_hierarchical_keys(
-            i,
-            parent_table,
-            tables_spec[parent_table][1],
-            child_table,
-            tables_spec[child_table][1],
-        )
-
-    # Check there are no cycles
-    _check_no_cycles(relations_spec, main_table_name)
-
-
-def _check_hierarchical_keys(
-    relation_id, parent_table, parent_table_key, child_table, child_table_key
-):
-    """Check that the parent table's key is contained in the child table's key"""
-    # Perform the check and save the error status
-    error_found = False
-    if isinstance(parent_table_key, str) and isinstance(child_table_key, str):
-        error_found = child_table_key != parent_table_key
-    elif isinstance(parent_table_key, str) and is_list_like(child_table_key):
-        error_found = parent_table_key not in child_table_key
-    elif is_list_like(parent_table_key) and is_list_like(child_table_key):
-        error_found = not set(parent_table_key).issubset(child_table_key)
-    elif is_list_like(parent_table_key) and isinstance(child_table_key, str):
-        error_found = (
-            len(parent_table_key) != 1 or child_table_key not in parent_table_key
-        )
-
-    # Report any error found
-    if error_found:
-        if isinstance(child_table_key, str):
-            child_table_key_msg = f"[{child_table_key}]"
-        else:
-            child_table_key_msg = f"[{', '.join(child_table_key)}]"
-        if isinstance(parent_table_key, str):
-            parent_table_key_msg = f"[{parent_table_key}]"
-        else:
-            parent_table_key_msg = f"[{', '.join(parent_table_key)}]"
+    # Check that the main table's key is contained in subtable keys
+    main_table_type = type(ds_spec["main_table"][0])
+    main_table_key = ds_spec["main_table"][1]
+    if main_table_key is None:
         raise ValueError(
-            f"Relation #{relation_id} child table '{child_table}' "
-            f"key ({child_table_key_msg}) does not contain that of parent table "
-            f"'{parent_table}' ({parent_table_key_msg})."
+            "The key of the main table is 'None': "
+            "table keys must be specified in multi-table datasets"
         )
-
-
-def _check_no_cycles(relations_spec, main_table_name):
-    """Check that there are no cycles in the 'relations' entry"""
-    tables_to_visit = [main_table_name]
-    tables_visited = set()
-    while tables_to_visit:
-        current_table = tables_to_visit.pop(0)
-        tables_visited.add(current_table)
-        for relation in relations_spec:
-            parent_table, child_table = relation[:2]
-            if parent_table == current_table:
-                tables_to_visit.append(child_table)
-                if tables_visited.intersection(tables_to_visit):
-                    raise ValueError(
-                        "'relations' entry contains a cycle that includes "
-                        f"the relation ({parent_table}, {child_table})."
-                    )
-
-
-def _check_format_entry(format_spec):
-    if not isinstance(format_spec, tuple):
-        raise TypeError(type_error_message("'format' entry", format_spec, tuple))
-    if len(format_spec) != 2:
+    if not main_table_key:
         raise ValueError(
-            f"'format' entry must be a tuple of size 2, not {len(format_spec)}"
+            "The key of the main table is empty: "
+            "table keys must be specified in multi-table datasets"
         )
-    sep, header = format_spec
-    if not isinstance(sep, str):
-        raise TypeError(
-            type_error_message("'format' tuple's 1st element (separator)", sep, str)
-        )
-    if not isinstance(header, bool):
-        raise TypeError(
-            type_error_message("'format' tuple's 2nd element (header)", header, bool)
-        )
-    if len(sep) != 1:
-        raise ValueError(f"'format' separator must be a single char, got '{sep}'")
+    for table_path, table_spec in ds_spec["additional_data_tables"].items():
+        table_source = table_spec[0]
+        if not isinstance(table_source, main_table_type):
+            raise ValueError(
+                f"Additional data table at data path '{table_path}' has type "
+                f"'{type(table_source).__name__}' which is different from the "
+                f"main table's type '{main_table_type.__name__}'."
+            )
+        table_key = table_spec[1]
+        if table_key is None:
+            raise ValueError(
+                f"Key of secondary table at path '{table_path}' is 'None': "
+                "table keys must be specified in multi-table datasets"
+            )
+        if not set(main_table_key).issubset(table_key):
+            table_key_msg = f"[{', '.join(table_key)}]"
+            main_table_key_msg = f"[{', '.join(main_table_key)}]"
+            raise ValueError(
+                f"Table at data path '{table_path}' "
+                f"key ({table_key_msg}) does not contain that of the main table "
+                f"({main_table_key_msg})."
+            )
 
 
 def get_khiops_type(numpy_type):
@@ -464,7 +333,7 @@ class Dataset:
     def __init__(self, X, y=None, categorical_target=True):
         # Initialize members
         self.main_table = None
-        self.secondary_tables = None
+        self.additional_data_tables = None
         self.relations = None
         self.categorical_target = categorical_target
         self.target_column = None
@@ -476,15 +345,15 @@ class Dataset:
         # A single pandas dataframe
         if isinstance(X, pd.DataFrame):
             self.main_table = PandasTable("main_table", X)
-            self.secondary_tables = []
+            self.additional_data_tables = []
         # A single numpy array (or compatible object)
         elif hasattr(X, "__array__") or is_list_like(X):
             self.main_table = NumpyTable("main_table", X)
-            self.secondary_tables = []
+            self.additional_data_tables = []
         # A scipy.sparse.spmatrix
         elif isinstance(X, sp.spmatrix):
             self.main_table = SparseTable("main_table", X)
-            self.secondary_tables = []
+            self.additional_data_tables = []
         # Special rejection for scipy.sparse.sparray (to pass the sklearn tests)
         # Note: We don't use scipy.sparse.sparray because it is not implemented in scipy
         # 1.10 which is the latest supporting py3.8
@@ -514,16 +383,17 @@ class Dataset:
 
         # Index the tables by name
         self._tables_by_name = {
-            table.name: table for table in [self.main_table] + self.secondary_tables
+            table.name: table
+            for table in [self.main_table] + self.additional_data_tables
         }
 
         # Post-conditions
         assert self.main_table is not None, "'main_table' is 'None' after init"
         assert isinstance(
-            self.secondary_tables, list
+            self.additional_data_tables, list
         ), "'secondary_tables' is not a list after init"
         assert not self.is_multitable or len(
-            self.secondary_tables
+            self.additional_data_tables
         ), "'secondary_tables' is empty in a multi-table dataset"
         assert (
             y is None or self.target_column is not None
@@ -556,6 +426,10 @@ class Dataset:
         # Check the key for the main_table (it is the same for the others)
         _check_table_key("main_table", key)
 
+    def _table_name_of_path(self, table_path):
+        # TODO: Add >= 128-character truncation and indexing scheme
+        return table_path.split("/")[-1]
+
     def _init_tables_from_mapping(self, X):
         """Initializes the table spec from a dict-like 'X'"""
         assert is_dict_like(X), "'X' must be dict-like"
@@ -563,15 +437,8 @@ class Dataset:
         # Check the input mapping
         check_dataset_spec(X)
 
-        # Initialize tables objects
-        if len(X["tables"]) == 1:
-            main_table_name = list(X["tables"])[0]
-            main_table_source, main_table_key = list(X["tables"].values())[0]
-            if isinstance(main_table_key, str):
-                main_table_key = [main_table_key]
-        else:
-            main_table_name = X["main_table"]
-            main_table_source, main_table_key = X["tables"][main_table_name]
+        main_table_name = "main_table"
+        main_table_source, main_table_key = X["main_table"]
 
         # Initialize a Pandas dataset
         if isinstance(main_table_source, pd.DataFrame):
@@ -580,32 +447,56 @@ class Dataset:
                 main_table_source,
                 key=main_table_key,
             )
-            self.secondary_tables = []
-            for table_name, (table_source, table_key) in X["tables"].items():
-                if table_name != main_table_name:
-                    self.secondary_tables.append(
-                        PandasTable(table_name, table_source, key=table_key)
+            self.additional_data_tables = []
+            self.relations = []
+            if "additional_data_tables" in X:
+                for table_path, table_spec in X["additional_data_tables"].items():
+                    table_source, table_key = table_spec[:2]
+                    table_name = self._table_name_of_path(table_path)
+                    table = PandasTable(
+                        table_name,
+                        table_source,
+                        data_path=table_path,
+                        key=table_key,
+                    )
+                    self.additional_data_tables.append(table)
+                    is_one_to_one_relation = False
+                    if len(table_spec) == 3 and table_spec[2] is True:
+                        is_one_to_one_relation = True
+
+                    # Set relation parent: if no "/" in path, main_table is the parent
+                    if not "/" in table_path:
+                        parent_table_name = self.main_table.name
+                    else:
+                        table_path_fragments = table_path.split("/")
+                        parent_table_name = self._table_name_of_path(
+                            "/".join(table_path_fragments[:-1])
+                        )
+                    self.relations.append(
+                        (parent_table_name, table_name, is_one_to_one_relation)
                     )
         # Initialize a sparse dataset (monotable)
         elif isinstance(main_table_source, sp.spmatrix):
             self.main_table = SparseTable(
-                main_table_name,
-                main_table_source,
+                name=main_table_name,
+                matrix=main_table_source,
                 key=main_table_key,
             )
-            self.secondary_tables = []
+            self.additional_data_tables = []
+            self.relations = []
         # Initialize a numpyarray dataset (monotable)
         elif hasattr(main_table_source, "__array__"):
             self.main_table = NumpyTable(
-                main_table_name,
-                main_table_source,
+                name=main_table_name,
+                array=main_table_source,
             )
-            if len(X["tables"]) > 1:
+            if "additional_data_tables" in X and len(X["additional_data_tables"]) > 0:
                 raise ValueError(
                     "Multi-table schemas are only allowed "
                     "with pandas dataframe source tables"
                 )
-            self.secondary_tables = []
+            self.additional_data_tables = []
+            self.relations = []
         else:
             raise TypeError(
                 type_error_message(
@@ -613,25 +504,9 @@ class Dataset:
                 )
             )
 
-        # If the relations are not specified initialize to a star schema
-        if "relations" not in X:
-            self.relations = [
-                (self.main_table.name, table.name, False)
-                for table in self.secondary_tables
-            ]
-        # Otherwise initialize the relations in the spec
-        else:
-            relations = []
-            for relation in X["relations"]:
-                parent, child = relation[:2]
-                relations.append(
-                    (parent, child, relation[2] if len(relation) == 3 else False)
-                )
-            self.relations = relations
-
     def _init_target_column(self, y):
         assert self.main_table is not None
-        assert self.secondary_tables is not None
+        assert self.additional_data_tables is not None
 
         # Check y's type
         # For in memory target columns:
@@ -730,22 +605,22 @@ class Dataset:
     @property
     def is_multitable(self):
         """bool : ``True`` if the dataset is multitable"""
-        return self.secondary_tables is not None and len(self.secondary_tables) > 0
+        return (
+            self.additional_data_tables is not None
+            and len(self.additional_data_tables) > 0
+        )
 
     def to_spec(self):
         """Returns a dictionary specification of this dataset"""
         ds_spec = {}
-        ds_spec["main_table"] = self.main_table.name
-        ds_spec["tables"] = {}
-        ds_spec["tables"][self.main_table.name] = (
-            self.main_table.data_source,
-            self.main_table.key,
-        )
-        for table in self.secondary_tables:
-            ds_spec["tables"][table.name] = (table.data_source, table.key)
-        if self.relations:
-            ds_spec["relations"] = []
-            ds_spec["relations"].extend(self.relations)
+        ds_spec["main_table"] = (self.main_table.data_source, self.main_table.key)
+        ds_spec["additional_data_tables"] = {}
+        for table in self.additional_data_tables:
+            assert table.data_path is not None
+            ds_spec["additional_data_tables"][table.data_path] = (
+                table.data_source,
+                table.key,
+            )
 
         return ds_spec
 
@@ -806,9 +681,9 @@ class Dataset:
         # root dictionary that point to each secondary table
         # This is performed using a breadth-first-search over the graph of relations
         # Note: In general 'name' and 'object_type' fields of Variable can be different
-        if self.secondary_tables:
+        if self.additional_data_tables:
             main_dictionary.root = True
-            table_names = [table.name for table in self.secondary_tables]
+            table_names = [table.name for table in self.additional_data_tables]
             tables_to_visit = [self.main_table.name]
             while tables_to_visit:
                 current_table = tables_to_visit.pop(0)
@@ -818,7 +693,7 @@ class Dataset:
                         tables_to_visit.append(child_table)
                         parent_table_name = parent_table
                         index_table = table_names.index(child_table)
-                        table = self.secondary_tables[index_table]
+                        table = self.additional_data_tables[index_table]
                         parent_table_dictionary = dictionary_domain.get_dictionary(
                             parent_table_name
                         )
@@ -851,7 +726,7 @@ class Dataset:
             A tuple containing:
 
             - The path of the main table
-            - A dictionary containing the relation [table-name -> file-path] for the
+            - A dictionary containing the relation [data-path -> file-path] for the
               secondary tables. The dictionary is empty for monotable datasets.
         """
         # Sort the main table unless:
@@ -871,8 +746,9 @@ class Dataset:
 
         # Create a copy of each secondary table
         secondary_table_paths = {}
-        for table in self.secondary_tables:
-            secondary_table_paths[table.name] = table.create_table_file_for_khiops(
+        for table in self.additional_data_tables:
+            assert table.data_path is not None
+            secondary_table_paths[table.data_path] = table.create_table_file_for_khiops(
                 output_dir, sort=sort
             )
 
@@ -895,25 +771,19 @@ class DatasetTable(ABC):
         if not name:
             raise ValueError("'name' cannot be empty")
         if key is not None:
-            if not is_list_like(key) and not isinstance(key, (str, int)):
-                raise TypeError(type_error_message("key", key, str, int, "list-like"))
-            if is_list_like(key):
-                for column_index, column_id in enumerate(key):
-                    if not isinstance(column_id, (str, int)):
-                        raise TypeError(
-                            type_error_message(
-                                f"key[{column_index}]", column_id, str, int
-                            )
-                            + f" at table '{name}'"
-                        )
+            if not is_list_like(key):
+                raise TypeError(type_error_message("key", key, "list-like"))
+            for column_index, column_id in enumerate(key):
+                if not isinstance(column_id, (str, int)):
+                    raise TypeError(
+                        type_error_message(f"key[{column_index}]", column_id, str, int)
+                        + f" at table '{name}'"
+                    )
 
         # Initialization (must be completed by concrete sub-classes)
         self.name = name
         self.data_source = None
-        if is_list_like(key) or key is None:
-            self.key = key
-        else:
-            self.key = [key]
+        self.key = key
         self.column_ids = None
         self.khiops_types = None
         self.n_samples = None
@@ -922,9 +792,7 @@ class DatasetTable(ABC):
         """Checks that the key columns exist"""
         if self.key is not None:
             if not is_list_like(self.key):
-                raise TypeError(
-                    type_error_message("key", self.key, str, int, "list-like")
-                )
+                raise TypeError(type_error_message("key", self.key, "list-like"))
             for column_name in self.key:
                 if column_name not in self.column_ids:
                     raise ValueError(
@@ -985,13 +853,15 @@ class PandasTable(DatasetTable):
         Name for the table.
     dataframe : `pandas.DataFrame`
         The data frame to be encapsulated. It must be non-empty.
+    data_path : str, optional
+        Data path of the table. Unset for main tables.
     key : list of str, optional
         The names of the columns composing the key.
     """
 
-    def __init__(self, name, dataframe, key=None):
+    def __init__(self, name, dataframe, data_path=None, key=None):
         # Call the parent method
-        super().__init__(name, key=key)
+        super().__init__(name=name, key=key)
 
         # Check inputs specific to this sub-class
         if not isinstance(dataframe, pd.DataFrame):
@@ -1002,6 +872,7 @@ class PandasTable(DatasetTable):
         # Initialize the attributes
         self.data_source = dataframe
         self.n_samples = len(self.data_source)
+        self.data_path = data_path
 
         # Initialize feature columns and verify their types
         self.column_ids = self.data_source.columns.values
@@ -1104,7 +975,7 @@ class NumpyTable(DatasetTable):
 
     def __init__(self, name, array, key=None):
         # Call the parent method
-        super().__init__(name, key=key)
+        super().__init__(name=name, key=key)
 
         # Check the array's types and shape
         if not hasattr(array, "__array__") and not is_list_like(array):

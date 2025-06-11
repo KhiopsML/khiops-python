@@ -1,7 +1,7 @@
 #Khiops 10.0.3
 
-Root	Dictionary	SNB_SpliceJunction	(SampleId)
-<InitialDictionary="SpliceJunction"> <PredictorLabel="Selective Naive Bayes"> <PredictorType="Classifier">
+Root	Dictionary	SNB_main_table	(SampleId)
+<InitialDictionary="main_table"> <PredictorLabel="Selective Naive Bayes"> <PredictorType="Classifier">
 {
 	Categorical	SampleId		; <Cost=1.09861> <Level=0>	
 Unused	Categorical	Class		; <TargetVariable>	

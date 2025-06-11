@@ -3,7 +3,7 @@
 	"version": "10.0",
 	"dictionaries": [
 		{
-			"name": "R_SpliceJunction",
+			"name": "R_main_table",
 			"label": "Recoding dictionary",
 			"root": true,
 			"key": ["SampleId"],

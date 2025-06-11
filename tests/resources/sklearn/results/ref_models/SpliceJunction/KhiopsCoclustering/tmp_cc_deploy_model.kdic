@@ -1,12 +1,12 @@
 #Khiops 10.0
 
-Dictionary	CC_Keys_main_table	(SampleId)
+Dictionary	CC_main_table	(SampleId)
 {
 	Categorical	SampleId		;	
-	Table(CC_main_table)	CC_main_table		;	
+	Table(CC_original_main_table)	CC_original_main_table		;	
 };
 
-Dictionary	CC_main_table	(SampleId)
+Dictionary	CC_original_main_table	(SampleId)
 {
 	Categorical	SampleId		;	
 	Numerical	Pos		;	
