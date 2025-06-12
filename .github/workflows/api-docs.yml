@@ -46,20 +46,10 @@ jobs:
       # https://github.com/actions/runner/issues/2033#issuecomment-1598547465
       options: --user 1001
     steps:
-      - name: Set parameters as env
-        run: |
-          KHIOPS_PYTHON_TUTORIAL_REVISION=${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
-          echo "KHIOPS_PYTHON_TUTORIAL_REVISION=$KHIOPS_PYTHON_TUTORIAL_REVISION" >> "$GITHUB_ENV"
       - name: Checkout khiops-python
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Checkout khiops-python-tutorial
-        uses: actions/checkout@v4
-        with:
-          repository: khiopsml/khiops-python-tutorial
-          ref: ${{ env.KHIOPS_PYTHON_TUTORIAL_REVISION }}
-          path: doc/khiops-python-tutorial
       - name: Add pip scripts directory to path
         run: echo PATH="$PATH:/github/home/.local/bin" >> "$GITHUB_ENV"
       - name: Install doc build requirements
@@ -72,10 +62,12 @@ jobs:
           # Install the doc python requirements
           cd doc
           pip3 install -U -r requirements.txt
+      # Clone the Khiops Python tutorial repository while building the documentation
       - name: Build Sphinx Documentation
         run: |
           cd doc
-          ./create-doc -t
+          ./create-doc -t -d -g \
+          ${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
       - name: Upload the docs as an artifact
         uses: actions/upload-artifact@v4
         with:

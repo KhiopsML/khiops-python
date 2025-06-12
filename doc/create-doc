@@ -7,17 +7,20 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # Default parameter values
 TRANSFORM_NOTEBOOKS=""
 DOWNLOAD_REPO=""
-DEFAULT_KHIOPS_TUTORIAL_REPO_URL="git@github.com:KhiopsML/khiops-python-tutorial.git"
+DEFAULT_KHIOPS_TUTORIAL_REPO_URL="https://github.com/KhiopsML/khiops-python-tutorial.git"
+DEFAULT_KHIOPS_TUTORIAL_REPO_REF="main"
 DEFAULT_KHIOPS_TUTORIAL_DIR="${SCRIPT_DIR}/khiops-python-tutorial"
 
 # Function to display the usage help
 usage() {
-  echo "Usage: create-doc [-r REPO_URL] [-d] [-t] [-l]"
+  echo "Usage: create-doc [-r REPO_URL] [-d] [-t] [-g] [-l]"
   echo "Options:"
   echo "  -d: Downloads the Khiops tutorial repository. Implies -t. See also -r."
   echo "  -t: Transform the Khiops Jupyter notebooks tutorials into reST."
-  echo "  -r: Set the Khiops tutorial repository. The default is"
+  echo "  -r: Set the Khiops tutorial repository URL. The default is"
   echo "      '$DEFAULT_KHIOPS_TUTORIAL_REPO_URL'."
+  echo "  -g: Set the Khiops tutorial repository Git reference. The default is"
+  echo "      '$DEFAULT_KHIOPS_TUTORIAL_REPO_REF'."
   echo "  -l: Directory of the local copy of the khiops tutorial repository. The default is"
   echo "      '$DEFAULT_KHIOPS_TUTORIAL_DIR'."
   echo ""
@@ -29,17 +32,19 @@ exit_bad() {
 }
 
 # Read command line arguments
-while getopts "dtr:l:" opt
+while getopts "dtrg:l:" opt
 do
   case "$opt" in
     d ) DOWNLOAD_REPO=true && TRANSFORM_NOTEBOOKS="true" ;;
     t ) TRANSFORM_NOTEBOOKS="true" ;;
     r ) KHIOPS_TUTORIAL_REPO_URL="$OPTARG" ;;
+    g ) KHIOPS_TUTORIAL_REPO_REF="$OPTARG" ;;
     l ) KHIOPS_TUTORIAL_REPO_DIR="$OPTARG" ;;
     * ) exit_bad ;;
   esac
 done
 KHIOPS_TUTORIAL_REPO_URL="${KHIOPS_TUTORIAL_REPO_URL:-$DEFAULT_KHIOPS_TUTORIAL_REPO_URL}"
+KHIOPS_TUTORIAL_REPO_REF="${KHIOPS_TUTORIAL_REPO_REF:-$DEFAULT_KHIOPS_TUTORIAL_REPO_REF}"
 KHIOPS_TUTORIAL_REPO_DIR="${KHIOPS_TUTORIAL_REPO_DIR:-$DEFAULT_KHIOPS_TUTORIAL_DIR}"
 
 
@@ -69,10 +74,9 @@ done
 # Clone the Khiops tutorial repository
 if [[ $DOWNLOAD_REPO ]]
 then
-  echo "Obtaining khiops-python-tutorial"
+  echo "Obtaining khiops-python-tutorial revision $KHIOPS_TUTORIAL_REPO_REF"
   rm -rf "$KHIOPS_TUTORIAL_REPO_DIR"
-  khiops_python_tutorial_repo_branch="main"
-  git clone --depth 1 --branch="$khiops_python_tutorial_repo_branch" \
+  git clone --depth 1 --branch="$KHIOPS_TUTORIAL_REPO_REF" \
       "$KHIOPS_TUTORIAL_REPO_URL" "$KHIOPS_TUTORIAL_REPO_DIR" \
       && rm -rf "$KHIOPS_TUTORIAL_REPO_DIR/.git"
 fi
