@@ -5,11 +5,6 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      deploy-gh-pages:
-        description: Deploy GH Pages
-        required: true
-        type: boolean
-        default: false
       khiops-python-tutorial-revision:
         default: main
         description: khiops-python-tutorial repo revision
@@ -24,6 +19,8 @@ on:
       - doc/*.py
       - khiops/**.py
       - .github/workflows/api-docs.yml
+  push:
+    tags: ['*']
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
@@ -49,20 +46,10 @@ jobs:
       # https://github.com/actions/runner/issues/2033#issuecomment-1598547465
       options: --user 1001
     steps:
-      - name: Set parameters as env
-        run: |
-          KHIOPS_PYTHON_TUTORIAL_REVISION=${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
-          echo "KHIOPS_PYTHON_TUTORIAL_REVISION=$KHIOPS_PYTHON_TUTORIAL_REVISION" >> "$GITHUB_ENV"
       - name: Checkout khiops-python
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Checkout khiops-python-tutorial
-        uses: actions/checkout@v4
-        with:
-          repository: khiopsml/khiops-python-tutorial
-          ref: ${{ env.KHIOPS_PYTHON_TUTORIAL_REVISION }}
-          path: doc/khiops-python-tutorial
       - name: Add pip scripts directory to path
         run: echo PATH="$PATH:/github/home/.local/bin" >> "$GITHUB_ENV"
       - name: Install doc build requirements
@@ -75,25 +62,43 @@ jobs:
           # Install the doc python requirements
           cd doc
           pip3 install -U -r requirements.txt
+      # Clone the Khiops Python tutorial repository while building the documentation
       - name: Build Sphinx Documentation
         run: |
           cd doc
-          ./create-doc -t
+          ./create-doc -t -d -g \
+          ${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
       - name: Upload the docs as an artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          path: doc/_build/html/
-  # Deploy only when the user explicitly (and manually) orders it
-  deploy:
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy-gh-pages == true
-    runs-on: ubuntu-latest
+          name: api-docs
+          path: ./doc/_build/html/
+  # Release on Git tag
+  release:
+    if: github.ref_type == 'tag'
     needs: build
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      - name: Deploy API Docs to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Download docs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: api-docs
+          path: ./doc/_build/html/
+      - name: Create docs release zip archive
+        uses: thedoctor0/zip-release@0.7.6
+        with:
+          type: zip
+          path: ./doc/_build/html/
+          filename: khiops-api-docs-${{ github.ref_name }}.zip
+      - name: Release the docs zip archive
+        uses: ncipollo/release-action@v1.15.0
+        with:
+          allowUpdates: true
+          artifacts: ./khiops-api-docs-${{ github.ref_name }}.zip
+          body: '**For testing purposes only**'
+          draft: false
+          makeLatest: false
+          prerelease: true
+          updateOnlyUnreleased: true
