@@ -21,7 +21,12 @@ from sklearn.utils.validation import column_or_1d
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import VariableBlock
-from khiops.core.internals.common import is_dict_like, is_list_like, type_error_message
+from khiops.core.internals.common import (
+    deprecation_message,
+    is_dict_like,
+    is_list_like,
+    type_error_message,
+)
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
 # To capture invalid-names other than X,y run:
@@ -169,6 +174,54 @@ def _check_multitable_spec(ds_spec):
                 f"key ({table_key_msg}) does not contain that of the main table "
                 f"({main_table_key_msg})."
             )
+
+
+def _table_name_of_path(table_path):
+    return table_path.split("/")[-1]
+
+
+def _upgrade_mapping_spec(ds_spec):
+    assert is_dict_like(ds_spec)
+    new_ds_spec = {}
+    new_ds_spec["additional_data_tables"] = {}
+    for table_name, table_data in ds_spec["tables"].items():
+        table_df, table_key = table_data
+        if not is_list_like(table_key):
+            table_key = [table_key]
+        if table_name == ds_spec["main_table"]:
+            new_ds_spec["main_table"] = (table_df, table_key)
+        else:
+            table_path = [table_name]
+            is_entity = False
+
+            # Cycle 4 times on the relations to get all transitive relation, like:
+            # - current table name N
+            # - main table name N1
+            # - and relations: (N1, N2), (N2, N3), (N3, N)
+            # the data-path must be N2/N3/N
+            # Note: this is a heuristic that should be replaced with a graph
+            # traversal procedure
+            # If no "relations" key exists, then one has a star schema and
+            # the data-paths are the names of the secondary tables themselves
+            # (with respect to the main table)
+            if "relations" in ds_spec:
+                for relation in list(ds_spec["relations"]) * 4:
+                    left, right = relation[:2]
+                    if len(relation) == 3 and right == table_name:
+                        is_entity = relation[2]
+                    if (
+                        left != ds_spec["main_table"]
+                        and left not in table_path
+                        and right in table_path
+                    ):
+                        table_path.insert(0, left)
+            table_path = "/".join(table_path)
+            if is_entity:
+                table_data = (table_df, table_key, is_entity)
+            else:
+                table_data = (table_df, table_key)
+            new_ds_spec["additional_data_tables"][table_path] = table_data
+    return new_ds_spec
 
 
 def get_khiops_type(numpy_type):
@@ -426,13 +479,25 @@ class Dataset:
         # Check the key for the main_table (it is the same for the others)
         _check_table_key("main_table", key)
 
-    def _table_name_of_path(self, table_path):
-        # TODO: Add >= 128-character truncation and indexing scheme
-        return table_path.split("/")[-1]
-
     def _init_tables_from_mapping(self, X):
         """Initializes the table spec from a dict-like 'X'"""
         assert is_dict_like(X), "'X' must be dict-like"
+
+        # Detect if deprecated mapping specification syntax is used;
+        # if so, issue deprecation warning and transform it to the new syntax
+        if "tables" in X.keys() and isinstance(X.get("main_table"), str):
+            warnings.warn(
+                deprecation_message(
+                    "This multi-table dataset specification format",
+                    "11.0.1",
+                    replacement=(
+                        "the new data-path-based format, as documented in "
+                        ":doc:`multi_table_primer`."
+                    ),
+                    quote=False,
+                )
+            )
+            X = _upgrade_mapping_spec(X)
 
         # Check the input mapping
         check_dataset_spec(X)
@@ -452,7 +517,7 @@ class Dataset:
             if "additional_data_tables" in X:
                 for table_path, table_spec in X["additional_data_tables"].items():
                     table_source, table_key = table_spec[:2]
-                    table_name = self._table_name_of_path(table_path)
+                    table_name = _table_name_of_path(table_path)
                     table = PandasTable(
                         table_name,
                         table_source,
@@ -469,7 +534,7 @@ class Dataset:
                         parent_table_name = self.main_table.name
                     else:
                         table_path_fragments = table_path.split("/")
-                        parent_table_name = self._table_name_of_path(
+                        parent_table_name = _table_name_of_path(
                             "/".join(table_path_fragments[:-1])
                         )
                     self.relations.append(

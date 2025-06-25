@@ -7,6 +7,7 @@
 import os
 import shutil
 import unittest
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -15,7 +16,7 @@ from numpy.testing import assert_equal
 from pandas.testing import assert_frame_equal
 from sklearn import datasets
 
-from khiops.sklearn.dataset import Dataset
+from khiops.sklearn.dataset import Dataset, _upgrade_mapping_spec
 
 
 class DatasetInputOutputConsistencyTests(unittest.TestCase):
@@ -351,6 +352,102 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             }
 
         return ref_var_types
+
+    def test_dataset_of_deprecated_mt_mapping(self):
+        """Test deprecated multi-table specification handling"""
+        (
+            ref_main_table,
+            ref_secondary_table_1,
+            ref_secondary_table_2,
+            ref_tertiary_table,
+            ref_quaternary_table,
+        ) = self.create_multitable_snowflake_dataframes()
+
+        features_ref_main_table = ref_main_table.drop("class", axis=1)
+        expected_ds_spec = {
+            "main_table": (features_ref_main_table, ["User_ID"]),
+            "additional_data_tables": {
+                "B": (ref_secondary_table_1, ["User_ID", "VAR_1"], False),
+                "B/D": (ref_tertiary_table, ["User_ID", "VAR_1", "VAR_2"], False),
+                "B/D/E": (
+                    ref_quaternary_table,
+                    ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
+                ),
+                "C": (ref_secondary_table_2, ["User_ID"], True),
+            },
+        }
+        deprecated_ds_spec = {
+            "main_table": "A",
+            "tables": {
+                "A": (features_ref_main_table, "User_ID"),
+                "B": (ref_secondary_table_1, ["User_ID", "VAR_1"]),
+                "C": (ref_secondary_table_2, "User_ID"),
+                "D": (ref_tertiary_table, ["User_ID", "VAR_1", "VAR_2"]),
+                "E": (
+                    ref_quaternary_table,
+                    ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
+                ),
+            },
+            "relations": {
+                ("A", "B", False),
+                ("B", "D", False),
+                ("D", "E"),
+                ("A", "C", True),
+            },
+        }
+
+        label = ref_main_table["class"]
+
+        # Test that deprecation warning is issued when creating a dataset
+        # according to the deprecated spec
+        with warnings.catch_warnings(record=True) as warning_list:
+            _ = Dataset(deprecated_ds_spec, label)
+        self.assertTrue(len(warning_list) > 0)
+        deprecation_warning_found = False
+        for warning in warning_list:
+            warning_message = warning.message
+            if (
+                issubclass(warning.category, UserWarning)
+                and len(warning_message.args) == 1
+                and "multi-table dataset specification format"
+                in warning_message.args[0]
+                and "deprecated" in warning_message.args[0]
+            ):
+                deprecation_warning_found = True
+                break
+        self.assertTrue(deprecation_warning_found)
+
+        # Test that a deprecated dataset spec is upgraded to the new format
+        ds_spec = _upgrade_mapping_spec(deprecated_ds_spec)
+        self.assertEqual(ds_spec.keys(), expected_ds_spec.keys())
+        main_table = ds_spec["main_table"]
+        expected_main_table = expected_ds_spec["main_table"]
+
+        # Test that main table keys are identical
+        self.assertEqual(main_table[1], expected_main_table[1])
+
+        # Test that main table data frame are equal
+        assert_frame_equal(main_table[0], expected_main_table[0])
+
+        # Test that additional data tables keys are identical
+        additional_data_tables = ds_spec["additional_data_tables"]
+        expected_additional_data_tables = expected_ds_spec["additional_data_tables"]
+        self.assertEqual(
+            additional_data_tables.keys(), expected_additional_data_tables.keys()
+        )
+
+        for table_path, expected_table_data in expected_additional_data_tables.items():
+            table_data = additional_data_tables[table_path]
+
+            # Test that secondary table keys are identical
+            self.assertEqual(table_data[1], expected_table_data[1])
+
+            # Test that the secondary table data frames are identical
+            assert_frame_equal(table_data[0], expected_table_data[0])
+
+            # Test that the secondary table entity statuses are identical if True
+            if len(expected_table_data) > 2 and expected_table_data[2] is True:
+                self.assertEqual(table_data[2], expected_table_data[2])
 
     def test_dataset_is_correctly_built(self):
         """Test that the dataset structure is consistent with the input spec"""
