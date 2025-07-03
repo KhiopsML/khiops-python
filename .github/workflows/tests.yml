@@ -1,19 +1,19 @@
 ---
 name: Tests
 env:
-  DEFAULT_SAMPLES_REVISION: 10.2.4
-  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.3.1
+  DEFAULT_SAMPLES_REVISION: 10.3.2
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 10.3.2
 on:
   workflow_dispatch:
     inputs:
       samples-revision:
-        default: 10.2.4
+        default: 10.3.2
         description: Git Tag/Branch/Commit for the khiops-samples Repo
       image-tag:
         default: latest
         description: Development Docker Image Tag
       khiops-desktop-revision:
-        default: 10.3.1
+        default: 10.3.2
         description: Khiops Windows Desktop Application Version
       run-expensive-tests:
         type: boolean

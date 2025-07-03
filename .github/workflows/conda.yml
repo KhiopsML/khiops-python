@@ -3,16 +3,16 @@ name: Conda Package
 env:
   # Note: The default Khiops version must never be an alpha release as they are
   #       ephemeral. To test alpha versions run the workflow manually.
-  DEFAULT_KHIOPS_CORE_VERSION: 10.3.1
-  DEFAULT_SAMPLES_VERSION: 10.2.4
+  DEFAULT_KHIOPS_CORE_VERSION: 10.3.2
+  DEFAULT_SAMPLES_VERSION: 10.3.2
 on:
   workflow_dispatch:
     inputs:
       khiops-core-version:
-        default: 10.3.1
+        default: 10.3.2
         description: khiops-core version for testing
       khiops-samples-version:
-        default: 10.2.4
+        default: 10.3.2
         description: khiops-samples version
       release-channel:
         type: choice

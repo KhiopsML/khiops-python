@@ -1,12 +1,12 @@
 ---
 name: Pip Package
 env:
-  DEFAULT_SAMPLES_REVISION: 10.2.4
+  DEFAULT_SAMPLES_REVISION: 10.3.2
 on:
   workflow_dispatch:
     inputs:
       samples-revision:
-        default: 10.2.4
+        default: 10.3.2
         description: khiops-samples repo revision
       image-tag:
         default: latest
