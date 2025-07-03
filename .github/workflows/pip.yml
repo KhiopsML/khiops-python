@@ -106,9 +106,10 @@ jobs:
           kh-samples core -i train_coclustering -e
           kh-samples sklearn -i khiops_classifier -e
 
-          # Test that the line containing "MPI command" also contains
-          # an executable named "mpiexec"
-          kh-status | grep "MPI command" | grep -wq "mpiexec"
+          # Test that the line containing "MPI command" does not contain "<empty>"
+          # The MPI command is not always named mpiexec, but can be orterun etc
+          # (as given by khiops_env)
+          kh-status | grep "MPI command" | grep -vwq "<empty>"
   release:
     if: github.ref_type == 'tag'
     needs: [build, test]
