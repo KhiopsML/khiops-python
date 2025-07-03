@@ -78,7 +78,7 @@ RUN true \
         do \
             $CONDA create -y -n $CONDA_ENV python=${version}; \
         done; \
-        $CONDA install -y -n py${version}_conda -c khiops-dev khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
+        $CONDA install -y -n py${version}_conda khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
     done' \
   && true
 
