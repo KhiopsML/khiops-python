@@ -15,6 +15,7 @@ khiops.sklearn
   :nosignatures:
 
   estimators
+  helpers
 
 Related Docs
 ------------

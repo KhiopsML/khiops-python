@@ -1,12 +1,12 @@
 ---
 name: Pip Package
 env:
-  DEFAULT_SAMPLES_REVISION: 10.2.4
+  DEFAULT_SAMPLES_REVISION: 10.3.2
 on:
   workflow_dispatch:
     inputs:
       samples-revision:
-        default: 10.2.4
+        default: 10.3.2
         description: khiops-samples repo revision
       image-tag:
         default: latest
@@ -106,9 +106,10 @@ jobs:
           kh-samples core -i train_coclustering -e
           kh-samples sklearn -i khiops_classifier -e
 
-          # Test that the line containing "MPI command" also contains
-          # an executable named "mpiexec"
-          kh-status | grep "MPI command" | grep -wq "mpiexec"
+          # Test that the line containing "MPI command" does not contain "<empty>"
+          # The MPI command is not always named mpiexec, but can be orterun etc
+          # (as given by khiops_env)
+          kh-status | grep "MPI command" | grep -vwq "<empty>"
   release:
     if: github.ref_type == 'tag'
     needs: [build, test]
