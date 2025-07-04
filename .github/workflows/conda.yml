@@ -3,16 +3,16 @@ name: Conda Package
 env:
   # Note: The default Khiops version must never be an alpha release as they are
   #       ephemeral. To test alpha versions run the workflow manually.
-  DEFAULT_KHIOPS_CORE_VERSION: 10.3.1
-  DEFAULT_SAMPLES_VERSION: 10.2.4
+  DEFAULT_KHIOPS_CORE_VERSION: 10.3.2
+  DEFAULT_SAMPLES_VERSION: 10.3.2
 on:
   workflow_dispatch:
     inputs:
       khiops-core-version:
-        default: 10.3.1
+        default: 10.3.2
         description: khiops-core version for testing
       khiops-samples-version:
-        default: 10.2.4
+        default: 10.3.2
         description: khiops-samples version
       release-channel:
         type: choice
@@ -57,10 +57,8 @@ jobs:
       - name: Install Dependency Requirements for Building Conda Packages
         run: conda install -y conda-build
       - name: Build the Conda Package
-        # Note: The "khiops-dev" conda channel is needed to retrieve the "khiops-core" package.
-        #       The "test" part of the conda recipe needs this package.
         run: |
-          conda build --channel khiops-dev --output-folder ./khiops-conda ./packaging/conda
+          conda build --output-folder ./khiops-conda ./packaging/conda
       - name: Upload Conda Package Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -80,8 +78,8 @@ jobs:
           - {os: ubuntu-24.04, json-image: '{"image": null}'}
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:8"}'}
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
-          - {os: windows-2019, json-image: '{"image": null}'}
           - {os: windows-2022, json-image: '{"image": null}'}
+          - {os: windows-2025, json-image: '{"image": null}'}
           - {os: macos-13, json-image: '{"image": null}'}
           - {os: macos-14, json-image: '{"image": null}'}
           - {os: macos-15, json-image: '{"image": null}'}
@@ -105,7 +103,7 @@ jobs:
           echo "KHIOPS_CORE_VERSION=$KHIOPS_CORE_VERSION" >> "$GITHUB_ENV"
       - name: Install the Khiops Conda package
         run: |
-          conda install --channel khiops-dev khiops-core=$KHIOPS_CORE_VERSION
+          conda install khiops-core=$KHIOPS_CORE_VERSION
           conda install --channel ./khiops-conda/ khiops
       - name: Test Khiops Installation Status
         run: kh-status

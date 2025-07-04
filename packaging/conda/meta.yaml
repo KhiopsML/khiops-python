@@ -26,7 +26,7 @@ requirements:
     - python
   run:
     - python
-    - khiops-core >=10.3.1,<10.3.2
+    - khiops-core >=10.3.2,<10.3.3
     - pandas >=0.25.3
     - scikit-learn >=0.22.2
   run_constrained:

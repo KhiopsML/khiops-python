@@ -6,6 +6,12 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.3.2.0 - 2025-07-03
+
+### Fixed
+- (`sklearn`) Documentation display for the `train_test_split_dataset` sklearn
+helper function.
+
 ## 10.3.1.0 - 2025-04-16
 
 ### Added
