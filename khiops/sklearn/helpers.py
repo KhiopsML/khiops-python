@@ -11,7 +11,7 @@ import itertools
 from sklearn.model_selection import train_test_split
 
 from khiops.core.internals.common import is_dict_like, type_error_message
-from khiops.sklearn.dataset import Dataset
+from khiops.sklearn.dataset import Dataset, table_name_of_path
 
 # Note: We build the splits with lists and itertools.chain avoid pylint warning about
 # unbalanced-tuple-unpacking. See issue https://github.com/pylint-dev/pylint/issues/5671
@@ -122,15 +122,31 @@ def _train_test_split_in_memory_dataset(ds, y, test_size, sklearn_split_params=N
 
     # Split the secondary tables tables
     # Note: The tables are traversed in BFS
-    todo_relations = [
-        relation for relation in ds.relations if relation[0] == ds.main_table.name
+    todo_tables = [
+        (table_path, table)
+        for table_path, table, _ in ds.additional_data_tables
+        if "/" not in table_path
     ]
-    while todo_relations:
-        current_parent_table_name, current_child_table_name, _ = todo_relations.pop(0)
-        for relation in ds.relations:
-            parent_table_name, _, _ = relation
+    while todo_tables:
+        current_table_path, current_table = todo_tables.pop(0)
+        if "/" not in current_table_path:
+            current_parent_table_name = ds.main_table.name
+        else:
+            table_path_fragments = current_table_path.split("/")
+            current_parent_table_name = table_name_of_path(
+                "/".join(table_path_fragments[:-1])
+            )
+        current_child_table_name = current_table.name
+        for secondary_table_path, secondary_table, _ in ds.additional_data_tables:
+            if "/" not in secondary_table_path:
+                parent_table_name = ds.main_table.name
+            else:
+                table_path_fragments = secondary_table_path.split("/")
+                parent_table_name = table_name_of_path(
+                    "/".join(table_path_fragments[:-1])
+                )
             if parent_table_name == current_child_table_name:
-                todo_relations.append(relation)
+                todo_tables.append((secondary_table_path, secondary_table))
 
         for new_ds in (train_ds, test_ds):
             origin_child_table = ds.get_table(current_child_table_name)

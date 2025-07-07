@@ -459,19 +459,22 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         self.assertEqual(dataset.main_table.name, "main_table")
         self.assertEqual(len(dataset.additional_data_tables), 4)
         dataset_secondary_table_names = {
-            secondary_table.name for secondary_table in dataset.additional_data_tables
+            secondary_table.name
+            for _, secondary_table, _ in dataset.additional_data_tables
         }
         self.assertEqual(dataset_secondary_table_names, {"B", "C", "D", "E"})
-        self.assertEqual(len(dataset.relations), 4)
 
         table_specs = ds_spec["additional_data_tables"].items()
-        for relation, (table_path, table_spec) in zip(dataset.relations, table_specs):
+        for (ds_table_path, _, ds_is_one_to_one), (
+            table_path,
+            table_spec,
+        ) in zip(dataset.additional_data_tables, table_specs):
             # The relation holds the table name, not the table path
-            self.assertEqual(relation[1], table_path.split("/")[-1])
+            self.assertEqual(ds_table_path, table_path)
             if len(table_spec) == 3:
-                self.assertEqual(relation[2], table_spec[2])
+                self.assertEqual(ds_is_one_to_one, table_spec[2])
             else:
-                self.assertFalse(relation[2])
+                self.assertFalse(ds_is_one_to_one)
 
     def test_out_file_from_dataframe_monotable(self):
         """Test consistency of the created data file with the input dataframe
@@ -745,7 +748,9 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
 
         # Check that the domain has the same table names as the reference
         ref_table_names = {
-            table.name for table in [ds.main_table] + ds.additional_data_tables
+            table.name
+            for table in [ds.main_table]
+            + [table for _, table, _ in ds.additional_data_tables]
         }
         out_table_names = {dictionary.name for dictionary in out_domain.dictionaries}
         self.assertEqual(ref_table_names, out_table_names)
@@ -758,7 +763,9 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         # Check that:
         # - the table keys are the same as the dataset
         # - the domain has the same variable names as the reference
-        for table in [ds.main_table] + ds.additional_data_tables:
+        for table in [ds.main_table] + [
+            table for _, table, _ in ds.additional_data_tables
+        ]:
             with self.subTest(table=table.name):
                 self.assertEqual(table.key, out_domain.get_dictionary(table.name).key)
                 out_dictionary_var_types = {

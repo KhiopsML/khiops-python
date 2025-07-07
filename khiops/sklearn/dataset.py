@@ -176,7 +176,7 @@ def _check_multitable_spec(ds_spec):
             )
 
 
-def _table_name_of_path(table_path):
+def table_name_of_path(table_path):
     return table_path.split("/")[-1]
 
 
@@ -387,7 +387,6 @@ class Dataset:
         # Initialize members
         self.main_table = None
         self.additional_data_tables = None
-        self.relations = None
         self.categorical_target = categorical_target
         self.target_column = None
         self.target_column_id = None
@@ -437,7 +436,8 @@ class Dataset:
         # Index the tables by name
         self._tables_by_name = {
             table.name: table
-            for table in [self.main_table] + self.additional_data_tables
+            for table in [self.main_table]
+            + [table for _, table, _ in self.additional_data_tables]
         }
 
         # Post-conditions
@@ -513,32 +513,21 @@ class Dataset:
                 key=main_table_key,
             )
             self.additional_data_tables = []
-            self.relations = []
             if "additional_data_tables" in X:
                 for table_path, table_spec in X["additional_data_tables"].items():
                     table_source, table_key = table_spec[:2]
-                    table_name = _table_name_of_path(table_path)
+                    table_name = table_name_of_path(table_path)
                     table = PandasTable(
                         table_name,
                         table_source,
-                        data_path=table_path,
                         key=table_key,
                     )
-                    self.additional_data_tables.append(table)
                     is_one_to_one_relation = False
                     if len(table_spec) == 3 and table_spec[2] is True:
                         is_one_to_one_relation = True
 
-                    # Set relation parent: if no "/" in path, main_table is the parent
-                    if not "/" in table_path:
-                        parent_table_name = self.main_table.name
-                    else:
-                        table_path_fragments = table_path.split("/")
-                        parent_table_name = _table_name_of_path(
-                            "/".join(table_path_fragments[:-1])
-                        )
-                    self.relations.append(
-                        (parent_table_name, table_name, is_one_to_one_relation)
+                    self.additional_data_tables.append(
+                        (table_path, table, is_one_to_one_relation)
                     )
         # Initialize a sparse dataset (monotable)
         elif isinstance(main_table_source, sp.spmatrix):
@@ -548,7 +537,6 @@ class Dataset:
                 key=main_table_key,
             )
             self.additional_data_tables = []
-            self.relations = []
         # Initialize a numpyarray dataset (monotable)
         elif hasattr(main_table_source, "__array__"):
             self.main_table = NumpyTable(
@@ -561,7 +549,6 @@ class Dataset:
                     "with pandas dataframe source tables"
                 )
             self.additional_data_tables = []
-            self.relations = []
         else:
             raise TypeError(
                 type_error_message(
@@ -680,11 +667,12 @@ class Dataset:
         ds_spec = {}
         ds_spec["main_table"] = (self.main_table.data_source, self.main_table.key)
         ds_spec["additional_data_tables"] = {}
-        for table in self.additional_data_tables:
-            assert table.data_path is not None
-            ds_spec["additional_data_tables"][table.data_path] = (
+        for table_path, table, is_one_to_one_relation in self.additional_data_tables:
+            assert table_path is not None
+            ds_spec["additional_data_tables"][table_path] = (
                 table.data_source,
                 table.key,
+                is_one_to_one_relation,
             )
 
         return ds_spec
@@ -748,31 +736,32 @@ class Dataset:
         # Note: In general 'name' and 'object_type' fields of Variable can be different
         if self.additional_data_tables:
             main_dictionary.root = True
-            table_names = [table.name for table in self.additional_data_tables]
-            tables_to_visit = [self.main_table.name]
-            while tables_to_visit:
-                current_table = tables_to_visit.pop(0)
-                for relation in self.relations:
-                    parent_table, child_table, is_one_to_one_relation = relation
-                    if parent_table == current_table:
-                        tables_to_visit.append(child_table)
-                        parent_table_name = parent_table
-                        index_table = table_names.index(child_table)
-                        table = self.additional_data_tables[index_table]
-                        parent_table_dictionary = dictionary_domain.get_dictionary(
-                            parent_table_name
-                        )
-                        dictionary = table.create_khiops_dictionary()
-                        dictionary_domain.add_dictionary(dictionary)
-                        table_variable = kh.Variable()
-                        if is_one_to_one_relation:
-                            table_variable.type = "Entity"
-                        else:
-                            table_variable.type = "Table"
-                        table_variable.name = table.name
-                        table_variable.object_type = table.name
-                        parent_table_dictionary.add_variable(table_variable)
+            for (
+                table_path,
+                table,
+                is_one_to_one_relation,
+            ) in self.additional_data_tables:
+                if not "/" in table_path:
+                    parent_table_name = self.main_table.name
+                else:
+                    table_path_fragments = table_path.split("/")
+                    parent_table_name = table_name_of_path(
+                        "/".join(table_path_fragments[:-1])
+                    )
+                parent_table_dictionary = dictionary_domain.get_dictionary(
+                    parent_table_name
+                )
 
+                dictionary = table.create_khiops_dictionary()
+                dictionary_domain.add_dictionary(dictionary)
+                table_variable = kh.Variable()
+                if is_one_to_one_relation:
+                    table_variable.type = "Entity"
+                else:
+                    table_variable.type = "Table"
+                table_variable.name = table.name
+                table_variable.object_type = table.name
+                parent_table_dictionary.add_variable(table_variable)
         return dictionary_domain
 
     def create_table_files_for_khiops(self, output_dir, sort=True):
@@ -811,9 +800,9 @@ class Dataset:
 
         # Create a copy of each secondary table
         secondary_table_paths = {}
-        for table in self.additional_data_tables:
-            assert table.data_path is not None
-            secondary_table_paths[table.data_path] = table.create_table_file_for_khiops(
+        for table_path, table, _ in self.additional_data_tables:
+            assert table_path is not None
+            secondary_table_paths[table_path] = table.create_table_file_for_khiops(
                 output_dir, sort=sort
             )
 
@@ -918,13 +907,11 @@ class PandasTable(DatasetTable):
         Name for the table.
     dataframe : `pandas.DataFrame`
         The data frame to be encapsulated. It must be non-empty.
-    data_path : str, optional
-        Data path of the table. Unset for main tables.
     key : list of str, optional
         The names of the columns composing the key.
     """
 
-    def __init__(self, name, dataframe, data_path=None, key=None):
+    def __init__(self, name, dataframe, key=None):
         # Call the parent method
         super().__init__(name=name, key=key)
 
@@ -937,7 +924,6 @@ class PandasTable(DatasetTable):
         # Initialize the attributes
         self.data_source = dataframe
         self.n_samples = len(self.data_source)
-        self.data_path = data_path
 
         # Initialize feature columns and verify their types
         self.column_ids = self.data_source.columns.values

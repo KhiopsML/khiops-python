@@ -1516,7 +1516,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         # Multi-table model: Check name and dictionary coherence of secondary tables
         dataset_secondary_tables_by_name = {
-            table.name: table for table in ds.additional_data_tables
+            table.name: table for _, table, _ in ds.additional_data_tables
         }
         for dictionary in self.model_.dictionaries:
             assert dictionary.name.startswith(self._khiops_model_prefix), (
