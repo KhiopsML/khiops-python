@@ -103,7 +103,13 @@ jobs:
           echo "KHIOPS_CORE_VERSION=$KHIOPS_CORE_VERSION" >> "$GITHUB_ENV"
       - name: Install the Khiops Conda package
         run: |
-          conda install khiops-core=$KHIOPS_CORE_VERSION
+          # Add the Conda `rc` label for alpha or RC pre-releases
+          if [[ $(echo ${KHIOPS_CORE_VERSION} | grep -E ".*(a|rc)\.[0-9]+") ]]; then
+            RC_LABEL="conda-forge/label/rc::"
+          else
+            RC_LABEL=""
+          fi
+          conda install ${RC_LABEL}khiops-core=$KHIOPS_CORE_VERSION
           conda install --channel ./khiops-conda/ khiops
       - name: Test Khiops Installation Status
         run: kh-status

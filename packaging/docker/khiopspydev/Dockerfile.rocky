@@ -69,8 +69,16 @@ RUN true \
 # set up all the supported Python environments under conda (for the unit tests)
 # relying on a variable containing all the versions
 ARG PYTHON_VERSIONS
+
+# Install Conda packages
+# Use `rc` label for alpha or RC khiops-core pre-releases
 RUN true \
   && export CONDA="/root/miniforge3/bin/conda" \
+  && if [[ $(echo ${KHIOPS_REVISION} | grep -E ".*-(a|rc)\.[0-9]+") ]]; then \
+       export RC_LABEL="conda-forge/label/rc::"; \
+     else \
+       export RC_LABEL=""; \
+     fi \
   && /bin/bash -c 'for version in ${PYTHON_VERSIONS}; \
     do \
         CONDA_ENVS="py${version} py${version}_conda"; \
@@ -78,7 +86,7 @@ RUN true \
         do \
             $CONDA create -y -n $CONDA_ENV python=${version}; \
         done; \
-        $CONDA install -y -n py${version}_conda khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
+        $CONDA install -y -n py${version}_conda ${RC_LABEL}khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
     done' \
   && true
 
