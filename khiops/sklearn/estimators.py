@@ -223,6 +223,13 @@ def _cleanup_dir(target_dir):
 class KhiopsEstimator(ABC, BaseEstimator):
     """Base class for Khiops Scikit-learn estimators
 
+    .. note::
+         The input features collection X needs to have single-line records
+         so that Khiops can handle them.
+         Hence, multi-line records are preprocessed:
+         carriage returns / line feeds are replaced
+         with blank spaces before being handed over to Khiops.
+
     Parameters
     ----------
     verbose : bool, default ``False``
@@ -1695,7 +1702,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     .. note::
 
         Visit `the Khiops site <https://khiops.org/learn/understand>`_ to learn
-        abouth the automatic feature engineering algorithm.
+        about the automatic feature engineering algorithm.
 
     Parameters
     ----------

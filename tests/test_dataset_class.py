@@ -4,7 +4,6 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""Test consistency of the created files with the input data"""
 import os
 import shutil
 import unittest
@@ -700,3 +699,47 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                     for var in out_domain.get_dictionary(table.name).variables
                 }
                 self.assertEqual(ref_var_types[table.name], out_dictionary_var_types)
+
+
+class DataFramePreprocessingTests(unittest.TestCase):
+    """Check that the preprocessing of X (input features collection) is actually done
+    when writing the csv used later by Khiops
+    """
+
+    def setUp(self):
+        """Set-up test-specific output directory"""
+        self.output_dir = os.path.join("resources", "tmp", self._testMethodName)
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def tearDown(self):
+        """Clean-up test-specific output directory"""
+        shutil.rmtree(self.output_dir, ignore_errors=True)
+        del self.output_dir
+
+    @staticmethod
+    def create_monotable_dataset_with_newlines():
+        data = {
+            "User_ID": [
+                "Cm6fu01r99",
+            ],
+            "Age": [39],
+            "Title": [
+                "Shimmer,\nsurprisingly\n\rgoes with lots",
+            ],
+        }
+        dataset = pd.DataFrame(data)
+        return dataset
+
+    def test_newlines_removed_from_csv_file_for_khiops(self):
+        dataset = Dataset(
+            DataFramePreprocessingTests.create_monotable_dataset_with_newlines()
+        )
+
+        out_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
+        out_table = pd.read_csv(out_table_path, sep="\t")
+
+        self.assertEqual(
+            "Shimmer, surprisingly  goes with lots",
+            out_table.Title[0],
+            "Newlines should have been removed from the data",
+        )
