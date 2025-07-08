@@ -1,7 +1,7 @@
 ---
 name: Dev Docker
 env:
-  DEFAULT_KHIOPS_REVISION: 10.7.3-a.0
+  DEFAULT_KHIOPS_REVISION: 11.0.0-a.0
   DEFAULT_IMAGE_INCREMENT: 0
   DEFAULT_SERVER_REVISION: main
   DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12 3.13
@@ -14,7 +14,7 @@ on:
     inputs:
       khiops-revision:
         type: string
-        default: 10.7.3-a.0
+        default: 11.0.0-a.0
         description: Khiops Revision
       image-increment:
         type: number

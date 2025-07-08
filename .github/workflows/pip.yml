@@ -9,7 +9,7 @@ on:
         default: 11.0.0
         description: khiops-samples repo revision
       image-tag:
-        default: 10.7.3-a.0.0
+        default: 11.0.0-a.0.0
         description: Development Docker Image Tag
   pull_request:
     paths:
@@ -64,7 +64,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '10.7.3-a.0.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '11.0.0-a.0.0' }}
     steps:
       - name: Set parameters as env
         run: |
@@ -106,9 +106,11 @@ jobs:
           kh-samples core -i train_coclustering -e
           kh-samples sklearn -i khiops_classifier -e
 
-          # Test that the line containing "MPI command" also contains
-          # an executable named "mpiexec"
-          kh-status | grep "MPI command" | grep -wq "mpiexec"
+          # Test that the line containing "MPI command" does not contain "<empty>"
+          # (as given by kh-status in the absence of MPI support)
+          # The MPI command is not always named mpiexec, but can be orterun etc
+          # (as given by khiops_env)
+          kh-status | grep "MPI command" | grep -vwq "<empty>"
   release:
     if: github.ref_type == 'tag'
     needs: [build, test]

@@ -146,7 +146,14 @@ def _infer_env_bin_dir_for_conda_based_installations():
     # Match $CONDA_PREFIX/[Ll]ib/python3.X/site-packages/khiops/core/internals/runner.py
     else:
         conda_env_dir = current_file_path.parents[6]
-    env_bin_dir = os.path.join(str(conda_env_dir), "bin")
+
+    # Conda env binary dir is:
+    # - on Windows: conda_env_dir\Library\bin
+    # - on Linux/macOS: conda_env_dir\bin
+    if platform.system() == "Windows":
+        env_bin_dir = os.path.join(str(conda_env_dir), "Library", "bin")
+    else:
+        env_bin_dir = os.path.join(str(conda_env_dir), "bin")
 
     return env_bin_dir
 
@@ -168,7 +175,10 @@ def _check_conda_env_bin_dir(conda_env_bin_dir):
 
     # Conda env dir is not equal to its root dir
     # Conda env bin dir exists, along with the `conda-meta` dir
+    # Note: On Windows, Conda env bin dir equals conda env dir\Library\bin
     conda_env_dir_path = conda_env_bin_dir_path.parent
+    if platform.system() == "Windows":
+        conda_env_dir_path = conda_env_dir_path.parent
     if (
         str(conda_env_dir_path) != conda_env_dir_path.root  # `.root` is an `str`
         and conda_env_bin_dir_path.is_dir()
@@ -180,20 +190,25 @@ def _check_conda_env_bin_dir(conda_env_bin_dir):
 
 def _infer_khiops_installation_method(trace=False):
     """Return the Khiops installation method"""
-    # We are in a conda environment if
-    # - if the CONDA_PREFIX environment variable exists and,
-    # - if MODL, MODL_Coclustering and mpiexec files exists in
-    # `$CONDA_PREFIX/bin`
-    #
-    # Note: The check that MODL and MODL_Coclustering are actually executable is done
+    # We are in a Conda environment if
+    # - the CONDA_PREFIX environment variable exists and,
+    # - the khiops_env script exists within:
+    #   - `%CONDA_PREFIX\Library\bin%` on Windows
+    #   - `$CONDA_PREFIX/bin` on Linux and MacOS
+    # Note: The check that the Khiops binaries are actually executable is done
     #       afterwards by the initializations method.
-    # We are in a conda env if the Khiops binaries exists within `$CONDA_PREFIX/bin`
-    if "CONDA_PREFIX" in os.environ and _khiops_env_file_exists(
-        os.path.join(os.environ["CONDA_PREFIX"], "bin")
-    ):
-        installation_method = "conda"
-    # Otherwise, we choose between conda-based and local (default choice)
-    else:
+    installation_method = "unknown"
+    if "CONDA_PREFIX" in os.environ:
+        conda_env_dir = os.environ["CONDA_PREFIX"]
+        if platform.system() == "Windows":
+            conda_binary_dir = os.path.join(conda_env_dir, "Library", "bin")
+        else:
+            conda_binary_dir = os.path.join(conda_env_dir, "bin")
+        if _khiops_env_file_exists(conda_binary_dir):
+            installation_method = "conda"
+    # Otherwise (installation_method is still "unknown"), we choose between
+    # conda-based and local (default choice)
+    if installation_method == "unknown":
         env_bin_dir = _infer_env_bin_dir_for_conda_based_installations()
         if trace:
             print(f"Environment binary dir: '{env_bin_dir}'")
