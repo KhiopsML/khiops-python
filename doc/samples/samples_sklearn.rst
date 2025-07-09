@@ -168,9 +168,8 @@ Samples
 
     # Create the dataset spec and the target
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
         },
     }
@@ -224,18 +223,12 @@ Samples
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-            "Users": (users_df, ["AccidentId", "VehicleId"]),
-            "Places": (places_df, "AccidentId"),
+            "Vehicles/Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, ["AccidentId"], True),
         },
-        "relations": [
-            ("Accidents", "Vehicles"),
-            ("Vehicles", "Users"),
-            ("Accidents", "Places", True),
-        ],
     }
 
     # Load the target variable "Gravity"
@@ -411,16 +404,14 @@ Samples
     # Create the dataset multitable specification for the train/test split
     # We specify each table with a name and a tuple (dataframe, key_columns)
     X_train = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (X_train_main, "AccidentId"),
+        "main_table": (X_train_main, ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (X_train_secondary, ["AccidentId", "VehicleId"]),
         },
     }
     X_test = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (X_test_main, "AccidentId"),
+        "main_table": (X_test_main, ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (X_test_secondary, ["AccidentId", "VehicleId"]),
         },
     }
@@ -557,9 +548,8 @@ Samples
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
         },
     }
@@ -596,18 +586,12 @@ Samples
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-            "Users": (users_df, ["AccidentId", "VehicleId"]),
-            "Places": (places_df, "AccidentId"),
+            "Vehicles/Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, ["AccidentId"], True),
         },
-        "relations": [
-            ("Accidents", "Vehicles"),
-            ("Vehicles", "Users"),
-            ("Accidents", "Places", True),
-        ],
     }
 
     # Load the target variable "Gravity"
@@ -701,14 +685,10 @@ Samples
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
         },
-        "relations": [
-            ("Accidents", "Vehicles"),
-        ],
     }
 
     # Load the target variable "Gravity"

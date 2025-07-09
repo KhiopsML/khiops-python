@@ -54,21 +54,15 @@ class EstimatorAttributesTests(unittest.TestCase):
 
         # Create the multi-table dataset spec
         X = {
-            "main_table": "Accidents",
-            "tables": {
-                "Accidents": (
-                    accidents_df.drop("Gravity", axis=1)[:size],
-                    "AccidentId",
-                ),
+            "main_table": (
+                accidents_df.drop("Gravity", axis=1)[:size],
+                ["AccidentId"],
+            ),
+            "additional_data_tables": {
                 "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-                "Users": (users_df, ["AccidentId", "VehicleId"]),
-                "Places": (places_df, ["AccidentId"]),
+                "Vehicles/Users": (users_df, ["AccidentId", "VehicleId"]),
+                "Places": (places_df, ["AccidentId"], True),
             },
-            "relations": [
-                ("Accidents", "Vehicles"),
-                ("Vehicles", "Users"),
-                ("Accidents", "Places", True),
-            ],
         }
         y = accidents_df["Gravity"][:size]
 
@@ -195,7 +189,7 @@ class EstimatorAttributesTests(unittest.TestCase):
         X, y = self._create_multitable_input()
         khc_accidents = KhiopsClassifier(n_trees=0, n_pairs=10)
         khc_accidents.fit(X, y)
-        self.assert_attribute_values_ok(khc_accidents, X["tables"]["Accidents"][0], y)
+        self.assert_attribute_values_ok(khc_accidents, X["main_table"][0], y)
         self.assertTrue(khc_accidents.is_multitable_model_)
 
     def test_regressor_attributes_monotable(self):
@@ -229,8 +223,8 @@ class EstimatorAttributesTests(unittest.TestCase):
          by Khiops post training.
         """
         X, _ = self._create_multitable_input(750)
-        y = X["tables"]["Accidents"][0]["Commune"]
-        X["tables"]["Accidents"][0].drop("Commune", axis=1, inplace=True)
+        y = X["main_table"][0]["Commune"]
+        X["main_table"][0].drop("Commune", axis=1, inplace=True)
         khr_accidents = KhiopsRegressor(n_trees=0)
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -240,9 +234,7 @@ class EstimatorAttributesTests(unittest.TestCase):
             )
             khr_accidents.fit(X, y)
 
-        self.assert_attribute_values_ok(
-            khr_accidents, X["tables"]["Accidents"][0], None
-        )
+        self.assert_attribute_values_ok(khr_accidents, X["main_table"][0], None)
         self.assertTrue(khr_accidents.is_multitable_model_)
 
     def test_encoder_attributes_monotable(self):

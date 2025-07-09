@@ -61,12 +61,10 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
         X, y = create_iris()
         raw_X_main_mt, raw_X_sec_mt, _ = create_iris_mt()
         X_mt = {
-            "main_table": "iris_main",
-            "tables": {
-                "iris_main": (raw_X_main_mt, "Id"),
-                "iris_sec": (raw_X_sec_mt, "Id"),
+            "main_table": (raw_X_main_mt, ["Id"]),
+            "additional_data_tables": {
+                "iris_sec": (raw_X_sec_mt, ["Id"]),
             },
-            "relations": [("iris_main", "iris_sec")],
         }
         khc = KhiopsClassifier(n_trees=0)
         khc.fit(X, y)
@@ -220,10 +218,9 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
             "Xs": {
                 "mono": X,
                 "multi": {
-                    "main_table": "iris_main",
-                    "tables": {
-                        "iris_main": (X_mt, "Id"),
-                        "iris_sec": (X_sec_mt, "Id"),
+                    "main_table": (X_mt, ["Id"]),
+                    "additional_data_tables": {
+                        "iris_sec": (X_sec_mt, ["Id"]),
                     },
                 },
             },

@@ -3,7 +3,7 @@
 	"version": "10.0",
 	"dictionaries": [
 		{
-			"name": "CC_Keys_main_table",
+			"name": "CC_main_table",
 			"key": ["SampleId"],
 			"variables": [
 				{
@@ -11,9 +11,9 @@
 					"type": "Categorical"
 				},
 				{
-					"name": "CC_main_table",
+					"name": "CC_original_main_table",
 					"type": "Table",
-					"objectType": "CC_main_table"
+					"objectType": "CC_original_main_table"
 				},
 				{
 					"name": "Coclustering",
@@ -37,7 +37,7 @@
 					"used": false,
 					"type": "Structure",
 					"structureType": "Vector",
-					"rule": "TableVector(CC_main_table, Pos)"
+					"rule": "TableVector(CC_original_main_table, Pos)"
 				},
 				{
 					"name": "CharSet",
@@ -45,7 +45,7 @@
 					"used": false,
 					"type": "Structure",
 					"structureType": "VectorC",
-					"rule": "TableVectorC(CC_main_table, Char)"
+					"rule": "TableVectorC(CC_original_main_table, Char)"
 				},
 				{
 					"name": "DeployedCoclusteringAtSampleId",
@@ -71,7 +71,7 @@
 			]
 		},
 		{
-			"name": "CC_main_table",
+			"name": "CC_original_main_table",
 			"key": ["SampleId"],
 			"variables": [
 				{

@@ -23,7 +23,10 @@ from khiops.core.internals.runner import get_runner
 
 
 def _build_multi_table_dictionary_domain(
-    dictionary_domain, root_dictionary_name, secondary_table_variable_name
+    dictionary_domain,
+    root_dictionary_name,
+    secondary_table_variable_name,
+    update_secondary_table_name=False,
 ):
     """Builds a multi-table dictionary domain from a dictionary with a key
     Parameters
@@ -34,6 +37,9 @@ def _build_multi_table_dictionary_domain(
         Name for the new root dictionary
     secondary_table_variable_name : str
         Name, in the root dictionary, for the "table" variable of the secondary table.
+    update_secondary_table_name : bool, default `False`
+        If ``True``, then update the secondary table name according to the
+        secondary table variable name. If not set, keep original table name.
 
     Returns
     -------
@@ -103,11 +109,17 @@ def _build_multi_table_dictionary_domain(
     target_variable = Variable()
     target_variable.name = secondary_table_variable_name
     target_variable.type = "Table"
-    target_variable.object_type = root_source_dictionary.name
+    if update_secondary_table_name:
+        target_variable.object_type = secondary_table_variable_name
+    else:
+        target_variable.object_type = root_source_dictionary.name
     root_target_dictionary.add_variable(target_variable)
 
     # Build secondary target dictionary, by copying root source dictionary
     secondary_target_dictionary = root_source_dictionary.copy()
+    secondary_target_dictionary.root = False
+    if update_secondary_table_name:
+        secondary_target_dictionary.name = secondary_table_variable_name
 
     # Build target domain and add dictionaries to it
     target_domain = DictionaryDomain()

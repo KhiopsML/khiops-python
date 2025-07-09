@@ -294,15 +294,11 @@ class KhiopsMultitableFitTests(unittest.TestCase):
             secondary_table_data, "SampleId", primary_table=splice_junction_df
         )
         dataset = {
-            "main_table": "SpliceJunction",
-            "tables": {
-                "SpliceJunction": (
-                    splice_junction_df,
-                    "SampleId",
-                ),
+            "main_table": (splice_junction_df, ["SampleId"]),
+            "additional_data_tables": {
                 "SpliceJunctionDNA": (
                     splice_junction_dna_df,
-                    "SampleId",
+                    ["SampleId"],
                 ),
             },
         }

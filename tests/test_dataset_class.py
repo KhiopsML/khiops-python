@@ -7,6 +7,7 @@
 import os
 import shutil
 import unittest
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -15,7 +16,7 @@ from numpy.testing import assert_equal
 from pandas.testing import assert_frame_equal
 from sklearn import datasets
 
-from khiops.sklearn.dataset import Dataset
+from khiops.sklearn.dataset import Dataset, _upgrade_mapping_spec
 
 
 class DatasetInputOutputConsistencyTests(unittest.TestCase):
@@ -235,34 +236,12 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             quaternary_table,
         )
 
-    def create_multitable_snowflake_data_files(
-        self,
-        main_table_path,
-        secondary_table_path_1,
-        secondary_table_path_2,
-        tertiary_table_path,
-        quaternary_table_path,
-    ):
-        (
-            main_table,
-            secondary_table_1,
-            secondary_table_2,
-            tertiary_table,
-            quaternary_table,
-        ) = self.create_multitable_snowflake_dataframes()
-        main_table.to_csv(main_table_path, sep="\t", index=False)
-        secondary_table_1.to_csv(secondary_table_path_1, sep="\t", index=False)
-        secondary_table_2.to_csv(secondary_table_path_2, sep="\t", index=False)
-        tertiary_table.to_csv(tertiary_table_path, sep="\t", index=False)
-        quaternary_table.to_csv(quaternary_table_path, sep="\t", index=False)
-
     def create_fixture_ds_spec(self, multitable, schema):
         if not multitable:
             ref_table = self.create_monotable_dataframe()
             features = ref_table.drop(["class"], axis=1)
             ds_spec = {
-                "main_table": "Reviews",
-                "tables": {"Reviews": (features, "User_ID")},
+                "main_table": (features, ["User_ID"]),
             }
             label = ref_table["class"]
         elif schema == "star":
@@ -272,10 +251,9 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             ) = self.create_multitable_star_dataframes()
             features_ref_main_table = ref_main_table.drop("class", axis=1)
             ds_spec = {
-                "main_table": "id_class",
-                "tables": {
-                    "id_class": (features_ref_main_table, "User_ID"),
-                    "logs": (ref_secondary_table, "User_ID"),
+                "main_table": (features_ref_main_table, ["User_ID"]),
+                "additional_data_tables": {
+                    "logs": (ref_secondary_table, ["User_ID"]),
                 },
             }
             label = ref_main_table["class"]
@@ -291,26 +269,16 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
 
             features_ref_main_table = ref_main_table.drop("class", axis=1)
             ds_spec = {
-                "main_table": "A",
-                "tables": {
-                    "D": (
-                        ref_tertiary_table,
-                        ["User_ID", "VAR_1", "VAR_2"],
-                    ),
-                    "B": (ref_secondary_table_1, ["User_ID", "VAR_1"]),
-                    "E": (
+                "main_table": (features_ref_main_table, ["User_ID"]),
+                "additional_data_tables": {
+                    "B": (ref_secondary_table_1, ["User_ID", "VAR_1"], False),
+                    "B/D": (ref_tertiary_table, ["User_ID", "VAR_1", "VAR_2"], False),
+                    "B/D/E": (
                         ref_quaternary_table,
                         ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
                     ),
-                    "C": (ref_secondary_table_2, ["User_ID"]),
-                    "A": (features_ref_main_table, "User_ID"),
+                    "C": (ref_secondary_table_2, ["User_ID"], True),
                 },
-                "relations": [
-                    ("B", "D", False),
-                    ("A", "C", True),
-                    ("D", "E"),
-                    ("A", "B", False),
-                ],
             }
             label = ref_main_table["class"]
 
@@ -319,7 +287,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
     def get_ref_var_types(self, multitable, schema=None):
         ref_var_types = {}
         if not multitable:
-            ref_var_types["Reviews"] = {
+            ref_var_types["main_table"] = {
                 "User_ID": "Categorical",
                 "Age": "Numerical",
                 "Clothing ID": "Numerical",
@@ -331,7 +299,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                 "class": "Categorical",
             }
         elif schema == "star":
-            ref_var_types["id_class"] = {
+            ref_var_types["main_table"] = {
                 "User_ID": "Categorical",
                 "class": "Categorical",
                 "logs": "Table",
@@ -347,7 +315,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             assert (
                 schema == "snowflake"
             ), f"'schema' should be 'snowflake' not '{schema}'"
-            ref_var_types["A"] = {
+            ref_var_types["main_table"] = {
                 "User_ID": "Categorical",
                 "class": "Categorical",
                 "B": "Table",
@@ -385,6 +353,102 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
 
         return ref_var_types
 
+    def test_dataset_of_deprecated_mt_mapping(self):
+        """Test deprecated multi-table specification handling"""
+        (
+            ref_main_table,
+            ref_secondary_table_1,
+            ref_secondary_table_2,
+            ref_tertiary_table,
+            ref_quaternary_table,
+        ) = self.create_multitable_snowflake_dataframes()
+
+        features_ref_main_table = ref_main_table.drop("class", axis=1)
+        expected_ds_spec = {
+            "main_table": (features_ref_main_table, ["User_ID"]),
+            "additional_data_tables": {
+                "B": (ref_secondary_table_1, ["User_ID", "VAR_1"], False),
+                "B/D": (ref_tertiary_table, ["User_ID", "VAR_1", "VAR_2"], False),
+                "B/D/E": (
+                    ref_quaternary_table,
+                    ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
+                ),
+                "C": (ref_secondary_table_2, ["User_ID"], True),
+            },
+        }
+        deprecated_ds_spec = {
+            "main_table": "A",
+            "tables": {
+                "A": (features_ref_main_table, "User_ID"),
+                "B": (ref_secondary_table_1, ["User_ID", "VAR_1"]),
+                "C": (ref_secondary_table_2, "User_ID"),
+                "D": (ref_tertiary_table, ["User_ID", "VAR_1", "VAR_2"]),
+                "E": (
+                    ref_quaternary_table,
+                    ["User_ID", "VAR_1", "VAR_2", "VAR_3"],
+                ),
+            },
+            "relations": {
+                ("A", "B", False),
+                ("B", "D", False),
+                ("D", "E"),
+                ("A", "C", True),
+            },
+        }
+
+        label = ref_main_table["class"]
+
+        # Test that deprecation warning is issued when creating a dataset
+        # according to the deprecated spec
+        with warnings.catch_warnings(record=True) as warning_list:
+            _ = Dataset(deprecated_ds_spec, label)
+        self.assertTrue(len(warning_list) > 0)
+        deprecation_warning_found = False
+        for warning in warning_list:
+            warning_message = warning.message
+            if (
+                issubclass(warning.category, UserWarning)
+                and len(warning_message.args) == 1
+                and "multi-table dataset specification format"
+                in warning_message.args[0]
+                and "deprecated" in warning_message.args[0]
+            ):
+                deprecation_warning_found = True
+                break
+        self.assertTrue(deprecation_warning_found)
+
+        # Test that a deprecated dataset spec is upgraded to the new format
+        ds_spec = _upgrade_mapping_spec(deprecated_ds_spec)
+        self.assertEqual(ds_spec.keys(), expected_ds_spec.keys())
+        main_table = ds_spec["main_table"]
+        expected_main_table = expected_ds_spec["main_table"]
+
+        # Test that main table keys are identical
+        self.assertEqual(main_table[1], expected_main_table[1])
+
+        # Test that main table data frame are equal
+        assert_frame_equal(main_table[0], expected_main_table[0])
+
+        # Test that additional data tables keys are identical
+        additional_data_tables = ds_spec["additional_data_tables"]
+        expected_additional_data_tables = expected_ds_spec["additional_data_tables"]
+        self.assertEqual(
+            additional_data_tables.keys(), expected_additional_data_tables.keys()
+        )
+
+        for table_path, expected_table_data in expected_additional_data_tables.items():
+            table_data = additional_data_tables[table_path]
+
+            # Test that secondary table keys are identical
+            self.assertEqual(table_data[1], expected_table_data[1])
+
+            # Test that the secondary table data frames are identical
+            assert_frame_equal(table_data[0], expected_table_data[0])
+
+            # Test that the secondary table entity statuses are identical if True
+            if len(expected_table_data) > 2 and expected_table_data[2] is True:
+                self.assertEqual(table_data[2], expected_table_data[2])
+
     def test_dataset_is_correctly_built(self):
         """Test that the dataset structure is consistent with the input spec"""
         ds_spec, label = self.create_fixture_ds_spec(
@@ -392,21 +456,25 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         )
         dataset = Dataset(ds_spec, label)
 
-        self.assertEqual(dataset.main_table.name, "A")
-        self.assertEqual(len(dataset.secondary_tables), 4)
+        self.assertEqual(dataset.main_table.name, "main_table")
+        self.assertEqual(len(dataset.additional_data_tables), 4)
         dataset_secondary_table_names = {
-            secondary_table.name for secondary_table in dataset.secondary_tables
+            secondary_table.name
+            for _, secondary_table, _ in dataset.additional_data_tables
         }
         self.assertEqual(dataset_secondary_table_names, {"B", "C", "D", "E"})
-        self.assertEqual(len(dataset.relations), 4)
 
-        spec_relations = ds_spec["relations"]
-        for relation, spec_relation in zip(dataset.relations, spec_relations):
-            self.assertEqual(relation[:2], spec_relation[:2])
-            if len(spec_relation) == 3:
-                self.assertEqual(relation[2], spec_relation[2])
+        table_specs = ds_spec["additional_data_tables"].items()
+        for (ds_table_path, _, ds_is_one_to_one), (
+            table_path,
+            table_spec,
+        ) in zip(dataset.additional_data_tables, table_specs):
+            # The relation holds the table name, not the table path
+            self.assertEqual(ds_table_path, table_path)
+            if len(table_spec) == 3:
+                self.assertEqual(ds_is_one_to_one, table_spec[2])
             else:
-                self.assertFalse(relation[2])
+                self.assertFalse(ds_is_one_to_one)
 
     def test_out_file_from_dataframe_monotable(self):
         """Test consistency of the created data file with the input dataframe
@@ -424,7 +492,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
 
         # Cast "Date" columns to datetime as we don't automatically recognize dates
         out_table["Date"] = out_table["Date"].astype("datetime64[ns]")
-        ref_table = spec["tables"]["Reviews"][0]
+        ref_table = spec["main_table"][0]
         ref_table["class"] = y
 
         # Check that the dataframes are equal
@@ -437,7 +505,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         """Test consistency of the created data file with the input numpy array"""
         # Create a monotable dataset from a numpy array
         iris = datasets.load_iris()
-        spec = {"tables": {"iris": (iris.data, None)}}
+        spec = {"main_table": (iris.data, None)}
         dataset = Dataset(spec, y=iris.target, categorical_target=True)
 
         # Create and load the intermediary Khiops file
@@ -534,7 +602,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         ) = self._create_test_sparse_matrix_with_target()
 
         # Create monotable dataset from input mapping with the sparse matrix
-        spec = {"tables": {"example_sparse_matrix": (input_sparse_matrix, None)}}
+        spec = {"main_table": (input_sparse_matrix, None)}
         dataset = Dataset(spec, y=input_target, categorical_target=True)
 
         # Create and load the intermediary Khiops file
@@ -580,9 +648,9 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         out_main_table = pd.read_csv(main_table_path, sep="\t")
         out_secondary_table = pd.read_csv(secondary_table_path, sep="\t")
 
-        ref_main_table = ds_spec["tables"]["id_class"][0]
+        ref_main_table = ds_spec["main_table"][0]
         ref_main_table["class"] = label
-        ref_secondary_table = ds_spec["tables"]["logs"][0]
+        ref_secondary_table = ds_spec["additional_data_tables"]["logs"][0]
 
         # Clean created test data
         assert_frame_equal(
@@ -618,7 +686,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         ) = dataset.create_table_files_for_khiops(self.output_dir)
 
         out_main_table = pd.read_csv(main_table_path, sep="\t")
-        ref_main_table = ds_spec["tables"]["A"][0]
+        ref_main_table = ds_spec["main_table"][0]
         ref_main_table["class"] = label
 
         # assertions
@@ -629,11 +697,11 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             out_main_table,
         )
 
-        additional_table_names = list(additional_table_paths.keys())
-        for name in additional_table_names:
-            additional_table_path = additional_table_paths[name]
+        additional_table_data_paths = list(additional_table_paths.keys())
+        for table_path in additional_table_data_paths:
+            additional_table_path = additional_table_paths[table_path]
             out_additional_table = pd.read_csv(additional_table_path, sep="\t")
-            ref_additional_table = ds_spec["tables"][name][0]
+            ref_additional_table = ds_spec["additional_data_tables"][table_path][0]
             assert_frame_equal(
                 ref_additional_table.sort_values(
                     by=ref_additional_table.columns.tolist(), ascending=True
@@ -674,11 +742,15 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         out_domain = ds.create_khiops_dictionary_domain()
 
         # Check that the domain has the same number of tables as the dataset
-        self.assertEqual(len(out_domain.dictionaries), 1 + len(ds.secondary_tables))
+        self.assertEqual(
+            len(out_domain.dictionaries), 1 + len(ds.additional_data_tables)
+        )
 
         # Check that the domain has the same table names as the reference
         ref_table_names = {
-            table.name for table in [ds.main_table] + ds.secondary_tables
+            table.name
+            for table in [ds.main_table]
+            + [table for _, table, _ in ds.additional_data_tables]
         }
         out_table_names = {dictionary.name for dictionary in out_domain.dictionaries}
         self.assertEqual(ref_table_names, out_table_names)
@@ -691,7 +763,9 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         # Check that:
         # - the table keys are the same as the dataset
         # - the domain has the same variable names as the reference
-        for table in [ds.main_table] + ds.secondary_tables:
+        for table in [ds.main_table] + [
+            table for _, table, _ in ds.additional_data_tables
+        ]:
             with self.subTest(table=table.name):
                 self.assertEqual(table.key, out_domain.get_dictionary(table.name).key)
                 out_dictionary_var_types = {

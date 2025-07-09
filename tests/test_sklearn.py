@@ -365,13 +365,15 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         "deploy_model": {
                             "expected_n_dictionaries": 2,
                             "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "CC_Keys_main_table",
-                            "expected_additional_data_table_names": ["CC_main_table"],
+                            "expected_main_dictionary_name": "CC_main_table",
+                            "expected_additional_data_table_names": [
+                                "CC_original_main_table"
+                            ],
                         },
                         "extract_keys_from_data_table": {
                             "expected_n_dictionaries": 1,
                             "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "main_table",
+                            "expected_main_dictionary_name": "CC_main_table",
                             "expected_additional_data_table_names": [],
                         },
                     }
@@ -415,7 +417,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         "train_predictor": {
                             "expected_n_dictionaries": 2,
                             "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "SpliceJunction",
+                            "expected_main_dictionary_name": "main_table",
                             "expected_additional_data_table_names": [
                                 "SpliceJunctionDNA"
                             ],
@@ -423,7 +425,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         "deploy_model": {
                             "expected_n_dictionaries": 2,
                             "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "SNB_SpliceJunction",
+                            "expected_main_dictionary_name": "SNB_main_table",
                             "expected_additional_data_table_names": [
                                 "SNB_SpliceJunctionDNA"
                             ],
@@ -433,7 +435,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         "train_recoder": {
                             "expected_n_dictionaries": 2,
                             "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "SpliceJunction",
+                            "expected_main_dictionary_name": "main_table",
                             "expected_additional_data_table_names": [
                                 "SpliceJunctionDNA"
                             ],
@@ -441,7 +443,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                         "deploy_model": {
                             "expected_n_dictionaries": 2,
                             "expected_main_table_key": "SampleId",
-                            "expected_main_dictionary_name": "R_SpliceJunction",
+                            "expected_main_dictionary_name": "R_main_table",
                             "expected_additional_data_table_names": [
                                 "R_SpliceJunctionDNA"
                             ],
@@ -485,10 +487,10 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 2: os.path.join(
                                     cls.output_dir, "main_table_Coclustering.khcj"
                                 ),
-                                3: "CC_main_table",
+                                3: "CC_original_main_table",
                                 4: "SampleId",
                                 5: os.path.join(
-                                    cls.output_dir, "CC_Keys_main_table_deployed.kdic"
+                                    cls.output_dir, "CC_main_table_deployed.kdic"
                                 ),
                             },
                             ("khiops.core", "read_coclustering_results_file"): {
@@ -511,20 +513,20 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 2: os.path.join(
                                     cls.output_dir, "main_table_Coclustering.khcj"
                                 ),
-                                3: "CC_main_table",
+                                3: "CC_original_main_table",
                                 4: "SampleId",
                                 5: os.path.join(
-                                    cls.output_dir, "CC_Keys_main_table_deployed.kdic"
+                                    cls.output_dir, "CC_main_table_deployed.kdic"
                                 ),
                             },
                         },
                         "predict": {
                             ("khiops.core", "deploy_model"): {
-                                1: "CC_Keys_main_table",
+                                1: "CC_main_table",
                                 3: cls.output_dir,
                             },
                             ("khiops.core", "extract_keys_from_data_table"): {
-                                1: "main_table",
+                                1: "CC_original_main_table",
                                 2: "copy_main_table.txt",
                                 3: "keys_main_table.txt",
                             },
@@ -587,14 +589,14 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                     KhiopsRegressor: {
                         "fit": {
                             ("khiops.core", "train_predictor"): {
-                                1: "SpliceJunction",
+                                1: "main_table",
                                 3: "Class",
                             }
                         },
                         "predict": {
                             ("khiops.core", "deploy_model"): {
-                                1: "SNB_SpliceJunction",
-                                2: "SpliceJunction.txt",
+                                1: "SNB_main_table",
+                                2: "main_table.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -602,14 +604,14 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                     KhiopsClassifier: {
                         "fit": {
                             ("khiops.core", "train_predictor"): {
-                                1: "SpliceJunction",
+                                1: "main_table",
                                 3: "Class",
                             }
                         },
                         "predict": {
                             ("khiops.core", "deploy_model"): {
-                                1: "SNB_SpliceJunction",
-                                2: "SpliceJunction.txt",
+                                1: "SNB_main_table",
+                                2: "main_table.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -617,15 +619,15 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                     KhiopsEncoder: {
                         "fit": {
                             ("khiops.core", "train_recoder"): {
-                                1: "SpliceJunction",
+                                1: "main_table",
                                 3: "Class",
                                 4: cls.output_dir,
                             }
                         },
                         "predict": {
                             ("khiops.core", "deploy_model"): {
-                                1: "R_SpliceJunction",
-                                2: "SpliceJunction.txt",
+                                1: "R_main_table",
+                                2: "main_table.txt",
                                 3: cls.output_dir,
                             }
                         },
@@ -724,7 +726,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                             ("khiops.core", "deploy_model"): {
                                 "detect_format": False,
                                 "header_line": True,
-                                "additional_data_tables": {"CC_main_table"},
+                                "additional_data_tables": {"CC_original_main_table"},
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops.log"
                                 ),
@@ -1117,18 +1119,16 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             secondary_table_data, "SampleId", primary_table=root_test_data[0]
         )
         X_train_data = {
-            "main_table": "SpliceJunction",
-            "tables": {
-                "SpliceJunction": (root_train_data[0], "SampleId"),
-                "SpliceJunctionDNA": (secondary_train_data[0], "SampleId"),
+            "main_table": (root_train_data[0], ["SampleId"]),
+            "additional_data_tables": {
+                "SpliceJunctionDNA": (secondary_train_data[0], ["SampleId"]),
             },
         }
         y_train_data = root_train_data[1]
         X_test_data = {
-            "main_table": "SpliceJunction",
-            "tables": {
-                "SpliceJunction": (root_test_data[0], "SampleId"),
-                "SpliceJunctionDNA": (secondary_test_data[0][0], "SampleId"),
+            "main_table": (root_test_data[0], ["SampleId"]),
+            "additional_data_tables": {
+                "SpliceJunctionDNA": (secondary_test_data[0][0], ["SampleId"]),
             },
         }
         return (X_train_data, y_train_data, X_test_data)
@@ -1252,11 +1252,15 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             )
             # choose train and test sets according to the source type
             assert source_type == "dataframe"
-            X_train_data = data["X_train"]["tables"]["SpliceJunctionDNA"][
+            X_train_data = data["X_train"]["additional_data_tables"][
+                "SpliceJunctionDNA"
+            ][
                 0
             ]  # XXX leaky
             y_train_data = None
-            X_test_data = data["X_test"]["tables"]["SpliceJunctionDNA"][0]  # XXX leaky
+            X_test_data = data["X_test"]["additional_data_tables"]["SpliceJunctionDNA"][
+                0
+            ]  # XXX leaky
         else:
             assert issubclass(estimator_type, KhiopsSupervisedEstimator)
             data = self._retrieve_data(

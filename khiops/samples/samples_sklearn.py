@@ -163,9 +163,8 @@ def khiops_classifier_multitable_star():
 
     # Create the dataset spec and the target
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
         },
     }
@@ -224,18 +223,12 @@ def khiops_classifier_multitable_snowflake():
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-            "Users": (users_df, ["AccidentId", "VehicleId"]),
-            "Places": (places_df, "AccidentId"),
+            "Vehicles/Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, ["AccidentId"], True),
         },
-        "relations": [
-            ("Accidents", "Vehicles"),
-            ("Vehicles", "Users"),
-            ("Accidents", "Places", True),
-        ],
     }
 
     # Load the target variable "Gravity"
@@ -416,16 +409,14 @@ def khiops_classifier_with_hyperparameters():
     # Create the dataset multitable specification for the train/test split
     # We specify each table with a name and a tuple (dataframe, key_columns)
     X_train = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (X_train_main, "AccidentId"),
+        "main_table": (X_train_main, ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (X_train_secondary, ["AccidentId", "VehicleId"]),
         },
     }
     X_test = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (X_test_main, "AccidentId"),
+        "main_table": (X_test_main, ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (X_test_secondary, ["AccidentId", "VehicleId"]),
         },
     }
@@ -578,9 +569,8 @@ def khiops_encoder_multitable_star():
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
         },
     }
@@ -622,18 +612,12 @@ def khiops_encoder_multitable_snowflake():
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-            "Users": (users_df, ["AccidentId", "VehicleId"]),
-            "Places": (places_df, "AccidentId"),
+            "Vehicles/Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, ["AccidentId"], True),
         },
-        "relations": [
-            ("Accidents", "Vehicles"),
-            ("Vehicles", "Users"),
-            ("Accidents", "Places", True),
-        ],
     }
 
     # Load the target variable "Gravity"
@@ -739,14 +723,10 @@ def khiops_encoder_with_hyperparameters():
 
     # Build the multi-table dataset spec (drop the target column "Gravity")
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
         },
-        "relations": [
-            ("Accidents", "Vehicles"),
-        ],
     }
 
     # Load the target variable "Gravity"
