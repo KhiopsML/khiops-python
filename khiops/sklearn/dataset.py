@@ -404,6 +404,10 @@ def write_internal_data_table(dataframe, file_path_or_stream):
     - UTF-8 encoding
     - The index is not written
 
+    Khiops cannot handle multi-line records.
+    Hence, the carriage returns / line feeds need to be removed from the records
+    before data is handed over to Khiops.
+
     Parameters
     ----------
     dataframe : `pandas.DataFrame`
@@ -412,6 +416,10 @@ def write_internal_data_table(dataframe, file_path_or_stream):
         The path of the internal data table file to be written or a writable file
         object.
     """
+    # Replace carriage returns / line feeds by blanks spaces
+    # in order to always keep mono-lines text fields
+    dataframe = dataframe.replace(["\r", "\n"], " ", regex=True)
+
     dataframe.to_csv(
         file_path_or_stream,
         sep="\t",
