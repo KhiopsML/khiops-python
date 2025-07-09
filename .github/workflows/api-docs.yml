@@ -1,15 +1,19 @@
 ---
 name: API Docs
 env:
-  DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION: main
+  DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION: 11.0.0.0-b.0
+  DEFAULT_KHIOPS_SAMPLES_REVISION: 11.0.0
 on:
   workflow_dispatch:
     inputs:
       khiops-python-tutorial-revision:
-        default: main
+        default: 11.0.0.0-b.0
         description: khiops-python-tutorial repo revision
+      khiops-samples-revision:
+        default: 11.0.0
+        description: khiops-samples repo revision
       image-tag:
-        default: 11.0.0-a.0.0
+        default: 11.0.0-b.0.0
         description: Development Docker Image Tag
   pull_request:
     paths:
@@ -41,7 +45,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '11.0.0-a.0.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '11.0.0-b.0.0' }}
       # Use the 'runner' user (1001) from github so checkout actions work properly
       # https://github.com/actions/runner/issues/2033#issuecomment-1598547465
       options: --user 1001
@@ -56,7 +60,7 @@ jobs:
         run: |
           # Install package itself to install the samples datasets
           pip3 install .
-          kh-download-datasets --force-overwrite
+          kh-download-datasets --force-overwrite --version ${{ inputs.khiops-samples-revision || env.DEFAULT_KHIOPS_SAMPLES_REVISION }}
           kh-status
 
           # Install the doc python requirements
