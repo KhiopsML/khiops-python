@@ -76,40 +76,31 @@ feature object ``X``. Specifically, instead of a `pandas.DataFrame`, ``X`` must 
 specifies the dataset schema in the following way::
 
    X = {
-      "main_table": <name of the main table>,
-      "tables" : {
-          <name of the main table>: (<dataframe of the main table>, <key of the main table>),
-          <name of table 1>: (<dataframe of table 1>, <key of table 1>),
-          <name of table 2>: (<dataframe of table 2>, <key of table 2>),
+      "main_table": (<dataframe of the main table>, <key of the main table>),
+      "additional_data_tables" : {
+          <data path to table 1>: (
+              <dataframe of table 1>, [<key of table 1>], <optional entity flag>
+          ),
+          <data path to table 2>: (
+              <dataframe of table 2>, [<key of table 2>], <optional entity flag>
+          ),
           ...
        }
-       "relations" : [
-            (<name of the main table>, <name of a different table>, <entity flag>),
-            (<name of another table>, <name of yet another table>, <entity flag>),
-            ...
-       ],
    }
 
 The three fields of this dictionary are:
 
-- ``main_table``: The name of the main table.
-- ``tables``: A dictionary indexed by the tables' names. Each table is associated to a 2-tuple
-  containing the following fields:
+- ``main_table``: a 2-tuple containing the following fields:
+  - The `pandas.DataFrame` object of the main table.
+  - The key columns' names: A list of strings.
+  .
+- ``additional_data_tables``: A dictionary indexed by the data paths to the secondary
+  tables. Each data path is associated to a 2-tuple containing the following fields:
 
-  - The `pandas.DataFrame` object of the table.
-  - The key columns' names : Either a list of strings or a single string.
-
-- ``relations``: An optional field containing a list of tuples describing the relations between
-  tables. The first two values (Strings) of each tuple correspond to names of both the parent and the child table
-  involved in the relation. A third value (Boolean) can be optionally added to the tuple to indicate if the relation is
-  either ``1:n`` or ``1:1`` (entity). For example, If the tuple ``(table1, table2, True)`` is contained in this
-  field, it means that:
-
-  - ``table1`` and ``table2`` are in a ``1:1`` relationship
-  - The key of ``table1`` is contained in that of ``table2`` (ie. keys are hierarchical)
-
-  If the ``relations`` field is not present then Khiops Python assumes that the tables are in a *star*
-  schema.
+  - The `pandas.DataFrame` object of the secondary table.
+  - The key columns' names : A list of strings.
+  - optionally, a flag which indicates if the secondary table is in
+    a ``1:1`` relationship to its parent table.
 
 .. note::
 
@@ -138,9 +129,8 @@ We build the input ``X`` as follows::
    accidents_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Accidents.txt", sep="\t")
    vehicles_df = pd.read_csv(f"{kh.get_samples_dir()}/AccidentsSummary/Vehicles.txt", sep="\t")
    X = {
-      "main_table" : "Accident",
-      "tables": {
-          "Accident": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+      "main_table" : (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+      "additional_data_tables": {
           "Vehicle": (vehicles_df, ["AccidentId", "VehicleId"])
       }
     }
@@ -170,19 +160,12 @@ We build the input ``X`` as follows::
     places_df = pd.read_csv(f"{kh.get_samples_dir()}/Accidents/Places.txt", sep="\t")
 
     X = {
-        "main_table": "Accidents",
-        "tables": {
-            "Accidents": (accidents_df.drop("Gravity", axis=1), "AccidentId"),
+        "main_table": (accidents_df.drop("Gravity", axis=1), ["AccidentId"]),
+        "additional_data_tables": {
             "Vehicles": (vehicles_df, ["AccidentId", "VehicleId"]),
-            "Users": (users_df, ["AccidentId", "VehicleId"]),
-            "Places": (places_df, "AccidentId"),
-
+            "Vehicles/Users": (users_df, ["AccidentId", "VehicleId"]),
+            "Places": (places_df, ["AccidentId"], True),
         },
-        "relations": [
-            ("Accidents", "Vehicles"),
-            ("Vehicles", "Users"),
-            ("Accidents", "Places", True),
-        ],
     }
 
 Both datasets can be found in the Khiops samples directory.

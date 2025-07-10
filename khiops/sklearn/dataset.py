@@ -177,6 +177,18 @@ def _check_multitable_spec(ds_spec):
 
 
 def table_name_of_path(table_path):
+    """Returns the table name as the last fragment of the table data path
+
+    Parameters
+    ----------
+    table_path: str
+        Data path of the table, in the format "path/to/table".
+
+    Returns
+    -------
+    str
+        The name of the table.
+    """
     return table_path.split("/")[-1]
 
 

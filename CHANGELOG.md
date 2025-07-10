@@ -6,10 +6,72 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
+## 11.0.0.0-b.0 - 2025-07-10
+
+### Added
+- (`core`) API support for predictor interpretation and reinforcement.
+- (`core`) API support for instance-variable coclustering model training.
+- (`core`) Support for text types in prediction and coclustering models.
+- (`core`) Analysis and coclustering report JSON serialization support.
+- (`sklearn`) Automatic removal of newline characters in strings on Pandas
+  dataframe columns. This is to ensure the proper working of the Khiops engine.
+
+### Changed
+- (`core`) Syntax for additional data tables specification, which uses the data
+  paths.
+- (`core`) API specification of the results path: full paths to report files are
+  now used instead of result directories.
+- (`sklearn`) Specification of the hierarchical multi-table schemata, which now
+  uses data paths as in the Core API.
+- (`general`) Various other changes and updates for Khiops 11.0.0-b.0
+  compatibility.
+
+### Deprecated
+- (`core`) The results directory parameter of the Core API functions. The full
+  path to the reports must now be specified instead.
+- (`core`) The "``"-based secondary table path specification. The "/"-based data
+  paths must now be used instead.
+- (`sklearn`) The specification syntax for hierarchical multi-table datasets.
+  The "/"-based data paths must now be used instead, as in the Core API.
+
+### Removed
+- (`general`) All functions, attributes and features that had been deprecated in
+  the 10.3.2.0 version.
+
+## 10.3.2.0 - 2025-07-03
+
+### Fixed
+- (`sklearn`) Documentation display for the `train_test_split_dataset` sklearn
+helper function.
+
+## 10.3.1.0 - 2025-04-16
 
 ### Added
 - (`sklearn`) Support for boolean and float targets in `KhiopsClassifier`.
+
+### Fixed
+- (`sklearn`) Crash when there were no informative trees in predictors.
+
+### Deprecated
+- (`core`) The `build_multi_table_dictionary_domain` helper function.
+
+## 10.3.0.0 - 2025-02-10
+
+### Fixed
+- (`core`) Dictionary file `.json` extension check in the `khiops.dictionary.read_dictionary_file`
+function.
+
+### Changed
+- (`sklearn`) The `train_test_split_dataset` helper has been moved from `khiops.utils` to
+`khiops.sklearn`.
+- (`sklearn`) The `transform_pairs` parameter of the `KhiopsEncoder` sklearn estimator has been
+renamed to `transform_type_pairs`.
+
+### Removed
+- (`sklearn`) The `is_fitted_` estimator attribute. The Scikit-learn `check_is_fitted` function
+can be used to test the fitted state of the estimators.
+- (`sklearn`) The `n_pairs` parameter of the `KhiopsRegressor` sklearn estimator. It was never
+supported.
 
 ## 10.2.4.0 - 2024-12-19
 
