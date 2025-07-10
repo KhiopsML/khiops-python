@@ -6,10 +6,40 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
+## 10.3.2.0 - 2025-07-03
+
+### Fixed
+- (`sklearn`) Documentation display for the `train_test_split_dataset` sklearn
+helper function.
+
+## 10.3.1.0 - 2025-04-16
 
 ### Added
 - (`sklearn`) Support for boolean and float targets in `KhiopsClassifier`.
+
+### Fixed
+- (`sklearn`) Crash when there were no informative trees in predictors.
+
+### Deprecated
+- (`core`) The `build_multi_table_dictionary_domain` helper function.
+
+## 10.3.0.0 - 2025-02-10
+
+### Fixed
+- (`core`) Dictionary file `.json` extension check in the `khiops.dictionary.read_dictionary_file`
+function.
+
+### Changed
+- (`sklearn`) The `train_test_split_dataset` helper has been moved from `khiops.utils` to
+`khiops.sklearn`.
+- (`sklearn`) The `transform_pairs` parameter of the `KhiopsEncoder` sklearn estimator has been
+renamed to `transform_type_pairs`.
+
+### Removed
+- (`sklearn`) The `is_fitted_` estimator attribute. The Scikit-learn `check_is_fitted` function
+can be used to test the fitted state of the estimators.
+- (`sklearn`) The `n_pairs` parameter of the `KhiopsRegressor` sklearn estimator. It was never
+supported.
 
 ## 10.2.4.0 - 2024-12-19
 
