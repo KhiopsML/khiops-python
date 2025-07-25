@@ -33,7 +33,6 @@ from khiops.core.internals.common import (
 from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import get_runner
 from khiops.core.internals.task import get_task_registry
-from khiops.core.internals.version import KhiopsVersion
 
 # List of all available construction rules in the Khiops tool
 all_construction_rules = [
@@ -266,15 +265,9 @@ def _preprocess_task_arguments(task_args):
     # Transform the use_complement_as_test bool parameter to its string counterpart
     if "use_complement_as_test" in task_args:
         if task_args["use_complement_as_test"]:
-            if get_khiops_version() < KhiopsVersion("10.0.0"):
-                task_args["fill_test_database_settings"] = True
-            else:
-                task_args["test_database_mode"] = "Complementary"
+            task_args["test_database_mode"] = "Complementary"
         else:
-            if get_khiops_version() < KhiopsVersion("10"):
-                task_args["fill_test_database_settings"] = False
-            else:
-                task_args["test_database_mode"] = "None"
+            task_args["test_database_mode"] = "None"
         del task_args["use_complement_as_test"]
 
     # Preprocess the database format parameters
@@ -826,11 +819,7 @@ def train_predictor(
     _run_task("train_predictor", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
-    reports_file_name = results_prefix
-    if get_runner().khiops_version < KhiopsVersion("10.0.0"):
-        reports_file_name += "AllReports.json"
-    else:
-        reports_file_name += "AllReports.khj"
+    reports_file_name = f"{results_prefix}AllReports.khj"
     reports_file_path = fs.get_child_path(results_dir, reports_file_name)
 
     if target_variable != "":
@@ -953,11 +942,7 @@ def evaluate_predictor(
     _run_task("evaluate_predictor", task_args)
 
     # Return the path of the JSON report
-    report_file_name = results_prefix
-    if get_runner().khiops_version < KhiopsVersion("10.0.0"):
-        report_file_name += "EvaluationReport.json"
-    else:
-        report_file_name += "EvaluationReport.khj"
+    report_file_name = f"{results_prefix}EvaluationReport.khj"
 
     return fs.get_child_path(results_dir, report_file_name)
 
@@ -1169,11 +1154,7 @@ def train_recoder(
     _run_task("train_recoder", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
-    reports_file_name = f"{results_prefix}AllReports"
-    if get_runner().khiops_version < KhiopsVersion("10.0.0"):
-        reports_file_name += ".json"
-    else:
-        reports_file_name += ".khj"
+    reports_file_name = f"{results_prefix}AllReports.khj"
     reports_file_path = fs.get_child_path(results_dir, reports_file_name)
     modeling_dictionary_file_path = fs.get_child_path(
         results_dir, f"{results_prefix}Modeling.kdic"
