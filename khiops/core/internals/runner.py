@@ -949,8 +949,10 @@ class KhiopsLocalRunner(KhiopsRunner):
 
         # On success parse and save the version
         if return_code == 0:
-            # Skip potential non-version lines (ex: Completed loading of file driver...)
-            for line in stdout.split(os.linesep):
+            # Skip potential non-version lines
+            # (ex: Completed loading of file driver, debug info ...)
+            for line in stdout.split("\n"):
+                line = line.strip("\r")  # remove Windows-specific Carriage-Return
                 if line.startswith("Khiops"):
                     khiops_version_str = line.rstrip().split(" ")[1]
                     break
