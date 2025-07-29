@@ -111,6 +111,21 @@ jobs:
           fi
           conda install ${RC_LABEL}khiops-core=$KHIOPS_CORE_VERSION
           conda install --channel ./khiops-conda/ khiops
+      - name: Install JQ test dependency (Linux / MacOS)
+        if: runner.os != 'Windows'
+        run: conda install jq
+      - name: Test Conda / Python Package Version Coherence
+        run: |
+          PACKAGE_VERSION=$(python -c "import khiops; print(khiops.__version__)")
+          CONDA_VERSION=$(conda list ^khiops$ --json | jq ".[].version")
+
+          # Fail if CONDA_VERSION is not identical to $PACKAGE_VERSION
+          echo $CONDA_VERSION | grep -wq $PACKAGE_VERSION
+          if [[ $? -ne 0 ]]
+          then
+            echo "::error::Conda package version $CONDA_VERSION does not match Python package version $PYTHON_VERSION"
+            false
+          fi
       - name: Test Khiops Installation Status
         run: kh-status
       - name: Test Khiops Installation Status (Conda-Based Environments)

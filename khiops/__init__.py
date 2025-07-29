@@ -22,19 +22,9 @@ The available sub-modules inside the package are:
   (extension ".khcj")
 - sklearn: Scikit-Learn estimator classes to learn and use Khiops models
 """
-import importlib
-import importlib.util
-import os
-import sys
-import warnings
-from copy import copy
-from pathlib import Path
-
-from khiops._version import get_versions
 from khiops.core.internals.version import KhiopsVersion
 
-__version__ = get_versions()["version"]
-del get_versions
+__version__ = "11.0.0.0b.0"
 
 
 def get_compatible_khiops_version():

@@ -1,9 +1,8 @@
 {% set name = load_file_data('../../pyproject.toml', from_recipe_dir=True).get('project').get('name') %}
-{% set version = load_setup_py_data(setup_file='../../setup.py', from_recipe_dir=True).get('version') %}
 package:
   name: {{ name }}
   # The Conda version cannot contain the '-' character, so we eliminate it
-  version: {{ version | replace('-', '') }}
+  version: "11.0.0.0b.0"
 
 source:
   path: ../../
@@ -19,13 +18,9 @@ build:
     {{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-isolation -vvv
 
 requirements:
-  build:
-    - python
-    - setuptools
-    - versioneer
   host:
     - python
-    - versioneer
+    - setuptools
   run:
     - python
     - khiops-core =11.0.0b.0

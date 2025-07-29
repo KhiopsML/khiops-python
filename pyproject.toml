@@ -127,7 +127,6 @@ line_length = 100
 [tool.coverage.run]
 branch = true
 source = ["khiops"]
-omit = ["khiops/_version.py"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -143,14 +142,6 @@ exclude_lines = [
 ]
 show_missing = true
 ignore_errors = true
-
-[tool.versioneer]
-VCS = "git"
-style = "pep440"
-versionfile_source = "khiops/_version.py"
-versionfile_build = "khiops/_version.py"
-tag_prefix = ""
-parentdir_prefix = "khiops-"
 
 [project]
 name = "khiops"
@@ -200,11 +191,14 @@ gcs = [
 include = ["khiops", "khiops.*"]
 namespaces = false
 
+[tool.setuptools.dynamic]
+version = {attr = "khiops.__version__"}
+
 [project.scripts]
 kh-status = "khiops.tools:kh_status_entry_point"
 kh-samples = "khiops.tools:kh_samples_entry_point"
 kh-download-datasets = "khiops.tools:kh_download_datasets_entry_point"
 
 [build-system]
-requires = ["setuptools", "versioneer[toml]", "tomli; python_version<'3.11'", "toml; python_version>='3.12'"]
+requires = ["setuptools", "tomli; python_version<'3.11'", "toml; python_version>='3.12'"]
 build-backend = "setuptools.build_meta"
