@@ -108,8 +108,7 @@ jobs:
 
             # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
             $CONDA install -y -n "$CONDA_ENV" tomli
-            $CONDA run --no-capture-output -n "$CONDA_ENV" python -c \
-              "import tomli; from functools import reduce; fp = open('pyproject.toml', 'rb'); p = tomli.load(fp); fp.close(); print(' '.join(reduce(lambda x, y: x + y, list(p['project']['optional-dependencies'].values()), p['project']['dependencies'])))" > requires.txt
+            $CONDA run --no-capture-output -n "$CONDA_ENV" python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" > requires.txt
             $CONDA install -y -n "$CONDA_ENV" `cat requires.txt`
             rm -f requires.txt
           done
@@ -265,8 +264,7 @@ jobs:
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()})
           python -m pip install setuptools
-          python -c `
-            "import tomllib; from functools import reduce; fp = open('pyproject.toml', 'rb'); p = tomllib.load(fp); fp.close(); print('\n'.join(reduce(lambda x, y: x + y, list(p['project']['optional-dependencies'].values()), p['project']['dependencies'])))" > requires.txt
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" -s "\n"  > requires.txt
 
           # Install the Python requirements
           Get-Content .\requires.txt `
@@ -349,8 +347,7 @@ jobs:
           git config --global --add safe.directory $(realpath .)
           # Install tomli for Python < 3.11
           pip install tomli
-          python -c \
-            "import tomli; from functools import reduce; fp = open('pyproject.toml', 'rb'); p = tomli.load(fp); fp.close(); print(' '.join(reduce(lambda x, y: x + y, list(p['project']['optional-dependencies'].values()), p['project']['dependencies'])))" > requires.txt
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" > requires.txt
           pip install `cat requires.txt`
           rm -f requires.txt
       - name: Setup and Install Test Requirements
