@@ -127,7 +127,6 @@ line_length = 100
 [tool.coverage.run]
 branch = true
 source = ["khiops"]
-omit = ["khiops/_version.py"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -143,3 +142,63 @@ exclude_lines = [
 ]
 show_missing = true
 ignore_errors = true
+
+[project]
+name = "khiops"
+dynamic = ["version"]
+description = "Python library for the Khiops AutoML suite"
+readme = "README.md"
+license = "BSD-3-Clause-Clear"
+license-files = ["LICENSE.md"]
+maintainers = [
+    {name = "The Khiops Team", email = "khiops.team@orange.com"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pandas>=0.25.3",
+    "scikit-learn>=0.22.2",
+]
+
+[project.urls]
+Homepage = "https://khiops.org"
+
+[project.optional-dependencies]
+s3 = [
+    # do not necessarily use the latest version, to avoid undesired breaking
+    # changes
+    "boto3>=1.17.39,<=1.35.69",
+    # an open issue on boto3 (https://github.com/boto/boto3/issues/3585)
+    # forces a minimal version of pyopenssl
+    "pyopenssl>=24.0.0,<25.0.0"
+
+]
+gcs = [
+    "google-cloud-storage>=1.37.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["khiops", "khiops.*"]
+namespaces = false
+
+[tool.setuptools.dynamic]
+version = {attr = "khiops.__version__"}
+
+[project.scripts]
+kh-status = "khiops.tools:kh_status_entry_point"
+kh-samples = "khiops.tools:kh_samples_entry_point"
+kh-download-datasets = "khiops.tools:kh_download_datasets_entry_point"
+
+[build-system]
+requires = ["setuptools", "tomli; python_version<'3.11'", "toml; python_version>='3.12'"]
+build-backend = "setuptools.build_meta"

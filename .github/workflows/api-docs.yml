@@ -59,13 +59,14 @@ jobs:
       - name: Install doc build requirements
         run: |
           # Install package itself to install the samples datasets
-          pip3 install .
+          python -m pip install --upgrade pip
+          python -m pip install --user .
           kh-download-datasets --force-overwrite --version ${{ inputs.khiops-samples-revision || env.DEFAULT_KHIOPS_SAMPLES_REVISION }}
           kh-status
 
           # Install the doc python requirements
           cd doc
-          pip3 install -U -r requirements.txt
+          python -m pip install -U -r requirements.txt
       # Clone the Khiops Python tutorial repository while building the documentation
       - name: Build Sphinx Documentation
         run: |

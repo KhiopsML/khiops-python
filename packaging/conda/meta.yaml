@@ -1,8 +1,8 @@
-{% set metadata = load_setup_py_data(setup_file='../../setup.py', from_recipe_dir=True) %}
+{% set name = load_file_data('../../pyproject.toml', from_recipe_dir=True).get('project').get('name') %}
 package:
-  name: {{ metadata.get('name') }}
+  name: {{ name }}
   # The Conda version cannot contain the '-' character, so we eliminate it
-  version: {{ metadata.get('version') | replace('-', '') }}
+  version: "11.0.0.0b.0"
 
 source:
   path: ../../
@@ -14,16 +14,13 @@ build:
     - kh-status = khiops.tools:kh_status_entry_point
     - kh-samples = khiops.tools:kh_samples_entry_point
     - kh-download-datasets = khiops.tools:kh_download_datasets_entry_point
-    - pk-status = khiops.tools:pk_status_entry_point   # deprecated
   script: |
     {{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir --no-build-isolation -vvv
 
 requirements:
-  build:
-    - python
-    - setuptools
   host:
     - python
+    - setuptools
   run:
     - python
     - khiops-core =11.0.0b.0
@@ -38,7 +35,7 @@ requirements:
     - pyopenssl>=24.0.0,<25.0.0
 
 outputs:
-  - name: {{ metadata.get('name') }}
+  - name: {{ name }}
     test:
       commands:
         - kh-status
