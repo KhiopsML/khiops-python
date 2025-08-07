@@ -8,6 +8,7 @@
 import unittest
 
 import khiops.core as kh
+from khiops.core.internals.version import KhiopsVersion
 from khiops.samples import samples, samples_sklearn
 from tests.test_helper import KhiopsTestHelper
 
@@ -22,8 +23,8 @@ class KhiopsSamplesTests(unittest.TestCase):
         """Test if all samples run without problems"""
         # Obtain the runner version and set the minimal requirements for some samples
         min_version = {
-            samples.detect_data_table_format: kh.KhiopsVersion("10.0.1"),
-            samples.deploy_coclustering: kh.KhiopsVersion("10.0.1"),
+            samples.detect_data_table_format: KhiopsVersion("10.0.1"),
+            samples.deploy_coclustering: KhiopsVersion("10.0.1"),
         }
 
         # Run the samples
