@@ -6,6 +6,13 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 10.3.2.1 - 2025-08-08
+
+### Fixed
+- (`core`) Memory profiling log parsing bug.
+- (`core`) Bug in the Core API `train_predictor` with the
+  `use_complement_as_test` option set to `True`.
+
 ## 10.3.2.0 - 2025-07-03
 
 ### Fixed
