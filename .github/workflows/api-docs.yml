@@ -58,6 +58,10 @@ jobs:
         run: echo PATH="$PATH:/github/home/.local/bin" >> "$GITHUB_ENV"
       - name: Install doc build requirements
         run: |
+          # Build the doc inside a virtual environment to make consistent use of dependencies
+          # python -m venv .venvdocs
+          # . .venvdocs/bin/activate
+
           # Install package itself to install the samples datasets
           python -m pip install --upgrade pip
           python -m pip install --user .
@@ -70,6 +74,7 @@ jobs:
       # Clone the Khiops Python tutorial repository while building the documentation
       - name: Build Sphinx Documentation
         run: |
+          # . .venvdocs/bin/activate
           cd doc
           ./create-doc -t -d -g \
           ${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
