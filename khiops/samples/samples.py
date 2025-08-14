@@ -65,6 +65,85 @@ def build_dictionary_from_data_table():
     )
 
 
+def create_dictionary_domain():
+    """Creates a dictionary domain from scratch
+
+    This dictionary domain contains a set of dictionaries,
+    with all possible variable types.
+    """
+    # Imports
+    import os
+    from khiops import core as kh
+
+    # Create a Root dictionary
+    root_dictionary = kh.Dictionary(
+        json_data={"name": "dict_from_scratch", "root": True, "key": ["Id"]}
+    )
+
+    # Start with simple variables to declare
+    simple_variables = [
+        {"name": "Id", "type": "Categorical"},
+        {"name": "Num", "type": "Numerical"},
+        {"name": "text", "type": "Text"},
+        {"name": "hour", "type": "Time"},
+        {"name": "date", "type": "Date"},
+        {"name": "ambiguous_ts", "type": "Timestamp"},
+        {"name": "ts", "type": "TimestampTZ"},
+    ]
+    for var_spec in simple_variables:
+        var = kh.Variable()
+        var.name = var_spec["name"]
+        var.type = var_spec["type"]
+        root_dictionary.add_variable(var)
+
+    # Create a second dictionary
+    second_dictionary = kh.Dictionary(
+        json_data={"name": "Service", "key": ["Id", "id_product"]}
+    )
+    second_dictionary.add_variable(
+        kh.Variable(json_data={"name": "Id", "type": "Categorical"})
+    )
+    second_dictionary.add_variable(
+        kh.Variable(json_data={"name": "id_product", "type": "Categorical"})
+    )
+    # Create a third dictionary
+    third_dictionary = kh.Dictionary(json_data={"name": "Address", "key": ["Id"]})
+    third_dictionary.add_variable(
+        kh.Variable(json_data={"name": "StreetNumber", "type": "Numerical"})
+    )
+    third_dictionary.add_variable(
+        kh.Variable(json_data={"name": "StreetName", "type": "Categorical"})
+    )
+    third_dictionary.add_variable(
+        kh.Variable(json_data={"name": "id_city", "type": "Categorical"})
+    )
+
+    # Add the variables used in a multi-table context in the first dictionary.
+    # They link the root dictionary to the additional ones
+    root_dictionary.add_variable(
+        kh.Variable(json_data={"name": "Services", "type": "Table(Service)"})
+    )
+    root_dictionary.add_variable(
+        kh.Variable(json_data={"name": "Address", "type": "Entity(Address)"})
+    )
+
+    # Create a DictionaryDomain (set of dictionaries)
+    dictionary_domain = kh.DictionaryDomain()
+    dictionary_domain.add_dictionary(root_dictionary)
+    dictionary_domain.add_dictionary(second_dictionary)
+    dictionary_domain.add_dictionary(third_dictionary)
+
+    output_dir = os.path.join("kh_samples", "create_dictionary_domain")
+    dictionary_file_path = os.path.join(output_dir, "dict_from_scratch.kdic")
+
+    # Create the output directory if needed
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
+    # Write the dictionary domain to a file
+    dictionary_domain.export_khiops_dictionary_file(dictionary_file_path)
+
+
 def detect_data_table_format():
     """Detects the format of a data table with and without a dictionary file
 
@@ -1987,6 +2066,7 @@ def build_deployed_dictionary():
 exported_samples = [
     get_khiops_version,
     build_dictionary_from_data_table,
+    create_dictionary_domain,
     detect_data_table_format,
     check_database,
     export_dictionary_files,
