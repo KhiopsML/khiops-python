@@ -271,6 +271,9 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "AnsiLatinGreek_Modeling",
             "AnsiLatin_Modeling",
             "Ansi_Modeling",
+            "CommentedIris",
+            "CommentedSpliceJunction",
+            "CommentedSparseCustomer",
             "Customer",
             "CustomerExtended",
             "D_Modeling",
@@ -1678,7 +1681,12 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         domain.name = "Iris"
         dictionary = kh.Dictionary()
         dictionary.name = "Test"
-        dictionary.label = "Some comment"
+        dictionary.label = "Some label"
+        dictionary.comments = ["Some comment 1", "Some comment 2", "Some comment 3"]
+        dictionary.internal_comments = [
+            "Some internal comment 1",
+            "Some internal comment 2",
+        ]
         domain.add_dictionary(dictionary)
         with open(os.devnull, "wb") as devnull_file:
             domain.write(devnull_file)

@@ -1,0 +1,69 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "VERSION",
+	"dictionaries": [
+		{
+			"name": "SpliceJunction",
+			"label": "Label SpliceJunction",
+			"comments": [
+				"Comment SpliceJunction key before",
+				"Comment SpliceJunction key after",
+				"Comment end"
+			],
+			"root": true,
+			"key": ["SampleId"],
+			"variables": [
+				{
+					"name": "SampleId",
+					"type": "Categorical"
+				},
+				{
+					"name": "Class",
+					"type": "Categorical"
+				},
+				{
+					"name": "DNA",
+					"label": "Label DNA",
+					"comments": [
+						"Comment DNA"
+					],
+					"type": "Table",
+					"objectType": "SpliceJunctionDNA"
+				}
+			]
+		},
+		{
+			"name": "SpliceJunctionDNA",
+			"label": "Label SpliceJunction",
+			"comments": [
+				"Comment SpliceJunction key before",
+				"Comment SpliceJunction key after",
+				"Comment SpliceJunction meta-data before",
+				"Comment SpliceJunction meta-data after",
+				"Comment end"
+			],
+			"key": ["SampleId"],
+			"metaData": {
+				"TestComment": true
+			},
+			"variables": [
+				{
+					"name": "SampleId",
+					"type": "Categorical"
+				},
+				{
+					"name": "Pos",
+					"type": "Numerical"
+				},
+				{
+					"name": "Char",
+					"type": "Categorical"
+				}
+			],
+			"internalComments": [
+				"Categorical\tLowerChar = ToLower(Char) ;"
+			]
+		}
+	],
+	"khiops_encoding": "ascii"
+}

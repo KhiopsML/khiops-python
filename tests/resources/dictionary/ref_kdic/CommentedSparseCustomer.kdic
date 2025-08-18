@@ -1,0 +1,48 @@
+#Khiops VERSION
+
+Dictionary	Address	(id_customer)
+{
+	Categorical	id_customer		;	
+	Numerical	StreetNumber		;	
+	Categorical	StreetName		;	
+	Categorical	City		;	
+};
+
+Root	Dictionary	Customer	(id_customer)
+{
+	Categorical	id_customer		;	
+	Categorical	id	 = CopyC(id_customer)	;	
+	Categorical	Name		;	
+	Entity(Address)	Address		;	
+	Table(Usage)	Usages		;	
+	// Partition comment
+	Structure(Partition)	partition1	 = Partition(ValueSetC("Mobile", "Tel", " * "))	;	// Partition label
+	// TablePartition comment 1
+	// TablePartition comment 2
+	{
+// Usages_S_M_Nb comment
+Unused	Table(Usage)	Usages_S_M_Nb		; <VarKey=1>	// Usages_S_M_Nb label
+// Usages_S_T_Nb comment
+Unused	Table(Usage)	Usages_S_T_Nb		; <VarKey=2>	// Usages_S_T_Nb label
+	}	tablePartition1	 = TablePartition(Usages, partition1, Service)	;	// TablePartition label
+	{
+	Numerical	S_M_Nb		; <VarKey=1>	
+	Numerical	S_T_Nb		; <VarKey=2>	
+	// Internal variable block comment
+	}	PartCounts	 = TablePartitionCount(tablePartition1)	;	// TablePartitionCount label
+	// S_Total comment
+	Numerical	S_Total	 = Sum(S_M_Nb, S_T_Nb)	;	
+	Table(Usage)	UsagesMobile	 = TableSelection(Usages, EQc(Service, "Mobile"))	;	
+	Table(Usage)	UsagesTel	 = TableSelection(Usages, EQc(Service, "Tel"))	;	
+	Numerical	D_M_Nb	 = TableCount(UsagesMobile)	;	
+	Numerical	D_T_Nb	 = TableCount(UsagesTel)	;	
+	Numerical	D_Total	 = Sum(D_M_Nb, D_T_Nb)	;	
+};
+
+Dictionary	Usage	(id_customer)
+{
+	Categorical	id_customer		;	
+	Categorical	Service		;	
+	Numerical	Duration		;	
+	Numerical	Price		;	
+};

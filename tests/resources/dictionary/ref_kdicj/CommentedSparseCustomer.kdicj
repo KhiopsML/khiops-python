@@ -1,0 +1,187 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "VERSION",
+	"dictionaries": [
+		{
+			"name": "Address",
+			"key": ["id_customer"],
+			"variables": [
+				{
+					"name": "id_customer",
+					"type": "Categorical"
+				},
+				{
+					"name": "StreetNumber",
+					"type": "Numerical"
+				},
+				{
+					"name": "StreetName",
+					"type": "Categorical"
+				},
+				{
+					"name": "City",
+					"type": "Categorical"
+				}
+			]
+		},
+		{
+			"name": "Customer",
+			"root": true,
+			"key": ["id_customer"],
+			"variables": [
+				{
+					"name": "id_customer",
+					"type": "Categorical"
+				},
+				{
+					"name": "id",
+					"type": "Categorical",
+					"rule": "CopyC(id_customer)"
+				},
+				{
+					"name": "Name",
+					"type": "Categorical"
+				},
+				{
+					"name": "Address",
+					"type": "Entity",
+					"objectType": "Address"
+				},
+				{
+					"name": "Usages",
+					"type": "Table",
+					"objectType": "Usage"
+				},
+				{
+					"name": "partition1",
+					"label": "Partition label",
+					"comments": [
+						"Partition comment"
+					],
+					"type": "Structure",
+					"structureType": "Partition",
+					"rule": "Partition(ValueSetC(\"Mobile\", \"Tel\", \" * \"))"
+				},
+				{
+					"blockName": "tablePartition1",
+					"label": "TablePartition label",
+					"comments": [
+						"TablePartition comment 1",
+						"TablePartition comment 2"
+					],
+					"rule": "TablePartition(Usages, partition1, Service)",
+					"variables": [
+						{
+							"name": "Usages_S_M_Nb",
+							"label": "Usages_S_M_Nb label",
+							"comments": [
+								"Usages_S_M_Nb comment"
+							],
+							"used": false,
+							"type": "Table",
+							"objectType": "Usage",
+							"metaData": {
+								"VarKey": 1
+							}
+						},
+						{
+							"name": "Usages_S_T_Nb",
+							"label": "Usages_S_T_Nb label",
+							"comments": [
+								"Usages_S_T_Nb comment"
+							],
+							"used": false,
+							"type": "Table",
+							"objectType": "Usage",
+							"metaData": {
+								"VarKey": 2
+							}
+						}
+					]
+				},
+				{
+					"blockName": "PartCounts",
+					"label": "TablePartitionCount label",
+					"rule": "TablePartitionCount(tablePartition1)",
+					"variables": [
+						{
+							"name": "S_M_Nb",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 1
+							}
+						},
+						{
+							"name": "S_T_Nb",
+							"type": "Numerical",
+							"metaData": {
+								"VarKey": 2
+							}
+						}
+					],
+					"internalComments": [
+						"Internal variable block comment"
+					]
+				},
+				{
+					"name": "S_Total",
+					"comments": [
+						"S_Total comment"
+					],
+					"type": "Numerical",
+					"rule": "Sum(S_M_Nb, S_T_Nb)"
+				},
+				{
+					"name": "UsagesMobile",
+					"type": "Table",
+					"objectType": "Usage",
+					"rule": "TableSelection(Usages, EQc(Service, \"Mobile\"))"
+				},
+				{
+					"name": "UsagesTel",
+					"type": "Table",
+					"objectType": "Usage",
+					"rule": "TableSelection(Usages, EQc(Service, \"Tel\"))"
+				},
+				{
+					"name": "D_M_Nb",
+					"type": "Numerical",
+					"rule": "TableCount(UsagesMobile)"
+				},
+				{
+					"name": "D_T_Nb",
+					"type": "Numerical",
+					"rule": "TableCount(UsagesTel)"
+				},
+				{
+					"name": "D_Total",
+					"type": "Numerical",
+					"rule": "Sum(D_M_Nb, D_T_Nb)"
+				}
+			]
+		},
+		{
+			"name": "Usage",
+			"key": ["id_customer"],
+			"variables": [
+				{
+					"name": "id_customer",
+					"type": "Categorical"
+				},
+				{
+					"name": "Service",
+					"type": "Categorical"
+				},
+				{
+					"name": "Duration",
+					"type": "Numerical"
+				},
+				{
+					"name": "Price",
+					"type": "Numerical"
+				}
+			]
+		}
+	],
+	"khiops_encoding": "ascii"
+}
