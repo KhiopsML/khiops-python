@@ -13,6 +13,7 @@
 import argparse
 import os
 import pathlib
+import platform
 import shutil
 import sys
 import tempfile
@@ -115,7 +116,10 @@ def download_datasets(
     """Downloads the Khiops sample datasets for a given version
 
     The datasets are downloaded to:
-        - Windows: ``%USERPROFILE%\\khiops_data\\samples``
+        - Windows:
+            - ``%PUBLIC%\\khiops_data\\samples`` if ``%PUBLIC%`` is defined and
+              points to a directory
+            - ``%USERPROFILE%\\khiops_data\\samples`` otherwise
         - Linux/macOS: ``$HOME/khiops_data/samples``
 
     Parameters
@@ -128,8 +132,22 @@ def download_datasets(
     # Note: The hidden parameter _called_from_shell is just to change the user messages.
 
     # Check if the home sample dataset location is available and build it if necessary
-    samples_dir = pathlib.Path.home() / "khiops_data" / "samples"
-    if samples_dir.exists() and not force_overwrite:
+    home_samples_dir = pathlib.Path.home() / "khiops_data" / "samples"
+
+    # Take the value of an environment variable in priority, if set to non-empty string
+    # If the environment variable is not set, samples location is:
+    # - on Windows systems:
+    #   - %PUBLIC%\khiops_data\samples if %PUBLIC% exists
+    #   - %USERPROFILE%\khiops_data\samples otherwise
+    # - on Linux / macOS systems:
+    #   - $HOME/khiops_data/samples
+    if "KHIOPS_SAMPLES_DIR" in os.environ and os.environ["KHIOPS_SAMPLES_DIR"]:
+        samples_dir = os.environ["KHIOPS_SAMPLES_DIR"]
+    elif platform.system() == "Windows" and "PUBLIC" in os.environ:
+        samples_dir = os.path.join(os.environ["PUBLIC"], "khiops_data", "samples")
+    else:
+        samples_dir = str(home_samples_dir)
+    if os.path.exists(samples_dir) and not force_overwrite:
         if _called_from_shell:
             instructions = "Execute with '--force-overwrite' to overwrite it"
         else:
@@ -140,7 +158,7 @@ def download_datasets(
         )
     else:
         # Create the samples dataset directory
-        if samples_dir.exists():
+        if os.path.exists(samples_dir):
             shutil.rmtree(samples_dir)
         os.makedirs(samples_dir, exist_ok=True)
 

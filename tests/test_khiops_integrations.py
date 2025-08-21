@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
+from khiops import tools
 from khiops.core.exceptions import KhiopsEnvironmentError
 from khiops.core.internals.runner import KhiopsLocalRunner
 from khiops.extras.docker import KhiopsDockerRunner
@@ -29,6 +30,118 @@ from tests.test_helper import KhiopsTestHelper
 
 class KhiopsRunnerEnvironmentTests(unittest.TestCase):
     """Test that runners in different environments work"""
+
+    @unittest.skipIf(
+        os.environ.get("SKIP_EXPENSIVE_TESTS", "false").lower() == "true",
+        "Skipping expensive test",
+    )
+    def test_samples_are_downloaded_according_to_the_runner_setting(self):
+        """Test that samples are downloaded to the runner samples directory"""
+
+        # Save initial state
+        initial_runner = kh.get_runner()
+        initial_khiops_samples_dir = os.environ.get("KHIOPS_SAMPLES_DIR")
+
+        # Test that default samples download location is consistent with the
+        # KhiopsLocalRunner samples directory
+        with tempfile.TemporaryDirectory() as tmp_samples_dir:
+
+            # Set environment variable to the temporary samples dir
+            os.environ["KHIOPS_SAMPLES_DIR"] = tmp_samples_dir
+
+            # Create test runner to update samples dir to tmp_samples_dir,
+            # according to the newly-set environment variable
+            test_runner = KhiopsLocalRunner()
+
+            # Set current runner to the test runner
+            kh.set_runner(test_runner)
+
+            # Check that samples are not in tmp_samples_dir
+            with self.assertRaises(AssertionError):
+                self.assert_samples_dir_integrity(tmp_samples_dir)
+
+            # Download samples into existing, but empty, tmp_samples_dir
+            # Check that samples have been downloaded to tmp_samples_dir
+            tools.download_datasets(force_overwrite=True)
+            self.assert_samples_dir_integrity(tmp_samples_dir)
+
+        # Remove KHIOPS_SAMPLES_DIR
+        # Create test runner to update samples dir to the default runner samples
+        # dir, following the deletion of the KHIOPS_SAMPLES_DIR environment
+        # variable
+        # Set current runner to the test runner
+        del os.environ["KHIOPS_SAMPLES_DIR"]
+        test_runner = KhiopsLocalRunner()
+        kh.set_runner(test_runner)
+
+        # Get the default runner samples dir
+        default_runner_samples_dir = kh.get_samples_dir()
+
+        # Move existing default runner samples dir contents to temporary directory
+        if os.path.isdir(default_runner_samples_dir):
+            tmp_initial_samples_dir = tempfile.mkdtemp()
+            shutil.copytree(
+                default_runner_samples_dir,
+                tmp_initial_samples_dir,
+                dirs_exist_ok=True,
+            )
+            shutil.rmtree(default_runner_samples_dir)
+        else:
+            tmp_initial_samples_dir = None
+
+        # Check that the samples are not present in the default runner
+        # samples dir
+        with self.assertRaises(AssertionError):
+            self.assert_samples_dir_integrity(default_runner_samples_dir)
+
+        # Download datasets to the default runner samples dir (which
+        # should be created on this occasion)
+        # Default samples dir does not exist anymore
+        # Check that the default samples dir is populated
+        tools.download_datasets()
+        self.assert_samples_dir_integrity(default_runner_samples_dir)
+
+        # Clean-up default samples dir
+        shutil.rmtree(default_runner_samples_dir)
+
+        # Restore initial state:
+        # - initial samples dir contents if previously present
+        # - initial KHIOPS_SAMPLES_DIR if set
+        # - initial runner
+        if tmp_initial_samples_dir is not None and os.path.isdir(
+            tmp_initial_samples_dir
+        ):
+            shutil.copytree(
+                tmp_initial_samples_dir,
+                default_runner_samples_dir,
+                dirs_exist_ok=True,
+            )
+
+            # Remove temporary directory
+            shutil.rmtree(tmp_initial_samples_dir)
+        if initial_khiops_samples_dir is not None:
+            os.environ["KHIOPS_SAMPLES_DIR"] = initial_khiops_samples_dir
+        kh.set_runner(initial_runner)
+
+    def assert_samples_dir_integrity(self, samples_dir):
+        """Checks that the samples dir has the expected structure"""
+        expected_dataset_names = [
+            "Accidents",
+            "AccidentsSummary",
+            "Adult",
+            "Customer",
+            "CustomerExtended",
+            "Iris",
+            "Letter",
+            "Mushroom",
+            "NegativeAirlineTweets",
+            "SpliceJunction",
+            "Vehicle",
+            "WineReviews",
+        ]
+        self.assertTrue(os.path.isdir(samples_dir))
+        for ds_name in expected_dataset_names:
+            self.assertIn(ds_name, os.listdir(samples_dir))
 
     @unittest.skipIf(
         platform.system() != "Linux", "Skipping test for non-Linux platform"

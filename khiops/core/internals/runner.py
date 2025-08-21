@@ -1032,8 +1032,9 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Set the fallback value for the samples directory
         home_samples_dir = Path.home() / "khiops_data" / "samples"
 
-        # Take the value of an environment variable in priority
-        if "KHIOPS_SAMPLES_DIR" in os.environ:
+        # Take the value of an environment variable in priority, if set to
+        # non-empty string
+        if "KHIOPS_SAMPLES_DIR" in os.environ and os.environ["KHIOPS_SAMPLES_DIR"]:
             self._samples_dir = os.environ["KHIOPS_SAMPLES_DIR"]
 
         # The samples location of Windows systems is:
