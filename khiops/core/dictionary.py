@@ -548,18 +548,22 @@ class Dictionary:
     ----------
     name : str
         Dictionary name.
-    label : str
-        Dictionary label/comment.
     root : bool
         True if the dictionary is the root of an dictionary hierarchy.
     key : list of str
         Names of the key variables.
-    meta_data : `MetaData`
-        MetaData object of the dictionary.
     variables : list of `Variable`
         The dictionary variables.
     variable_blocks : list of `VariableBlock`
         The dictionary variable blocks.
+    label : str
+        Dictionary label.
+    comments : list of str
+        List of dictionary comments.
+    internal_comments : list of str
+        List of internal dictionary comments.
+    meta_data : `MetaData`
+        MetaData object of the dictionary.
     """
 
     def __init__(self, json_data=None):
@@ -579,6 +583,8 @@ class Dictionary:
         # Initialize main attributes
         self.name = json_data.get("name", "")
         self.label = json_data.get("label", "")
+        self.comments = json_data.get("comments", [])
+        self.internal_comments = json_data.get("internalComments", [])
         self.root = json_data.get("root", False)
 
         # Initialize names of key variable
@@ -634,6 +640,8 @@ class Dictionary:
         # Copy dictionary main features
         dictionary_copy.name = self.name
         dictionary_copy.label = self.label
+        dictionary_copy.comments = self.comments.copy()
+        dictionary_copy.internal_comments = self.internal_comments.copy()
         dictionary_copy.root = self.root
         dictionary_copy.key = self.key.copy()
         dictionary_copy.meta_data = self.meta_data.copy()
@@ -653,6 +661,10 @@ class Dictionary:
                 variable_block_copy = VariableBlock()
                 variable_block_copy.name = variable.variable_block.name
                 variable_block_copy.label = variable.variable_block.label
+                variable_block_copy.comments = variable.variable_block.comments.copy()
+                variable_block_copy.internal_comments = (
+                    variable.variable_block.internal_comments.copy()
+                )
                 variable_block_copy.rule = variable.variable_block.rule
                 variable_block_copy.meta_data = variable_block.meta_data.copy()
 
@@ -900,6 +912,10 @@ class Dictionary:
         if self.label:
             writer.write("// ")
             writer.writeln(self.label)
+        if self.comments:
+            for comment in self.comments:
+                writer.write("// ")
+                writer.writeln(comment)
         if self.root:
             writer.write("Root\t")
         writer.write("Dictionary\t")
@@ -929,6 +945,11 @@ class Dictionary:
             else:
                 variable.variable_block.write(writer)
                 i += len(variable.variable_block.variables)
+
+        # Write internal comments if available
+        for comment in self.internal_comments:
+            writer.write("// ")
+            writer.writeln(comment)
         writer.writeln("};")
 
 
@@ -946,8 +967,6 @@ class Variable:
     ----------
     name : str
         Variable name.
-    label : str
-        Variable label/comment.
     used : bool
         True if the variable is used.
     type : str
@@ -958,11 +977,15 @@ class Variable:
         Type complement for the ``Structure`` type. Set to "" for other types.
     rule : str
         Derivation rule. Set to "" if there is no rule associated to this variable.
-    meta_data : `MetaData`
-        Variable metadata.
     variable_block : `VariableBlock`
         Block to which the variable belongs. Not set if the variable does not belong to
         a block.
+    label : str
+        Variable label.
+    comments : list of str
+        List of variable comments.
+    meta_data : `MetaData`
+        Variable metadata.
     """
 
     def __init__(self, json_data=None):
@@ -974,6 +997,7 @@ class Variable:
         # Main attributes
         self.name = ""
         self.label = ""
+        self.comments = []
         self.used = True
         self.type = ""
 
@@ -1007,6 +1031,7 @@ class Variable:
         # Initialize main attributes
         self.name = json_data.get("name")
         self.label = json_data.get("label", "")
+        self.comments = json_data.get("comments", [])
         self.used = json_data.get("used", True)
         self.type = json_data.get("type")
 
@@ -1045,6 +1070,7 @@ class Variable:
         variable = Variable()
         variable.name = self.name
         variable.label = self.label
+        variable.comments = self.comments.copy()
         variable.used = self.used
         variable.type = self.type
         variable.object_type = self.object_type
@@ -1142,6 +1168,11 @@ class Variable:
         if not isinstance(writer, KhiopsOutputWriter):
             raise TypeError(type_error_message("writer", writer, KhiopsOutputWriter))
 
+        # Write comments if available
+        for comment in self.comments:
+            writer.write("\t// ")
+            writer.writeln(comment)
+
         # Write "Unused" flag if variable not used
         if not self.used:
             writer.write("Unused")
@@ -1167,7 +1198,7 @@ class Variable:
             self.meta_data.write(writer)
         writer.write("\t")
 
-        # Write label/commentary if available
+        # Write label if available
         if self.label:
             writer.write("// ")
             writer.write(self.label)
@@ -1186,16 +1217,20 @@ class VariableBlock:
 
     Attributes
     ----------
-    name :
+    name : str
         Block name.
-    label :
-        Block label/commentary.
     rule :
         Block derivation rule.
-    meta_data :
-        Metadata object of the block.
     variables :
         List of the Variable objects of the block.
+    label : str
+        Block label.
+    comments : list of str
+        List of block comments.
+    internal_comments : list of str
+        List of internal block comments.
+    meta_data :
+        Metadata object of the block.
     """
 
     def __init__(self, json_data=None):
@@ -1215,6 +1250,8 @@ class VariableBlock:
         # Initialize main attributes
         self.name = json_data.get("blockName", "")
         self.label = json_data.get("label", "")
+        self.comments = json_data.get("comments", [])
+        self.internal_comments = json_data.get("internalComments", [])
 
         # Initialize derivation rule
         self.rule = json_data.get("rule", "")
@@ -1305,10 +1342,21 @@ class VariableBlock:
         # Check file object type
         if not isinstance(writer, KhiopsOutputWriter):
             raise TypeError(type_error_message("writer", writer, KhiopsOutputWriter))
+
+        # Write comments if available
+        for comment in self.comments:
+            writer.write("\t// ")
+            writer.writeln(comment)
+
         # Write variables
         writer.writeln("\t{")
         for variable in self.variables:
             variable.write(writer)
+
+        # Write internal comments if available
+        for comment in self.internal_comments:
+            writer.write("\t// ")
+            writer.writeln(comment)
         writer.write("\t}")
 
         # Write block's name
@@ -1328,7 +1376,7 @@ class VariableBlock:
             self.meta_data.write(writer)
         writer.write("\t")
 
-        # Write label/commentary if available
+        # Write label if available
         if self.label:
             writer.write("// ")
             writer.write(self.label)

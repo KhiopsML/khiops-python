@@ -1,0 +1,67 @@
+{
+	"tool": "Khiops Dictionary",
+	"version": "VERSION",
+	"dictionaries": [
+		{
+			"name": "Iris",
+			"label": "Label Iris",
+			"comments": [
+				"Comment Iris 1",
+				"Comment Iris 2",
+				"Comment Iris 3",
+				"Comment Iris 4",
+				"Comment Iris 5"
+			],
+			"variables": [
+				{
+					"name": "SepalLength",
+					"label": "Label SepalLength",
+					"comments": [
+						"Comment SepalLength 1",
+						"Comment SepalLength 2"
+					],
+					"type": "Numerical"
+				},
+				{
+					"name": "SepalWidth",
+					"type": "Numerical"
+				},
+				{
+					"name": "PetalLength",
+					"type": "Numerical"
+				},
+				{
+					"name": "PetalWidth",
+					"label": "Label PetalWidth",
+					"comments": [
+						"Comment PetalWidth"
+					],
+					"type": "Numerical"
+				},
+				{
+					"name": "Class",
+					"comments": [
+						"Comment Class"
+					],
+					"type": "Categorical"
+				},
+				{
+					"name": "NoSetosa",
+					"label": "Label NoSetosa",
+					"comments": [
+						"Comment NoSetosa 1",
+						"Comment NoSetosa 2"
+					],
+					"used": false,
+					"type": "Numerical",
+					"rule": "NEQc(Class, \"Iris-setosa\")"
+				}
+			],
+			"internalComments": [
+				"Comment internal Iris 1",
+				"Comment internal Iris 2"
+			]
+		}
+	],
+	"khiops_encoding": "ascii"
+}

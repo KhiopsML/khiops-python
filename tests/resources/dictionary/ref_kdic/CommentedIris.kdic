@@ -1,0 +1,25 @@
+#Khiops VERSION
+
+// Label Iris
+// Comment Iris 1
+// Comment Iris 2
+// Comment Iris 3
+// Comment Iris 4
+// Comment Iris 5
+Dictionary	Iris
+{
+	// Comment SepalLength 1
+	// Comment SepalLength 2
+	Numerical	SepalLength		;	// Label SepalLength
+	Numerical	SepalWidth		;	
+	Numerical	PetalLength		;	
+	// Comment PetalWidth
+	Numerical	PetalWidth		;	// Label PetalWidth
+	// Comment Class
+	Categorical	Class		;	
+	// Comment NoSetosa 1
+	// Comment NoSetosa 2
+Unused	Numerical	NoSetosa	 = NEQc(Class, "Iris-setosa")	;	// Label NoSetosa
+// Comment internal Iris 1
+// Comment internal Iris 2
+};

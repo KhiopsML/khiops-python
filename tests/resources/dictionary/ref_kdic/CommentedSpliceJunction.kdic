@@ -1,0 +1,28 @@
+#Khiops VERSION
+
+// Label SpliceJunction
+// Comment SpliceJunction key before
+// Comment SpliceJunction key after
+// Comment end
+Root	Dictionary	SpliceJunction	(SampleId)
+{
+	Categorical	SampleId		;	
+	Categorical	Class		;
+	// Comment DNA
+	Table(SpliceJunctionDNA)	DNA		;	// Label DNA
+};
+
+// Label SpliceJunction
+// Comment SpliceJunction key before
+// Comment SpliceJunction key after
+// Comment SpliceJunction meta-data before
+// Comment SpliceJunction meta-data after
+// Comment end
+Dictionary	SpliceJunctionDNA	(SampleId)
+<TestComment>
+{
+	Categorical	SampleId		;	
+	Numerical	Pos		;	
+	Categorical	Char		;	
+// Categorical	LowerChar = ToLower(Char) ;
+};
