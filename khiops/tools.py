@@ -13,7 +13,6 @@
 import argparse
 import os
 import pathlib
-import platform
 import shutil
 import sys
 import tempfile
@@ -22,6 +21,7 @@ import warnings
 import zipfile
 
 import khiops.core as kh
+from khiops.core.internals.runner import get_default_samples_dir
 from khiops.samples import samples as samples_core
 
 # We deactivate the warnings to not show a deprecation warning from sklearn
@@ -116,9 +116,10 @@ def download_datasets(
     """Downloads the Khiops sample datasets for a given version
 
     The datasets are downloaded to:
+        - all systems: ``KHIOPS_SAMPLES_DIR/khiops_data/samples`` if
+          ``KHIOPS_SAMPLES_DIR`` is defined and non-empty
         - Windows:
-            - ``%PUBLIC%\\khiops_data\\samples`` if ``%PUBLIC%`` is defined and
-              points to a directory
+            - ``%PUBLIC%\\khiops_data\\samples`` if ``%PUBLIC%`` is defined
             - ``%USERPROFILE%\\khiops_data\\samples`` otherwise
         - Linux/macOS: ``$HOME/khiops_data/samples``
 
@@ -130,23 +131,7 @@ def download_datasets(
         The version of the samples datasets.
     """
     # Note: The hidden parameter _called_from_shell is just to change the user messages.
-
-    # Check if the home sample dataset location is available and build it if necessary
-    home_samples_dir = pathlib.Path.home() / "khiops_data" / "samples"
-
-    # Take the value of an environment variable in priority, if set to non-empty string
-    # If the environment variable is not set, samples location is:
-    # - on Windows systems:
-    #   - %PUBLIC%\khiops_data\samples if %PUBLIC% exists
-    #   - %USERPROFILE%\khiops_data\samples otherwise
-    # - on Linux / macOS systems:
-    #   - $HOME/khiops_data/samples
-    if "KHIOPS_SAMPLES_DIR" in os.environ and os.environ["KHIOPS_SAMPLES_DIR"]:
-        samples_dir = os.environ["KHIOPS_SAMPLES_DIR"]
-    elif platform.system() == "Windows" and "PUBLIC" in os.environ:
-        samples_dir = os.path.join(os.environ["PUBLIC"], "khiops_data", "samples")
-    else:
-        samples_dir = str(home_samples_dir)
+    samples_dir = get_default_samples_dir()
     if os.path.exists(samples_dir) and not force_overwrite:
         if _called_from_shell:
             instructions = "Execute with '--force-overwrite' to overwrite it"
