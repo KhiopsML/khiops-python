@@ -10,7 +10,12 @@ ARG KHIOPS_REVISION
 RUN true \
   # Install git (for khiops-python version calculation) and pip \
   && apt-get -y update \
-  && apt-get -y --no-install-recommends install git python3-pip zip pandoc wget ruby-dev \
+  && apt-get -y --no-install-recommends install git python3-pip \
+  # On Debian/Ubuntu systems, python3-venv must be installed to provide ensurepip.
+  # It is still possible to create venvs using the --without-pip flag but any subsequent
+  # module installation with pip would be impossible
+  python3.10-venv \
+  zip pandoc wget ruby-dev \
   # Get Linux distribution codename \
   && if [ -f /etc/os-release ]; then . /etc/os-release; fi \
   # Obtain the Khiops native package \
