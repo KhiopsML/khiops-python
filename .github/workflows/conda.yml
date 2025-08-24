@@ -146,7 +146,8 @@ jobs:
           done
 
           # Note: kh-status is not reachable as it is not in PATH
-          $PYTHON -c "import khiops.core as kh; kh.get_runner().print_status()"
+          $PYTHON -c \
+            "import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)"
       - name: Download Sample Datasets
         run: |
           kh-download-datasets \
