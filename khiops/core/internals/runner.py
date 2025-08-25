@@ -14,6 +14,7 @@
 
 import io
 import os
+import pathlib
 import platform
 import shlex
 import shutil
@@ -49,6 +50,25 @@ def _isdir_without_all_perms(dir_path):
     )
 
 
+def get_default_samples_dir():
+    """Returns the default samples directory
+
+    The default samples directory is computed according to the following priorities:
+        - all systems: ``KHIOPS_SAMPLES_DIR/khiops_data/samples`` if set
+        - Windows:
+            - ``%PUBLIC%\\khiops_data\\samples`` if ``%PUBLIC%`` is defined
+            - ``%USERPROFILE%\\khiops_data\\samples`` otherwise
+        - Linux/macOS: ``$HOME/khiops_data/samples``
+    """
+    if "KHIOPS_SAMPLES_DIR" in os.environ and os.environ["KHIOPS_SAMPLES_DIR"]:
+        samples_dir = os.environ["KHIOPS_SAMPLES_DIR"]
+    elif platform.system() == "Windows" and "PUBLIC" in os.environ:
+        samples_dir = os.path.join(os.environ["PUBLIC"], "khiops_data", "samples")
+    else:
+        samples_dir = str(pathlib.Path.home() / "khiops_data" / "samples")
+    return samples_dir
+
+
 def _get_dir_status(a_dir):
     """Returns the status of a local or remote directory
 
@@ -56,14 +76,10 @@ def _get_dir_status(a_dir):
     but not checked.
     """
     if fs.is_local_resource(a_dir):
-        # Remove initial slash on windows systems
-        # urllib's url2pathname does not work properly
         a_dir_res = fs.create_resource(os.path.normpath(a_dir))
-        a_dir_path = a_dir_res.uri_info.path
-        if platform.system() == "Windows":
-            if a_dir_path.startswith("/"):
-                a_dir_path = a_dir_path[1:]
 
+        # a_dir_res is a LocalFilesystemResource already
+        a_dir_path = a_dir_res.path
         if not os.path.exists(a_dir_path):
             status = "non-existent"
         elif not os.path.isdir(a_dir_path):
@@ -96,31 +112,6 @@ def _check_samples_dir(samples_dir):
             f"({samples_dir}). {download_msg}",
             stacklevel=3,
         )
-
-
-def _extract_path_from_uri(uri):
-    res = fs.create_resource(uri)
-    if platform.system() == "Windows":
-        # Case of file:///<LETTER>:/<REST_OF_PATH>:
-        #   Eliminate first slash ("/") from path if the first component
-        if (
-            res.uri_info.scheme == ""
-            and res.uri_info.path[0] == "/"
-            and res.uri_info.path[1].isalpha()
-            and res.uri_info.path[2] == ":"
-        ):
-            path = res.uri_info.path[1:]
-        # Case of C:/<REST_OF_PATH>:
-        #   Just use the original path
-        elif len(res.uri_info.scheme) == 1:
-            path = uri
-        # Otherwise return URI path as-is
-        else:
-            path = res.uri_info.path
-
-    else:
-        path = res.uri_info.path
-    return path
 
 
 def _khiops_env_file_exists(env_dir):
@@ -399,7 +390,7 @@ class KhiopsRunner(ABC):
     def root_temp_dir(self, dir_path):
         # Check existence, directory status and permissions for local paths
         if fs.is_local_resource(dir_path):
-            real_dir_path = _extract_path_from_uri(dir_path)
+            real_dir_path = fs.create_resource(dir_path).path
             if os.path.exists(real_dir_path):
                 if os.path.isfile(real_dir_path):
                     raise KhiopsEnvironmentError(
@@ -439,7 +430,7 @@ class KhiopsRunner(ABC):
         # Local resource: Effectively create the file with the python file API
         if fs.is_local_resource(self.root_temp_dir):
             # Extract the path from the potential URI
-            root_temp_dir_path = _extract_path_from_uri(self.root_temp_dir)
+            root_temp_dir_path = fs.create_resource(self.root_temp_dir).path
 
             # Create the temporary file
             tmp_file_fd, tmp_file_path = tempfile.mkstemp(
@@ -470,7 +461,7 @@ class KhiopsRunner(ABC):
         """
         # Local resource: Effectively create the directory with the python file API
         if fs.is_local_resource(self.root_temp_dir):
-            root_temp_dir_path = _extract_path_from_uri(self.root_temp_dir)
+            root_temp_dir_path = fs.create_resource(self.root_temp_dir).path
             temp_dir = tempfile.mkdtemp(prefix=prefix, dir=root_temp_dir_path)
         # Remote resource: Just return a highly probable unique path
         else:
@@ -919,7 +910,7 @@ class KhiopsLocalRunner(KhiopsRunner):
 
       - Windows:
 
-        - ``%PUBLIC%\khiops_data\samples%`` if it exists and is a directory
+        - ``%PUBLIC%\khiops_data\samples%`` if ``%PUBLIC%`` is defined
         - ``%USERPROFILE%\khiops_data\samples%`` otherwise
 
       - Linux and macOS:
@@ -1029,38 +1020,9 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _initialize_default_samples_dir(self):
         """See class docstring"""
-        # Set the fallback value for the samples directory
-        home_samples_dir = Path.home() / "khiops_data" / "samples"
-
-        # Take the value of an environment variable in priority
-        if "KHIOPS_SAMPLES_DIR" in os.environ:
-            self._samples_dir = os.environ["KHIOPS_SAMPLES_DIR"]
-
-        # The samples location of Windows systems is:
-        # - %PUBLIC%\khiops_data\samples if %PUBLIC% exists
-        # - %USERPROFILE%\khiops_data\samples otherwise
-        elif platform.system() == "Windows":
-            if "PUBLIC" in os.environ:
-                public_samples_dir = os.path.join(
-                    os.environ["PUBLIC"], "khiops_data", "samples"
-                )
-            else:
-                public_samples_dir = None
-
-            ok_statuses = ["ok", "remote"]
-            if (
-                public_samples_dir is not None
-                and _get_dir_status(public_samples_dir) in ok_statuses
-            ):
-                self._samples_dir = public_samples_dir
-            else:
-                self._samples_dir = str(home_samples_dir)
-
-        # The default samples location on Unix systems is:
-        # $HOME/khiops/samples on Linux and Mac OS
-        else:
-            self._samples_dir = str(home_samples_dir)
-
+        samples_dir = get_default_samples_dir()
+        _check_samples_dir(samples_dir)
+        self._samples_dir = samples_dir
         assert self._samples_dir is not None
 
     def _check_tools(self):

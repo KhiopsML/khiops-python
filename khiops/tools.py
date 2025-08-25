@@ -21,6 +21,7 @@ import warnings
 import zipfile
 
 import khiops.core as kh
+from khiops.core.internals.runner import get_default_samples_dir
 from khiops.samples import samples as samples_core
 
 # We deactivate the warnings to not show a deprecation warning from sklearn
@@ -115,7 +116,11 @@ def download_datasets(
     """Downloads the Khiops sample datasets for a given version
 
     The datasets are downloaded to:
-        - Windows: ``%USERPROFILE%\\khiops_data\\samples``
+        - all systems: ``KHIOPS_SAMPLES_DIR/khiops_data/samples`` if
+          ``KHIOPS_SAMPLES_DIR`` is defined and non-empty
+        - Windows:
+            - ``%PUBLIC%\\khiops_data\\samples`` if ``%PUBLIC%`` is defined
+            - ``%USERPROFILE%\\khiops_data\\samples`` otherwise
         - Linux/macOS: ``$HOME/khiops_data/samples``
 
     Parameters
@@ -126,10 +131,8 @@ def download_datasets(
         The version of the samples datasets.
     """
     # Note: The hidden parameter _called_from_shell is just to change the user messages.
-
-    # Check if the home sample dataset location is available and build it if necessary
-    samples_dir = pathlib.Path.home() / "khiops_data" / "samples"
-    if samples_dir.exists() and not force_overwrite:
+    samples_dir = get_default_samples_dir()
+    if os.path.exists(samples_dir) and not force_overwrite:
         if _called_from_shell:
             instructions = "Execute with '--force-overwrite' to overwrite it"
         else:
@@ -140,7 +143,7 @@ def download_datasets(
         )
     else:
         # Create the samples dataset directory
-        if samples_dir.exists():
+        if os.path.exists(samples_dir):
             shutil.rmtree(samples_dir)
         os.makedirs(samples_dir, exist_ok=True)
 

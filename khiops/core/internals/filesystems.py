@@ -8,7 +8,6 @@
 
 import json
 import os
-import platform
 import shutil
 import warnings
 from abc import ABC, abstractmethod
@@ -59,8 +58,11 @@ def is_local_resource(uri_or_path):
     `bool`
         `True` if a URI refers to a local path
     """
-    uri_info = urlparse(uri_or_path, allow_fragments=False)
-    return len(uri_info.scheme) <= 1 or uri_info.scheme == "file"
+    if (index := uri_or_path.find("://")) > 0:
+        scheme = uri_or_path[:index]
+        return len(scheme) == 1 or scheme == "file"
+    else:
+        return True
 
 
 def create_resource(uri_or_path):
@@ -80,15 +82,34 @@ def create_resource(uri_or_path):
     `FilesystemResource`
         The URI resource object, its class depends on the URI.
     """
-    uri_info = urlparse(uri_or_path, allow_fragments=False)
-    if uri_info.scheme == "s3":
-        return AmazonS3Resource(uri_or_path)
-    elif uri_info.scheme == "gs":
-        return GoogleCloudStorageResource(uri_or_path)
-    elif is_local_resource(uri_or_path):
-        return LocalFilesystemResource(uri_or_path)
+    # Case where the URI scheme separator `://` is contained in the uri/path
+    if (index := uri_or_path.find("://")) > 0:
+        scheme = uri_or_path[:index]
+
+        # Case of normal schemes (those whose scheme is not a single char)
+        # Note: Any 1-char scheme is considered a Windows path
+        if len(scheme) > 1:
+            uri_info = urlparse(uri_or_path, allow_fragments=False)
+            if uri_info.scheme == "s3":
+                return AmazonS3Resource(uri_or_path)
+            elif uri_info.scheme == "gs":
+                return GoogleCloudStorageResource(uri_or_path)
+            elif scheme == "file":
+                # Reject URI if authority is not empty
+                if uri_info.netloc:
+                    raise ValueError(
+                        f"Non-empty 'authority' in local-path URI '{uri_or_path}': "
+                        f"'{uri_info.netloc}'"
+                    )
+                return LocalFilesystemResource(uri_or_path)
+            else:
+                raise ValueError(f"Unsupported URI scheme '{uri_info.scheme}'")
+        else:
+            return LocalFilesystemResource(uri_or_path)
+
+    # No scheme separator `://` found: Build a local resource
     else:
-        raise ValueError(f"Unsupported URI scheme {uri_info.scheme}")
+        return LocalFilesystemResource(uri_or_path)
 
 
 def parent_path(path):
@@ -411,12 +432,8 @@ class LocalFilesystemResource(FilesystemResource):
         # Obtain the local from the URI
         # Case where the scheme is in fact a windows drive
         #   => Build the proper path with drive
-        if (
-            len(self.uri_info.scheme) == 1
-            and self.uri_info.scheme.isalpha()
-            and platform.system() == "Windows"
-        ):
-            self.path = os.path.join(f"{self.uri_info.scheme}:\\", self.uri_info.path)
+        if len(self.uri_info.scheme) == 1 and self.uri_info.scheme.isalpha():
+            self.path = f"{self.uri_info.scheme}:{self.uri_info.path}"
         # Case of the "file" scheme
         elif self.uri_info.scheme == "file":
             # If invalid second colon in path (eg. "/C:/Users"):

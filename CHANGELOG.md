@@ -12,6 +12,11 @@
 - (`core`) Dictionary API support for dictionary, variable and variable block
   comments, and dictionary and variable block internal comments.
 
+### Fixed
+- (General) Inconsistency between the `tools.download_datasets` function and the
+  current samples directory according to `core.api.get_samples_dir()`.
+  
+
 ## 11.0.0.0-b.0 - 2025-07-10
 
 ### Added
