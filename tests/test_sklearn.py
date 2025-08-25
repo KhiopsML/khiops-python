@@ -749,6 +749,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "header_line": True,
                                 "max_pairs": 1,
                                 "max_trees": 5,
+                                "max_text_features": 300000,
+                                "text_features": "ngrams",
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
                                 "specific_pairs": [("age", "race")],
@@ -777,6 +779,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "detect_format": False,
                                 "header_line": True,
                                 "max_trees": 0,
+                                "max_text_features": 300000,
+                                "text_features": "ngrams",
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
                                 "construction_rules": ["TableMode", "TableSelection"],
@@ -803,6 +807,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "header_line": True,
                                 "max_pairs": 1,
                                 "max_trees": 5,
+                                "max_text_features": 300000,
+                                "text_features": "ngrams",
                                 "specific_pairs": [("age", "race")],
                                 "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
@@ -841,6 +847,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_constructed_variables": 10,
                                 "max_pairs": 1,
                                 "max_trees": 5,
+                                "max_text_features": 300000,
+                                "text_features": "ngrams",
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
                                 "specific_pairs": [],
@@ -870,6 +878,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "header_line": True,
                                 "max_constructed_variables": 10,
                                 "max_trees": 0,
+                                "max_text_features": 300000,
+                                "text_features": "ngrams",
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
                                 "construction_rules": ["TableMode", "TableSelection"],
@@ -897,6 +907,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_constructed_variables": 10,
                                 "max_pairs": 1,
                                 "max_trees": 5,
+                                "max_text_features": 300000,
+                                "text_features": "ngrams",
                                 "specific_pairs": [],
                                 "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
@@ -1410,6 +1422,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             extra_estimator_kwargs={
                 "n_pairs": 1,
                 "n_trees": 5,
+                "n_text_features": 300000,
+                "type_text_features": "ngrams",
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
                 "specific_pairs": [("age", "race")],
@@ -1431,6 +1445,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             extra_estimator_kwargs={
                 "n_pairs": 1,
                 "n_trees": 5,
+                "n_text_features": 300000,
+                "type_text_features": "ngrams",
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
                 "specific_pairs": [("age", "race")],
@@ -1451,6 +1467,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "n_features": 10,
                 "n_pairs": 1,
                 "n_trees": 5,
+                "n_text_features": 300000,
+                "type_text_features": "ngrams",
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
                 "specific_pairs": [],
@@ -1488,6 +1506,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             extra_estimator_kwargs={
                 "n_pairs": 1,
                 "n_trees": 5,
+                "n_text_features": 300000,
+                "type_text_features": "ngrams",
                 "specific_pairs": [("age", "race")],
                 "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
@@ -1512,6 +1532,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             extra_estimator_kwargs={
                 "n_pairs": 1,
                 "n_trees": 5,
+                "n_text_features": 300000,
+                "type_text_features": "ngrams",
                 "specific_pairs": [("age", "race")],
                 "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
@@ -1535,6 +1557,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "n_features": 10,
                 "n_pairs": 1,
                 "n_trees": 5,
+                "n_text_features": 300000,
+                "type_text_features": "ngrams",
                 "specific_pairs": [],
                 "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
@@ -1575,6 +1599,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             extra_estimator_kwargs={
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
+                "n_text_features": 300000,
+                "type_text_features": "ngrams",
                 "construction_rules": ["TableMode", "TableSelection"],
             },
         )
@@ -1591,6 +1617,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             extra_estimator_kwargs={
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
+                "n_text_features": 300000,
+                "type_text_features": "ngrams",
                 "construction_rules": ["TableMode", "TableSelection"],
             },
         )
@@ -1605,6 +1633,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             extra_estimator_kwargs={
                 "n_features": 10,
                 "n_trees": 0,
+                "n_text_features": 300000,
+                "type_text_features": "ngrams",
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
                 "construction_rules": ["TableMode", "TableSelection"],
@@ -1693,6 +1723,7 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
         # Set the estimators to test
         # Notes:
         # - We use n_trees=0 so the tests execute faster
+        # - We use n_text_features=0 so the tests execute faster
         # - We omit KhiopsCoclustering because he needs special inputs to work well
         #   and sklearn's check_estimator method does not accept them.
         # - KhiopsEncoder:
@@ -1701,10 +1732,11 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
         #   - We set it with informative_features_only=False so it always have output
         #   columns (sklearn estimator checks expect non-empty encoders)
         khiops_estimators = [
-            KhiopsClassifier(n_trees=0),
-            KhiopsRegressor(n_trees=0),
+            KhiopsClassifier(n_trees=0, n_text_features=0),
+            KhiopsRegressor(n_trees=0, n_text_features=0),
             KhiopsEncoder(
                 n_trees=0,
+                n_text_features=0,
                 informative_features_only=False,
                 transform_type_numerical="0-1_normalization",
             ),
