@@ -100,15 +100,17 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                 False,
                 False,
             ],
+            # Make some entries longer than 100 characters in the "Title" column
+            # to trigger the "Text" Khiops type assignment heuristic
             "Title": [
-                "Awesome",
+                (15 * "Awesome ").strip(),
                 "Very lovely",
                 "Some major design flaws",
                 "My favorite buy!",
-                "Flattering shirt",
+                (7 * "Flattering shirt ").strip(),
                 "Not for the very petite",
                 "Cagrcoal shimmer fun",
-                "Shimmer, surprisingly goes with lots",
+                (3 * "Shimmer, surprisingly goes with lots ").strip(),
                 "Flattering",
                 "Such a fun dress!",
             ],
@@ -128,6 +130,9 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
             ],
         }
         dataset = pd.DataFrame(data)
+
+        # Force StringDType on "Title" to have it of "Text" Khiops type
+        dataset["Title"] = dataset["Title"].astype("string")
         return dataset
 
     def create_monotable_data_file(self, table_path):
@@ -294,7 +299,7 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
                 "Clothing ID": "Numerical",
                 "Date": "Timestamp",
                 "New": "Categorical",
-                "Title": "Categorical",
+                "Title": "Text",
                 "Recommended IND": "Numerical",
                 "Positive Feedback average": "Numerical",
                 "class": "Categorical",
@@ -489,7 +494,9 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
 
         # Create and load the intermediary Khiops file
         out_table_path, _ = dataset.create_table_files_for_khiops(self.output_dir)
-        out_table = pd.read_csv(out_table_path, sep="\t")
+
+        # Force StringDType on the "Title" column upon CSV reading
+        out_table = pd.read_csv(out_table_path, sep="\t", dtype={"Title": "string"})
 
         # Cast "Date" columns to datetime as we don't automatically recognize dates
         out_table["Date"] = out_table["Date"].astype("datetime64[ns]")
@@ -799,7 +806,7 @@ class DataFramePreprocessingTests(unittest.TestCase):
             ],
             "Age": [39],
             "Title": [
-                "Shimmer,\nsurprisingly\n\rgoes with lots",
+                (3 * "Shimmer,\nsurprisingly\n\rgoes with lots").strip(),
             ],
         }
         dataset = pd.DataFrame(data)
@@ -814,7 +821,7 @@ class DataFramePreprocessingTests(unittest.TestCase):
         out_table = pd.read_csv(out_table_path, sep="\t")
 
         self.assertEqual(
-            "Shimmer, surprisingly  goes with lots",
+            (3 * "Shimmer, surprisingly  goes with lots").strip(),
             out_table.Title[0],
             "Newlines should have been removed from the data",
         )
