@@ -11,6 +11,7 @@
 ### Added
 - (`core`) Dictionary API support for dictionary, variable and variable block
   comments, and dictionary and variable block internal comments.
+- (`sklearn`) `Text` Khiops type support at the estimator level.
 
 ### Fixed
 - (General) Inconsistency between the `tools.download_datasets` function and the
