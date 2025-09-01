@@ -976,7 +976,10 @@ class Variable:
     structure_type : str
         Type complement for the ``Structure`` type. Set to "" for other types.
     rule : str
-        Derivation rule. Set to "" if there is no rule associated to this variable.
+        Derivation rule or external table reference. Set to "" if there is no
+        rule associated to this variable. Examples:
+            - standard rule: "Sum(Var1, Var2)"
+            - reference rule: "[TableName]"
     variable_block : `VariableBlock`
         Block to which the variable belongs. Not set if the variable does not belong to
         a block.
