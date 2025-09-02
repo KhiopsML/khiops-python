@@ -66,7 +66,7 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                 "iris_sec": (raw_X_sec_mt, ["Id"]),
             },
         }
-        khc = KhiopsClassifier(n_trees=0)
+        khc = KhiopsClassifier(n_trees=0, n_text_features=0)
         khc.fit(X, y)
         y_pred = khc.predict(X)
         khc.fit(X_mt, y)
@@ -185,7 +185,7 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                     estimator=KhiopsClassifier.__name__,
                 ):
                     # Train the classifier
-                    khc = KhiopsClassifier(n_trees=0)
+                    khc = KhiopsClassifier(n_trees=0, n_text_features=0)
                     khc.fit(X, y)
 
                     # Check the expected classes

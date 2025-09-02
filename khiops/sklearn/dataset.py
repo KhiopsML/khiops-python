@@ -236,19 +236,40 @@ def _upgrade_mapping_spec(ds_spec):
     return new_ds_spec
 
 
-def get_khiops_type(numpy_type):
+def get_khiops_type(numpy_type, categorical_str_max_size=None):
     """Translates a numpy dtype to a Khiops dictionary type
 
     Parameters
     ----------
-    numpy_type : `numpy.dtype`:
+    numpy_type : `numpy.dtype`
         Numpy type of the column
+    categorical_str_max_size : `int`, optional
+        Maximum length of the entries of the column whose type is ``numpy_type``.
 
     Returns
     -------
     str
-        Khiops type name. Either "Categorical", "Numerical" or "Timestamp"
+        Khiops type name. Either "Categorical", "Text", "Numerical" or "Timestamp".
+
+    .. note::
+        The "Text" Khiops type is inferred if the Numpy type is "string"
+        and the maximum length of the entries of that type is greater than 100.
+
     """
+    # Check categorical_str_max_size type
+    if categorical_str_max_size is not None and not isinstance(
+        categorical_str_max_size, (int, np.int64)
+    ):
+        raise TypeError(
+            type_error_message(
+                "categorical_str_max_size",
+                categorical_str_max_size,
+                int,
+                np.int64,
+            )
+        )
+
+    # Get the Numpy dtype in lowercase
     lower_numpy_type = str(numpy_type).lower()
 
     # timedelta64 and datetime64 types
@@ -257,6 +278,11 @@ def get_khiops_type(numpy_type):
     # float<x>, int<x>, uint<x> types
     elif "int" in lower_numpy_type or "float" in lower_numpy_type:
         khiops_type = "Numerical"
+    elif lower_numpy_type == "string":
+        if categorical_str_max_size is not None and categorical_str_max_size > 100:
+            khiops_type = "Text"
+        else:
+            khiops_type = "Categorical"
     # bool_ and object, character, bytes_, str_, void, record and other types
     else:
         khiops_type = "Categorical"
@@ -956,10 +982,16 @@ class PandasTable(DatasetTable):
                 )
 
         # Initialize Khiops types
-        self.khiops_types = {
-            column_id: get_khiops_type(self.data_source.dtypes[column_id])
-            for column_id in self.column_ids
-        }
+        self.khiops_types = {}
+        for column_id in self.column_ids:
+            column = self.data_source[column_id]
+            column_numpy_type = column.dtype
+            column_max_size = None
+            if isinstance(column_numpy_type, pd.StringDtype):
+                column_max_size = column.str.len().max()
+            self.khiops_types[column_id] = get_khiops_type(
+                column_numpy_type, column_max_size
+            )
 
         # Check key integrity
         self.check_key()

@@ -142,6 +142,75 @@ def khiops_classifier_multiclass():
     print(f"Test auc      = {test_auc}")
 
 
+def khiops_classifier_text():
+    """Train a `.KhiopsClassifier` on a monotable dataframe with textual data"""
+    # Imports
+    import os
+    import pandas as pd
+    from khiops import core as kh
+    from khiops.sklearn import KhiopsClassifier
+    from sklearn import metrics
+    from sklearn.model_selection import train_test_split
+
+    # Load the dataset into a pandas dataframe
+    data_table_path = os.path.join(
+        kh.get_samples_dir(), "NegativeAirlineTweets", "NegativeAirlineTweets.txt"
+    )
+    data_df = pd.read_csv(data_table_path, sep="\t")
+
+    # Split the whole dataframe into train and test (70%-30%)
+    data_train_df, data_test_df = train_test_split(
+        data_df, test_size=0.3, random_state=1
+    )
+
+    # Split the dataset into:
+    # - the X feature table
+    # - the y target vector ("negativereason" column)
+    X_train = data_train_df.drop("negativereason", axis=1)
+    X_test = data_test_df.drop("negativereason", axis=1)
+    y_train = data_train_df["negativereason"]
+    y_test = data_test_df["negativereason"]
+
+    # Set Pandas StringDType on the "text" column
+    X_train["text"] = X_train["text"].astype("string")
+    X_test["text"] = X_test["text"].astype("string")
+
+    # Create the classifier object
+    khc = KhiopsClassifier()
+
+    # Train the classifier
+    khc.fit(X_train, y_train)
+
+    # Show the feature importance info
+    print(f"Features evaluated: {khc.n_features_evaluated_}")
+    print(f"Features selected : {khc.n_features_used_}")
+    print("Top 3 used features")
+    for i, feature in enumerate(khc.feature_used_names_[:3]):
+        print(f"{feature} - Importance: {khc.feature_used_importances_[i][2]}")
+    print("---")
+
+    # Predict the classes on the test dataset
+    y_test_pred = khc.predict(X_test)
+    print("Predicted classes (first 10):")
+    print(y_test_pred[0:10])
+    print("---")
+
+    # Predict the class probabilities on the test dataset
+    y_test_probas = khc.predict_proba(X_test)
+    print(f"Class order: {khc.classes_}")
+    print("Predicted class probabilities (first 10):")
+    print(y_test_probas[0:10])
+    print("---")
+
+    # Evaluate the accuracy metric on the test dataset
+    test_accuracy = metrics.accuracy_score(y_test, y_test_pred)
+    print(f"Test accuracy = {test_accuracy}")
+
+    # If you have Khiops Visualization installed you may open the report as follows
+    # khc.export_report_file("report.khj")
+    # kh.visualize_report("report.khj")
+
+
 def khiops_classifier_multitable_star():
     """Trains a `.KhiopsClassifier` on a star multi-table dataset"""
     # Imports
@@ -831,6 +900,7 @@ def khiops_coclustering_simplify():
 exported_samples = [
     khiops_classifier,
     khiops_classifier_multiclass,
+    khiops_classifier_text,
     khiops_classifier_multitable_star,
     khiops_classifier_multitable_snowflake,
     khiops_classifier_sparse,

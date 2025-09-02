@@ -1199,6 +1199,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self,
         n_features=100,
         n_trees=10,
+        n_text_features=10000,
+        type_text_features="words",
         specific_pairs=None,
         all_possible_pairs=True,
         construction_rules=None,
@@ -1213,6 +1215,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         )
         self.n_features = n_features
         self.n_trees = n_trees
+        self.n_text_features = n_text_features
+        self.type_text_features = type_text_features
         self.specific_pairs = specific_pairs
         self.all_possible_pairs = all_possible_pairs
         self.construction_rules = construction_rules
@@ -1280,6 +1284,20 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             raise TypeError(type_error_message("n_trees", self.n_trees, int))
         if self.n_trees < 0:
             raise ValueError("'n_trees' must be positive")
+        if not isinstance(self.n_text_features, int):
+            raise TypeError(
+                type_error_message("n_text_features", self.n_text_features, int)
+            )
+        if self.n_text_features < 0:
+            raise ValueError("'n_text_features' must be positive")
+        if not isinstance(self.type_text_features, str):
+            raise TypeError(
+                type_error_message("type_text_features", self.type_text_features, str)
+            )
+        if self.type_text_features not in ("words", "ngrams", "tokens"):
+            raise ValueError(
+                "'type_text_features' must be among 'words', 'ngrams' or 'tokens'"
+            )
         if self.construction_rules is not None:
             if not is_list_like(self.construction_rules):
                 raise TypeError(
@@ -1373,6 +1391,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         # Rename parameters to be compatible with khiops.core
         kwargs["max_constructed_variables"] = kwargs.pop("n_features")
         kwargs["max_trees"] = kwargs.pop("n_trees")
+        kwargs["max_text_features"] = kwargs.pop("n_text_features")
+        kwargs["text_features"] = kwargs.pop("type_text_features")
 
         # Add the additional_data_tables parameter
         kwargs["additional_data_tables"] = additional_data_tables
@@ -1548,6 +1568,8 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         self,
         n_features=100,
         n_trees=10,
+        n_text_features=10000,
+        type_text_features="words",
         n_selected_features=0,
         n_evaluated_features=0,
         specific_pairs=None,
@@ -1560,6 +1582,8 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         super().__init__(
             n_features=n_features,
             n_trees=n_trees,
+            n_text_features=n_text_features,
+            type_text_features=type_text_features,
             specific_pairs=specific_pairs,
             all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
@@ -1722,6 +1746,13 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         combine other features, either native or constructed. These features usually
         improve the classifier's performance at the cost of interpretability of the
         model.
+    n_text_features : int, default 10000
+        Maximum number of text features to construct.
+    type_text_features : str, default "words"
+        Type of the text features to construct. Can be either one of:
+            - "words": sequences of non-space characters
+            - "ngrams": sequences of bytes
+            - "tokens": user-defined
     n_selected_features : int, default 0
         Maximum number of features to be selected in the SNB predictor. If equal to
         0 it selects all the features kept in the training.
@@ -1813,6 +1844,8 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         n_features=100,
         n_pairs=0,
         n_trees=10,
+        n_text_features=10000,
+        type_text_features="words",
         n_selected_features=0,
         n_evaluated_features=0,
         specific_pairs=None,
@@ -1826,6 +1859,8 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         super().__init__(
             n_features=n_features,
             n_trees=n_trees,
+            n_text_features=n_text_features,
+            type_text_features=type_text_features,
             n_selected_features=n_selected_features,
             n_evaluated_features=n_evaluated_features,
             construction_rules=construction_rules,
@@ -2217,6 +2252,8 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         self,
         n_features=100,
         n_trees=0,
+        n_text_features=10000,
+        type_text_features="words",
         n_selected_features=0,
         n_evaluated_features=0,
         construction_rules=None,
@@ -2227,6 +2264,8 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         super().__init__(
             n_features=n_features,
             n_trees=n_trees,
+            n_text_features=n_text_features,
+            type_text_features=type_text_features,
             n_selected_features=n_selected_features,
             n_evaluated_features=n_evaluated_features,
             construction_rules=construction_rules,
@@ -2376,6 +2415,13 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         Maximum number of decision tree features to construct. The constructed trees
         combine other features, either native or constructed. These features usually
         improve a predictor's performance at the cost of interpretability of the model.
+    n_text_features : int, default 10000
+        Maximum number of text features to construct.
+    type_text_features : str, default "words"
+        Type of the text features to construct. Can be either one of:
+            - "words": sequences of non-space characters
+            - "ngrams": sequences of bytes
+            - "tokens": user-defined
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
@@ -2469,6 +2515,8 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         n_features=100,
         n_pairs=0,
         n_trees=0,
+        n_text_features=10000,
+        type_text_features="words",
         specific_pairs=None,
         all_possible_pairs=True,
         construction_rules=None,
@@ -2485,6 +2533,8 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         super().__init__(
             n_features=n_features,
             n_trees=n_trees,
+            n_text_features=n_text_features,
+            type_text_features=type_text_features,
             construction_rules=construction_rules,
             verbose=verbose,
             output_dir=output_dir,

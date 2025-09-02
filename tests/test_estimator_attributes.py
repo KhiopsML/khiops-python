@@ -187,7 +187,7 @@ class EstimatorAttributesTests(unittest.TestCase):
          by Khiops post training.
         """
         X, y = self._create_multitable_input()
-        khc_accidents = KhiopsClassifier(n_trees=0, n_pairs=10)
+        khc_accidents = KhiopsClassifier(n_trees=0, n_text_features=0, n_pairs=10)
         khc_accidents.fit(X, y)
         self.assert_attribute_values_ok(khc_accidents, X["main_table"][0], y)
         self.assertTrue(khc_accidents.is_multitable_model_)
@@ -203,7 +203,7 @@ class EstimatorAttributesTests(unittest.TestCase):
         adult_df = pd.read_csv(adult_dataset_path, sep="\t").sample(750)
         X = adult_df.drop("age", axis=1)
         y = adult_df["age"]
-        khr_adult = KhiopsRegressor(n_trees=0)
+        khr_adult = KhiopsRegressor(n_trees=0, n_text_features=0)
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 action="ignore",
@@ -225,7 +225,7 @@ class EstimatorAttributesTests(unittest.TestCase):
         X, _ = self._create_multitable_input(750)
         y = X["main_table"][0]["Commune"]
         X["main_table"][0].drop("Commune", axis=1, inplace=True)
-        khr_accidents = KhiopsRegressor(n_trees=0)
+        khr_accidents = KhiopsRegressor(n_trees=0, n_text_features=0)
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 action="ignore",
@@ -262,7 +262,7 @@ class EstimatorAttributesTests(unittest.TestCase):
          by Khiops post training.
         """
         X, y = self._create_multitable_input()
-        khe_accidents = KhiopsEncoder(n_trees=5)
+        khe_accidents = KhiopsEncoder(n_trees=5, n_text_features=5000)
         khe_accidents.fit(X, y)
 
         self.assert_attribute_values_ok(khe_accidents, X, None)
