@@ -148,10 +148,10 @@ def _preprocess_arguments(args):
     -------
     tuple
         A 3-tuple containing:
-        - A `~.CommandLineOptions` instance
-        - A `~.SystemSettings` instance
-        - A `bool` that is ``True`` if the value of the `dictionary_file_or_domain`
-          `args` key is a `~.DictionaryDomain` instance.
+            - A `~.CommandLineOptions` instance
+            - A `~.SystemSettings` instance
+            - A `bool` that is ``True`` if the value of the `dictionary_file_or_domain`
+             `args` key is a `~.DictionaryDomain` instance.
 
     .. note:: This function *mutates* the input `args` dictionary.
     """
@@ -757,9 +757,9 @@ def train_predictor(
         Maximum number of text features to construct.
     text_features : str, default "words"
         Type of the text features. Can be either one of:
-        - "words": sequences of non-space characters
-        - "ngrams": sequences of bytes
-        - "tokens": user-defined
+            - "words": sequences of non-space characters
+            - "ngrams": sequences of bytes
+            - "tokens": user-defined
     max_trees : int, default 10
         Maximum number of trees to construct.
     max_pairs : int, default 0
@@ -788,8 +788,8 @@ def train_predictor(
         Maximum number of variable parts produced by preprocessing methods. If equal
         to 0 it is automatically calculated.
         Special default values for unsupervised analysis:
-        - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
-        - If ``grouping_method`` is "BasicGrouping": 10
+            - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
+            - If ``grouping_method`` is "BasicGrouping": 10
     ... :
         See :ref:`core-api-common-params`.
 
@@ -879,11 +879,9 @@ def interpret_predictor(
         all the variables of the predictor are considered.
     importance_ranking : str, default "Global"
         Ranking of the Shapley values produced by the interpretor. Ca be one of:
-
-        - "Global": predictor variables are ranked by decreasing global importance.
-
-        - "Individual": predictor variables are ranked by decreasing individual
-          Shapley value.
+            - "Global": predictor variables are ranked by decreasing global importance.
+            - "Individual": predictor variables are ranked by decreasing individual
+              Shapley value.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1247,8 +1245,8 @@ def train_recoder(
         Maximum number of variable parts produced by preprocessing methods. If equal
         to 0 it is automatically calculated.
         Special default values for unsupervised analysis:
-        - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
-        - If ``grouping_method`` is "BasicGrouping": 10
+            - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
+            - If ``grouping_method`` is "BasicGrouping": 10
     ... :
         See :ref:`core-api-common-params`.
 
