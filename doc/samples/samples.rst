@@ -655,8 +655,12 @@ Samples
     fold_index_variable.name = "FoldIndex"
     fold_index_variable.type = "Numerical"
     fold_index_variable.used = False
-    fold_index_variable.rule = "Ceil(Product(" + str(fold_number) + ",  Random()))"
     dictionary.add_variable(fold_index_variable)
+
+    # Create fold indexing rule and set it on `fold_index_variable`
+    dictionary.get_variable(fold_index_variable.name).set_rule(
+        kh.Rule("Ceil", kh.Rule("Product", fold_number, kh.Rule("Random()"))),
+    )
 
     # Add variables that indicate if the instance is in the train dataset:
     for fold_index in range(1, fold_number + 1):
@@ -664,8 +668,10 @@ Samples
         is_in_train_dataset_variable.name = "IsInTrainDataset" + str(fold_index)
         is_in_train_dataset_variable.type = "Numerical"
         is_in_train_dataset_variable.used = False
-        is_in_train_dataset_variable.rule = "NEQ(FoldIndex, " + str(fold_index) + ")"
         dictionary.add_variable(is_in_train_dataset_variable)
+        dictionary.get_variable(is_in_train_dataset_variable.name).set_rule(
+            kh.Rule("NEQ", fold_index_variable, fold_index),
+        )
 
     # Print dictionary with fold variables
     print("Dictionary file with fold variables")

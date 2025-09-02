@@ -13,6 +13,7 @@
 
 """
 import io
+import math
 import os
 import re
 import warnings
@@ -989,8 +990,10 @@ class Variable:
     rule : str
         Derivation rule or external table reference. Set to "" if there is no
         rule associated to this variable. Examples:
+
             - standard rule: "Sum(Var1, Var2)"
             - reference rule: "[TableName]"
+
     variable_block : `VariableBlock`
         Block to which the variable belongs. Not set if the variable does not belong to
         a block.
@@ -1158,11 +1161,11 @@ class Variable:
         """
         if self.rule:
             if isinstance(self.rule, str):
-                if self.rule[0] == "[":
+                if self.rule.startswith("[") and self.rule.endswith("]"):
                     return True
             else:
                 assert isinstance(self.rule, bytes)
-                if self.rule[0] == b"[":
+                if self.rule.startswith(b"[") and self.rule.endswith(b"]"):
                     return True
         return False
 
@@ -1181,6 +1184,34 @@ class Variable:
         elif self.type == "Structure":
             full_type += f"({self.structure_type})"
         return full_type
+
+    def get_rule(self):
+        """Gets the rule of the variable
+
+        Returns
+        -------
+        `Rule`
+            A `Rule` instance created as a verbatim rule from the ``rule``
+            attribute of the variable.
+        """
+        return Rule(verbatim=self.rule, is_reference=self.is_reference_rule())
+
+    def set_rule(self, rule):
+        """Sets a rule on a specified variable in the dictionary
+
+        Parameters
+        ----------
+        rule : `Rule`
+            The rule to be set on the variable.
+
+        Raises
+        ------
+        `TypeError`
+            If ``rule`` is not of type `Rule`.
+        """
+        if not isinstance(rule, Rule):
+            raise TypeError(type_error_message("rule", rule, Rule))
+        self.rule = repr(rule)
 
     def write(self, writer):
         """Writes the domain to a file writer in ``.kdic`` format
@@ -1357,6 +1388,39 @@ class VariableBlock:
         """
         return self.meta_data.get_value(key)
 
+    def get_rule(self):
+        """Gets the rule of the variable block
+
+        Returns
+        -------
+        `Rule`
+            A `Rule` instance created as a verbatim rule from the ``rule``
+            attribute of the variable block.
+        """
+        return Rule(verbatim=self.rule)
+
+    def set_rule(self, rule):
+        """Sets a rule on a specified variable block in the dictionary
+
+        Parameters
+        ----------
+        rule : `Rule`
+            The rule to be set on the variable block.
+
+        Raises
+        ------
+        `TypeError`
+            If ``rule`` is not of type `Rule`.
+
+        `ValueError`
+            If ``rule`` is a reference rule.
+        """
+        if not isinstance(rule, Rule):
+            raise TypeError(type_error_message("rule", rule, Rule))
+        if rule.is_reference:
+            raise ValueError("Cannot set reference rule on a variable block")
+        self.rule = repr(rule)
+
     def write(self, writer):
         """Writes the variable block to a file writer in ``.kdic`` format
 
@@ -1407,6 +1471,247 @@ class VariableBlock:
             writer.write("// ")
             writer.write(self.label)
         writer.writeln("")
+
+
+class Rule:
+    """A rule of a variable or variable block in a Khiops dictionary
+
+    Parameters
+    ----------
+    name_and_operands : tuple
+        Each tuple member can have one of the following types:
+
+            - str
+            - bytes
+            - int
+            - float
+            - `Variable`
+            - `Rule`
+            - upper-scoped `Variable`
+            - upper-scoped `Rule`
+
+        The first element of the ``name_and_operands`` tuple is the name of the
+        rule and must be str or bytes and non-empty for a standard rule, i.e. if
+        ``is_reference`` is not set.
+    verbatim : str or bytes, optional
+        Verbatim representation of an entire rule. If set, then ``names_and_operands``
+        must be empty.
+    is_reference : bool, default ``False``
+        If set to ``True``, then the rule is serialized as a reference rule:
+        ``Rule(Operand1, Operand2, ...)`` is serialized as
+        ``[Operand1, Operand2, ...]``.
+
+    Attributes
+    ----------
+    name : str or bytes or ``None``
+        Name of the rule. It is ``None`` for reference rules.
+    operands : tuple of operands
+        Each operand has one of the following types:
+
+            - str
+            - bytes
+            - int
+            - float
+            - `Variable`
+            - `Rule`
+            - upper-scoped `Variable`
+            - upper-scoped `Rule`
+
+    is_reference : bool
+        The reference status of the rule.
+
+        .. note::
+            This attribute cannot be changed on a `Rule` instance.
+    """
+
+    def __init__(self, *name_and_operands, verbatim=None, is_reference=False):
+        """See class docstring"""
+        # Check input parameters and initialize rule fragments accordigly
+        if not isinstance(is_reference, bool):
+            raise TypeError(type_error_message("is_reference", is_reference, bool))
+
+        # Rule provided as name plus operands
+        if verbatim is None:
+            if not name_and_operands:
+                raise ValueError("A name must be provided to a standard rule")
+            if is_reference:
+                self.name = None
+                self.operands = name_and_operands
+            else:
+                name, *operands = name_and_operands
+                if not is_string_like(name):
+                    raise TypeError(type_error_message("name", name, "string-like"))
+                if not name:
+                    raise ValueError("'name' must be a non-empty string")
+                self.name = name
+                self.operands = operands
+        # Rule provided as verbatim
+        else:
+            if not is_string_like(verbatim):
+                raise TypeError(type_error_message("verbatim", verbatim, "string-like"))
+            if not verbatim:
+                raise ValueError("'verbatim' must be a non-empty string")
+            if name_and_operands:
+                raise ValueError(
+                    "Rule name and operands must not be provided for verbatim rules"
+                )
+            self.name = None
+            self.operands = ()
+
+        # Check operand types
+        for operand in self.operands:
+            if not is_string_like(operand) and not isinstance(
+                operand, (int, float, Variable, Rule, _ScopedOperand)
+            ):
+                raise TypeError(
+                    type_error_message(
+                        f"Operand '{operand}'",
+                        operand,
+                        "string-like",
+                        int,
+                        float,
+                        Variable,
+                        Rule,
+                        "upper-scoped Variable",
+                        "upper-scoped Rule",
+                    )
+                )
+
+        # Initialize private attributes
+        self._verbatim = verbatim
+        self._is_reference = is_reference
+
+    @property
+    def is_reference(self):
+        return self._is_reference
+
+    def __repr__(self):
+        stream = io.BytesIO()
+        writer = KhiopsOutputWriter(stream)
+        self.write(writer)
+        return str(stream.getvalue(), encoding="utf8", errors="replace")
+
+    def copy(self):
+        """Copies this rule instance
+
+        Returns
+        -------
+        `Rule`
+            A copy of this instance.
+        """
+        return Rule(self.name, *self.operands)
+
+    def write(self, writer):
+        """Writes the rule to a file writer in the ``.kdic`` format
+
+        Parameters
+        ----------
+        writer : `.KhiopsOutputWriter`
+            Output writer.
+
+            .. note::
+                ``self.name`` is not included in the serialization of reference rules.
+        """
+        # Check the type of the writer
+        if not isinstance(writer, KhiopsOutputWriter):
+            raise TypeError(type_error_message("writer", writer, KhiopsOutputWriter))
+
+        # Write standard rule
+        rule_pattern = r"^[A-Z]([a-zA-Z]*)\(?.*\)?$"
+        rule_regex = re.compile(rule_pattern)
+        bytes_rule_regex = re.compile(bytes(rule_pattern, encoding="ascii"))
+        if self.operands:
+            if self.is_reference:
+                writer.write("[")
+            else:
+                writer.write(_format_name(self.name))
+                writer.write("(")
+
+            # Write operand, according to its type
+            # Variable operands have their name written only
+            for i, operand in enumerate(self.operands):
+                if isinstance(operand, (Rule, _ScopedOperand)):
+                    operand.write(writer)
+                elif isinstance(operand, Variable):
+                    writer.write(_format_name(operand.name))
+                elif is_string_like(operand):
+                    writer.write(_quote_value(operand))
+                elif isinstance(operand, float) and not math.isfinite(operand):
+                    writer.write("#Missing")
+                # int or finite float cases
+                else:
+                    writer.write(str(operand))
+                if i < len(self.operands) - 1:
+                    writer.write(", ")
+            if self.is_reference:
+                writer.write("]")
+            else:
+                writer.write(")")
+        # Write no-operand rule
+        elif (
+            isinstance(self.name, str)
+            and rule_regex.match(self.name)
+            or isinstance(self.name, bytes)
+            and bytes_rule_regex.match(self.name)
+        ):
+            writer.write(self.name)
+        # Write verbatim-given rule
+        elif self._verbatim:
+            writer.write(self._verbatim)
+
+
+class _ScopedOperand:
+    def __init__(self, operand):
+        assert type(operand) in (Variable, Rule, _ScopedOperand), type_error_message(
+            "operand", operand, Variable, Rule, "upper-scoped Variable or Rule"
+        )
+        self.operand = operand
+
+    def write(self, writer):
+        assert isinstance(writer, KhiopsOutputWriter), type_error_message(
+            "writer", writer, KhiopsOutputWriter
+        )
+        writer.write(".")
+        if isinstance(self.operand, Variable):
+            writer.write(_format_name(self.operand.name))
+        else:
+            self.operand.write(writer)
+
+    def __repr__(self):
+        stream = io.BytesIO()
+        writer = KhiopsOutputWriter(stream)
+        self.write(writer)
+        return str(stream.getvalue(), encoding="utf8", errors="replace")
+
+
+def upper_scope(operand):
+    """Applies the upper-scope operator ``.`` to an operand
+
+    Parameters
+    ----------
+    operand : `Variable`, `Rule`, upper-scoped `Variable` or upper-scoped `Rule`
+        Operand that is upper-scoped.
+
+    Raises
+    ------
+    `TypeError`
+        If the type of ``operand`` is not `Variable`, `Rule`, upper-scoped `Variable`
+        or upper-scoped `Rule`.
+
+    Returns
+    -------
+    upper-scoped operand
+        The upper-scoped operand, as if the upper-scope operator ``.`` were
+        applied to an operand in a rule in the ``.kdic`` dictionary language.
+
+    """
+    if not isinstance(operand, (Variable, Rule, _ScopedOperand)):
+        raise TypeError(
+            type_error_message(
+                "operand", operand, Variable, Rule, "upper-scoped Variable or Rule"
+            )
+        )
+    return _ScopedOperand(operand)
 
 
 class MetaData:

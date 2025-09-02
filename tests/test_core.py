@@ -8,6 +8,7 @@
 import glob
 import io
 import json
+import math
 import os
 import shutil
 import tempfile
@@ -1878,8 +1879,9 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                     dictionary_copy.get_variable_block(block.name)
 
                 # Set the block as non-native add, and remove it
-                block.rule = "SomeBlockCreatingRule()"
                 dictionary_copy.add_variable_block(block)
+                block_rule = kh.Rule("SomeBlockCreatingRule()")
+                dictionary_copy.get_variable_block(block.name).set_rule(block_rule)
                 self.assertEqual(block, dictionary_copy.get_variable_block(block.name))
                 removed_block = dictionary_copy.remove_variable_block(
                     block.name,
@@ -1922,6 +1924,339 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         )
                     removed_value = variable_block.meta_data.remove_key("SomeKey")
                     self.assertEqual(removed_value, "SomeValue")
+
+                # Test rule getters / setters
+                dictionary_copy = dictionary.copy()
+                for variable_index, variable_name in enumerate(
+                    [variable.name for variable in dictionary_copy.variables]
+                ):
+                    some_rule = kh.Rule(
+                        "SomeRuleForVariable" + variable_index * "i",
+                        "an_operand",
+                        2,
+                        kh.Rule("SomeEmbeddedRule()"),
+                    )
+                    dictionary_copy.get_variable(variable_name).set_rule(some_rule)
+                    self.assertEqual(
+                        dictionary_copy.get_variable(variable_name).rule,
+                        repr(some_rule),
+                    )
+                    self.assertEqual(
+                        repr(dictionary_copy.get_variable(variable_name).get_rule()),
+                        repr(some_rule),
+                    )
+                    some_reference_rule = kh.Rule(
+                        "some_reference_operand_for_variable" + variable_index * "i",
+                        kh.Variable(
+                            json_data={
+                                "name": "SomeReferenceVariable" + variable_index * "i",
+                                "type": "Categorical",
+                            }
+                        ),
+                        is_reference=True,
+                    )
+                    dictionary_copy.get_variable(variable_name).set_rule(
+                        some_reference_rule
+                    )
+                    self.assertEqual(
+                        dictionary_copy.get_variable(variable_name).rule,
+                        repr(some_reference_rule),
+                    )
+                    self.assertEqual(
+                        repr(dictionary_copy.get_variable(variable_name).get_rule()),
+                        repr(some_reference_rule),
+                    )
+                for variable_block_index, variable_block_name in enumerate(
+                    [
+                        variable_block.name
+                        for variable_block in dictionary_copy.variable_blocks
+                    ]
+                ):
+                    some_rule = kh.Rule(
+                        "SomeRuleForVariableBlock" + variable_block_index * "i",
+                        "an_operand",
+                        2,
+                        kh.Rule("SomeEmbeddedRule()"),
+                    )
+                    dictionary_copy.get_variable_block(variable_block_name).set_rule(
+                        some_rule
+                    )
+                    self.assertEqual(
+                        dictionary_copy.get_variable_block(variable_block_name).rule,
+                        repr(some_rule),
+                    )
+                    self.assertEqual(
+                        repr(
+                            dictionary_copy.get_variable_block(
+                                variable_block_name
+                            ).get_rule()
+                        ),
+                        repr(some_rule),
+                    )
+                    some_reference_rule = kh.Rule(
+                        "some_reference_operand_for_variable block"
+                        + variable_block_index * "i",
+                        3,
+                        is_reference=True,
+                    )
+                    with self.assertRaises(ValueError):
+                        dictionary_copy.get_variable_block(
+                            variable_block_name
+                        ).set_rule(some_reference_rule)
+
+    def test_dictionary_rule_construction(self):
+        """Tests the Rule construction and serialization"""
+        rule_verbatims = [
+            "SomeRule",
+            b"SomeRule",
+            'SomeRule("some_operand", 2)',
+            b'SomeRule("some_operand", 2)',
+            'SomeRule("some""operand", 2)',
+            b'SomeRule("some""operand", 2)',
+            'SomeRule("some_operand", 2, SomeVariable)',
+            'SomeRule("some_operand", 2, `Some#Variable`)',
+            b'SomeRule("some_operand", 2, `Some#Variable`)',
+            'SomeRule("some_operand", 2, `Some``Variable`)',
+            b'SomeRule("some_operand", 2, `Some``Variable`)',
+            'SomeRule("some_operand", 2, .SomeVariable)',
+            b'SomeRule("some_operand", 2, .SomeVariable)',
+            'SomeRule("some_operand", 2, ..SomeVariable)',
+            'SomeRule("some_operand", #Missing)',
+            b'SomeRule("some_operand", #Missing)',
+            'SomeRule("some_operand", 2, SomeEmbeddedRule("some_other_operand"))',
+            b'SomeRule("some_operand", 2, SomeEmbeddedRule("some_other_operand"))',
+            'SomeRule("some_operand", 2, .SomeEmbeddedRule("some_other_operand"))',
+            'SomeRule("some_operand", 2, ..SomeEmbeddedRule("some_other_operand"))',
+            (
+                'SomeRule("some_operand", 2, SomeEmbeddedRule("some_other_operand", '
+                'SomeOtherRule("some_embedded_operand", #Missing, 3)))'
+            ),
+            '["some_reference_operand"]',
+            b'["some_reference_operand"]',
+            '["some_reference_operand", SomeReferenceVariable]',
+            b'["some_reference_operand", SomeReferenceVariable]',
+            (
+                b'SomeRule("som\xe9_operand", 2, '
+                b'SomeEmbeddedRule("som\xe9_other_operand"))'
+            ),
+        ]
+
+        rules = [
+            [kh.Rule("SomeRule")],
+            [kh.Rule(b"SomeRule")],
+            [
+                kh.Rule("SomeRule", "some_operand", 2),
+                kh.Rule(verbatim='SomeRule("some_operand", 2)'),
+            ],
+            [
+                kh.Rule(b"SomeRule", b"some_operand", 2),
+                kh.Rule(verbatim=b'SomeRule("some_operand", 2)'),
+            ],
+            [
+                kh.Rule("SomeRule", 'some"operand', 2),
+            ],
+            [
+                kh.Rule(b"SomeRule", b'some"operand', 2),
+            ],
+            [
+                kh.Rule(verbatim='SomeRule("some_operand", 2, SomeVariable)'),
+                kh.Rule(
+                    "SomeRule",
+                    "some_operand",
+                    2,
+                    kh.Variable(
+                        json_data={"name": "SomeVariable", "type": "Categorical"}
+                    ),
+                ),
+            ],
+            [
+                kh.Rule(
+                    "SomeRule",
+                    "some_operand",
+                    2,
+                    kh.Variable(
+                        json_data={"name": "Some#Variable", "type": "Categorical"}
+                    ),
+                )
+            ],
+            [
+                kh.Rule(
+                    b"SomeRule",
+                    b"some_operand",
+                    2,
+                    kh.Variable(
+                        json_data={"name": b"Some#Variable", "type": b"Categorical"}
+                    ),
+                )
+            ],
+            [
+                kh.Rule(
+                    "SomeRule",
+                    "some_operand",
+                    2,
+                    kh.Variable(
+                        json_data={"name": "Some`Variable", "type": "Categorical"}
+                    ),
+                )
+            ],
+            [
+                kh.Rule(
+                    b"SomeRule",
+                    b"some_operand",
+                    2,
+                    kh.Variable(
+                        json_data={"name": b"Some`Variable", "type": b"Categorical"}
+                    ),
+                )
+            ],
+            [
+                kh.Rule(
+                    "SomeRule",
+                    "some_operand",
+                    2,
+                    kh.upper_scope(
+                        kh.Variable(
+                            json_data={"name": "SomeVariable", "type": "Categorical"}
+                        )
+                    ),
+                ),
+            ],
+            [
+                kh.Rule(
+                    b"SomeRule",
+                    b"some_operand",
+                    2,
+                    kh.upper_scope(
+                        kh.Variable(
+                            json_data={"name": b"SomeVariable", "type": b"Categorical"}
+                        )
+                    ),
+                ),
+            ],
+            [
+                kh.Rule(
+                    "SomeRule",
+                    "some_operand",
+                    2,
+                    kh.upper_scope(
+                        kh.upper_scope(
+                            kh.Variable(
+                                json_data={
+                                    "name": "SomeVariable",
+                                    "type": "Categorical",
+                                }
+                            )
+                        )
+                    ),
+                ),
+            ],
+            [
+                kh.Rule("SomeRule", "some_operand", math.nan),
+                kh.Rule("SomeRule", "some_operand", float("inf")),
+                kh.Rule("SomeRule", "some_operand", float("-inf")),
+                kh.Rule(verbatim='SomeRule("some_operand", #Missing)'),
+            ],
+            [
+                kh.Rule(b"SomeRule", b"some_operand", math.nan),
+                kh.Rule(b"SomeRule", b"some_operand", float("inf")),
+                kh.Rule(b"SomeRule", b"some_operand", float("-inf")),
+                kh.Rule(verbatim=b'SomeRule("some_operand", #Missing)'),
+            ],
+            [
+                kh.Rule(
+                    "SomeRule",
+                    "some_operand",
+                    2,
+                    kh.Rule("SomeEmbeddedRule", "some_other_operand"),
+                ),
+                kh.Rule(
+                    verbatim=(
+                        'SomeRule("some_operand", 2, '
+                        'SomeEmbeddedRule("some_other_operand"))'
+                    ),
+                ),
+            ],
+            [
+                kh.Rule(
+                    b"SomeRule",
+                    b"some_operand",
+                    2,
+                    kh.Rule(b"SomeEmbeddedRule", b"some_other_operand"),
+                ),
+                kh.Rule(
+                    (
+                        b'SomeRule("some_operand", 2, '
+                        b'SomeEmbeddedRule("some_other_operand"))'
+                    )
+                ),
+            ],
+            [
+                kh.Rule(
+                    "SomeRule",
+                    "some_operand",
+                    2,
+                    kh.upper_scope(kh.Rule("SomeEmbeddedRule", "some_other_operand")),
+                ),
+            ],
+            [
+                kh.Rule(
+                    "SomeRule",
+                    "some_operand",
+                    2,
+                    kh.upper_scope(
+                        kh.upper_scope(
+                            kh.Rule("SomeEmbeddedRule", "some_other_operand")
+                        )
+                    ),
+                ),
+            ],
+            [
+                kh.Rule(
+                    "SomeRule",
+                    "some_operand",
+                    2,
+                    kh.Rule(
+                        "SomeEmbeddedRule",
+                        "some_other_operand",
+                        kh.Rule("SomeOtherRule", "some_embedded_operand", math.inf, 3),
+                    ),
+                )
+            ],
+            [kh.Rule("some_reference_operand", is_reference=True)],
+            [kh.Rule(b"some_reference_operand", is_reference=True)],
+            [
+                kh.Rule(
+                    "some_reference_operand",
+                    kh.Variable(
+                        json_data={
+                            "name": "SomeReferenceVariable",
+                            "type": "Categorical",
+                        }
+                    ),
+                    is_reference=True,
+                )
+            ],
+            [
+                kh.Rule(
+                    b"some_reference_operand",
+                    kh.Variable(
+                        json_data={
+                            "name": b"SomeReferenceVariable",
+                            "type": "Categorical",
+                        }
+                    ),
+                    is_reference=True,
+                )
+            ],
+        ]
+
+        for rule_list, rule_verbatim in zip(rules, rule_verbatims):
+            for rule in rule_list:
+                if isinstance(rule_verbatim, str):
+                    self.assertEqual(repr(rule), rule_verbatim)
+                else:
+                    self.assertTrue(isinstance(rule_verbatim, bytes))
+                    self.assertEqual(bytes(repr(rule), encoding="utf8"), rule_verbatim)
 
     def test_dictionary_extract_data_paths(self):
         """Tests the extract_data_paths Dictionary method"""
