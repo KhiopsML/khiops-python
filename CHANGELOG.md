@@ -11,6 +11,8 @@
 ### Added
 - (`core`) Dictionary API support for dictionary, variable and variable block
   comments, and dictionary and variable block internal comments.
+- (`core`) Dictionary `Rule` class and supporting API for adding and getting
+  rules to / from variables and variable blocks.
 - (`sklearn`) `Text` Khiops type support at the estimator level.
 
 ### Fixed
