@@ -971,6 +971,17 @@ class Variable:
         True if the variable is used.
     type : str
         Variable type.
+        It can be either native (``Categorical``, ``Numerical``, ``Time``,
+        ``Date``, ``Timestamp``, ``TimestampTZ``, ``Text``),
+        internal (``TextList``, ``Structure``)
+
+            - See https://khiops.org/11.0.0-b.0/api-docs/kdic/text-list-rules/
+            - See https://khiops.org/11.0.0-b.0/api-docs/kdic/structures-introduction/
+
+        or relational (``Entity`` - 0-1 relationship, ``Table`` - 0-n relationship)
+
+            - See https://khiops.org/11.0.0-b.0/tutorials/kdic_multi_table/
+
     object_type : str
         Type complement for the ``Table`` and ``Entity`` types.
     structure_type : str
@@ -989,6 +1000,11 @@ class Variable:
         List of variable comments.
     meta_data : `MetaData`
         Variable metadata.
+
+    Examples
+    --------
+    See the following function of the ``samples.py`` documentation script:
+        - `samples.create_dictionary_domain()`
     """
 
     def __init__(self, json_data=None):
