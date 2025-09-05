@@ -279,9 +279,12 @@ jobs:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
         shell: pwsh
         run: |
+          # This $ErrorActionPreference directive stops the current invoked expression not the whole script          
           $ErrorActionPreference = 'Stop'
+          # Set the following $PSNativeCommandUseErrorActionPreference to avoid stopping the whole script in case of error
+          # so that the return code can be evaluated if needed
+          $PSNativeCommandUseErrorActionPreference = $false
           Set-StrictMode -Version Latest
-          $PSNativeCommandUseErrorActionPreference = $true
 
           # Refresh environment variables by using the Chocolatey tool
           # Otherwise, the env vars set in the registry by the Khiops installer do not get updated
@@ -295,7 +298,12 @@ jobs:
           $Python = "${{ steps.setup-python.outputs.python-path }}"
 
           # Print status
-          Invoke-Expression -Command "$Python -c 'import khiops.core as kh; kh.get_runner().print_status()'"
+          Invoke-Expression -Command "$Python -c 'import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)'"
+          # The installation status check will fail
+          # because the library was not installed properly (the source code was only cloned)
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::Status error: improper setup, as expected: khiops-python has been cloned, not installed from a package"
+          }
 
           # Run integration tests on Windows
           Invoke-Expression -Command "$Python -m unittest -v tests.test_khiops_integrations"
@@ -363,13 +371,24 @@ jobs:
           # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
         run: |-
+          # Reset the default 'exit-on-error' mode of the bash shell in Github actions
+          # so that the return code can be evaluated if needed
+          set +e
+
           # Make sure MPI support is not loaded through env modules
           # Note: As Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway
           if [ -n "$MODULESHOME" ]; then module unload mpi; fi
 
           # Print status
-          python -c "import khiops.core as kh; kh.get_runner().print_status()"
+          python -c \
+            "import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)"
+          RETCODE=$?
+          # The installation status check will fail
+          # because the library was not installed properly (the source code was only cloned)
+          if [ $RETCODE -ne 0 ]; then
+            echo "::error::Status error: improper setup, as expected: khiops-python has been cloned, not installed from a package"
+          fi
 
           # Run integration tests on Ubuntu and Rocky
           python -m unittest -v tests.test_khiops_integrations
