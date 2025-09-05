@@ -1943,15 +1943,9 @@ class VariableStatistics:
     name : str
         Variable name.
     type : str
-        Variable type. Valid values:
+        Variable type. There are only two valid values for a prepared variable :
             - "Numerical"
             - "Categorical"
-            - "Date"
-            - "Time"
-            - "Timestamp"
-            - "Table"
-            - "Entity"
-            - "Structure"
     level : float
         Variable predictive importance.
     target_part_number : int
