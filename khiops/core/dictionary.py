@@ -50,7 +50,7 @@ def _format_name(name):
     # Python isalnum is not used because of utf-8 encoding (accentuated chars
     # are considered alphanumeric)
     # Return original name if is an identifier, otherwise between backquotes
-    identifier_pattern = r"^[a-zA-Z][a-zA-Z0-9_]*"
+    identifier_pattern = r"^[a-zA-Z_][a-zA-Z0-9_]*"
     str_identifier_regex = re.compile(identifier_pattern)
     bytes_identifier_regex = re.compile(bytes(identifier_pattern, encoding="ascii"))
     if isinstance(name, str):
