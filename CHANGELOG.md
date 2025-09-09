@@ -13,6 +13,7 @@
   comments, and dictionary and variable block internal comments.
 - (`core`) Dictionary `Rule` class and supporting API for adding and getting
   rules to / from variables and variable blocks.
+- (`core`) New way to add a variable to a dictionary using a complete specification.
 - (`sklearn`) `Text` Khiops type support at the estimator level.
 
 ### Fixed

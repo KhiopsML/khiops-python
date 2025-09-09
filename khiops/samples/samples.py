@@ -91,40 +91,36 @@ def create_dictionary_domain():
         {"name": "ts", "type": "TimestampTZ"},
     ]
     for var_spec in simple_variables:
-        var = kh.Variable()
-        var.name = var_spec["name"]
-        var.type = var_spec["type"]
-        root_dictionary.add_variable(var)
+        root_dictionary.add_variable_from_spec(
+            name=var_spec["name"], type=var_spec["type"]
+        )
 
     # Create a second dictionary
     second_dictionary = kh.Dictionary(
         json_data={"name": "Service", "key": ["Id", "id_product"]}
     )
-    second_dictionary.add_variable(
-        kh.Variable(json_data={"name": "Id", "type": "Categorical"})
-    )
-    second_dictionary.add_variable(
-        kh.Variable(json_data={"name": "id_product", "type": "Categorical"})
-    )
+    second_dictionary.add_variable_from_spec(name="Id", type="Categorical")
+    second_dictionary.add_variable_from_spec(name="id_product", type="Categorical")
+
     # Create a third dictionary
     third_dictionary = kh.Dictionary(json_data={"name": "Address", "key": ["Id"]})
-    third_dictionary.add_variable(
-        kh.Variable(json_data={"name": "StreetNumber", "type": "Numerical"})
-    )
-    third_dictionary.add_variable(
-        kh.Variable(json_data={"name": "StreetName", "type": "Categorical"})
-    )
-    third_dictionary.add_variable(
-        kh.Variable(json_data={"name": "id_city", "type": "Categorical"})
+    third_dictionary.add_variable_from_spec(name="StreetNumber", type="Numerical")
+    third_dictionary.add_variable_from_spec(name="StreetName", type="Categorical")
+    third_dictionary.add_variable_from_spec(name="id_city", type="Categorical")
+    # Add a variable with a rule
+    third_dictionary.add_variable_from_spec(
+        name="computed",
+        type="Numerical",
+        rule=kh.Rule("Ceil", kh.Rule("Product", 3, kh.Rule("Random()"))),
     )
 
     # Add the variables used in a multi-table context in the first dictionary.
     # They link the root dictionary to the additional ones
-    root_dictionary.add_variable(
-        kh.Variable(json_data={"name": "Services", "type": "Table(Service)"})
+    root_dictionary.add_variable_from_spec(
+        name="Services", type="Table", object_type="Service"
     )
-    root_dictionary.add_variable(
-        kh.Variable(json_data={"name": "Address", "type": "Entity(Address)"})
+    root_dictionary.add_variable_from_spec(
+        name="Address", type="Entity", object_type="Address"
     )
 
     # Create a DictionaryDomain (set of dictionaries)
@@ -724,25 +720,19 @@ def train_predictor_with_cross_validation():
 
     # Add a random fold index variable to the learning dictionary
     fold_number = 5
-    fold_index_variable = kh.Variable()
-    fold_index_variable.name = "FoldIndex"
-    fold_index_variable.type = "Numerical"
-    fold_index_variable.used = False
-    dictionary.add_variable(fold_index_variable)
+    dictionary.add_variable_from_spec(name="FoldIndex", type="Numerical", used=False)
 
     # Create fold indexing rule and set it on `fold_index_variable`
-    dictionary.get_variable(fold_index_variable.name).set_rule(
+    fold_index_variable = dictionary.get_variable("FoldIndex")
+    fold_index_variable.set_rule(
         kh.Rule("Ceil", kh.Rule("Product", fold_number, kh.Rule("Random()"))),
     )
 
     # Add variables that indicate if the instance is in the train dataset:
     for fold_index in range(1, fold_number + 1):
-        is_in_train_dataset_variable = kh.Variable()
-        is_in_train_dataset_variable.name = "IsInTrainDataset" + str(fold_index)
-        is_in_train_dataset_variable.type = "Numerical"
-        is_in_train_dataset_variable.used = False
-        dictionary.add_variable(is_in_train_dataset_variable)
-        dictionary.get_variable(is_in_train_dataset_variable.name).set_rule(
+        name = "IsInTrainDataset" + str(fold_index)
+        dictionary.add_variable_from_spec(name=name, type="Numerical", used=False)
+        dictionary.get_variable(name).set_rule(
             kh.Rule("NEQ", fold_index_variable, fold_index),
         )
 
