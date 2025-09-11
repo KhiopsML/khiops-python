@@ -1156,8 +1156,15 @@ class Variable:
         bool
             ``True`` if the special reference rule is used.
         """
-
-        return self.rule and self.rule[0] == "["
+        if self.rule:
+            if isinstance(self.rule, str):
+                if self.rule[0] == "[":
+                    return True
+            else:
+                assert isinstance(self.rule, bytes)
+                if self.rule[0] == b"[":
+                    return True
+        return False
 
     def full_type(self):
         """Returns the variable's full type
