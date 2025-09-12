@@ -757,9 +757,11 @@ def train_predictor(
         Maximum number of text features to construct.
     text_features : str, default "words"
         Type of the text features. Can be either one of:
+
             - "words": sequences of non-space characters
             - "ngrams": sequences of bytes
             - "tokens": user-defined
+
     max_trees : int, default 10
         Maximum number of trees to construct.
     max_pairs : int, default 0
@@ -788,8 +790,10 @@ def train_predictor(
         Maximum number of variable parts produced by preprocessing methods. If equal
         to 0 it is automatically calculated.
         Special default values for unsupervised analysis:
+
             - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
             - If ``grouping_method`` is "BasicGrouping": 10
+
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1181,9 +1185,11 @@ def train_recoder(
         Maximum number of text features to construct.
     text_features : str, default "words"
         Type of the text features. Can be either one of:
+
         - "words": sequences of non-space characters
         - "ngrams": sequences of bytes
         - "tokens": user-defined
+
     max_trees : int, default 10
         Maximum number of trees to construct.
     max_pairs : int, default 0
@@ -1210,13 +1216,16 @@ def train_recoder(
         If ``True`` keeps initial numerical variables.
     categorical_recoding_method : str
         Type of recoding for categorical variables. Types available:
+
             - "part Id" (default): An id for the interval/group
             - "part label": A label for the interval/group
             - "0-1 binarization": A 0's and 1's coding the interval/group id
             - "conditional info": Conditional information of the interval/group
             - "none": Keeps the variable as-is
+
     numerical_recoding_method : str
         Type of recoding recoding for numerical variables. Types available:
+
             - "part Id" (default): An id for the interval/group
             - "part label": A label for the interval/group
             - "0-1 binarization": A 0's and 1's coding the interval/group id
@@ -1226,13 +1235,16 @@ def train_recoder(
             - "rank normalization": mean normalized rank (between 0 and 1) of the
               instances
             - "none": Keeps the variable as-is
+
     pairs_recoding_method : str
         Type of recoding for bivariate variables. Types available:
+
             - "part Id" (default): An id for the interval/group
             - "part label": A label for the interval/group
             - "0-1 binarization": A 0's and 1's coding the interval/group id
             - "conditional info": Conditional information of the interval/group
             - "none": Keeps the variable as-is
+
     discretization_method : str, default "MODL"
         Name of the discretization method in case of unsupervised analysis.
         Its valid values are: "MODL", "EqualWidth", "EqualFrequency" or "none".
@@ -1245,8 +1257,10 @@ def train_recoder(
         Maximum number of variable parts produced by preprocessing methods. If equal
         to 0 it is automatically calculated.
         Special default values for unsupervised analysis:
+
             - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
             - If ``grouping_method`` is "BasicGrouping": 10
+
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1254,6 +1268,7 @@ def train_recoder(
     -------
     tuple
         A 2-tuple containing:
+
             - The path of the JSON file report of the process
             - The path of the dictionary containing the recoding model
 
