@@ -332,7 +332,7 @@ def train_predictor_text():
     # Train the predictor
     kh.train_predictor(
         dictionary_file_path,
-        "FlightNegativeTweets",
+        "NegativeAirlineTweets",
         data_table_path,
         "negativereason",
         report_file_path,
@@ -1249,7 +1249,7 @@ def deploy_model_text():
     # Train the predictor
     _, model_dictionary_file_path = kh.train_predictor(
         dictionary_file_path,
-        "FlightNegativeTweets",
+        "NegativeAirlineTweets",
         data_table_path,
         "negativereason",
         report_file_path,
@@ -1262,7 +1262,7 @@ def deploy_model_text():
     # It will score it according to the trained predictor
     kh.deploy_model(
         model_dictionary_file_path,
-        "SNB_FlightNegativeTweets",
+        "SNB_NegativeAirlineTweets",
         data_table_path,
         output_data_table_path,
     )
