@@ -23,6 +23,7 @@ from khiops.core import api
 from khiops.core.exceptions import KhiopsJSONError
 from khiops.core.internals.common import (
     deprecation_message,
+    is_dict_like,
     is_string_like,
     type_error_message,
 )
@@ -43,10 +44,6 @@ def _format_name(name):
 
     Otherwise, it returns the name between backquoted (backquotes within are doubled)
     """
-    # Check that the type of name is string or bytes
-    if not is_string_like(name):
-        raise TypeError(type_error_message("name", name, "string-like"))
-
     # Check if the name is an identifier
     # Python isalnum is not used because of utf-8 encoding (accentuated chars
     # are considered alphanumeric)
@@ -79,6 +76,70 @@ def _quote_value(value):
         assert isinstance(value, bytes)
         quoted_value = b'"' + value.replace(b'"', b'""') + b'"'
     return quoted_value
+
+
+def _check_name(name):
+    """Ensures the variable name is consistent
+    with the Khiops core name constraints
+
+    Plain string or bytes are both accepted as input.
+    The Khiops core forbids a name
+        - with a length outside the [1,128] interval
+        - containing a simple (Unix) carriage-return (\n)
+        - with leading and trailing spaces.
+    This function must check at least these constraints.
+
+    Parameters
+    ----------
+        name : str
+            Name to be validated.
+    Raises
+    ------
+        `ValueError`
+            If the provided name does not comply with the formatting constraints.
+    """
+    # Check that the type of name is string or bytes
+    if not is_string_like(name):
+        raise TypeError(type_error_message("name", name, "string-like"))
+
+    # Check the name complies with the Khiops core constraints
+    if isinstance(name, str):
+        contains_carriage_return = "\n" in name
+    else:
+        assert isinstance(name, bytes)
+        contains_carriage_return = b"\n" in name
+    if len(name) > 128 or contains_carriage_return or name != name.strip():
+        raise ValueError(
+            f"Variable name '{name}' cannot be accepted "
+            "(invalid length or characters)"
+        )
+
+
+def _is_valid_type(type_str):
+    """Checks whether the type is known"""
+    return (
+        _is_native_type(type_str)
+        or _is_object_type(type_str)
+        or type_str in ["TextList", "Structure"]
+    )  # internal types
+
+
+def _is_native_type(type_str):
+    """Checks whether the type is native (not internal or relational)"""
+    return type_str in [
+        "Categorical",
+        "Numerical",
+        "Time",
+        "Date",
+        "Timestamp",
+        "TimestampTZ",
+        "Text",
+    ]
+
+
+def _is_object_type(type_str):
+    """Checks whether the type is an object one (relational)"""
+    return type_str in ["Entity", "Table"]
 
 
 class DictionaryDomain(KhiopsJSONObject):
@@ -769,6 +830,102 @@ class Dictionary:
         self.variables.append(variable)
         self._variables_by_name[variable.name] = variable
 
+    def add_variable_from_spec(
+        self,
+        name,
+        type,
+        label="",
+        used=True,
+        object_type=None,
+        structure_type=None,
+        rule=None,
+        meta_data=None,
+    ):
+        """Adds a variable to this dictionary using a complete specification
+
+        Parameters
+        ----------
+        name : str
+            Variable name.
+        type : str
+            Variable type. See `Variable`.
+        label : str, default ""
+            Label of the variable.
+        used : bool, default ``True``
+            Usage status of the variable.
+        object_type : str, optional
+            Object type. Ignored if variable type not in ["Entity", "Table"].
+        structure_type : str, optional
+            Structure type. Ignored if variable type is not "Structure".
+        rule : `Rule`, optional
+            Variable rule.
+        meta_data : dict, optional
+            A Python dictionary which holds the metadata specification.
+            The dictionary keys are str. The values can be str, bool, float or int.
+
+        Raises
+        ------
+        `ValueError`
+            - If the variable name is empty or does not comply
+              with the formatting constraints.
+            - If there is already a variable with the same name.
+            - If the given variable type is unknown.
+            - If a native type is given 'object_type' or 'structure_type'.
+            - If the 'meta_data' is not a dictionary.
+        """
+        # Values and Types checks
+        if not name:
+            raise ValueError(
+                "Cannot add to dictionary unnamed variable " f"(name = '{name}')"
+            )
+        if name in self._variables_by_name:
+            raise ValueError(f"Dictionary already has a variable named '{name}'")
+        if not _is_valid_type(type):
+            raise ValueError(f"Invalid type '{type}'")
+        if _is_native_type(type):
+            if object_type or structure_type:
+                raise ValueError(
+                    f"Native type '{type}' "
+                    "cannot have 'object_type' or 'structure_type'"
+                )
+        if _is_object_type(type) and object_type is None:
+            raise ValueError(f"'object_type' must be provided for type '{type}'")
+        if type == "Structure" and structure_type is None:
+            raise ValueError(f"'structure_type' must be provided for type '{type}'")
+        if meta_data is not None:
+            if not is_dict_like(meta_data):
+                raise TypeError(type_error_message("meta_data", meta_data, "dict-like"))
+        if object_type is not None:
+            if not is_string_like(object_type):
+                raise TypeError(
+                    type_error_message("object_type", object_type, "string-like")
+                )
+        if structure_type is not None:
+            if not is_string_like(structure_type):
+                raise TypeError(
+                    type_error_message("structure_type", structure_type, "string-like")
+                )
+        if rule is not None:
+            if not isinstance(rule, Rule):
+                raise TypeError(type_error_message("rule", rule, Rule))
+
+        # Variable initialization
+        variable = Variable()
+        variable.name = name
+        variable.type = type
+        variable.used = used
+        if meta_data is not None:
+            for key, value in meta_data.items():
+                variable.meta_data.add_value(key, value)
+        variable.label = label
+        if object_type is not None:
+            variable.object_type = object_type
+        if structure_type is not None:
+            variable.structure_type = structure_type
+        if rule is not None:
+            variable.set_rule(rule)
+        self.add_variable(variable)
+
     def remove_variable(self, variable_name):
         """Removes the specified variable from this dictionary
 
@@ -1017,7 +1174,9 @@ class Variable:
             raise TypeError(type_error_message("json_data", json_data, dict))
 
         # Main attributes
-        self.name = ""
+        # The variable name is protected attribute accessible only via a property
+        # to ensure it is always valid
+        self._name = ""
         self.label = ""
         self.comments = []
         self.used = True
@@ -1058,7 +1217,7 @@ class Variable:
         self.type = json_data.get("type")
 
         # Initialize complement of the type
-        if self.type in ("Entity", "Table"):
+        if _is_object_type(self.type):
             self.object_type = json_data.get("objectType")
         elif self.type == "Structure":
             self.structure_type = json_data.get("structureType")
@@ -1072,7 +1231,7 @@ class Variable:
             self.meta_data = MetaData(json_meta_data)
 
     def __repr__(self):
-        """Returns a human readable string representation"""
+        """Returns a human-readable string representation"""
         return f"Variable ({self.name})"
 
     def __str__(self):
@@ -1080,6 +1239,15 @@ class Variable:
         writer = KhiopsOutputWriter(stream)
         self.write(writer)
         return str(stream.getvalue(), encoding="utf8", errors="replace")
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        _check_name(value)
+        self._name = value
 
     def copy(self):
         """Copies this variable instance
@@ -1179,7 +1347,7 @@ class Variable:
             basic.
         """
         full_type = self.type
-        if self.type in ("Entity", "Table"):
+        if _is_object_type(self.type):
             full_type += f"({self.object_type})"
         elif self.type == "Structure":
             full_type += f"({self.structure_type})"

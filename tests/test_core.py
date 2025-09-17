@@ -1834,9 +1834,88 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 self.assertEqual(removed_variable, variable)
                 with self.assertRaises(KeyError):
                     dictionary_copy.remove_variable(variable.name)
-                variable.name = ""
                 with self.assertRaises(ValueError):
+                    variable.name = ""
                     dictionary_copy.add_variable(variable)
+                # Thoroughly test Dictionary.add_variable_from_spec
+                # (using a part of the exception message to ensure
+                # the actual error is raised)
+                # empty name is forbidden
+                with self.assertRaisesRegex(ValueError, "unnamed"):
+                    dictionary.add_variable_from_spec(name="", type="Categorical")
+                # too long name is forbidden
+                with self.assertRaisesRegex(ValueError, "cannot be accepted"):
+                    dictionary.add_variable_from_spec(
+                        name="A" * 200, type="Categorical"
+                    )
+                # the name must not contain forbidden characters
+                with self.assertRaisesRegex(ValueError, "cannot be accepted"):
+                    dictionary.add_variable_from_spec(
+                        name="ALLFDLFDFDLLL\t", type="Categorical"
+                    )
+                # successful adding (with a name including accents)
+                dictionary.add_variable_from_spec(
+                    name=bytes("MyVarî", encoding="cp1252"), type="Categorical"
+                )
+                # duplicate name is forbidden
+                with self.assertRaisesRegex(ValueError, "already"):
+                    dictionary.add_variable_from_spec(
+                        name=bytes("MyVarî", encoding="cp1252"), type="Numerical"
+                    )
+                # type must be recognized
+                with self.assertRaisesRegex(ValueError, "Invalid type"):
+                    dictionary.add_variable_from_spec(
+                        name="fresh_one", type="Unknown Type"
+                    )
+                # native types cannot accept object_type or structure_type
+                with self.assertRaisesRegex(ValueError, "Native type"):
+                    dictionary.add_variable_from_spec(
+                        name="fresh_one", type="Numerical", object_type="X"
+                    )
+                # an object type must have an object_type parameter
+                with self.assertRaisesRegex(
+                    ValueError, "'object_type' must be provided"
+                ):
+                    dictionary.add_variable_from_spec(name="fresh_one", type="Entity")
+                # object_type must be a str
+                with self.assertRaisesRegex(TypeError, "'object_type'.*string-like"):
+                    dictionary.add_variable_from_spec(
+                        name="fresh_one", type="Entity", object_type={}
+                    )
+                # a structure type must have a structure_type parameter
+                with self.assertRaisesRegex(
+                    ValueError, "'structure_type' must be provided"
+                ):
+                    dictionary.add_variable_from_spec(
+                        name="fresh_one", type="Structure"
+                    )
+                # rule must be Rule object
+                with self.assertRaisesRegex(TypeError, "'rule'.*Rule"):
+                    dictionary.add_variable_from_spec(
+                        name="fresh_one", type="Categorical", rule={}
+                    )
+                # 'meta_data' must be a dict
+                with self.assertRaisesRegex(TypeError, "meta_data.*dict"):
+                    dictionary.add_variable_from_spec(
+                        name="fresh_one", type="Categorical", meta_data="str"
+                    )
+                # successful adding (with meta-data and rule)
+                dictionary.add_variable_from_spec(
+                    name="fresh_one",
+                    type="Categorical",
+                    meta_data={"a": 1, "b": 2},
+                    rule=kh.Rule("Ceil", kh.Rule("Product", 3, kh.Rule("Random()"))),
+                )
+                self.assertEqual(
+                    2,
+                    dictionary.get_variable("fresh_one").get_value("b"),
+                    "Variable meta-data must be set correctly",
+                )
+                self.assertEqual(
+                    "Ceil(Product(3, Random()))",
+                    repr(dictionary.get_variable("fresh_one").get_rule()),
+                    "Variable rule must be set correctly",
+                )
 
                 # Test Dictionary variable block accessors
                 # Create a simple block
