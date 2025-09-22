@@ -1187,7 +1187,7 @@ class Variable:
         self.structure_type = ""
 
         # Derivation rule
-        self.rule = ""
+        self._rule = ""
 
         # Metadata
         self.meta_data = MetaData()
@@ -1223,7 +1223,7 @@ class Variable:
             self.structure_type = json_data.get("structureType")
 
         # Initialize derivation rule
-        self.rule = json_data.get("rule", "")
+        self._rule = json_data.get("rule", "")
 
         # Initialize metadata
         json_meta_data = json_data.get("metaData")
@@ -1248,6 +1248,16 @@ class Variable:
     def name(self, value):
         _check_name(value)
         self._name = value
+
+    @property
+    def rule(self):
+        return self._rule
+
+    @rule.setter
+    def rule(self, value):
+        if not is_string_like(value):
+            raise TypeError(type_error_message("rule", value, "string-like"))
+        self._rule = value
 
     def copy(self):
         """Copies this variable instance
@@ -1479,7 +1489,7 @@ class VariableBlock:
         self.internal_comments = json_data.get("internalComments", [])
 
         # Initialize derivation rule
-        self.rule = json_data.get("rule", "")
+        self._rule = json_data.get("rule", "")
 
         # Initialize metadata if available
         json_meta_data = json_data.get("metaData")
@@ -1503,6 +1513,16 @@ class VariableBlock:
         writer = KhiopsOutputWriter(stream)
         self.write(writer)
         return str(stream.getvalue(), encoding="utf8", errors="replace")
+
+    @property
+    def rule(self):
+        return self._rule
+
+    @rule.setter
+    def rule(self, value):
+        if not is_string_like(value):
+            raise TypeError(type_error_message("rule", value, "string-like"))
+        self._rule = value
 
     def add_variable(self, variable):
         """Adds a variable to this block
