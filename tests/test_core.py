@@ -1916,6 +1916,9 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                     repr(dictionary.get_variable("fresh_one").get_rule()),
                     "Variable rule must be set correctly",
                 )
+                variable_rule = kh.Rule(verbatim="Ceil(Product(3, Random()))")
+                with self.assertRaises(TypeError):
+                    dictionary.get_variable("fresh_one").rule = variable_rule
 
                 # Test Dictionary variable block accessors
                 # Create a simple block
@@ -1959,7 +1962,9 @@ class KhiopsCoreServicesTests(unittest.TestCase):
 
                 # Set the block as non-native add, and remove it
                 dictionary_copy.add_variable_block(block)
-                block_rule = kh.Rule("SomeBlockCreatingRule()")
+                block_rule = kh.Rule("SomeBlockCreatingRule")
+                with self.assertRaises(TypeError):
+                    dictionary_copy.get_variable_block(block.name).rule = block_rule
                 dictionary_copy.get_variable_block(block.name).set_rule(block_rule)
                 self.assertEqual(block, dictionary_copy.get_variable_block(block.name))
                 removed_block = dictionary_copy.remove_variable_block(
