@@ -857,8 +857,8 @@ class Dictionary:
             Object type. Ignored if variable type not in ["Entity", "Table"].
         structure_type : str, optional
             Structure type. Ignored if variable type is not "Structure".
-        rule : `Rule`, optional
-            Variable rule.
+        rule : str, optional
+            String representation of a variable rule.
         meta_data : dict, optional
             A Python dictionary which holds the metadata specification.
             The dictionary keys are str. The values can be str, bool, float or int.
@@ -906,8 +906,8 @@ class Dictionary:
                     type_error_message("structure_type", structure_type, "string-like")
                 )
         if rule is not None:
-            if not isinstance(rule, Rule):
-                raise TypeError(type_error_message("rule", rule, Rule))
+            if not isinstance(rule, str):
+                raise TypeError(type_error_message("rule", rule, str))
 
         # Variable initialization
         variable = Variable()
@@ -923,7 +923,7 @@ class Dictionary:
         if structure_type is not None:
             variable.structure_type = structure_type
         if rule is not None:
-            variable.set_rule(rule)
+            variable.rule = str(rule)
         self.add_variable(variable)
 
     def remove_variable(self, variable_name):
@@ -1363,34 +1363,6 @@ class Variable:
             full_type += f"({self.structure_type})"
         return full_type
 
-    def get_rule(self):
-        """Gets the rule of the variable
-
-        Returns
-        -------
-        `Rule`
-            A `Rule` instance created as a verbatim rule from the ``rule``
-            attribute of the variable.
-        """
-        return Rule(verbatim=self.rule, is_reference=self.is_reference_rule())
-
-    def set_rule(self, rule):
-        """Sets a rule on a specified variable in the dictionary
-
-        Parameters
-        ----------
-        rule : `Rule`
-            The rule to be set on the variable.
-
-        Raises
-        ------
-        `TypeError`
-            If ``rule`` is not of type `Rule`.
-        """
-        if not isinstance(rule, Rule):
-            raise TypeError(type_error_message("rule", rule, Rule))
-        self.rule = repr(rule)
-
     def write(self, writer):
         """Writes the domain to a file writer in ``.kdic`` format
 
@@ -1576,39 +1548,6 @@ class VariableBlock:
         """
         return self.meta_data.get_value(key)
 
-    def get_rule(self):
-        """Gets the rule of the variable block
-
-        Returns
-        -------
-        `Rule`
-            A `Rule` instance created as a verbatim rule from the ``rule``
-            attribute of the variable block.
-        """
-        return Rule(verbatim=self.rule)
-
-    def set_rule(self, rule):
-        """Sets a rule on a specified variable block in the dictionary
-
-        Parameters
-        ----------
-        rule : `Rule`
-            The rule to be set on the variable block.
-
-        Raises
-        ------
-        `TypeError`
-            If ``rule`` is not of type `Rule`.
-
-        `ValueError`
-            If ``rule`` is a reference rule.
-        """
-        if not isinstance(rule, Rule):
-            raise TypeError(type_error_message("rule", rule, Rule))
-        if rule.is_reference:
-            raise ValueError("Cannot set reference rule on a variable block")
-        self.rule = repr(rule)
-
     def write(self, writer):
         """Writes the variable block to a file writer in ``.kdic`` format
 
@@ -1663,6 +1602,17 @@ class VariableBlock:
 
 class Rule:
     """A rule of a variable or variable block in a Khiops dictionary
+
+    This object is a convenience feature which eases rule creation and
+    serialization, especially in complex cases (rule operands which are
+    variables or rules themselves, sometimes upper-scoped). A `Rule` instance
+    must be converted to `str` before setting it in a `Variable` or
+    `VariableBlock` instance.
+
+    `Rule` instances can be created either from full operand specifications, or
+    from verbatim rules. The latter is useful when the rule is retrieved from an
+    existing variable or variable block and is used as an operand in another
+    rule.
 
     Parameters
     ----------

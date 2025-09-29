@@ -1890,7 +1890,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         name="fresh_one", type="Structure"
                     )
                 # rule must be Rule object
-                with self.assertRaisesRegex(TypeError, "'rule'.*Rule"):
+                with self.assertRaisesRegex(TypeError, "'rule'.*'str'"):
                     dictionary.add_variable_from_spec(
                         name="fresh_one", type="Categorical", rule={}
                     )
@@ -1904,7 +1904,9 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                     name="fresh_one",
                     type="Categorical",
                     meta_data={"a": 1, "b": 2},
-                    rule=kh.Rule("Ceil", kh.Rule("Product", 3, kh.Rule("Random()"))),
+                    rule=str(
+                        kh.Rule("Ceil", kh.Rule("Product", 3, kh.Rule("Random()")))
+                    ),
                 )
                 self.assertEqual(
                     2,
@@ -1913,7 +1915,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     "Ceil(Product(3, Random()))",
-                    repr(dictionary.get_variable("fresh_one").get_rule()),
+                    dictionary.get_variable("fresh_one").rule,
                     "Variable rule must be set correctly",
                 )
                 variable_rule = kh.Rule(verbatim="Ceil(Product(3, Random()))")
@@ -1965,7 +1967,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 block_rule = kh.Rule("SomeBlockCreatingRule")
                 with self.assertRaises(TypeError):
                     dictionary_copy.get_variable_block(block.name).rule = block_rule
-                dictionary_copy.get_variable_block(block.name).set_rule(block_rule)
+                dictionary_copy.get_variable_block(block.name).rule = str(block_rule)
                 self.assertEqual(block, dictionary_copy.get_variable_block(block.name))
                 removed_block = dictionary_copy.remove_variable_block(
                     block.name,
@@ -2020,13 +2022,13 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         2,
                         kh.Rule("SomeEmbeddedRule()"),
                     )
-                    dictionary_copy.get_variable(variable_name).set_rule(some_rule)
+                    dictionary_copy.get_variable(variable_name).rule = str(some_rule)
                     self.assertEqual(
                         dictionary_copy.get_variable(variable_name).rule,
                         repr(some_rule),
                     )
                     self.assertEqual(
-                        repr(dictionary_copy.get_variable(variable_name).get_rule()),
+                        dictionary_copy.get_variable(variable_name).rule,
                         repr(some_rule),
                     )
                     some_reference_rule = kh.Rule(
@@ -2039,7 +2041,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         ),
                         is_reference=True,
                     )
-                    dictionary_copy.get_variable(variable_name).set_rule(
+                    dictionary_copy.get_variable(variable_name).rule = str(
                         some_reference_rule
                     )
                     self.assertEqual(
@@ -2047,7 +2049,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         repr(some_reference_rule),
                     )
                     self.assertEqual(
-                        repr(dictionary_copy.get_variable(variable_name).get_rule()),
+                        dictionary_copy.get_variable(variable_name).rule,
                         repr(some_reference_rule),
                     )
                 for variable_block_index, variable_block_name in enumerate(
@@ -2062,7 +2064,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         2,
                         kh.Rule("SomeEmbeddedRule()"),
                     )
-                    dictionary_copy.get_variable_block(variable_block_name).set_rule(
+                    dictionary_copy.get_variable_block(variable_block_name).rule = str(
                         some_rule
                     )
                     self.assertEqual(
@@ -2070,23 +2072,13 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         repr(some_rule),
                     )
                     self.assertEqual(
-                        repr(
-                            dictionary_copy.get_variable_block(
-                                variable_block_name
-                            ).get_rule()
-                        ),
+                        dictionary_copy.get_variable_block(variable_block_name).rule,
                         repr(some_rule),
                     )
-                    some_reference_rule = kh.Rule(
-                        "some_reference_operand_for_variable block"
-                        + variable_block_index * "i",
-                        3,
-                        is_reference=True,
-                    )
-                    with self.assertRaises(ValueError):
-                        dictionary_copy.get_variable_block(
-                            variable_block_name
-                        ).set_rule(some_reference_rule)
+                    with self.assertRaises(TypeError):
+                        dictionary_copy.get_variable_block(variable_block_name).rule = (
+                            some_rule
+                        )
 
     def test_dictionary_rule_construction(self):
         """Tests the Rule construction and serialization"""
