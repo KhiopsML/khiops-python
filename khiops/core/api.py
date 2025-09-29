@@ -494,6 +494,10 @@ def export_dictionary_as_json(
     ----------
     dictionary_file_path_or_domain : str or `.DictionaryDomain`
         Path of a Khiops dictionary file or a DictionaryDomain object.
+    json_dictionary_file_path : str
+        Path (absolute path recommended) to the output dictionary file,
+        in the JSON format. Note that a relative path will produce a file in
+        the current working directory.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -538,7 +542,8 @@ def build_dictionary_from_data_table(
     output_dictionary_name : str
         Name dictionary to be created.
     output_dictionary_file_path : str
-        Path of the output dictionary file.
+        Path (absolute path recommended) of the output dictionary file. Note that
+        a relative path will produce a file in the current working directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -700,9 +705,11 @@ def train_predictor(
         constructs a classifier and if it is numerical a regressor. If equal to "" it
         performs an unsupervised analysis.
     analysis_report_file_path : str
-        Path to the analysis report file in the JSON format. An additional dictionary
-        file with the same name and extension ``.model.kdic`` is built, which contains
-        the trained models.
+        Path (absolute path recommended) to the analysis report file,
+        in the JSON format. An additional dictionary file with the same name and
+        extension ``.model.kdic`` is built, which contains the trained models.
+        Note that a relative path will produce a report file in the current working
+        directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1010,7 +1017,9 @@ def evaluate_predictor(
     data_table_path : str
         Path of the evaluation data table file.
     evaluation_report_file_path : str
-        Path to the evaluation report file, in the JSON format.
+        Path (absolute path recommended) to the evaluation report file,
+        in the JSON format. Note that a relative path will produce a report file in
+        the current working directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1146,9 +1155,11 @@ def train_recoder(
     target_variable : str
         Name of the target variable. If equal to "" it trains an unsupervised recoder.
     analysis_report_file_path : str
-        Path to the analysis report file in the JSON format. An additional dictionary
-        file with the same name and extension ``.model.kdic`` is built, which contains
-        the trained recoding model.
+        Path (absolute path recommended) to the analysis report file,
+        in the JSON format. An additional dictionary file with the same name and
+        extension ``.model.kdic`` is built, which contains the trained recoding model.
+        Note that a relative path will produce a report file in the current working
+        directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1338,7 +1349,8 @@ def deploy_model(
     data_table_path : str
         Path of the data table file.
     output_data_table_path : str
-        Path of the output data file.
+        Path (absolute path recommended) of the output data file. Note that a
+        relative path will produce a file in the current working directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1424,7 +1436,8 @@ def build_deployed_dictionary(
     dictionary_name : str
         Name of the dictionary to be analyzed.
     output_dictionary_file_path : str
-        Path of the output dictionary file.
+        Path (absolute path recommended) of the output dictionary file. Note that
+        a relative path will produce a file in the current working directory.
     ... :
         See :ref:`core-api-common-params`.
 
@@ -1480,7 +1493,8 @@ def sort_data_table(
     data_table_path : str
         Path of the data table file.
     output_data_table_path : str
-        Path of the output data file.
+        Path (absolute path recommended) of the output data file. Note that a
+        relative path will produce a file in the current working directory.
     sort_variables : list of str, optional
         The names of the variables to sort. If not set sorts the table by its key.
     detect_format : bool, default ``True``
@@ -1555,7 +1569,8 @@ def extract_keys_from_data_table(
     data_table_path : str
         Path of the data table file.
     output_data_table_path : str
-        Path of the output data file.
+        Path (absolute path recommended) of the output data file. Note that a
+        relative path will produce a file in the current working directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1634,7 +1649,9 @@ def train_coclustering(
     coclustering_variables : list of str
         The names of variables to use in coclustering. Min length: 2. Max length: 10.
     coclustering_report_file_path : str
-        Path to the coclustering report file in the JSON format.
+        Path (absolute path recommended) to the coclustering report file,
+        in the JSON format. Note that a relative path will produce a report file in
+        the current working directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1745,7 +1762,9 @@ def train_instance_variable_coclustering(
     data_table_path : str
         Path of the data table file.
     coclustering_report_file_path : str
-        Path to the coclustering report file in the JSON format.
+        Path (absolute path recommended) to the coclustering report file,
+        in the JSON format. Note that a relative path will produce a report file in
+        the current working directory.
     detect_format : bool, default ``True``
         If ``True`` detects automatically whether the data table file has a header and
         its field separator. It is set to ``False`` if ``header_line`` or
@@ -1833,7 +1852,9 @@ def simplify_coclustering(
     coclustering_file_path : str
         Path of the coclustering file (extension ``.khc``, or ``.khcj``).
     simplified_coclustering_file_path : str
-        Path of the output coclustering file.
+        Path (absolute path recommended) of the output coclustering file. Note
+        that a relative path will produce a report file in the current working
+        directory.
     max_preserved_information : int, default 0
         Maximum information preserve in the simplified coclustering. If equal to 0
         there is no limit.
@@ -2009,7 +2030,8 @@ def extract_clusters(
     cluster_variable : str
         Name of the variable for which the clusters are extracted.
     clusters_file_path : str
-        Path of the output clusters TSV file.
+        Path (absolute path recommended) of the output clusters TSV file. Note
+        that a relative path will produce a file in the current working directory.
     max_preserved_information : int, default 0
         Maximum information preserve in the simplified coclustering. If equal to 0 there
         is no limit.
