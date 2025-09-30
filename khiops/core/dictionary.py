@@ -1660,6 +1660,91 @@ class Rule:
 
         .. note::
             This attribute cannot be changed on a `Rule` instance.
+
+    Examples
+    --------
+        - basic rule, with variables as operands:
+            - verbatim:
+                .. code-block::
+
+                    Product(PetalLength, PetalWidth)
+
+            - object construction:
+                .. highlight:: python
+                .. code-block:: python
+
+                    petal_length_var = kh.Variable()
+                    petal_length_var.name = "PetalLength"
+                    petal_length_var.type = "Numerical"
+                    petal_width_var = kh.Variable()
+                    petal_width_var.name = "PetalWidth"
+                    petal_width_var.type = "Numerical"
+                    rule = kh.Rule("Product", petal_length_var, petal_width_var)
+
+        - multi-table rule:
+            - verbatim:
+                .. code-block::
+
+                    TableCount(
+                        TableSelection(
+                            Vehicles,
+                            EQ(PassengerNumber, 1)
+                        )
+                    )
+
+            - object construction:
+                .. highlight:: python
+                .. code-block:: python
+
+                    vehicles_var = accidents_dictionary.get_variable("Vehicles")
+                    passenger_number_var = vehicles_dictionary.get_variable(
+                        "PassengerNumber"
+                    )
+                    rule = kh.Rule(
+                        "TableCount",
+                        kh.Rule(
+                            "TableSelection",
+                            vehicles_var,
+                            kh.Rule("EQ", passenger_number_var, 1)
+                        )
+                    )
+
+        - multi-table rule with upper-scoped operands (advanced usage):
+            - verbatim:
+                .. code-block::
+
+                    TableSelection(
+                        Vehicles,
+                        EQ(
+                            PassengerNumber,
+                            .TableMax(Vehicles, PassengerNumber)
+                        )
+                    )
+
+            - object construction:
+                .. highlight:: python
+                .. code-block:: python
+
+                    vehicles_var = accidents_dictionary.get_variable("Vehicles")
+                    passenger_number_var = vehicles_dictionary.get_variable(
+                        "PassengerNumber"
+                    )
+                    rule = kh.Rule(
+                        "TableSelection",
+                        vehicles_var,
+                        kh.Rule(
+                            "EQ",
+                            passenger_number_var,
+                            kh.upper_scope(
+                                kh.Rule(
+                                    "TableMax",
+                                    vehicle_var,
+                                    passenger_number_var
+                                )
+                            )
+                        )
+                    )
+
     """
 
     def __init__(self, *name_and_operands, verbatim=None, is_reference=False):
@@ -1741,6 +1826,13 @@ class Rule:
 
     def write(self, writer):
         """Writes the rule to a file writer in the ``.kdic`` format
+
+        This method ensures proper `Rule` serialization, automatically handling:
+
+            - back-quote recoding in variable names
+            - double-quote recoding in categorical constants
+            - missing data (``inf``, ``-inf``, ``NaN``) serialization as ``#Missing``
+            - upper-scope operator serialization as ``.``
 
         Parameters
         ----------
