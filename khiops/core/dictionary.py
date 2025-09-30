@@ -79,15 +79,15 @@ def _quote_value(value):
 
 
 def _check_name(name):
-    """Ensures the variable name is consistent
-    with the Khiops core name constraints
+    """Ensures the variable name is consistent with the Khiops core name constraints
 
-    Plain string or bytes are both accepted as input.
-    The Khiops core forbids a name
+    Plain string or bytes are both accepted as input. The Khiops core forbids a name:
+
         - with a length outside the [1,128] interval
         - containing a simple (Unix) carriage-return (\n)
         - with leading and trailing spaces.
-    This function must check at least these constraints.
+
+    This function must check these constraints.
 
     Parameters
     ----------
