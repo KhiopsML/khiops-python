@@ -111,7 +111,7 @@ def create_dictionary_domain():
     third_dictionary.add_variable_from_spec(
         name="computed",
         type="Numerical",
-        rule=str(kh.Rule("Ceil", kh.Rule("Product", 3, kh.Rule("Random()")))),
+        rule=str(kh.Rule("Ceil", kh.Rule("Product", 3, kh.Rule("Random")))),
     )
 
     # Add the variables used in a multi-table context in the first dictionary.
@@ -725,7 +725,7 @@ def train_predictor_with_cross_validation():
     # Create fold indexing rule and set it on `fold_index_variable`
     fold_index_variable = dictionary.get_variable("FoldIndex")
     fold_index_variable.rule = str(
-        kh.Rule("Ceil", kh.Rule("Product", fold_number, kh.Rule("Random()"))),
+        kh.Rule("Ceil", kh.Rule("Product", fold_number, kh.Rule("Random"))),
     )
 
     # Add variables that indicate if the instance is in the train dataset:

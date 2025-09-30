@@ -1755,9 +1755,9 @@ class Rule:
             raise TypeError(type_error_message("writer", writer, KhiopsOutputWriter))
 
         # Write standard rule
-        rule_pattern = r"^[A-Z]([a-zA-Z]*)\(?.*\)?$"
-        rule_regex = re.compile(rule_pattern)
-        bytes_rule_regex = re.compile(bytes(rule_pattern, encoding="ascii"))
+        rule_name_pattern = r"^[A-Z]([a-zA-Z]*)$"
+        rule_name_regex = re.compile(rule_name_pattern)
+        bytes_rule_name_regex = re.compile(bytes(rule_name_pattern, encoding="ascii"))
         if self.operands:
             if self.is_reference:
                 writer.write("[")
@@ -1788,11 +1788,14 @@ class Rule:
         # Write no-operand rule
         elif (
             isinstance(self.name, str)
-            and rule_regex.match(self.name)
+            and rule_name_regex.match(self.name)
             or isinstance(self.name, bytes)
-            and bytes_rule_regex.match(self.name)
+            and bytes_rule_name_regex.match(self.name)
         ):
-            writer.write(self.name)
+            writer.write(_format_name(self.name))
+
+            # Add parentheses automatically
+            writer.write("()")
         # Write verbatim-given rule
         elif self._verbatim:
             writer.write(self._verbatim)

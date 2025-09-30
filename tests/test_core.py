@@ -1904,9 +1904,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                     name="fresh_one",
                     type="Categorical",
                     meta_data={"a": 1, "b": 2},
-                    rule=str(
-                        kh.Rule("Ceil", kh.Rule("Product", 3, kh.Rule("Random()")))
-                    ),
+                    rule=str(kh.Rule("Ceil", kh.Rule("Product", 3, kh.Rule("Random")))),
                 )
                 self.assertEqual(
                     2,
@@ -2020,7 +2018,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         "SomeRuleForVariable" + variable_index * "i",
                         "an_operand",
                         2,
-                        kh.Rule("SomeEmbeddedRule()"),
+                        kh.Rule("SomeEmbeddedRule"),
                     )
                     dictionary_copy.get_variable(variable_name).rule = str(some_rule)
                     self.assertEqual(
@@ -2062,7 +2060,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         "SomeRuleForVariableBlock" + variable_block_index * "i",
                         "an_operand",
                         2,
-                        kh.Rule("SomeEmbeddedRule()"),
+                        kh.Rule("SomeEmbeddedRule"),
                     )
                     dictionary_copy.get_variable_block(variable_block_name).rule = str(
                         some_rule
@@ -2083,8 +2081,8 @@ class KhiopsCoreServicesTests(unittest.TestCase):
     def test_dictionary_rule_construction(self):
         """Tests the Rule construction and serialization"""
         rule_verbatims = [
-            "SomeRule",
-            b"SomeRule",
+            "SomeRule()",
+            b"SomeRule()",
             'SomeRule("some_operand", 2)',
             b'SomeRule("some_operand", 2)',
             'SomeRule("some""operand", 2)',
@@ -2260,7 +2258,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                     kh.Rule(b"SomeEmbeddedRule", b"some_other_operand"),
                 ),
                 kh.Rule(
-                    (
+                    verbatim=(
                         b'SomeRule("some_operand", 2, '
                         b'SomeEmbeddedRule("some_other_operand"))'
                     )
