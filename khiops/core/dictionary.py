@@ -79,15 +79,15 @@ def _quote_value(value):
 
 
 def _check_name(name):
-    """Ensures the variable name is consistent
-    with the Khiops core name constraints
+    """Ensures the variable name is consistent with the Khiops core name constraints
 
-    Plain string or bytes are both accepted as input.
-    The Khiops core forbids a name
+    Plain string or bytes are both accepted as input. The Khiops core forbids a name:
+
         - with a length outside the [1,128] interval
         - containing a simple (Unix) carriage-return (\n)
         - with leading and trailing spaces.
-    This function must check at least these constraints.
+
+    This function must check these constraints.
 
     Parameters
     ----------
@@ -857,8 +857,8 @@ class Dictionary:
             Object type. Ignored if variable type not in ["Entity", "Table"].
         structure_type : str, optional
             Structure type. Ignored if variable type is not "Structure".
-        rule : `Rule`, optional
-            Variable rule.
+        rule : str, optional
+            String representation of a variable rule.
         meta_data : dict, optional
             A Python dictionary which holds the metadata specification.
             The dictionary keys are str. The values can be str, bool, float or int.
@@ -906,8 +906,8 @@ class Dictionary:
                     type_error_message("structure_type", structure_type, "string-like")
                 )
         if rule is not None:
-            if not isinstance(rule, Rule):
-                raise TypeError(type_error_message("rule", rule, Rule))
+            if not isinstance(rule, str):
+                raise TypeError(type_error_message("rule", rule, str))
 
         # Variable initialization
         variable = Variable()
@@ -923,7 +923,7 @@ class Dictionary:
         if structure_type is not None:
             variable.structure_type = structure_type
         if rule is not None:
-            variable.set_rule(rule)
+            variable.rule = str(rule)
         self.add_variable(variable)
 
     def remove_variable(self, variable_name):
@@ -1363,34 +1363,6 @@ class Variable:
             full_type += f"({self.structure_type})"
         return full_type
 
-    def get_rule(self):
-        """Gets the rule of the variable
-
-        Returns
-        -------
-        `Rule`
-            A `Rule` instance created as a verbatim rule from the ``rule``
-            attribute of the variable.
-        """
-        return Rule(verbatim=self.rule, is_reference=self.is_reference_rule())
-
-    def set_rule(self, rule):
-        """Sets a rule on a specified variable in the dictionary
-
-        Parameters
-        ----------
-        rule : `Rule`
-            The rule to be set on the variable.
-
-        Raises
-        ------
-        `TypeError`
-            If ``rule`` is not of type `Rule`.
-        """
-        if not isinstance(rule, Rule):
-            raise TypeError(type_error_message("rule", rule, Rule))
-        self.rule = repr(rule)
-
     def write(self, writer):
         """Writes the domain to a file writer in ``.kdic`` format
 
@@ -1576,39 +1548,6 @@ class VariableBlock:
         """
         return self.meta_data.get_value(key)
 
-    def get_rule(self):
-        """Gets the rule of the variable block
-
-        Returns
-        -------
-        `Rule`
-            A `Rule` instance created as a verbatim rule from the ``rule``
-            attribute of the variable block.
-        """
-        return Rule(verbatim=self.rule)
-
-    def set_rule(self, rule):
-        """Sets a rule on a specified variable block in the dictionary
-
-        Parameters
-        ----------
-        rule : `Rule`
-            The rule to be set on the variable block.
-
-        Raises
-        ------
-        `TypeError`
-            If ``rule`` is not of type `Rule`.
-
-        `ValueError`
-            If ``rule`` is a reference rule.
-        """
-        if not isinstance(rule, Rule):
-            raise TypeError(type_error_message("rule", rule, Rule))
-        if rule.is_reference:
-            raise ValueError("Cannot set reference rule on a variable block")
-        self.rule = repr(rule)
-
     def write(self, writer):
         """Writes the variable block to a file writer in ``.kdic`` format
 
@@ -1664,6 +1603,17 @@ class VariableBlock:
 class Rule:
     """A rule of a variable or variable block in a Khiops dictionary
 
+    This object is a convenience feature which eases rule creation and
+    serialization, especially in complex cases (rule operands which are
+    variables or rules themselves, sometimes upper-scoped). A `Rule` instance
+    must be converted to `str` before setting it in a `Variable` or
+    `VariableBlock` instance.
+
+    `Rule` instances can be created either from full operand specifications, or
+    from verbatim rules. The latter is useful when the rule is retrieved from an
+    existing variable or variable block and is used as an operand in another
+    rule.
+
     Parameters
     ----------
     name_and_operands : tuple
@@ -1710,6 +1660,91 @@ class Rule:
 
         .. note::
             This attribute cannot be changed on a `Rule` instance.
+
+    Examples
+    --------
+        - basic rule, with variables as operands:
+            - verbatim:
+                .. code-block::
+
+                    Product(PetalLength, PetalWidth)
+
+            - object construction:
+                .. highlight:: python
+                .. code-block:: python
+
+                    petal_length_var = kh.Variable()
+                    petal_length_var.name = "PetalLength"
+                    petal_length_var.type = "Numerical"
+                    petal_width_var = kh.Variable()
+                    petal_width_var.name = "PetalWidth"
+                    petal_width_var.type = "Numerical"
+                    rule = kh.Rule("Product", petal_length_var, petal_width_var)
+
+        - multi-table rule:
+            - verbatim:
+                .. code-block::
+
+                    TableCount(
+                        TableSelection(
+                            Vehicles,
+                            EQ(PassengerNumber, 1)
+                        )
+                    )
+
+            - object construction:
+                .. highlight:: python
+                .. code-block:: python
+
+                    vehicles_var = accidents_dictionary.get_variable("Vehicles")
+                    passenger_number_var = vehicles_dictionary.get_variable(
+                        "PassengerNumber"
+                    )
+                    rule = kh.Rule(
+                        "TableCount",
+                        kh.Rule(
+                            "TableSelection",
+                            vehicles_var,
+                            kh.Rule("EQ", passenger_number_var, 1)
+                        )
+                    )
+
+        - multi-table rule with upper-scoped operands (advanced usage):
+            - verbatim:
+                .. code-block::
+
+                    TableSelection(
+                        Vehicles,
+                        EQ(
+                            PassengerNumber,
+                            .TableMax(Vehicles, PassengerNumber)
+                        )
+                    )
+
+            - object construction:
+                .. highlight:: python
+                .. code-block:: python
+
+                    vehicles_var = accidents_dictionary.get_variable("Vehicles")
+                    passenger_number_var = vehicles_dictionary.get_variable(
+                        "PassengerNumber"
+                    )
+                    rule = kh.Rule(
+                        "TableSelection",
+                        vehicles_var,
+                        kh.Rule(
+                            "EQ",
+                            passenger_number_var,
+                            kh.upper_scope(
+                                kh.Rule(
+                                    "TableMax",
+                                    vehicle_var,
+                                    passenger_number_var
+                                )
+                            )
+                        )
+                    )
+
     """
 
     def __init__(self, *name_and_operands, verbatim=None, is_reference=False):
@@ -1792,6 +1827,13 @@ class Rule:
     def write(self, writer):
         """Writes the rule to a file writer in the ``.kdic`` format
 
+        This method ensures proper `Rule` serialization, automatically handling:
+
+            - back-quote recoding in variable names
+            - double-quote recoding in categorical constants
+            - missing data (``inf``, ``-inf``, ``NaN``) serialization as ``#Missing``
+            - upper-scope operator serialization as ``.``
+
         Parameters
         ----------
         writer : `.KhiopsOutputWriter`
@@ -1805,9 +1847,9 @@ class Rule:
             raise TypeError(type_error_message("writer", writer, KhiopsOutputWriter))
 
         # Write standard rule
-        rule_pattern = r"^[A-Z]([a-zA-Z]*)\(?.*\)?$"
-        rule_regex = re.compile(rule_pattern)
-        bytes_rule_regex = re.compile(bytes(rule_pattern, encoding="ascii"))
+        rule_name_pattern = r"^[A-Z]([a-zA-Z]*)$"
+        rule_name_regex = re.compile(rule_name_pattern)
+        bytes_rule_name_regex = re.compile(bytes(rule_name_pattern, encoding="ascii"))
         if self.operands:
             if self.is_reference:
                 writer.write("[")
@@ -1838,11 +1880,14 @@ class Rule:
         # Write no-operand rule
         elif (
             isinstance(self.name, str)
-            and rule_regex.match(self.name)
+            and rule_name_regex.match(self.name)
             or isinstance(self.name, bytes)
-            and bytes_rule_regex.match(self.name)
+            and bytes_rule_name_regex.match(self.name)
         ):
-            writer.write(self.name)
+            writer.write(_format_name(self.name))
+
+            # Add parentheses automatically
+            writer.write("()")
         # Write verbatim-given rule
         elif self._verbatim:
             writer.write(self._verbatim)

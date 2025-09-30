@@ -11,8 +11,7 @@
 ### Added
 - (`core`) Dictionary API support for dictionary, variable and variable block
   comments, and dictionary and variable block internal comments.
-- (`core`) Dictionary `Rule` class and supporting API for adding and getting
-  rules to / from variables and variable blocks.
+- (`core`) Dictionary `Rule` class and supporting API for serializing `Rule` instances.
 - (`core`) New way to add a variable to a dictionary using a complete specification.
 - (`sklearn`) `Text` Khiops type support at the estimator level.
 
