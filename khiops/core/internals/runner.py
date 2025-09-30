@@ -1072,13 +1072,17 @@ class KhiopsLocalRunner(KhiopsRunner):
             compatible_khiops_version.minor,
             compatible_khiops_version.patch,
         ):
+            operating_system = platform.system()
+            installation_method = _infer_khiops_installation_method()
             warnings.warn(
-                f"Khiops version '{self._khiops_version}' does not match "
-                f"the Khiops Python library version '{khiops.__version__}' "
-                "(different major.minor.patch version). "
+                f"Version '{self._khiops_version}' of the Khiops executables "
+                "does not match the Khiops Python library version "
+                f"'{khiops.__version__}' (different major.minor.patch version). "
                 "There may be compatibility errors and "
-                "we recommend to update either Khiops binaries or "
-                "the Khiops Python library. "
+                "we recommend to update either the Khiops "
+                f"executables package for your '{operating_system}' operating "
+                "system, or the Khiops Python library, "
+                f"according to your '{installation_method}' environment. "
                 "See https://khiops.org for more information.",
                 stacklevel=3,
             )
