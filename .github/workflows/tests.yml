@@ -117,6 +117,7 @@ jobs:
         if: github.ref != 'dev' && github.ref != 'dev-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
         run: echo "SKIP_EXPENSIVE_TESTS=true" >> "$GITHUB_ENV"
       - name: Prepare Integration Tests on remote files
+        if: env.SKIP_EXPENSIVE_TESTS != 'true'
         env:
           AWS_ENDPOINT_URL: http://localhost:4569
         shell: bash
@@ -139,6 +140,7 @@ jobs:
           cat  ${GITHUB_WORKSPACE}/.aws/configuration
           /scripts/run_fake_remote_file_servers.sh .  # launch the servers in the background
       - name: Authenticate to GCP using "Workload Identity Federation"
+        if: env.SKIP_EXPENSIVE_TESTS != 'true'
         # For integration tests on GCS we use a real Google account
         # Retrieve the Google credentials through "Workload Identity Federation"
         # see https://github.com/google-github-actions/auth?tab=readme-ov-file#workload-identity-federation-through-a-service-account
