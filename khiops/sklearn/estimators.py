@@ -427,6 +427,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
             and hasattr(self, "model_report_")
             and isinstance(self.model_report_, kh.KhiopsJSONObject)
         ):
+            self.feature_names_in_ = ds.main_table.column_ids
             self._fit_training_post_process(ds)
             self.is_multitable_model_ = ds.is_multitable
             self.n_features_in_ = ds.main_table.n_features()
@@ -1597,6 +1598,36 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         self.n_evaluated_features = n_evaluated_features
         self.n_selected_features = n_selected_features
 
+    def _fit_training_post_process(self, ds):
+        # Call the parent's method
+        super()._fit_training_post_process(ds)
+
+        # Extract statistics, about the selected features, from the modeling report
+        modeling_report = self.model_report_.modeling_report.get_snb_predictor()
+        if modeling_report.selected_variables is not None:
+            feature_used_names_, feature_used_importances_ = (
+                self.get_feature_used_statistics(modeling_report)
+            )
+            self.feature_used_names_ = feature_used_names_
+            self.feature_used_importances_ = feature_used_importances_
+            self.n_features_used_ = len(self.feature_used_names_)
+
+        # feature_used_names_ is not set if no variable is selected in the model
+        feature_used_names = getattr(self, "feature_used_names_", [])
+
+        # Compute feature importances
+        feature_importances = []
+        for feature_name in self.feature_names_in_:
+            if feature_name in feature_used_names:
+                feature_index = np.where(feature_used_names == feature_name)
+                feature_importance = self.feature_used_importances_[
+                    feature_index
+                ].ravel()[2]
+            else:
+                feature_importance = 0.0
+            feature_importances.append(feature_importance)
+        self.feature_importances_ = np.array(feature_importances)
+
     def __sklearn_tags__(self):
         # If we don't implement this trivial method it's not found by the sklearn. This
         # is likely due to the complex resolution of the multiple inheritance.
@@ -1795,6 +1826,39 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     classes_ : `ndarray <numpy.ndarray>` of shape (n_classes\_,)
         The list of classes seen in training. Depending on the training target, the
         contents are ``int`` or ``str``.
+    n_features_in_ : int
+        The number of features in the main table of the training dataset.
+    feature_names_in_ : `ndarray <numpy.ndarray>` of shape (n_features_in\_,)
+        Names of the features in the main table of the training dataset.
+    feature_importances_ :  `ndarray <numpy.ndarray>` of shape (n_features_in\_, )
+        Importances of the features provided to the classifier, in the main
+        table of the training dataset. The importance of each feature is
+        calculated as follows:
+
+        - if the feature is used by the classifier, then its importance is the
+          average of its exact Shapley values across the training dataset.
+
+        - if the feature is not used by the classifier, then its importance
+          is 0.0.
+
+        .. warning::
+            Since Khiops is an AutoML suite, it uses generated features on its
+            predictors (e.g. regularized decision trees). This implies that there
+            is no direct link between the native features and its importance
+            when AutoML features are used, as an important feature might not be
+            selected, but a generated feature might (e.g. a tree containing an
+            important variable).
+
+            To ensure that the ``feature_importances_`` attribute has
+            `the meaning specified by scikit-learn <https://scikit-learn.org/stable/glossary.html#term-feature_importances_>`_
+            one must disable most AutoML capabilities of Khiops, namely:
+
+             - the training dataset must be monotable;
+             - no timestamp column should be used in the training dataset;
+             - the ``n_trees`` parameter must be set to 0;
+             - the ``n_pairs`` parameter must be left to its default value, 0;
+             - the ``n_text_features`` parameter must be set to 0.
+
     n_features_evaluated_ : int
         The number of features evaluated by the classifier.
     feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
@@ -1817,7 +1881,8 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
           to all features selected by the classifier. It ranges between 0 (little
           contribution to the model) and 1 (large contribution to the model).
 
-        - Importance: The geometric mean between the Level and the Weight.
+        - Importance: Average of the exact Shapley values of each used feature
+          across the training data.
 
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
@@ -2029,16 +2094,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
                 if key.startswith("TargetProb"):
                     variable.used = True
 
-        # Extract statistics, about the selected features, from the modeling report
-        modeling_report = self.model_report_.modeling_report.get_snb_predictor()
-        if modeling_report.selected_variables is not None:
-            feature_used_names_, feature_used_importances_ = (
-                self.get_feature_used_statistics(modeling_report)
-            )
-            self.feature_used_names_ = feature_used_names_
-            self.feature_used_importances_ = feature_used_importances_
-            self.n_features_used_ = len(self.feature_used_names_)
-
     def predict(self, X):
         """Predicts the most probable class for the test dataset X
 
@@ -2208,6 +2263,37 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
     Attributes
     ----------
+    n_features_in_ : int
+        The number of features in the main table of the training dataset.
+    feature_names_in_ : `ndarray <numpy.ndarray>` of shape (n_features_in\_,)
+        Names of the features in the main table of the training dataset.
+    feature_importances_ :  `ndarray <numpy.ndarray>` of shape (n_features_in\_, )
+        Importances of the features provided to the classifier. The importance of each feature is calculated as follows:
+
+        - if the feature is used by the classifier, then its importance is the
+          average of its exact Shapley values across the training dataset.
+
+        - if the feature is not used by the classifier, then its importance
+          is 0.0.
+
+        .. warning::
+            Since Khiops is an AutoML suite, it uses generated features on its
+            predictors (e.g. regularized decision trees). This implies that there
+            is no direct link between the native features and its importance
+            when AutoML features are used, as an important feature might not be
+            selected, but a generated feature might (e.g. a tree containing an
+            important variable).
+
+            To ensure that the ``feature_importances_`` attribute has
+            `the meaning specified by scikit-learn <https://scikit-learn.org/stable/glossary.html#term-feature_importances_>`_
+            one must disable most AutoML capabilities of Khiops, namely:
+
+             - the training dataset must be monotable;
+             - no timestamp column should be used in the training dataset;
+             - the ``n_trees`` parameter must be set to 0;
+             - the ``n_pairs`` parameter must be left to its default value, 0;
+             - the ``n_text_features`` parameter must be set to 0.
+
     n_features_evaluated_ : int
         The number of features evaluated by the classifier.
     feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
@@ -2230,7 +2316,8 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
           to all features selected by the classifier. It ranges between 0 (little
           contribution to the model) and 1 (large contribution to the model).
 
-        - Importance: The geometric mean between the Level and the Weight.
+        - Importance: Average of the exact Shapley values of each used feature
+          across the training data.
 
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
@@ -2334,16 +2421,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
                 variables_to_eliminate.append(variable.name)
         for variable_name in variables_to_eliminate:
             self._get_main_dictionary().remove_variable(variable_name)
-
-        # Extract statistics, about the selected features, from the modeling report
-        modeling_report = self.model_report_.modeling_report.get_snb_predictor()
-        if modeling_report.selected_variables is not None:
-            feature_used_names_, feature_used_importances_ = (
-                self.get_feature_used_statistics(modeling_report)
-            )
-            self.feature_used_names_ = feature_used_names_
-            self.feature_used_importances_ = feature_used_importances_
-            self.n_features_used_ = len(self.feature_used_names_)
 
     def _check_target_type(self, ds):
         _check_numerical_target_type(ds)

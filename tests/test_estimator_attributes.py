@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 from khiops import core as kh
+from khiops.sklearn.dataset import Dataset
 from khiops.sklearn.estimators import KhiopsClassifier, KhiopsEncoder, KhiopsRegressor
 
 # Disable PEP8 variable names because of scikit-learn X,y conventions
@@ -74,6 +75,7 @@ class EstimatorAttributesTests(unittest.TestCase):
             self.assertEqual(model.classes_.tolist(), sorted(y.unique()))
             self.assertEqual(model.n_classes_, len(y.unique()))
             self.assertEqual(model.n_features_in_, len(X.columns))
+            self.assertEqual(model.feature_names_in_.tolist(), X.columns.tolist())
 
         # Extract the features and their levels from the report
         # TODO: Eliminate this as this is the implementation
@@ -160,6 +162,25 @@ class EstimatorAttributesTests(unittest.TestCase):
             )
             self.assertEqual(
                 model.n_features_used_, len(feature_used_importances_report)
+            )
+
+            # Test input feature names and importances
+            ds = Dataset(X)
+            feature_names_in_dataset = ds.main_table.column_ids
+            self.assertEqual(
+                model.feature_names_in_.tolist(), feature_names_in_dataset.tolist()
+            )
+            feature_importances_report = []
+            for feature_name in feature_names_in_dataset:
+                if feature_name in feature_used_names:
+                    feature_index = feature_used_names.index(feature_name)
+                    feature_importances_report.append(
+                        feature_used_importances_report[feature_index][2]
+                    )
+                else:
+                    feature_importances_report.append(0.0)
+            self.assertEqual(
+                model.feature_importances_.tolist(), feature_importances_report
             )
 
     def test_classifier_attributes_monotable(self):

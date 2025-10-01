@@ -76,6 +76,15 @@ Samples
         print(f"{feature} - Importance: {khc.feature_used_importances_[i][2]}")
     print("---")
 
+    print("Top 5 used features, among those present in the dataset")
+    for feature, importance in sorted(
+        zip(khc.feature_names_in_, khc.feature_importances_),
+        key=lambda imp: float(imp[1]),
+        reverse=True,
+    )[:5]:
+        print(f"{feature} - Importance: {importance}")
+    print("---")
+
     # Predict the classes on the test dataset
     y_test_pred = khc.predict(X_test)
     print("Predicted classes (first 10):")
