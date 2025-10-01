@@ -432,7 +432,7 @@ class CoclusteringReport:
             # Check minimum consistency of input data
             if "cellFrequencies" not in json_data:
                 raise KhiopsJSONError(
-                    "'cellFrequencies' key not found " "but 'cellPartIndexes' found."
+                    "'cellFrequencies' key not found but 'cellPartIndexes' found."
                 )
             json_cell_frequencies = json_data["cellFrequencies"]
             json_cell_part_indexes = json_data["cellPartIndexes"]
@@ -909,8 +909,8 @@ class CoclusteringDimension:
                 )
             elif not isinstance(json_data["intervals"], list):
                 raise KhiopsJSONError("'intervals' key must be a list")
-            elif len(json_data["intervals"]) < 2:
-                raise KhiopsJSONError("'intervals' key must have length at least 2")
+            elif len(json_data["intervals"]) < 1:
+                raise KhiopsJSONError("'intervals' key must have length at least 1")
 
             # Initialize the intervals data
             for json_interval in json_data["intervals"]:
@@ -921,6 +921,11 @@ class CoclusteringDimension:
             # Initialize open interval flags
             first_interval = self.parts[0]
             if first_interval.is_missing:
+                if len(json_data["intervals"]) < 2:
+                    raise KhiopsJSONError(
+                        "'intervals' key must have at least 2 elements "
+                        "when one element contains missing values."
+                    )
                 first_interval = self.parts[1]
             first_interval.is_left_open = True
             last_interval = self.parts[-1]

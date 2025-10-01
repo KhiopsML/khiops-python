@@ -167,6 +167,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
         reports = [
             "Adult",
             "Iris",
+            "IrisSimplified",
             "IrisIV",
             "Ansi_Coclustering",
             "AnsiGreek_Coclustering",
