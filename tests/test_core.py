@@ -1584,6 +1584,31 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             dimension.init_summary(json_data="NOT A DICT")
         with self.assertRaises(TypeError):
             dimension.init_partition(json_data="NOT A DICT")
+        dimension.init_summary(json_data={"name": "PartName", "type": "Numerical"})
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            dimension.init_partition(
+                json_data={
+                    "name": dimension.name,
+                    "type": dimension.type,
+                    "intervals": [],
+                }
+            )
+        self.assertIn(
+            "'intervals' key must have length at least 1", cm.exception.args[0]
+        )
+        with self.assertRaises(kh.KhiopsJSONError) as cm:
+            dimension.init_partition(
+                json_data={
+                    "name": dimension.name,
+                    "type": dimension.type,
+                    "intervals": [None],
+                }
+            )
+        self.assertIn(
+            "'intervals' key must have at least 2 elements when one element "
+            "contains missing values",
+            cm.exception.args[0],
+        )
         with self.assertRaises(TypeError):
             dimension.init_hierarchy(json_data="NOT A DICT")
         with self.assertRaises(TypeError):
