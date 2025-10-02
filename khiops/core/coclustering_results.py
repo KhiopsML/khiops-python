@@ -479,14 +479,10 @@ class CoclusteringReport:
         Returns
         -------
         `CoclusteringDimension`
-            The specified dimension.
-
-        Raises
-        ------
-        `KeyError`
-            If no dimension with the specified names exist.
+            The specified dimension. A ``None`` value is returned
+            if the dimension name is not found.
         """
-        return self._dimensions_by_name[dimension_name]
+        return self._dimensions_by_name.get(dimension_name)
 
     def to_dict(self):
         """Transforms this instance to a dict with the Khiops JSON file structure"""
@@ -1062,14 +1058,10 @@ class CoclusteringDimension:
         Returns
         -------
         `CoclusteringDimensionPart`
-            The part with the specified name.
-
-        Raises
-        ------
-        `KeyError`
-            If there is no part with the specified name.
+            The part with the specified name. A ``None`` value is returned
+            if the part name is not found.
         """
-        return self._parts_by_name[part_name]
+        return self._parts_by_name.get(part_name)
 
     def get_cluster(self, cluster_name):
         """Returns the specified cluster
@@ -1082,14 +1074,10 @@ class CoclusteringDimension:
         Returns
         -------
         `CoclusteringCluster`
-            The specified cluster.
-
-        Raises
-        ------
-        `KeyError`
-            If there is no cluster with the specified name.
+            The specified cluster. A ``None`` value is returned
+            if the cluster name is not found.
         """
-        return self._clusters_by_name[cluster_name]
+        return self._clusters_by_name.get(cluster_name)
 
     def to_dict(self, report_type):
         """Transforms this instance to a dict with the Khiops JSON file structure

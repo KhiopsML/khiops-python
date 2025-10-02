@@ -575,14 +575,10 @@ class PreparationReport:
         Returns
         -------
         `VariableStatistics`
-            The statistics of the specified variable.
-
-        Raises
-        ------
-        `KeyError`
-            If no variable with the specified names exist.
+            The statistics of the specified variable. A ``None`` value is returned
+            if the variable name is not found.
         """
-        return self._variables_statistics_by_name[variable_name]
+        return self._variables_statistics_by_name.get(variable_name)
 
     def get_tree(self, tree_name):
         """Returns the tree with the specified name
@@ -595,14 +591,10 @@ class PreparationReport:
         Returns
         -------
         `Tree`
-            The tree which has the specified name.
-
-        Raises
-        ------
-        `KeyError`
-            If no tree with the specified name exists.
+            The tree which has the specified name. A ``None`` value is returned
+            if the tree name is not found.
         """
-        return self._trees_by_name[tree_name]
+        return self._trees_by_name.get(tree_name)
 
     def to_dict(self):
         """Transforms this instance to a dict with the Khiops JSON file structure"""
@@ -1045,15 +1037,12 @@ class BivariatePreparationReport:
         -------
         `VariablePairStatistics`
             The statistics of the specified pair of variables.
-
-        Raises
-        ------
-        `KeyError`
-            If no pair with the specified names exist.
+             A ``None`` value is returned if no pair with the
+             specified names exist.
         """
-        return self._variables_pairs_statistics_by_name[
+        return self._variables_pairs_statistics_by_name.get(
             (variable_name_1, variable_name_2)
-        ]
+        )
 
     def to_dict(self):
         """Transforms this instance to a dict with the Khiops JSON file structure"""
@@ -1306,14 +1295,10 @@ class ModelingReport:
         Returns
         -------
         `TrainedPredictor`
-            The predictor object for the specified name.
-
-        Raises
-        ------
-        `KeyError`
-            If there is no predictor with the specified name.
+            The predictor object for the specified name. A ``None`` value is
+            returned if the predictor name is not found.
         """
-        return self._trained_predictors_by_name[predictor_name]
+        return self._trained_predictors_by_name.get(predictor_name)
 
     def get_snb_predictor(self):
         """Returns the Selective Naive Bayes predictor
@@ -1321,12 +1306,8 @@ class ModelingReport:
         Returns
         -------
         `TrainedPredictor`
-            The predictor object for "Selective Naive Bayes".
-
-        Raises
-        ------
-        `KeyError`
-            If there is no predictor named "Selective Naive Bayes".
+            The predictor object for "Selective Naive Bayes". A ``None`` value is
+            returned if there is no predictor named "Selective Naive Bayes".
         """
         return self.get_predictor("Selective Naive Bayes")
 
@@ -1588,14 +1569,10 @@ class EvaluationReport:
         Returns
         -------
         `PredictorPerformance`
-            The performance metrics for the specified predictor.
-
-        Raises
-        ------
-        `KeyError`
-            If no predictor with the specified name exists.
+            The performance metrics for the specified predictor. A ``None`` value
+            is returned if the predictor name is not found.
         """
-        return self._predictors_performance_by_name[predictor_name]
+        return self._predictors_performance_by_name.get(predictor_name)
 
     def get_snb_performance(self):
         """Returns the performance metrics for the Selective Naive Bayes predictor
@@ -1625,21 +1602,20 @@ class EvaluationReport:
         Returns
         -------
         `PredictorCurve`
-            The REC curve for the specified regressor.
+            The REC curve for the specified regressor. A ``None`` value is
+            returned if the regressor name is not found.
 
         Raises
         ------
         `ValueError`
-            If no regressor curves available. (
-        `KeyError`
-            If no regressor with the specified name exists.
+            If no regressor curves available.
         """
         if self.learning_task != "Regression analysis":
             raise ValueError("REC curves are available only for regression")
         for curve in self.regression_rec_curves:
             if curve.name == regressor_name:
                 return curve
-        raise KeyError(regressor_name)
+        return None
 
     def get_snb_rec_curve(self):
         """Returns the REC curve for the Selective Naive Bayes regressor
@@ -1675,12 +1651,8 @@ class EvaluationReport:
         -------
         `PredictorCurve`
             The lift curve for the specified classifier and target value.
-
-        Raises
-        ------
-        `KeyError`
-            If no classifier with the specified exists or no target value with the
-            specified name exists.
+            A ``None`` value is returned if no classifier with the specified
+            exists or no target value with the specified name exists.
         """
         if self.learning_task != "Classification analysis":
             raise ValueError("Lift curves are available only for classification")
@@ -1701,8 +1673,7 @@ class EvaluationReport:
                     for lift_curve in self.classification_lift_curves[i]:
                         if lift_curve.name == classifier_name:
                             return lift_curve
-                    raise KeyError(classifier_name)
-        raise KeyError(target_value)
+        return None
 
     def get_snb_lift_curve(self, target_value):
         """Returns lift curve for the Selective Naive Bayes clf. given a target value
@@ -1716,14 +1687,8 @@ class EvaluationReport:
         -------
         `PredictorCurve`
             The lift curve of the Selective Naive Bayes classifier for the specified
-            target value.
-
-        Raises
-        ------
-        `ValueError`
-            If the Selective Naive Bayes classifier information is not available.
-        `KeyError`
-            If no target value with the specified name exists.
+            target value. A ``None`` value is returned if no Selective Naive Bayes
+            classifier information is available.
         """
         if self.learning_task != "Classification analysis":
             raise ValueError("Lift curves are available only for classification")
@@ -1732,10 +1697,7 @@ class EvaluationReport:
                 for lift_curve in self.classification_lift_curves[i]:
                     if lift_curve.name == "Selective Naive Bayes":
                         return lift_curve
-                raise ValueError(
-                    "Selective Naive Bayes classifier information not available"
-                )
-        raise KeyError(target_value)
+        return None
 
     def to_dict(self):
         """Transforms this instance to a dict with the Khiops JSON file structure"""

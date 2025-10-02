@@ -238,15 +238,10 @@ class DictionaryDomain(KhiopsJSONObject):
         Returns
         -------
         `Dictionary`
-            The specified dictionary.
-
-        Raises
-        ------
-        `KeyError`
-            If no dictionary with the specified name exist.
-
+            The specified dictionary. A ``None`` value is returned
+            if the dictionary name is not found.
         """
-        return self._dictionaries_by_name[dictionary_name]
+        return self._dictionaries_by_name.get(dictionary_name)
 
     def add_dictionary(self, dictionary):
         """Adds a dictionary to this domain
@@ -409,20 +404,16 @@ class DictionaryDomain(KhiopsJSONObject):
         data_path_parts = data_path.split("`")
         source_dictionary_name = data_path_parts[0]
 
-        try:
-            dictionary = self.get_dictionary(source_dictionary_name)
-        except KeyError as error:
-            raise ValueError(
-                f"Source dictionary not found: '{source_dictionary_name}'"
-            ) from error
+        dictionary = self.get_dictionary(source_dictionary_name)
+        if dictionary is None:
+            raise ValueError(f"Source dictionary not found: '{source_dictionary_name}'")
 
         for table_variable_name in data_path_parts[1:]:
-            try:
-                table_variable = dictionary.get_variable(table_variable_name)
-            except KeyError as error:
+            table_variable = dictionary.get_variable(table_variable_name)
+            if table_variable is None:
                 raise ValueError(
                     f"Table variable '{table_variable_name}' in data path not found"
-                ) from error
+                )
 
             if table_variable.type not in ["Table", "Entity"]:
                 raise ValueError(
@@ -430,13 +421,12 @@ class DictionaryDomain(KhiopsJSONObject):
                     f"in data path is of type '{table_variable.type}'"
                 )
 
-            try:
-                dictionary = self.get_dictionary(table_variable.object_type)
-            except KeyError as error:
+            dictionary = self.get_dictionary(table_variable.object_type)
+            if dictionary is None:
                 raise ValueError(
                     f"Table variable '{table_variable_name}' in data path "
                     f"points to unknown dictionary '{table_variable.object_type}'"
-                ) from error
+                )
         return dictionary
 
     def _get_dictionary_at_data_path(self, data_path):
@@ -447,32 +437,34 @@ class DictionaryDomain(KhiopsJSONObject):
         # - either it is found as such,
         # - or it is a Table or Entity variable whose table needs to be looked-up
         first_table_variable_name = data_path_parts[0]
-        try:
-            dictionary = self.get_dictionary(first_table_variable_name)
-        except KeyError as error:
+
+        dictionary = self.get_dictionary(first_table_variable_name)
+        if dictionary is None:
             for a_dictionary in self.dictionaries:
                 try:
                     table_variable = a_dictionary.get_variable(
                         first_table_variable_name
                     )
-                    if table_variable.type not in ["Table", "Entity"]:
-                        raise ValueError from error
-                    dictionary = self.get_dictionary(table_variable.object_type)
-                    break
-                except (KeyError, ValueError):
+                    if table_variable is not None:
+                        if table_variable.type not in ["Table", "Entity"]:
+                            raise ValueError(
+                                f"Variable '{table_variable}' "
+                                "must be of type 'Table' or 'Entity'"
+                            )
+                        dictionary = self.get_dictionary(table_variable.object_type)
+                        if dictionary is not None:
+                            break
+                except ValueError:
                     continue
             else:
-                raise ValueError(
-                    f"Dictionary not found in data path: '{data_path}'"
-                ) from error
+                raise ValueError(f"Dictionary not found in data path: '{data_path}'")
 
         for table_variable_name in data_path_parts[1:]:
-            try:
-                table_variable = dictionary.get_variable(table_variable_name)
-            except KeyError as error:
+            table_variable = dictionary.get_variable(table_variable_name)
+            if table_variable is None:
                 raise ValueError(
                     f"Table variable '{table_variable_name}' in data path not found"
-                ) from error
+                )
 
             if table_variable.type not in ["Table", "Entity"]:
                 raise ValueError(
@@ -480,13 +472,12 @@ class DictionaryDomain(KhiopsJSONObject):
                     f"in data path is of type '{table_variable.type}'"
                 )
 
-            try:
-                dictionary = self.get_dictionary(table_variable.object_type)
-            except KeyError as error:
+            dictionary = self.get_dictionary(table_variable.object_type)
+            if dictionary is None:
                 raise ValueError(
                     f"Table variable '{table_variable_name}' in data path "
                     f"points to unknown dictionary '{table_variable.object_type}'"
-                ) from error
+                )
         return dictionary
 
     def export_khiops_dictionary_file(self, kdic_file_path):
@@ -740,10 +731,7 @@ class Dictionary:
     def get_value(self, key):
         """Returns the metadata value associated to the specified key
 
-        Raises
-        ------
-        `KeyError`
-            If the key is not found
+        A ``None`` value is returned if the key is not found.
         """
         return self.meta_data.get_value(key)
 
@@ -770,14 +758,10 @@ class Dictionary:
         Returns
         -------
         `Variable`
-            The specified variable.
-
-        Raises
-        ------
-        `KeyError`
-            If no variable with the specified name exists.
+            The specified variable. A ``None`` value is returned
+            if the variable name is not found.
         """
-        return self._variables_by_name[variable_name]
+        return self._variables_by_name.get(variable_name)
 
     def get_variable_block(self, variable_block_name):
         """Returns the specified variable block
@@ -790,15 +774,11 @@ class Dictionary:
         Returns
         -------
         `VariableBlock`
-            The specified variable.
-
-        Raises
-        ------
-        `KeyError`
-            If no variable block with the specified name exists.
+            The specified variable. A ``None`` value is returned
+            if the variable block name is not found.
 
         """
-        return self._variable_blocks_by_name[variable_block_name]
+        return self._variable_blocks_by_name.get(variable_block_name)
 
     def add_variable(self, variable):
         """Adds a variable to this dictionary
@@ -1282,10 +1262,7 @@ class Variable:
     def get_value(self, key):
         """Returns the metadata value associated to the specified key
 
-        Raises
-        ------
-        `KeyError`
-            If no metadata has this key.
+        A ``None`` value is returned if the key is not found.
         """
         return self.meta_data.get_value(key)
 
@@ -1541,10 +1518,7 @@ class VariableBlock:
     def get_value(self, key):
         """Returns the metadata value associated to the specified key
 
-        Raises
-        ------
-        `KeyError`
-            If ``key`` is not found
+        A ``None`` value is returned if the key is not found.
         """
         return self.meta_data.get_value(key)
 
@@ -2019,14 +1993,13 @@ class MetaData:
         Returns
         -------
         int, str or float
-            The value at the specified key
+            The value at the specified key. A ``None`` value is returned
+            if the key is not found.
 
         Raises
         ------
         `TypeError`
             If ``key`` is not str.
-        `KeyError`
-            If ``key`` is not found.
         """
         # Check the argument types
         if not is_string_like(key):
@@ -2036,7 +2009,7 @@ class MetaData:
         for i, stored_key in enumerate(self.keys):
             if stored_key == key:
                 return self.values[i]
-        raise KeyError(key)
+        return None
 
     def add_value(self, key, value):
         """Adds a value at the specified key

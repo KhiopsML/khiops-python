@@ -1409,8 +1409,9 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             )
 
         # Test anomalous access
-        with self.assertRaises(KeyError):
-            report.get_variable_statistics("INEXISTENT VARIABLE NAME")
+        self.assertEqual(
+            None, report.get_variable_statistics("INEXISTENT VARIABLE NAME")
+        )
 
     def _test_bivariate_preparation_report_accessors(
         self, result_file_name, report, expected_outputs
@@ -1433,8 +1434,10 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             )
 
         # Test anomalous access
-        with self.assertRaises(KeyError):
-            report.get_variable_pair_statistics("INEXISTENT VARIABLE", "PAIR NAME")
+        self.assertEqual(
+            None,
+            report.get_variable_pair_statistics("INEXISTENT VARIABLE", "PAIR NAME"),
+        )
 
     def _test_modeling_report_accessors(
         self, result_file_name, report, expected_outputs
@@ -1455,8 +1458,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         )
 
         # Test anomalous access
-        with self.assertRaises(KeyError):
-            report.get_predictor("INEXISTENT REPORT NAME")
+        self.assertIsNone(report.get_predictor("INEXISTENT REPORT NAME"))
 
     def _test_evaluation_report_accessors(
         self, result_file_name, report, expected_outputs
@@ -1481,8 +1483,9 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         )
 
         # Test anomalous access
-        with self.assertRaises(KeyError):
-            report.get_predictor_performance("INEXISTENT REPORT NAME")
+        self.assertEqual(
+            None, report.get_predictor_performance("INEXISTENT REPORT NAME")
+        )
 
         # Test anomalous access to performance objects
         for predictor_name in report.get_predictor_names():
@@ -1510,15 +1513,24 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 else:
                     report.get_classifier_lift_curve(predictor_name, "INEXISTENT VALUE")
             if report.learning_task == "Classification analysis":
-                with self.assertRaises(KeyError):
-                    report.get_classifier_lift_curve(predictor_name, "INEXISTENT VALUE")
-        with self.assertRaises(KeyError):
-            if report.learning_task == "Classification analysis":
+                self.assertEqual(
+                    None,
+                    report.get_classifier_lift_curve(
+                        predictor_name, "INEXISTENT VALUE"
+                    ),
+                )
+
+        if report.learning_task == "Classification analysis":
+            self.assertEqual(
+                None,
                 report.get_classifier_lift_curve(
                     "INEXISTENT PREDICTOR", report.classification_target_values[0]
-                )
-            else:
-                report.get_regressor_rec_curve("INEXISTENT PREDICTOR")
+                ),
+            )
+        else:
+            self.assertEqual(
+                None, report.get_regressor_rec_curve("INEXISTENT PREDICTOR")
+            )
 
         # Test anomalous access to SNB curves
         with self.assertRaises(ValueError):
@@ -1527,8 +1539,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             else:
                 report.get_snb_lift_curve("INEXISTENT VALUE")
         if report.learning_task == "Classification analysis":
-            with self.assertRaises(KeyError):
-                report.get_snb_lift_curve("INEXISTENT VALUE")
+            self.assertIsNone(report.get_snb_lift_curve("INEXISTENT VALUE"))
 
     def _test_performance_report_accessors(
         self, result_file_name, learning_task, report, expected_outputs
@@ -1796,8 +1807,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             meta_data.remove_key(object())
         meta_data.add_value("key", "value")
-        with self.assertRaises(KeyError):
-            meta_data.get_value("INEXISTENT KEY")
+        self.assertIsNone(meta_data.get_value("INEXISTENT KEY"))
         with self.assertRaises(ValueError):
             meta_data.add_value("key", "REPEATED KEY")
         with self.assertRaises(KeyError):
@@ -1967,8 +1977,8 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 self.assertEqual(block, removed_block)
                 self.assertIsNone(block_variable.variable_block)
                 self.assertEqual(block.variables, [])
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable_block(block.name)
+                # Nonexistent variable block name
+                self.assertIsNone(dictionary_copy.get_variable_block(block.name))
 
                 # Add and remove the block and remove the native variables
                 dictionary_copy.remove_variable(block_variable.name)
@@ -1981,10 +1991,12 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 self.assertEqual(block, removed_block)
                 self.assertEqual(block.variables, [block_variable])
                 self.assertEqual(block_variable.block, removed_block)
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable(block_variable.name)
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable_block(block.name)
+                # Nonexistent variable block name
+                self.assertEqual(
+                    None, dictionary_copy.get_variable(block_variable.name)
+                )
+                # Nonexistent variable name
+                self.assertIsNone(dictionary_copy.get_variable_block(block.name))
 
                 # Set the block as non-native add, and remove it
                 dictionary_copy.add_variable_block(block)
@@ -1999,10 +2011,12 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 self.assertEqual(block, removed_block)
                 self.assertEqual(block.variables, [block_variable])
                 self.assertEqual(block_variable.block, removed_block)
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable(block_variable.name)
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable_block(block.name)
+                # Nonexistent variable block name
+                self.assertEqual(
+                    None, dictionary_copy.get_variable(block_variable.name)
+                )
+                # Nonexistent variable name
+                self.assertIsNone(dictionary_copy.get_variable_block(block.name))
 
                 # Test Dictionary variable and block accessors by cleaning the dict.
                 for variable_name in [
