@@ -614,9 +614,9 @@ class Dataset:
                 else:
                     y_checked = _column_or_1d_with_dtype(y, dtype=y.dtype)
             elif hasattr(y, "dtypes"):
-                if isinstance(y.dtypes[0], pd.CategoricalDtype):
+                if isinstance(y.dtypes.iloc[0], pd.CategoricalDtype):
                     y_checked = _column_or_1d_with_dtype(
-                        y, dtype=y.dtypes[0].categories.dtype
+                        y, dtype=y.dtypes.iloc[0].categories.dtype
                     )
                 else:
                     y_checked = _column_or_1d_with_dtype(y)
