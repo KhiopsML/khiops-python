@@ -1,0 +1,169 @@
+{
+  "tool": "Khiops Coclustering",
+  "version": "VERSION",
+  "shortDescription": "",
+  "coclusteringReport": {
+    "summary": {
+      "instances": 150,
+      "cells": 1,
+      "nullCost": 1379.668177,
+      "cost": 1164.273132,
+      "level": 0.1561209056,
+      "initialDimensions": 3,
+      "frequencyVariable": "",
+      "dictionary": "Iris",
+			"database": "..\/..\/..\/datasets\/Iris\/Iris.txt",
+      "samplePercentage": 100,
+      "samplingMode": "Include sample",
+      "selectionVariable": "",
+      "selectionValue": ""
+    },
+    "dimensionSummaries": [
+      {
+        "name": "PetalLength",
+        "type": "Numerical",
+        "parts": 1,
+        "initialParts": 1,
+        "values": 150,
+        "interest": 1,
+        "description": "",
+        "min": 1,
+        "max": 6.9
+      },
+      {
+        "name": "PetalWidth",
+        "type": "Numerical",
+        "parts": 1,
+        "initialParts": 1,
+        "values": 150,
+        "interest": 1,
+        "description": "",
+        "min": 0.1,
+        "max": 2.5
+      },
+      {
+        "name": "Class",
+        "type": "Categorical",
+        "parts": 1,
+        "initialParts": 1,
+        "values": 3,
+        "interest": 1,
+        "description": ""
+      }
+    ],
+    "dimensionPartitions": [
+      {
+        "name": "PetalLength",
+        "type": "Numerical",
+        "intervals": [
+          {
+            "cluster": "]-inf;+inf[",
+            "bounds": [
+              1,
+              6.9
+            ]
+          }
+        ]
+      },
+      {
+        "name": "PetalWidth",
+        "type": "Numerical",
+        "intervals": [
+          {
+            "cluster": "]-inf;+inf[",
+            "bounds": [
+              0.1,
+              2.5
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Class",
+        "type": "Categorical",
+        "valueGroups": [
+          {
+            "cluster": "C1",
+            "values": [
+              "Iris-setosa",
+              "Iris-versicolor",
+              "Iris-virginica"
+            ],
+            "valueFrequencies": [
+              50,
+              50,
+              50
+            ],
+            "valueTypicalities": [
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "defaultGroupIndex": 0
+      }
+    ],
+    "dimensionHierarchies": [
+      {
+        "name": "PetalLength",
+        "type": "Numerical",
+        "clusters": [
+          {
+            "cluster": "]-inf;+inf[",
+            "parentCluster": "",
+            "frequency": 150,
+            "interest": 0.648091,
+            "hierarchicalLevel": -0.0145257,
+            "rank": 2,
+            "hierarchicalRank": 4,
+            "isLeaf": true
+          }
+        ]
+      },
+      {
+        "name": "PetalWidth",
+        "type": "Numerical",
+        "clusters": [
+          {
+            "cluster": "]-inf;+inf[",
+            "parentCluster": "",
+            "frequency": 150,
+            "interest": 0.681865,
+            "hierarchicalLevel": 0.374198,
+            "rank": 2,
+            "hierarchicalRank": 5,
+            "isLeaf": true
+          }
+        ]
+      },
+      {
+        "name": "Class",
+        "type": "Categorical",
+        "clusters": [
+          {
+            "cluster": "C1",
+            "parentCluster": "",
+            "frequency": 150,
+            "interest": 0.941775,
+            "hierarchicalLevel": 0,
+            "rank": 2,
+            "hierarchicalRank": 3,
+            "isLeaf": true
+          }
+        ]
+      }
+    ],
+    "cellPartIndexes": [
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "cellFrequencies": [
+      150
+    ]
+  },
+  "khiops_encoding": "ascii"
+}
