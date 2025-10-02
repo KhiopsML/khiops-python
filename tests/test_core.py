@@ -1796,8 +1796,7 @@ class KhiopsCoreServicesTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             meta_data.remove_key(object())
         meta_data.add_value("key", "value")
-        with self.assertRaises(KeyError):
-            meta_data.get_value("INEXISTENT KEY")
+        self.assertIsNone(meta_data.get_value("INEXISTENT KEY"))
         with self.assertRaises(ValueError):
             meta_data.add_value("key", "REPEATED KEY")
         with self.assertRaises(KeyError):
@@ -1967,8 +1966,8 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 self.assertEqual(block, removed_block)
                 self.assertIsNone(block_variable.variable_block)
                 self.assertEqual(block.variables, [])
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable_block(block.name)
+                # Nonexistent variable block name
+                self.assertIsNone(dictionary_copy.get_variable_block(block.name))
 
                 # Add and remove the block and remove the native variables
                 dictionary_copy.remove_variable(block_variable.name)
@@ -1981,10 +1980,10 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 self.assertEqual(block, removed_block)
                 self.assertEqual(block.variables, [block_variable])
                 self.assertEqual(block_variable.block, removed_block)
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable(block_variable.name)
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable_block(block.name)
+                # Nonexistent variable block name
+                self.assertIsNone(dictionary_copy.get_variable(block_variable.name))
+                # Nonexistent variable name
+                self.assertIsNone(dictionary_copy.get_variable_block(block.name))
 
                 # Set the block as non-native add, and remove it
                 dictionary_copy.add_variable_block(block)
@@ -1999,10 +1998,10 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                 self.assertEqual(block, removed_block)
                 self.assertEqual(block.variables, [block_variable])
                 self.assertEqual(block_variable.block, removed_block)
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable(block_variable.name)
-                with self.assertRaises(KeyError):
-                    dictionary_copy.get_variable_block(block.name)
+                # Nonexistent variable block name
+                self.assertIsNone(dictionary_copy.get_variable(block_variable.name))
+                # Nonexistent variable name
+                self.assertIsNone(dictionary_copy.get_variable_block(block.name))
 
                 # Test Dictionary variable and block accessors by cleaning the dict.
                 for variable_name in [
