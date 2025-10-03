@@ -1567,9 +1567,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         for feature_name in self.feature_names_in_:
             if feature_name in feature_used_names:
                 feature_index = np.where(feature_used_names == feature_name)
-                feature_importance = self.feature_used_importances_[
-                    feature_index
-                ].ravel()[2]
+                feature_importance = self.feature_used_importances_[feature_index][0]
             else:
                 feature_importance = 0.0
             feature_importances.append(feature_importance)
@@ -1672,10 +1670,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
                 [var.name for var in modeling_report.selected_variables]
             )
             feature_used_importances_ = np.array(
-                [
-                    [var.level, var.weight, var.importance]
-                    for var in modeling_report.selected_variables
-                ]
+                [var.importance for var in modeling_report.selected_variables]
             )
         # Return empty arrays if no selected variables are available
         else:
@@ -1810,20 +1805,10 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         The number of features used by the classifier.
     feature_used_names_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, )
         Names of the features used by the classifier.
-    feature_used_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, 3)
-        Level, Weight and Importance of the features used by the classifier:
-
-        - Level: A measure of the predictive importance of the feature taken
-          individually. It ranges between 0 (no predictive interest) and 1 (optimal
-          predictive importance).
-
-        - Weight: A measure of the predictive importance of the feature taken relative
-          to all features selected by the classifier. It ranges between 0 (little
-          contribution to the model) and 1 (large contribution to the model).
-
-        - Importance: Average of the exact Shapley values of each used feature
-          across the training data.
-
+    feature_used_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_,)
+        Importance of the features used by the classifier. The importance is
+        computed as the average of the exact Shapley values of each used feature
+        across the training dataset.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -2238,20 +2223,10 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         The number of features used by the classifier.
     feature_used_names_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, )
         Names of the features used by the classifier.
-    feature_used_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, 3)
-        Level, Weight and Importance of the features used by the classifier:
-
-        - Level: A measure of the predictive importance of the feature taken
-          individually. It ranges between 0 (no predictive interest) and 1 (optimal
-          predictive importance).
-
-        - Weight: A measure of the predictive importance of the feature taken relative
-          to all features selected by the classifier. It ranges between 0 (little
-          contribution to the model) and 1 (large contribution to the model).
-
-        - Importance: Average of the exact Shapley values of each used feature
-          across the training data.
-
+    feature_used_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_,)
+        Importance of the features used by the classifier. The importance is
+        computed as the average of the exact Shapley values of each used feature
+        across the training dataset.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`

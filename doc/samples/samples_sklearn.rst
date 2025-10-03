@@ -72,7 +72,7 @@ Samples
     print(f"Features selected : {khc.n_features_used_}")
     print("Top 3 used features")
     for i, feature in enumerate(khc.feature_used_names_[:3]):
-        print(f"{feature} - Importance: {khc.feature_used_importances_[i][2]}")
+        print(f"{feature} - Importance: {khc.feature_used_importances_[i]}")
     print("---")
 
     print("Top 5 used features, among those present in the dataset")
@@ -198,7 +198,7 @@ Samples
     print(f"Features selected : {khc.n_features_used_}")
     print("Top 3 used features")
     for i, feature in enumerate(khc.feature_used_names_[:3]):
-        print(f"{feature} - Importance: {khc.feature_used_importances_[i][2]}")
+        print(f"{feature} - Importance: {khc.feature_used_importances_[i]}")
     print("---")
 
     # Predict the classes on the test dataset
@@ -318,7 +318,7 @@ Samples
     print(f"Features selected : {khc.n_features_used_}")
     print("Top 3 used features")
     for i, feature in enumerate(khc.feature_used_names_[:3]):
-        print(f"{feature} - Importance: {khc.feature_used_importances_[i][2]}")
+        print(f"{feature} - Importance: {khc.feature_used_importances_[i]}")
     print("---")
 
     # Predict the class on the test dataset
@@ -549,7 +549,7 @@ Samples
     print(f"Features selected : {khr.n_features_used_}")
     print("Top 3 used features")
     for i, feature in enumerate(khr.feature_used_names_[:3]):
-        print(f"{feature} - Importance: {khr.feature_used_importances_[i][2]}")
+        print(f"{feature} - Importance: {khr.feature_used_importances_[i]}")
     print("---")
 
     # Predict the values on the test dataset

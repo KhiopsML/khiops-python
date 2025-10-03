@@ -9,7 +9,6 @@ import unittest
 import warnings
 from os import path
 
-import numpy as np
 import pandas as pd
 
 from khiops import core as kh
@@ -89,7 +88,7 @@ class EstimatorAttributesTests(unittest.TestCase):
                 for var in modeling_report.get_snb_predictor().selected_variables
             ]
             feature_used_importances_report = [
-                [var.level, var.weight, var.importance]
+                var.importance
                 for var in modeling_report.get_snb_predictor().selected_variables
             ]
 
@@ -113,7 +112,7 @@ class EstimatorAttributesTests(unittest.TestCase):
                 if feature_name in feature_used_names:
                     feature_index = feature_used_names.index(feature_name)
                     feature_importances_report.append(
-                        feature_used_importances_report[feature_index][2]
+                        feature_used_importances_report[feature_index]
                     )
                 else:
                     feature_importances_report.append(0.0)
