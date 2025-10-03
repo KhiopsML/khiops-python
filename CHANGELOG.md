@@ -13,7 +13,13 @@
   comments, and dictionary and variable block internal comments.
 - (`core`) Dictionary `Rule` class and supporting API for serializing `Rule` instances.
 - (`core`) New way to add a variable to a dictionary using a complete specification.
+- (`core`) New API constants for rules used in automatic variable construction:
+  - `DEFAULT_CONSTRUCTION_RULES`: names of table and entity construction rules,
+    which are applied by default
+  - `CALENDRICAL_CONSTRUCTION_RULES`: names of date, time and timestamp rules.
 - (`sklearn`) `Text` Khiops type support at the estimator level.
+- (`sklearn`) The `feature_names_in_` and `feature_importances_` Khiops
+  classifier and regressor estimator attributes.
 
 ### Changed
 - (`core`) Dictionary API (DictionaryDomain, Dictionary, MetaData), 
