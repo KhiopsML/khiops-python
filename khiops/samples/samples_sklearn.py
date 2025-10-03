@@ -58,7 +58,6 @@ def khiops_classifier():
     khc.fit(X_train, y_train)
 
     # Show the feature importance info
-    print(f"Features evaluated: {khc.n_features_evaluated_}")
     print(f"Features selected : {khc.n_features_used_}")
     print("Top 3 used features")
     for i, feature in enumerate(khc.feature_used_names_[:3]):
@@ -191,7 +190,6 @@ def khiops_classifier_text():
     khc.fit(X_train, y_train)
 
     # Show the feature importance info
-    print(f"Features evaluated: {khc.n_features_evaluated_}")
     print(f"Features selected : {khc.n_features_used_}")
     print("Top 3 used features")
     for i, feature in enumerate(khc.feature_used_names_[:3]):
@@ -320,7 +318,6 @@ def khiops_classifier_multitable_snowflake():
     khc.fit(X_train, y_train)
 
     # Show the feature importance info
-    print(f"Features evaluated: {khc.n_features_evaluated_}")
     print(f"Features selected : {khc.n_features_used_}")
     print("Top 3 used features")
     for i, feature in enumerate(khc.feature_used_names_[:3]):
@@ -560,7 +557,6 @@ def khiops_regressor():
     khr.fit(X_train, y_train)
 
     # Show the feature importance info
-    print(f"Features evaluated: {khr.n_features_evaluated_}")
     print(f"Features selected : {khr.n_features_used_}")
     print("Top 3 used features")
     for i, feature in enumerate(khr.feature_used_names_[:3]):
@@ -704,13 +700,6 @@ def khiops_encoder_multitable_snowflake():
     # Create the KhiopsEncoder with 10 additional multitable features and fit it
     khe = KhiopsEncoder(n_features=10)
     khe.fit(X, y)
-
-    # Show the feature importance info
-    print(f"Features evaluated: {khe.n_features_evaluated_}")
-    print("Top 3 evaluated features")
-    for i, feature in enumerate(khe.feature_evaluated_names_[:3]):
-        print(f"{feature} - Level: {khe.feature_evaluated_importances_[i]}")
-    print("---")
 
     # Transform the train dataset
     print("Encoded feature names:")

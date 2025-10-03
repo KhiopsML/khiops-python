@@ -1449,59 +1449,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         if self.model_main_dictionary_name_ is None:
             raise ValueError("No model dictionary after Khiops call")
 
-        # Extract, from the preparation reports, the number of evaluated features,
-        # their names and their levels
-        univariate_preparation_report = self.model_report_.preparation_report
-        if self.model_report_.bivariate_preparation_report is not None:
-            bivariate_preparation_report = (
-                self.model_report_.bivariate_preparation_report
-            )
-            pair_feature_evaluated_names_ = (
-                bivariate_preparation_report.get_variable_pair_names()
-            )
-            pair_feature_evaluated_levels_ = [
-                bivariate_preparation_report.get_variable_pair_statistics(*var).level
-                for var in bivariate_preparation_report.get_variable_pair_names()
-            ]
-        else:
-            pair_feature_evaluated_names_ = []
-            pair_feature_evaluated_levels_ = []
-        if self.model_report_.tree_preparation_report is not None:
-            tree_preparation_report = self.model_report_.tree_preparation_report
-            tree_feature_evaluated_names_ = tree_preparation_report.get_variable_names()
-            tree_feature_evaluated_levels_ = [
-                tree_preparation_report.get_variable_statistics(var).level
-                for var in tree_preparation_report.get_variable_names()
-            ]
-        else:
-            tree_feature_evaluated_names_ = []
-            tree_feature_evaluated_levels_ = []
-
-        feature_evaluated_names_ = (
-            univariate_preparation_report.get_variable_names()
-            + pair_feature_evaluated_names_
-            + tree_feature_evaluated_names_
-        )
-        feature_evaluated_importances_ = np.array(
-            [
-                univariate_preparation_report.get_variable_statistics(var).level
-                for var in univariate_preparation_report.get_variable_names()
-            ]
-            + pair_feature_evaluated_levels_
-            + tree_feature_evaluated_levels_
-        )
-
-        # Sort the features by level
-        combined = list(zip(feature_evaluated_names_, feature_evaluated_importances_))
-        combined.sort(key=lambda x: x[1], reverse=True)
-
-        # Set the sklearn attributes
-        self.feature_evaluated_names_ = np.array(
-            [x[0] for x in combined], dtype=np.dtype("object")
-        )
-        self.feature_evaluated_importances_ = np.array([x[1] for x in combined])
-        self.n_features_evaluated_ = len(combined)
-
     def _transform_check_dataset(self, ds):
         assert isinstance(ds, Dataset), "'ds' is not 'Dataset'"
 
@@ -1859,13 +1806,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
              - the ``n_pairs`` parameter must be left to its default value, 0;
              - the ``n_text_features`` parameter must be set to 0.
 
-    n_features_evaluated_ : int
-        The number of features evaluated by the classifier.
-    feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Names of the features evaluated by the classifier.
-    feature_evaluated_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Level of the features evaluated by the classifier.
-        See below for a definition of the level.
     n_features_used_ : int
         The number of features used by the classifier.
     feature_used_names_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, )
@@ -2294,13 +2234,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
              - the ``n_pairs`` parameter must be left to its default value, 0;
              - the ``n_text_features`` parameter must be set to 0.
 
-    n_features_evaluated_ : int
-        The number of features evaluated by the classifier.
-    feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Names of the features evaluated by the classifier.
-    feature_evaluated_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Level of the features evaluated by the classifier.
-        See below for a definition of the level.
     n_features_used_ : int
         The number of features used by the classifier.
     feature_used_names_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, )
@@ -2561,14 +2494,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
     Attributes
     ----------
-    n_features_evaluated_ : int
-        The number of features evaluated by the classifier.
-    feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Names of the features evaluated by the classifier.
-    feature_evaluated_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Level of the features evaluated by the classifier. The Level is  measure of the
-        predictive importance of the feature taken individually. It ranges between 0 (no
-        predictive interest) and 1 (optimal predictive importance).
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
