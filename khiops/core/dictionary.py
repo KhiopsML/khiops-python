@@ -733,7 +733,7 @@ class Dictionary:
 
         Returns
         -------
-        `Metadata`
+        `MetaData`
             Metadata value associated to the specified key. ``None`` is returned
             if the metadata key is not found.
         """
@@ -1267,7 +1267,7 @@ class Variable:
 
         Returns
         -------
-        `Metadata`
+        `MetaData`
             Metadata value associated to the specified key. ``None`` is returned
             if the metadata key is not found.
         """
@@ -1527,7 +1527,7 @@ class VariableBlock:
 
         Returns
         -------
-        `Metadata`
+        `MetaData`
             Metadata value associated to the specified key. ``None`` is returned
             if the metadata key is not found.
         """
