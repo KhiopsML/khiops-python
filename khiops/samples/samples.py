@@ -432,7 +432,7 @@ def train_predictor_mt_with_specific_rules():
 
     It is the same as `.train_predictor_mt` but with the specification of the allowed
     variable construction rules. The list of available rules is found in the field
-    ``kh.all_construction_rules``
+    ``kh.ALL_CONSTRUCTION_RULES``
     """
     # Imports
     import os
