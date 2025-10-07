@@ -15,6 +15,11 @@
 - (`core`) New way to add a variable to a dictionary using a complete specification.
 - (`sklearn`) `Text` Khiops type support at the estimator level.
 
+### Changed
+- (`core`) Dictionary API (DictionaryDomain, Dictionary, MetaData), 
+  when a requested key is not found in getters, return ``None`` instead
+  of raising a `KeyError` exception.
+
 ### Fixed
 - (General) Inconsistency between the `tools.download_datasets` function and the
   current samples directory according to `core.api.get_samples_dir()`.
