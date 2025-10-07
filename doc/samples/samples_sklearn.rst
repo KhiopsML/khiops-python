@@ -70,8 +70,8 @@ Samples
 
     # Show the feature importance info
     print(f"Features selected : {khc.n_features_used_}")
-    print("Top 3 used features")
-    for i, feature in enumerate(khc.feature_used_names_[:3]):
+    print("Top 5 used features")
+    for i, feature in enumerate(khc.feature_used_names_[:5]):
         print(f"{feature} - Importance: {khc.feature_used_importances_[i]}")
     print("---")
 
