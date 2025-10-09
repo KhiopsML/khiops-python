@@ -931,6 +931,9 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Call parent constructor
         super().__init__()
 
+        # Initialize the khiops_env variables cache
+        self._khiops_env_cache = {}
+
         # Initialize Khiops environment
         self._initialize_khiops_environment()
 
@@ -972,7 +975,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                     "you have installed khiops >= 10.2.3. "
                     "Go to https://khiops.org for more information."
                 )
-
+        # Read the output of `khiops_env` into the env cache and update the environment
         with subprocess.Popen(
             [khiops_env_path, "--env"],
             stdout=subprocess.PIPE,
@@ -994,23 +997,16 @@ class KhiopsLocalRunner(KhiopsRunner):
                     var_value = ""
                 else:
                     continue
-                # Set paths to Khiops binaries
-                if var_name == "KHIOPS_PATH":
-                    self.khiops_path = var_value
-                    os.environ["KHIOPS_PATH"] = var_value
-                elif var_name == "KHIOPS_COCLUSTERING_PATH":
-                    self.khiops_coclustering_path = var_value
-                    os.environ["KHIOPS_COCLUSTERING_PATH"] = var_value
-                # Set MPI command
-                elif var_name == "KHIOPS_MPI_COMMAND":
-                    self._mpi_command_args = shlex.split(var_value)
-                    os.environ["KHIOPS_MPI_COMMAND"] = var_value
-                # Propagate all the other environment variables to Khiops binaries
-                else:
-                    os.environ[var_name] = var_value
+                self._khiops_env_cache[var_name] = var_value
+        os.environ.update(self._khiops_env_cache)
 
-                # Set KHIOPS_API_MODE to `true`
-                os.environ["KHIOPS_API_MODE"] = "true"
+        # Set the runner's fields from the environment
+        self.khiops_path = os.environ["KHIOPS_PATH"]
+        self.khiops_coclustering_path = os.environ["KHIOPS_COCLUSTERING_PATH"]
+        self._mpi_command_args = shlex.split(os.environ["KHIOPS_MPI_COMMAND"])
+
+        # Set KHIOPS_API_MODE to `true`
+        os.environ["KHIOPS_API_MODE"] = "true"
 
         # Check the tools exist and are executable
         self._check_tools()
@@ -1253,11 +1249,14 @@ class KhiopsLocalRunner(KhiopsRunner):
         return error_list, warning_list
 
     def _build_status_message(self):
+        # Refresh the environment if the env cache was invalidated
+        self._refresh_khiops_env_if_cache_invalidated()
+
         # Call the parent's method
         status_msg, error_list, warning_list = super()._build_status_message()
 
+        # Obtain the installation errors and warnings
         library_root_dir = Path(__file__).parents[2]
-
         installation_errors, installation_warnings = (
             self._detect_library_installation_incompatibilities(library_root_dir)
         )
@@ -1422,6 +1421,9 @@ class KhiopsLocalRunner(KhiopsRunner):
                 type_error_message("command_line_args", command_line_args, list)
             )
 
+        # Refresh the environment if the env cache was invalidated
+        self._refresh_khiops_env_if_cache_invalidated()
+
         # Build command line arguments
         khiops_process_args = []
         if use_mpi:
@@ -1456,6 +1458,22 @@ class KhiopsLocalRunner(KhiopsRunner):
             stdout, stderr = khiops_process.communicate()
 
         return stdout, stderr, khiops_process.returncode
+
+    def _refresh_khiops_env_if_cache_invalidated(self):
+        """Update the Khiops environment khiops_env only if variables have changed"""
+        # Check if the cache is invalidated
+        cache_invalidated = False
+        for cached_var_name, cached_var_value in self._khiops_env_cache.items():
+            if (
+                cached_var_name not in os.environ
+                or os.environ[cached_var_name] != cached_var_value
+            ):
+                cache_invalidated = True
+                break
+
+        # If the cache is invalidated then refresh the environment
+        if cache_invalidated:
+            self._initialize_khiops_environment()
 
     def _run(
         self,
