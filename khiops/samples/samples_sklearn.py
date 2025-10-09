@@ -67,7 +67,7 @@ def khiops_classifier():
     print("Top 5 used features, among those present in the dataset")
     for feature, importance in sorted(
         zip(khc.feature_names_in_, khc.feature_importances_),
-        key=lambda imp: float(imp[1]),
+        key=lambda imp: imp[1],
         reverse=True,
     )[:5]:
         print(f"{feature} - Importance: {importance}")

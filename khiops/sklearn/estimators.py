@@ -1557,21 +1557,19 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             )
             self.feature_used_names_ = feature_used_names_
             self.feature_used_importances_ = feature_used_importances_
-            self.n_features_used_ = len(self.feature_used_names_)
-
-        # feature_used_names_ is not set if no variable is selected in the model
-        feature_used_names = getattr(self, "feature_used_names_", [])
+        else:
+            self.feature_used_names_ = []
+            self.feature_used_importances_ = np.array([])
+        self.n_features_used_ = len(self.feature_used_names_)
 
         # Compute feature importances
-        feature_importances = []
-        for feature_name in self.feature_names_in_:
-            if feature_name in feature_used_names:
-                feature_index = np.where(feature_used_names == feature_name)
-                feature_importance = self.feature_used_importances_[feature_index][0]
-            else:
-                feature_importance = 0.0
-            feature_importances.append(feature_importance)
-        self.feature_importances_ = np.array(feature_importances)
+        self.feature_importances_ = np.zeros(self.feature_names_in_.shape)
+        for i, feature_name in enumerate(self.feature_names_in_):
+            if feature_name in self.feature_used_names_:
+                feature_index = np.where(self.feature_used_names_ == feature_name)
+                self.feature_importances_[i] = self.feature_used_importances_[
+                    feature_index
+                ][0]
 
     def __sklearn_tags__(self):
         # If we don't implement this trivial method it's not found by the sklearn. This
