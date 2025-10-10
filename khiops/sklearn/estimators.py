@@ -1733,8 +1733,9 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     Parameters
     ----------
     n_features : int, default 100
-        *Multi-table only* : Maximum number of multi-table aggregate features to
-        construct. See :doc:`/multi_table_primer` for more details.
+        Maximum number of features to construct automatically. See
+        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        features.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features are 2D grid
         partitions of univariate feature pairs. The grid is optimized such that in each
@@ -1769,8 +1770,9 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
     construction_rules : list of str, optional
-        Allowed rules for the automatic feature construction. If not set, it uses all
-        possible rules.
+        Allowed rules for the automatic feature construction. If not set, Khiops
+        uses the multi-table construction rules listed in
+        `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`
     group_target_value : bool, default ``False``
         Allows grouping of the target values in classification. It can substantially
         increase the training time.
@@ -2181,8 +2183,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     Parameters
     ----------
     n_features : int, default 100
-        *Multi-table only* : Maximum number of multi-table aggregate features to
-        construct. See :doc:`/multi_table_primer` for more details.
+        Maximum number of features to construct automatically. See
+        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        features.
     n_selected_features : int, default 0
         Maximum number of features to be selected in the SNB predictor. If equal to
         0 it selects all the features kept in the training.
@@ -2190,8 +2193,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         Maximum number of features to be evaluated in the SNB predictor training. If
         equal to 0 it evaluates all informative features.
     construction_rules : list of str, optional
-        Allowed rules for the automatic feature construction. If not set, it uses all
-         possible rules.
+        Allowed rules for the automatic feature construction. If not set, Khiops
+        uses the multi-table construction rules listed in
+        `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`.
     verbose : bool, default ``False``
         If ``True`` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
@@ -2403,8 +2407,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     categorical_target : bool, default ``True``
         ``True`` if the target column is categorical.
     n_features : int, default 100
-        *Multi-table only* : Maximum number of multi-table aggregate features to
-        construct. See :doc:`/multi_table_primer` for more details.
+        Maximum number of features to construct automatically. See
+        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        features.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features are 2D grid
         partitions of univariate feature pairs. The grid is optimized such that in each
@@ -2432,8 +2437,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
     construction_rules : list of str, optional
-        Allowed rules for the automatic feature construction. If not set, it uses all
-         possible rules.
+        Allowed rules for the automatic feature construction. If not set, Khiops
+        uses the multi-table construction rules listed in
+        `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`.
     informative_features_only : bool, default ``True``
         If ``True`` keeps only informative features.
     group_target_value : bool, default ``False``
