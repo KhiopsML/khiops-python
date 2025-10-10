@@ -68,14 +68,6 @@ Samples
     # Train the classifier
     khc.fit(X_train, y_train)
 
-    # Show the feature importance info
-    print(f"Features evaluated: {khc.n_features_evaluated_}")
-    print(f"Features selected : {khc.n_features_used_}")
-    print("Top 3 used features")
-    for i, feature in enumerate(khc.feature_used_names_[:3]):
-        print(f"{feature} - Importance: {khc.feature_used_importances_[i][2]}")
-    print("---")
-
     # Predict the classes on the test dataset
     y_test_pred = khc.predict(X_test)
     print("Predicted classes (first 10):")
@@ -185,14 +177,6 @@ Samples
 
     # Train the classifier
     khc.fit(X_train, y_train)
-
-    # Show the feature importance info
-    print(f"Features evaluated: {khc.n_features_evaluated_}")
-    print(f"Features selected : {khc.n_features_used_}")
-    print("Top 3 used features")
-    for i, feature in enumerate(khc.feature_used_names_[:3]):
-        print(f"{feature} - Importance: {khc.feature_used_importances_[i][2]}")
-    print("---")
 
     # Predict the classes on the test dataset
     y_test_pred = khc.predict(X_test)
@@ -306,14 +290,6 @@ Samples
     # Train the classifier (by default it creates 1000 multi-table features)
     khc = KhiopsClassifier(n_trees=0)
     khc.fit(X_train, y_train)
-
-    # Show the feature importance info
-    print(f"Features evaluated: {khc.n_features_evaluated_}")
-    print(f"Features selected : {khc.n_features_used_}")
-    print("Top 3 used features")
-    for i, feature in enumerate(khc.feature_used_names_[:3]):
-        print(f"{feature} - Importance: {khc.feature_used_importances_[i][2]}")
-    print("---")
 
     # Predict the class on the test dataset
     y_test_pred = khc.predict(X_test)
@@ -539,14 +515,6 @@ Samples
     # Train the regressor
     khr.fit(X_train, y_train)
 
-    # Show the feature importance info
-    print(f"Features evaluated: {khr.n_features_evaluated_}")
-    print(f"Features selected : {khr.n_features_used_}")
-    print("Top 3 used features")
-    for i, feature in enumerate(khr.feature_used_names_[:3]):
-        print(f"{feature} - Importance: {khr.feature_used_importances_[i][2]}")
-    print("---")
-
     # Predict the values on the test dataset
     y_test_pred = khr.predict(X_test)
     print("Predicted values for 'age' (first 10):")
@@ -666,13 +634,6 @@ Samples
     # Create the KhiopsEncoder with 10 additional multitable features and fit it
     khe = KhiopsEncoder(n_features=10)
     khe.fit(X, y)
-
-    # Show the feature importance info
-    print(f"Features evaluated: {khe.n_features_evaluated_}")
-    print("Top 3 evaluated features")
-    for i, feature in enumerate(khe.feature_evaluated_names_[:3]):
-        print(f"{feature} - Level: {khe.feature_evaluated_importances_[i]}")
-    print("---")
 
     # Transform the train dataset
     print("Encoded feature names:")
