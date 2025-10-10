@@ -1821,6 +1821,8 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         - Importance: The geometric mean between the Level and the Weight.
 
+    n_features_in_ : int
+        The number of features in the main table of the training dataset.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -2236,6 +2238,8 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
         - Importance: The geometric mean between the Level and the Weight.
 
+    n_features_in_ : int
+        The number of features in the main table of the training dataset.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
