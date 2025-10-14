@@ -31,18 +31,10 @@ from khiops.core.internals.common import (
 from khiops.core.internals.runner import get_runner
 from khiops.core.internals.task import get_task_registry
 
-# List of all available construction rules in the Khiops tool
-all_construction_rules = [
-    "Day",
-    "DecimalTime",
-    "DecimalWeekDay",
-    "DecimalYear",
-    "DecimalYearTS",
-    "GetDate",
-    "GetTime",
+# Construction rules
+DEFAULT_CONSTRUCTION_RULES = [
     "GetValue",
     "GetValueC",
-    "LocalTimestamp",
     "TableCount",
     "TableCountDistinct",
     "TableMax",
@@ -53,9 +45,37 @@ all_construction_rules = [
     "TableSelection",
     "TableStdDev",
     "TableSum",
+]
+"""List of construction rules that Khiops uses by default
+
+.. note::
+    These are all the multi-table rules.
+"""  # pylint: disable=pointless-string-statement
+
+CALENDRICAL_CONSTRUCTION_RULES = [
+    "Day",
+    "DecimalTime",
+    "DecimalWeekDay",
+    "DecimalYear",
+    "DecimalYearTS",
+    "GetDate",
+    "GetTime",
+    "LocalTimestamp",
     "WeekDay",
     "YearDay",
 ]
+"""List of calendrical construction rules
+
+These rules include: date, time and timestamp rules.
+
+.. note::
+    These rules are not enabled by default. The user needs to explicitly
+    select each of them via the ``construction_rules`` parameter of the
+    relevant Core API functions.
+"""  # pylint: disable=pointless-string-statement
+
+# List of all available construction rules in the Khiops tool
+ALL_CONSTRUCTION_RULES = DEFAULT_CONSTRUCTION_RULES + CALENDRICAL_CONSTRUCTION_RULES
 
 ##########################
 # Private module methods #
@@ -758,8 +778,9 @@ def train_predictor(
     max_constructed_variables : int, default 1000
         Maximum number of variables to construct.
     construction_rules : list of str, optional
-        Allowed rules for the automatic variable construction. If not set it uses all
-        possible rules.
+        Allowed rules for the automatic variable construction. If not set, Khiops
+        uses the multi-table construction rules listed in
+        `DEFAULT_CONSTRUCTION_RULES`.
     max_text_features : int, default 10000
         Maximum number of text features to construct.
     text_features : str, default "words"
@@ -1190,21 +1211,22 @@ def train_recoder(
     max_constructed_variables : int, default 100
         Maximum number of variables to construct.
     construction_rules : list of str, optional
-        Allowed rules for the automatic variable construction. If not set it uses all
-        possible rules.
+        Allowed rules for the automatic variable construction. If not set, Khiops
+        uses the multi-table construction rules listed in
+        `DEFAULT_CONSTRUCTION_RULES`.
     max_text_features : int, default 10000
         Maximum number of text features to construct.
     text_features : str, default "words"
         Type of the text features. Can be either one of:
 
-        - "words": sequences of non-space characters
-        - "ngrams": sequences of bytes
-        - "tokens": user-defined
+            - "words": sequences of non-space characters
+            - "ngrams": sequences of bytes
+            - "tokens": user-defined
 
     max_trees : int, default 10
         Maximum number of trees to construct.
     max_pairs : int, default 0
-        Maximum number of variables pairs to construct.
+        Maximum number of variable pairs to construct.
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs

@@ -9,7 +9,6 @@ import unittest
 import warnings
 from os import path
 
-import numpy as np
 import pandas as pd
 
 from khiops import core as kh
@@ -74,93 +73,6 @@ class EstimatorAttributesTests(unittest.TestCase):
             self.assertEqual(model.classes_.tolist(), sorted(y.unique()))
             self.assertEqual(model.n_classes_, len(y.unique()))
             self.assertEqual(model.n_features_in_, len(X.columns))
-
-        # Extract the features and their levels from the report
-        # TODO: Eliminate this as this is the implementation
-        #       Think of a better lighter test: For example verify that the variable are
-        #       in order within the 3 feature lists (simple, pairs and trees).
-        #       Do similarly below with the selected variables.
-        univariate_preparation_report = model.model_report_.preparation_report
-        if model.model_report_.bivariate_preparation_report is not None:
-            bivariate_preparation_report = (
-                model.model_report_.bivariate_preparation_report
-            )
-            pair_feature_evaluated_names_ = (
-                bivariate_preparation_report.get_variable_pair_names()
-            )
-            pair_feature_evaluated_levels_ = [
-                [
-                    bivariate_preparation_report.get_variable_pair_statistics(
-                        var[0], var[1]
-                    ).level
-                ]
-                for var in bivariate_preparation_report.get_variable_pair_names()
-            ]
-        else:
-            pair_feature_evaluated_names_ = []
-            pair_feature_evaluated_levels_ = []
-        if model.model_report_.tree_preparation_report is not None:
-            tree_preparation_report = model.model_report_.tree_preparation_report
-            tree_feature_evaluated_names_ = tree_preparation_report.get_variable_names()
-            tree_feature_evaluated_levels_ = [
-                [tree_preparation_report.get_variable_statistics(var).level]
-                for var in tree_preparation_report.get_variable_names()
-            ]
-        else:
-            tree_feature_evaluated_names_ = []
-            tree_feature_evaluated_levels_ = []
-
-        feature_evaluated_names_report_ = (
-            univariate_preparation_report.get_variable_names()
-            + pair_feature_evaluated_names_
-            + tree_feature_evaluated_names_
-        )
-        feature_evaluated_importances_report = np.array(
-            [
-                [univariate_preparation_report.get_variable_statistics(var).level]
-                for var in univariate_preparation_report.get_variable_names()
-            ]
-            + pair_feature_evaluated_levels_
-            + tree_feature_evaluated_levels_
-        )
-
-        # Sort the features by level
-        combined = list(
-            zip(feature_evaluated_names_report_, feature_evaluated_importances_report)
-        )
-        combined.sort(key=lambda x: x[1], reverse=True)
-        feature_names = list(x[0] for x in combined)
-        feature_levels = list(x[1] for x in combined)
-
-        # Check that the features and their levels were extracted in order
-        self.assertEqual(
-            model.n_features_evaluated_, len(feature_evaluated_names_report_)
-        )
-        self.assertEqual(model.feature_evaluated_names_.tolist(), list(feature_names))
-        self.assertEqual(model.feature_evaluated_importances_.tolist(), feature_levels)
-
-        modeling_report = model.model_report_.modeling_report
-        # Check the selected variables for the regressor and classifier
-        if not isinstance(model, KhiopsEncoder):
-            # Extract the selected variables and their importances from the report
-            # TODO: See TODO above
-            feature_used_names = [
-                var.name
-                for var in modeling_report.get_snb_predictor().selected_variables
-            ]
-            feature_used_importances_report = [
-                [var.level, var.weight, var.importance]
-                for var in modeling_report.get_snb_predictor().selected_variables
-            ]
-
-            self.assertEqual(model.feature_used_names_.tolist(), feature_used_names)
-            self.assertEqual(
-                model.feature_used_importances_.tolist(),
-                feature_used_importances_report,
-            )
-            self.assertEqual(
-                model.n_features_used_, len(feature_used_importances_report)
-            )
 
     def test_classifier_attributes_monotable(self):
         """Test consistency of KhiopsClassifier's attributes with the output reports

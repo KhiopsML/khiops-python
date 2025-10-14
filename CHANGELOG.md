@@ -13,12 +13,22 @@
   comments, and dictionary and variable block internal comments.
 - (`core`) Dictionary `Rule` class and supporting API for serializing `Rule` instances.
 - (`core`) New way to add a variable to a dictionary using a complete specification.
+- (`core`) New API constants for rules used in automatic variable construction:
+  - `DEFAULT_CONSTRUCTION_RULES`: names of table and entity construction rules,
+    which are applied by default
+  - `CALENDRICAL_CONSTRUCTION_RULES`: names of date, time and timestamp rules.
 - (`sklearn`) `Text` Khiops type support at the estimator level.
 
 ### Changed
 - (`core`) Dictionary API (DictionaryDomain, Dictionary, MetaData), 
   when a requested key is not found in getters, return ``None`` instead
   of raising a `KeyError` exception.
+
+### Removed
+- (`sklearn`) Remove the `n_features_evaluated_`, `feature_evaluated_names`,
+  `feature_evaluated_importances_`, `n_features_used_`, `feature_used_names_`
+  and `feature_used_importances_` Khiops classifier and regressor estimator
+  attributes.
 
 ### Fixed
 - (General) Inconsistency between the `tools.download_datasets` function and the

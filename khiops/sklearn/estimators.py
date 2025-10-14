@@ -1448,59 +1448,6 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         if self.model_main_dictionary_name_ is None:
             raise ValueError("No model dictionary after Khiops call")
 
-        # Extract, from the preparation reports, the number of evaluated features,
-        # their names and their levels
-        univariate_preparation_report = self.model_report_.preparation_report
-        if self.model_report_.bivariate_preparation_report is not None:
-            bivariate_preparation_report = (
-                self.model_report_.bivariate_preparation_report
-            )
-            pair_feature_evaluated_names_ = (
-                bivariate_preparation_report.get_variable_pair_names()
-            )
-            pair_feature_evaluated_levels_ = [
-                bivariate_preparation_report.get_variable_pair_statistics(*var).level
-                for var in bivariate_preparation_report.get_variable_pair_names()
-            ]
-        else:
-            pair_feature_evaluated_names_ = []
-            pair_feature_evaluated_levels_ = []
-        if self.model_report_.tree_preparation_report is not None:
-            tree_preparation_report = self.model_report_.tree_preparation_report
-            tree_feature_evaluated_names_ = tree_preparation_report.get_variable_names()
-            tree_feature_evaluated_levels_ = [
-                tree_preparation_report.get_variable_statistics(var).level
-                for var in tree_preparation_report.get_variable_names()
-            ]
-        else:
-            tree_feature_evaluated_names_ = []
-            tree_feature_evaluated_levels_ = []
-
-        feature_evaluated_names_ = (
-            univariate_preparation_report.get_variable_names()
-            + pair_feature_evaluated_names_
-            + tree_feature_evaluated_names_
-        )
-        feature_evaluated_importances_ = np.array(
-            [
-                univariate_preparation_report.get_variable_statistics(var).level
-                for var in univariate_preparation_report.get_variable_names()
-            ]
-            + pair_feature_evaluated_levels_
-            + tree_feature_evaluated_levels_
-        )
-
-        # Sort the features by level
-        combined = list(zip(feature_evaluated_names_, feature_evaluated_importances_))
-        combined.sort(key=lambda x: x[1], reverse=True)
-
-        # Set the sklearn attributes
-        self.feature_evaluated_names_ = np.array(
-            [x[0] for x in combined], dtype=np.dtype("object")
-        )
-        self.feature_evaluated_importances_ = np.array([x[1] for x in combined])
-        self.n_features_evaluated_ = len(combined)
-
     def _transform_check_dataset(self, ds):
         assert isinstance(ds, Dataset), "'ds' is not 'Dataset'"
 
@@ -1686,25 +1633,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
 
         return model_copy, output_columns_dtype
 
-    def get_feature_used_statistics(self, modeling_report):
-        # Extract, from the modeling report, names, levels, weights and importances
-        # of the selected features.
-        if modeling_report.selected_variables is not None:
-            feature_used_names_ = np.array(
-                [var.name for var in modeling_report.selected_variables]
-            )
-            feature_used_importances_ = np.array(
-                [
-                    [var.level, var.weight, var.importance]
-                    for var in modeling_report.selected_variables
-                ]
-            )
-        # Return empty arrays if no selected variables are available
-        else:
-            feature_used_names_ = np.array([], dtype=np.dtype("<U1"))
-            feature_used_importances_ = np.array([])
-        return feature_used_names_, feature_used_importances_
-
     def _fit_check_params(self, ds, **kwargs):
         # Call parent method
         super()._fit_check_params(ds, **kwargs)
@@ -1733,8 +1661,9 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     Parameters
     ----------
     n_features : int, default 100
-        *Multi-table only* : Maximum number of multi-table aggregate features to
-        construct. See :doc:`/multi_table_primer` for more details.
+        Maximum number of features to construct automatically. See
+        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        features.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features are 2D grid
         partitions of univariate feature pairs. The grid is optimized such that in each
@@ -1769,8 +1698,9 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
     construction_rules : list of str, optional
-        Allowed rules for the automatic feature construction. If not set, it uses all
-        possible rules.
+        Allowed rules for the automatic feature construction. If not set, Khiops
+        uses the multi-table construction rules listed in
+        `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`
     group_target_value : bool, default ``False``
         Allows grouping of the target values in classification. It can substantially
         increase the training time.
@@ -1795,30 +1725,8 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     classes_ : `ndarray <numpy.ndarray>` of shape (n_classes\_,)
         The list of classes seen in training. Depending on the training target, the
         contents are ``int`` or ``str``.
-    n_features_evaluated_ : int
-        The number of features evaluated by the classifier.
-    feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Names of the features evaluated by the classifier.
-    feature_evaluated_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Level of the features evaluated by the classifier.
-        See below for a definition of the level.
-    n_features_used_ : int
-        The number of features used by the classifier.
-    feature_used_names_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, )
-        Names of the features used by the classifier.
-    feature_used_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, 3)
-        Level, Weight and Importance of the features used by the classifier:
-
-        - Level: A measure of the predictive importance of the feature taken
-          individually. It ranges between 0 (no predictive interest) and 1 (optimal
-          predictive importance).
-
-        - Weight: A measure of the predictive importance of the feature taken relative
-          to all features selected by the classifier. It ranges between 0 (little
-          contribution to the model) and 1 (large contribution to the model).
-
-        - Importance: The geometric mean between the Level and the Weight.
-
+    n_features_in_ : int
+        The number of features in the main table of the training dataset.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -2029,16 +1937,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
                 if key.startswith("TargetProb"):
                     variable.used = True
 
-        # Extract statistics, about the selected features, from the modeling report
-        modeling_report = self.model_report_.modeling_report.get_snb_predictor()
-        if modeling_report.selected_variables is not None:
-            feature_used_names_, feature_used_importances_ = (
-                self.get_feature_used_statistics(modeling_report)
-            )
-            self.feature_used_names_ = feature_used_names_
-            self.feature_used_importances_ = feature_used_importances_
-            self.n_features_used_ = len(self.feature_used_names_)
-
     def predict(self, X):
         """Predicts the most probable class for the test dataset X
 
@@ -2181,8 +2079,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     Parameters
     ----------
     n_features : int, default 100
-        *Multi-table only* : Maximum number of multi-table aggregate features to
-        construct. See :doc:`/multi_table_primer` for more details.
+        Maximum number of features to construct automatically. See
+        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        features.
     n_selected_features : int, default 0
         Maximum number of features to be selected in the SNB predictor. If equal to
         0 it selects all the features kept in the training.
@@ -2190,8 +2089,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         Maximum number of features to be evaluated in the SNB predictor training. If
         equal to 0 it evaluates all informative features.
     construction_rules : list of str, optional
-        Allowed rules for the automatic feature construction. If not set, it uses all
-         possible rules.
+        Allowed rules for the automatic feature construction. If not set, Khiops
+        uses the multi-table construction rules listed in
+        `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`.
     verbose : bool, default ``False``
         If ``True`` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
@@ -2208,30 +2108,8 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
     Attributes
     ----------
-    n_features_evaluated_ : int
-        The number of features evaluated by the classifier.
-    feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Names of the features evaluated by the classifier.
-    feature_evaluated_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Level of the features evaluated by the classifier.
-        See below for a definition of the level.
-    n_features_used_ : int
-        The number of features used by the classifier.
-    feature_used_names_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, )
-        Names of the features used by the classifier.
-    feature_used_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_used\_, 3)
-        Level, Weight and Importance of the features used by the classifier:
-
-        - Level: A measure of the predictive importance of the feature taken
-          individually. It ranges between 0 (no predictive interest) and 1 (optimal
-          predictive importance).
-
-        - Weight: A measure of the predictive importance of the feature taken relative
-          to all features selected by the classifier. It ranges between 0 (little
-          contribution to the model) and 1 (large contribution to the model).
-
-        - Importance: The geometric mean between the Level and the Weight.
-
+    n_features_in_ : int
+        The number of features in the main table of the training dataset.
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
@@ -2335,16 +2213,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         for variable_name in variables_to_eliminate:
             self._get_main_dictionary().remove_variable(variable_name)
 
-        # Extract statistics, about the selected features, from the modeling report
-        modeling_report = self.model_report_.modeling_report.get_snb_predictor()
-        if modeling_report.selected_variables is not None:
-            feature_used_names_, feature_used_importances_ = (
-                self.get_feature_used_statistics(modeling_report)
-            )
-            self.feature_used_names_ = feature_used_names_
-            self.feature_used_importances_ = feature_used_importances_
-            self.n_features_used_ = len(self.feature_used_names_)
-
     def _check_target_type(self, ds):
         _check_numerical_target_type(ds)
 
@@ -2403,8 +2271,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     categorical_target : bool, default ``True``
         ``True`` if the target column is categorical.
     n_features : int, default 100
-        *Multi-table only* : Maximum number of multi-table aggregate features to
-        construct. See :doc:`/multi_table_primer` for more details.
+        Maximum number of features to construct automatically. See
+        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        features.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features are 2D grid
         partitions of univariate feature pairs. The grid is optimized such that in each
@@ -2432,8 +2301,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         Pairs specified with ``specific_pairs`` have top priority: they are constructed
         first.
     construction_rules : list of str, optional
-        Allowed rules for the automatic feature construction. If not set, it uses all
-         possible rules.
+        Allowed rules for the automatic feature construction. If not set, Khiops
+        uses the multi-table construction rules listed in
+        `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`.
     informative_features_only : bool, default ``True``
         If ``True`` keeps only informative features.
     group_target_value : bool, default ``False``
@@ -2484,14 +2354,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
     Attributes
     ----------
-    n_features_evaluated_ : int
-        The number of features evaluated by the classifier.
-    feature_evaluated_names_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Names of the features evaluated by the classifier.
-    feature_evaluated_importances_ : `ndarray <numpy.ndarray>` of shape (n_features_evaluated\_,)
-        Level of the features evaluated by the classifier. The Level is  measure of the
-        predictive importance of the feature taken individually. It ranges between 0 (no
-        predictive interest) and 1 (optimal predictive importance).
     is_multitable_model_ : bool
         ``True`` if the model was fitted on a multi-table dataset.
     model_ : `.DictionaryDomain`
