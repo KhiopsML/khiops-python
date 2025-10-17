@@ -20,14 +20,7 @@ on:
         options: [None, testpypi, pypi]
         description: Publish to Test PyPI or PyPI
   pull_request:
-    paths:
-      - setup.py
-      - setup.cfg
-      - pyproject.toml
-      - LICENSE.md
-      - versioneer.py
-      - khiops/_version.py
-      - .github/workflows/pip.yml
+    paths: [pyproject.toml, LICENSE.md, .github/workflows/pip.yml]
   push:
     tags: ['*']
 concurrency:

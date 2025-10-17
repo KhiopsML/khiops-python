@@ -1,5 +1,2 @@
 # Commit message template always have Unix endlines
 .git_commit_template eol=lf
-
-# Versioneer
-khiops/_version.py export-subst
