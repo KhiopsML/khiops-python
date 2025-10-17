@@ -10,7 +10,7 @@ repos:
     hooks:
       - id: pylint
         language_version: python3
-        exclude: doc/convert_samples.py|doc/conf.py|versioneer.py|khiops/_version.py|setup.py
+        exclude: doc/convert_samples.py|doc/conf.py
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:

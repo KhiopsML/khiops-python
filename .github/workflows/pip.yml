@@ -1,4 +1,7 @@
 ---
+# After building and testing the pip package,
+# this workflow publishes it to Github Release by default
+# and to Test PyPI (TEST) or PyPI (PROD) if requested
 name: Pip Package
 env:
   DEFAULT_SAMPLES_REVISION: 11.0.0
@@ -11,15 +14,13 @@ on:
       image-tag:
         default: 11.0.0-b.0.0
         description: Development Docker Image Tag
+      pypi-target:
+        type: choice
+        default: None  # no publishing to any Package Index by default
+        options: [None, testpypi, pypi]
+        description: Publish to Test PyPI or PyPI
   pull_request:
-    paths:
-      - setup.py
-      - setup.cfg
-      - pyproject.toml
-      - LICENSE.md
-      - versioneer.py
-      - khiops/_version.py
-      - .github/workflows/pip.yml
+    paths: [pyproject.toml, LICENSE.md, .github/workflows/pip.yml]
   push:
     tags: ['*']
 concurrency:
@@ -51,9 +52,9 @@ jobs:
           # Install required Python build dependency
           pip install build
 
-          # Build the package
+          # Build the source package (sdist) only          
           python3 -m build --sdist
-      - name: Upload package as artifact
+      - name: Upload the package as artifact
         uses: actions/upload-artifact@v4
         with:
           name: pip-package
@@ -119,8 +120,12 @@ jobs:
           # The MPI command is not always named mpiexec, but can be orterun etc
           # (as given by khiops_env)
           kh-status | grep "MPI command" | grep -vwq "<empty>"
-  release:
-    if: github.ref_type == 'tag'
+  # The implementation of a unique release job with multiple conditional steps
+  # for each publishing mode is not chosen
+  # because of the required job environment verified for Trusted Publishing
+  release-github:
+    # only publish on tag pushes
+    if: github.ref_type == 'tag' && github.repository_owner == 'KhiopsML'
     needs: [build, test]
     runs-on: ubuntu-22.04
     permissions:
@@ -130,7 +135,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: pip-package
-      - name: Upload Pip package to the release
+      - name: Upload Pip source package to the github release
         uses: ncipollo/release-action@v1.15.0
         with:
           allowUpdates: true
@@ -140,3 +145,46 @@ jobs:
           makeLatest: false
           prerelease: true
           updateOnlyUnreleased: true
+  release-testpypi:
+    # only publish on testpypi if requested and on tag pushes
+    if: inputs.pypi-target == 'testpypi' && github.ref_type == 'tag' && github.repository_owner == 'KhiopsML'
+    needs: [build, test]
+    runs-on: ubuntu-22.04
+    permissions:
+      # IMPORTANT: OIDC token mandatory for trusted publishing on TestPyPI and PyPI
+      id-token: write
+    # required job environment verified for Trusted Publishing
+    environment:
+      name: testpypi
+    steps:
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pip-package
+          path: dist/
+      - name: Publish Python distribution to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+          repository-url: https://test.pypi.org/legacy/
+  release-pypi:
+    # only publish on pypi if requested and on tag pushes
+    if: inputs.pypi-target == 'pypi' && github.ref_type == 'tag' && github.repository_owner == 'KhiopsML'
+    needs: [build, test]
+    runs-on: ubuntu-22.04
+    permissions:
+      # IMPORTANT: OIDC token mandatory for trusted publishing on TestPyPI and PyPI
+      id-token: write
+    # required job environment verified for Trusted Publishing
+    environment:
+      name: pypi
+    steps:
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pip-package
+          path: dist/
+      - name: Publish Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
