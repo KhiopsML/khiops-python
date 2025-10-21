@@ -238,6 +238,24 @@ jobs:
           # See the upload-artifact step in the build job for the explanation of this pattern
           name: khiops-conda
           path: ./khiops-conda
+      - name: Check Conda package / Git tag version coherence
+        run: |
+          # Don't exit on first error: print relevant error message
+          set +e
+          # Extract Conda package version from the package artifact
+          PACKAGE_VERSION=$( \
+            unzip -p ./khiops-conda/noarch/*.conda info-*.tar.zst \
+            | tar --zstd -axf - info/index.json -O \
+            | jq -r ".version" \
+          )
+          # Convert pre-release version specification in the Git tag to the
+          # Conda format and check that it matches the Conda package version
+          echo ${{ github.ref_name }} | tr -d '-' | grep -wq $PACKAGE_VERSION
+          if [[ $? -ne 0 ]]
+          then
+            echo "::error::Conda package version $PACKAGE_VERSION does not match Git tag ${{ github.ref_name }}"
+            false
+          fi
       - name: Install Miniforge
         uses: conda-incubator/setup-miniconda@v3
         with:
