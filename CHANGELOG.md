@@ -9,6 +9,7 @@
 ## Unreleased -
 
 ### Added
+- (General) Support for Python 3.14.
 - (`core`) Dictionary API support for dictionary, variable and variable block
   comments, and dictionary and variable block internal comments.
 - (`core`) Dictionary `Rule` class and supporting API for serializing `Rule` instances.
