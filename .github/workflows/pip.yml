@@ -90,6 +90,10 @@ jobs:
           name: pip-package
       - name: Install package
         run: |
+          # Allow Pip to write to its cache
+          mkdir -p /github/home/.cache/pip
+          chown -R $(whoami) /github/home/.cache/pip
+          # Install the Khiops Python library
           pip install --upgrade pip
           pip install $(ls khiops*.tar.gz)
       - name: Run tests
@@ -120,6 +124,22 @@ jobs:
           # The MPI command is not always named mpiexec, but can be orterun etc
           # (as given by khiops_env)
           kh-status | grep "MPI command" | grep -vwq "<empty>"
+      - name: Test package / Git tag version coherence
+        shell: bash
+        if: github.ref_type == 'tag'
+        run: |
+          # Don't exit on first error: print relevant error message
+          set +e
+          # Convert pre-release version specification in the Git tag to the Pip
+          # format and check that it matches the Pip package version
+          PACKAGE_VERSION=$(pip show khiops | awk 'BEGIN {FS = ": "} $1 ~ /^Version$/ {print $2}')
+          echo ${{ github.ref_name }} | tr -d '-' | rev | sed 's/\.//' | rev | \
+            grep -wq $PACKAGE_VERSION
+          if [[ $? -ne 0 ]]
+          then
+            echo "::error::Python package version $PACKAGE_VERSION does not match Git tag ${{ github.ref_name }}"
+            false
+          fi
   # The implementation of a unique release job with multiple conditional steps
   # for each publishing mode is not chosen
   # because of the required job environment verified for Trusted Publishing
