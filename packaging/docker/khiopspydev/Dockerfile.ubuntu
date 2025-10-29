@@ -67,7 +67,7 @@ RUN true \
         # khiops core \
         $CONDA install -y -n py${version}_conda ${RC_LABEL}khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
         # remote files drivers installed in the conda environment \
-        $CONDA install -y -n py${version}_conda -c khiops \
+        $CONDA install -y -n py${version}_conda -c conda-forge \
         khiops-driver-s3=${KHIOPS_S3_DRIVER_REVISION} \
         khiops-driver-gcs=${KHIOPS_GCS_DRIVER_REVISION}; \
     done' \
