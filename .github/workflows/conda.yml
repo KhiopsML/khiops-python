@@ -14,11 +14,6 @@ on:
       khiops-samples-version:
         default: 11.0.0
         description: khiops-samples version
-      release-channel:
-        type: choice
-        default: khiops-dev
-        options: [khiops-dev, khiops]
-        description: Anaconda channel to release
   push:
     tags: ['*']
   pull_request:
@@ -223,8 +218,8 @@ jobs:
             tests.test_khiops_integrations.KhiopsRunnerEnvironmentTests.test_runner_environment_initialization
 
   # Release is only executed on tags
-  # Note: For this job to work the secrets variables KHIOPS_ANACONDA_CHANNEL_TOKEN and
-  #       KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN must be set with valid anaconda.org access tokens
+  # Note: For this job to work the secret variable KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN
+  #       must be set with a valid anaconda.org access token
   release:
     if: github.ref_type == 'tag'
     needs: test
@@ -268,16 +263,6 @@ jobs:
         run: python -m conda_index ./khiops-conda
       - name: Upload the Package to anaconda.org
         run: |-
-          # Set the anaconda.org channel
-          ANACONDA_CHANNEL="${{ inputs.release-channel || 'khiops-dev' }}"
-
-          # For the release channel: upload without forcing
-          if [[ "$ANACONDA_CHANNEL" == "khiops" ]]
-          then
-            anaconda --token "${{ secrets.KHIOPS_ANACONDA_CHANNEL_TOKEN }}" upload \
-              --user "$ANACONDA_CHANNEL" ./khiops-conda/noarch/*.conda
-          # For the dev channel: upload with forcing
-          else
-            anaconda --token "${{ secrets.KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN }}" upload \
-              --user "$ANACONDA_CHANNEL" --force ./khiops-conda/noarch/*.conda
-          fi
+          # Override versions, as the packages are pushed to a dev channel          
+          anaconda --token "${{ secrets.KHIOPS_DEV_ANACONDA_CHANNEL_TOKEN }}" upload \
+            --user khiops-dev --force ./khiops-conda/noarch/*.conda
