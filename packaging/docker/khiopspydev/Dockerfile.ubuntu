@@ -83,8 +83,7 @@ RUN true \
     # Get Linux distribution codename \
     && if [ -f /etc/os-release ]; then . /etc/os-release; fi \
     && wget -O khiops-gcs.deb https://github.com/KhiopsML/khiopsdriver-gcs/releases/download/${KHIOPS_GCS_DRIVER_REVISION}/khiops-driver-gcs_${KHIOPS_GCS_DRIVER_REVISION}-1-${VERSION_CODENAME}.amd64.deb \
-    # A little typo in the artifact name for version 0.0.14 needs fixing that is why a hardcoded version is used here \
-    && wget -O khiops-s3.deb https://github.com/KhiopsML/khiopsdriver-s3/releases/download/${KHIOPS_S3_DRIVER_REVISION}/khiops-driver-s3_0.0.13-1-${VERSION_CODENAME}.amd64.deb \
+    && wget -O khiops-s3.deb https://github.com/KhiopsML/khiopsdriver-s3/releases/download/${KHIOPS_S3_DRIVER_REVISION}/khiops-driver-s3_${KHIOPS_S3_DRIVER_REVISION}-1-${VERSION_CODENAME}.amd64.deb \
     && (dpkg -i --force-all khiops-gcs.deb khiops-s3.deb || true) \
     && apt-get -f -y install \
     && rm -f khiops-gcs.deb khiops-s3.deb \
