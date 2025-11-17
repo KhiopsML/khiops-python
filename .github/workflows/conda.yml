@@ -75,9 +75,9 @@ jobs:
           - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
           - {os: windows-2022, json-image: '{"image": null}'}
           - {os: windows-2025, json-image: '{"image": null}'}
-          - {os: macos-13, json-image: '{"image": null}'}
           - {os: macos-14, json-image: '{"image": null}'}
           - {os: macos-15, json-image: '{"image": null}'}
+          - {os: macos-15-intel, json-image: '{"image": null}'}
     runs-on: ${{ matrix.env.os }}
     container: ${{ fromJSON(matrix.env.json-image) }}
     steps:
