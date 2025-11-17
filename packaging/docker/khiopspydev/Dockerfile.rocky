@@ -14,7 +14,8 @@ ARG KHIOPS_REVISION
 RUN true \
   && useradd -rm -d /home/rocky -s /bin/bash -g root -u 1000 rocky \
   # Install git (for khiops-python version calculation), pandoc and pip \
-  && dnf upgrade -y \
+  # --allowerasing is needed to resolve package conflicts \
+  && dnf upgrade -y --allowerasing \
   && dnf search pandoc \
   && dnf install --enablerepo=devel -y \
     git \
