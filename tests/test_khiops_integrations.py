@@ -19,7 +19,10 @@ import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops import tools
 from khiops.core.exceptions import KhiopsEnvironmentError
-from khiops.core.internals.runner import KhiopsLocalRunner
+from khiops.core.internals.runner import (
+    KhiopsLocalRunner,
+    _build_khiops_process_environment,
+)
 from khiops.extras.docker import KhiopsDockerRunner
 from khiops.sklearn.estimators import KhiopsClassifier
 from tests.test_helper import KhiopsTestHelper
@@ -282,12 +285,33 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         output_msg = str(context.exception)
         self.assertEqual(output_msg, expected_msg)
 
+    def test_runner_environment_for_openmpi5(self):
+        """Test if KHIOPS_MPI_HOME is actually exported
+        and HOME is corrected for OpenMPI 5+"""
+
+        # Trigger the environment initialization
+        _ = kh.get_runner().khiops_version
+
+        khiops_env = _build_khiops_process_environment()
+
+        # Check `KHIOPS_MPI_HOME` is correctly exported for OpenMPI 5+
+        self.assertIsNotNone(os.environ.get("KHIOPS_MPI_HOME"))
+
+        # Check HOME is corrected in the new process environment
+        self.assertEqual(
+            os.path.pathsep.join(
+                [khiops_env.get("KHIOPS_MPI_HOME", ""), os.environ.get("HOME", "")]
+            ),
+            khiops_env.get("HOME"),
+        )
+
     def test_runner_environment_initialization(self):
         """Test that local runner initializes/ed its environment properly
 
         .. note::
             To test a real initialization this test should be executed alone.
         """
+
         # Obtain the current runner
         runner = kh.get_runner()
 

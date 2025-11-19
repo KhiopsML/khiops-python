@@ -327,6 +327,22 @@ def _get_current_library_installer():
         return "unknown"
 
 
+def _build_khiops_process_environment():
+    """Build a specific environment used for the execution of khiops in a process
+
+    This environment can be modified freely without interfering
+    with the global one.
+    """
+    khiops_env = os.environ.copy()
+
+    # Ensure HOME is always set for OpenMPI 5+
+    # (using KHIOPS_MPI_HOME if it exists)
+    khiops_env["HOME"] = os.path.pathsep.join(
+        [khiops_env.get("KHIOPS_MPI_HOME", ""), khiops_env.get("HOME", "")]
+    )
+    return khiops_env
+
+
 class KhiopsRunner(ABC):
     """Abstract Khiops Python runner to be re-implemented"""
 
@@ -994,8 +1010,14 @@ class KhiopsLocalRunner(KhiopsRunner):
                     var_value = ""
                 else:
                     continue
+
+                # Special var to export in order
+                # to prepend to or to set to HOME for OpenMPI 5+
+                # when running khiops core
+                if var_name == "KHIOPS_MPI_HOME":
+                    os.environ["KHIOPS_MPI_HOME"] = var_value
                 # Set paths to Khiops binaries
-                if var_name == "KHIOPS_PATH":
+                elif var_name == "KHIOPS_PATH":
                     self.khiops_path = var_value
                     os.environ["KHIOPS_PATH"] = var_value
                 elif var_name == "KHIOPS_COCLUSTERING_PATH":
@@ -1443,6 +1465,11 @@ class KhiopsLocalRunner(KhiopsRunner):
                     khiops_call += f" {quote}{arg}{quote}"
             print(f"Khiops execution call: {khiops_call}")
 
+        # Build custom Khiops process environment
+        # which makes sure HOME is defined and set
+        # according to khiops_env's KHIOPS_MPI_HOME
+        khiops_env = _build_khiops_process_environment()
+
         # Execute the process
         with subprocess.Popen(
             khiops_process_args,
@@ -1452,6 +1479,7 @@ class KhiopsLocalRunner(KhiopsRunner):
             encoding="utf8",
             errors="replace",
             universal_newlines=True,
+            env=khiops_env,
         ) as khiops_process:
             stdout, stderr = khiops_process.communicate()
 
