@@ -12,7 +12,7 @@ on:
         default: 11.0.0
         description: khiops-samples repo revision
       image-tag:
-        default: 11.0.0-b.0.0
+        default: 11.0.0-rc.1.0
         description: Development Docker Image Tag
       pypi-target:
         type: choice
@@ -65,13 +65,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: [ubuntu22.04, rocky9]
+        container: [ubuntu22.04, rocky9, debian13]
     container:
       # 'latest' default image tag cannot be set as an environment variable,
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '11.0.0-b.0.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '11.0.0-rc.1.0' }}
     steps:
       - name: Set parameters as env
         run: |
@@ -101,10 +101,11 @@ jobs:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
-          # Oversubscribe for MPI 4.x
+          # Oversubscribe for Open MPI 4.x
           rmaps_base_oversubscribe: true
-          # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
+          # Oversubscribe for Open MPI >= 5
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |-
           # Make sure MPI support is not loaded through env modules
           # Note: As the Docker container's shell is non-interactive, environment

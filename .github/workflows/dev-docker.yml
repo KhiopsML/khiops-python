@@ -1,7 +1,7 @@
 ---
 name: Dev Docker
 env:
-  DEFAULT_KHIOPS_REVISION: 11.0.0-b.0
+  DEFAULT_KHIOPS_REVISION: 11.0.0-rc.1
   DEFAULT_IMAGE_INCREMENT: 0
   DEFAULT_SERVER_REVISION: main
   DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12 3.13 3.14
@@ -14,7 +14,7 @@ on:
     inputs:
       khiops-revision:
         type: string
-        default: 11.0.0-b.0
+        default: 11.0.0-rc.1
         description: Khiops Revision
       image-increment:
         type: number
@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        khiopsdev-os: [ubuntu22.04, rocky8, rocky9]
+        khiopsdev-os: [ubuntu22.04, rocky8, rocky9, debian13]
     permissions:
       packages: write  # to write in the Github package registry
     steps:

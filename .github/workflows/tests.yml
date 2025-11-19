@@ -10,7 +10,7 @@ on:
         default: 11.0.0
         description: Git Tag/Branch/Commit for the khiops-samples Repo
       image-tag:
-        default: 11.0.0-b.0.1
+        default: 11.0.0-rc.1.0
         description: Development Docker Image Tag
       khiops-desktop-revision:
         default: 11.0.0-b.0
@@ -43,7 +43,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '11.0.0-b.0.1' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '11.0.0-rc.1.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -175,10 +175,11 @@ jobs:
           KHIOPS_RUNNER_SERVICE_PATH: /scripts/run_service.sh
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
-          # Oversubscribe for MPI 4.x
+          # Oversubscribe for Open MPI 4.x
           rmaps_base_oversubscribe: true
-          # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
+          # Oversubscribe for Open MPI >= 5
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
           # Var for tests with S3
           no_proxy: localhost
         run: |
@@ -326,14 +327,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: [ubuntu22.04, rocky8, rocky9]
+        container: [ubuntu22.04, rocky8, rocky9, debian13]
     runs-on: ubuntu-latest
     container:
       # 'latest' default image tag cannot be set as an environment variable,
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '11.0.0-b.0.1' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '11.0.0-rc.1.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -363,9 +364,9 @@ jobs:
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(realpath .)
           # Install tomli for Python < 3.11
-          pip install tomli
+          pip install --user tomli
           python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" > requires.txt
-          pip install `cat requires.txt`
+          pip install --user `cat requires.txt`
           rm -f requires.txt
       - name: Setup and Install Test Requirements
         run: |
@@ -375,10 +376,11 @@ jobs:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
-          # Oversubscribe for MPI 4.x
+          # Oversubscribe for Open MPI 4.x
           rmaps_base_oversubscribe: true
-          # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
+          # Oversubscribe for Open MPI >= 5
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |-
           # Reset the default 'exit-on-error' mode of the bash shell in Github actions
           # so that the return code can be evaluated if needed
