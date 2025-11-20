@@ -10,6 +10,7 @@ import io
 import json
 import math
 import os
+import pathlib
 import shutil
 import tempfile
 import textwrap
@@ -22,6 +23,7 @@ from unittest import mock
 
 import khiops
 import khiops.core as kh
+import khiops.core.internals.filesystems as fs
 from khiops.core import KhiopsRuntimeError
 from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import KhiopsLocalRunner, KhiopsRunner
@@ -3184,6 +3186,41 @@ class KhiopsCoreVariousTests(unittest.TestCase):
         )
         output_msg = str(context.exception)
         self.assertEqual(output_msg, expected_msg)
+
+
+class LocalFileSystemTests(unittest.TestCase):
+    """Test the methods of the `LocalFileSystem`"""
+
+    def setUp(self):
+        self.current_dir = os.getcwd()  # save the current directory
+
+    def test_copy_from_local(self):
+        """Ensure fs.copy_from_local behaves as expected"""
+
+        tmp_dir = "/tmp"
+        os.chdir(tmp_dir)  # folder location of the target files
+        # target file names that will be created
+        target_file_name1 = "khiops-python-unit-test-target1.txt"
+        target_file_name2 = "khiops-python-unit-test-target2.txt"
+        with tempfile.NamedTemporaryFile(
+            prefix="khiops-python-unit-test-source", dir=tmp_dir
+        ) as tmp_file_source:
+            try:
+                fs.copy_from_local(target_file_name1, tmp_file_source.name)
+                fs.copy_from_local(f"./{target_file_name2}", tmp_file_source.name)
+                fs.copy_from_local(
+                    "./created_folder/khiops-python-unit-test-target3.txt",
+                    tmp_file_source.name,
+                )
+            except FileNotFoundError as exc:
+                self.fail(f"'copy_from_local' failed unexpectedly : {str(exc)}")
+            finally:
+                pathlib.Path(target_file_name1).unlink(missing_ok=True)
+                pathlib.Path(target_file_name1).unlink(missing_ok=True)
+                shutil.rmtree("./created_folder/", ignore_errors=True)
+
+    def tearDown(self):
+        os.chdir(self.current_dir)  # restore the current directory
 
 
 if __name__ == "__main__":

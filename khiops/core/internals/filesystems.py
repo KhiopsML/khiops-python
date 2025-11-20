@@ -477,7 +477,7 @@ class LocalFilesystemResource(FilesystemResource):
 
     def copy_from_local(self, local_path):
         directory = os.path.dirname(self.path)
-        if not os.path.isdir(directory):
+        if len(directory) > 0 and not os.path.isdir(directory):
             os.makedirs(directory)
         shutil.copy(local_path, self.path)
 
