@@ -89,13 +89,23 @@ jobs:
         with:
           name: pip-package
       - name: Install package
+        shell: bash
         run: |
           # Allow Pip to write to its cache
           mkdir -p /github/home/.cache/pip
           chown -R $(whoami) /github/home/.cache/pip
           # Install the Khiops Python library
+
+          # A virtual env is mandatory under debian
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+            python -m venv khiops-debian-venv
+            source khiops-debian-venv/bin/activate                      
+          fi
           pip install --upgrade pip
           pip install $(ls khiops*.tar.gz)
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+            deactivate                      
+          fi
       - name: Run tests
         env:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
@@ -106,11 +116,17 @@ jobs:
           OMPI_MCA_rmaps_base_oversubscribe: true
           # Oversubscribe for Open MPI >= 5
           PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
+        shell: bash
         run: |-
           # Make sure MPI support is not loaded through env modules
           # Note: As the Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway
           if [ -n "$MODULESHOME" ]; then module unload mpi; fi
+
+          # A virtual env is mandatory under debian
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+            source khiops-debian-venv/bin/activate                      
+          fi
 
           # Print khiops installation status
           kh-status
@@ -125,6 +141,9 @@ jobs:
           # The MPI command is not always named mpiexec, but can be orterun etc
           # (as given by khiops_env)
           kh-status | grep "MPI command" | grep -vwq "<empty>"
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+            deactivate                      
+          fi
       - name: Test package / Git tag version coherence
         shell: bash
         if: github.ref_type == 'tag'
