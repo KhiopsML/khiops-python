@@ -60,7 +60,7 @@ RUN true \
        export RC_LABEL=""; \
      fi; \
     # Update conda to the latest version \
-    $CONDA update -n base -c conda-forge conda; \
+    $CONDA update -n base conda; \
     for version in ${PYTHON_VERSIONS}; \
     do \
         CONDA_ENVS="py${version} py${version}_conda"; \
@@ -69,11 +69,11 @@ RUN true \
             $CONDA create -y -n $CONDA_ENV python=${version}; \
         done; \
         # khiops core \
-        $CONDA install -y -n py${version}_conda ${RC_LABEL}khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
+        $CONDA install -y -n py${version}_conda "${RC_LABEL}"khiops-core==$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
         # remote files drivers installed in the conda environment \
-        $CONDA install -y -n py${version}_conda -c conda-forge \
-        khiops-driver-s3=${KHIOPS_S3_DRIVER_REVISION} \
-        khiops-driver-gcs=${KHIOPS_GCS_DRIVER_REVISION}; \
+        $CONDA install -y -n py${version}_conda \
+        khiops-driver-s3==${KHIOPS_S3_DRIVER_REVISION} \
+        khiops-driver-gcs==${KHIOPS_GCS_DRIVER_REVISION}; \
     done' \
   && true
 
