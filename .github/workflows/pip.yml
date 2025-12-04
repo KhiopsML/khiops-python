@@ -99,12 +99,12 @@ jobs:
           # A virtual env is mandatory under debian
           if [[ "${{ matrix.container }}" == "debian13" ]]; then
             python -m venv khiops-debian-venv
-            source khiops-debian-venv/bin/activate                      
+            source khiops-debian-venv/bin/activate
           fi
           pip install --upgrade pip
           pip install $(ls khiops*.tar.gz)
           if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            deactivate                      
+            deactivate
           fi
       - name: Run tests
         env:
@@ -125,7 +125,7 @@ jobs:
 
           # A virtual env is mandatory under debian
           if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            source khiops-debian-venv/bin/activate                      
+            source khiops-debian-venv/bin/activate
           fi
 
           # Print khiops installation status
@@ -141,8 +141,8 @@ jobs:
           # The MPI command is not always named mpiexec, but can be orterun etc
           # (as given by khiops_env)
           kh-status | grep "MPI command" | grep -vwq "<empty>"
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            deactivate                      
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+            deactivate
           fi
       - name: Test package / Git tag version coherence
         shell: bash
@@ -150,9 +150,17 @@ jobs:
         run: |
           # Don't exit on first error: print relevant error message
           set +e
+          # A virtual env is mandatory under Debian 13
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+            python -m venv khiops-debian-venv
+            source khiops-debian-venv/bin/activate
+          fi
           # Convert pre-release version specification in the Git tag to the Pip
           # format and check that it matches the Pip package version
           PACKAGE_VERSION=$(pip show khiops | awk 'BEGIN {FS = ": "} $1 ~ /^Version$/ {print $2}')
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+            deactivate
+          fi
           echo ${{ github.ref_name }} | tr -d '-' | rev | sed 's/\.//' | rev | \
             grep -wq $PACKAGE_VERSION
           if [[ $? -ne 0 ]]
