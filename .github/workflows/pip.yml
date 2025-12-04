@@ -150,9 +150,17 @@ jobs:
         run: |
           # Don't exit on first error: print relevant error message
           set +e
+          # A virtual env is mandatory under Debian 13
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+            python -m venv khiops-debian-venv
+            source khiops-debian-venv/bin/activate
+          fi
           # Convert pre-release version specification in the Git tag to the Pip
           # format and check that it matches the Pip package version
           PACKAGE_VERSION=$(pip show khiops | awk 'BEGIN {FS = ": "} $1 ~ /^Version$/ {print $2}')
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+            deactivate
+          fi
           echo ${{ github.ref_name }} | tr -d '-' | rev | sed 's/\.//' | rev | \
             grep -wq $PACKAGE_VERSION
           if [[ $? -ne 0 ]]
