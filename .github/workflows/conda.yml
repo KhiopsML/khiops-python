@@ -100,7 +100,7 @@ jobs:
           else
             RC_LABEL=""
           fi
-          conda install ${RC_LABEL}khiops-core=$KHIOPS_CORE_VERSION
+          conda install "${RC_LABEL}"khiops-core==$KHIOPS_CORE_VERSION
           conda install --channel ./khiops-conda/ khiops
       - name: Install JQ test dependency (Linux / MacOS)
         if: runner.os != 'Windows'
