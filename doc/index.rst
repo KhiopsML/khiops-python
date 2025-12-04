@@ -14,8 +14,8 @@ Khiops can be installed with `conda package manager <https://docs.conda.io/en/la
     conda activate khiops-env
     conda install -c conda-forge khiops
 
-Alternatively, you can install in a virtual environment using `pip`,
-under Linux (in a `bash` shell) :
+Alternatively, you can install in a virtual environment using ``pip``,
+under Linux (in a ``bash`` shell) :
 
 .. code-block:: bash
 
@@ -23,7 +23,7 @@ under Linux (in a `bash` shell) :
     source khiops-venv/bin/activate
     pip install -U khiops
 
-under Windows (in a `powershell` shell) :
+under Windows (in a ``powershell`` shell) :
 
 .. code-block:: powershell
 
