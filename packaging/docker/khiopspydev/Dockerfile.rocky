@@ -58,10 +58,10 @@ RUN true \
      fi \
   # Install miniforge to have multiple Python versions via Conda \
   && mkdir -p /root/miniforge3 && cd /root/miniforge3 \
-  && wget https://github.com/conda-forge/miniforge/releases/download/24.1.2-0/Miniforge3-24.1.2-0-Linux-x86_64.sh -O ./Miniforge3_24.1.2-0-Linux-x86_64.sh \
-  && echo "dbadb808edf4da00af35d888d3eeebbfdce71972b60bf4b16dbacaee2ab57f28 Miniforge3_24.1.2-0-Linux-x86_64.sh" | sha256sum --check \
-  && bash ./Miniforge3_24.1.2-0-Linux-x86_64.sh -b -u -p /root/miniforge3 \
-  && rm -rf /root/miniforge3/Miniforge3_24.1.2-0-Linux-x86_64.sh \
+  && wget https://github.com/conda-forge/miniforge/releases/download/25.9.1-0/Miniforge3-25.9.1-0-Linux-x86_64.sh -O ./Miniforge3_25.9.1-0-Linux-x86_64.sh \
+  && echo "07f64c1d908ae036e9f6a81f97704899311c0ae677d83980d664b9781d4cc5fc Miniforge3_25.9.1-0-Linux-x86_64.sh" | sha256sum --check \
+  && bash ./Miniforge3_25.9.1-0-Linux-x86_64.sh -b -u -p /root/miniforge3 \
+  && rm -rf /root/miniforge3/Miniforge3_25.9.1-0-Linux-x86_64.sh \
   # Clean build files \
   && dnf clean all \
   && rm -rf ./khiops \

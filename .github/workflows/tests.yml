@@ -10,7 +10,7 @@ on:
         default: 11.0.0
         description: Git Tag/Branch/Commit for the khiops-samples Repo
       image-tag:
-        default: 11.0.0-b.0.1
+        default: 11.0.0-rc.1.0
         description: Development Docker Image Tag
       khiops-desktop-revision:
         default: 11.0.0-b.0
@@ -37,13 +37,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     container:
       # 'latest' default image tag cannot be set as an environment variable,
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '11.0.0-b.0.1' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '11.0.0-rc.1.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -175,10 +175,11 @@ jobs:
           KHIOPS_RUNNER_SERVICE_PATH: /scripts/run_service.sh
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
-          # Oversubscribe for MPI 4.x
+          # Oversubscribe for Open MPI 4.x
           rmaps_base_oversubscribe: true
-          # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
+          # Oversubscribe for Open MPI >= 5
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
           # Var for tests with S3
           no_proxy: localhost
         run: |
@@ -326,14 +327,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: [ubuntu22.04, rocky8, rocky9]
+        container: [ubuntu22.04, rocky8, rocky9, debian13]
     runs-on: ubuntu-latest
     container:
       # 'latest' default image tag cannot be set as an environment variable,
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '11.0.0-b.0.1' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '11.0.0-rc.1.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -357,28 +358,49 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
       - name: Install khiops-python dev dependencies
+        shell: bash
         run: |
           # The following git command is required,
           # as the Git repository is in a directory the current user does not own,
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(realpath .)
+
+          # A virtual env is mandatory under debian
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+            python -m venv khiops-debian-venv
+            source khiops-debian-venv/bin/activate                      
+          fi
+
           # Install tomli for Python < 3.11
           pip install tomli
           python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" > requires.txt
           pip install `cat requires.txt`
           rm -f requires.txt
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+            deactivate                      
+          fi
       - name: Setup and Install Test Requirements
-        run: |
+        shell: bash
+        run: |-
+          # A virtual env is mandatory under debian
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+            source khiops-debian-venv/bin/activate                      
+          fi
           pip install -r test-requirements.txt
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+            deactivate                      
+          fi
       - name: Test Khiops Integration
         env:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
-          # Oversubscribe for MPI 4.x
+          # Oversubscribe for Open MPI 4.x
           rmaps_base_oversubscribe: true
-          # Oversubscribe for MPI > 4.x
           OMPI_MCA_rmaps_base_oversubscribe: true
+          # Oversubscribe for Open MPI >= 5
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
+        shell: bash
         run: |-
           # Reset the default 'exit-on-error' mode of the bash shell in Github actions
           # so that the return code can be evaluated if needed
@@ -388,6 +410,11 @@ jobs:
           # Note: As Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway
           if [ -n "$MODULESHOME" ]; then module unload mpi; fi
+
+          # A virtual env is mandatory under debian
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+            source khiops-debian-venv/bin/activate                      
+          fi
 
           # Print status
           python -c \
@@ -404,3 +431,6 @@ jobs:
 
           # Execute Khiops sample (train and deploy model), which uses MPI
           python -m khiops.samples.samples -i deploy_model -e
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+            deactivate                      
+          fi
