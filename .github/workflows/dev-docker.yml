@@ -4,7 +4,7 @@ env:
   DEFAULT_KHIOPS_REVISION: 11.0.0-rc.2
   DEFAULT_IMAGE_INCREMENT: 0
   DEFAULT_SERVER_REVISION: main
-  DEFAULT_PYTHON_VERSIONS: 3.8 3.9 3.10 3.11 3.12 3.13 3.14
+  DEFAULT_PYTHON_VERSIONS: 3.10 3.11 3.12 3.13 3.14
   DEFAULT_KHIOPS_GCS_DRIVER_REVISION: 0.0.14
   DEFAULT_KHIOPS_S3_DRIVER_REVISION: 0.0.14
 on:
@@ -30,7 +30,7 @@ on:
         description: Set as 'latest'
       python-versions:
         type: string
-        default: 3.8 3.9 3.10 3.11 3.12 3.13 3.14
+        default: 3.10 3.11 3.12 3.13 3.14
         description: Python versions to support
       server-revision:
         type: string
