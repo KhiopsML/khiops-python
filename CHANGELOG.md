@@ -6,7 +6,7 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased -
+## 11.0.0.0-rc.2 - 2025-12-5
 
 ### Added
 - (General) Support for Python 3.14.
@@ -21,6 +21,9 @@
 - (`sklearn`) `Text` Khiops type support at the estimator level.
 
 ### Changed
+- (General) Pip packages are published on PyPI.
+- (General) Conda packages only depend on the `conda-forge` channel and are
+  published on `conda-forge`.
 - (`core`) Dictionary API (DictionaryDomain, Dictionary, MetaData), 
   when a requested key is not found in getters, return ``None`` instead
   of raising a `KeyError` exception.
