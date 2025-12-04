@@ -24,7 +24,7 @@ The available sub-modules inside the package are:
 """
 from khiops.core.internals.version import KhiopsVersion
 
-__version__ = "11.0.0.0b.0"
+__version__ = "11.0.0.0rc.2"
 
 
 def get_compatible_khiops_version():
