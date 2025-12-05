@@ -284,6 +284,9 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         output_msg = str(context.exception)
         self.assertEqual(output_msg, expected_msg)
 
+    @unittest.skipIf(
+        platform.system() != "Linux", "Skipping test for non-Linux platform"
+    )
     def test_runner_environment_for_openmpi5(self):
         """Test if KHIOPS_MPI_HOME is actually exported
         and HOME is corrected for OpenMPI 5+"""
