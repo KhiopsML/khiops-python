@@ -139,7 +139,6 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             "Mushroom",
             "NegativeAirlineTweets",
             "SpliceJunction",
-            "Vehicle",
             "WineReviews",
         ]
         self.assertTrue(os.path.isdir(samples_dir))
