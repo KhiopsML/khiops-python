@@ -127,6 +127,11 @@ jobs:
           if [[ "${{ matrix.container }}" == "debian13" ]]; then            
             source khiops-debian-venv/bin/activate
           fi
+          if [[ $RUNNER_OS != 'Windows' ]]; then
+            # Set rights to OpenMPI-specific folder
+            mkdir -p /github/home/.pmix/components
+            chown -R $(whoami) /github/home/.pmix/components
+          fi
 
           # Print khiops installation status
           kh-status
