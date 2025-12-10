@@ -105,7 +105,8 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
     "pandas>=0.25.3",
-    "scikit-learn>=0.22.2",
+    # do not use the latest version, to avoid undesired breaking changes
+    "scikit-learn>=0.22.2,<=1.7.2",
 ]
 
 [project.urls]
@@ -113,8 +114,7 @@ Homepage = "https://khiops.org"
 
 [project.optional-dependencies]
 s3 = [
-    # do not necessarily use the latest version, to avoid undesired breaking
-    # changes
+    # do not use the latest version, to avoid undesired breaking changes
     "boto3>=1.17.39,<=1.35.69",
 ]
 gcs = [
