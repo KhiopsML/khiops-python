@@ -276,9 +276,21 @@ jobs:
           python -m pip install setuptools
           python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" -s "\n"  > requires.txt
 
-          # Install the Python requirements
+          # Install the Python requirements outside a python venv
           Get-Content .\requires.txt `
             | ForEach-Object {python -m pip install $_.toString()}
+
+          # Create and activate a python venv
+          python -m venv khiops-windows-venv
+          khiops-windows-venv\Scripts\Activate.ps1
+
+          # Install the Python requirements inside a venv
+          # The venv python executable is used here
+          Get-Content .\requires.txt `
+            | ForEach-Object {khiops-windows-venv\Scripts\python -m pip install $_.toString()}
+
+          # Deactivate the python venv
+          deactivate
           Remove-Item -force requires.txt
       - name: Setup and Install Test Requirements
         run: python -m pip install -r test-requirements.txt
@@ -323,6 +335,22 @@ jobs:
 
           # Execute Khiops Coclustering sample (train and deploy model)
           Invoke-Expression -Command "$Python -m khiops.samples.samples -i deploy_coclustering -e"
+
+          # Install khiops-python in the python venv using the sources          
+          # The venv python executable is used here 
+          Invoke-Expression -Command "khiops-windows-venv\Scripts\python -m pip install ."
+          # Change directory to avoid using the cloned khiops-python
+          Invoke-Expression -Command "cd khiops-windows-venv\"
+
+          # Print status
+          # The venv python executable is used here
+          Invoke-Expression -Command "Scripts\python -c 'import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)'"
+
+          # The installation status MUST not fail                    
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::Status error: khiops-python installation status check MUST NOT fail"
+            exit 1
+          }
   check-khiops-integration-on-linux:
     strategy:
       fail-fast: false

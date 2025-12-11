@@ -1218,9 +1218,15 @@ class KhiopsLocalRunner(KhiopsRunner):
                     if (
                         platform.system() == "Windows"
                         and
-                        # Under Windows, python is not in a bin/ folder
-                        # for conda-based installations
-                        str(Path(sys.executable).parents[0]) != base_dir
+                        # Under Windows, there are two cases :
+                        (
+                            # for conda-based installations python is inside 'base_dir'
+                            str(Path(sys.executable).parents[0]) != base_dir
+                            and
+                            # for 'binary+pip' installations (within a virtual env)
+                            # python is inside 'base_dir'/Scripts
+                            str(Path(sys.executable).parents[1]) != base_dir
+                        )
                         # Under Linux or MacOS a bin/ folder exists
                         or str(Path(sys.executable).parents[1]) != base_dir
                     ):
