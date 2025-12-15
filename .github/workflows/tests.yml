@@ -445,16 +445,29 @@ jobs:
           fi
 
           # Print status
-          python -c \
-            "import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)"
-          RETCODE=$?
+          PATTERN=$(python -c \
+            "import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)" 2> >(grep -Ei 'with.*?unknown.*?installer') )                    
           # The installation status check will fail
           # because the library was not installed properly (the source code was only cloned)
-          if [ $RETCODE -ne 0 ]; then
+          if [ -n "$PATTERN" ]; then
             echo "::error::Status error: improper setup, as expected: khiops-python has been cloned, not installed from a package"
           fi
 
-          # Run integration tests on Ubuntu and Rocky
+          # Run the library against an incompatible Khiops (with a different major version)
+          # This instance of Khiops is isolated in a dedicated conda environment
+          CONDA="/root/miniforge3/bin/conda"                
+          # Check an error is raised because of the major version mismatch
+          # The khiops-python library from the cloned sources is used here
+          PATTERN=$($CONDA run -n py3_khiops10_conda python -c "import khiops.core as kh; print(kh.get_runner().khiops_version)" 2> >(grep -Ei 'major version.*?does not match'))          
+          if [ -z "$PATTERN" ]; then
+            echo "::error::Status error: khiops-python should fail because of the major version mismatch"          
+            if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+              deactivate                      
+            fi          
+            exit 1;
+          fi
+
+          # Run the remaining integration tests
           python -m unittest -v tests.test_khiops_integrations
 
           # Execute Khiops sample (train and deploy model), which uses MPI

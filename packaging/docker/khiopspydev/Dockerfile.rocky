@@ -87,8 +87,13 @@ RUN true \
         do \
             $CONDA create -y -n $CONDA_ENV python=${version}; \
         done; \
-        $CONDA install -y -n py${version}_conda ${RC_LABEL}khiops-core=$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
-    done' \
+        $CONDA install -y -n py${version}_conda ${RC_LABEL}khiops-core==$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
+    done; \
+    # Install Khiops from a different major version in a dedicated conda environment \
+    # The python interpreter version of the base environment is used as no specific version is given \
+    $CONDA create -y -n py3_khiops10_conda; \
+    $CONDA install -y -n py3_khiops10_conda khiops::khiops-core==10.3.1; \
+    ' \
   && true
 
 RUN mkdir -p /scripts

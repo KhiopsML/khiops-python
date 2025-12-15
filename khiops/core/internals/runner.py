@@ -1076,30 +1076,46 @@ class KhiopsLocalRunner(KhiopsRunner):
             error_msg += f"\nstderr: {stderr}" if stderr else ""
             raise KhiopsRuntimeError(error_msg)
 
+        # Khiops core version
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
-        # Warn if the khiops version does not match the Khiops Python library version
-        # Note: Currently the check is very strict. It may be loosened in the future
-        # (major.minor.patch must be the same)
+        # Library version
         compatible_khiops_version = khiops.get_compatible_khiops_version()
+
+        operating_system = platform.system()
+        installation_method = _infer_khiops_installation_method()
+
+        # Fail immediately if the major versions differ
+        # Note: the installation status will not show at all
+        if self.khiops_version.major != compatible_khiops_version.major:
+            raise KhiopsRuntimeError(
+                f"Major version '{self.khiops_version.major}' of the Khiops "
+                "executables does not match the Khiops Python library major version "
+                f"'{compatible_khiops_version.major}'. "
+                "To avoid any compatibility error, "
+                "please update either the Khiops "
+                f"executables package for your '{operating_system}' operating "
+                "system, or the Khiops Python library, "
+                f"according to your '{installation_method}' environment. "
+                "See https://khiops.org for more information.",
+            )
+
+        # Warn if the khiops minor and patch versions do not match
+        # the Khiops Python library ones
         # KhiopsVersion implements the equality operator, which however also
         # takes pre-release tags into account.
         # The restriction here does not apply to pre-release tags
         if (
-            self.khiops_version.major,
             self.khiops_version.minor,
             self.khiops_version.patch,
         ) != (
-            compatible_khiops_version.major,
             compatible_khiops_version.minor,
             compatible_khiops_version.patch,
         ):
-            operating_system = platform.system()
-            installation_method = _infer_khiops_installation_method()
             warnings.warn(
                 f"Version '{self._khiops_version}' of the Khiops executables "
                 "does not match the Khiops Python library version "
-                f"'{khiops.__version__}' (different major.minor.patch version). "
+                f"'{khiops.__version__}' (different minor.patch version). "
                 "There may be compatibility errors and "
                 "we recommend to update either the Khiops "
                 f"executables package for your '{operating_system}' operating "
@@ -1160,8 +1176,9 @@ class KhiopsLocalRunner(KhiopsRunner):
                     f"Khiops Python library installation path '{library_root_dir}' "
                     "does not match the current Conda environment "
                     f"'{os.environ['CONDA_PREFIX']}'. "
-                    "Please install the Khiops Python library "
-                    "in the current Conda environment. "
+                    "Either deactivate the current Conda environment "
+                    "or use the Khiops Python library "
+                    "belonging to the current Conda environment. "
                     "Go to https://khiops.org for instructions.\n"
                 )
                 error_list.append(error)
@@ -1172,7 +1189,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                     f"Khiops binary path '{self.khiops_path}' "
                     "does not match the current Conda environment "
                     f"'{os.environ['CONDA_PREFIX']}'. "
-                    "Please install the Khiops binary "
+                    "We recommend installing the Khiops binary "
                     "in the current Conda environment. "
                     "Go to https://khiops.org for instructions.\n"
                 )

@@ -72,7 +72,12 @@ RUN true \
         $CONDA install -y -n py${version}_conda \
         khiops-driver-s3==${KHIOPS_S3_DRIVER_REVISION} \
         khiops-driver-gcs==${KHIOPS_GCS_DRIVER_REVISION}; \
-    done' \
+    done; \
+    # Install Khiops from a different major version in a dedicated conda environment \
+    # The python interpreter version of the base environment is used as no specific version is given \
+    $CONDA create -y -n py3_khiops10_conda; \
+    $CONDA install -y -n py3_khiops10_conda khiops::khiops-core==10.3.1; \
+    ' \
   && true
 
 RUN mkdir -p /scripts
