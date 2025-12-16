@@ -2,7 +2,7 @@
 name: Tests
 env:
   DEFAULT_SAMPLES_REVISION: 11.0.0
-  DEFAULT_KHIOPS_DESKTOP_REVISION: 11.0.0-rc.2
+  DEFAULT_KHIOPS_DESKTOP_REVISION: 11.0.0
 on:
   workflow_dispatch:
     inputs:
@@ -10,10 +10,10 @@ on:
         default: 11.0.0
         description: Git Tag/Branch/Commit for the khiops-samples Repo
       image-tag:
-        default: 11.0.0-rc.2.0
+        default: 11.0.0.0
         description: Development Docker Image Tag
       khiops-desktop-revision:
-        default: 11.0.0-rc.2
+        default: 11.0.0
         description: Khiops Windows Desktop Application Version
       run-expensive-tests:
         type: boolean
@@ -43,7 +43,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '11.0.0-rc.2.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '11.0.0.0' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
