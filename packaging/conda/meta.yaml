@@ -23,7 +23,7 @@ requirements:
     - setuptools
   run:
     - python
-    - conda-forge/label/rc::khiops-core =11.0.0rc.2
+    - khiops-core =11.0.0
     - pandas >=0.25.3
     - scikit-learn >=0.22.2
   run_constrained:
