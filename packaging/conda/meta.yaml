@@ -2,7 +2,7 @@
 package:
   name: {{ name }}
   # The Conda version cannot contain the '-' character, so we eliminate it
-  version: "11.0.0.0rc.2"
+  version: "11.0.0.0"
 
 source:
   path: ../../
