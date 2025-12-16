@@ -6,10 +6,11 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## 11.0.0.0-rc.2 - 2025-12-5
+## 11.0.0.0 - 2025-12-19
 
 ### Added
 - (General) Support for Python 3.14.
+- (General) Warnings and error messages for unsupported installation setups.
 - (`core`) Dictionary API support for dictionary, variable and variable block
   comments, and dictionary and variable block internal comments.
 - (`core`) Dictionary `Rule` class and supporting API for serializing `Rule` instances.
