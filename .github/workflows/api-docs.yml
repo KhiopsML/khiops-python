@@ -1,13 +1,13 @@
 ---
 name: API Docs
 env:
-  DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION: 11.0.0.0-rc.2
+  DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION: 11.0.0.0
   DEFAULT_KHIOPS_SAMPLES_REVISION: 11.0.0
 on:
   workflow_dispatch:
     inputs:
       khiops-python-tutorial-revision:
-        default: 11.0.0.0-rc.2
+        default: 11.0.0.0
         description: khiops-python-tutorial repo revision
       khiops-samples-revision:
         default: 11.0.0
