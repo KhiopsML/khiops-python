@@ -369,6 +369,7 @@ Samples
     import os
     import pandas as pd
     import pickle
+    from khiops import core as kh
     from khiops.sklearn import KhiopsClassifier
 
     # Create/clean the output directory
@@ -534,7 +535,9 @@ Samples
 .. code-block:: python
 
     # Imports
+    import os
     import pandas as pd
+    from khiops import core as kh
     from khiops.sklearn import KhiopsEncoder
 
     # Load the dataset

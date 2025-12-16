@@ -374,6 +374,7 @@ def khiops_classifier_pickle():
     import os
     import pandas as pd
     import pickle
+    from khiops import core as kh
     from khiops.sklearn import KhiopsClassifier
 
     # Create/clean the output directory
@@ -555,7 +556,9 @@ def khiops_encoder():
         usually splits the dataset into train and test subsets.
     """
     # Imports
+    import os
     import pandas as pd
+    from khiops import core as kh
     from khiops.sklearn import KhiopsEncoder
 
     # Load the dataset
