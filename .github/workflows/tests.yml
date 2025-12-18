@@ -444,6 +444,10 @@ jobs:
             source khiops-debian-venv/bin/activate                      
           fi
 
+          # Set rights to OpenMPI-specific folder
+          mkdir -p /github/home/.pmix/components
+          chown -R $(whoami) /github/home/.pmix/components
+
           # Print status
           PATTERN=$(python -c \
             "import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)" 2> >(grep -Ei 'with.*?unknown.*?installer') )                    
