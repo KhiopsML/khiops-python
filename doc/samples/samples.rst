@@ -37,6 +37,8 @@ Samples
 .. autofunction:: get_khiops_version
 .. code-block:: python
 
+    from khiops import core as kh
+
     print(f"Khiops version: {kh.get_khiops_version()}")
 .. autofunction:: build_dictionary_from_data_table
 .. code-block:: python
@@ -1635,6 +1637,9 @@ Samples
 .. code-block:: python
 
     # Set the file paths
+    import os
+    from khiops import core as kh
+
     splice_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
     dictionary_file_path = os.path.join(splice_dir, "SpliceJunction.kdic")
     data_table_path = os.path.join(splice_dir, "SpliceJunctionDNA.txt")

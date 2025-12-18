@@ -25,6 +25,8 @@ from khiops import core as kh
 
 def get_khiops_version():
     """Shows the Khiops version"""
+    from khiops import core as kh
+
     print(f"Khiops version: {kh.get_khiops_version()}")
 
 
@@ -1847,6 +1849,9 @@ def simplify_coclustering():
 def extract_clusters():
     """Extract the clusters' id, members, frequencies and typicalities into a file"""
     # Set the file paths
+    import os
+    from khiops import core as kh
+
     splice_dir = os.path.join(kh.get_samples_dir(), "SpliceJunction")
     dictionary_file_path = os.path.join(splice_dir, "SpliceJunction.kdic")
     data_table_path = os.path.join(splice_dir, "SpliceJunctionDNA.txt")
