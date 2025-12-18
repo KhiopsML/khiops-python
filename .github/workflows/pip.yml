@@ -166,7 +166,7 @@ jobs:
           if [[ "${{ matrix.container }}" == "debian13" ]]; then
             deactivate
           fi
-          echo ${{ github.ref_name }} | tr -d '-' | rev | sed 's/\.//' | rev | \
+          echo ${{ github.ref_name }} | tr -d '-' | rev | sed -E 's/\.([^0-9].*)/\1/' | rev | \
             grep -wq $PACKAGE_VERSION
           if [[ $? -ne 0 ]]
           then
