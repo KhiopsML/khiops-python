@@ -10,7 +10,7 @@ on:
         default: 11.0.0
         description: Git Tag/Branch/Commit for the khiops-samples Repo
       image-tag:
-        default: 11.0.0.0
+        default: latest
         description: Development Docker Image Tag
       khiops-desktop-revision:
         default: 11.0.0
@@ -43,7 +43,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || '11.0.0.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -362,7 +362,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '11.0.0.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -443,6 +443,10 @@ jobs:
           if [[ "${{ matrix.container }}" == "debian13" ]]; then            
             source khiops-debian-venv/bin/activate                      
           fi
+
+          # Set rights to OpenMPI-specific folder
+          mkdir -p /github/home/.pmix/components
+          chown -R $(whoami) /github/home/.pmix/components
 
           # Print status
           PATTERN=$(python -c \

@@ -12,7 +12,7 @@ on:
         default: 11.0.0
         description: khiops-samples repo revision
       image-tag:
-        default: 11.0.0.0
+        default: latest
         description: Development Docker Image Tag
       pypi-target:
         type: choice
@@ -71,7 +71,7 @@ jobs:
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || '11.0.0.0' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
     steps:
       - name: Set parameters as env
         run: |
