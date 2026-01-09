@@ -291,6 +291,9 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         """Test if KHIOPS_MPI_HOME is actually exported
         and HOME is corrected for OpenMPI 5+"""
 
+        # Store initial HOME, then delete it from the environment
+        initial_home = os.environ.pop("HOME", "")
+
         # Trigger the environment initialization
         _ = kh.get_runner().khiops_version
 
@@ -300,12 +303,15 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         self.assertIsNotNone(os.environ.get("KHIOPS_MPI_HOME"))
 
         # Check HOME is corrected in the new process environment
+        self.assertIn("HOME", khiops_env)
         self.assertEqual(
-            os.path.pathsep.join(
-                [khiops_env.get("KHIOPS_MPI_HOME", ""), os.environ.get("HOME", "")]
-            ),
-            khiops_env.get("HOME"),
+            khiops_env["KHIOPS_MPI_HOME"],
+            khiops_env["HOME"],
         )
+
+        # Restore initial HOME in the environment
+        if initial_home:
+            os.environ["HOME"] = initial_home
 
     def test_runner_environment_initialization(self):
         """Test that local runner initializes/ed its environment properly

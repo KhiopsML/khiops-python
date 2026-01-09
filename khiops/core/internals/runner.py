@@ -337,9 +337,8 @@ def _build_khiops_process_environment():
 
     # Ensure HOME is always set for OpenMPI 5+
     # (using KHIOPS_MPI_HOME if it exists)
-    khiops_env["HOME"] = os.path.pathsep.join(
-        [khiops_env.get("KHIOPS_MPI_HOME", ""), khiops_env.get("HOME", "")]
-    )
+    if "HOME" not in khiops_env:
+        khiops_env["HOME"] = khiops_env.get("KHIOPS_MPI_HOME", "")
     return khiops_env
 
 
