@@ -11,6 +11,7 @@
 ### Fixed
 - (General) Automatic Credentials Discovery-based credential retrieval for
   Google cloud storage (GCS).
+- (`sklearn`) Temporary directory race condition in estimators.
 
 ## 11.0.0.0 - 2025-12-19
 

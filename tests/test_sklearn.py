@@ -6,18 +6,24 @@
 ######################################################################################
 """Tests parameter transfer between Khiops sklearn and core APIs"""
 import contextlib
+import io
 import os
 import shutil
 import unittest
 import warnings
+from concurrent.futures import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
 from itertools import product
 
 import numpy as np
+import pandas as pd
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.validation import check_is_fitted
 
 import khiops.core as kh
+import khiops.core.internals.filesystems as fs
+from khiops.core.internals.runner import KhiopsLocalRunner
 from khiops.sklearn.estimators import (
     KhiopsClassifier,
     KhiopsCoclustering,
@@ -1773,6 +1779,27 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
                     print("Done")
 
 
+def no_mpi(func):
+    """Disable MPI (in setting proc number to 1) to save resources"""
+
+    def inner(self):
+        # set up a single cpu runner
+        initial_runner = kh.get_runner()
+        initial_proc_number = os.environ["KHIOPS_PROC_NUMBER"]
+        os.environ["KHIOPS_PROC_NUMBER"] = "1"
+        single_cpu_runner = KhiopsLocalRunner()
+        kh.set_runner(single_cpu_runner)
+
+        # call the initial test function
+        func(self)
+
+        # restore the runner
+        os.environ["KHIOPS_PROC_NUMBER"] = initial_proc_number
+        kh.set_runner(initial_runner)
+
+    return inner
+
+
 class KhiopsSklearnVariousTests(unittest.TestCase):
     """Miscelanous sklearn classes tests"""
 
@@ -1827,3 +1854,89 @@ class KhiopsSklearnVariousTests(unittest.TestCase):
             with self.subTest(export_operation=export_operation, estimator=estimator):
                 with self.assertRaises(NotFittedError):
                     getattr(estimator, export_operation)("report.khj")
+
+    @no_mpi
+    def test_concurrency_safe_operations(self):
+        """Ensure no race condition occurs when running concurrent operations"""
+
+        # Define all the function calls that will be submitted to the threads
+        def predict_func(clf, X):
+            return clf.predict(X)
+
+        def predict_proba_func(clf, X):
+            return clf.predict_proba(X)
+
+        def encoder_fit_transform_func(khe, X, y):
+            return khe.fit_transform(X, y)
+
+        def estimator_fit_func(khcc, X, id_column):
+            return khcc.fit(X, id_column=id_column)
+
+        def coclustering_simplify_func(khcc):
+            return khcc.simplify()
+
+        def coclustering_predict_func(khcc, X):
+            return khcc.predict(X)
+
+        clf = KhiopsClassifier(n_trees=0)
+        adult_df = pd.read_csv(
+            f"{kh.get_samples_dir()}/Adult/Adult.txt", sep="\t", header=0
+        )
+        X = adult_df.drop("class", axis=1)
+        clf.fit(X, adult_df["class"])
+
+        # Test `predict`, `predict_proba` of `KhiopsPredictor` and its children
+        # (`KhiopsClassifier` and `KhiopsRegressor`)
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(predict_func, clf, X): i for i in range(5)}
+            for future in as_completed(futures):
+                print(future.result())
+            futures = {executor.submit(predict_proba_func, clf, X): i for i in range(5)}
+            for future in as_completed(futures):
+                print(future.result())
+
+        # Test `transform` of `KhiopsEncoder`
+        khe = KhiopsEncoder()
+
+        y = adult_df["class"]
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {
+                executor.submit(encoder_fit_transform_func, khe, X, y): i
+                for i in range(5)
+            }
+            for future in as_completed(futures):
+                print(future.result())
+
+        # Test `fit`, `simplify` and `predict` of
+        # `KhiopsCoclustering` and `KhiopsEstimator`
+        splice_data_dir = fs.get_child_path(
+            kh.get_runner().samples_dir, "SpliceJunction"
+        )
+        splice_data_file_path = fs.get_child_path(
+            splice_data_dir, "SpliceJunctionDNA.txt"
+        )
+
+        # Read the splice junction secondary datatable
+        with io.BytesIO(fs.read(splice_data_file_path)) as splice_data_file:
+            splice_df = pd.read_csv(splice_data_file, sep="\t")
+
+        khcc = KhiopsCoclustering()
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {
+                executor.submit(estimator_fit_func, khcc, splice_df, "SampleId"): i
+                for i in range(5)
+            }
+            for future in as_completed(futures):
+                print(future.result())
+            futures = {
+                executor.submit(coclustering_simplify_func, khcc): i for i in range(5)
+            }
+            for future in as_completed(futures):
+                print(future.result())
+            futures = {
+                executor.submit(coclustering_predict_func, khcc, splice_df): i
+                for i in range(5)
+            }
+            for future in as_completed(futures):
+                print(future.result())
