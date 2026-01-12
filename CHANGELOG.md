@@ -6,6 +6,12 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## Unreleased
+
+### Fixed
+- (General) Automatic Credentials Discovery-based credential retrieval for
+  Google cloud storage (GCS).
+
 ## 11.0.0.0 - 2025-12-19
 
 ### Added
