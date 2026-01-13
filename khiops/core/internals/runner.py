@@ -14,7 +14,6 @@
 
 import io
 import os
-import pathlib
 import platform
 import shlex
 import shutil
@@ -65,7 +64,11 @@ def get_default_samples_dir():
     elif platform.system() == "Windows" and "PUBLIC" in os.environ:
         samples_dir = os.path.join(os.environ["PUBLIC"], "khiops_data", "samples")
     else:
-        samples_dir = str(pathlib.Path.home() / "khiops_data" / "samples")
+        # The filesystem abstract layer is used here
+        # as the path can be either local or remote
+        samples_dir = fs.get_child_path(
+            fs.get_child_path(os.environ["HOME"], "khiops_data"), "samples"
+        )
     return samples_dir
 
 
