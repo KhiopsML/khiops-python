@@ -23,7 +23,6 @@ on:
   pull_request:
     paths:
       - khiops/**.py
-      - pykhiops/**.py  # TODO: Remove for Khiops 11
       - tests/**.py
       - tests/resources/**
       - '!tests/resources/**.md'
