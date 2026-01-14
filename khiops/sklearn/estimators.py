@@ -362,8 +362,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         # Create temporary directory and tables
         computation_dir = self._create_computation_dir("fit")
-        initial_runner_temp_dir = kh.get_runner().root_temp_dir
-        kh.get_runner().root_temp_dir = computation_dir
 
         # Create the dataset, fit the model and reset in case of any failure
         try:
@@ -377,7 +375,6 @@ class KhiopsEstimator(ABC, BaseEstimator):
         # Cleanup and restore the runner's temporary dir
         finally:
             self._cleanup_computation_dir(computation_dir)
-            kh.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # If on "fitted" state then:
         # - self.model_ must be a DictionaryDomain
@@ -963,7 +960,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         computation_dir = self._create_computation_dir("simplify")
         output_dir = self._get_output_dir(computation_dir)
         simplify_log_file_path = fs.get_child_path(output_dir, "khiops_simplify_cc.log")
-        initial_runner_temp_dir = kh.get_runner().root_temp_dir
         full_coclustering_file_path = fs.get_child_path(
             output_dir, "FullCoclustering.khcj"
         )
@@ -971,7 +967,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             output_dir, "Coclustering.khcj"
         )
         self.model_report_.write_khiops_json_file(full_coclustering_file_path)
-        kh.get_runner().root_temp_dir = computation_dir
         try:
             # - simplify_coclustering, then
             # - prepare_coclustering_deployment
@@ -1040,7 +1035,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             )
         finally:
             self._cleanup_computation_dir(computation_dir)
-            kh.get_runner().root_temp_dir = initial_runner_temp_dir
         return simplified_cc
 
     def simplify(
@@ -1101,8 +1095,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         """
         # Create temporary directory
         computation_dir = self._create_computation_dir("predict")
-        initial_runner_temp_dir = kh.get_runner().root_temp_dir
-        kh.get_runner().root_temp_dir = computation_dir
 
         # Create the input dataset
         ds = Dataset(X)
@@ -1119,7 +1111,6 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         # Cleanup and restore the runner's temporary dir
         finally:
             self._cleanup_computation_dir(computation_dir)
-            kh.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # Transform to numpy.array
         y_pred = y_pred.to_numpy()
@@ -1557,8 +1548,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         """
         # Create temporary directory
         computation_dir = self._create_computation_dir("predict")
-        initial_runner_temp_dir = kh.get_runner().root_temp_dir
-        kh.get_runner().root_temp_dir = computation_dir
 
         try:
             # Create the input dataset
@@ -1575,10 +1564,6 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         # Cleanup and restore the runner's temporary dir
         finally:
             self._cleanup_computation_dir(computation_dir)
-            kh.get_runner().root_temp_dir = initial_runner_temp_dir
-
-        # Restore the runner's temporary dir
-        kh.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # Return pd.Series in the monotable + pandas case
         assert isinstance(y_pred, (str, pd.DataFrame)), "Expected str or DataFrame"
@@ -1997,8 +1982,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         """
         # Create temporary directory and tables
         computation_dir = self._create_computation_dir("predict_proba")
-        initial_runner_temp_dir = kh.get_runner().root_temp_dir
-        kh.get_runner().root_temp_dir = computation_dir
 
         # Create the input dataset
 
@@ -2015,7 +1998,6 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         # Cleanup and restore the runner's temporary dir
         finally:
             self._cleanup_computation_dir(computation_dir)
-            kh.get_runner().root_temp_dir = initial_runner_temp_dir
 
         # - Reorder the columns to that of self.classes_
         # - Transform to np.ndarray
@@ -2649,8 +2631,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         """
         # Create temporary directory
         computation_dir = self._create_computation_dir("transform")
-        initial_runner_temp_dir = kh.get_runner().root_temp_dir
-        kh.get_runner().root_temp_dir = computation_dir
 
         # Create and transform the dataset
         try:
@@ -2665,7 +2645,6 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         # Cleanup and restore the runner's temporary dir
         finally:
             self._cleanup_computation_dir(computation_dir)
-            kh.get_runner().root_temp_dir = initial_runner_temp_dir
         return X_transformed.to_numpy(copy=False)
 
     def _transform_prepare_deployment_for_transform(self, ds):
