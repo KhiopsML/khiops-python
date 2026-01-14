@@ -6,7 +6,7 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
+## 11.0.0.1 - 2026-01-14
 
 ### Fixed
 - (General) Automatic Credentials Discovery-based credential retrieval for
