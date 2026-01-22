@@ -762,6 +762,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "specific_pairs": [("age", "race")],
                                 "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
+                                "max_parts": 0,
                                 "group_target_value": False,
                                 "additional_data_tables": {},
                             }
@@ -790,6 +791,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
                                 "construction_rules": ["TableMode", "TableSelection"],
+                                "max_parts": 5,
                                 "additional_data_tables": {},
                             }
                         },
@@ -818,6 +820,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "specific_pairs": [("age", "race")],
                                 "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
+                                "max_parts": 7,
                                 "informative_variables_only": True,
                                 "group_target_value": False,
                                 "keep_initial_categorical_variables": False,
@@ -860,6 +863,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "specific_pairs": [],
                                 "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
+                                "max_parts": 4,
                                 "group_target_value": False,
                                 "additional_data_tables": {"SpliceJunctionDNA"},
                             }
@@ -889,6 +893,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_selected_variables": 1,
                                 "max_evaluated_variables": 3,
                                 "construction_rules": ["TableMode", "TableSelection"],
+                                "max_parts": 6,
                                 "additional_data_tables": {"SpliceJunctionDNA"},
                             }
                         },
@@ -918,6 +923,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "specific_pairs": [],
                                 "all_possible_pairs": False,
                                 "construction_rules": ["TableMode", "TableSelection"],
+                                "max_parts": 8,
                                 "informative_variables_only": True,
                                 "group_target_value": False,
                                 "keep_initial_categorical_variables": False,
@@ -1480,6 +1486,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "specific_pairs": [],
                 "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
+                "n_feature_parts": 4,
                 "group_target_value": False,
             },
         )
@@ -1517,6 +1524,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "specific_pairs": [("age", "race")],
                 "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
+                "n_feature_parts": 7,
                 "informative_features_only": True,
                 "group_target_value": False,
                 "keep_initial_variables": False,
@@ -1543,6 +1551,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "specific_pairs": [("age", "race")],
                 "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
+                "n_feature_parts": 7,
                 "informative_features_only": True,
                 "group_target_value": False,
                 "keep_initial_variables": False,
@@ -1568,6 +1577,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "specific_pairs": [],
                 "all_possible_pairs": False,
                 "construction_rules": ["TableMode", "TableSelection"],
+                "n_feature_parts": 8,
                 "informative_features_only": True,
                 "group_target_value": False,
                 "keep_initial_variables": False,
@@ -1608,6 +1618,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "n_text_features": 300000,
                 "type_text_features": "ngrams",
                 "construction_rules": ["TableMode", "TableSelection"],
+                "n_feature_parts": 5,
             },
         )
 
@@ -1626,6 +1637,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "n_text_features": 300000,
                 "type_text_features": "ngrams",
                 "construction_rules": ["TableMode", "TableSelection"],
+                "n_feature_parts": 5,
             },
         )
 
@@ -1644,6 +1656,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
                 "construction_rules": ["TableMode", "TableSelection"],
+                "n_feature_parts": 6,
             },
         )
 
