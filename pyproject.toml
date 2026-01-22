@@ -104,8 +104,8 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "pandas>=0.25.3",
-    # do not use the latest version, to avoid undesired breaking changes
+    # do not use the latest versions, to avoid undesired breaking changes
+    "pandas>=0.25.3,<=2.3.3",
     "scikit-learn>=0.22.2,<=1.7.2",
 ]
 
