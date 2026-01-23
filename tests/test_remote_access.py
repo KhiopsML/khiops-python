@@ -227,6 +227,33 @@ class KhiopsRemoteAccessTestsContainer:
             self.assertTrue(fs.exists(log_file_path), f"Path: {log_file_path}")
             fs.remove(log_file_path)
 
+        def test_samples_dir_inferred_from_remote_home(self):
+            """Test samples_dir is correctly inferred using a remote path in HOME"""
+
+            # Save initial state
+            # This runner has remote paths (for root_temp_dir for example)
+            initial_runner = kh.get_runner()
+            initial_home = os.environ.get("HOME")
+
+            # Set a remote path to HOME
+            os.environ["HOME"] = initial_runner.root_temp_dir
+            test_runner = KhiopsLocalRunner()
+            kh.set_runner(test_runner)
+
+            # Test the home path is indeed remote
+            self.assertFalse(fs.is_local_resource(os.environ["HOME"]))
+
+            # Test that samples_dir is built according to the expectations
+            expected_samples_dir = fs.get_child_path(
+                fs.get_child_path(os.environ["HOME"], "khiops_data"), "samples"
+            )
+            self.assertEqual(test_runner.samples_dir, expected_samples_dir)
+
+            # Restore initial state
+            if initial_home is not None:
+                os.environ["HOME"] = initial_home
+            kh.set_runner(initial_runner)
+
 
 class KhiopsS3RemoteFileTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAccessTests):
     """Integration tests with Amazon S3 filesystems"""
