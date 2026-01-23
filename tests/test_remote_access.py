@@ -149,6 +149,9 @@ class KhiopsRemoteAccessTestsContainer:
                 )
             self.print_test_title()
 
+            # Save the runner that can be modified by the test
+            self.initial_runner = kh.get_runner()
+
         def tearDown(self):
             # Cleanup the output dir (the files within and the folder)
             if hasattr(self, "folder_name_to_clean_in_teardown"):
@@ -159,6 +162,25 @@ class KhiopsRemoteAccessTestsContainer:
                         )
                     )
                 fs.remove(self.folder_name_to_clean_in_teardown)
+
+            # Restore the environment variables that can be left tained
+            # after a test failure
+            if hasattr(self, "env_vars_to_restore"):
+                for var_name in self.env_vars_to_restore:
+                    # Delete 'var_name' from the environment if it was not
+                    # in the environment at the beginning of each test
+                    if (
+                        self.env_vars_to_restore[var_name] is None
+                        and os.environ.get(var_name) is not None
+                    ):
+                        del os.environ[var_name]
+                    # Set 'var_name' in the environment to the value it had
+                    # before the beginning of each test
+                    elif self.env_vars_to_restore.get(var_name) is not None:
+                        os.environ[var_name] = self.env_vars_to_restore[var_name]
+
+            # Reset the current runner to the value it had before each test
+            kh.set_runner(self.initial_runner)
 
         def test_train_predictor_with_remote_access(self):
             """Test train_predictor with remote resources"""
@@ -227,16 +249,27 @@ class KhiopsRemoteAccessTestsContainer:
             self.assertTrue(fs.exists(log_file_path), f"Path: {log_file_path}")
             fs.remove(log_file_path)
 
+        @unittest.skipIf(
+            docker_runner_config_exists(),
+            "Skip the remote path tests for docker runner",
+        )
         def test_samples_dir_inferred_from_remote_home(self):
             """Test samples_dir is correctly inferred using a remote path in HOME"""
 
-            # Save initial state
-            # This runner has remote paths (for root_temp_dir for example)
-            initial_runner = kh.get_runner()
-            initial_home = os.environ.get("HOME")
+            # Save the changed env vars in a dict that will be restored by tearDown
+            # even if the test fails
+            self.env_vars_to_restore = {}
+            for var_name in ("HOME", "KHIOPS_SAMPLES_DIR"):
+                print(f"Initial value of {var_name} = {os.environ.get(var_name)}")
+                self.env_vars_to_restore[var_name] = os.environ.get(var_name)
 
-            # Set a remote path to HOME
-            os.environ["HOME"] = initial_runner.root_temp_dir
+            # The current runner kh.get_runner() has remote paths
+            # (in root_temp_dir attribute for example)
+            # Set this remote path to HOME
+            os.environ["HOME"] = kh.get_runner().root_temp_dir
+            # Delete KHIOPS_SAMPLES_DIR so that its value will be inferred using HOME
+            if os.environ.get("KHIOPS_SAMPLES_DIR") is not None:
+                del os.environ["KHIOPS_SAMPLES_DIR"]
             test_runner = KhiopsLocalRunner()
             kh.set_runner(test_runner)
 
@@ -248,11 +281,6 @@ class KhiopsRemoteAccessTestsContainer:
                 fs.get_child_path(os.environ["HOME"], "khiops_data"), "samples"
             )
             self.assertEqual(test_runner.samples_dir, expected_samples_dir)
-
-            # Restore initial state
-            if initial_home is not None:
-                os.environ["HOME"] = initial_home
-            kh.set_runner(initial_runner)
 
 
 class KhiopsS3RemoteFileTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAccessTests):
