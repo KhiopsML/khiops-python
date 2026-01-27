@@ -2064,6 +2064,18 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         Maximum number of features to construct automatically. See
         :doc:`/multi_table_primer` for more details on the multi-table-specific
         features.
+    n_trees : int, default 10
+        Maximum number of decision tree features to construct. The constructed trees
+        combine other features, either native or constructed. These features usually
+        improve the regressor's performance at the cost of interpretability of the
+        model.
+    n_text_features : int, default 10000
+        Maximum number of text features to construct.
+    type_text_features : str, default "words"
+        Type of the text features to construct. Can be either one of:
+            - "words": sequences of non-space characters
+            - "ngrams": sequences of bytes
+            - "tokens": user-defined
     n_selected_features : int, default 0
         Maximum number of features to be selected in the SNB predictor. If equal to
         0 it selects all the features kept in the training.
