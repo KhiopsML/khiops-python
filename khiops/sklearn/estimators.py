@@ -2172,8 +2172,6 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         self : `KhiopsRegressor`
             The calling estimator instance.
         """
-        if self.n_trees > 0:
-            warnings.warn("Khiops does not support n_trees > 0 for regression models.")
         kwargs["categorical_target"] = False
         return super().fit(X, y=y, **kwargs)
 
