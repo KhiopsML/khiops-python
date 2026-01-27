@@ -142,7 +142,7 @@ def _is_object_type(type_str):
     return type_str in ["Entity", "Table"]
 
 
-class DictionaryDomain(KhiopsJSONObject):
+class DictionaryDomain:
     """Main class containing the information of a Khiops dictionary file
 
     A DictionaryDomainain is a collection of `Dictionary` objects. These dictionaries
@@ -175,8 +175,12 @@ class DictionaryDomain(KhiopsJSONObject):
         if json_data is not None and not isinstance(json_data, dict):
             raise TypeError(type_error_message("json_data", json_data, dict))
 
-        # Initialize base attributes
-        super().__init__(json_data=json_data)
+        # Create KhiopsJSONObject and use it via composition
+        self._json_object = KhiopsJSONObject(json_data)
+
+        # Propagate the relevant attributes from the KhiopsJSONObject instance
+        self.tool = self._json_object.tool
+        self.version = self._json_object.version
 
         # Transform to an empty dictionary if json_data is not specified
         if json_data is None:
@@ -220,9 +224,7 @@ class DictionaryDomain(KhiopsJSONObject):
         dictionary_domain_copy = DictionaryDomain()
         dictionary_domain_copy.tool = self.tool
         dictionary_domain_copy.version = self.version
-        dictionary_domain_copy.khiops_encoding = self.khiops_encoding
-        dictionary_domain_copy.ansi_chars = self.ansi_chars
-        dictionary_domain_copy.colliding_utf8_chars = self.colliding_utf8_chars
+        dictionary_domain_copy._json_object = self._json_object
         for dictionary in self.dictionaries:
             dictionary_domain_copy.add_dictionary(dictionary.copy())
         return dictionary_domain_copy
@@ -489,7 +491,9 @@ class DictionaryDomain(KhiopsJSONObject):
             Path of the output dictionary file (``.kdic``).
         """
         with io.BytesIO() as kdic_contents_stream:
-            kdic_file_writer = self.create_output_file_writer(kdic_contents_stream)
+            kdic_file_writer = self._json_object.create_output_file_writer(
+                kdic_contents_stream
+            )
             self.write(kdic_file_writer)
             fs.write(kdic_file_path, kdic_contents_stream.getvalue())
 
@@ -502,7 +506,7 @@ class DictionaryDomain(KhiopsJSONObject):
             Output stream or writer.
         """
         if isinstance(stream_or_writer, io.IOBase):
-            writer = self.create_output_file_writer(stream_or_writer)
+            writer = self._json_object.create_output_file_writer(stream_or_writer)
         elif isinstance(stream_or_writer, KhiopsOutputWriter):
             writer = stream_or_writer
         else:
