@@ -13,10 +13,28 @@ in two ways:
 
 ## Installation
 
+Using `conda`
 ```bash
-conda install -c conda-forge -c khiops khiops
+conda create -n khiops-env
+conda activate khiops-env
+conda install -c conda-forge khiops
 ```
-Other install methods are documented at the [Khiops website][khiops-install].
+
+Using `pip` under Linux (in a `bash` shell)
+```bash
+python -m venv khiops-venv
+source khiops-venv/bin/activate
+pip install -U khiops
+```
+
+Using `pip` under Windows (in a `powershell` shell)
+```shell
+python -m venv khiops-venv
+khiops-venv\Scripts\activate
+pip install -U khiops
+```
+
+Other installation methods are documented at the [Khiops website][khiops-install].
 
 ### Requirements
 - [Python][python] (>=3.8)

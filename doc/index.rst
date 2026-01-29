@@ -6,11 +6,30 @@ Welcome to the Khiops Python API documentation page.
 
 Installation
 ------------
-Khiops is better installed with `conda package manager <https://docs.conda.io/en/latest/>`_
+Khiops can be installed with `conda package manager <https://docs.conda.io/en/latest/>`_
 
-.. code-block:: shell
+.. code-block:: bash
 
-    conda install -c conda-forge -c khiops khiops
+    conda create -n khiops-env
+    conda activate khiops-env
+    conda install -c conda-forge khiops
+
+Alternatively, you can install in a virtual environment using `pip`,
+under Linux (in a `bash` shell) :
+
+.. code-block:: bash
+
+    python -m venv khiops-venv
+    source khiops-venv/bin/activate
+    pip install -U khiops
+
+under Windows (in a `powershell` shell) :
+
+.. code-block:: powershell
+
+    python -m venv khiops-venv
+    khiops-venv\Scripts\activate
+    pip install -U khiops
 
 More details and other install methods are documented at the `Khiops website
 <https://www.khiops.org/setup>`_.
