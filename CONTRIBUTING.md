@@ -125,7 +125,7 @@ See the documentation practices and tools [here](./doc/README.md).
 ### Main Guiding Principles
 > The commit history must be the cleanest possible
 
-> The `dev` branch must pass all tests
+> The `main` branch must pass all tests
 
 ### Commits
 #### Commit Message
@@ -143,47 +143,43 @@ eventually answer more thoroughly *What do these changes do?* but try create com
 "atomic" enough so that their title suffices to answer this question.
 
 #### Rewriting History
-Rewriting commit history is only allowed in feature branches and `dev`. Rewriting the history in
-`dev` is very limited: it should be only done to serious problems in the history. It is forbidden to
+Rewriting commit history is only allowed in feature branches. It is forbidden to
 rebase before the last merge commit.
 
 A usual application of history rewriting is to eliminate commits named "Fix previous commit". In
 this case use `rebase` to rewrite the history as follows:
 ```bash
-git rebase -i <ROOT-REF> # Usually ROOT-REF is either "dev", "HEAD~2" or a specific hash
+git rebase -i <ROOT-REF> # Usually ROOT-REF is either "main", "HEAD~2" or a specific hash
 ```
 to interactively move and squash fix commits with the `fixup` or `squash` operator. Usually this
 operation will make your feature branch diverge from `origin` (GitHub repo), so a `git push --force`
 is necessary to update it.
 
-More generally, rewriting allows to obtain a commit history that is the cleanest possible. See [Git
-Rewriting History](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History) for more details.
+More generally, history rewriting allows to obtain a commit history that is the cleanest possible.
+See [Git Rewriting History](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History) for more details.
 
 **Warning:** Do not rebase on a commit before the branching point of your feature branch as it may
 screw up your local repository by erasing merge commits.
 
 ### Branches and Development Workflow
-We use feature branches that branch/merge from/to `dev`. The `main` branch is only used for final
+We use feature branches that branch/merge from/to `main`, which is also used for
 releases.
 
 The rules for the branches are:
-- Feature branches: You can commit and rewrite the branch at will. It should pass the CI/CD workflows
-  before merging to `dev`. Note that only short tests are run in feature branches.
-- `dev` branch: You should avoid directly commit and rewrite this branch (and only maintainers
-  can do it). This branch may not succeed all the CI/CD workflows since short and long tests are run.
-  You may release beta versions from this branch.
-- `main` branch: Only merges from `dev` are accepted. All CI/CD workflows must succeed (this
+- Feature branches: You can commit and rewrite the branch history at will. It should pass the CI/CD workflows
+  before merging to `main`. Note that only short tests are run in feature branches.
+- `main` branch: Only merges from feature branches are accepted. All CI/CD workflows must succeed (this
   includes the long tests).
 
 As for the use of feature branches, GitHub makes it easy to implement the following workflow:
 - Create an issue for the particular feature/fix/etc.
 - Create a branch for the issue by clicking the "Create a branch" link in the issue's right column.
 - Develop, commit changes locally. Don't hesitate to rewrite the branch history if it is clearer.
-  This will create a feature branch from `dev` with a name starting with the issue number followed
+  This will create a feature branch from `main` with a name starting with the issue number followed
   by the issue title.
 - Once you have some commits (`WIP`s or otherwise), you may push your branch and create a pull
   request (PR) for the issue.
-- pull `dev` and rebase on it if there are new changes (see [below](#rebasing-on-develop))
+- pull `main` and rebase on it if there are new changes (see below)
 - Push your feature branch to GitHub (if necessary, use `push --force` to rewrite the feature branch
   history) and ensure that it passes the CI/CD jobs.
 - Ask the PR be reviewed by another team member:
@@ -206,18 +202,18 @@ _Pros:_
 
 _Cons:_
 - Extra commits in history.
-- Non-linear `dev` and `main` history.
+- Non-linear `main` history.
 
-### Rebasing on `dev`
-It may happen that the `dev` branch was updated while you are developing your feature branch.
+### Rebasing on `main`
+It may happen that the `main` branch was updated while you are developing your feature branch.
 To avoid extra merge commits do the following to update your local copy of your feature branch:
 ```bash
 # on my-feat-branch
 git stash           # only when you have non-committed changes
-git switch dev
+git switch main
 git pull
 git switch my-feat-branch
-git rebase dev
+git rebase main
 # fix any conflicts you may have
 git stash pop       # only when you have non-committed changes
 ```
@@ -232,12 +228,12 @@ data-science packages:
   - [Scikit-learn](https://scikit-learn.org/stable/)
   - [Pandas](https://pandas.pydata.org/)
 
-Note that these 4 packages already have a sizable number of dependencies. We should discuss
+Note that these 2 packages already have a sizable number of dependencies. We should discuss
 thoroughly the pros and cons of any new external package dependency before adding it.
 
 ### Development/Build dependencies
 For development dependencies (eg. `black`, `isort`, `sphinx`, `wrapt`, `furo`) we can be more
-carefree while still trying to not add too many dependencies.
+carefree while still trying not to add too many dependencies.
 
 ### Python Support Policy
 Our Python support policy is the following:
@@ -245,12 +241,12 @@ Our Python support policy is the following:
 - We support an old Python version **up to 6 months** from its official end of
   support by the Python developers.
 
-By _supporting a Python version_ we mean that we pass all our test batteries in the specified
+By _supporting a Python version_ we mean that we pass all our test suites in the specified
 version.
 
 ## Versioning
 We follow a non-standard `MAJOR.MINOR.PATCH.INCREMENT[-PRE_RELEASE]` versioning convention. The
-first three numbers `MAJOR.MINOR.PATCH` are the latest Khiops version that is compatible with the
+first three numbers `MAJOR.MINOR.PATCH` are the Khiops version that is compatible with the
 package. The number `INCREMENT` indicates the evolution of the Khiops Python library followed by an
 optional `[-PRE_RELEASE]` version for alpha, beta and release candidate releases (eg. `b.2`).
 
@@ -263,10 +259,9 @@ by `pip` and `conda`.
 ## Releases
 
 ## Pre-releases
-When tagging a revision the CI will create the packages and upload them to the `khiops-dev` channel.
-Prefer to augment the pre-release revision number to re-create a tag because the CI overwrites
-packages with the same tag in the `khiops-dev` channel. Do not forget to clean any temporary
-pre-releases from `khiops-dev` and the releases GitHub page.
+When tagging a revision the CI will create the Pip packages.
+Prefer to augment the pre-release revision number to re-create a tag. Do not forget to clean any temporary
+pre-releases from the releases GitHub page.
 
 
 ## Public Releases
@@ -280,29 +275,17 @@ Checklist:
   - Update your local repo and save your work:
     - `git stash # if necessary`
     - `git fetch --tags --prune --prune-tags`
-    - `git switch dev`
-    - `git pull`
     - `git switch main`
     - `git pull`
-  - Merge the `dev` branch into `main`
-    - `git switch main`
-    - `git merge dev`
   - Tag the merge commit with the release version (see Versioning above)
     - `git switch main`
-    - `git tag 10.3.0.1 # Just an example`
-  - Make `dev` point to the merge commit just created in `main`
-    - This is necessary to include the merge commit into master to calculate intermediary versions
-      with Versioneer.
-    - Steps:
-      - `git switch dev`
-      - `git reset --hard main`
-      - `git push dev` (you need to remove the protections of `dev` for this step)
+    - `git tag 11.0.0.2 # Just an example`
 - Workflows
-  - Execute the `Conda Package` workflow specifying:
-    - The release tag
-    - `khiops` as the release channel
-  - Execute the `API Docs` workflow specifying "Deploy GH Pages".
+  - Execute the `Pip Package` workflow specifying:
+    - The tag on which to launch the workflow
+    - The Pip repository: `Test PyPI` (for pre-releases) or `PyPI` (for
+      releases)
 
-To make a public release, you must execute the `Conda Package` CI workflow manually on a tag and
-specify the `khiops` anaconda channel for upload. These uploads do not overwrite any packages in
-this channel, so you must correct any mistake manually.
+To make a public release, you must execute the `Pip Package` CI workflow manually on a tag and
+specify the `PyPI` Pip repository for upload. These uploads do not overwrite any packages in
+the repository, so you must correct any mistake manually.

@@ -112,8 +112,8 @@ jobs:
             rm -f requires.txt
           done
       - name: Configure Expensive Tests Setting
-        # Skip expensive tests by default, unless on the `dev`, `dev-v10` or `main` branches
-        if: github.ref != 'dev' && github.ref != 'dev-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
+        # Skip expensive tests by default, unless on the `main-v10` or `main` branches
+        if: github.ref != 'main-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
         run: echo "SKIP_EXPENSIVE_TESTS=true" >> "$GITHUB_ENV"
       - name: Prepare Integration Tests on remote files
         if: env.SKIP_EXPENSIVE_TESTS != 'true'
