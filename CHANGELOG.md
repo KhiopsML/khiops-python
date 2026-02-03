@@ -9,11 +9,14 @@
 ## Unreleased
 
 ### Added
-- (`sklearn`) `n_feature_parts` parameter to the supervised estimators 
+- (`sklearn`) `n_feature_parts` parameter to the supervised estimators
+
+### Fixed
+- (`sklearn`) Default value of `n_features` for the supervised estimators
 
 ## 11.0.0.2 - 2026-01-26
 
-## Fixed
+### Fixed
 - (`core`) Samples dir path construction when HOME is a remote path
 
 ## 11.0.0.1 - 2026-01-14

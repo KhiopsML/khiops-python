@@ -1188,7 +1188,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
     def __init__(
         self,
-        n_features=100,
+        n_features=1000,
         n_trees=10,
         n_text_features=10000,
         type_text_features="words",
@@ -1513,7 +1513,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
 
     def __init__(
         self,
-        n_features=100,
+        n_features=1000,
         n_trees=10,
         n_text_features=10000,
         type_text_features="words",
@@ -1656,7 +1656,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
     Parameters
     ----------
-    n_features : int, default 100
+    n_features : int, default 1000
         Maximum number of features to construct automatically. See
         :doc:`/multi_table_primer` for more details on the multi-table-specific
         features.
@@ -1748,7 +1748,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
     def __init__(
         self,
-        n_features=100,
+        n_features=1000,
         n_pairs=0,
         n_trees=10,
         n_text_features=10000,
@@ -2076,7 +2076,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
     Parameters
     ----------
-    n_features : int, default 100
+    n_features : int, default 1000
         Maximum number of features to construct automatically. See
         :doc:`/multi_table_primer` for more details on the multi-table-specific
         features.
@@ -2141,7 +2141,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
     def __init__(
         self,
-        n_features=100,
+        n_features=1000,
         n_trees=0,
         n_text_features=10000,
         type_text_features="words",
@@ -2283,7 +2283,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     ----------
     categorical_target : bool, default ``True``
         ``True`` if the target column is categorical.
-    n_features : int, default 100
+    n_features : int, default 1000
         Maximum number of features to construct automatically. See
         :doc:`/multi_table_primer` for more details on the multi-table-specific
         features.
@@ -2390,7 +2390,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     def __init__(
         self,
         categorical_target=True,
-        n_features=100,
+        n_features=1000,
         n_pairs=0,
         n_trees=0,
         n_text_features=10000,
