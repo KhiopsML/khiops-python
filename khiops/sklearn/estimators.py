@@ -1195,6 +1195,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         specific_pairs=None,
         all_possible_pairs=True,
         construction_rules=None,
+        n_feature_parts=0,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1211,6 +1212,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         self.specific_pairs = specific_pairs
         self.all_possible_pairs = all_possible_pairs
         self.construction_rules = construction_rules
+        self.n_feature_parts = n_feature_parts
         self._original_target_dtype = None
         self._predicted_target_meta_data_tag = None
         self._khiops_baseline_model_prefix = None
@@ -1300,6 +1302,12 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                 for rule in self.construction_rules:
                     if not isinstance(rule, str):
                         raise TypeError(type_error_message(rule, rule, str))
+        if not isinstance(self.n_feature_parts, int):
+            raise TypeError(
+                type_error_message("n_feature_parts", self.n_feature_parts, int)
+            )
+        if self.n_feature_parts < 0:
+            raise ValueError("'n_feature_parts' must be positive")
 
     def _fit_train_model(self, ds, computation_dir, **kwargs):
         # Train the model with Khiops
@@ -1384,6 +1392,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         kwargs["max_trees"] = kwargs.pop("n_trees")
         kwargs["max_text_features"] = kwargs.pop("n_text_features")
         kwargs["text_features"] = kwargs.pop("type_text_features")
+        kwargs["max_parts"] = kwargs.pop("n_feature_parts")
 
         # Add the additional_data_tables parameter
         kwargs["additional_data_tables"] = additional_data_tables
@@ -1513,6 +1522,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         specific_pairs=None,
         all_possible_pairs=True,
         construction_rules=None,
+        n_feature_parts=0,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -1525,6 +1535,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             specific_pairs=specific_pairs,
             all_possible_pairs=all_possible_pairs,
             construction_rules=construction_rules,
+            n_feature_parts=n_feature_parts,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -1685,7 +1696,10 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, Khiops
         uses the multi-table construction rules listed in
-        `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`
+        `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`.
+    n_feature_parts : int, default 0
+        Maximum number of variable parts produced by preprocessing methods. If equal
+        to 0 it is automatically calculated.
     group_target_value : bool, default ``False``
         Allows grouping of the target values in classification. It can substantially
         increase the training time.
@@ -1744,6 +1758,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         specific_pairs=None,
         all_possible_pairs=True,
         construction_rules=None,
+        n_feature_parts=0,
         group_target_value=False,
         verbose=False,
         output_dir=None,
@@ -1757,6 +1772,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             n_selected_features=n_selected_features,
             n_evaluated_features=n_evaluated_features,
             construction_rules=construction_rules,
+            n_feature_parts=n_feature_parts,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -2086,6 +2102,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         Allowed rules for the automatic feature construction. If not set, Khiops
         uses the multi-table construction rules listed in
         `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`.
+    n_feature_parts : int, default 0
+        Maximum number of variable parts produced by preprocessing methods. If equal
+        to 0 it is automatically calculated.
     verbose : bool, default ``False``
         If ``True`` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
@@ -2129,6 +2148,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         n_selected_features=0,
         n_evaluated_features=0,
         construction_rules=None,
+        n_feature_parts=0,
         verbose=False,
         output_dir=None,
         auto_sort=True,
@@ -2141,6 +2161,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
             n_selected_features=n_selected_features,
             n_evaluated_features=n_evaluated_features,
             construction_rules=construction_rules,
+            n_feature_parts=n_feature_parts,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
@@ -2296,6 +2317,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         Allowed rules for the automatic feature construction. If not set, Khiops
         uses the multi-table construction rules listed in
         `kh.DEFAULT_CONSTRUCTION_RULES <khiops.core.api.DEFAULT_CONSTRUCTION_RULES>`.
+    n_feature_parts : int, default 0
+        Maximum number of variable parts produced by preprocessing methods. If equal
+        to 0 it is automatically calculated.
     informative_features_only : bool, default ``True``
         If ``True`` keeps only informative features.
     group_target_value : bool, default ``False``
@@ -2374,6 +2398,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         specific_pairs=None,
         all_possible_pairs=True,
         construction_rules=None,
+        n_feature_parts=0,
         informative_features_only=True,
         group_target_value=False,
         keep_initial_variables=False,
@@ -2390,6 +2415,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             n_text_features=n_text_features,
             type_text_features=type_text_features,
             construction_rules=construction_rules,
+            n_feature_parts=n_feature_parts,
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
