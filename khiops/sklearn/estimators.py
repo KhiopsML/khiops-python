@@ -180,7 +180,7 @@ def _check_pair_parameters(estimator):
     if not isinstance(estimator.n_pairs, int):
         raise TypeError(type_error_message("n_pairs", estimator.n_pairs, int))
     if estimator.n_pairs < 0:
-        raise ValueError("'n_pairs' must be positive")
+        raise ValueError("'n_pairs' must be non-negative")
     if estimator.specific_pairs is not None:
         if not is_list_like(estimator.specific_pairs):
             raise TypeError(
@@ -955,7 +955,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
                         type_error_message("'max_part_numbers' values", value, int)
                     )
                 elif value < 0:
-                    raise ValueError("'max_part_numbers' values must be positive")
+                    raise ValueError("'max_part_numbers' values must be non-negative")
         # Create temporary directory and tables
         computation_dir = self._create_computation_dir("simplify")
         output_dir = self._get_output_dir(computation_dir)
@@ -1272,17 +1272,17 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         if not isinstance(self.n_features, int):
             raise TypeError(type_error_message("n_features", self.n_features, int))
         if self.n_features < 0:
-            raise ValueError("'n_features' must be positive")
+            raise ValueError("'n_features' must be non-negative")
         if not isinstance(self.n_trees, int):
             raise TypeError(type_error_message("n_trees", self.n_trees, int))
         if self.n_trees < 0:
-            raise ValueError("'n_trees' must be positive")
+            raise ValueError("'n_trees' must be non-negative")
         if not isinstance(self.n_text_features, int):
             raise TypeError(
                 type_error_message("n_text_features", self.n_text_features, int)
             )
         if self.n_text_features < 0:
-            raise ValueError("'n_text_features' must be positive")
+            raise ValueError("'n_text_features' must be non-negative")
         if not isinstance(self.type_text_features, str):
             raise TypeError(
                 type_error_message("type_text_features", self.type_text_features, str)
@@ -1307,7 +1307,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
                 type_error_message("n_feature_parts", self.n_feature_parts, int)
             )
         if self.n_feature_parts < 0:
-            raise ValueError("'n_feature_parts' must be positive")
+            raise ValueError("'n_feature_parts' must be non-negative")
 
     def _fit_train_model(self, ds, computation_dir, **kwargs):
         # Train the model with Khiops
@@ -1635,9 +1635,9 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
 
         # Check estimator parameters
         if self.n_evaluated_features < 0:
-            raise ValueError("'n_evaluated_features' must be positive")
+            raise ValueError("'n_evaluated_features' must be non-negative")
         if self.n_selected_features < 0:
-            raise ValueError("'n_selected_features' must be positive")
+            raise ValueError("'n_selected_features' must be non-negative")
 
 
 # Note: scikit-learn **requires** inherit first the mixins and then other classes
