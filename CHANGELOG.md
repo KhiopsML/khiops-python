@@ -13,6 +13,7 @@
 
 ### Fixed
 - (`sklearn`) Default value of `n_features` for the supervised estimators
+- (`core`) Detection of an unhappy installation path in a venv under Windows
 
 ## 11.0.0.2 - 2026-01-26
 
