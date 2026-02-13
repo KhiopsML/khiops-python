@@ -1240,11 +1240,17 @@ class KhiopsLocalRunner(KhiopsRunner):
                         # Under Windows, there are two cases :
                         (
                             # for conda-based installations python is inside 'base_dir'
-                            str(Path(sys.executable).parents[0]) != base_dir
+                            # (warning : the case of the path in sys.executable
+                            # can be altered by some tools under Windows)
+                            str(Path(sys.executable.lower()).parents[0])
+                            != base_dir.lower()
                             and
                             # for 'binary+pip' installations (within a virtual env)
                             # python is inside 'base_dir'/Scripts
-                            str(Path(sys.executable).parents[1]) != base_dir
+                            # (warning : the case of the path in sys.executable
+                            # can be altered by some tools under Windows)
+                            str(Path(sys.executable.lower()).parents[1])
+                            != base_dir.lower()
                         )
                         # Under Linux or MacOS a bin/ folder exists
                         or str(Path(sys.executable).parents[1]) != base_dir
