@@ -753,6 +753,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
+                                "max_constructed_variables": 333,
                                 "max_pairs": 1,
                                 "max_trees": 5,
                                 "max_text_features": 300000,
@@ -785,6 +786,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
+                                "max_constructed_variables": 555,
                                 "max_trees": 0,
                                 "max_text_features": 300000,
                                 "text_features": "ngrams",
@@ -813,6 +815,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "field_separator": "\t",
                                 "detect_format": False,
                                 "header_line": True,
+                                "max_constructed_variables": 777,
                                 "max_pairs": 1,
                                 "max_trees": 5,
                                 "max_text_features": 300000,
@@ -1432,6 +1435,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             schema_type="monotable",
             source_type="dataframe",
             extra_estimator_kwargs={
+                "n_features": 333,
                 "n_pairs": 1,
                 "n_trees": 5,
                 "n_text_features": 300000,
@@ -1456,6 +1460,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             schema_type="monotable",
             source_type="dataframe_xy",
             extra_estimator_kwargs={
+                "n_features": 333,
                 "n_pairs": 1,
                 "n_trees": 5,
                 "n_text_features": 300000,
@@ -1519,6 +1524,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             schema_type="monotable",
             source_type="dataframe",
             extra_estimator_kwargs={
+                "n_features": 777,
                 "n_pairs": 1,
                 "n_trees": 5,
                 "n_text_features": 300000,
@@ -1546,6 +1552,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             schema_type="monotable",
             source_type="dataframe_xy",
             extra_estimator_kwargs={
+                "n_features": 777,
                 "n_pairs": 1,
                 "n_trees": 5,
                 "n_text_features": 300000,
@@ -1615,6 +1622,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             schema_type="monotable",
             source_type="dataframe",
             extra_estimator_kwargs={
+                "n_features": 555,
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
                 "n_text_features": 300000,
@@ -1634,6 +1642,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             schema_type="monotable",
             source_type="dataframe_xy",
             extra_estimator_kwargs={
+                "n_features": 555,
                 "n_selected_features": 1,
                 "n_evaluated_features": 3,
                 "n_text_features": 300000,
