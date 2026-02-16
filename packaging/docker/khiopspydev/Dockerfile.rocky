@@ -21,16 +21,12 @@ RUN true \
     git \
     pandoc \
     wget \
-  # Install Python 3.11 if on Rocky 8 \
-  && if [ "$KHIOPSDEV_OS" = "rocky8" ]; then \
+  # Install Python 3.11 on Rocky 8 or 9 as they come with obsolete versions (<= 3.9) \
+  && if [ "$KHIOPSDEV_OS" = "rocky8" -o "$KHIOPSDEV_OS" = "rocky9" ]; then \
        dnf install -y \
        python3.11 \
        python3.11-pip \
        python3.11-setuptools ; \
-     else \
-       dnf install -y \
-       python3-setuptools \
-       python3-pip ; \
      fi \
   # Get Linux distribution codename \
   && if [ -f /etc/os-release ]; then . /etc/os-release; fi \
@@ -47,14 +43,12 @@ RUN true \
   && module unload mpi \
   # Hard-code OpenMPI module name \
   && module load mpi/openmpi-x86_64 \
-  # Set python to python3.11 and pip to Pip 3.11 on Rocky 8 \
-  # Set python to python3 on Rocky 9 \
-  && if [ "$KHIOPSDEV_OS" = "rocky8" ]; then \
-       alternatives --set python /usr/bin/python3.11 \
-       && alternatives --install /usr/bin/pip pip /usr/bin/pip3.11 1 ; \
-     else \
-       alternatives --install /usr/bin/python python /usr/bin/python3 1 \
-       && alternatives --install /usr/bin/pip pip /usr/bin/pip3 1 ; \
+  # Set python to python3.11 and pip to Pip 3.11 on Rocky 8 and 9 \
+  && if [ "$KHIOPSDEV_OS" = "rocky8" -o "$KHIOPSDEV_OS" = "rocky9" ]; then \
+       alternatives --install /usr/bin/python python /usr/bin/python3.11 2; \
+       alternatives --set python /usr/bin/python3.11; \
+       alternatives --install /usr/bin/pip pip /usr/bin/pip3.11 2; \
+       alternatives --set pip /usr/bin/pip3.11; \
      fi \
   # Install miniforge to have multiple Python versions via Conda \
   && mkdir -p /root/miniforge3 && cd /root/miniforge3 \

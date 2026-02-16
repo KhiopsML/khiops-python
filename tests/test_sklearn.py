@@ -18,7 +18,7 @@ from itertools import product
 import numpy as np
 import pandas as pd
 from sklearn.exceptions import NotFittedError
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import estimator_checks_generator
 from sklearn.utils.validation import check_is_fitted
 
 import khiops.core as kh
@@ -1784,9 +1784,7 @@ class KhiopsSklearnEstimatorStandardTests(unittest.TestCase):
             # Execute sklearn's estimator test battery
             print("")
             for khiops_estimator in khiops_estimators:
-                for estimator, check in check_estimator(
-                    khiops_estimator, generate_only=True
-                ):
+                for estimator, check in estimator_checks_generator(khiops_estimator):
                     check_name = check.func.__name__
                     if check_name == "check_n_features_in_after_fitting":
                         continue
