@@ -1077,7 +1077,7 @@ class NumpyTable(DatasetTable):
             raise TypeError(type_error_message("array", array, np.ndarray, Sequence))
 
         # Initialize the members
-        self.data_source = check_array(array, ensure_2d=True, force_all_finite=False)
+        self.data_source = check_array(array, ensure_2d=True, ensure_all_finite=False)
         self.column_ids = column_or_1d(range(self.data_source.shape[1]))
         self.khiops_types = {
             column_id: get_khiops_type(self.data_source.dtype)
