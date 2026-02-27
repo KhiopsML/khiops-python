@@ -13,7 +13,6 @@ from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
-import sklearn
 from scipy import sparse as sp
 from sklearn.utils import check_array
 from sklearn.utils.validation import column_or_1d
@@ -32,6 +31,13 @@ from khiops.core.internals.common import (
 # To capture invalid-names other than X,y run:
 #   pylint --disable=all --enable=invalid-names dataset.py
 # pylint: disable=invalid-name
+
+# Set a special pandas option to force the new string data type (`StringDtype`)
+# even for version 2.0 which is still required for python 3.10.
+# This new string data type no longer maps to a NumPy data type.
+# Hence, code assuming NumPy type compatibility will break unless
+# this string data type is handled separately.
+pd.options.future.infer_string = True
 
 
 def check_dataset_spec(ds_spec):
@@ -393,16 +399,11 @@ def write_internal_data_table(dataframe, file_path_or_stream):
 
 
 def _column_or_1d_with_dtype(y, dtype=None):
-    # 'dtype' has been introduced on `column_or_1d' since Scikit-learn 1.2;
-    if sklearn.__version__ < "1.2":
-        if pd.api.types.is_string_dtype(dtype) and y.isin(["True", "False"]).all():
-            warnings.warn(
-                "'y' stores strings restricted to 'True'/'False' values: "
-                "The predict method may return a bool vector."
-            )
-        return column_or_1d(y, warn=True)
-    else:
-        return column_or_1d(y, warn=True, dtype=dtype)
+    """Checks the data is of the provided `dtype`.
+    If a problem is detected a warning is printed or an error raised,
+    otherwise the pandas object is transformed into a numpy.array
+    """
+    return column_or_1d(y, warn=True, dtype=dtype)
 
 
 class Dataset:
@@ -607,16 +608,54 @@ class Dataset:
         # pandas.Series, pandas.DataFrame or numpy.ndarray
         else:
             if hasattr(y, "dtype"):
+                if not isinstance(y, np.ndarray):
+                    # Since pandas 3.0, numbers and boolean values in an array
+                    # but with a carriage-return are wrongly inferred first
+                    # respectively as `object` dtype instead of `int64` and
+                    # `object` dtype instead of `bool`.
+                    # Forcing pandas to `infer_objects` fixes the error
+                    if pd.api.types.is_object_dtype(y):
+                        y = y.infer_objects()
+
+                # Since pandas 3.0 (and even in 2.0 if the option is activated)
+                # a new `StringDtype` is used to handle strings.
+                # It does not match any longer the one recognized by numpy.
+                # An issue was created on scikit-learn
+                # https://github.com/scikit-learn/scikit-learn/issues/33383
+                # Until it is fixed, 'y' is not checked by
+                # `_column_or_1d_with_dtype` when pandas dtype is `StringDtype`.
+
                 if isinstance(y.dtype, pd.CategoricalDtype):
                     y_checked = _column_or_1d_with_dtype(
-                        y, dtype=y.dtype.categories.dtype
+                        y,
+                        dtype=(
+                            y.dtype.categories.dtype
+                            if not pd.api.types.is_string_dtype(
+                                y.dtype.categories.dtype
+                            )
+                            else None
+                        ),
                     )
                 else:
-                    y_checked = _column_or_1d_with_dtype(y, dtype=y.dtype)
+                    y_checked = _column_or_1d_with_dtype(
+                        y,
+                        dtype=(
+                            y.dtype
+                            if not pd.api.types.is_string_dtype(y.dtype)
+                            else None
+                        ),
+                    )
             elif hasattr(y, "dtypes"):
                 if isinstance(y.dtypes.iloc[0], pd.CategoricalDtype):
                     y_checked = _column_or_1d_with_dtype(
-                        y, dtype=y.dtypes.iloc[0].categories.dtype
+                        y,
+                        dtype=(
+                            y.dtypes.iloc[0].categories.dtype
+                            if not pd.api.types.is_string_dtype(
+                                y.dtypes.iloc[0].categories.dtype
+                            )
+                            else None
+                        ),
                     )
                 else:
                     y_checked = _column_or_1d_with_dtype(y)
@@ -965,21 +1004,16 @@ class PandasTable(DatasetTable):
 
         # Initialize feature columns and verify their types
         self.column_ids = self.data_source.columns.values
-        if not np.issubdtype(self.column_ids.dtype, np.integer):
-            if np.issubdtype(self.column_ids.dtype, object):
-                for i, column_id in enumerate(self.column_ids):
-                    if not isinstance(column_id, str):
-                        raise TypeError(
-                            f"Dataframe column ids must be either all integers or "
-                            f"all strings. Column id at index {i} ('{column_id}') is"
-                            f" of type '{type(column_id).__name__}'"
-                        )
-            else:
-                raise TypeError(
-                    f"Dataframe column ids must be either all integers or "
-                    f"all strings. The column index has dtype "
-                    f"'{self.column_ids.dtype}'"
-                )
+        # Ensure the feature columns are either all string
+        # or all numeric but not a mix of both.
+        if not pd.api.types.is_numeric_dtype(
+            self.column_ids
+        ) and not pd.api.types.is_string_dtype(self.column_ids):
+            raise TypeError(
+                "Dataframe column ids must be either all integers or "
+                "all strings. Columns have the following mixed types: "
+                f"{sorted(set([type(cid).__name__ for cid in self.column_ids]))}."
+            )
 
         # Initialize Khiops types
         self.khiops_types = {}
@@ -988,7 +1022,11 @@ class PandasTable(DatasetTable):
             column_numpy_type = column.dtype
             column_max_size = None
             if isinstance(column_numpy_type, pd.StringDtype):
-                column_max_size = column.str.len().max()
+                # If a value is missing in column,
+                # column.str.len() would be typed as float64 instead of int64
+                # Until this is changed, the type is forced to int64
+                # cf https://github.com/pandas-dev/pandas/issues/51948
+                column_max_size = column.str.len().astype(pd.Int64Dtype()).max()
             self.khiops_types[column_id] = get_khiops_type(
                 column_numpy_type, column_max_size
             )

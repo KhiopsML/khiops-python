@@ -503,6 +503,13 @@ class DatasetInputOutputConsistencyTests(unittest.TestCase):
         ref_table = spec["main_table"][0]
         ref_table["class"] = y
 
+        # Since pandas 3.0 the default precision for parsing a datetime
+        # is now microseconds (us) instead of nanoseconds (ns)
+        # unless enough precision is given.
+        # Unfortunately only the changelog states this, not the docstring.
+        # To avoid any comparison error in tests
+        # we need set the required precision (ns) to the datetime
+        ref_table["Date"] = ref_table["Date"].astype("datetime64[ns]")
         # Check that the dataframes are equal
         assert_frame_equal(
             ref_table.sort_values(by="User_ID").reset_index(drop=True),

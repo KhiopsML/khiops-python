@@ -2021,7 +2021,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             y_probas, (pd.DataFrame, np.ndarray)
         ), "y_probas is not a Pandas DataFrame nor Numpy array"
         y_probas = y_probas.reindex(
-            self._sorted_prob_variable_names(), axis=1, copy=False
+            self._sorted_prob_variable_names(), axis=1
         ).to_numpy(copy=False)
 
         assert isinstance(y_probas, (str, np.ndarray)), "Expected str or np.ndarray"
@@ -2265,7 +2265,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
         # Transform to np.ndarray
         if isinstance(y_pred, pd.DataFrame):
-            y_pred = y_pred.astype("float64", copy=False).to_numpy(copy=False).ravel()
+            y_pred = y_pred.astype("float64").to_numpy(copy=False).ravel()
 
         assert isinstance(y_pred, (str, np.ndarray)), "Expected str or np.array"
         return y_pred

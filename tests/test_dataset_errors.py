@@ -595,6 +595,6 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         output_error_msg = str(context.exception)
         expected_msg = (
             "Dataframe column ids must be either all integers or all "
-            "strings. Column id at index 0 ('1') is of type 'int'"
+            "strings. Columns have the following mixed types: ['int', 'str']."
         )
         self.assertEqual(output_error_msg, expected_msg)
