@@ -12,7 +12,9 @@
 - (`sklearn`) `n_feature_parts` parameter to the supervised estimators
 
 ### Fixed
-- (`sklearn`) Default value of `n_features` for the supervised estimators
+- (`sklearn`) Default value of `n_features` for the supervised estimators.
+- *Internals*: 
+  - Detection of unsupported installation modes on Windows operating systems.
 
 ## 11.0.0.2 - 2026-01-26
 

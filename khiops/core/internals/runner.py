@@ -542,14 +542,14 @@ class KhiopsRunner(ABC):
         assert (
             os.path.basename(Path(__file__).parents[2]) == "khiops"
         ), "Please fix the `Path.parents` in this method "
-        library_root_dir = Path(__file__).parents[2]
+        library_root_dir_path = Path(__file__).parents[2]
 
         status_msg = "Khiops Python library settings\n"
         status_msg += f"version             : {khiops.__version__}\n"
         status_msg += f"runner class        : {self.__class__.__name__}\n"
         status_msg += f"root temp dir       : {self.root_temp_dir}\n"
         status_msg += f"sample datasets dir : {samples_dir_path}\n"
-        status_msg += f"library root dir    : {library_root_dir}\n"
+        status_msg += f"library root dir    : {library_root_dir_path}\n"
 
         error_list = []
 
@@ -1127,7 +1127,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                 stacklevel=3,
             )
 
-    def _detect_library_installation_incompatibilities(self, library_root_dir):
+    def _detect_library_installation_incompatibilities(self, library_root_dir_path):
         """Detects known incompatible installations of this library
         in the 3 installation modes see `_infer_khiops_installation_method`
         (binary+pip, conda, conda-based)
@@ -1137,7 +1137,7 @@ class KhiopsLocalRunner(KhiopsRunner):
 
         Parameters
         ----------
-        library_root_dir : PosixPath
+        library_root_dir_path : Path
             path to this current library
 
 
@@ -1172,10 +1172,12 @@ class KhiopsLocalRunner(KhiopsRunner):
                 )
                 warning_list.append(warning)
 
+            conda_prefix_path = Path(os.environ["CONDA_PREFIX"])
             # the conda environment must match the library installation
-            if not str(library_root_dir).startswith(os.environ["CONDA_PREFIX"]):
+            if not library_root_dir_path.is_relative_to(conda_prefix_path):
                 error = (
-                    f"Khiops Python library installation path '{library_root_dir}' "
+                    "Khiops Python library installation "
+                    f"path '{library_root_dir_path}' "
                     "does not match the current Conda environment "
                     f"'{os.environ['CONDA_PREFIX']}'. "
                     "Either deactivate the current Conda environment "
@@ -1184,9 +1186,10 @@ class KhiopsLocalRunner(KhiopsRunner):
                     "Go to https://khiops.org for instructions.\n"
                 )
                 error_list.append(error)
+            khiops_path = Path(self.khiops_path)
             # the khiops executable path must also match the conda environment one
             # meaning khiops core was installed using conda
-            if not self.khiops_path.startswith(os.environ["CONDA_PREFIX"]):
+            if not khiops_path.is_relative_to(conda_prefix_path):
                 error = (
                     f"Khiops binary path '{self.khiops_path}' "
                     "does not match the current Conda environment "
@@ -1226,32 +1229,39 @@ class KhiopsLocalRunner(KhiopsRunner):
             # no further check cannot be performed)
             base_dir = _infer_base_dir_for_conda_based_or_pip_installations()
             if len(base_dir) > 0:
+                # Store in separate variable(s) to abstract over
+                # the path casing on Windows
+                sys_base_prefix_path = Path(sys.base_prefix)
+                sys_prefix_path = Path(sys.prefix)
                 # within a virtual env, sys.prefix is set to the virtual env folder
                 # whereas sys.base_prefix remains unchanged.
                 # Please be aware that if a python executable of a virtual env is used
                 # the corresponding virtual env is activated and sys.prefix updated
-                if sys.base_prefix != sys.prefix:
+                if sys_base_prefix_path != sys_prefix_path:
                     # the python executable location
                     # (within the virtual env or the conda-based env)
                     # must match the library installation
+                    sys_executable_direct_parent = Path(sys.executable).parents[0]
+                    sys_executable_grand_parent = Path(sys.executable).parents[1]
+                    base_dir_path = Path(base_dir)
                     if (
                         platform.system() == "Windows"
                         and
                         # Under Windows, there are two cases :
                         (
                             # for conda-based installations python is inside 'base_dir'
-                            str(Path(sys.executable).parents[0]) != base_dir
+                            sys_executable_direct_parent != base_dir_path
                             and
                             # for 'binary+pip' installations (within a virtual env)
                             # python is inside 'base_dir'/Scripts
-                            str(Path(sys.executable).parents[1]) != base_dir
+                            sys_executable_grand_parent != base_dir_path
                         )
                         # Under Linux or MacOS a bin/ folder exists
-                        or str(Path(sys.executable).parents[1]) != base_dir
+                        or sys_executable_grand_parent != base_dir_path
                     ):
                         error = (
                             "Khiops Python library installation path "
-                            f"'{library_root_dir}' "
+                            f"'{library_root_dir_path}' "
                             "does not match the current python environment "
                             f"('{sys.executable}'). "
                             "Go to https://khiops.org for instructions "
@@ -1260,14 +1270,15 @@ class KhiopsLocalRunner(KhiopsRunner):
                         )
                         error_list.append(error)
                 else:
+                    sys_executable_path = Path(sys.executable)
                     # the installation is not within a virtual env
                     # (sys.base_prefix == sys.prefix)
-                    if not sys.executable.startswith(sys.base_prefix):
+                    if not sys_executable_path.is_relative_to(sys_base_prefix_path):
                         # the executable is not the expected one
                         # (the system-wide python)
                         error = (
                             "Khiops Python library installed in "
-                            f"'{library_root_dir}' "
+                            f"'{library_root_dir_path}' "
                             "is run with an unexpected executable "
                             f"'{sys.executable}'. "
                             "The system-wide python located in "
@@ -1280,15 +1291,19 @@ class KhiopsLocalRunner(KhiopsRunner):
                         error_list.append(error)
                     # fetch the 'User site' site-packages path
                     # which is already adapted for each OS (Windows, MacOS, Linux)
-                    user_site_packages_dir = site.getusersitepackages()
-                    if not str(library_root_dir).startswith(user_site_packages_dir):
+                    user_site_packages_path = Path(site.getusersitepackages())
+                    if not library_root_dir_path.is_relative_to(
+                        user_site_packages_path
+                    ):
                         # the library is not installed on the 'User site'
-                        if not str(library_root_dir).startswith(sys.base_prefix):
+                        if not library_root_dir_path.is_relative_to(
+                            sys_base_prefix_path
+                        ):
                             # the library is supposed to be installed system-wide,
                             # but it seems that the location is wrong
                             error = (
                                 "Khiops Python library installation path "
-                                f"'{library_root_dir}' "
+                                f"'{library_root_dir_path}' "
                                 "does not match the system-wide Python prefix in "
                                 f"'{sys.base_prefix}'. "
                                 "Go to https://khiops.org for instructions "
@@ -1303,10 +1318,10 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Call the parent's method
         status_msg, error_list, warning_list = super()._build_status_message()
 
-        library_root_dir = Path(__file__).parents[2]
+        library_root_dir_path = Path(__file__).parents[2]
 
         installation_errors, installation_warnings = (
-            self._detect_library_installation_incompatibilities(library_root_dir)
+            self._detect_library_installation_incompatibilities(library_root_dir_path)
         )
 
         # Build the messages for install type and mpi
