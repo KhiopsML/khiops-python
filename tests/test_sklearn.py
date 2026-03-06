@@ -1135,7 +1135,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             dataset_name, "SpliceJunction", "SpliceJunctionDNA"
         )
         if transform_for_regression:
-            root_table_data.replace({"Class": {"EI": 1, "IE": 2, "N": 3}}, inplace=True)
+            root_table_data = root_table_data.replace(
+                {"Class": {"EI": 1, "IE": 2, "N": 3}}
+            ).infer_objects()  # this call forces the inference to the actual dtype
         root_train_data, root_test_data = KhiopsTestHelper.prepare_data(
             root_table_data, "Class"
         )

@@ -84,7 +84,8 @@ class KhiopsSklearnOutputTypes(unittest.TestCase):
                 "int": y,
                 "int binary": y_bin,
                 "float": y.astype(float),
-                "bool": y.replace({0: True, 1: True, 2: False}),
+                # the call to `infer_objects()` forces the inference to the actual dtype
+                "bool": y.replace({0: True, 1: True, 2: False}).infer_objects(),
                 "string": self._replace(y, {0: "se", 1: "vi", 2: "ve"}),
                 "string binary": self._replace(y_bin, {0: "vi_or_se", 1: "ve"}),
                 "int as string": self._replace(y, {0: "8", 1: "9", 2: "10"}),
