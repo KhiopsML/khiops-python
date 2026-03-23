@@ -463,6 +463,9 @@ class LocalFilesystemResource(FilesystemResource):
                 return local_file.read(size)
 
     def write(self, data):
+        directory = os.path.dirname(self.path)
+        if len(directory) > 0 and not os.path.isdir(directory):
+            os.makedirs(directory)
         with open(self.path, "wb") as output_file:
             output_file.write(data)
 
