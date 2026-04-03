@@ -23,10 +23,10 @@ of sub-reports objects given by the following structure::
     |- cells      -> list of CoclusteringCell
 
     CoclusteringDimension
-    |- parts                    -> list of CoclusteringDimensionPart
-    |- variable_part_dimensions -> list of CoclusteringDimension
-    |- clusters                 -> list of CoclusteringCluster
-    |- root_cluster             -> CoclusteringCluster
+    |- parts                     -> list of CoclusteringDimensionPart
+    |- inner_variable_dimensions -> list of CoclusteringDimension
+    |- clusters                  -> list of CoclusteringCluster
+    |- root_cluster              -> CoclusteringCluster
 
     CoclusteringDimensionPartValueGroup
     |- values -> list of CoclusteringDimensionPartValue
@@ -785,9 +785,13 @@ class CoclusteringDimension:
         Maximum value of a numerical dimension/variable.
     parts : list of `CoclusteringDimensionPart`
         Partition of this dimension.
-    variable_part_dimensions : list of `CoclusteringDimension`
+    inner_variable_dimensions : list of `CoclusteringDimension`
         Variable part instance-variable coclustering dimensions. ``None`` for
         variable-variable clustering.
+        Contains the dimensions of the variables involved in the
+        instances x variables coclustering model.
+        This model includes two dimensions: one for instances and one for variable
+        parts (`isVarPart` set to ``True`` for this dimension).
     clusters : list of `CoclusteringCluster`
         Clusters of this dimension's hierarchy. Note that includes intermediary
         clusters.
@@ -827,8 +831,8 @@ class CoclusteringDimension:
         # Clusters internal dictionary
         self._clusters_by_name = {}
 
-        # Variable part dimensions
-        self.variable_part_dimensions = None
+        # Inner variable dimensions
+        self.inner_variable_dimensions = None
 
     def init_summary(self, json_data=None):
         """Initializes the summary attributes from a Python JSON object
@@ -954,7 +958,7 @@ class CoclusteringDimension:
                 # Create inner variables dimensions (subpartition)
                 if "innerVariables" not in json_data:
                     raise KhiopsJSONError("'innerVariables' key not found")
-                self.variable_part_dimensions = []
+                self.inner_variable_dimensions = []
                 json_inner_variables = json_data["innerVariables"]
                 if "dimensionSummaries" in json_inner_variables:
                     for json_dimension_summary in json_inner_variables[
@@ -963,25 +967,25 @@ class CoclusteringDimension:
                         dimension = CoclusteringDimension().init_summary(
                             json_dimension_summary
                         )
-                        self.variable_part_dimensions.append(dimension)
+                        self.inner_variable_dimensions.append(dimension)
 
                 # Initialize inner variables dimensions' partitions
                 if "dimensionPartitions" in json_inner_variables:
                     json_dimension_partitions = json_inner_variables[
                         "dimensionPartitions"
                     ]
-                    if len(self.variable_part_dimensions) != len(
+                    if len(self.inner_variable_dimensions) != len(
                         json_dimension_partitions
                     ):
                         raise KhiopsJSONError(
-                            "'ineerVariables/dimensionPartitions' list has length "
+                            "'innerVariables/dimensionPartitions' list has length "
                             f"{len(json_dimension_partitions)} instead of "
-                            f"{len(self.variable_part_dimensions)}"
+                            f"{len(self.inner_variable_dimensions)}"
                         )
                     for i, json_dimension_partition in enumerate(
                         json_dimension_partitions
                     ):
-                        dimension = self.variable_part_dimensions[i]
+                        dimension = self.inner_variable_dimensions[i]
                         dimension.init_partition(json_dimension_partition)
 
         return self
@@ -1137,11 +1141,11 @@ class CoclusteringDimension:
                     report["innerVariables"] = {
                         "dimensionSummaries": [
                             dimension.to_dict(report_type="summary")
-                            for dimension in self.variable_part_dimensions
+                            for dimension in self.inner_variable_dimensions
                         ],
                         "dimensionPartitions": [
                             dimension.to_dict(report_type="partition")
-                            for dimension in self.variable_part_dimensions
+                            for dimension in self.inner_variable_dimensions
                         ],
                     }
             return report

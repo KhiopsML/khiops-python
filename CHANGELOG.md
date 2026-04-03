@@ -6,6 +6,11 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## Unreleased
+
+### Changed
+- (`core`) Rename `variable_part_dimensions` to `inner_variable_dimensions` in Coclustering results.
+
 ## 11.0.0.3 - 2026-03-06
 
 ### Added
