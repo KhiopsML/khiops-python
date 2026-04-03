@@ -766,6 +766,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_parts": 3,
                                 "group_target_value": False,
                                 "additional_data_tables": {},
+                                "keep_selected_variables_only": False,
                             }
                         },
                         "predict": {
@@ -794,6 +795,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_evaluated_variables": 3,
                                 "construction_rules": ["TableMode", "TableSelection"],
                                 "max_parts": 5,
+                                "keep_selected_variables_only": False,
                                 "additional_data_tables": {},
                             }
                         },
@@ -1449,6 +1451,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "construction_rules": ["TableMode", "TableSelection"],
                 "n_feature_parts": 3,
                 "group_target_value": False,
+                "keep_selected_variables_only": False,
             },
         )
 
@@ -1474,6 +1477,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "construction_rules": ["TableMode", "TableSelection"],
                 "n_feature_parts": 3,
                 "group_target_value": False,
+                "keep_selected_variables_only": False,
             },
         )
 
@@ -1631,6 +1635,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "type_text_features": "ngrams",
                 "construction_rules": ["TableMode", "TableSelection"],
                 "n_feature_parts": 5,
+                "keep_selected_variables_only": False,
             },
         )
 
@@ -1651,6 +1656,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "type_text_features": "ngrams",
                 "construction_rules": ["TableMode", "TableSelection"],
                 "n_feature_parts": 5,
+                "keep_selected_variables_only": False,
             },
         )
 
