@@ -54,6 +54,30 @@ def docker_runner_config_exists():
     )
 
 
+def azure_config_for_files_exists():
+    # Notes :
+    # `AZURE_STORAGE_CONNECTION_STRING` is a string composed of
+    # the storage account name and account key (amount other technical details)
+    # `CLOUD_FILE_URI_PREFIX` follows this pattern (for files) :
+    # <storage account name>.file.core.windows.net
+    return (
+        "AZURE_STORAGE_CONNECTION_STRING" in os.environ
+        and "CLOUD_FILE_URI_PREFIX" in os.environ
+    )
+
+
+def azure_config_for_blobs_exists():
+    # Notes :
+    # `AZURE_STORAGE_CONNECTION_STRING` is a string composed of
+    # the storage account name and account key (amount other technical details)
+    # `CLOUD_BLOB_URI_PREFIX` follows this pattern (for blobs) :
+    # <storage account name>.blob.core.windows.net
+    return (
+        "AZURE_STORAGE_CONNECTION_STRING" in os.environ
+        and "CLOUD_BLOB_URI_PREFIX" in os.environ
+    )
+
+
 class KhiopsRemoteAccessTestsContainer:
     """Container class to allow unittest.TestCase inheritance"""
 
@@ -61,12 +85,19 @@ class KhiopsRemoteAccessTestsContainer:
         """Generic class to test remote filesystems and Khiops runners"""
 
         @classmethod
-        def init_remote_bucket(cls, bucket_name=None, proto=None):
-            # create the remote root_temp_dir
-            remote_resource = fs.create_resource(
-                f"{proto}://{bucket_name}/khiops-cicd/tmp"
-            )
-            remote_resource.make_dir()
+        def init_remote_storage(cls, bucket_name_or_storage_prefix=None, proto=None):
+            # create the remote parent directories for clarity's sake
+            # even it is not required as all the remote storage implementations
+            # create the missing folders if needed
+            for remote_path in (
+                # root_temp_dir
+                f"{proto}://{bucket_name_or_storage_prefix}/khiops-cicd/tmp/",
+                # samples dir
+                f"{proto}://{bucket_name_or_storage_prefix}/khiops-cicd/samples/",
+            ):
+                remote_resource = fs.create_resource(remote_path)
+                # This action should always be idempotent if the folder already exists
+                remote_resource.make_dir()
 
             # copy to /samples each file
             for file in (
@@ -77,13 +108,22 @@ class KhiopsRemoteAccessTestsContainer:
                 "SpliceJunction/SpliceJunction.kdic",
             ):
                 fs.copy_from_local(
-                    f"{proto}://{bucket_name}/khiops-cicd/samples/{file}",
+                    f"{proto}://{bucket_name_or_storage_prefix}/khiops-cicd/"
+                    f"samples/{file}",
                     os.path.join(kh.get_samples_dir(), file),
                 )
+
                 # symmetric call to ensure the upload was OK
                 fs.copy_to_local(
-                    f"{proto}://{bucket_name}/khiops-cicd/samples/{file}", "/tmp/dummy"
+                    f"{proto}://{bucket_name_or_storage_prefix}/khiops-cicd/"
+                    f"samples/{file}",
+                    f"/tmp/khiops-{proto}-dummy",
                 )
+                # We cannot use `unittest.TestCase.assertTrue` in a class method
+                if not os.path.isfile(f"/tmp/khiops-{proto}-dummy"):
+                    raise RuntimeError(
+                        f"/tmp/khiops-{proto}-dummy must have been created"
+                    )
 
         def results_dir_root(self):
             """To be overridden by descendants if needed
@@ -293,7 +333,9 @@ class KhiopsS3RemoteFileTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAcces
             runner = kh.get_runner()
             bucket_name = os.environ["S3_BUCKET_NAME"]
 
-            cls.init_remote_bucket(bucket_name=bucket_name, proto="s3")
+            cls.init_remote_storage(
+                bucket_name_or_storage_prefix=bucket_name, proto="s3"
+            )
 
             runner.samples_dir = f"s3://{bucket_name}/khiops-cicd/samples"
             resources_directory = KhiopsTestHelper.get_resources_dir()
@@ -336,7 +378,9 @@ class KhiopsGCSRemoteFileTests(
             runner = kh.get_runner()
             bucket_name = os.environ["GCS_BUCKET_NAME"]
 
-            cls.init_remote_bucket(bucket_name=bucket_name, proto="gs")
+            cls.init_remote_storage(
+                bucket_name_or_storage_prefix=bucket_name, proto="gs"
+            )
 
             runner.samples_dir = f"gs://{bucket_name}/khiops-cicd/samples"
             resources_directory = KhiopsTestHelper.get_resources_dir()
@@ -365,6 +409,86 @@ class KhiopsGCSRemoteFileTests(
 
     def remote_access_test_case(self):
         return "GCS"
+
+
+class KhiopsAzureRemoteFileTests(
+    KhiopsRemoteAccessTestsContainer.KhiopsRemoteAccessTests
+):
+    """Integration tests with Azure Storage filesystems"""
+
+    @classmethod
+    def setUpClass(cls):
+        """Sets up remote directories in runner"""
+        if azure_config_for_files_exists():
+            runner = kh.get_runner()
+            cloud_file_uri_prefix = os.environ["CLOUD_FILE_URI_PREFIX"]
+
+            cls.init_remote_storage(
+                bucket_name_or_storage_prefix=cloud_file_uri_prefix, proto="https"
+            )
+
+            runner.samples_dir = f"https://{cloud_file_uri_prefix}/khiops-cicd/samples"
+            resources_directory = KhiopsTestHelper.get_resources_dir()
+
+            # WARNING : khiops temp files cannot be remote
+            cls._khiops_temp_dir = f"{resources_directory}/tmp/khiops-cicd"
+
+            # root_temp_dir
+            # (where the log file is saved by default when using `kh`)
+            # can be remote
+            runner.root_temp_dir = f"https://{cloud_file_uri_prefix}/khiops-cicd/tmp"
+
+    @classmethod
+    def tearDownClass(cls):
+        """Sets back the runner defaults"""
+        if azure_config_for_files_exists():
+            kh.get_runner().__init__()
+
+    def config_exists(self):
+        return azure_config_for_files_exists()
+
+    def remote_access_test_case(self):
+        return "Azure Files"
+
+
+class KhiopsAzureRemoteBlobTests(
+    KhiopsRemoteAccessTestsContainer.KhiopsRemoteAccessTests
+):
+    """Integration tests with Azure Storage filesystems : Blobs"""
+
+    @classmethod
+    def setUpClass(cls):
+        """Sets up remote directories in runner"""
+        if azure_config_for_blobs_exists():
+            runner = kh.get_runner()
+            cloud_file_uri_prefix = os.environ["CLOUD_BLOB_URI_PREFIX"]
+
+            cls.init_remote_storage(
+                bucket_name_or_storage_prefix=cloud_file_uri_prefix, proto="https"
+            )
+
+            runner.samples_dir = f"https://{cloud_file_uri_prefix}/khiops-cicd/samples"
+            resources_directory = KhiopsTestHelper.get_resources_dir()
+
+            # WARNING : khiops temp files cannot be remote
+            cls._khiops_temp_dir = f"{resources_directory}/tmp/khiops-cicd"
+
+            # root_temp_dir
+            # (where the log file is saved by default when using `kh`)
+            # can be remote
+            runner.root_temp_dir = f"https://{cloud_file_uri_prefix}/khiops-cicd/tmp"
+
+    @classmethod
+    def tearDownClass(cls):
+        """Sets back the runner defaults"""
+        if azure_config_for_blobs_exists():
+            kh.get_runner().__init__()
+
+    def config_exists(self):
+        return azure_config_for_blobs_exists()
+
+    def remote_access_test_case(self):
+        return "Azure Blobs"
 
 
 class KhiopsDockerRunnerTests(KhiopsRemoteAccessTestsContainer.KhiopsRemoteAccessTests):
