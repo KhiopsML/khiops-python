@@ -10,6 +10,7 @@
 
 ### Added
 - (`sklearn`) `keep_selected_variables_only` parameter to the predictors (`KhiopsClassifier` and `KhiopsRegressor`)
+- (General) Support for Azure storage
 
 ### Changed
 - (`core`) Rename `variable_part_dimensions` to `inner_variable_dimensions` in Coclustering results.
