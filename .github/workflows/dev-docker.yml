@@ -5,8 +5,9 @@ env:
   DEFAULT_IMAGE_INCREMENT: 0
   DEFAULT_SERVER_REVISION: main
   DEFAULT_PYTHON_VERSIONS: 3.10 3.11 3.12 3.13 3.14
-  DEFAULT_KHIOPS_GCS_DRIVER_REVISION: 0.0.14
-  DEFAULT_KHIOPS_S3_DRIVER_REVISION: 0.0.14
+  DEFAULT_KHIOPS_GCS_DRIVER_REVISION: 0.0.16
+  DEFAULT_KHIOPS_S3_DRIVER_REVISION: 0.0.15
+  DEFAULT_KHIOPS_AZURE_DRIVER_REVISION: 0.0.6
 on:
   pull_request:
     paths: [packaging/docker/khiopspydev/Dockerfile.*, .github/workflows/dev-docker.yml]
@@ -38,12 +39,16 @@ on:
         description: Khiops Server Revision
       khiops-gcs-driver-revision:
         type: string
-        default: 0.0.14
+        default: 0.0.16
         description: Driver version for Google Cloud Storage remote files
       khiops-s3-driver-revision:
         type: string
-        default: 0.0.14
+        default: 0.0.15
         description: Driver version for AWS-S3 remote files
+      khiops-azure-driver-revision:
+        type: string
+        default: 0.0.6
+        description: Driver version for Azure remote files and blobs
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -67,6 +72,7 @@ jobs:
           echo "IMAGE_URL=ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.khiopsdev-os }}" >> "$GITHUB_ENV"
           echo "KHIOPS_GCS_DRIVER_REVISION=${{ inputs.khiops-gcs-driver-revision || env.DEFAULT_KHIOPS_GCS_DRIVER_REVISION }}" >> "$GITHUB_ENV"
           echo "KHIOPS_S3_DRIVER_REVISION=${{ inputs.khiops-s3-driver-revision || env.DEFAULT_KHIOPS_S3_DRIVER_REVISION }}" >> "$GITHUB_ENV"
+          echo "KHIOPS_AZURE_DRIVER_REVISION=${{ inputs.khiops-azure-driver-revision || env.DEFAULT_KHIOPS_AZURE_DRIVER_REVISION }}" >> "$GITHUB_ENV"
       - name: Checkout khiops-python sources
         uses: actions/checkout@v4
       - name: Set up Docker Buildx
@@ -105,6 +111,7 @@ jobs:
             "PYTHON_VERSIONS=${{ inputs.python-versions || env.DEFAULT_PYTHON_VERSIONS }}"
             "KHIOPS_GCS_DRIVER_REVISION=${{ env.KHIOPS_GCS_DRIVER_REVISION }}"
             "KHIOPS_S3_DRIVER_REVISION=${{ env.KHIOPS_S3_DRIVER_REVISION }}"
+            "KHIOPS_AZURE_DRIVER_REVISION=${{ env.KHIOPS_AZURE_DRIVER_REVISION }}"
           tags: ${{ env.DOCKER_IMAGE_TAGS }}
           # Push only on manual request
           push: ${{ inputs.push || false }}
