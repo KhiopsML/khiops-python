@@ -303,7 +303,14 @@ class KhiopsCoreIOTests(unittest.TestCase):
             ref_kdic = os.path.join(ref_kdic_dir, f"{dictionary}.kdic")
             ref_kdicj = os.path.join(ref_kdicj_dir, f"{dictionary}.kdicj")
             output_kdic = os.path.join(output_kdic_dir, f"{dictionary}.kdic")
+            output_kdic_new_dir = os.path.join(output_kdic_dir, "missing_folder")
+
+            # Cleanup the previous `output_kdic_new_dir` folder (if it exists)
+            shutil.rmtree(output_kdic_new_dir, ignore_errors=True)
+
+            self.assertFalse(os.path.exists(output_kdic_new_dir))
             copy_output_kdic = os.path.join(copy_output_kdic_dir, f"{dictionary}.kdic")
+
             with self.subTest(dictionary=dictionary):
                 if dictionary in dictionaries_warn:
                     with self.assertWarns(UserWarning):
@@ -312,6 +319,11 @@ class KhiopsCoreIOTests(unittest.TestCase):
                     domain = kh.read_dictionary_file(ref_kdicj)
                 domain.export_khiops_dictionary_file(output_kdic)
                 assert_files_equal(self, ref_kdic, output_kdic)
+                domain.export_khiops_dictionary_file(
+                    os.path.join(output_kdic_new_dir, f"{dictionary}.kdic")
+                )
+                # Ensure a missing parent directory is created automatically
+                self.assertTrue(os.path.exists(output_kdic_new_dir))
 
                 domain_copy = domain.copy()
                 domain_copy.export_khiops_dictionary_file(copy_output_kdic)
