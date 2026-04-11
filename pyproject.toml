@@ -113,12 +113,20 @@ dependencies = [
 Homepage = "https://khiops.org"
 
 [project.optional-dependencies]
+# Warning : the following dependencies are also extracted for other installation tools.
+# However Conda does not fully support PEP508 requirements specification,
+# namely the "~=" operator. Use instead version ranges.
 s3 = [
     # do not use the latest version, to avoid undesired breaking changes
     "boto3>=1.17.39,<=1.35.69",
 ]
 gcs = [
     "google-cloud-storage>=1.37.0",
+]
+azure = [
+    "azure-core>=1.39.0,<2.0.0",
+    "azure-storage-file-share>=12.10.1,<13.0.0",
+    "azure-storage-blob>=12.28.0,<13.0.0",
 ]
 
 [tool.setuptools.packages.find]
