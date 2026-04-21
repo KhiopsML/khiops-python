@@ -41,6 +41,7 @@ To have a complete illustration of the access to the information of all classes 
 module look at their ``to_dict`` methods which write Python dictionaries in the
 same format as the Khiops JSON reports.
 """
+import functools
 import io
 import warnings
 
@@ -447,6 +448,7 @@ class CoclusteringReport:
                 # Initialize cell
                 cell = CoclusteringCell()
                 cell.frequency = json_cell_frequencies[i]
+                cell.part_indexes = part_indexes
 
                 # Initialize cell parts:
                 # Retrieve part from its index in the partition, per dimension
@@ -490,19 +492,6 @@ class CoclusteringReport:
 
     def to_dict(self):
         """Transforms this instance to a dict with the Khiops JSON file structure"""
-        # Compute cellPartIndexes
-        cell_parts_indexes = []
-        for cell in self.cells:
-            cell_part_indexes = []
-            for cell_part in cell.parts:
-                for dimension in self.dimensions:
-                    for dimension_part_index, dimension_part in enumerate(
-                        dimension.parts
-                    ):
-                        if cell_part == dimension_part:
-                            cell_part_indexes.append(dimension_part_index)
-                            break
-            cell_parts_indexes.append(cell_part_indexes)
         report_summary = {
             "instances": self.instance_number,
             "cells": self.cell_number,
@@ -532,7 +521,11 @@ class CoclusteringReport:
                 dimension.to_dict(report_type="hierarchy")
                 for dimension in self.dimensions
             ],
-            "cellPartIndexes": cell_parts_indexes,
+            "cellPartIndexes": functools.reduce(
+                lambda part_indexes, cell: part_indexes + [cell.part_indexes],
+                self.cells,
+                [],
+            ),
             "cellFrequencies": [cell.frequency for cell in self.cells],
         }
         return report
@@ -1853,6 +1846,8 @@ class CoclusteringCell:
     ----------
     parts : list of `CoclusteringDimensionPart`
         Parts for each coclustering dimension.
+    part_indexes : list of int
+        Part indexes for each coclustering dimension.
     frequency : int
         Frequency of this cell.
     """
@@ -1860,6 +1855,7 @@ class CoclusteringCell:
     def __init__(self):
         """Constructs an instance with default attribute values"""
         self.parts = []
+        self.part_indexes = []
         self.frequency = 0
 
     def write_line(self, writer):  # pragma: no cover
