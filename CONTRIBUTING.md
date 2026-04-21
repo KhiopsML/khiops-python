@@ -269,7 +269,6 @@ Checklist:
 - Release issue and its related PR
   - Update the API Docs if necessary
   - Update `CHANGELOG.md`
-  - Update the default `khiops-core` version in [.github/workflows/conda.yml]
   - Update the default value for `version` in the `download_datasets` function in [khiops/tools.py]
 - Git manipulations
   - Update your local repo and save your work:
@@ -280,11 +279,18 @@ Checklist:
   - Tag the merge commit with the release version (see Versioning above)
     - `git switch main`
     - `git tag 11.0.0.2 # Just an example`
-- Workflows
+- Release to repositories
   - Execute the `Pip Package` workflow specifying:
     - The tag on which to launch the workflow
     - The Pip repository: `Test PyPI` (for pre-releases) or `PyPI` (for
       releases)
+- New releases of related projects
+  -  Release after version bump:
+    - `khiops-feedstock` (Conda package)
+    - `khiops-doc` (website)
+    - `khiops-notebook` and `khiops-docker` (Docker images)
+- Conda packages testing
+  - Use the `Test the released Conda Package` workflow to test the `khiops` Conda package
 
 To make a public release, you must execute the `Pip Package` CI workflow manually on a tag and
 specify the `PyPI` Pip repository for upload. These uploads do not overwrite any packages in
