@@ -5,12 +5,12 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Classes to interact with local and remote filesystems"""
-
 import json
 import os
 import shutil
 import warnings
 from abc import ABC, abstractmethod
+from functools import cached_property
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -37,6 +37,18 @@ try:
     gcs_import_error = None
 except ImportError as import_error:
     gcs_import_error = import_error
+
+# Import azure packages if available
+# Delay an ImportError raising to an instantiation of the resource
+try:
+    from azure.core import credentials, utils
+
+    # pylint: disable=redefined-outer-name
+    from azure.storage import blob, fileshare
+
+    azure_import_error = None
+except ImportError as import_error:
+    azure_import_error = import_error
 
 # pylint: enable=invalid-name
 
@@ -76,6 +88,7 @@ def create_resource(uri_or_path):
         - ``file`` or empty: Local filesystem resource
         - ``s3``: Amazon S3 resource
         - ``gs``: Google Cloud Storage resource
+        - ``https``: Azure Storage resource (files or blobs)
 
     Returns
     -------
@@ -94,6 +107,19 @@ def create_resource(uri_or_path):
                 return AmazonS3Resource(uri_or_path)
             elif uri_info.scheme == "gs":
                 return GoogleCloudStorageResource(uri_or_path)
+            elif uri_info.scheme == "https":
+                # Create the corresponding instance of Azure storage resource
+                # based on a well-known name pattern of the uri netloc.
+                # Among all the Azure storages, Khiops supports only
+                # (via its specific driver):
+                # - Files
+                # - Blobs (Binary Large Objects)
+                if uri_info.netloc.endswith(".file.core.windows.net"):
+                    # netloc of a file share
+                    return AzureStorageFileResource(uri_or_path)
+                else:
+                    # netloc of a blob
+                    return AzureStorageBlobResource(uri_or_path)
             elif scheme == "file":
                 # Reject URI if authority is not empty
                 if uri_info.netloc:
@@ -503,7 +529,7 @@ class LocalFilesystemResource(FilesystemResource):
 class GoogleCloudStorageResource(FilesystemResource):
     """Google Cloud Storage Resource
 
-    By default it reads the configuration from standard location.
+    By default, it reads the configuration from standard location.
     """
 
     def __init__(self, uri):
@@ -733,3 +759,307 @@ class AmazonS3Resource(FilesystemResource):
 
 
 # pylint: enable=no-member
+
+
+class AzureStorageResourceMixin:
+    """Azure compatible Storage Resource Mixin
+
+    See `AzureStorageFileResource` and `AzureStorageBlobResource` for more details.
+
+    """
+
+    def __init__(self, uri):
+        """
+        Azure Storage Resource initializer common to Files and Blobs
+        """
+
+        # Stop initialization if Azure modules are not available
+        if azure_import_error is not None:
+            warnings.warn(
+                "Could not import azure modules. "
+                "Make sure you have installed the azure.core, "
+                "azure.storage.fileshare and azure.storage.blob packages to "
+                "access Azure Storage files."
+            )
+            raise azure_import_error
+
+        super().__init__(uri)
+
+        if len(self.uri_parts) < 2:
+            # parts[0] contains the "share name" (for file shares)
+            # or "container name" (for blobs)
+            # parts[1:] contains the remaining of the path
+            raise ValueError(
+                f"Invalid Azure Resource URI '{uri}'. "
+                "The allowed patterns are: \n"
+                "- File : https://<storage-account-name>.file.core.windows.net/"
+                "<share name>/<0 to n folder name(s)>/<file name>\n"
+                "- Blob : https://<storage-account-name>.blob.core.windows.net/"
+                "<container name>/<0 to n virtual folder name(s)>/<blob name>"
+            )
+
+        # Create the authentication object using the connection string
+        connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+        mappings = utils.parse_connection_string(connection_string)
+        self.credential = credentials.AzureNamedKeyCredential(
+            mappings.get("accountname"), mappings.get("accountkey")
+        )
+
+    def create_child(self, file_name):
+        return create_resource(child_uri_info(self.uri_info, file_name).geturl())
+
+    def create_parent(self, file_name):  # pylint: disable=unused-argument
+        return create_resource(parent_uri_info(self.uri_info).geturl())
+
+    def _uri_parts(self):
+        return [part for part in self.uri_info.path.split("/") if len(part) > 0]
+
+    @cached_property
+    def uri_parts(self):
+        """Build a list of path parts from a path as a str"""
+        return self._uri_parts()
+
+
+class AzureStorageFileResource(AzureStorageResourceMixin, FilesystemResource):
+    """Azure compatible Storage File Resource
+
+    As a prerequisite, the remote storage account and "file share" on Azure
+    MUST have been created by the user.
+
+    For shared Files, the URI pattern of a resource is the following :
+    https://<storage-account-name>.file.core.windows.net/<share name>/...
+                                                <0 to n folder name(s)>/<file name>
+    The first name after the netloc is the "share name" not a simple "folder name".
+
+    By default, this resource reads the configuration from standard location
+    (environment variables for the moment)
+    """
+
+    def __init__(self, uri):
+        """
+        Azure Storage Resource initializer for Files
+        """
+        super().__init__(uri)
+
+        share_url = (
+            f"{self.uri_info.scheme}://{self.uri_info.netloc}/" f"{self.uri_parts[0]}"
+        )
+        # Instantiate a `ShareClient` and attach it to the current instance.
+        self.azure_share_client = fileshare.ShareClient.from_share_url(
+            share_url=share_url, credential=self.credential
+        )
+
+        self.relative_remaining_path = "/".join(self.uri_parts[1:])
+
+        # Instantiate a `ShareFileClient` and attach it to the current instance.
+        self.file_share_client = self.azure_share_client.get_file_client(
+            self.relative_remaining_path
+        )
+
+        # Instantiate a `ShareDirectoryClient` and attach it to the current instance.
+        self.directory_share_client = self.azure_share_client.get_directory_client(
+            self.relative_remaining_path
+        )
+
+    def write(self, data):
+        # In order to be consistent with the other storage implementations,
+        # if the parent directories are missing they are created one by one.
+        relative_folders_hierarchy = os.path.dirname(self.relative_remaining_path)
+        self._create_the_whole_folders_hierarchy(relative_folders_hierarchy)
+
+        self.file_share_client.upload_file(data)
+
+    def exists(self):
+        """Check if the target resource exists (file or directory)"""
+
+        # Calls to `ShareFileClient` and `ShareDirectoryClient` are required
+        # because :
+        # - the check against `file_share_client` is ``False``
+        #   if the target is a directory.
+        # - the check against `directory_share_client` is ``False``
+        #   if the target is a file.
+        return self.file_share_client.exists() or self.directory_share_client.exists()
+
+    def remove(self):
+        """Remove the target resource either it is a file or a directory.
+        If an error occurs an exception is raised.
+        """
+
+        # Attempt to delete a file first; if it fails, attempt to delete a directory;
+        try:
+            self.file_share_client.delete_file()
+        # pylint: disable=broad-exception-caught
+        except Exception as file_delete_error:
+            try:
+                self.directory_share_client.delete_directory()
+            # pylint: disable=broad-exception-caught
+            except Exception as directory_delete_error:
+                raise RuntimeError(
+                    str(file_delete_error) + " " + str(directory_delete_error)
+                ) from None
+
+    def copy_from_local(self, local_path):
+        # In order to be consistent with the other storage implementations,
+        # if the parent directories are missing they are created one by one.
+        relative_folders_hierarchy = os.path.dirname(self.relative_remaining_path)
+        self._create_the_whole_folders_hierarchy(relative_folders_hierarchy)
+
+        self.file_share_client.upload_file(read(local_path))
+
+    def copy_to_local(self, local_path):
+        data = self.file_share_client.download_file()
+        with open(local_path, "wb") as output_file:
+            data.readinto(output_file)
+
+    def list_dir(self):
+        """List the files (not the directories) of the current directory
+        Notes:
+            This is not a recursive listing operation
+        """
+
+        return [
+            item["name"]
+            for item in self.directory_share_client.list_directories_and_files()
+            if not item["is_directory"]
+        ]
+
+    def make_dir(self):
+        # To avoid any exception while attempting to create an existing directory,
+        # that would occur otherwise, its existence is first checked
+
+        if not self.directory_share_client.exists():
+            self.azure_share_client.create_directory(self.relative_remaining_path)
+
+    def read(self, size=None):
+        return self.file_share_client.download_file(length=size).readall()
+
+    def _create_the_whole_folders_hierarchy(self, relative_folders_hierarchy):
+        """
+        Create the whole folders hierarchy in checking and
+        creating each parent if needed
+        """
+        parts = relative_folders_hierarchy.split("/")
+        current_hierarchy = ""
+        for current_folder in parts:
+            current_hierarchy += current_folder + "/"
+            directory_share_client = self.azure_share_client.get_directory_client(
+                current_hierarchy
+            )
+            if not directory_share_client.exists():
+                self.azure_share_client.create_directory(current_hierarchy)
+
+
+class AzureStorageBlobResource(AzureStorageResourceMixin, FilesystemResource):
+    """Azure compatible Storage Blob Resource
+
+    As a prerequisite, the remote storage account and the blob "container" on Azure
+    MUST have been created by the user.
+
+    For blobs, the URI pattern of a resource is the following:
+    https://<storage-account-name>.blob.core.windows.net/<container name>/...
+                                        <0 to n virtual folder name(s)>/<blob name>
+    The "virtual folder names" are part of the blob name but can help simulate
+    a folder hierarchy.
+    The first name after the netloc is the "container name" not a simple
+    "virtual folder name".
+
+    By default, this resource reads the configuration from standard location
+    (environment variables for the moment)
+    """
+
+    def __init__(self, uri):
+        """
+        Azure Storage Resource initializer for Blobs
+        """
+        super().__init__(uri)
+
+        # For blobs : most of the time, there is no need to distinguish
+        # between `container_url`
+        # and the remaining parts of the path because the `BlobClient` knows
+        # how to handle with absolute paths.
+        # But for blobs listing only, a `ContainerClient` is needed.
+        # Therefore, the `container_url` must still be built.
+        container_url = (
+            f"{self.uri_info.scheme}://"
+            f"{self.uri_info.netloc}/"
+            f"{self.uri_parts[0]}"
+        )
+
+        # Instantiate a `ContainerClient` and attach it to the current instance.
+        self.azure_blob_container_client = blob.ContainerClient.from_container_url(
+            container_url=container_url, credential=self.credential
+        )
+
+        # Instantiate a `BlobClient` and attach it to the current instance.
+        self.azure_blob_client = blob.BlobClient.from_blob_url(
+            blob_url=self.uri_info.geturl(), credential=self.credential
+        )
+
+        # For blobs the client will manage most of the time with absolute paths
+        # except when listing blobs of a "virtual folder" where is field this used.
+        self.relative_remaining_path = "/".join(self.uri_parts[1:])
+
+    def read(self, size=None):
+        return self.azure_blob_client.download_blob(length=size).readall()
+
+    def write(self, data):
+        # In order to be consistent with the other drivers,
+        # this method will overwrite the destination blob if it exists.
+        # This is not the default behavior.
+        self.azure_blob_client.upload_blob(data, overwrite=True)
+
+    def exists(self):
+        # As the virtual folder names are part of the blob name,
+        # there is no such test like checking a virtual folder existence.
+        # Only a blob existence is checked here.
+        return self.azure_blob_client.exists()
+
+    def remove(self):
+        # As the virtual folder names are part of the blob name,
+        # there is no such action like removing a virtual folder.
+        # Only a blob removal is done here.
+        self.azure_blob_client.delete_blob()
+
+    def copy_from_local(self, local_path):
+        # In order to be consistent with the other drivers,
+        # this method will overwrite the destination blob if it exists.
+        # This is not the default behavior.
+        # Moreover, if the virtual folders hierarchy does not exist
+        # it is created automatically as it is part of the blob name.
+        self.azure_blob_client.upload_blob(read(local_path), overwrite=True)
+
+    def copy_to_local(self, local_path):
+        data = self.azure_blob_client.download_blob()
+        with open(local_path, "wb") as output_file:
+            data.readinto(output_file)
+
+    def list_dir(self):
+        """
+        List the files of the current directory
+        """
+        # By default, the sdk will list all the blobs belonging to the container.
+        # An extract filter is then required to simulate a directory listing.
+        # Moreover, the virtual folders hierarchy must be deleted from the result.
+        virtual_folder_hierarchy = self.relative_remaining_path
+        if not virtual_folder_hierarchy.endswith("/"):
+            # Normalize the folder hierarchy with a trailing '/'
+            virtual_folder_hierarchy += "/"
+        len_virtual_folder_hierarchy = len(virtual_folder_hierarchy)
+        return [
+            item[len_virtual_folder_hierarchy:]
+            for item in self.azure_blob_container_client.list_blob_names(
+                # Keep only the blobs belonging to the "virtual folder"
+                name_starts_with=self.relative_remaining_path,
+            )
+        ]
+
+    def make_dir(self):
+        warnings.warn(
+            "'make_dir' is a non-operation on Azure Storage for Blobs. "
+            "See the documentation at "
+            "https://learn.microsoft.com/en-us/rest/api/storageservices/"
+            "operations-on-containers and "
+            "https://learn.microsoft.com/en-us/rest/api/storageservices/"
+            "naming-and-referencing-containers--blobs--and-metadata#blob-names "
+            "(a virtual hierarchy can be created in naming blobs)"
+        )
