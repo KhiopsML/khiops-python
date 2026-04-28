@@ -28,7 +28,7 @@ on:
       set-latest:
         type: boolean
         default: false
-        description: Set as 'latest'
+        description: Set as 'latest' (if the current branch is 'main')
       python-versions:
         type: string
         default: 3.10 3.11 3.12 3.13 3.14

@@ -78,39 +78,27 @@ jobs:
         run: |
           CONDA="/root/miniforge3/bin/conda"
 
-          # Native Khiops-based Conda environment, and
-          # `khiops-core`-based Conda environment
-          CONDA_ENVS="py${{ matrix.python-version }} py${{ matrix.python-version }}_conda"
-          for CONDA_ENV in $CONDA_ENVS
-          do
-            mkdir -p -m u+rwx reports/"$CONDA_ENV"
+          # Native Khiops-based Conda environment (to test in a specific python version)
+          CONDA_ENV=py${{ matrix.python-version }}
+          mkdir -p -m u+rwx reports/"$CONDA_ENV"
 
-            # install within the conda environments without activating them
-            $CONDA install -y -n "$CONDA_ENV" unittest-xml-reporting
-            $CONDA install -y -n "$CONDA_ENV" --file test-requirements.txt
-          done
+          # install within the conda environments without activating them
+          $CONDA install -y -n "$CONDA_ENV" unittest-xml-reporting
+          $CONDA install -y -n "$CONDA_ENV" --file test-requirements.txt
       - name: Install khiops-python dependencies
         if: success() || failure()
         run: |
-          # The following git command is required,
-          # as the Git repository is in a directory the current user does not own,
-          # Python versioneer fails to compute the current version correctly otherwise
-          git config --global --add safe.directory $(realpath .)
           CONDA="/root/miniforge3/bin/conda"
-          # Native Khiops-based Conda environment, and
-          # `khiops-core`-based Conda environment
-          CONDA_ENVS="py${{ matrix.python-version }} py${{ matrix.python-version }}_conda"
-          for CONDA_ENV in $CONDA_ENVS
-          do
-            # Since Python 3.13, setuptools is not installed automatically anymore
-            $CONDA install -y -n "$CONDA_ENV" setuptools
+          # Native Khiops-based Conda environment (to test in a specific python version)          
+          CONDA_ENV=py${{ matrix.python-version }}
+          # Since Python 3.13, setuptools is not installed automatically anymore
+          $CONDA install -y -n "$CONDA_ENV" setuptools
 
-            # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
-            $CONDA install -y -n "$CONDA_ENV" tomli
-            $CONDA run --no-capture-output -n "$CONDA_ENV" python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" > requires.txt
-            $CONDA install -y -n "$CONDA_ENV" `cat requires.txt`
-            rm -f requires.txt
-          done
+          # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
+          $CONDA install -y -n "$CONDA_ENV" tomli
+          $CONDA run --no-capture-output -n "$CONDA_ENV" python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" > requires.txt
+          $CONDA install -y -n "$CONDA_ENV" `cat requires.txt`
+          rm -f requires.txt
       - name: Configure Expensive Tests Setting
         # Skip expensive tests by default, unless on the `main-v10` or `main` branches
         if: github.ref != 'main-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
@@ -197,23 +185,17 @@ jobs:
           # version is retrieved
           git config --global --add safe.directory $(realpath .)
           CONDA="/root/miniforge3/bin/conda"
-          # Native Khiops-based Conda environment, and
-          # `khiops-core`-based Conda environment
-          CONDA_ENVS="py${{ matrix.python-version }} py${{ matrix.python-version }}_conda"
-          for CONDA_ENV in $CONDA_ENVS
-          do
-            $CONDA run --no-capture-output -n "$CONDA_ENV" coverage run -m xmlrunner -o "reports/$CONDA_ENV" -v
-            $CONDA run --no-capture-output -n "$CONDA_ENV" coverage report -m
-            $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
-          done
+          # Native Khiops-based Conda environment (to test in a specific python version)          
+          CONDA_ENV=py${{ matrix.python-version }}
+          $CONDA run --no-capture-output -n "$CONDA_ENV" coverage run -m xmlrunner -o "reports/$CONDA_ENV" -v
+          $CONDA run --no-capture-output -n "$CONDA_ENV" coverage report -m
+          $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
       - name: Display Test Reports
         if: success() || failure()
         uses: dorny/test-reporter@v1
         with:
           name: Run Tests ${{ matrix.python-version }}
-          path: >-
-            reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml,
-            reports/py${{ matrix.python-version }}_conda/TEST-tests.*.*.xml
+          path: reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml
           reporter: java-junit
           path-replace-backslashes: 'true'  # Necessary for windows paths
           fail-on-error: 'false'
@@ -225,8 +207,6 @@ jobs:
           path: |-
             reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml
             reports/py${{ matrix.python-version }}/py-coverage.xml
-            reports/py${{ matrix.python-version }}_conda/TEST-tests.*.*.xml
-            reports/py${{ matrix.python-version }}_conda/py-coverage.xml
             tests/resources/scenario_generation/*/ref/*._kh
             tests/resources/scenario_generation/*/output/*._kh
             tests/resources/*/output_reports/*.txt
