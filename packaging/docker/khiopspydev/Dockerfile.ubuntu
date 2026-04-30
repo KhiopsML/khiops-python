@@ -42,41 +42,28 @@ RUN true \
   && rm -rf ./khiops \
   && true
 
-# set up all the supported Python environments under conda (for the unit tests)
+# set up all the supported Python environments under Conda (for the unit tests)
 # relying on a variable containing all the versions
 ARG PYTHON_VERSIONS
 ARG KHIOPS_GCS_DRIVER_REVISION
 ARG KHIOPS_S3_DRIVER_REVISION
+ARG KHIOPS_AZURE_DRIVER_REVISION
 
-# Install Conda packages
-# Use `rc` label for alpha or RC khiops-core pre-releases
+# Initialize all the Conda environments
 RUN true \
   && export CONDA="/root/miniforge3/bin/conda" \
-  && /bin/bash -c 'if [[ $(echo ${KHIOPS_REVISION} | grep -E ".*-(a|rc)\.[0-9]+") ]]; then \
-       export RC_LABEL="conda-forge/label/rc::"; \
-     else \
-       export RC_LABEL=""; \
-     fi; \
+  && /bin/bash -c ' \
     # Update conda to the latest version \
     $CONDA update -n base conda; \
     for version in ${PYTHON_VERSIONS}; \
     do \
-        CONDA_ENVS="py${version} py${version}_conda"; \
-        for CONDA_ENV in $CONDA_ENVS; \
-        do \
-            $CONDA create -y -n $CONDA_ENV python=${version}; \
-        done; \
-        # khiops core \
-        $CONDA install -y -n py${version}_conda "${RC_LABEL}"khiops-core==$(echo ${KHIOPS_REVISION} | tr -d "-") ; \
-        # remote files drivers installed in the conda environment \
-        $CONDA install -y -n py${version}_conda \
-        khiops-driver-s3==${KHIOPS_S3_DRIVER_REVISION} \
-        khiops-driver-gcs==${KHIOPS_GCS_DRIVER_REVISION}; \
+        $CONDA create -y -n py${version} python=${version}; \
     done; \
     # Install Khiops from a different major version in a dedicated conda environment \
+    # for a specific test regarding compatibility test \
     # The python interpreter version of the base environment is used as no specific version is given \
     $CONDA create -y -n py3_khiops10_conda; \
-    $CONDA install -y -n py3_khiops10_conda khiops::khiops-core==10.3.1; \
+    $CONDA install -y -n py3_khiops10_conda khiops-core==10.3.2; \
     ' \
   && true
 
@@ -91,9 +78,11 @@ RUN true \
     && if [ -f /etc/os-release ]; then . /etc/os-release; fi \
     && wget -O khiops-gcs.deb https://github.com/KhiopsML/khiopsdriver-gcs/releases/download/${KHIOPS_GCS_DRIVER_REVISION}/khiops-driver-gcs_${KHIOPS_GCS_DRIVER_REVISION}-1-${VERSION_CODENAME}.amd64.deb \
     && wget -O khiops-s3.deb https://github.com/KhiopsML/khiopsdriver-s3/releases/download/${KHIOPS_S3_DRIVER_REVISION}/khiops-driver-s3_${KHIOPS_S3_DRIVER_REVISION}-1-${VERSION_CODENAME}.amd64.deb \
-    && (dpkg -i --force-all khiops-gcs.deb khiops-s3.deb || true) \
+    # XXX There is a typo in the latest release tag. Until it is fixed, we need to use the hardcoded folder name
+    && wget -O khiops-azure.deb https://github.com/KhiopsML/khiopsdriver-azure/releases/download/0.0.7/khiops-driver-azure_${KHIOPS_AZURE_DRIVER_REVISION}-1-${VERSION_CODENAME}.amd64.deb \
+    && (dpkg -i --force-all khiops-gcs.deb khiops-s3.deb khiops-azure.deb || true) \
     && apt-get -f -y install \
-    && rm -f khiops-gcs.deb khiops-s3.deb \
+    && rm -f khiops-gcs.deb khiops-s3.deb khiops-azure.deb \
     && true
 
 FROM ghcr.io/khiopsml/khiops-server:${SERVER_REVISION} AS server
