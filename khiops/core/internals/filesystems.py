@@ -833,7 +833,7 @@ class AzureStorageFileResource(AzureStorageResourceMixin, FilesystemResource):
 
     For shared Files, the URI pattern of a resource is the following :
     https://<storage-account-name>.file.core.windows.net/<share name>/...
-                                                <0 to n folder name(s)>/<file name>
+    <0 to n folder name(s)>/<file name>.
     The first name after the netloc is the "share name" not a simple "folder name".
 
     By default, this resource reads the configuration from standard location
@@ -918,8 +918,9 @@ class AzureStorageFileResource(AzureStorageResourceMixin, FilesystemResource):
 
     def list_dir(self):
         """List the files (not the directories) of the current directory
-        Notes:
-            This is not a recursive listing operation
+
+        .. note::
+            This is not a recursive listing operation.
         """
 
         return [
@@ -962,7 +963,7 @@ class AzureStorageBlobResource(AzureStorageResourceMixin, FilesystemResource):
 
     For blobs, the URI pattern of a resource is the following:
     https://<storage-account-name>.blob.core.windows.net/<container name>/...
-                                        <0 to n virtual folder name(s)>/<blob name>
+    <0 to n virtual folder name(s)>/<blob name>.
     The "virtual folder names" are part of the blob name but can help simulate
     a folder hierarchy.
     The first name after the netloc is the "container name" not a simple

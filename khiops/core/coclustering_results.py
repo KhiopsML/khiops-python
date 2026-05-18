@@ -784,7 +784,7 @@ class CoclusteringDimension:
         Contains the dimensions of the variables involved in the
         instances x variables coclustering model.
         This model includes two dimensions: one for instances and one for variable
-        parts (`isVarPart` set to ``True`` for this dimension).
+        parts (``isVarPart`` set to ``True`` for this dimension).
     clusters : list of `CoclusteringCluster`
         Clusters of this dimension's hierarchy. Note that includes intermediary
         clusters.
