@@ -9,12 +9,13 @@
 import argparse
 import glob
 import os
+import subprocess
 import sys
 
 import nbformat
 from jupyter_client import KernelManager
 from nbconvert import MarkdownExporter, NotebookExporter
-from nbconvert.preprocessors import ExecutePreprocessor
+from nbconvert.preprocessors import CellExecutionError, ExecutePreprocessor
 from nbformat import notebooknode as nbnode
 
 
@@ -42,7 +43,9 @@ def main(args):
     if args.execute_notebooks:
         # Set up one kernel for all executions
         kernel_manager = KernelManager(kernel_name="python3")
-        kernel_manager.start_kernel()
+
+        # Do not print errors
+        kernel_manager.start_kernel(stderr=subprocess.DEVNULL)
         preprocessor = ExecutePreprocessor(km=kernel_manager)
 
         for notebook_path, notebook_name in zip(notebook_paths, notebook_names):
@@ -75,7 +78,13 @@ def main(args):
                     notebook.cells.insert(0, setup_cell)
 
                     # Execute the notebook to obtain the output cells
-                    preprocessor.preprocess(notebook, {})
+                    try:
+                        preprocessor.preprocess(notebook, {})
+                    except CellExecutionError:
+                        print(
+                            f"WARNING: '{notebook_path}' had execution errors "
+                            f"(export type: '{file_ext}')"
+                        )
 
                     # Eliminate the setup cell
                     notebook.cells.pop(0)

@@ -12,3 +12,9 @@ python "$DOC_DIR/convert_samples.py" --sklearn -f md "$SAMPLES_DIR" "$DOC_DIR/sa
 # Generate the notebooks
 python "$DOC_DIR/convert_samples.py" "$SAMPLES_DIR" "$SAMPLES_DIR/samples.ipynb"
 python "$DOC_DIR/convert_samples.py" --sklearn "$SAMPLES_DIR" "$SAMPLES_DIR/samples_sklearn.ipynb"
+
+# Copy source scripts and notebooks to doc/samples/ for download links
+cp "$SAMPLES_DIR/samples.py" "$DOC_DIR/samples/"
+cp "$SAMPLES_DIR/samples.ipynb" "$DOC_DIR/samples/"
+cp "$SAMPLES_DIR/samples_sklearn.py" "$DOC_DIR/samples/"
+cp "$SAMPLES_DIR/samples_sklearn.ipynb" "$DOC_DIR/samples/"

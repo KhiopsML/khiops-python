@@ -10,6 +10,7 @@ DOWNLOAD_REPO=""
 DEFAULT_KHIOPS_TUTORIAL_REPO_URL="https://github.com/KhiopsML/khiops-python-tutorial.git"
 DEFAULT_KHIOPS_TUTORIAL_REPO_REF="main"
 DEFAULT_KHIOPS_TUTORIAL_DIR="${SCRIPT_DIR}/khiops-python-tutorial"
+PREPARE_ONLY=""
 
 # Function to display the usage help
 usage() {
@@ -23,6 +24,7 @@ usage() {
   echo "      '$DEFAULT_KHIOPS_TUTORIAL_REPO_REF'."
   echo "  -l: Directory of the local copy of the khiops tutorial repository. The default is"
   echo "      '$DEFAULT_KHIOPS_TUTORIAL_DIR'."
+  echo "  -p: Prepare only - skip the final Zensical build."
   echo ""
 }
 
@@ -32,7 +34,7 @@ exit_bad() {
 }
 
 # Read command line arguments
-while getopts "dtr:g:l:" opt
+while getopts "dtr:g:l:p" opt
 do
   case "$opt" in
     d ) DOWNLOAD_REPO=true && TRANSFORM_NOTEBOOKS="true" ;;
@@ -40,6 +42,7 @@ do
     r ) KHIOPS_TUTORIAL_REPO_URL="$OPTARG" ;;
     g ) KHIOPS_TUTORIAL_REPO_REF="$OPTARG" ;;
     l ) KHIOPS_TUTORIAL_REPO_DIR="$OPTARG" ;;
+    p ) PREPARE_ONLY="true" ;;
     * ) exit_bad ;;
   esac
 done
@@ -48,7 +51,7 @@ KHIOPS_TUTORIAL_REPO_REF="${KHIOPS_TUTORIAL_REPO_REF:-$DEFAULT_KHIOPS_TUTORIAL_R
 KHIOPS_TUTORIAL_REPO_DIR="${KHIOPS_TUTORIAL_REPO_DIR:-$DEFAULT_KHIOPS_TUTORIAL_DIR}"
 
 # Check command existence
-command_requirements="tar python zip"
+command_requirements="python zip"
 if [[ $DOWNLOAD_REPO ]]
 then
   command_requirements="$command_requirements git"
@@ -73,8 +76,8 @@ then
 fi
 
 # Convert tutorials to Markdown
+mkdir -p ./tutorials
 tutorials_dir="$(realpath ./tutorials)"
-mkdir -p "$tutorials_dir"
 if [[ $TRANSFORM_NOTEBOOKS ]]
 then
   echo "Creating Markdown tutorial pages"
@@ -99,7 +102,28 @@ zip "$tutorials_dir/core_tutorials.zip" Core*.ipynb data/*/* exercises/.dummy
 zip "$tutorials_dir/sklearn_tutorials.zip" Sklearn*.ipynb data/*/* exercises/.dummy
 cd "../.."
 
-# Build the documentation with MkDocs
-echo "Executing MkDocs"
-cd "$SCRIPT_DIR/.."
-mkdocs build
+# Copy source scripts and notebooks to doc/samples/ for download links
+echo "Copying sample scripts and notebooks"
+SAMPLES_DIR="$SCRIPT_DIR/../khiops/samples"
+cp -f "$SAMPLES_DIR/samples.py" "$SCRIPT_DIR/samples/"
+cp -f "$SAMPLES_DIR/samples.ipynb" "$SCRIPT_DIR/samples/"
+cp -f "$SAMPLES_DIR/samples_sklearn.py" "$SCRIPT_DIR/samples/"
+cp -f "$SAMPLES_DIR/samples_sklearn.ipynb" "$SCRIPT_DIR/samples/"
+
+# Build the documentation with Zensical (unless prepare-only)
+if [[ ! $PREPARE_ONLY ]]; then
+  echo "Executing Zensical"
+  cd "$SCRIPT_DIR/.."
+
+  # Inject the khiops version into zensical.toml (replaces the old
+  # mkdocs hooks-based mechanism, which Zensical does not support)
+  VERSION=$(python -c "import khiops; print(khiops.__version__)")
+  awk -v v="$VERSION" '
+    /^site_name = / { print "site_name = \"Khiops Python " v "\""; next }
+    { print }
+  ' zensical.toml > zensical.toml.tmp && mv zensical.toml.tmp zensical.toml
+  zensical build --strict
+
+  # Restore zensical.toml to its previous state
+  git checkout -- zensical.toml
+fi

@@ -21,23 +21,12 @@ on:
       - doc/create-doc
       - doc/clean-doc
       - doc/*.py
-      - mkdocs.yml
+      - zensical.toml
       - khiops/**.py
       - .github/workflows/api-docs.yml
-  push:
-    tags: ['*']
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
-  id-token: write
   packages: read
-  pages: write
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest
-# queued. However, do NOT cancel in-progress runs as we want to allow these production deployments
-# to complete.
-concurrency:
-  group: pages
-  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -79,7 +68,7 @@ jobs:
           cd doc
           python -m pip install -U -r requirements.txt
       # Clone the Khiops Python tutorial repository while building the documentation
-      - name: Build MkDocs Documentation
+      - name: Build Zensical Documentation
         run: |
           cd doc
           ./create-doc -t -d -g \
@@ -88,33 +77,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: api-docs
-          path: ./doc/_build/html/
-  # Release on Git tag
-  release:
-    if: github.ref_type == 'tag'
-    needs: build
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-    steps:
-      - name: Download docs artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: api-docs
-          path: ./doc/_build/html/
-      - name: Create docs release zip archive
-        uses: thedoctor0/zip-release@0.7.6
-        with:
-          type: zip
-          path: ./doc/_build/html/
-          filename: khiops-api-docs-${{ github.ref_name }}.zip
-      - name: Release the docs zip archive
-        uses: ncipollo/release-action@v1.15.0
-        with:
-          allowUpdates: true
-          artifacts: ./khiops-api-docs-${{ github.ref_name }}.zip
-          body: '**For testing purposes only**'
-          draft: false
-          makeLatest: false
-          prerelease: true
-          updateOnlyUnreleased: true
+          path: ./_doc_build/html/

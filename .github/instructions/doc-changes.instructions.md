@@ -12,78 +12,80 @@ guidance.
 
 ```
 doc/
-├── conf.py                  # Sphinx configuration
-├── index.rst                # Top-level doc page
-├── create-doc               # Full build script (tutorials + Sphinx)
+├── index.md                 # Top-level doc page
+├── multi_table_primer.md    # Multi-table learning guide
+├── notes.md                 # API notes (common params, input types, sampling)
+├── create-doc               # Full build script (tutorials + Zensical)
 ├── clean-doc                # Clean script (supports --clean-tutorial)
-├── convert-samples-hook     # Pre-commit hook: regenerates sample reST + notebooks
-├── convert_samples.py       # Converts samples.py / samples_sklearn.py to reST or .ipynb
-├── convert_tutorials.py     # Converts tutorial Jupyter notebooks to reST
+├── convert-samples-hook     # Pre-commit hook: regenerates sample Markdown + notebooks
+├── convert_samples.py       # Converts samples.py / samples_sklearn.py to Markdown or .ipynb
+├── convert_tutorials.py     # Converts tutorial Jupyter notebooks to Markdown
 ├── requirements.txt         # Python doc-build dependencies
-├── multi_table_primer.rst   # Multi-table learning guide
-├── notes.rst                # API notes (common params, input types, sampling)
-├── core/index.rst           # khiops.core API reference (autosummary)
-├── sklearn/index.rst        # khiops.sklearn API reference (autosummary)
-├── internal/index.rst       # Internal modules reference
-├── tools/index.rst          # khiops.tools reference
-├── samples/                 # Generated reST sample pages (via convert-samples-hook)
-├── tutorials/               # Generated reST tutorials (via create-doc -t)
-├── _static/                 # CSS and images (branding, logo)
-└── _templates/autosummary/  # Custom autosummary templates (class, function, method, module)
+├── core/index.md            # khiops.core API reference (mkdocstrings)
+├── sklearn/index.md         # khiops.sklearn API reference (mkdocstrings)
+├── internal/index.md        # Internal modules reference
+├── tools/index.md           # khiops.tools reference
+├── samples/                 # Generated Markdown sample pages (via convert-samples-hook)
+├── tutorials/               # Generated Markdown tutorials (via create-doc -t)
+└── _static/                 # CSS and images (branding, logo)
 ```
+
+The Zensical configuration file `zensical.toml` is at the repository root.
 
 ## Build and Validation
 
 ```bash
-cd doc
-
-# Install doc dependencies (do NOT create a virtualenv inside doc/ — Sphinx will process its .rst files)
-pip install -U -r requirements.txt
+# Install doc dependencies (do NOT create a virtualenv inside doc/ — Zensical will process its .md files)
+pip install -U -r doc/requirements.txt
 
 # Also requires:
-# - A system-wide pandoc installation (used by nbconvert for notebook→reST conversion)
 # - The 'black' Python package (used by convert_samples.py to format code snippets)
 
-# Regenerate reST samples and notebooks from samples.py / samples_sklearn.py.
+# Regenerate Markdown samples and notebooks from samples.py / samples_sklearn.py.
 # This hook also runs automatically via pre-commit when those files are modified.
+cd doc
 ./convert-samples-hook
 
-# Full build: download tutorials, convert notebooks to reST, run Sphinx
+# Full build: download tutorials, convert notebooks to Markdown, run Zensical
 ./create-doc -d -t
 
-# Incremental build (Sphinx only, after reST files are already generated):
-sphinx-build -M html . _build/
+# Incremental build (Zensical only, after Markdown files are already generated):
+cd ..  # must be at repo root where zensical.toml lives
+zensical build
+
+# Serve locally for development:
+zensical serve
 
 # Clean generated docs (add --clean-tutorial to also remove tutorials/ and khiops-python-tutorial/)
+cd doc
 ./clean-doc
 ```
 
-The `create-doc` script requires `tar`, `python`, `make`, `zip`, and `git` (if
-downloading tutorials). Output goes to `doc/_build/html/`.
+The `create-doc` script requires `tar`, `python`, `zip`, and `git` (if
+downloading tutorials). Output goes to `_doc_build/html/`.
 
 The `create-doc` script accepts the following options:
 
 - `-d` — Download the khiops-python-tutorial repository (implies `-t`)
-- `-t` — Transform tutorial Jupyter notebooks into reST
+- `-t` — Transform tutorial Jupyter notebooks into Markdown
 - `-r REPO_URL` — Set the tutorial repository URL
 - `-g GIT_REF` — Set the tutorial repository Git reference (branch or tag)
 - `-l DIR` — Set the local directory of the tutorial repository
+- `-p` — Prepare only: download tutorials, convert notebooks, create ZIPs,
+  and copy samples, but skip the final Zensical build. Used by the
+  [khiops-doc](https://github.com/KhiopsML/khiops-doc) CI.
 
 ## CI Workflow
 
-The **API Docs** workflow (`.github/workflows/api-docs.yml`) triggers on:
+The **API Docs** workflow (`.github/workflows/api-docs.yml`) validates
+documentation builds. It triggers on:
 
-- **Tag pushes** — builds docs and uploads a zip archive to GitHub Releases as
-  a prerelease (with `allowUpdates: true`)
-- **PRs** touching `doc/**.rst`, `doc/create-doc`, `doc/clean-doc`, `doc/*.py`,
-  `khiops/**.py`, or the workflow file itself
+- **PRs** touching `doc/**.md`, `doc/create-doc`, `doc/clean-doc`, `doc/*.py`,
+  `zensical.toml`, `khiops/**.py`, or the workflow file itself
 - **`workflow_dispatch`** with optional inputs:
   - `khiops-python-tutorial-revision` (default: `11.0.0.0`)
   - `khiops-samples-revision` (default: `11.0.0`)
   - `image-tag` (default: `latest`) — the dev Docker image tag
-
-The workflow uses a concurrency group (`pages`) so only one deployment runs at a
-time — queued runs are skipped but in-progress runs are never cancelled.
 
 **Build job** — runs inside the
 `ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:<image-tag>` Docker
@@ -95,29 +97,23 @@ image:
 4. Runs `./create-doc -t -d -g <tutorial-revision>`
 5. Uploads the built HTML as a `api-docs` artifact
 
-**Release job** (tag pushes only) — downloads the artifact, zips it, and
-uploads the zip to GitHub Releases.
+Note: the production API docs are built by the
+[khiops-doc](https://github.com/KhiopsML/khiops-doc) CI, which clones this
+repository at the version tag and builds the docs natively using mkdocstrings.
 
-## Sphinx Setup
+## Zensical Setup
 
-- **Engine**: Sphinx with the [Furo](https://pradyunsg.me/furo/) theme
-  (Orange-branded colors and Helvetica Neue font)
-- **Docstring format**: [NumPy style](https://numpydoc.readthedocs.io/en/latest/format.html) parsed by the `numpydoc` extension
-  (`numpydoc_show_class_members = False`)
-- **Extensions**: `autodoc`, `autosummary`, `intersphinx`, `numpydoc`,
-  `sphinx_copybutton`
-- **Intersphinx targets**: Python, pandas, scikit-learn, NumPy, SciPy
-- **Custom templates**: `_templates/autosummary/` provides templates for
-  `class.rst`, `function.rst`, `method.rst`, `module.rst`
-- **Strict mode**: `nitpicky = True` — broken references are errors
-- **Default role**: `obj` (configured as `default_role = "obj"` in `conf.py`) —
-  allows cross-referencing without explicit `:class:`/`:func:` qualifiers in
-  most cases
-- **Warning suppression**: `conf.py` defines a `suppress_sklearn_warnings`
-  callback that silences known false-positive missing-reference warnings for
-  sklearn variables (`X`, `y`) and tutorial literals
-- Sphinx warnings **should not be ignored** — they almost always indicate
-  rendering errors
+- **Engine**: Zensical with the [Material](https://squidfunk.github.io/mkdocs-material/)
+  theme (Orange-branded colors and Helvetica Neue font)
+- **Docstring format**: [NumPy style](https://numpydoc.readthedocs.io/en/latest/format.html)
+  parsed by the `mkdocstrings[python]` plugin
+- **Plugins**: `mkdocstrings[python]`, `autorefs`, `search`
+- **Intersphinx-equivalent**: mkdocstrings `import` option loads inventory files
+  from Python, pandas, scikit-learn, NumPy, SciPy
+- **Cross-references**: Use `[display text][fully.qualified.name]` or
+  `[fully.qualified.name][]` syntax for linking to documented objects
+- **Custom CSS**: `_static/css/custom.css` provides Orange branding via CSS
+  custom properties (Material theme variables)
 
 ## Docstring Conventions
 
@@ -166,18 +162,18 @@ Keep concise — use `list of <type>` for simple cases. For complex containers, 
 
 ### Type Referencing
 
-Use type referencing (backtick cross-references) only for complex types and
-Exceptions. Do not use it for built-in types like `str` or `int`.
+Use cross-references only for complex types and Exceptions. Do not use them for
+built-in types like `str` or `int`.
 
 ```
-# No — str and int link to the Python docs unnecessarily:
-some_string : `str`
-some_int : `int`
+# No — str and int do not need cross-references:
+some_string : str
+some_int : int
 
 # Yes — Khiops internal class:
-dictionary : `.Dictionary`
+dictionary : `Dictionary`
 
-# Yes — Pandas project class (via intersphinx):
+# Yes — Pandas project class (via intersphinx inventory):
 df : `pandas.DataFrame`
 
 # Yes — Exception:
@@ -187,22 +183,17 @@ Raises
     When something wrong happens.
 ```
 
-### Cross-References
+### Cross-References in Markdown
 
-```rst
-`~khiops.core.api.train_predictor`     # shows "train_predictor" (short form)
-`khiops.core.api.train_predictor`      # shows full path
-`.train_predictor`                      # wildcard — works if unambiguous
-`train_predictor`                       # within the same module
+```markdown
+[train_predictor][khiops.core.api.train_predictor]   # shows "train_predictor"
+[khiops.core.api.train_predictor][]                  # shows full path
 ```
 
-Use explicit `:func:`, `:class:` domains only for complex types and Exceptions.
-The `default_role = "obj"` setting handles most cases.
+Use mkdocstrings `:::` directives for API documentation blocks:
 
-## reStructuredText Pitfalls
-
-The docstrings use **reST, not Markdown**. Key differences:
-
-- **Lists** require an empty line before the first item
-- **Code blocks** use `::` (with empty line + indentation) or `.. code-block:: python`
-- **Links**: `` `Link text <https://example.com>`_ `` instead of `[text](url)`
+```markdown
+::: khiops.core.api
+    options:
+      heading_level: 3
+```

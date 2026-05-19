@@ -57,9 +57,5 @@ doc/tutorials/
 doc/samples/*.txt
 doc/samples/kh_samples
 doc/samples/my_classifier
-doc/core/generated
-doc/sklearn/generated
-doc/internal/generated
-doc/tools/generated
-doc/_build/
+_doc_build/
 doc/khiops-python-tutorial

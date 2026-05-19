@@ -146,5 +146,5 @@ kh-samples = "khiops.tools:kh_samples_entry_point"
 kh-download-datasets = "khiops.tools:kh_download_datasets_entry_point"
 
 [build-system]
-requires = ["setuptools", "tomli; python_version<'3.11'", "toml; python_version>='3.12'"]
+requires = ["setuptools", "tomli; python_version<'3.11'"]
 build-backend = "setuptools.build_meta"

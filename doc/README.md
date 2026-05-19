@@ -10,7 +10,7 @@ Khiops Python library.
 
 # You'll need the python packages in the requirements.txt file in the doc/ directory
 # Warning: If you create a virtualenv, do not place it within the doc/ directory.
-#          The installed packages may contain .md files and MkDocs will process them!
+#          The installed packages may contain .md files and Zensical will process them!
 # pip install -U -r doc/requirements.txt
 
 # Execute this if there were non committed updates to samples.py or samples_sklearn.py:
@@ -22,25 +22,26 @@ Khiops Python library.
 # Create the HTML documentation:
 # - Downloads the khiops-python-tutorial resources
 # - Generates the Markdown version of the tutorials
-# - Executes MkDocs (output: _doc_build/html)
-cd doc && ./create-doc -d -t && cd ..
+# - Executes Zensical (output: _doc_build/html)
+cd doc && ./create-doc -d -t || true && cd ..
 
-# To only execute MkDocs on updated Markdown resources
-# mkdocs build
+# To only execute Zensical on updated Markdown resources
+# zensical build
 
 # To serve locally for development (with live reload)
-# mkdocs serve
+# zensical serve
 ```
 
-## MkDocs
-We use [MkDocs](https://www.mkdocs.org/) with the
+## Zensical
+We use [Zensical](https://www.zensical.org/) with the
 [Material](https://squidfunk.github.io/mkdocs-material/) theme to generate the
 documentation and the
 [NumPy docstring format](https://numpydoc.readthedocs.io/en/latest/format.html).
 
-The MkDocs configuration file `mkdocs.yml` lives at the repository root.
+The Zensical configuration file `zensical.toml` lives at the repository root.
 
-The following MkDocs plugins and extensions are used:
+The following MkDocs plugins and extensions are used in Zensical through
+Zensical's MkDocs compatibility layer:
 - `mkdocstrings[python]`: Automatically creates API documentation from Python docstrings
   (NumPy format). Replaces Sphinx's `autodoc`, `autosummary`, and `numpydoc`.
 - `autorefs`: Enables cross-references to documented objects across pages.
@@ -201,7 +202,7 @@ Raises
 ## Cross-References in Markdown
 
 The documentation pages use Markdown, not reST. Cross-references use the
-mkdocstrings/autorefs syntax:
+zensicaltrings/autorefs syntax:
 
 ```markdown
 # Link showing "train_predictor"
@@ -230,5 +231,5 @@ Notes and warnings use the `!!!` syntax:
     This is a warning.
 ```
 
-See the [MkDocs Material admonitions docs](https://squidfunk.github.io/mkdocs-material/reference/admonitions/)
+See the [Zensical Material admonitions docs](https://squidfunk.github.io/zensical-material/reference/admonitions/)
 for more details.

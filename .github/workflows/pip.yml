@@ -54,7 +54,7 @@ jobs:
           python -m build --sdist
 
           # Get built package version and make it accessible to subsequent jobs
-          PACKAGE_VERSION=$(python -m build --metadata | jq ".version" | tr -d '"')
+          PACKAGE_VERSION=$(python -m build --metadata | grep -w "version" | cut -d':' -f 2 | sed 's/[ ",]//g')
           echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
       - name: Upload the package as artifact
         uses: actions/upload-artifact@v4
