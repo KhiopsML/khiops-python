@@ -864,7 +864,7 @@ def train_predictor(
 
     # Return the paths of the JSON report and modelling dictionary file
     if target_variable != "":
-        current_dir = fs.parent_path(analysis_report_file_path)
+        current_dir = fs.get_parent_path(analysis_report_file_path)
         report_file_name, _ = os.path.splitext(
             os.path.basename(analysis_report_file_path)
         )
@@ -1320,7 +1320,7 @@ def train_recoder(
     _run_task("train_recoder", task_args)
 
     # Return the paths of the JSON report and modelling dictionary file
-    current_dir = fs.parent_path(analysis_report_file_path)
+    current_dir = fs.get_parent_path(analysis_report_file_path)
     report_file_name, _ = os.path.splitext(os.path.basename(analysis_report_file_path))
 
     modeling_dictionary_file_path = fs.get_child_path(

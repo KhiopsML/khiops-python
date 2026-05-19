@@ -52,6 +52,81 @@ except ImportError as import_error:
 
 # pylint: enable=invalid-name
 
+#######################
+## Private functions ##
+#######################
+
+
+def _parent_path(path):
+    r"""Returns the parent of the specified path
+
+    Notes
+    -----
+    This function always returns a posix path ("/" as separator). For example for the
+    windows path::
+
+        C:\Program Files\khiops
+
+    this method returns::
+
+        C:/Program Files
+    """
+    return Path(path).parent.as_posix()
+
+
+def _parent_uri_info(uri_info):
+    """Creates the parent for the input URI info
+
+    Parameters
+    ----------
+    uri_info : `urllib.parse.ParseResult`
+        URI info structure (output of `urllib.parse.urlparse`)
+
+    Returns
+    -------
+    `urllib.parse.ParseResult`
+        URI info structure for the parent URI
+
+    """
+    return uri_info._replace(path=_parent_path(uri_info.path))
+
+
+def _child_path(path, child_name):
+    r"""Creates a path with a child appended
+
+    Notes
+    -----
+    This function always returns a posix path ("/" as separator). For example for the
+    windows path and child name::
+
+        parent: C:\Program Files
+        child:  khiops
+
+    this method returns::
+        C:/Program Files/khiops
+    """
+    return Path(path).joinpath(child_name).as_posix()
+
+
+def _child_uri_info(uri_info, child_name):
+    r"""Creates a URI info with a path with child appended
+
+    Parameters
+    ----------
+    uri_info : `urllib.parse.ParseResult`
+        URI info structure (output of `urllib.parse.urlparse`)
+
+    child_name : str
+        Name of the new childe node
+
+    Returns
+    -------
+    `urllib.parse.ParseResult`
+        URI info structure for the child URI
+    """
+    return uri_info._replace(path=_child_path(uri_info.path, child_name))
+
+
 ######################
 ## Helper Functions ##
 ######################
@@ -136,76 +211,6 @@ def create_resource(uri_or_path):
     # No scheme separator `://` found: Build a local resource
     else:
         return LocalFilesystemResource(uri_or_path)
-
-
-def parent_path(path):
-    r"""Returns the parent of the specified path
-
-    Notes
-    -----
-    This function always return a posix path ("/" as separator). For example for the
-    windows path::
-
-        C:\Program Files\khiops
-
-    this method returns::
-
-        C:/Program Files
-    """
-    return Path(path).parent.as_posix()
-
-
-def parent_uri_info(uri_info):
-    """Creates the parent for the input URI info
-
-    Parameters
-    ----------
-    uri_info : `urllib.parse.ParseResult`
-        URI info structure (output of `urllib.parse.urlparse`)
-
-    Returns
-    -------
-    `urllib.parse.ParseResult`
-        URI info structure for the parent URI
-
-    """
-    return uri_info._replace(path=parent_path(uri_info.path))
-
-
-def child_path(path, child_name):
-    r"""Creates a path with a child appended
-
-    Notes
-    -----
-    This function always return a posix path ("/" as separator). For example for the
-    windows path and child name::
-
-        parent: C:\Program Files
-        child:  khiops
-
-    this method returns::
-        C:/Program Files/khiops
-    """
-    return Path(path).joinpath(child_name).as_posix()
-
-
-def child_uri_info(uri_info, child_name):
-    r"""Creates a URI info with a path with child appended
-
-    Parameters
-    ----------
-    uri_info : `urllib.parse.ParseResult`
-        URI info structure (output of `urllib.parse.urlparse`)
-
-    child_name : str
-        Name of the new childe node
-
-    Returns
-    -------
-    `urllib.parse.ParseResult`
-        URI info structure for the child URI
-    """
-    return uri_info._replace(path=child_path(uri_info.path, child_name))
 
 
 ##############
@@ -373,7 +378,7 @@ def get_child_path(uri_or_path, child_name):
 
 
 def get_parent_path(uri_or_path):
-    """Returns the specified parent path of this URI
+    """Returns the parent path of this URI
 
     Parameters
     ----------
@@ -523,7 +528,7 @@ class LocalFilesystemResource(FilesystemResource):
         return create_resource(os.path.join(self.path, file_name))
 
     def create_parent(self):
-        return create_resource(parent_path(self.path))
+        return create_resource(_parent_path(self.path))
 
 
 class GoogleCloudStorageResource(FilesystemResource):
@@ -592,10 +597,10 @@ class GoogleCloudStorageResource(FilesystemResource):
         )
 
     def create_child(self, file_name):
-        return create_resource(child_uri_info(self.uri_info, file_name).geturl())
+        return create_resource(_child_uri_info(self.uri_info, file_name).geturl())
 
     def create_parent(self):
-        return create_resource(parent_uri_info(self.uri_info).geturl())
+        return create_resource(_parent_uri_info(self.uri_info).geturl())
 
 
 # Avoid pylint complaining on dynamic class returned by boto3 API
@@ -752,10 +757,10 @@ class AmazonS3Resource(FilesystemResource):
         )
 
     def create_child(self, file_name):
-        return create_resource(child_uri_info(self.uri_info, file_name).geturl())
+        return create_resource(_child_uri_info(self.uri_info, file_name).geturl())
 
     def create_parent(self):
-        return create_resource(parent_uri_info(self.uri_info).geturl())
+        return create_resource(_parent_uri_info(self.uri_info).geturl())
 
 
 # pylint: enable=no-member
@@ -806,10 +811,10 @@ class AzureStorageResourceMixin:
         )
 
     def create_child(self, file_name):
-        return create_resource(child_uri_info(self.uri_info, file_name).geturl())
+        return create_resource(_child_uri_info(self.uri_info, file_name).geturl())
 
     def create_parent(self, file_name):  # pylint: disable=unused-argument
-        return create_resource(parent_uri_info(self.uri_info).geturl())
+        return create_resource(_parent_uri_info(self.uri_info).geturl())
 
     def _uri_parts(self):
         return [part for part in self.uri_info.path.split("/") if len(part) > 0]
@@ -828,7 +833,7 @@ class AzureStorageFileResource(AzureStorageResourceMixin, FilesystemResource):
 
     For shared Files, the URI pattern of a resource is the following :
     https://<storage-account-name>.file.core.windows.net/<share name>/...
-                                                <0 to n folder name(s)>/<file name>
+    <0 to n folder name(s)>/<file name>.
     The first name after the netloc is the "share name" not a simple "folder name".
 
     By default, this resource reads the configuration from standard location
@@ -913,8 +918,9 @@ class AzureStorageFileResource(AzureStorageResourceMixin, FilesystemResource):
 
     def list_dir(self):
         """List the files (not the directories) of the current directory
-        Notes:
-            This is not a recursive listing operation
+
+        .. note::
+            This is not a recursive listing operation.
         """
 
         return [
@@ -957,7 +963,7 @@ class AzureStorageBlobResource(AzureStorageResourceMixin, FilesystemResource):
 
     For blobs, the URI pattern of a resource is the following:
     https://<storage-account-name>.blob.core.windows.net/<container name>/...
-                                        <0 to n virtual folder name(s)>/<blob name>
+    <0 to n virtual folder name(s)>/<blob name>.
     The "virtual folder names" are part of the blob name but can help simulate
     a folder hierarchy.
     The first name after the netloc is the "container name" not a simple
