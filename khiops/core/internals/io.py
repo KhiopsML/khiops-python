@@ -125,7 +125,7 @@ class KhiopsJSONObject:
 
     Raises
     ------
-    `~.KhiopsJSONError`
+    `KhiopsJSONError`
         If the JSON data is invalid.
 
     Attributes
@@ -149,7 +149,8 @@ class KhiopsJSONObject:
         Dictionary that specifies the order of the keys in the Khiops JSON report.
         Its values are `None`, except when they are dictionaries themselves.
 
-        .. note::
+        !!! note
+
             This is a class attribute that can be set in subclasses, to specify
             a key order when serializing the report in a JSON file, via the
             ``write_khiops_json_file`` method.

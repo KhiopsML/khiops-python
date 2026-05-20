@@ -6,7 +6,8 @@
 ######################################################################################
 """Classes to manipulate Khiops Dictionary files
 
-.. note::
+!!! note
+
     To have a complete illustration of the access to the information of all classes in
     this module look at their ``write`` methods which write them in Khiops Dictionary
     file format (``.kdic``).
@@ -154,7 +155,8 @@ class DictionaryDomain:
         Python dictionary representing the data of a Khiops Dictionary JSON file. If not
         specified it returns an empty instance.
 
-        .. note::
+        !!! note
+
             Prefer the `.read_dictionary_file` function from the core API to obtain an
             instance of this class from a Khiops Dictionary file (``kdic`` or
             ``kdicj``).
@@ -283,7 +285,8 @@ class DictionaryDomain:
     def extract_data_paths(self, source_dictionary_name):
         """Extracts the data paths for a dictionary in a multi-table schema
 
-        See :doc:`/multi_table_primer` for more details about data paths.
+        See [Multi-Table Learning Primer](../multi_table_primer.md)
+        for more details about data paths.
 
         Parameters
         ----------
@@ -529,7 +532,7 @@ def read_dictionary_file(dictionary_file_path):
 
     Parameters
     ----------
-    dictionary_file : str
+    dictionary_file_path : str
         Path of the file to be imported. The file can be either Khiops Dictionary
         (extension ``kdic``) or Khiops JSON Dictionary (extension ``.json`` or
         ``.kdicj``).
@@ -979,13 +982,14 @@ class Dictionary:
     ):
         """Removes the specified variable block from this dictionary
 
-        .. note::
+        !!! note
+
             Non-native block variables (those created from block rules) are never kept
             in the dictionary.
 
         Parameters
         ----------
-        variable_name : str
+        variable_block_name : str
             Name of the variable block to be removed.
         keep_native_block_variables : bool, default ``True``
             If ``True`` and the block is native then  only the block structure is
@@ -1647,92 +1651,96 @@ class Rule:
     is_reference : bool
         The reference status of the rule.
 
-        .. note::
+        !!! note
+
             This attribute cannot be changed on a `Rule` instance.
 
     Examples
     --------
         - basic rule, with variables as operands:
             - verbatim:
-                .. code-block::
 
-                    Product(PetalLength, PetalWidth)
+                ```
+                Product(PetalLength, PetalWidth)
+                ```
 
             - object construction:
-                .. highlight:: python
-                .. code-block:: python
 
-                    petal_length_var = kh.Variable()
-                    petal_length_var.name = "PetalLength"
-                    petal_length_var.type = "Numerical"
-                    petal_width_var = kh.Variable()
-                    petal_width_var.name = "PetalWidth"
-                    petal_width_var.type = "Numerical"
-                    rule = kh.Rule("Product", petal_length_var, petal_width_var)
+                ```python
+                petal_length_var = kh.Variable()
+                petal_length_var.name = "PetalLength"
+                petal_length_var.type = "Numerical"
+                petal_width_var = kh.Variable()
+                petal_width_var.name = "PetalWidth"
+                petal_width_var.type = "Numerical"
+                rule = kh.Rule("Product", petal_length_var, petal_width_var)
+                ```
 
         - multi-table rule:
             - verbatim:
-                .. code-block::
 
-                    TableCount(
-                        TableSelection(
-                            Vehicles,
-                            EQ(PassengerNumber, 1)
-                        )
+                ```
+                TableCount(
+                    TableSelection(
+                        Vehicles,
+                        EQ(PassengerNumber, 1)
                     )
+                )
+                ```
 
             - object construction:
-                .. highlight:: python
-                .. code-block:: python
 
-                    vehicles_var = accidents_dictionary.get_variable("Vehicles")
-                    passenger_number_var = vehicles_dictionary.get_variable(
-                        "PassengerNumber"
+                ```python
+                vehicles_var = accidents_dictionary.get_variable("Vehicles")
+                passenger_number_var = vehicles_dictionary.get_variable(
+                    "PassengerNumber"
+                )
+                rule = kh.Rule(
+                    "TableCount",
+                    kh.Rule(
+                        "TableSelection",
+                        vehicles_var,
+                        kh.Rule("EQ", passenger_number_var, 1)
                     )
-                    rule = kh.Rule(
-                        "TableCount",
-                        kh.Rule(
-                            "TableSelection",
-                            vehicles_var,
-                            kh.Rule("EQ", passenger_number_var, 1)
-                        )
-                    )
+                )
+                ```
 
         - multi-table rule with upper-scoped operands (advanced usage):
             - verbatim:
-                .. code-block::
 
-                    TableSelection(
-                        Vehicles,
-                        EQ(
-                            PassengerNumber,
-                            .TableMax(Vehicles, PassengerNumber)
-                        )
+                ```
+                TableSelection(
+                    Vehicles,
+                    EQ(
+                        PassengerNumber,
+                        .TableMax(Vehicles, PassengerNumber)
                     )
+                )
+                ```
 
             - object construction:
-                .. highlight:: python
-                .. code-block:: python
 
-                    vehicles_var = accidents_dictionary.get_variable("Vehicles")
-                    passenger_number_var = vehicles_dictionary.get_variable(
-                        "PassengerNumber"
-                    )
-                    rule = kh.Rule(
-                        "TableSelection",
-                        vehicles_var,
-                        kh.Rule(
-                            "EQ",
-                            passenger_number_var,
-                            kh.upper_scope(
-                                kh.Rule(
-                                    "TableMax",
-                                    vehicle_var,
-                                    passenger_number_var
-                                )
+                ```python
+                vehicles_var = accidents_dictionary.get_variable("Vehicles")
+                passenger_number_var = vehicles_dictionary.get_variable(
+                    "PassengerNumber"
+                )
+                rule = kh.Rule(
+                    "TableSelection",
+                    vehicles_var,
+                    kh.Rule(
+                        "EQ",
+                        passenger_number_var,
+                        kh.upper_scope(
+                            kh.Rule(
+                                "TableMax",
+                                vehicle_var,
+                                passenger_number_var
                             )
                         )
                     )
+                )
+                ```
 
     """
 
@@ -1828,7 +1836,8 @@ class Rule:
         writer : `.KhiopsOutputWriter`
             Output writer.
 
-            .. note::
+            !!! note
+
                 ``self.name`` is not included in the serialization of reference rules.
         """
         # Check the type of the writer

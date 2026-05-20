@@ -63,7 +63,8 @@ class CoclusteringResults(KhiopsJSONObject):
         Python dictionary representing the data of a Khiops Coclustering JSON report
         file. If not specified it returns an empty instance.
 
-        .. note::
+        !!! note
+
             Prefer either the the `read_coclustering_results_file` function from the
             core API to obtain an instance of this class from a Khiops Coclustering JSON
             file.
@@ -230,7 +231,8 @@ class CoclusteringResults(KhiopsJSONObject):
     def write_report_file(self, report_file_path):  # pragma: no cover
         """Writes a TSV report file with the object's information
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -250,7 +252,8 @@ class CoclusteringResults(KhiopsJSONObject):
     def write_report(self, stream_or_writer):  # pragma: no cover
         """Writes the instance's TSV report to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -341,7 +344,7 @@ class CoclusteringReport:
     initial_dimension_number : int
         Initial number of dimensions. The number of dimensions (``len(dimensions)``) may
         be less than this quantity after a simplification (see
-        `~.api.simplify_coclustering`).
+        `api.simplify_coclustering`).
     frequency_variable : str
         Name of the variable to be aggregated in the cells. By default is the number of
         individuals.
@@ -533,7 +536,8 @@ class CoclusteringReport:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -557,7 +561,8 @@ class CoclusteringReport:
     def write_dimensions(self, writer):  # pragma: no cover
         """Writes the "dimensions" section of the TSV report to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -579,7 +584,8 @@ class CoclusteringReport:
     def write_coclustering_stats(self, writer):  # pragma: no cover
         """Writes the "stats" section of the TSV report to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -613,7 +619,8 @@ class CoclusteringReport:
     def write_bounds(self, writer):  # pragma: no cover
         """Writes the "bounds" section of the TSV report to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -645,7 +652,8 @@ class CoclusteringReport:
     def write_hierarchies(self, writer):  # pragma: no cover
         """Writes the dimension reports' "hierarchy" sections to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -664,7 +672,8 @@ class CoclusteringReport:
     def write_compositions(self, writer):  # pragma: no cover
         """Writes the dimensions' "composition" sections to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -683,7 +692,8 @@ class CoclusteringReport:
     def write_cells(self, writer):  # pragma: no cover
         """Writes the "cells" section of the TSV report to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -711,7 +721,8 @@ class CoclusteringReport:
     def write_annotations(self, writer):  # pragma: no cover
         """Writes the dimensions' "annotation" sections to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -745,7 +756,8 @@ class CoclusteringDimension:
 
     It only has a no-parameter constructor.
 
-    .. note::
+    !!! note
+
         The instance information is initialized with the `init_summary`,
         `init_partition` and `init_hierarchy` methods. Its owner object (class
         `CoclusteringReport`) uses the information found in the fields
@@ -765,7 +777,7 @@ class CoclusteringDimension:
         Number of parts of the variable associated to this dimension.
     initial_part_number : int
         Number of initial parts. Note that ``part_number`` <= ``initial_part_number``
-        after a coclustering simplification (see `~.api.simplify_coclustering`).
+        after a coclustering simplification (see `api.simplify_coclustering`).
     value_number : int
         Number of values of the dimension's variable.
     interest : float
@@ -1155,7 +1167,8 @@ class CoclusteringDimension:
     def write_dimension_header_line(self, writer):  # pragma: no cover
         """Writes the "dimensions" section header to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1182,7 +1195,8 @@ class CoclusteringDimension:
     def write_dimension_line(self, writer):  # pragma: no cover
         """Writes the "dimensions" section line to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1207,7 +1221,8 @@ class CoclusteringDimension:
     def write_hierarchy(self, writer):  # pragma: no cover
         """Writes the "hierarchy" section to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1232,7 +1247,8 @@ class CoclusteringDimension:
     def write_composition(self, writer):  # pragma: no cover
         """Writes the "composition" section to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1273,7 +1289,8 @@ class CoclusteringDimension:
     def write_annotation(self, writer):  # pragma: no cover
         """Writes the "annotation" section to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1316,7 +1333,8 @@ class CoclusteringDimension:
 
         This method is mainly a test of the encoding of the cluster hierarchy.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1584,7 +1602,8 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
 class CoclusteringDimensionPartValue:
     """A specific value of a variable in a dimension value group.
 
-    .. note::
+    !!! note
+
         This class has only a no-parameter constructor initializing an instance with the
         default values.
 
@@ -1708,7 +1727,8 @@ class CoclusteringCluster:
     def write_hierarchy_header_line(self, writer):  # pragma: no cover
         """Writes the "hierarchy" section's header to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1734,7 +1754,8 @@ class CoclusteringCluster:
     def write_hierarchy_line(self, writer):  # pragma: no cover
         """Writes a line of the "hierarchy" section to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1758,7 +1779,8 @@ class CoclusteringCluster:
     def write_annotation_header_line(self, writer):  # pragma: no cover
         """Writes the "annotation" section's header to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1782,7 +1804,8 @@ class CoclusteringCluster:
     def write_annotation_line(self, writer):  # pragma: no cover
         """Writes a line of the "annotation" section to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1807,7 +1830,8 @@ class CoclusteringCluster:
 
         This method is mainly a test of the encoding of the cluster hierarchy.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1838,7 +1862,8 @@ class CoclusteringCluster:
 class CoclusteringCell:
     """A coclustering cell
 
-    .. note::
+    !!! note
+
         This class has only a no-parameter constructor initializing an instance with the
         default values.
 
@@ -1861,7 +1886,8 @@ class CoclusteringCell:
     def write_line(self, writer):  # pragma: no cover
         """Writes a line of the instance's report to a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12.
 

@@ -223,7 +223,8 @@ def _cleanup_dir(target_dir):
 class KhiopsEstimator(ABC, BaseEstimator):
     """Base class for Khiops Scikit-learn estimators
 
-    .. note::
+    !!! note
+
          The input features collection X needs to have single-line records
          so that Khiops can handle them.
          Hence, multi-line records are preprocessed:
@@ -535,9 +536,10 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         root_name : str
             Name of root table in trained Khiops model .kdic
@@ -682,9 +684,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
         id_column : str
             The column that contains the id of the instance.
         columns : list, optional
@@ -1083,9 +1086,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
@@ -1246,11 +1250,12 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : `array-like` of shape (n_samples,)
             The target values.
 
         Returns
@@ -1651,18 +1656,19 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     r"""Khiops Selective Naive Bayes Classifier
 
     This classifier supports automatic feature engineering on multi-table datasets. See
-    :doc:`/multi_table_primer` for more details.
+    [Multi-Table Learning Primer](../multi_table_primer.md) for more details.
 
-    .. note::
+    !!! note
 
-        Visit `the Khiops site <https://khiops.org/learn/understand>`_ to learn
+        Visit [the Khiops site](https://khiops.org/learn/understand) to learn
         about the automatic feature engineering algorithm.
 
     Parameters
     ----------
     n_features : int, default 1000
         Maximum number of features to construct automatically. See
-        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        [Multi-Table Learning Primer](../multi_table_primer.md)
+        for more details on the multi-table-specific
         features.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features are 2D grid
@@ -1871,11 +1877,12 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : `array-like` of shape (n_samples,)
             The target values.
 
         Returns
@@ -1954,9 +1961,10 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
@@ -1988,9 +1996,10 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
@@ -2075,18 +2084,19 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     r"""Khiops Selective Naive Bayes Regressor
 
     This regressor supports automatic feature engineering on multi-table datasets. See
-    :doc:`/multi_table_primer` for more details.
+    [Multi-Table Learning Primer](../multi_table_primer.md) for more details.
 
-    .. note::
+    !!! note
 
-        Visit `the Khiops site <https://khiops.org/learn/understand>`_ to learn
+        Visit [the Khiops site](https://khiops.org/learn/understand) to learn
         about the automatic feature engineering algorithm.
 
     Parameters
     ----------
     n_features : int, default 1000
         Maximum number of features to construct automatically. See
-        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        [Multi-Table Learning Primer](../multi_table_primer.md)
+        for more details on the multi-table-specific
         features.
     n_trees : int, default 10
         Maximum number of decision tree features to construct. The constructed trees
@@ -2187,17 +2197,19 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     def fit(self, X, y=None, **kwargs):
         """Fits a Selective Naive Bayes regressor according to X, y
 
-        .. warning::
+        !!! warning
+
             Make sure that the type of ``y`` is float. This is easily done with ``y =
             y.astype(float)``.
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : `array-like` of shape (n_samples,)
             The target values.
 
         Returns
@@ -2252,9 +2264,10 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
@@ -2264,7 +2277,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
             column ids is added in multi-table mode. The key columns are added for
             multi-table tasks. The array is in the form of:
 
-            - `numpy.ndarray` if X is :external:term:`array-like`, or dataset spec
+            - `numpy.ndarray` if X is `array-like`, or dataset spec
               containing `pandas.DataFrame` table.
             - str (a path for the file containing the array) if X is a dataset spec
               containing file-path tables.
@@ -2297,7 +2310,8 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         ``True`` if the target column is categorical.
     n_features : int, default 1000
         Maximum number of features to construct automatically. See
-        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        [Multi-Table Learning Primer](../multi_table_primer.md)
+        for more details on the multi-table-specific
         features.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features are 2D grid
@@ -2347,7 +2361,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             - "conditional_info"
 
         See the documentation for the ``categorical_recoding_method`` parameter of the
-        `~.api.train_recoder` function for more details.
+        `api.train_recoder` function for more details.
     transform_type_numerical : str, default "part_id"
         One of the following strings are valid:
             - "part_id"
@@ -2359,7 +2373,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             - "rank_normalization"
 
         See the documentation for the ``numerical_recoding_method`` parameter of the
-        `~.api.train_recoder` function for more details.
+        `api.train_recoder` function for more details.
     transform_type_pairs : str, default "part_id"
         Type of transformation for bivariate features. Valid values:
             - "part_id"
@@ -2599,11 +2613,12 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : `array-like` of shape (n_samples,)
             The target values.
 
         Returns
@@ -2661,15 +2676,17 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     def transform(self, X):
         """Transforms X with a fitted Khiops supervised encoder
 
-        .. note::
+        !!! note
+
             Numerical features are encoded to categorical ones. See the
             ``transform_type_numerical`` parameter for details.
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
@@ -2718,11 +2735,12 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : `array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an `array-like` or a ``dict``
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : `array-like` of shape (n_samples,)
             The target values.
 
         Returns

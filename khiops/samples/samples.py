@@ -349,7 +349,7 @@ def train_predictor_error_handling():
 
     If the latter information is not enough to diagnose the problem, it is possible to
     save the temporary log file by activating the "trace" flag in the call to
-    `~.api.train_predictor`. The path of the log file will be printed to the standard
+    `api.train_predictor`. The path of the log file will be printed to the standard
     output, as well as that of the dictionary and scenario files (note that the "trace"
     keyword argument is available in all functions of the `khiops.core.api`
     submodule).
@@ -398,7 +398,7 @@ def train_predictor_error_handling():
 def train_predictor_mt():
     """Trains a multi-table predictor in the simplest way possible
 
-    It is a call to `~.api.train_predictor` with additional parameters to handle
+    It is a call to `api.train_predictor` with additional parameters to handle
     multi-table learning
     """
     # Imports
@@ -601,7 +601,7 @@ def train_predictor_with_pairs():
 def train_predictor_with_multiple_parameters():
     """Trains a predictor with various additional parameters
 
-    Some of these parameters are specific to `~.api.train_predictor` and others generic
+    Some of these parameters are specific to `api.train_predictor` and others generic
     to any Khiops execution.
 
     In this example, we specify the following parameters in the call:
@@ -894,7 +894,7 @@ def multiple_train_predictor():
 def interpret_predictor():
     """Builds interpretation model for existing predictor
 
-    It calls `~.api.train_predictor` and `~.api.interpret_predictor` only with
+    It calls `api.train_predictor` and `api.interpret_predictor` only with
     their mandatory parameters.
     """
     # Imports
@@ -935,7 +935,7 @@ def reinforce_predictor():
       variable, reinforcement part, final score after reinforcement, and class change
       tag.
 
-    It calls `~.api.train_predictor` and `~.api.reinforce_predictor` only with
+    It calls `api.train_predictor` and `api.reinforce_predictor` only with
     their mandatory parameters.
     """
     # Imports
@@ -973,7 +973,7 @@ def reinforce_predictor():
 def evaluate_predictor():
     """Evaluates a predictor in the simplest way possible
 
-    It calls `~.api.evaluate_predictor` with only its mandatory parameters.
+    It calls `api.evaluate_predictor` with only its mandatory parameters.
     """
     # Imports
     import os
@@ -1088,7 +1088,7 @@ def access_predictor_evaluation_report():
 def train_recoder():
     """Train a database recoder in the simplest way possible
 
-    It is a call to `~.api.train_recoder` with only its mandatory parameters.
+    It is a call to `api.train_recoder` with only its mandatory parameters.
     """
     # Imports
     import os
@@ -1180,7 +1180,7 @@ def train_recoder_mt_flatten():
 def deploy_model():
     """Deploys a model in the simplest way possible
 
-    It is a call to `~.api.deploy_model` with its mandatory parameters.
+    It is a call to `api.deploy_model` with its mandatory parameters.
 
     In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
     associated dictionary to the input database. The model predictions are written to
@@ -1216,7 +1216,7 @@ def deploy_model():
 
 def deploy_model_text():
     """Deploys a model learned on textual data
-    It is a call to `~.api.deploy_model` with its mandatory parameters, plus
+    It is a call to `api.deploy_model` with its mandatory parameters, plus
     text-specific parameters.
 
     In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
@@ -1263,7 +1263,7 @@ def deploy_model_text():
 def deploy_model_mt():
     """Deploys a multi-table classifier in the simplest way possible
 
-    It is a call to `~.api.deploy_model` with additional parameters to handle
+    It is a call to `api.deploy_model` with additional parameters to handle
     multi-table deployment.
 
     In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
@@ -1309,7 +1309,7 @@ def deploy_model_mt():
 def deploy_model_mt_with_interpretation():
     """Deploys a multi-table interpretor in the simplest way possible
 
-    It is a call to `~.api.deploy_model` with additional parameters related to
+    It is a call to `api.deploy_model` with additional parameters related to
     the variable importances.
 
     In this example, a Selective Naive Bayes (SNB) interpretation model is
@@ -1368,7 +1368,7 @@ def deploy_model_mt_with_interpretation():
 def deploy_reinforced_model_mt():
     """Deploys a multi-table reinforced model in the simplest way possible
 
-    It is a call to `~.api.deploy_model` with additional parameters related to
+    It is a call to `api.deploy_model` with additional parameters related to
     the lever variables.
 
     In this example, a reinforced Selective Naive Bayes (SNB) model is
@@ -1659,7 +1659,7 @@ def deploy_regressor_for_metrics():
 def sort_data_table():
     """Sorts a database in the simplest way possible
 
-    It is a call to `~.api.sort_data_table` with only its mandatory parameters. This
+    It is a call to `api.sort_data_table` with only its mandatory parameters. This
     sorts a data table by its default key variable (specified in the table's
     dictionary).
     """
@@ -1686,7 +1686,7 @@ def sort_data_table():
 def sort_data_table_expert():
     """Sorts a database by a field other than the default table key
 
-    It is a call to `~.api.sort_data_table` with additional parameters to specify the
+    It is a call to `api.sort_data_table` with additional parameters to specify the
     sorting fields.
     """
     # Imports
@@ -1715,7 +1715,7 @@ def sort_data_table_expert():
 def extract_keys_from_data_table():
     """Extracts the keys from a database
 
-    It is a call to `~.api.extract_keys_from_data_table` with only its mandatory
+    It is a call to `api.extract_keys_from_data_table` with only its mandatory
     parameters.
 
     Pre-requisite: the database must be sorted by its key.
@@ -1746,7 +1746,7 @@ def extract_keys_from_data_table():
 def train_coclustering():
     """Trains a coclustering model in the simplest way possible
 
-    It is a call to `~.api.train_coclustering` with only its mandatory parameters.
+    It is a call to `api.train_coclustering` with only its mandatory parameters.
     """
     # Imports
     import os
@@ -1777,7 +1777,7 @@ def train_coclustering():
 def train_instance_variable_coclustering():
     """Trains an instance-variable coclustering model in the simplest way possible
 
-    It is a call to `~.api.train_instance_variable_coclustering` with only its mandatory
+    It is a call to `api.train_instance_variable_coclustering` with only its mandatory
     parameters.
     """
     # Imports
@@ -1995,7 +1995,8 @@ def deploy_coclustering_expert():
 def scenario_prologue():
     """Trains a simple model with a prologue written in the Khiops scenario language
 
-    .. note::
+    !!! note
+
         This is an **advanced** feature.
     """
     # Imports

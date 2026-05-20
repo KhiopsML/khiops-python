@@ -106,7 +106,8 @@ class AnalysisResults(KhiopsJSONObject):
         A dictionary representing the data of a Khiops JSON report file. If not
         specified it returns an empty instance.
 
-        .. note::
+        !!! note
+
             See also the `.read_analysis_results_file` function to obtain an instance
             of this class from a Khiops JSON file.
 
@@ -139,7 +140,7 @@ class AnalysisResults(KhiopsJSONObject):
         Available only in supervised analysis and when the *test* split was not empty.
     evaluation_report : `EvaluationReport`
         An `EvaluationReport` instance for evaluations created with an explicit
-        evaluation (either with the `~.api.evaluate_predictor` core API function or the
+        evaluation (either with the `api.evaluate_predictor` core API function or the
         *Evaluate Predictor* feature of the Khiops desktop app). Available only when the
         report was generated with the aforementioned features.
     """
@@ -231,7 +232,8 @@ class AnalysisResults(KhiopsJSONObject):
     def write_report_file(self, report_file_path):  # pragma: no cover
         """Writes a TSV report file with the object's information
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -280,7 +282,8 @@ class AnalysisResults(KhiopsJSONObject):
     def write_report(self, stream_or_writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -756,7 +759,8 @@ class PreparationReport:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1031,7 +1035,8 @@ class BivariatePreparationReport:
     def get_variable_pair_statistics(self, variable_name_1, variable_name_2):
         """Returns the statistics of the specified pair of variables
 
-        .. note::
+        !!! note
+
             The variable names can be given in any order.
 
         Parameters
@@ -1143,7 +1148,8 @@ class BivariatePreparationReport:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1380,7 +1386,8 @@ class ModelingReport:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1436,10 +1443,10 @@ class EvaluationReport:
             - ``evaluationReport``: explicit evaluation
 
         The first two fields are set when doing a supervised analysis: either with the
-        "Train Model" feature of the Khiops app or the `~.api.train_predictor` function
+        "Train Model" feature of the Khiops app or the `api.train_predictor` function
         of the Khiops Python core API. The third field is set when doing an explicit
         evaluation: either with the *Evaluate Predictor* feature of the Khiops app or
-        the `~.api.evaluate_predictor` function of the Khiops Python core API.
+        the `api.evaluate_predictor` function of the Khiops Python core API.
 
         If not specified it returns an empty instance.
 
@@ -1813,7 +1820,8 @@ class EvaluationReport:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -1917,7 +1925,8 @@ class EvaluationReport:
 class VariableStatistics:
     """Variable information and statistics
 
-    .. note::
+    !!! note
+
         The statistics in this class are for both numerical and categorical data.
 
 
@@ -1929,7 +1938,8 @@ class VariableStatistics:
         JSON report file. If not specified it returns an empty instance.
 
 
-        .. note::
+        !!! note
+
             The ``data_grid`` field is considered a "detail" and is not initialized in
             the constructor. Instead, it is initialized explicitly via the
             ``init_details`` method. This allows to make partial initializations for
@@ -2174,7 +2184,8 @@ class VariableStatistics:
 
         The header is the same for all variable types.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -2213,7 +2224,8 @@ class VariableStatistics:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -2287,7 +2299,8 @@ class VariableStatistics:
     def write_report_details(self, writer):  # pragma: no cover
         """Writes the details' attributes into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -2333,7 +2346,8 @@ class VariablePairStatistics:
         field within the ``bivariatePreparationReport`` field of a Khiops JSON report
         file. If not specified it returns an empty instance.
 
-        .. note::
+        !!! note
+
             The ``data_grid`` field is considered as "detail" and is not initialized in
             the constructor. Instead, it is initialized explicitly via the
             `init_details` method. This allows to make partial initializations for large
@@ -2483,7 +2497,8 @@ class VariablePairStatistics:
 
         The header is the same for all variable types.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -2527,7 +2542,8 @@ class VariablePairStatistics:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -2569,7 +2585,8 @@ class VariablePairStatistics:
     def write_report_details(self, writer):  # pragma: no cover
         """Writes the details' attributes into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3149,7 +3166,8 @@ class DataGrid:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3387,7 +3405,8 @@ class DataGridDimension:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3499,7 +3518,8 @@ class PartInterval:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3571,7 +3591,8 @@ class PartValue:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3647,7 +3668,8 @@ class PartValueGroup:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3681,7 +3703,8 @@ class TrainedPredictor:
         within the ``modelingReport`` field of a Khiops JSON report file. If not
         specified it returns an empty instance.
 
-        .. note::
+        !!! note
+
             The ``selected_variables`` field is considered a "detail" and is not
             initialized in the constructor. Instead, it is initialized explicitly via
             the `init_details` method. This allows to make partial initializations for
@@ -3789,7 +3812,8 @@ class TrainedPredictor:
     def write_report_header_line(self, writer):  # pragma: no cover
         """Writes the header line of a TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3816,7 +3840,8 @@ class TrainedPredictor:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3839,7 +3864,8 @@ class TrainedPredictor:
     def write_report_details(self, writer):  # pragma: no cover
         """Writes the details of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3928,7 +3954,8 @@ class SelectedVariable:
 
         The header is the same for all variable types.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3955,7 +3982,8 @@ class SelectedVariable:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -3991,7 +4019,8 @@ class PredictorPerformance:
         field within the one of the evaluation report fields of a Khiops JSON report
         file. If not specified it returns an empty instance.
 
-        .. note::
+        !!! note
+
             The ``confusion_matrix`` field is considered as "detail" and is not
             initialized in the constructor. Instead, it is initialized explicitly via
             the `init_details` method. This allows to make partial initializations for
@@ -4116,7 +4145,9 @@ class PredictorPerformance:
     def get_metric(self, metric_name):
         """Returns the value of the specified metric
 
-        .. note:: The available metrics is available via the method `get_metric_names`.
+        !!! note
+
+            The available metrics is available via the method `get_metric_names`.
 
         Parameters
         ----------
@@ -4182,7 +4213,8 @@ class PredictorPerformance:
 
         The header is the same for all variable types.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -4217,7 +4249,8 @@ class PredictorPerformance:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -4242,7 +4275,8 @@ class PredictorPerformance:
     def write_report_details(self, writer):  # pragma: no cover
         """Writes the details of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 
@@ -4315,7 +4349,8 @@ class ConfusionMatrix:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
             Khiops 12. Use the `.to_dict` method instead.
 

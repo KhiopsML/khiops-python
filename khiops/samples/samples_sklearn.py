@@ -551,7 +551,8 @@ def khiops_encoder():
     features and groups categorical features in a way that the resulting interval/groups
     have the highest class-purity.
 
-    .. note::
+    !!! note
+
         For simplicity we train from the whole dataset. To assess the performance one
         usually splits the dataset into train and test subsets.
     """

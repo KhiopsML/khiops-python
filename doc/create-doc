@@ -16,7 +16,7 @@ usage() {
   echo "Usage: create-doc [-r REPO_URL] [-d] [-t] [-g] [-l]"
   echo "Options:"
   echo "  -d: Downloads the Khiops tutorial repository. Implies -t. See also -r."
-  echo "  -t: Transform the Khiops Jupyter notebooks tutorials into reST."
+  echo "  -t: Transform the Khiops Jupyter notebooks tutorials into Markdown."
   echo "  -r: Set the Khiops tutorial repository URL. The default is"
   echo "      '$DEFAULT_KHIOPS_TUTORIAL_REPO_URL'."
   echo "  -g: Set the Khiops tutorial repository Git reference. The default is"
@@ -32,7 +32,7 @@ exit_bad() {
 }
 
 # Read command line arguments
-while getopts "dtrg:l:" opt
+while getopts "dtr:g:l:" opt
 do
   case "$opt" in
     d ) DOWNLOAD_REPO=true && TRANSFORM_NOTEBOOKS="true" ;;
@@ -47,17 +47,8 @@ KHIOPS_TUTORIAL_REPO_URL="${KHIOPS_TUTORIAL_REPO_URL:-$DEFAULT_KHIOPS_TUTORIAL_R
 KHIOPS_TUTORIAL_REPO_REF="${KHIOPS_TUTORIAL_REPO_REF:-$DEFAULT_KHIOPS_TUTORIAL_REPO_REF}"
 KHIOPS_TUTORIAL_REPO_DIR="${KHIOPS_TUTORIAL_REPO_DIR:-$DEFAULT_KHIOPS_TUTORIAL_DIR}"
 
-
-# Add the khiops directory to the Python path
-if [[ -z "${PYTHONPATH+x}" ]]
-then
-  export PYTHONPATH=".."
-else
-  export PYTHONPATH="$PYTHONPATH:.."
-fi
-
 # Check command existence
-command_requirements="tar python make zip"
+command_requirements="tar python zip"
 if [[ $DOWNLOAD_REPO ]]
 then
   command_requirements="$command_requirements git"
@@ -81,12 +72,12 @@ then
       && rm -rf "$KHIOPS_TUTORIAL_REPO_DIR/.git"
 fi
 
-# Convert tutorials to reST
+# Convert tutorials to Markdown
 tutorials_dir="$(realpath ./tutorials)"
 mkdir -p "$tutorials_dir"
 if [[ $TRANSFORM_NOTEBOOKS ]]
 then
-  echo "Creating reST tutorial pages"
+  echo "Creating Markdown tutorial pages"
   python convert_tutorials.py \
       --execute-notebooks "$KHIOPS_TUTORIAL_REPO_DIR" "$tutorials_dir"
 fi
@@ -108,6 +99,7 @@ zip "$tutorials_dir/core_tutorials.zip" Core*.ipynb data/*/* exercises/.dummy
 zip "$tutorials_dir/sklearn_tutorials.zip" Sklearn*.ipynb data/*/* exercises/.dummy
 cd "../.."
 
-# Create the documentation with Sphinx
-echo "Executing Sphinx"
-sphinx-build -M html . _build/
+# Build the documentation with MkDocs
+echo "Executing MkDocs"
+cd "$SCRIPT_DIR/.."
+mkdocs build

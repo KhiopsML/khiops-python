@@ -5,7 +5,7 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""Transforms the samples.py script to a notebook or reST page"""
+"""Transforms the samples.py script to a notebook or Markdown page"""
 
 import argparse
 import inspect
@@ -66,57 +66,51 @@ def create_sample_cells(sample_method):
     return sample_execution_cells
 
 
-def create_rest_page_header(script_name):
+def create_markdown_page_header(script_name):
+    """Creates the header for a Markdown samples page"""
     subtitle = "The code snippets on this page demonstrate the basic use of the "
     if script_name == "samples":
         title = "Samples core"
-        subtitle += ":py:mod:`khiops.core` module."
+        subtitle += "[khiops.core][] module."
     else:
         title = "Samples sklearn"
-        subtitle += ":py:mod:`khiops.sklearn <khiops.sklearn.estimators>` module."
+        subtitle += "[khiops.sklearn][] module."
     return (
-        ":orphan:\n"
-        "\n"
-        f".. currentmodule:: {script_name}\n"
-        "\n"
-        f"{title}\n"
-        f"{'=' * len(title)}\n"
+        f"# {title}\n"
         "\n"
         f"{subtitle}\n"
         "\n"
-        "Script and Jupyter notebook\n"
-        "---------------------------\n"
+        "## Script and Jupyter notebook\n"
+        "\n"
         "The samples in this page are also available as:\n"
         "\n"
-        f"- :download:`Python script <../../khiops/samples/{script_name}.py>`\n"
-        f"- :download:`Jupyter notebook <../../khiops/samples/{script_name}.ipynb>`\n"
+        f"- [Python script](../../khiops/samples/{script_name}.py)\n"
+        f"- [Jupyter notebook](../../khiops/samples/{script_name}.ipynb)\n"
         "\n"
-        "Setup\n"
-        "-----\n"
+        "## Setup\n"
+        "\n"
         "First make sure you have installed the sample datasets. In a configured\n"
         "conda shell (ex. *Anaconda Prompt* in Windows) execute:\n"
         "\n"
-        ".. code-block:: shell\n"
-        "\n"
-        "    kh-download-datasets\n"
+        "```shell\n"
+        "kh-download-datasets\n"
+        "```\n"
         "\n"
         "If that doesn't work open a python console and execute:\n"
         "\n"
-        ".. code-block:: python\n"
+        "```python\n"
+        "from khiops.tools import download_datasets\n"
+        "download_datasets()\n"
+        "```\n"
         "\n"
-        "    from khiops.tools import download_datasets\n"
-        "    download_datasets()\n"
-        "\n"
-        "\n"
-        "Samples\n"
-        "-------\n"
+        "## Samples\n"
     )
 
 
 def split_docstring(source):
     docstring_open_quote = source.find('"""')
     if docstring_open_quote == -1:
-        source_without_docstring = sample_source
+        source_without_docstring = source
         docstring = ""
     else:
         docstring_close_quote = (
@@ -127,17 +121,20 @@ def split_docstring(source):
     return source_without_docstring, docstring
 
 
-def create_rest_page_section(sample_function):
-    code, _ = split_docstring(inspect.getsource(sample_function))
+def create_markdown_page_section(sample_function):
+    """Creates a Markdown section for a sample function"""
+    code, docstring = split_docstring(inspect.getsource(sample_function))
     code = textwrap.dedent(code)
     code = black.format_str(code, mode=black.Mode())
-    code = textwrap.indent(code, "    ")
     code = code.rstrip()
     return (
-        f".. autofunction:: {sample_function.__name__}\n"
-        ".. code-block:: python\n"
+        f"### `{sample_function.__name__}()`\n"
         "\n"
-        f"{code}"
+        f"{docstring}\n"
+        "\n"
+        "```python\n"
+        f"{code}\n"
+        "```"
     )
 
 
@@ -185,24 +182,24 @@ def main(args):
 
         with open(args.output_path, "w") as notebook:
             json.dump(notebook_objects, notebook, indent=1)
-    # Case of a reST page: Print the header and sections to the file
+    # Case of a Markdown page: Print the header and sections to the file
     else:
-        with open(args.output_path, "w") as rest_page:
-            print(create_rest_page_header(script_name), file=rest_page)
+        with open(args.output_path, "w") as md_page:
+            print(create_markdown_page_header(script_name), file=md_page)
             for sample_method in samples.exported_samples:
-                print(create_rest_page_section(sample_method), file=rest_page)
+                print(create_markdown_page_section(sample_method), file=md_page)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="python convert_samples.py",
         formatter_class=argparse.RawTextHelpFormatter,
-        description="Transforms the samples.py script to a notebook or reST page",
+        description="Transforms the samples.py script to a notebook or Markdown page",
     )
     parser.add_argument("samples_dir", metavar="PYFILE", help="samples scripts dir")
     parser.add_argument("output_path", metavar="OUTFILE", help="output file")
     parser.add_argument("--sklearn", action="store_true", default=False)
     parser.add_argument(
-        "-f", "--format", type=str, choices=["ipynb", "rst"], default="ipynb"
+        "-f", "--format", type=str, choices=["ipynb", "md"], default="ipynb"
     )
     main(parser.parse_args())

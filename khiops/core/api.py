@@ -9,10 +9,10 @@
 The methods in this module allow to execute all Khiops and Khiops Coclustering tasks.
 
 See also:
-    - :ref:`core-api-common-params`
-    - :ref:`core-api-input-types`
-    - :ref:`core-api-sampling-mode`
-    - :ref:`core-api-env-samples-dir`
+    - [Common Parameters](../notes.md#core-api-common-params)
+    - [Input Types](../notes.md#core-api-input-types)
+    - [Database Sampling](../notes.md#core-api-sampling-mode)
+    - [Samples Directory Customization](../notes.md#core-api-env-samples-dir)
 """
 import io
 import os
@@ -48,7 +48,8 @@ DEFAULT_CONSTRUCTION_RULES = [
 ]
 """List of construction rules that Khiops uses by default
 
-.. note::
+!!! note
+
     These are all the multi-table rules.
 """  # pylint: disable=pointless-string-statement
 
@@ -68,7 +69,8 @@ CALENDRICAL_CONSTRUCTION_RULES = [
 
 These rules include: date, time and timestamp rules.
 
-.. note::
+!!! note
+
     These rules are not enabled by default. The user needs to explicitly
     select each of them via the ``construction_rules`` parameter of the
     relevant Core API functions.
@@ -168,12 +170,14 @@ def _preprocess_arguments(args):
     -------
     tuple
         A 3-tuple containing:
-            - A `~.CommandLineOptions` instance
-            - A `~.SystemSettings` instance
+            - A `CommandLineOptions` instance
+            - A `SystemSettings` instance
             - A `bool` that is ``True`` if the value of the `dictionary_file_or_domain`
-             `args` key is a `~.DictionaryDomain` instance.
+             `args` key is a `DictionaryDomain` instance.
 
-    .. note:: This function *mutates* the input `args` dictionary.
+    !!! note
+
+        This function *mutates* the input `args` dictionary.
     """
     # Execute the preprocessing of common task arguments
     task_is_called_with_domain = _preprocess_task_arguments(args)
@@ -221,10 +225,14 @@ def _preprocess_arguments(args):
 def _deprecate_legacy_data_path(data_path_task_arg_name, task_args):
     """Detect and replace legacy data path with the current syntax
 
-    .. note:: The function mutates task_args.
-    .. note:: A similar logic is repeated in `DictionaryDomain`
-              but cannot be factored out in a simple way
-              because no `DictionaryDomain` object is built here
+    !!! note
+
+        The function mutates task_args.
+
+    !!! note
+
+        A similar logic is repeated in `DictionaryDomain` but cannot be factored
+        out in a simple way because no `DictionaryDomain` object is built here.
     """
     if (
         data_path_task_arg_name in task_args
@@ -523,8 +531,10 @@ def export_dictionary_as_json(
         Path (absolute path recommended) to the output dictionary file,
         in the JSON format. Note that a relative path will produce a file in
         the current working directory.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Examples
     --------
@@ -581,8 +591,10 @@ def build_dictionary_from_data_table(
         A field separator character. "" has the same effect as "\\t". Sets
         ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
         is ``True``.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
     """
     # Save the task arguments
     # WARNING: Do not move this line, see the top of the "tasks" section for details
@@ -644,7 +656,8 @@ def check_database(
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it checks ``sample_percentage`` percent of
         the data; if equal to "Exclude sample" it checks the complement of the
-        data selected with "Include sample". See also :ref:`core-api-sampling-mode`.
+        data selected with "Include sample". See also
+        [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
         It checks only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -652,11 +665,14 @@ def check_database(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer`.
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md).
     max_messages : int, default 20
         Maximum number of error messages to write in the log file.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Examples
     --------
@@ -717,10 +733,11 @@ def train_predictor(
 ):
     r"""Trains a model from a data table
 
-    .. note::
-         For all input dictionaries, this function creates model dictionaries whose
-         names are prefixed with ``SNB_``. For regression models, additional
-         dictionaries are created and their names are prefixed with ``Baseline_``.
+    !!! note
+
+        For all input dictionaries, this function creates model dictionaries whose
+        names are prefixed with ``SNB_``. For regression models, additional
+        dictionaries are created and their names are prefixed with ``Baseline_``.
 
     Parameters
     ----------
@@ -759,7 +776,7 @@ def train_predictor(
         percent of the data and tests the model on the remainder of the data if
         ``use_complement_as_test`` is set to ``True``.  If equal to "Exclude sample" the
         train and test datasets above are exchanged. See also
-        :ref:`core-api-sampling-mode`.
+        [Database Sampling](../notes.md#core-api-sampling-mode).
     use_complement_as_test : bool, default ``True``
         Uses the complement of the sampled database as test database for
         computing the model's performance metrics.
@@ -770,7 +787,8 @@ def train_predictor(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer`.
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md).
     do_data_preparation_only : bool, default ``False``
         If ``True`` it only does data preparation via MODL preprocessing without
         training a Selective Naive Bayes Predictor.
@@ -832,8 +850,10 @@ def train_predictor(
             - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
             - If ``grouping_method`` is "BasicGrouping": 10
 
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Returns
     -------
@@ -924,8 +944,10 @@ def interpret_predictor(
             - "Global": predictor variables are ranked by decreasing global importance.
             - "Individual": predictor variables are ranked by decreasing individual
               Shapley value.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Raises
     ------
@@ -987,8 +1009,10 @@ def reinforce_predictor(
         The names of variables to use as lever variables while building the
         reinforced predictor. Min length: 1. Max length: the total number of variables
         in the prediction model.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Raises
     ------
@@ -1069,7 +1093,7 @@ def evaluate_predictor(
         If equal to "Include sample" it evaluates the predictor on ``sample_percentage``
         percent of the data. If equal to "Exclude sample" it evaluates the predictor on
         the complement of the data selected with "Include sample". See also
-        :ref:`core-api-sampling-mode`.
+        [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal "".
@@ -1077,17 +1101,21 @@ def evaluate_predictor(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer`.
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md).
 
-        .. note::
-             For external tables, use the initial dictionary name in the data paths,
-             which is the same as the one used for training the predictor.
+        !!! note
+
+            For external tables, use the initial dictionary name in the data paths,
+            which is the same as the one used for training the predictor.
 
     main_target_value : str, default ""
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Returns
     -------
@@ -1177,9 +1205,10 @@ def train_recoder(
     The output files of this process contain a dictionary file (``.kdic``) that can be
     used to recode databases with the `deploy_model` function.
 
-    .. note::
-      For all input dictionaries, this function creates model dictionaries whose names
-      are prefixed with ``R_``.
+    !!! note
+
+        For all input dictionaries, this function creates model dictionaries whose names
+        are prefixed with ``R_``.
 
     Parameters
     ----------
@@ -1215,7 +1244,7 @@ def train_recoder(
         If equal to "Include sample" it trains the recoder on ``sample_percentage``
         percent of the data. If equal to "Exclude sample" it trains the recoder on the
         complement of the data selected with "Include sample". See also
-        :ref:`core-api-sampling-mode`.
+        [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1223,7 +1252,8 @@ def train_recoder(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer`.
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md).
     max_constructed_variables : int, default 100
         Maximum number of variables to construct.
     construction_rules : list of str, optional
@@ -1310,8 +1340,10 @@ def train_recoder(
             - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
             - If ``grouping_method`` is "BasicGrouping": 10
 
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Returns
     -------
@@ -1407,7 +1439,7 @@ def deploy_model(
         If equal to "Include sample" it deploys the model on ``sample_percentage``
         percent of the data. If equal to "Exclude sample" it deploys the model on the
         complement of the data selected with "Include sample". See also
-        :ref:`core-api-sampling-mode`.
+        [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
         It deploys only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1415,19 +1447,24 @@ def deploy_model(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer`.
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md).
 
-        .. note:: Use model dictionary data paths for external tables.
+        !!! note
 
+            Use model dictionary data paths for external tables.
     output_header_line : bool, default ``True``
         If ``True`` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
     output_additional_data_tables : dict, optional
         A dictionary containing the output data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer`.
-    ... :
-        See :ref:`core-api-common-params`.
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md).
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Raises
     ------
@@ -1479,8 +1516,10 @@ def build_deployed_dictionary(
     output_dictionary_file_path : str
         Path (absolute path recommended) of the output dictionary file. Note that
         a relative path will produce a file in the current working directory.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Raises
     ------
@@ -1554,8 +1593,10 @@ def sort_data_table(
         If ``True`` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
 
     Raises
@@ -1628,8 +1669,10 @@ def extract_keys_from_data_table(
         If ``True`` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Raises
     ------
@@ -1711,7 +1754,8 @@ def train_coclustering(
         If equal to "Include sample" it trains the coclustering estimator on
         ``sample_percentage`` percent of the data. If equal to "Exclude sample" it
         trains the coclustering estimator on the complement of the data selected with
-        "Include sample". See also :ref:`core-api-sampling-mode`.
+        "Include sample". See also
+        [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1719,13 +1763,16 @@ def train_coclustering(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer`.
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md).
     frequency_variable : str, default ""
         Name of frequency variable.
     min_optimization_time : int, default 0
         Minimum optimization time in seconds.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Returns
     -------
@@ -1788,7 +1835,7 @@ def train_instance_variable_coclustering(
     **kwargs,
 ):
     r"""Trains an instance-variable coclustering model from a data table
-    .. note::
+    !!! note
 
         If keys are available in the input dictionary, they are used as instance
         identifiers. Otherwise, line numbers in the instance data table are used as
@@ -1824,7 +1871,8 @@ def train_instance_variable_coclustering(
         If equal to "Include sample" it trains the coclustering estimator on
         ``sample_percentage`` percent of the data. If equal to "Exclude sample" it
         trains the coclustering estimator on the complement of the data selected with
-        "Include sample". See also :ref:`core-api-sampling-mode`.
+        "Include sample". See also
+        [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
         It trains with only the records such that the value of ``selection_variable`` is
         equal to ``selection_value``. Ignored if equal to "".
@@ -1832,11 +1880,14 @@ def train_instance_variable_coclustering(
         See ``selection_variable`` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer`.
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md).
     min_optimization_time : int, default 0
         Minimum optimization time in seconds.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Returns
     -------
@@ -1906,10 +1957,13 @@ def simplify_coclustering(
         Maximum number of parts totaled over all variables. If equal to 0 there is no
         limit.
     max_part_numbers : dict, optional
-      Dictionary that associate variable names to their maximum number of parts to
-      preserve in the simplified coclustering. If not set there is no limit.
-    ... :
-        See :ref:`core-api-common-params`.
+        Dictionary that associate variable names to their maximum number of
+        parts to preserve in the simplified coclustering. If not set there is
+        no limit.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Raises
     ------
@@ -2010,9 +2064,9 @@ def prepare_coclustering_deployment(
         Maximum number of parts totaled over all variables. If equal to 0 there is no
         limit.
     max_part_numbers : dict, optional
-      Dictionary associating variable names to their maximum number of parts to
-      preserve in the simplified coclustering. For variables not present in
-      ``max_part_numbers`` there is no limit.
+        Dictionary associating variable names to their maximum number of parts
+        to preserve in the simplified coclustering. For variables not present
+        in ``max_part_numbers`` there is no limit.
     build_cluster_variable : bool, default ``True``
         If ``True`` includes a cluster id variable in the deployment.
     build_distance_variables : bool, default ``False``
@@ -2021,8 +2075,10 @@ def prepare_coclustering_deployment(
         If ``True`` includes the frequency variables in the deployment.
     variables_prefix : str, default ""
         Prefix for the variables in the deployment dictionary.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Raises
     ------
@@ -2083,10 +2139,13 @@ def extract_clusters(
         Maximum number of parts totaled over all variables. If equal to 0 there is no
         limit.
     max_part_numbers : dict, optional
-      Dictionary that associate variable names to their maximum number of parts to
-      preserve in the simplified coclustering. If not set there is no limit.
-    ... :
-        See :ref:`core-api-common-params`.
+        Dictionary that associate variable names to their maximum number of
+        parts to preserve in the simplified coclustering. If not set there is
+        no limit.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Examples
     --------
@@ -2130,8 +2189,10 @@ def detect_data_table_format(
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str, optional
         Name of the dictionary.
-    ... :
-        See :ref:`core-api-common-params`.
+
+    See Also
+    --------
+    - [Common Parameters](../notes.md#core-api-common-params)
 
     Returns
     -------

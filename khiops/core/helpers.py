@@ -179,7 +179,7 @@ def deploy_coclustering(
         Path of the data table file.
     coclustering_file_path : str
         Path of the coclustering model file (extension ``.khc`` or ``.khcj``).
-        .. note::
+        !!! note
 
             Instance-variable coclustering is not currently supported.
 
@@ -214,9 +214,9 @@ def deploy_coclustering(
         Maximum number of parts totaled over all variables. If equal to 0 there is no
         limit.
     max_part_numbers : dict, optional
-      Dictionary associating variable names to their maximum number of parts to
-      preserve in the simplified coclustering. For variables not present in
-      ``max_part_numbers`` there is no limit.
+        Dictionary associating variable names to their maximum number of parts
+        to preserve in the simplified coclustering. For variables not present
+        in ``max_part_numbers`` there is no limit.
     build_cluster_variable : bool, default ``True``
         If True includes a cluster id variable in the deployment.
     build_distance_variables : bool, default False
@@ -225,8 +225,10 @@ def deploy_coclustering(
         If True includes the frequency variables in the deployment.
     variables_prefix : str, default ""
         Prefix for the variables in the deployment dictionary.
-    ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+
+    See Also
+    --------
+    - `.KhiopsRunner.run` : Additional options.
 
     Returns
     -------
@@ -392,7 +394,8 @@ def deploy_predictor_for_metrics(
     - The predicted value of the target variable
     - The probabilities of each value of the target variable *(classifier only)*
 
-    .. note::
+    !!! note
+
         To obtain the data of the default Khiops test dataset use ``sample_percentage =
         70`` and ``sampling_mode = "Exclude sample"``.
 
@@ -423,14 +426,17 @@ def deploy_predictor_for_metrics(
         sample_percentage`` percent of data.
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer` documentation.
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md) documentation.
     output_header_line : bool, default ``True``
         If True writes a header line containing the column names in the output table.
     output_field_separator : str, default "\\t"
         A field separator character ("" counts as "\\t").
-    ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
-    """
+
+    See Also
+    --------
+    - `.KhiopsRunner.run` : Additional options.
+    -"""
     # Check the dictionary domain
     api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
 
@@ -489,7 +495,7 @@ def visualize_report(report_path):
 
     Before using this function, make sure you have installed the Khiops Visualization
     app and/or the Khiops Co-Visualization app. More info at
-    `<https://khiops.org/setup/visualization/>`_
+    <https://khiops.org/setup/visualization/>
 
     Parameters
     ----------

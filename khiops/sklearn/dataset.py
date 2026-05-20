@@ -46,7 +46,8 @@ def check_dataset_spec(ds_spec):
     Parameters
     ----------
     ds_spec : dict
-        A specification of a multi-table dataset (see :doc:`/multi_table_primer`).
+        A specification of a multi-table dataset
+        (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
     Raises
     ------
@@ -257,7 +258,8 @@ def get_khiops_type(numpy_type, categorical_str_max_size=None):
     str
         Khiops type name. Either "Categorical", "Text", "Numerical" or "Timestamp".
 
-    .. note::
+    !!! note
+
         The "Text" Khiops type is inferred if the Numpy type is "string"
         and the maximum length of the entries of that type is greater than 100.
 
@@ -531,7 +533,7 @@ class Dataset:
                     "11.0.1",
                     replacement=(
                         "the new data-path-based format, as documented in "
-                        ":doc:`multi_table_primer`."
+                        "the 'Multi-Table Learning Primer' documentation."
                     ),
                     quote=False,
                 )

@@ -135,7 +135,8 @@ def _child_uri_info(uri_info, child_name):
 def is_local_resource(uri_or_path):
     r"""Checks if a URI or path is effectively a local path
 
-    .. note::
+    !!! note
+
 
         An URI with scheme of size 1 will be considered a local path. This is to take
         into account Windows paths such as ``C:\Some\Windows\Path``.
@@ -628,7 +629,8 @@ class AmazonS3Resource(FilesystemResource):
     - AWS_S3_ENDPOINT_URL: sets the service endpoint URL
     - AWS_DEFAULT_REGION: sets the region to send requests to
 
-    .. note::
+    !!! note
+
         Operations with the s3 client are only verified by checking that the HTTP
         response code is in the 200 range.
 
@@ -918,7 +920,8 @@ class AzureStorageFileResource(AzureStorageResourceMixin, FilesystemResource):
     def list_dir(self):
         """List the files (not the directories) of the current directory
 
-        .. note::
+        !!! note
+
             This is not a recursive listing operation.
         """
 

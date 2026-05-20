@@ -1,3 +1,20 @@
+/* Orange brand colors — https://brand.orange.com */
+:root {
+  --md-primary-fg-color: #FF7900;
+  --md-primary-fg-color--light: #FFD200;
+  --md-primary-fg-color--dark: #F16E00;
+  --md-accent-fg-color: #F16E00;
+  --md-typeset-a-color: #F16E00;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #FF7900;
+  --md-primary-fg-color--light: #FFD200;
+  --md-primary-fg-color--dark: #F16E00;
+  --md-accent-fg-color: #F16E00;
+  --md-typeset-a-color: #FF7900;
+}
+
 /* Custom header sizes */
 h1 {
   font-size: 1.85em;
@@ -17,6 +34,11 @@ h4 {
 
 h5 {
   font-size: 0.90em;
+}
+
+/* Body font */
+:root {
+  --md-text-font: "Helvetica Neue", Helvetica, sans-serif;
 }
 
 img.sidebar-logo {

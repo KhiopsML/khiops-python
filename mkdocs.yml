@@ -1,0 +1,122 @@
+---
+site_name: Khiops Python
+site_url: https://khiopsml.github.io/khiops-python/
+repo_url: https://github.com/KhiopsML/khiops-python
+repo_name: KhiopsML/khiops-python
+docs_dir: doc
+site_dir: doc/_build/html
+exclude_docs: |
+  *.py
+  create-doc
+  clean-doc
+  convert-samples-hook
+  requirements.txt
+  _templates/
+  _build/
+  khiops-python-tutorial/
+  **/*.ipynb_checkpoints/
+theme:
+  name: material
+  logo: _static/images/orange_small_logo.png
+  favicon: _static/images/orange_small_logo.png
+  palette:
+    - scheme: default
+      primary: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+extra_css: [_static/css/custom.css]
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      custom_templates: doc/_templates
+      handlers:
+        python:
+          inventories:
+            - https://docs.python.org/3/objects.inv
+            - https://pandas.pydata.org/pandas-docs/dev/objects.inv
+            - https://scikit-learn.org/stable/objects.inv
+            - https://numpy.org/doc/stable/objects.inv
+            - https://docs.scipy.org/doc/scipy/objects.inv
+          options:
+            docstring_style: numpy
+            docstring_section_style: spacy
+            show_root_heading: true
+            show_root_full_path: true
+            show_symbol_type_heading: false
+            show_symbol_type_toc: false
+            show_source: false
+            group_by_category: true
+            show_category_heading: true
+            summary: true
+            members_order: source
+            merge_init_into_class: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            inherited_members: false
+            show_if_no_docstring: false
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+  - def_list
+nav:
+  - Home: index.md
+  - API Reference:
+      - sklearn:
+          - sklearn/index.md
+          - estimators: sklearn/estimators.md
+          - helpers: sklearn/helpers.md
+      - core:
+          - core/index.md
+          - api: core/api.md
+          - dictionary: core/dictionary.md
+          - analysis_results: core/analysis_results.md
+          - coclustering_results: core/coclustering_results.md
+          - exceptions: core/exceptions.md
+          - helpers: core/helpers.md
+      - tools: tools/index.md
+      - internals:
+          - internal/index.md
+          - dataset: internal/dataset.md
+          - common: internal/common.md
+          - filesystems: internal/filesystems.md
+          - io: internal/io.md
+          - runner: internal/runner.md
+          - scenario: internal/scenario.md
+          - task: internal/task.md
+          - types: internal/types.md
+          - version: internal/version.md
+  - Tutorials and Code Samples:
+      - Tutorials: tutorials/index.md
+      - Samples sklearn: samples/samples_sklearn.md
+      - Samples core: samples/samples.md
+  - Other Topics:
+      - Multi-Table Learning Primer: multi_table_primer.md
+      - Notes: notes.md

@@ -11,7 +11,8 @@ from collections.abc import Iterable, Mapping, Sequence
 class SystemSettings:
     """Khiops system settings
 
-    .. note::
+    !!! note
+
         These settings are not available in the `CommandLineOptions`.
     """
 

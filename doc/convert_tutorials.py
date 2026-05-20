@@ -4,7 +4,7 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""Converts the Jupyter notebooks of the Khiops Python tutorial to reST"""
+"""Converts the Jupyter notebooks of the Khiops Python tutorial to Markdown"""
 
 import argparse
 import glob
@@ -13,7 +13,7 @@ import sys
 
 import nbformat
 from jupyter_client import KernelManager
-from nbconvert import NotebookExporter, RSTExporter
+from nbconvert import MarkdownExporter, NotebookExporter
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import notebooknode as nbnode
 
@@ -38,7 +38,7 @@ def main(args):
         os.path.splitext(os.path.basename(path))[0] for path in notebook_paths
     ]
 
-    # Execute each notebook and convert it to reST if specified
+    # Execute each notebook and convert it to Markdown if specified
     if args.execute_notebooks:
         # Set up one kernel for all executions
         kernel_manager = KernelManager(kernel_name="python3")
@@ -50,15 +50,15 @@ def main(args):
             with open(notebook_path, encoding="utf8") as notebook_file:
                 notebook = nbformat.read(notebook_file, 4)
                 notebook_exporter = NotebookExporter()
-                rst_exporter = RSTExporter()
-                export_setups = [(rst_exporter, "rst"), (notebook_exporter, "ipynb")]
+                md_exporter = MarkdownExporter()
+                export_setups = [(md_exporter, "md"), (notebook_exporter, "ipynb")]
 
                 for exporter, file_ext in export_setups:
-                    # Add a setup cell for rest
+                    # Add a setup cell for Markdown export
                     # - Disables the html output when displaying dataframes
                     # - Adds "../.." to the sys path
                     setup_source = "import sys\n" 'sys.path.append("../..")\n'
-                    if file_ext == "rst":
+                    if file_ext == "md":
                         setup_source += (
                             "import pandas as pd\n"
                             'pd.set_option("display.notebook_repr_html", False)\n'
@@ -80,15 +80,13 @@ def main(args):
                     # Eliminate the setup cell
                     notebook.cells.pop(0)
 
-                    # Execute the notebook and write output
+                    # Export the notebook and write output
                     output_file_path = os.path.join(
                         abs_output_dir, f"{notebook_name}.{file_ext}"
                     )
                     print(f"Writing file {output_file_path}")
                     with open(output_file_path, "w", encoding="utf8") as output_file:
                         body, _ = exporter.from_notebook_node(notebook)
-                        if file_ext == "rst":
-                            output_file.write(":orphan:\n\n")
                         output_file.write(body)
         kernel_manager.shutdown_kernel(now=True)
 
@@ -98,40 +96,38 @@ def main(args):
     # Define the message creator local function
     def _tutorials_message(module_name):
         return (
-            "These "
-            f":download:`Jupyter notebook tutorials <{module_name}_tutorials.zip>` "
-            f"cover the basic usage of the ``{module_name}`` Khiops sub-module. The "
+            f"These [Jupyter notebook tutorials]({module_name}_tutorials.zip) "
+            f"cover the basic usage of the `{module_name}` Khiops sub-module. The "
             "solution notebooks are "
-            f":download:`available here <{module_name}_tutorials_solutions.zip>` "
+            f"[available here]({module_name}_tutorials_solutions.zip) "
             "or you can browse them in this page:\n\n"
         )
 
     # Write the tutorial page
     sklearn_tutorials = [name for name in notebook_names if name.startswith("Sklearn")]
     core_tutorials = [name for name in notebook_names if name.startswith("Core")]
-    tutorials_file_path = os.path.join(abs_output_dir, "index.rst")
+    tutorials_file_path = os.path.join(abs_output_dir, "index.md")
     with open(tutorials_file_path, "w", encoding="utf8") as tutorials_file:
-        tutorials_file.write("Tutorials\n")
-        tutorials_file.write("=========\n")
+        tutorials_file.write("# Tutorials\n")
         tutorials_file.write("\n")
-        tutorials_file.write("Sklearn\n")
-        tutorials_file.write("-------\n")
+        tutorials_file.write("## Sklearn\n")
+        tutorials_file.write("\n")
         tutorials_file.write(_tutorials_message("sklearn"))
         for name in sklearn_tutorials:
-            tutorials_file.write(f"- :doc:`{name}`\n")
+            tutorials_file.write(f"- [{name}]({name}.md)\n")
         tutorials_file.write("\n")
-        tutorials_file.write("Core\n")
-        tutorials_file.write("----\n")
+        tutorials_file.write("## Core\n")
+        tutorials_file.write("\n")
         tutorials_file.write(_tutorials_message("core"))
         for name in core_tutorials:
-            tutorials_file.write(f"- :doc:`{name}`\n")
+            tutorials_file.write(f"- [{name}]({name}.md)\n")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="python convert_tutorial.py",
         formatter_class=argparse.RawTextHelpFormatter,
-        description="Converts the tutorial notebooks to a reST page",
+        description="Converts the tutorial notebooks to a Markdown page",
     )
     parser.add_argument(
         "tutorial_dir",

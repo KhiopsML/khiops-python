@@ -5,9 +5,9 @@ set -euo pipefail
 DOC_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 SAMPLES_DIR="$(dirname "$DOC_DIR")/khiops/samples"
 
-# Generate the rEST pages
-python "$DOC_DIR/convert_samples.py" -f rst "$SAMPLES_DIR" "$DOC_DIR/samples/samples.rst"
-python "$DOC_DIR/convert_samples.py" --sklearn -f rst "$SAMPLES_DIR" "$DOC_DIR/samples/samples_sklearn.rst"
+# Generate the Markdown pages
+python "$DOC_DIR/convert_samples.py" -f md "$SAMPLES_DIR" "$DOC_DIR/samples/samples.md"
+python "$DOC_DIR/convert_samples.py" --sklearn -f md "$SAMPLES_DIR" "$DOC_DIR/samples/samples_sklearn.md"
 
 # Generate the notebooks
 python "$DOC_DIR/convert_samples.py" "$SAMPLES_DIR" "$SAMPLES_DIR/samples.ipynb"

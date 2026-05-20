@@ -135,7 +135,8 @@ def _infer_env_bin_dir_for_conda_based_installations():
     str
         absolute path of the 'bin' dir where the khiops binaries are installed
 
-        .. note::
+        !!! note
+
             Borderline case : if no Conda-based Khiops installation is found
             this function will return 'bin'
     """
@@ -167,7 +168,8 @@ def _infer_base_dir_for_conda_based_or_pip_installations():
     str
         An absolute path to the base directory
 
-        .. note::
+        !!! note
+
             It returns an empty string if it detects a borderline installation
     """
     assert os.path.basename(Path(__file__).parents[2]) == "khiops", (
@@ -429,7 +431,8 @@ class KhiopsRunner(ABC):
     def create_temp_file(self, prefix, suffix):
         """Creates a unique temporary file in the runner's root temporary directory
 
-        .. note::
+        !!! note
+
             For remote filesystems no actual file is created, just a (highly probable)
             unique path is returned.
 
@@ -920,7 +923,7 @@ class KhiopsLocalRunner(KhiopsRunner):
     - the ``khiops-core`` Linux native library installed on the local machine, or
     - the Windows Khiops desktop application installed on the local machine
 
-    .. rubric:: Samples directory settings
+    **Samples directory settings**
 
     Default values for the ``samples_dir`` attribute:
 

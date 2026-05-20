@@ -306,7 +306,8 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
     def test_runner_environment_initialization(self):
         """Test that local runner initializes/ed its environment properly
 
-        .. note::
+        !!! note
+
             To test a real initialization this test should be executed alone.
         """
 

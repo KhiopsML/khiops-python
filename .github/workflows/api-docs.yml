@@ -17,10 +17,11 @@ on:
         description: Development Docker Image Tag
   pull_request:
     paths:
-      - doc/**.rst
+      - doc/**.md
       - doc/create-doc
       - doc/clean-doc
       - doc/*.py
+      - mkdocs.yml
       - khiops/**.py
       - .github/workflows/api-docs.yml
   push:
@@ -78,7 +79,7 @@ jobs:
           cd doc
           python -m pip install -U -r requirements.txt
       # Clone the Khiops Python tutorial repository while building the documentation
-      - name: Build Sphinx Documentation
+      - name: Build MkDocs Documentation
         run: |
           cd doc
           ./create-doc -t -d -g \
