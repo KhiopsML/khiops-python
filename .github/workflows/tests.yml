@@ -96,9 +96,16 @@ jobs:
 
           # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
           $CONDA install -y -n "$CONDA_ENV" tomli
-          $CONDA run --no-capture-output -n "$CONDA_ENV" python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" > requires.txt
-          $CONDA install -y -n "$CONDA_ENV" `cat requires.txt`
-          rm -f requires.txt
+          # Conda environments are only used to support multiple Python versions, hence install Pip packages inside
+          # Install Pip inside the Conda env to use it instead of the system-wide Pip
+          $CONDA install -y -n "$CONDA_ENV" pip
+          # First, install all dependencies except khiops-core and khiops-drivers-*
+          $CONDA run --no-capture-output -n "$CONDA_ENV" python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          $CONDA run -n "$CONDA_ENV" pip install `cat requires-no-khiops.txt`
+          # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
+          $CONDA run --no-capture-output -n "$CONDA_ENV" python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          $CONDA run -n "$CONDA_ENV" pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
+          rm -f requires-khiops.txt requires-no-khiops.txt
       - name: Configure Expensive Tests Setting
         # Skip expensive tests by default, unless on the `main-v10` or `main` branches
         if: github.ref != 'main-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
@@ -187,6 +194,9 @@ jobs:
           CONDA="/root/miniforge3/bin/conda"
           # Native Khiops-based Conda environment (to test in a specific python version)          
           CONDA_ENV=py${{ matrix.python-version }}
+          # Set the paths to the Khiops binaries for the tests against the khiops-server
+          export KHIOPS_CMD=/root/miniforge3/envs/$CONDA_ENV/bin/khiops
+          export KHIOPS_COCLUSTERING_CMD=/root/miniforge3/envs/$CONDA_ENV/bin/khiops_coclustering
           $CONDA run --no-capture-output -n "$CONDA_ENV" coverage run -m xmlrunner -o "reports/$CONDA_ENV" -v
           $CONDA run --no-capture-output -n "$CONDA_ENV" coverage report -m
           $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
@@ -264,11 +274,17 @@ jobs:
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(Resolve-Path '.' | % {$_.toString()})
           python -m pip install setuptools
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" -s "\n"  > requires.txt
 
           # Install the Python requirements outside a python venv
-          Get-Content .\requires.txt `
+          # First, install all dependencies except khiops-core and khiops-drivers-*
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" -s "\n" --exclude-khiops-family > requires-no-khiops.txt
+          Get-Content .\requires-no-khiops.txt `
             | ForEach-Object {python -m pip install $_.toString()}
+          # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" -s "\n" --khiops-family-only > requires-khiops.txt
+          # the official PyPI index is also needed for transitive dependencies (for example `impi-rt` on Windows)
+          Get-Content .\requires-khiops.txt `
+            | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple $_.toString()}
 
           # Create and activate a python venv
           python -m venv khiops-windows-venv
@@ -276,12 +292,16 @@ jobs:
 
           # Install the Python requirements inside a venv
           # The venv python executable is used here
-          Get-Content .\requires.txt `
-            | ForEach-Object {khiops-windows-venv\Scripts\python -m pip install $_.toString()}
+          # Same Pip indexes prioritization rules as above
+          Get-Content .\requires-no-khiops.txt `
+            | ForEach-Object {python -m pip install $_.toString()}          
+          Get-Content .\requires-khiops.txt `
+            | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple $_.toString()}
 
           # Deactivate the python venv
           deactivate
-          Remove-Item -force requires.txt
+          Remove-Item -force requires-no-khiops.txt 
+          Remove-Item -force requires-khiops.txt
       - name: Setup and Install Test Requirements
         run: python -m pip install -r test-requirements.txt
       - name: Test Khiops Integration
@@ -391,9 +411,13 @@ jobs:
 
           # Install tomli for Python < 3.11
           pip install tomli
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" > requires.txt
-          pip install `cat requires.txt`
-          rm -f requires.txt
+          # First, install all dependencies except khiops-core and khiops-drivers-*
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          pip install `cat requires-no-khiops.txt`
+          # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
+          rm -f requires-khiops.txt requires-no-khiops.txt
           if [[ "${{ matrix.container }}" == "debian13" ]]; then            
             deactivate                      
           fi
@@ -445,20 +469,6 @@ jobs:
           # because the library was not installed properly (the source code was only cloned)
           if [ -n "$PATTERN" ]; then
             echo "::error::Status error: improper setup, as expected: khiops-python has been cloned, not installed from a package"
-          fi
-
-          # Run the library against an incompatible Khiops (with a different major version)
-          # This instance of Khiops is isolated in a dedicated conda environment
-          CONDA="/root/miniforge3/bin/conda"                
-          # Check an error is raised because of the major version mismatch
-          # The khiops-python library from the cloned sources is used here
-          PATTERN=$($CONDA run -n py3_khiops10_conda python -c "import khiops.core as kh; print(kh.get_runner().khiops_version)" 2> >(grep -Ei 'major version.*?does not match'))          
-          if [ -z "$PATTERN" ]; then
-            echo "::error::Status error: khiops-python should fail because of the major version mismatch"          
-            if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-              deactivate                      
-            fi          
-            exit 1;
           fi
 
           # Run the remaining integration tests

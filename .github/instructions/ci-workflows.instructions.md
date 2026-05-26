@@ -40,8 +40,7 @@ Three job groups:
   JUnit XML via `unittest-xml-reporting`.
 - **`check-khiops-integration-on-linux`**: Runs integration tests on multiple
   Linux containers (ubuntu22.04, rocky8, rocky9, debian13). Validates Khiops
-  status, runs samples, tests major-version mismatch detection with a
-  `py3_khiops10_conda` environment, and runs the integration test suite.
+  status, runs samples and the integration tests suite.
 - **`check-khiops-integration-on-windows`**: Installs Khiops Desktop via NSIS
   installer on Windows 2022 with Python 3.12. Runs integration tests and
   samples outside a Python virtual environment, then installs khiops-python

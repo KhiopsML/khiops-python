@@ -24,7 +24,21 @@ def main(args):
         # Optional dependencies listed as per-group dependencies
         for dependency_group in project_metadata["optional-dependencies"].values():
             dependencies += list(dependency_group)
-    print(args.dependency_separator.join(dependencies))
+
+    if args.khiops_family_only:
+        print(
+            args.dependency_separator.join(
+                [d for d in dependencies if d.startswith("khiops-")]
+            )
+        )
+    elif args.exclude_khiops_family:
+        print(
+            args.dependency_separator.join(
+                [d for d in dependencies if not d.startswith("khiops-")]
+            )
+        )
+    else:
+        print(args.dependency_separator.join(dependencies))
 
 
 if __name__ == "__main__":
@@ -47,4 +61,21 @@ if __name__ == "__main__":
         type=lambda s: codecs.decode(s, "unicode_escape") if s == "\\n" else s,
         help="Dependency separator (default: ' ')",
     )
+
+    exclusive_filtering_group = parser.add_mutually_exclusive_group()
+
+    exclusive_filtering_group.add_argument(
+        "--khiops-family-only",
+        action="store_true",
+        help="Keep only the dependencies from the Khiops family",
+        required=False,
+    )
+
+    exclusive_filtering_group.add_argument(
+        "--exclude-khiops-family",
+        action="store_true",
+        help="Exclude the dependencies from the Khiops family",
+        required=False,
+    )
+
     main(parser.parse_args())

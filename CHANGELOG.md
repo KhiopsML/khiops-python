@@ -13,7 +13,11 @@
 - (General) Support for Azure storage
 
 ### Changed
+- (General) Full-Pip installation support: `khiops` now depends on the `khiops-core` and optionally on the remote storage driver packages
 - (`core`) Rename `variable_part_dimensions` to `inner_variable_dimensions` in Coclustering results.
+
+### Removed
+- (General) Support of the installation type combining "OS Native Khiops Core" and "Pip Khiops Python library" 
 
 ## 11.0.0.3 - 2026-03-06
 

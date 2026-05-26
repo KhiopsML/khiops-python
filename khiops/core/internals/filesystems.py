@@ -116,8 +116,8 @@ def _child_uri_info(uri_info, child_name):
     uri_info : `urllib.parse.ParseResult`
         URI info structure (output of `urllib.parse.urlparse`)
 
-    child_name : str
-        Name of the new childe node
+    child_name : `str`
+        Name of the new child node
 
     Returns
     -------
@@ -584,9 +584,9 @@ class GoogleCloudStorageResource(FilesystemResource):
             self.uri_info.netloc, prefix=dir_path[1:], delimiter="/"
         )
         paths = []
-        for blob in blobs:
-            if not blob.name.endswith("/"):
-                paths.append(os.path.basename(blob.name))
+        for current_blob in blobs:
+            if not current_blob.name.endswith("/"):
+                paths.append(os.path.basename(current_blob.name))
 
         return paths
 
@@ -639,7 +639,7 @@ class AmazonS3Resource(FilesystemResource):
         if boto3_import_error is not None:
             warnings.warn(
                 "Could not import boto3 python library, "
-                "make sure you it installed to access S3 files."
+                "make sure you installed it to access S3 files."
             )
             raise boto3_import_error
 
@@ -777,7 +777,6 @@ class AzureStorageResourceMixin:
         """
         Azure Storage Resource initializer common to Files and Blobs
         """
-
         # Stop initialization if Azure modules are not available
         if azure_import_error is not None:
             warnings.warn(

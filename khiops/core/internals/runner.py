@@ -24,7 +24,7 @@ import tempfile
 import uuid
 import warnings
 from abc import ABC, abstractmethod
-from importlib.metadata import PackageNotFoundError, files
+from importlib.metadata import PackageNotFoundError, distribution, files
 from pathlib import Path
 
 import khiops
@@ -243,11 +243,12 @@ def _infer_khiops_installation_method(trace=False):
        it was not activated previously nor during the execution
        and thus the CONDA_PREFIX environment variable is undefined
        and the path to the `bin` directory inside the conda environment is not in PATH
-    - 'binary+pip' installs the binaries and the shared libraries system-wide
-      but will keep the python libraries
-      in the python system folder
-      or in the Python folder inside the home directory of the user,
-      or in a virtual environment (if one is used)
+    - 'pip' environment containing binaries, shared libraries and the Python libraries
+      can either be:
+      - system-wide (strongly discouraged)
+      - or in the Python folder inside the home directory of the user
+        (a.k.a. "User site")
+      - or in a classical virtual environment (highly encouraged)
 
     """
     # We are in a Conda environment if
@@ -277,10 +278,10 @@ def _infer_khiops_installation_method(trace=False):
         ):
             installation_method = "conda-based"
         else:
-            installation_method = "binary+pip"
+            installation_method = "pip"
     if trace:
         print(f"Installation method: '{installation_method}'")
-    assert installation_method in ("conda", "conda-based", "binary+pip")
+    assert installation_method in ("conda", "conda-based", "pip")
     return installation_method
 
 
@@ -953,24 +954,36 @@ class KhiopsLocalRunner(KhiopsRunner):
         self._initialize_khiops_environment()
 
     def _initialize_khiops_environment(self):
-        # Check the `khiops_env` script
-        # On Windows native installations, rely on the `KHIOPS_HOME` environment
-        # variable set by the Khiops Desktop Application installer
         installation_method = _infer_khiops_installation_method()
-        if platform.system() == "Windows" and installation_method == "binary+pip":
-            # KHIOPS_HOME variable by default
-            if "KHIOPS_HOME" in os.environ:
-                khiops_env_path = os.path.join(
-                    os.environ["KHIOPS_HOME"], "bin", "khiops_env.cmd"
+        # in a 'pip' installation method,
+        # the current Khiops Python library depends on the Khiops binary-only
+        # PyPI package.
+        # Let's ensure this dependency has not disappeared.
+        if installation_method == "pip":
+            try:
+                distribution("khiops-core")
+            except PackageNotFoundError as exc:
+                raise KhiopsEnvironmentError(
+                    f"The Khiops binaries are not installed properly: {exc}. "
+                    "Re-install the Khiops Python library to automatically install "
+                    "Khiops. Go to https://khiops.org for more information.\n"
                 )
-            # Raise error if KHIOPS_HOME is not set
+        # Search for the `khiops_env` script location
+        if platform.system() == "Windows":
+            sys_executable_direct_parent = Path(sys.executable).parents[0]
+            probable_khiops_env = os.path.join(
+                sys_executable_direct_parent, "khiops_env.cmd"
+            )
+            # The script is found in the current environment
+            if os.path.exists(probable_khiops_env):
+                khiops_env_path = probable_khiops_env
+            # Raise error otherwise
             else:
                 raise KhiopsEnvironmentError(
-                    "No environment variable named 'KHIOPS_HOME' found. "
-                    "Make sure you have installed Khiops >= 10.2.3. "
+                    "No 'khiops_env.cmd' found in the current environment. "
+                    "Make sure you have installed Khiops properly. "
                     "Go to https://khiops.org for more information."
                 )
-
         # In Conda-based environments, `khiops_env` might not be in the PATH,
         # hence its path must be inferred
         elif installation_method == "conda-based":
@@ -987,7 +1000,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                 raise KhiopsEnvironmentError(
                     "The 'khiops_env' script not found for the current "
                     f"'{installation_method}' installation method. Make sure "
-                    "you have installed khiops >= 10.2.3. "
+                    "you have installed Khiops properly. "
                     "Go to https://khiops.org for more information."
                 )
 
@@ -1029,6 +1042,14 @@ class KhiopsLocalRunner(KhiopsRunner):
                 elif var_name == "KHIOPS_MPI_COMMAND":
                     self._mpi_command_args = shlex.split(var_value)
                     os.environ["KHIOPS_MPI_COMMAND"] = var_value
+                # On Windows, in 'pip' installations,
+                # "KHIOPS_MPI_DLL_PATH" (containing the Intel MPI Library)
+                # must be added to "PATH" otherwise Khiops wouldn't find it
+                # and fail immediately
+                elif installation_method == "pip" and var_name == "KHIOPS_MPI_DLL_PATH":
+                    os.environ["PATH"] = os.pathsep.join(
+                        [var_value, os.environ.get("PATH")]
+                    )
                 # Propagate all the other environment variables to Khiops binaries
                 else:
                     os.environ[var_name] = var_value
@@ -1081,56 +1102,10 @@ class KhiopsLocalRunner(KhiopsRunner):
         # Khiops core version
         self._khiops_version = KhiopsVersion(khiops_version_str)
 
-        # Library version
-        compatible_khiops_version = khiops.get_compatible_khiops_version()
-
-        operating_system = platform.system()
-        installation_method = _infer_khiops_installation_method()
-
-        # Fail immediately if the major versions differ
-        # Note: the installation status will not show at all
-        if self.khiops_version.major != compatible_khiops_version.major:
-            raise KhiopsRuntimeError(
-                f"Major version '{self.khiops_version.major}' of the Khiops "
-                "executables does not match the Khiops Python library major version "
-                f"'{compatible_khiops_version.major}'. "
-                "To avoid any compatibility error, "
-                "please update either the Khiops "
-                f"executables package for your '{operating_system}' operating "
-                "system, or the Khiops Python library, "
-                f"according to your '{installation_method}' environment. "
-                "See https://khiops.org for more information.",
-            )
-
-        # Warn if the khiops minor and patch versions do not match
-        # the Khiops Python library ones
-        # KhiopsVersion implements the equality operator, which however also
-        # takes pre-release tags into account.
-        # The restriction here does not apply to pre-release tags
-        if (
-            self.khiops_version.minor,
-            self.khiops_version.patch,
-        ) != (
-            compatible_khiops_version.minor,
-            compatible_khiops_version.patch,
-        ):
-            warnings.warn(
-                f"Version '{self._khiops_version}' of the Khiops executables "
-                "does not match the Khiops Python library version "
-                f"'{khiops.__version__}' (different minor.patch version). "
-                "There may be compatibility errors and "
-                "we recommend to update either the Khiops "
-                f"executables package for your '{operating_system}' operating "
-                "system, or the Khiops Python library, "
-                f"according to your '{installation_method}' environment. "
-                "See https://khiops.org for more information.",
-                stacklevel=3,
-            )
-
     def _detect_library_installation_incompatibilities(self, library_root_dir_path):
         """Detects known incompatible installations of this library
         in the 3 installation modes see `_infer_khiops_installation_method`
-        (binary+pip, conda, conda-based)
+        (pip, conda, conda-based)
 
         The error_list or warning_list collections
         are not empty if an issue is detected
@@ -1199,7 +1174,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                     "Go to https://khiops.org for instructions.\n"
                 )
                 error_list.append(error)
-        # 'binary+pip', 'conda-based' or borderline installations
+        # 'pip', 'conda-based' or borderline installations
         else:
 
             # ensure a known installer was used otherwise unexpected issues can occur
@@ -1220,11 +1195,11 @@ class KhiopsLocalRunner(KhiopsRunner):
                 )
                 warning_list.append(warning)
 
-            # we consider only the 'binary+pip' and 'conda-based' installations here
+            # we consider only the 'pip' and 'conda-based' installations here
             # - 'conda-based' installation (similar to a non-activated virtual env)
-            # - 'binary+pip' installation under a virtual env
-            # - User site 'binary+pip' installation (without virtual env)
-            # - system-wide 'binary+pip' installation (without virtual env)...
+            # - 'pip' installation under a virtual env
+            # - User site 'pip' installation (without virtual env)
+            # - system-wide 'pip' installation (without virtual env)...
             # (an empty string means a borderline installation was found,
             # no further check cannot be performed)
             base_dir = _infer_base_dir_for_conda_based_or_pip_installations()
@@ -1252,7 +1227,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                             # for conda-based installations python is inside 'base_dir'
                             sys_executable_direct_parent != base_dir_path
                             and
-                            # for 'binary+pip' installations (within a virtual env)
+                            # for 'pip' installations (within a virtual env)
                             # python is inside 'base_dir'/Scripts
                             sys_executable_grand_parent != base_dir_path
                         )
@@ -1392,9 +1367,9 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     @khiops_path.setter
     def khiops_path(self, modl_path):
-        # Check that the path is a directory and it exists
+        # Check that the path is a file and it exists
         if not os.path.exists(modl_path):
-            raise KhiopsEnvironmentError(f"Inexistent Khiops path: '{modl_path}'")
+            raise KhiopsEnvironmentError(f"Nonexistent Khiops path: '{modl_path}'")
         if not os.path.isfile(modl_path):
             raise KhiopsEnvironmentError(
                 f"Khiops file path is a directory: {modl_path}"
@@ -1414,10 +1389,10 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     @khiops_coclustering_path.setter
     def khiops_coclustering_path(self, modl_coclustering_path):
-        # Check that the path is a directory and it exists
+        # Check that the path is a file and it exists
         if not os.path.exists(modl_coclustering_path):
             raise KhiopsEnvironmentError(
-                f"Inexistent Khiops coclustering path: '{modl_coclustering_path}'"
+                f"Nonexistent Khiops coclustering path: '{modl_coclustering_path}'"
             )
         if not os.path.isfile(modl_coclustering_path):
             raise KhiopsEnvironmentError(
