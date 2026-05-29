@@ -10,10 +10,10 @@ guidance.
 
 ## Workflow Overview
 
-This repository has seven GitHub Actions workflows in `.github/workflows/`. Most
+This repository has six GitHub Actions workflows in `.github/workflows/`. Most
 workflows use concurrency groups to cancel in-progress runs when superseded,
-except `release.yml` (no concurrency group) and `api-docs.yml` (which uses a
-`pages` concurrency group that does not cancel in-progress runs).
+except `api-docs.yml` (which uses a `pages` concurrency group that does not
+cancel in-progress runs).
 
 ### `quick-checks.yml`
 
@@ -69,12 +69,6 @@ Builds an **sdist** package (no wheel) and tests it in Docker containers
 Publishing to TestPyPI/PyPI uses OIDC Trusted Publishing and requires the
 corresponding GitHub environment (`testpypi` or `pypi`). Only runs for the
 `KhiopsML` org on tag pushes.
-
-### `release.yml`
-
-Manual workflow that merges `dev` into `main`, tags the merge commit with the
-provided version, and resets `dev` to `main`. Only triggered via
-`workflow_dispatch` with a `version` input.
 
 ### `api-docs.yml`
 
