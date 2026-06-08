@@ -712,6 +712,11 @@ def train_predictor(
 ):
     r"""Trains a model from a data table
 
+    .. note::
+         For all input dictionaries, this function creates model dictionaries whose
+         names are prefixed with ``SNB_``. For regression models, additional
+         dictionaries are created and their names are prefixed with ``Baseline_``.
+
     Parameters
     ----------
     dictionary_file_path_or_domain : str or `.DictionaryDomain`
@@ -1069,7 +1074,9 @@ def evaluate_predictor(
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see :doc:`/multi_table_primer`.
 
-        .. note:: Use the initial dictionary name in the data paths.
+        .. note::
+             For external tables, use the initial dictionary name in the data paths,
+             which is the same as the one used for training the predictor.
 
     main_target_value : str, default ""
         If this target value is specified then it guarantees the calculation of lift
@@ -1164,6 +1171,10 @@ def train_recoder(
 
     The output files of this process contain a dictionary file (``.kdic``) that can be
     used to recode databases with the `deploy_model` function.
+
+    .. note::
+      For all input dictionaries, this function creates model dictionaries whose names
+      are prefixed with ``R_``.
 
     Parameters
     ----------
@@ -1400,6 +1411,9 @@ def deploy_model(
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see :doc:`/multi_table_primer`.
+
+        .. note:: Use model dictionary data paths for external tables.
+
     output_header_line : bool, default ``True``
         If ``True`` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
