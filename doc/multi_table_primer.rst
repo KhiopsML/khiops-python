@@ -208,6 +208,28 @@ Types of secondary tables include:
     than the number of addresses so it may make sense to load it entirely in memory for efficiency
     reasons.
 
+  .. note:: In `.khiops.core.api.evaluate_predictor`, the initial name of the
+      external table must be used, which is the same as the one used for
+      training the predictor. 
+      For example:
+
+      .. code-block:: c
+
+         additional_data_tables: {
+             "/City": "/path/to/Cities.csv"
+         }
+
+  .. note:: In `.khiops.core.api.deploy_model`, model dictionary data paths must be used for
+       external tables. For example, when deploying a classification or a regression
+       model:
+
+       .. code-block:: c
+
+          additional_data_tables: {
+              "/SNB_City": "/path/to/Cities.csv"
+          }
+
+
 Note that besides the root table names the components of a data path are **table variable names**
 and not *table names*. For further details about the multi-table capabilities of Khiops refer to the
 documentation at `the Khiops site <https://khiops.org/setup/KhiopsGuide.pdf>`_.
