@@ -1,0 +1,69 @@
+# Arguments
+ARG KHIOPSDEV_OS
+ARG SERVER_REVISION
+FROM ghcr.io/khiopsml/khiops/khiopsdev-${KHIOPSDEV_OS}:latest AS khiopsdev
+LABEL maintainer="khiops.team@orange.com"
+LABEL description="Container for the development of khiops-python"
+
+# Install dev tools and miniforge (for the unit tests)
+RUN true \
+  # Install git (for khiops-python version calculation), pip and unzip (used when deflating the samples) \
+  && apt-get -y update \
+  && apt-get -y --no-install-recommends install git python3-pip unzip \
+  # On Debian/Ubuntu systems, python3-venv must be installed to provide ensurepip.
+  # It is still possible to create venvs using the --without-pip flag but any subsequent
+  # module installation with pip would be impossible
+  python3-venv \
+  zip pandoc wget ruby-dev \
+  # Set python to python3 \
+  && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
+  # Install miniforge to have multiple Python versions via Conda \
+  && mkdir -p /root/miniforge3 && cd /root/miniforge3 \
+  && wget https://github.com/conda-forge/miniforge/releases/download/26.3.2-3/Miniforge3-26.3.2-3-Linux-x86_64.sh -O ./Miniforge3-26.3.2-3-Linux-x86_64.sh \
+  && echo "848194851a98903134187fbb4ab50efe87b003e0c0f808f97644b7524a62bf2c Miniforge3-26.3.2-3-Linux-x86_64.sh" | sha256sum --check \
+  && bash ./Miniforge3-26.3.2-3-Linux-x86_64.sh -b -u -p /root/miniforge3 \
+  && rm -rf /root/miniforge3/Miniforge3-26.3.2-3-Linux-x86_64.sh \
+  # Cleanup \
+  && rm -fr /var/lib/apt/lists/* \
+  && apt-get clean \
+  && true
+
+# set up all the supported Python environments under Conda (for the unit tests)
+# relying on a variable containing all the versions
+ARG PYTHON_VERSIONS
+
+# Initialize all the Conda environments
+RUN true \
+  && export CONDA="/root/miniforge3/bin/conda" \
+  && /bin/bash -c ' \
+    # Update conda to the latest version \
+    $CONDA update -n base conda; \
+    for version in ${PYTHON_VERSIONS}; \
+    do \
+        $CONDA create -y -n py${version} python=${version}; \
+    done;' \
+  && true
+
+RUN mkdir -p /scripts
+COPY ./run_service.sh ./run_fake_remote_file_servers.sh /scripts/
+RUN chmod +x /scripts/run_service.sh /scripts/run_fake_remote_file_servers.sh && \
+  useradd -rm -d /home/ubuntu -s /bin/bash -g root -u 1000 ubuntu
+
+FROM ghcr.io/khiopsml/khiops-server:${SERVER_REVISION} AS server
+
+FROM khiopsdev AS base
+COPY --from=server /service /usr/bin/service
+
+# S3 fake file server (only in the ubuntu container)
+# Do not use the latest fakes3 version because starting from 1.3 a licence is required
+# if fakes3 is no longer compatible think about switching to an alternative and fully compatible server
+# (https://github.com/jamhall/s3rver:v3.7.1 is not yet for example)
+RUN gem install fakes3:1.2.1 sorted_set
+# Avoid resolving a fake s3-bucket.localhost hostname
+# Alternate builders (buildx via moby buildkit) mount /etc/hosts read-only, the following command will fail
+# echo "127.0.0.1 s3-bucket.localhost" >> /etc/hosts
+# You will have to add the `add-hosts` input instead (https://github.com/docker/build-push-action/#inputs)
+
+# Port on which fakes3 is listening
+EXPOSE 4569
+

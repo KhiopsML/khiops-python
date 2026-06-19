@@ -77,6 +77,12 @@ jobs:
         run: |
           SAMPLES_REVISION=${{ inputs.samples-revision || env.DEFAULT_SAMPLES_REVISION }}
           echo "SAMPLES_REVISION=$SAMPLES_REVISION" >> "$GITHUB_ENV"
+      - name: Checkout sources  # Checkout the sources to be able to extract the dependencies list
+        uses: actions/checkout@v4
+        with:
+          # Get Git tags
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
       - name: Checkout Khiops samples
         uses: actions/checkout@v4
         with:
@@ -88,12 +94,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: pip-package
-      - name: Install package
+      - name: Install the package
         shell: bash
         run: |
           # Allow Pip to write to its cache
           mkdir -p /github/home/.cache/pip
           chown -R $(whoami) /github/home/.cache/pip
+
           # Install the Khiops Python library
 
           # A virtual env is mandatory under debian
@@ -102,6 +109,16 @@ jobs:
             source khiops-debian-venv/bin/activate
           fi
           pip install --upgrade pip
+          # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
+          pip install tomli
+          # First, install all dependencies except khiops-core and khiops-drivers-*
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          pip install `cat requires-no-khiops.txt`
+          # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
+          rm -f requires-khiops.txt requires-no-khiops.txt
+          # Lastly, install khiops-python
           pip install $(ls khiops*.tar.gz)
           if [[ "${{ matrix.container }}" == "debian13" ]]; then            
             deactivate

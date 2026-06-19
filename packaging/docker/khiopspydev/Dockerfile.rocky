@@ -7,10 +7,7 @@ LABEL description="Container for the development of khiops-python"
 
 # Reuse KHIOPSDEV_OS from previous stage
 ARG KHIOPSDEV_OS
-ARG KHIOPS_REVISION
 # - Install dev tools and miniforge (for the unit tests)
-# - Build and install Khiops
-# - Set mpich as the default MPI
 RUN true \
   && useradd -rm -d /home/rocky -s /bin/bash -g root -u 1000 rocky \
   # Install git (for khiops-python version calculation), pandoc and pip \
@@ -28,21 +25,6 @@ RUN true \
        python3.11-pip \
        python3.11-setuptools ; \
      fi \
-  # Get Linux distribution codename \
-  && if [ -f /etc/os-release ]; then . /etc/os-release; fi \
-  && IFS='.' read -ra VERSION <<< "$VERSION_ID" \
-  && ROCKY_VERSION=${VERSION[0]} \
-  # Obtain the Khiops native package \
-  && KHIOPS_PKG_FILE=$KHIOPS_REVISION/khiops-core-openmpi-$(echo ${KHIOPS_REVISION} | tr '-' '_')-1.el$ROCKY_VERSION.x86_64.rpm \
-  && wget -O KHIOPS_CORE.rpm "https://github.com/KhiopsML/khiops/releases/download/${KHIOPS_PKG_FILE}" \
-  # Install the Khiops native package \
-  && dnf install KHIOPS_CORE.rpm -y \
-  && rm -f KHIOPS_CORE.rpm \
-  # Make sure that MPI is openmpi \
-  && source /etc/profile.d/modules.sh \
-  && module unload mpi \
-  # Hard-code OpenMPI module name \
-  && module load mpi/openmpi-x86_64 \
   # Set python to python3.11 and pip to Pip 3.11 on Rocky 8 and 9 \
   && if [ "$KHIOPSDEV_OS" = "rocky8" -o "$KHIOPSDEV_OS" = "rocky9" ]; then \
        alternatives --install /usr/bin/python python /usr/bin/python3.11 2; \
@@ -52,13 +34,12 @@ RUN true \
      fi \
   # Install miniforge to have multiple Python versions via Conda \
   && mkdir -p /root/miniforge3 && cd /root/miniforge3 \
-  && wget https://github.com/conda-forge/miniforge/releases/download/25.9.1-0/Miniforge3-25.9.1-0-Linux-x86_64.sh -O ./Miniforge3_25.9.1-0-Linux-x86_64.sh \
-  && echo "07f64c1d908ae036e9f6a81f97704899311c0ae677d83980d664b9781d4cc5fc Miniforge3_25.9.1-0-Linux-x86_64.sh" | sha256sum --check \
-  && bash ./Miniforge3_25.9.1-0-Linux-x86_64.sh -b -u -p /root/miniforge3 \
-  && rm -rf /root/miniforge3/Miniforge3_25.9.1-0-Linux-x86_64.sh \
-  # Clean build files \
+  && wget https://github.com/conda-forge/miniforge/releases/download/26.3.2-3/Miniforge3-26.3.2-3-Linux-x86_64.sh -O ./Miniforge3-26.3.2-3-Linux-x86_64.sh \
+  && echo "848194851a98903134187fbb4ab50efe87b003e0c0f808f97644b7524a62bf2c Miniforge3-26.3.2-3-Linux-x86_64.sh" | sha256sum --check \
+  && bash ./Miniforge3-26.3.2-3-Linux-x86_64.sh -b -u -p /root/miniforge3 \
+  && rm -rf /root/miniforge3/Miniforge3-26.3.2-3-Linux-x86_64.sh \
+  # Cleanup \
   && dnf clean all \
-  && rm -rf ./khiops \
   && true
 
 # set up all the supported Python environments under Conda (for the unit tests)
@@ -74,13 +55,7 @@ RUN true \
     for version in ${PYTHON_VERSIONS}; \
     do \
         $CONDA create -y -n py${version} python=${version}; \
-    done; \
-    # Install Khiops from a different major version in a dedicated conda environment \
-    # for a specific test regarding compatibility test \
-    # The python interpreter version of the base environment is used as no specific version is given \
-    $CONDA create -y -n py3_khiops10_conda; \
-    $CONDA install -y -n py3_khiops10_conda khiops-core==10.3.2; \
-    ' \
+    done;' \
   && true
 
 RUN mkdir -p /scripts

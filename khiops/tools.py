@@ -156,9 +156,10 @@ def download_datasets(
 
         # Download the sample zip file and extracted to the home dataset dir
         print(f"Downloading samples from {samples_zip_url}")
-        with tempfile.NamedTemporaryFile() as temp_zip_file, urllib.request.urlopen(
-            samples_zip_url
-        ) as zip_request:
+        with (
+            tempfile.NamedTemporaryFile() as temp_zip_file,
+            urllib.request.urlopen(samples_zip_url) as zip_request,
+        ):
             temp_zip_file.write(zip_request.read())
             temp_zip_file.seek(0)
             with zipfile.ZipFile(temp_zip_file) as temp_zip:

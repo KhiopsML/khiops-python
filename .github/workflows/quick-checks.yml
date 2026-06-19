@@ -19,11 +19,15 @@ jobs:
       - name: Install khiops-python dev dependencies
         run: |
           # Extract and install package dependency requirements from metadata
-          pip install pip-tools
-          python -m piptools compile -o requirements.txt
-
-          # Install dev dependencies
-          pip install -r requirements.txt
+          # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
+          pip install tomli
+          # First, install all dependencies except khiops-core and khiops-drivers-*
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          pip install `cat requires-no-khiops.txt`
+          # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
+          rm -f requires-khiops.txt requires-no-khiops.txt
 
           # Install black for the samples-generation script
           pip install black

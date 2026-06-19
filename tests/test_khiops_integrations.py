@@ -227,10 +227,7 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             # Create temporary khiops_env path
             temp_khiops_env_file_path = os.path.join(temp_khiops_env_dir, "khiops_env")
 
-            # On Windows, set KHIOPS_HOME to the temp dir
-            original_khiops_home_env_var = os.environ.get("KHIOPS_HOME")
             if platform.system() == "Windows":
-                os.environ["KHIOPS_HOME"] = temp_dir
                 temp_khiops_env_file_path += ".cmd"
 
             # Replace the khiops_env with a script that fails showing an error message
@@ -267,13 +264,6 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
 
             # Restore initial PATH
             os.environ["PATH"] = original_path_env_var
-
-            # On Windows, restore initial KHIOPS_HOME
-            if (
-                platform.system() == "Windows"
-                and original_khiops_home_env_var is not None
-            ):
-                os.environ["KHIOPS_HOME"] = original_khiops_home_env_var
 
         # Check that the script error message matches the expected one
         expected_msg = (
