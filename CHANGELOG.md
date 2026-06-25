@@ -6,7 +6,7 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
+## 11.0.1.0rc.2 - 2026-06-25
 
 ### Added
 - (`sklearn`) `keep_selected_variables_only` parameter to the predictors (`KhiopsClassifier` and `KhiopsRegressor`)
