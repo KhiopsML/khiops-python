@@ -10,7 +10,7 @@ on:
         default: 11.0.0
         description: khiops-samples version
       khiops-python-version:
-        default: 11.0.0.3
+        default: 11.0.1.0rc.2
         description: khiops-python version for testing
 defaults:
   run:
