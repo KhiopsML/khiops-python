@@ -956,61 +956,58 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _initialize_khiops_environment(self):
         installation_method = _infer_khiops_installation_method()
-        # in a 'pip' installation method,
-        # the current Khiops Python library depends on the Khiops binary-only
-        # PyPI package.
-        # Let's ensure this dependency has not disappeared.
-        if installation_method == "pip":
-            try:
-                distribution("khiops-core")
-            except PackageNotFoundError as exc:
-                raise KhiopsEnvironmentError(
-                    f"The Khiops binaries are not installed properly: {exc}. "
-                    "Re-install the Khiops Python library to automatically install "
-                    "Khiops. Go to https://khiops.org for more information.\n"
+        match installation_method:
+            case "conda-based":
+                # In conda-based environments, khiops_env is not in PATH;
+                # its location must be inferred from the conda env directory.
+                khiops_env_path = os.path.join(
+                    _infer_env_bin_dir_for_conda_based_installations(), "khiops_env"
                 )
-        # Search for the `khiops_env` script location
-        if platform.system() == "Windows":
-            # Use sysconfig.get_path("scripts") to find the Scripts directory.
-            # This is the directory where pip places console scripts and works
-            # correctly in all scenarios: virtual envs, system installs, and
-            # user installs (unlike Path(sys.executable).parent which only
-            # points to the Scripts dir when inside a virtual env).
-            scripts_dirs = [sysconfig.get_path("scripts")]
-            # Also check the user scripts directory to handle `pip install --user`
-            user_scripts = sysconfig.get_path("scripts", f"{os.name}_user")
-            if user_scripts and user_scripts not in scripts_dirs:
-                scripts_dirs.append(user_scripts)
-            khiops_env_path = None
-            for scripts_dir in scripts_dirs:
-                candidate = os.path.join(scripts_dir, "khiops_env.cmd")
-                if os.path.exists(candidate):
-                    khiops_env_path = candidate
-                    break
-            if khiops_env_path is None:
+                if platform.system() == "Windows":
+                    khiops_env_path += ".cmd"
+            case "conda":
+                # In an activated conda environment, khiops_env is in PATH.
+                khiops_env_path = self._infer_khiops_env_from_path(installation_method)
+            case "pip":
+                # Ensure the binary dependency is still installed.
+                try:
+                    distribution("khiops-core")
+                except PackageNotFoundError as exc:
+                    raise KhiopsEnvironmentError(
+                        f"The Khiops binaries are not installed properly: {exc}. "
+                        "Re-install the Khiops Python library to automatically install "
+                        "Khiops. Go to https://khiops.org for more information.\n"
+                    ) from exc
+                if platform.system() == "Windows":
+                    # Determine the Scripts directory where pip placed khiops_env.cmd.
+                    # If this library is installed under the user site-packages
+                    # directory, khiops-core (and its khiops_env.cmd) was also installed
+                    # there with`pip install --user`, so use the user Scripts directory.
+                    # Otherwise use the standard Scripts directory (venv or system-wide
+                    # install). This avoids an ambiguous search and mirrors how pip
+                    # resolves scripts.
+                    library_root_dir_path = Path(__file__).parents[2]
+                    user_site_packages_path = Path(site.getusersitepackages())
+                    if library_root_dir_path.is_relative_to(user_site_packages_path):
+                        scripts_dir = sysconfig.get_path("scripts", "nt_user")
+                    else:
+                        scripts_dir = sysconfig.get_path("scripts")
+                    khiops_env_path = os.path.join(scripts_dir, "khiops_env.cmd")
+                    if not os.path.exists(khiops_env_path):
+                        raise KhiopsEnvironmentError(
+                            "No 'khiops_env.cmd' found in the current environment. "
+                            "Make sure you have installed Khiops properly. "
+                            "Go to https://khiops.org for more information."
+                        )
+                else:
+                    # On UNIX, pip places khiops_env in the bin directory,
+                    # which is in PATH.
+                    khiops_env_path = self._infer_khiops_env_from_path(
+                        installation_method
+                    )
+            case _:
                 raise KhiopsEnvironmentError(
-                    "No 'khiops_env.cmd' found in the current environment. "
-                    "Make sure you have installed Khiops properly. "
-                    "Go to https://khiops.org for more information."
-                )
-        # In Conda-based environments, `khiops_env` might not be in the PATH,
-        # hence its path must be inferred
-        elif installation_method == "conda-based":
-            khiops_env_path = os.path.join(
-                _infer_env_bin_dir_for_conda_based_installations(), "khiops_env"
-            )
-            if platform.system() == "Windows":
-                khiops_env_path += ".cmd"
-
-        # On UNIX or Conda, khiops_env is always in path for a proper installation
-        else:
-            khiops_env_path = shutil.which("khiops_env")
-            if khiops_env_path is None:
-                raise KhiopsEnvironmentError(
-                    "The 'khiops_env' script not found for the current "
-                    f"'{installation_method}' installation method. Make sure "
-                    "you have installed Khiops properly. "
-                    "Go to https://khiops.org for more information."
+                    f"Unknown installation method '{installation_method}'."
                 )
 
         with subprocess.Popen(
@@ -1071,6 +1068,17 @@ class KhiopsLocalRunner(KhiopsRunner):
 
         # Initialize the default samples dir
         self._initialize_default_samples_dir()
+
+    def _infer_khiops_env_from_path(self, installation_method):
+        khiops_env_path = shutil.which("khiops_env")
+        if khiops_env_path is None:
+            raise KhiopsEnvironmentError(
+                "The 'khiops_env' script not found for the current "
+                f"'{installation_method}' installation method. Make sure "
+                "you have installed Khiops properly. "
+                "Go to https://khiops.org for more information."
+            )
+        return khiops_env_path
 
     def _initialize_default_samples_dir(self):
         """See class docstring"""
@@ -1232,13 +1240,13 @@ class KhiopsLocalRunner(KhiopsRunner):
                         platform.system() == "Windows"
                         and
                         # Under Windows, there are two cases :
-                        (
-                            # for conda-based installations python is inside 'base_dir'
-                            sys_executable_direct_parent != base_dir_path
-                            and
-                            # for 'pip' installations (within a virtual env)
-                            # python is inside 'base_dir'/Scripts
-                            sys_executable_grand_parent != base_dir_path
+                        # for conda-based installations python is inside 'base_dir'
+                        # for 'pip' installations (within a virtual env)
+                        # python is inside 'base_dir'/Scripts
+                        base_dir_path
+                        not in (
+                            sys_executable_direct_parent,
+                            sys_executable_grand_parent,
                         )
                         # Under Linux or MacOS a bin/ folder exists
                         or sys_executable_grand_parent != base_dir_path
