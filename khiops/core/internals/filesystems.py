@@ -444,7 +444,7 @@ class FilesystemResource(ABC):
         """
 
     @abstractmethod
-    def create_parent(self, file_name):
+    def create_parent(self):
         """Creates a resource representing the parent of this instance
 
         Returns
@@ -812,7 +812,7 @@ class AzureStorageResourceMixin:
     def create_child(self, file_name):
         return create_resource(_child_uri_info(self.uri_info, file_name).geturl())
 
-    def create_parent(self, file_name):  # pylint: disable=unused-argument
+    def create_parent(self):
         return create_resource(_parent_uri_info(self.uri_info).geturl())
 
     def _uri_parts(self):
