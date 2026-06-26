@@ -20,6 +20,7 @@ import shutil
 import site
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import uuid
 import warnings
@@ -970,15 +971,23 @@ class KhiopsLocalRunner(KhiopsRunner):
                 )
         # Search for the `khiops_env` script location
         if platform.system() == "Windows":
-            sys_executable_direct_parent = Path(sys.executable).parents[0]
-            probable_khiops_env = os.path.join(
-                sys_executable_direct_parent, "khiops_env.cmd"
-            )
-            # The script is found in the current environment
-            if os.path.exists(probable_khiops_env):
-                khiops_env_path = probable_khiops_env
-            # Raise error otherwise
-            else:
+            # Use sysconfig.get_path("scripts") to find the Scripts directory.
+            # This is the directory where pip places console scripts and works
+            # correctly in all scenarios: virtual envs, system installs, and
+            # user installs (unlike Path(sys.executable).parent which only
+            # points to the Scripts dir when inside a virtual env).
+            scripts_dirs = [sysconfig.get_path("scripts")]
+            # Also check the user scripts directory to handle `pip install --user`
+            user_scripts = sysconfig.get_path("scripts", f"{os.name}_user")
+            if user_scripts and user_scripts not in scripts_dirs:
+                scripts_dirs.append(user_scripts)
+            khiops_env_path = None
+            for scripts_dir in scripts_dirs:
+                candidate = os.path.join(scripts_dir, "khiops_env.cmd")
+                if os.path.exists(candidate):
+                    khiops_env_path = candidate
+                    break
+            if khiops_env_path is None:
                 raise KhiopsEnvironmentError(
                     "No 'khiops_env.cmd' found in the current environment. "
                     "Make sure you have installed Khiops properly. "
