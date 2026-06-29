@@ -11,9 +11,6 @@ on:
       samples-revision:
         default: 11.0.0
         description: khiops-samples repo revision
-      image-tag:
-        default: latest
-        description: Development Docker Image Tag
       pypi-target:
         type: choice
         default: None  # no publishing to any Package Index by default
@@ -50,30 +47,63 @@ jobs:
           pip install build
 
           # Build the source package (sdist) only          
-          python3 -m build --sdist
+          python -m build --sdist
       - name: Upload the package as artifact
         uses: actions/upload-artifact@v4
         with:
           name: pip-package
           path: ./dist/khiops*.tar.gz
+  # Test Pip package on brand new environments
   test:
     needs: build
-    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        container: [ubuntu22.04, rocky9, debian13]
-    container:
-      # 'latest' default image tag cannot be set as an environment variable,
-      # because the `env` context is only accessible at the step level;
-      # hence, it is hard-coded
-      image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
+        env:
+          # Test without virtualenv only on platforms that support it out of the
+          # box (i.e. where passing `--break-system-packages` to Pip is not
+          # required)
+          - {os: ubuntu-24.04, json-image: '{"image": null}', use-virtualenv: true}
+          - {os: ubuntu-24.04, json-image: '{"image": null}', use-virtualenv: false}
+          - {os: ubuntu-22.04, json-image: '{"image": "debian:trixie"}', use-virtualenv: true}
+          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux/rockylinux:10"}', use-virtualenv: true}
+          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux/rockylinux:10"}', use-virtualenv: false}
+          - {os: windows-2025, json-image: '{"image": null}', use-virtualenv: true}
+          - {os: windows-2025, json-image: '{"image": null}', use-virtualenv: false}
+          - {os: macos-15, json-image: '{"image": null}', use-virtualenv: true}
+    runs-on: ${{ matrix.env.os }}
+    container: ${{ fromJSON(matrix.env.json-image) }}
     steps:
+      - name: Make sure Python is installed on Linux (might not be in containers)
+        if: fromJSON(matrix.env.json-image).image != null
+        shell: sh
+        run: |
+          if command -v apt-get; then
+            apt-get update -y
+            apt-get install -y python3 python3-pip python3-venv
+          elif command -v dnf; then
+            dnf install -y python3 python3-pip
+            # Install findutils on Rocky Linux when xargs cannot be found
+            if ! command -v xargs; then
+              dnf install -y findutils
+            fi
+          fi
       - name: Set parameters as env
+        shell: bash
         run: |
           SAMPLES_REVISION=${{ inputs.samples-revision || env.DEFAULT_SAMPLES_REVISION }}
           echo "SAMPLES_REVISION=$SAMPLES_REVISION" >> "$GITHUB_ENV"
+          if [[ $RUNNER_OS == 'Windows' ]]; then
+            VENV_ACTIVATE_SCRIPT="khiops-venv/Scripts/activate"
+          else
+            VENV_ACTIVATE_SCRIPT="khiops-venv/bin/activate"
+          fi
+          echo "VENV_ACTIVATE_SCRIPT=$VENV_ACTIVATE_SCRIPT" >> "$GITHUB_ENV"
+          # Setup Python (be portable wrt. python vs python3 in runners and
+          # containers; either python3 or python is present as per the Python
+          # installation step in the Docker container contexts)
+          PYTHON=$(basename $(command -v python3 || command -v python))
+          echo "PYTHON=$PYTHON" >> "$GITHUB_ENV"
       - name: Checkout sources  # Checkout the sources to be able to extract the dependencies list
         uses: actions/checkout@v4
         with:
@@ -94,30 +124,32 @@ jobs:
       - name: Install the package
         shell: bash
         run: |
-          # Allow Pip to write to its cache
-          mkdir -p /github/home/.cache/pip
-          chown -R $(whoami) /github/home/.cache/pip
+          # Allow Pip to write to its cache (only applies to Docker containers)
+          if [[ -n "${{ fromJSON(matrix.env.json-image).image }}" ]]; then
+            mkdir -p /github/home/.cache/pip
+            chown -R $(whoami) /github/home/.cache/pip
+          fi
 
           # Install the Khiops Python library
 
-          # A virtual env is mandatory under debian
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then
-            python -m venv khiops-debian-venv
-            source khiops-debian-venv/bin/activate
+          # Use a virtualenv if required
+          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
+            $PYTHON -m venv khiops-venv
+            source "$VENV_ACTIVATE_SCRIPT"
           fi
-          pip install --upgrade pip
+          $PYTHON -m pip install --upgrade pip
           # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
-          pip install tomli
+          $PYTHON -c "import tomllib" 2>/dev/null || $PYTHON -m pip install tomli
           # First, install all dependencies except khiops-core and khiops-drivers-*
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
-          pip install `cat requires-no-khiops.txt`
+          $PYTHON scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          [ ! -s requires-no-khiops.txt ] || xargs $PYTHON -m pip install < requires-no-khiops.txt
           # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
-          pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
+          $PYTHON scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          [ ! -s requires-khiops.txt ] || xargs $PYTHON -m pip install --index-url https://test.pypi.org/simple < requires-khiops.txt
           rm -f requires-khiops.txt requires-no-khiops.txt
           # Lastly, install khiops-python
-          pip install $(ls khiops*.tar.gz)
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
+          $PYTHON -m pip install khiops*.tar.gz
+          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
             deactivate
           fi
       - name: Run tests
@@ -137,12 +169,13 @@ jobs:
           # modules are currently not initializing the shell anyway
           if [ -n "$MODULESHOME" ]; then module unload mpi; fi
 
-          # A virtual env is mandatory under debian
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            source khiops-debian-venv/bin/activate
+          # Use a virtualenv if required
+          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
+            source "$VENV_ACTIVATE_SCRIPT"
           fi
-          if [[ $RUNNER_OS != 'Windows' ]]; then
-            # Set rights to OpenMPI-specific folder
+          if [[ -n "${{ fromJSON(matrix.env.json-image).image }}" ]]; then
+            # Set rights to OpenMPI-specific folder (only applies to Docker
+            # containers)
             mkdir -p /github/home/.pmix/components
             chown -R $(whoami) /github/home/.pmix/components
           fi
@@ -160,7 +193,7 @@ jobs:
           # The MPI command is not always named mpiexec, but can be orterun etc
           # (as given by khiops_env)
           kh-status | grep "MPI command" | grep -vwq "<empty>"
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
             deactivate
           fi
       - name: Test package / Git tag version coherence
@@ -169,19 +202,18 @@ jobs:
         run: |
           # Don't exit on first error: print relevant error message
           set +e
-          # A virtual env is mandatory under Debian 13
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then
-            python -m venv khiops-debian-venv
-            source khiops-debian-venv/bin/activate
+          # Use a virtualenv if required
+          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
+            source "$VENV_ACTIVATE_SCRIPT"
           fi
           # Convert pre-release version specification in the Git tag to the Pip
           # format and check that it matches the Pip package version
-          PACKAGE_VERSION=$(pip show khiops | awk 'BEGIN {FS = ": "} $1 ~ /^Version$/ {print $2}')
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+          PACKAGE_VERSION=$($PYTHON -m pip show khiops | awk 'BEGIN {FS = ": "} $1 ~ /^Version$/ {print $2}')
+          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
             deactivate
           fi
-          echo ${{ github.ref_name }} | tr -d '-' | rev | sed -E 's/\.([^0-9].*)/\1/' | rev | \
-            grep -wq $PACKAGE_VERSION
+          echo "${{ github.ref_name }}" | tr -d '-' | rev | sed -E 's/\.([^0-9].*)/\1/' | rev | \
+            grep -wq "$PACKAGE_VERSION"
           if [[ $? -ne 0 ]]
           then
             echo "::error::Python package version $PACKAGE_VERSION does not match Git tag ${{ github.ref_name }}"
