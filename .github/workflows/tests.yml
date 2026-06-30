@@ -2,7 +2,6 @@
 name: Tests
 env:
   DEFAULT_SAMPLES_REVISION: 11.0.0
-  DEFAULT_KHIOPS_DESKTOP_REVISION: 11.0.0
 on:
   workflow_dispatch:
     inputs:
@@ -12,9 +11,6 @@ on:
       image-tag:
         default: latest
         description: Development Docker Image Tag
-      khiops-desktop-revision:
-        default: 11.0.0
-        description: Khiops Windows Desktop Application Version
       run-expensive-tests:
         type: boolean
         required: false
@@ -229,25 +225,6 @@ jobs:
   check-khiops-integration-on-windows:
     runs-on: windows-2022
     steps:
-      - name: Download the Khiops Desktop NSIS Installer
-        shell: pwsh
-        run: |
-          $KHIOPS_DESKTOP_REVISION = '${{ inputs.khiops-desktop-revision || env.DEFAULT_KHIOPS_DESKTOP_REVISION }}'
-          $KHIOPS_DOWNLOAD_URL = "https://github.com/KhiopsML/khiops/releases/download/${KHIOPS_DESKTOP_REVISION}/khiops-${KHIOPS_DESKTOP_REVISION}-setup.exe"
-          Invoke-WebRequest "${KHIOPS_DOWNLOAD_URL}" `
-            -OutFile .\khiops-setup.exe `
-            -UseBasicParsing
-          Unblock-File .\khiops-setup.exe
-      - name: Install the Khiops Desktop Application
-        shell: pwsh
-        run: |
-          # Execute the installer
-          $ErrorActionPreference = 'Stop'
-          $ProgressPreference = 'SilentlyContinue'
-          Start-Process `
-            -FilePath .\khiops-setup.exe `
-            -ArgumentList '/S' `
-            -Wait
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
