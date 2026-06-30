@@ -143,6 +143,11 @@ jobs:
           # First, install all dependencies except khiops-core and khiops-drivers-*
           $PYTHON scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
           [ ! -s requires-no-khiops.txt ] || xargs $PYTHON -m pip install < requires-no-khiops.txt
+          # On Windows, the `impi-rt` MPI dependency must be installed
+          # separately, from PyPI, because it is not present on TestPyPI
+          if [[ $RUNNER_OS == 'Windows' ]]; then
+            $PYTHON -m pip install impi-rt
+          fi
           # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
           $PYTHON scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
           [ ! -s requires-khiops.txt ] || xargs $PYTHON -m pip install --index-url https://test.pypi.org/simple < requires-khiops.txt
