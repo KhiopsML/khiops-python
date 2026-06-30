@@ -6,6 +6,8 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## 11.0.1.0rc.3 - 2026-07-01
+
 ## 11.0.1.0rc.2 - 2026-06-25
 
 ### Added
