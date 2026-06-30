@@ -237,10 +237,15 @@ class KhiopsRemoteAccessTestsContainer:
             iris_data_dir = fs.get_child_path(kh.get_runner().samples_dir, "Iris")
             # ask for folder cleaning during tearDown
             self.folder_name_to_clean_in_teardown = output_dir = fs.get_child_path(
+                # TODO : use `kh.get_runner().root_temp_dir` instead as soon as
+                #  https://github.com/KhiopsML/khiops-python/issues/593 is fixed
+                #  so that `output_dir` becomes remote (except for Docker)
                 self.results_dir_root(),
                 f"test_{self.remote_access_test_case()}_remote_files_{uuid.uuid4()}",
             )
 
+            # TODO : remove this block as soon as
+            #  https://github.com/KhiopsML/khiops-python/issues/593 is fixed
             # Attempt to make local directory if not existing
             if not fs.exists(output_dir) and fs.is_local_resource(output_dir):
                 fs.make_dir(output_dir)
