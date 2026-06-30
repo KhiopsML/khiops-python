@@ -957,16 +957,16 @@ class KhiopsLocalRunner(KhiopsRunner):
     def _initialize_khiops_environment(self):
         installation_method = _infer_khiops_installation_method()
         match installation_method:
+            # In conda-based environments, khiops_env is not in PATH;
+            # its location must be inferred from the conda env directory.
             case "conda-based":
-                # In conda-based environments, khiops_env is not in PATH;
-                # its location must be inferred from the conda env directory.
                 khiops_env_path = os.path.join(
                     _infer_env_bin_dir_for_conda_based_installations(), "khiops_env"
                 )
                 if platform.system() == "Windows":
                     khiops_env_path += ".cmd"
+            # In an activated conda environment, khiops_env is in PATH.
             case "conda":
-                # In an activated conda environment, khiops_env is in PATH.
                 khiops_env_path = self._infer_khiops_env_from_path(installation_method)
             case "pip":
                 # Ensure the binary dependency is still installed.
@@ -978,14 +978,15 @@ class KhiopsLocalRunner(KhiopsRunner):
                         "Re-install the Khiops Python library to automatically install "
                         "Khiops. Go to https://khiops.org for more information.\n"
                     ) from exc
+                # On Windows, determine the Scripts directory where pip placed
+                # khiops_env.cmd.
+                # If this library is installed under the user site-packages
+                # directory, khiops-core (and its khiops_env.cmd) was also installed
+                # there with `pip install --user`, so use the user Scripts directory.
+                # Otherwise use the standard Scripts directory (venv or system-wide
+                # install). This avoids an ambiguous search and mirrors how pip
+                # resolves scripts.
                 if platform.system() == "Windows":
-                    # Determine the Scripts directory where pip placed khiops_env.cmd.
-                    # If this library is installed under the user site-packages
-                    # directory, khiops-core (and its khiops_env.cmd) was also installed
-                    # there with`pip install --user`, so use the user Scripts directory.
-                    # Otherwise use the standard Scripts directory (venv or system-wide
-                    # install). This avoids an ambiguous search and mirrors how pip
-                    # resolves scripts.
                     library_root_dir_path = Path(__file__).parents[2]
                     user_site_packages_path = Path(site.getusersitepackages())
                     if library_root_dir_path.is_relative_to(user_site_packages_path):
@@ -999,9 +1000,9 @@ class KhiopsLocalRunner(KhiopsRunner):
                             "Make sure you have installed Khiops properly. "
                             "Go to https://khiops.org for more information."
                         )
+                # On UNIX, pip places khiops_env in the bin directory,
+                # which is in PATH.
                 else:
-                    # On UNIX, pip places khiops_env in the bin directory,
-                    # which is in PATH.
                     khiops_env_path = self._infer_khiops_env_from_path(
                         installation_method
                     )
