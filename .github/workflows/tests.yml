@@ -259,9 +259,8 @@ jobs:
             | ForEach-Object {python -m pip install $_.toString()}
           # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
           python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" -s "\n" --khiops-family-only > requires-khiops.txt
-          # the official PyPI index is also needed for transitive dependencies (for example `impi-rt` on Windows)
           Get-Content .\requires-khiops.txt `
-            | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple $_.toString()}
+            | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple $_.toString()}
 
           # Create and activate a python venv
           python -m venv khiops-windows-venv
@@ -269,11 +268,10 @@ jobs:
 
           # Install the Python requirements inside a venv
           # The venv python executable is used here
-          # Same Pip indexes prioritization rules as above
           Get-Content .\requires-no-khiops.txt `
             | ForEach-Object {python -m pip install $_.toString()}          
           Get-Content .\requires-khiops.txt `
-            | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple $_.toString()}
+            | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple $_.toString()}
 
           # Deactivate the python venv
           deactivate
