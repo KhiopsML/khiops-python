@@ -2,7 +2,7 @@
 # See https://github.com/conda-forge/khiops-feedstock/tree/main/recipe
 
 {% set name = "khiops" %}
-{% set version = "11.0.1.0rc.2" %}
+{% set version = "11.0.1.0rc.3" %}
 # The minimal Python version as supported by the conda-forge CI
 {% set python_min = "3.10" %}
 
