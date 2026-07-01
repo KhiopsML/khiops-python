@@ -217,9 +217,10 @@ jobs:
           if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
             deactivate
           fi
-          echo "${{ github.ref_name }}" | tr -d '-' | rev | sed -E 's/\.([^0-9].*)/\1/' | rev | \
-            grep -wq "$PACKAGE_VERSION"
-          if [[ $? -ne 0 ]]
+          # Remove any '.' or '-' from the versions to be able to compare them canonically
+          canonic_tag_name=$(echo "${{ github.ref_name }}" | perl -pe "s/[\.-]//g")
+          canonic_package_version=$(echo $PACKAGE_VERSION  | perl -pe "s/[\.-]//g")            
+          if [[ "$canonic_tag_name" != "$canonic_package_version" ]]
           then
             echo "::error::Python package version $PACKAGE_VERSION does not match Git tag ${{ github.ref_name }}"
             false
