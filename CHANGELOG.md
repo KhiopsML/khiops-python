@@ -6,20 +6,23 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## 11.0.1.0rc.3 - 2026-07-01
-
-## 11.0.1.0rc.2 - 2026-06-25
+## 11.0.1.0 - 2026-07-02
 
 ### Added
-- (`sklearn`) `keep_selected_variables_only` parameter to the predictors (`KhiopsClassifier` and `KhiopsRegressor`)
-- (General) Support for Azure storage
+- (General) Support for Azure storage.
+- (General) Support for system-wide Pip installation on Windows.
+- (General) Documentation for external data table paths for multi-table datasets.
+- (`sklearn`) `keep_selected_variables_only` parameter to the predictors (`KhiopsClassifier` and `KhiopsRegressor`).
+
+### Fixed
+- (`core`) Handling of remote storage URI arguments in the Core API functions.
 
 ### Changed
-- (General) Full-Pip installation support: `khiops` now depends on the `khiops-core` and optionally on the remote storage driver packages
-- (`core`) Rename `variable_part_dimensions` to `inner_variable_dimensions` in Coclustering results.
+- (General) Full-Pip installation support: `khiops` now depends on the `khiops-core` and optionally on the remote storage driver packages.
+- (`core`) Rename `variable_part_dimensions` to `inner_variable_dimensions` in `CoclusteringResults`.
 
 ### Removed
-- (General) Support of the installation type combining "OS Native Khiops Core" and "Pip Khiops Python library" 
+- (General) Support of the installation type combining "OS Native Khiops Core" and "Pip Khiops Python library".
 
 ## 11.0.0.3 - 2026-03-06
 
