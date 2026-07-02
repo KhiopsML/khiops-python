@@ -3,9 +3,6 @@ name: Test the released Conda Package
 on:
   workflow_dispatch:
     inputs:
-      khiops-core-version:
-        default: 11.0.0
-        description: khiops-core version for testing
       khiops-samples-version:
         default: 11.0.0
         description: khiops-samples version
@@ -48,13 +45,12 @@ jobs:
       - name: Install the Khiops Conda package
         run: |
           # Add the Conda `rc` label for alpha or RC pre-releases
-          if [[ $(echo ${{ inputs.khiops-core-version }} | grep -E ".*(a|rc)\.[0-9]+") ]]; then
+          if [[ $(echo ${{ inputs.khiops-python-version }} | grep -E ".*(a|rc)\.[0-9]+") ]]; then
             RC_LABEL="conda-forge/label/rc::"
           else
             RC_LABEL=""
           fi
-          conda install "${RC_LABEL}"khiops-core==${{ inputs.khiops-core-version }} 
-          conda install khiops==${{ inputs.khiops-python-version }}
+          conda install "${RC_LABEL}"khiops==${{ inputs.khiops-python-version }}
       - name: Test Khiops Installation Status
         run: kh-status
       - name: Test Khiops Installation Status (Conda-Based Environments)
