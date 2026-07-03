@@ -25,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -225,6 +225,7 @@ jobs:
             echo "::error::Python package version $PACKAGE_VERSION does not match Git tag ${{ github.ref_name }}"
             false
           fi
+
   # The implementation of a unique release job with multiple conditional steps
   # for each publishing mode is not chosen
   # because of the required job environment verified for Trusted Publishing
@@ -232,7 +233,7 @@ jobs:
     # only publish on tag pushes
     if: github.ref_type == 'tag' && github.repository_owner == 'KhiopsML'
     needs: [build, test]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -254,7 +255,7 @@ jobs:
     # only publish on testpypi if requested and on tag pushes
     if: inputs.pypi-target == 'testpypi' && github.ref_type == 'tag' && github.repository_owner == 'KhiopsML'
     needs: [build, test]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       # IMPORTANT: OIDC token mandatory for trusted publishing on TestPyPI and PyPI
       id-token: write
@@ -276,7 +277,7 @@ jobs:
     # only publish on pypi if requested and on tag pushes
     if: inputs.pypi-target == 'pypi' && github.ref_type == 'tag' && github.repository_owner == 'KhiopsML'
     needs: [build, test]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       # IMPORTANT: OIDC token mandatory for trusted publishing on TestPyPI and PyPI
       id-token: write
