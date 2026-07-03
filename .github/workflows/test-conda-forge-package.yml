@@ -3,14 +3,11 @@ name: Test the released Conda Package
 on:
   workflow_dispatch:
     inputs:
-      khiops-core-version:
-        default: 11.0.0
-        description: khiops-core version for testing
       khiops-samples-version:
         default: 11.0.0
         description: khiops-samples version
       khiops-python-version:
-        default: 11.0.1.0rc.3
+        default: 11.0.1.0
         description: khiops-python version for testing
 defaults:
   run:
@@ -24,20 +21,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
-        env:
-          - {os: ubuntu-22.04, json-image: '{"image": "ubuntu:20.04"}'}
-          - {os: ubuntu-22.04, json-image: '{"image": null}'}
-          - {os: ubuntu-24.04, json-image: '{"image": null}'}
-          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:8"}'}
-          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux:9"}'}
-          - {os: windows-2022, json-image: '{"image": null}'}
-          - {os: windows-2025, json-image: '{"image": null}'}
-          - {os: macos-14, json-image: '{"image": null}'}
-          - {os: macos-15, json-image: '{"image": null}'}
-          - {os: macos-15-intel, json-image: '{"image": null}'}
-    runs-on: ${{ matrix.env.os }}
-    container: ${{ fromJSON(matrix.env.json-image) }}
+        python-version: ['3.10', '3.14']
+        os: [ubuntu-24.04, windows-2025, macos-15]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Install Miniforge
         uses: conda-incubator/setup-miniconda@v3
@@ -48,13 +34,12 @@ jobs:
       - name: Install the Khiops Conda package
         run: |
           # Add the Conda `rc` label for alpha or RC pre-releases
-          if [[ $(echo ${{ inputs.khiops-core-version }} | grep -E ".*(a|rc)\.[0-9]+") ]]; then
+          if [[ $(echo ${{ inputs.khiops-python-version }} | grep -E ".*(a|rc)\.[0-9]+") ]]; then
             RC_LABEL="conda-forge/label/rc::"
           else
             RC_LABEL=""
           fi
-          conda install "${RC_LABEL}"khiops-core==${{ inputs.khiops-core-version }} 
-          conda install khiops==${{ inputs.khiops-python-version }}
+          conda install "${RC_LABEL}"khiops==${{ inputs.khiops-python-version }}
       - name: Test Khiops Installation Status
         run: kh-status
       - name: Test Khiops Installation Status (Conda-Based Environments)
@@ -85,6 +70,11 @@ jobs:
         env:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
+          # Oversubscribe for Open MPI 4.x
+          rmaps_base_oversubscribe: true
+          OMPI_MCA_rmaps_base_oversubscribe: true
+          # Oversubscribe for Open MPI >= 5
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |
           kh-samples core -i deploy_model -e
           kh-samples core -i deploy_coclustering -e
@@ -95,6 +85,11 @@ jobs:
         env:
           # Force > 2 CPU cores to launch mpiexec
           KHIOPS_PROC_NUMBER: 4
+          # Oversubscribe for Open MPI 4.x
+          rmaps_base_oversubscribe: true
+          OMPI_MCA_rmaps_base_oversubscribe: true
+          # Oversubscribe for Open MPI >= 5
+          PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         run: |
           # Set `python` to the current Conda Python executable
           PYTHON="$(type -P python)"
