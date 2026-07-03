@@ -28,6 +28,8 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    outputs:
+      package-version: ${{ steps.build.outputs.PACKAGE_VERSION }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -36,6 +38,7 @@ jobs:
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
       - name: Build Pip package
+        id: build
         run: |
           # This is needed so that the Git tag is parsed and the version is retrieved
           git config --global --add safe.directory $(realpath .)
@@ -48,6 +51,10 @@ jobs:
 
           # Build the source package (sdist) only          
           python -m build --sdist
+
+          # Get built package version and make it accessible to subsequent jobs
+          PACKAGE_VERSION=$(python -m build --metadata | jq ".version" | tr -d '"')
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
       - name: Upload the package as artifact
         uses: actions/upload-artifact@v4
         with:
@@ -198,29 +205,28 @@ jobs:
           # The MPI command is not always named mpiexec, but can be orterun etc
           # (as given by khiops_env)
           kh-status | grep "MPI command" | grep -vwq "<empty>"
+
+          # Deactivate virtualenv if used
           if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
             deactivate
           fi
+  check-package-version:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
       - name: Test package / Git tag version coherence
+        env:
+          PACKAGE_VERSION: ${{ needs.build.outputs.package-version }}
         shell: bash
-        if: github.ref_type == 'tag'
         run: |
           # Don't exit on first error: print relevant error message
           set +e
-          # Use a virtualenv if required
-          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
-            source "$VENV_ACTIVATE_SCRIPT"
-          fi
           # Convert pre-release version specification in the Git tag to the Pip
           # format and check that it matches the Pip package version
-          PACKAGE_VERSION=$($PYTHON -m pip show khiops | awk 'BEGIN {FS = ": "} $1 ~ /^Version$/ {print $2}')
-          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
-            deactivate
-          fi
-          # Remove any '.' or '-' from the versions to be able to compare them canonically
-          canonic_tag_name=$(echo "${{ github.ref_name }}" | perl -pe "s/[\.-]//g")
-          canonic_package_version=$(echo $PACKAGE_VERSION  | perl -pe "s/[\.-]//g")            
-          if [[ "$canonic_tag_name" != "$canonic_package_version" ]]
+          echo "${{ github.ref_name }}" | tr -d '-' | rev | sed -E 's/\.([^0-9].*)/\1/' | rev | \
+            grep -wq "$PACKAGE_VERSION"
+          if [[ $? -ne 0 ]]
           then
             echo "::error::Python package version $PACKAGE_VERSION does not match Git tag ${{ github.ref_name }}"
             false
@@ -232,7 +238,7 @@ jobs:
   release-github:
     # only publish on tag pushes
     if: github.ref_type == 'tag' && github.repository_owner == 'KhiopsML'
-    needs: [build, test]
+    needs: [test, check-package-version]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -254,7 +260,7 @@ jobs:
   release-testpypi:
     # only publish on testpypi if requested and on tag pushes
     if: inputs.pypi-target == 'testpypi' && github.ref_type == 'tag' && github.repository_owner == 'KhiopsML'
-    needs: [build, test]
+    needs: [test, check-package-version]
     runs-on: ubuntu-24.04
     permissions:
       # IMPORTANT: OIDC token mandatory for trusted publishing on TestPyPI and PyPI
@@ -276,7 +282,7 @@ jobs:
   release-pypi:
     # only publish on pypi if requested and on tag pushes
     if: inputs.pypi-target == 'pypi' && github.ref_type == 'tag' && github.repository_owner == 'KhiopsML'
-    needs: [build, test]
+    needs: [test, check-package-version]
     runs-on: ubuntu-24.04
     permissions:
       # IMPORTANT: OIDC token mandatory for trusted publishing on TestPyPI and PyPI
