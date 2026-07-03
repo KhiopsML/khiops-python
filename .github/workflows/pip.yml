@@ -34,13 +34,14 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          # Get Git tags so that versioneer can function correctly
+          # Get Git tags
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
       - name: Build Pip package
         id: build
         run: |
-          # This is needed so that the Git tag is parsed and the version is retrieved
+          # This is needed so that the Git tag is parsed and the version is
+          # retrieved
           git config --global --add safe.directory $(realpath .)
 
           # Upgrade Pip
@@ -90,6 +91,7 @@ jobs:
             apt-get install -y python3 python3-pip python3-venv
           elif command -v dnf; then
             dnf install -y python3 python3-pip
+
             # Install findutils on Rocky Linux when xargs cannot be found
             if ! command -v xargs; then
               dnf install -y findutils
@@ -106,12 +108,14 @@ jobs:
             VENV_ACTIVATE_SCRIPT="khiops-venv/bin/activate"
           fi
           echo "VENV_ACTIVATE_SCRIPT=$VENV_ACTIVATE_SCRIPT" >> "$GITHUB_ENV"
+
           # Setup Python (be portable wrt. python vs python3 in runners and
           # containers; either python3 or python is present as per the Python
           # installation step in the Docker container contexts)
           PYTHON=$(basename $(command -v python3 || command -v python))
           echo "PYTHON=$PYTHON" >> "$GITHUB_ENV"
-      - name: Checkout sources  # Checkout the sources to be able to extract the dependencies list
+        # Checkout the sources to be able to extract the dependencies list
+      - name: Checkout sources
         uses: actions/checkout@v4
         with:
           # Get Git tags
@@ -137,30 +141,36 @@ jobs:
             chown -R $(whoami) /github/home/.cache/pip
           fi
 
-          # Install the Khiops Python library
-
           # Use a virtualenv if required
           if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
             $PYTHON -m venv khiops-venv
             source "$VENV_ACTIVATE_SCRIPT"
           fi
           $PYTHON -m pip install --upgrade pip
+
           # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
           $PYTHON -c "import tomllib" 2>/dev/null || $PYTHON -m pip install tomli
-          # First, install all dependencies except khiops-core and khiops-drivers-*
+
+          # Install all dependencies except khiops-*
           $PYTHON scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
           [ ! -s requires-no-khiops.txt ] || xargs $PYTHON -m pip install < requires-no-khiops.txt
+
           # On Windows, the `impi-rt` MPI dependency must be installed
           # separately, from PyPI, because it is not present on TestPyPI
           if [[ $RUNNER_OS == 'Windows' ]]; then
             $PYTHON -m pip install impi-rt
           fi
-          # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
+
+          # khiops-core and khiops-drivers-* must always be installed from
+          # TestPyPI in order to avoid distorting usage statistics
           $PYTHON scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
           [ ! -s requires-khiops.txt ] || xargs $PYTHON -m pip install --index-url https://test.pypi.org/simple < requires-khiops.txt
           rm -f requires-khiops.txt requires-no-khiops.txt
-          # Lastly, install khiops-python
+
+          # Install the khiops package
           $PYTHON -m pip install khiops*.tar.gz
+
+          # Deactivate virtualenv if used
           if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
             deactivate
           fi
@@ -222,6 +232,7 @@ jobs:
         run: |
           # Don't exit on first error: print relevant error message
           set +e
+
           # Convert pre-release version specification in the Git tag to the Pip
           # format and check that it matches the Pip package version
           echo "${{ github.ref_name }}" | tr -d '-' | rev | sed -E 's/\.([^0-9].*)/\1/' | rev | \
