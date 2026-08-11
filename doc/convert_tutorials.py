@@ -52,51 +52,48 @@ def main(args):
             print(f"Processing {notebook_path}")
             with open(notebook_path, encoding="utf8") as notebook_file:
                 notebook = nbformat.read(notebook_file, 4)
-                notebook_exporter = NotebookExporter()
-                md_exporter = MarkdownExporter()
-                export_setups = [(md_exporter, "md"), (notebook_exporter, "ipynb")]
 
-                for exporter, file_ext in export_setups:
-                    # Add a setup cell for Markdown export
-                    # - Disables the html output when displaying dataframes
-                    # - Adds "../.." to the sys path
-                    setup_source = "import sys\n" 'sys.path.append("../..")\n'
-                    if file_ext == "md":
-                        setup_source += (
-                            "import pandas as pd\n"
-                            'pd.set_option("display.notebook_repr_html", False)\n'
-                        )
-
-                    setup_cell_dict = {
+                # Add setup cell (sys.path + disable HTML dataframes)
+                setup_source = (
+                    "import sys\n"
+                    'sys.path.append("../..")\n'
+                    "import pandas as pd\n"
+                    'pd.set_option("display.notebook_repr_html", False)\n'
+                )
+                setup_cell = nbnode.from_dict(
+                    {
                         "cell_type": "code",
                         "execution_count": None,
                         "metadata": {},
                         "outputs": [],
                         "source": setup_source,
                     }
-                    setup_cell = nbnode.from_dict(setup_cell_dict)
-                    notebook.cells.insert(0, setup_cell)
+                )
+                notebook.cells.insert(0, setup_cell)
 
-                    # Execute the notebook to obtain the output cells
-                    try:
-                        preprocessor.preprocess(notebook, {})
-                    except CellExecutionError:
-                        print(
-                            f"WARNING: '{notebook_path}' had execution errors "
-                            f"(export type: '{file_ext}')"
-                        )
+                # Execute the notebook once
+                try:
+                    preprocessor.preprocess(notebook, {})
+                except CellExecutionError:
+                    print(f"WARNING: '{notebook_path}' had execution" f" errors")
 
-                    # Eliminate the setup cell
-                    notebook.cells.pop(0)
+                # Remove the setup cell from the executed notebook
+                notebook.cells.pop(0)
 
-                    # Export the notebook and write output
-                    output_file_path = os.path.join(
-                        abs_output_dir, f"{notebook_name}.{file_ext}"
-                    )
-                    print(f"Writing file {output_file_path}")
-                    with open(output_file_path, "w", encoding="utf8") as output_file:
-                        body, _ = exporter.from_notebook_node(notebook)
-                        output_file.write(body)
+                # Export as Markdown (with text-only dataframe outputs)
+                md_path = os.path.join(abs_output_dir, f"{notebook_name}.md")
+                print(f"Writing file {md_path}")
+                with open(md_path, "w", encoding="utf8") as output_file:
+                    body, _ = MarkdownExporter().from_notebook_node(notebook)
+                    output_file.write(body)
+
+                # Export as .ipynb (same executed outputs)
+                nb_path = os.path.join(abs_output_dir, f"{notebook_name}.ipynb")
+                print(f"Writing file {nb_path}")
+                with open(nb_path, "w", encoding="utf8") as output_file:
+                    body, _ = NotebookExporter().from_notebook_node(notebook)
+                    output_file.write(body)
+
         kernel_manager.shutdown_kernel(now=True)
 
     # Restore the initial current directory
