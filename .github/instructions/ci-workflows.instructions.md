@@ -73,12 +73,12 @@ corresponding GitHub environment (`testpypi` or `pypi`). Only runs for the
 Builds Zensical documentation inside a dev Docker container for validation.
 Triggers on:
 
-- PRs touching `doc/**/*.md`, `doc/create-doc`, `doc/clean-doc`, `doc/*.py`,
+- PRs touching `doc/site/**/*.md`, `doc/util/create-doc`, `doc/util/clean-doc`, `doc/util/*.py`,
   `zensical.toml`, `khiops/**/*.py`, or the workflow file
 - `workflow_dispatch` with optional tutorial and samples revision inputs
 
 Uses the `khiopspydev-ubuntu22.04` Docker image and runs
-`./create-doc -t -d -g <revision>`. The built HTML is uploaded as a
+`doc/util/create-doc -t -d -g <revision>`. The built HTML is uploaded as a
 `api-docs` artifact for review.
 
 Note: the production API docs are built by the

@@ -17,10 +17,10 @@ on:
         description: Development Docker Image Tag
   pull_request:
     paths:
-      - doc/**.md
-      - doc/create-doc
-      - doc/clean-doc
-      - doc/*.py
+      - doc/site/**.md
+      - doc/util/create-doc
+      - doc/util/clean-doc
+      - doc/util/*.py
       - zensical.toml
       - khiops/**.py
       - .github/workflows/api-docs.yml
@@ -65,16 +65,14 @@ jobs:
           kh-status
 
           # Install the doc python requirements
-          cd doc
-          python -m pip install -U -r requirements.txt
+          python -m pip install -U -r doc/util/requirements.txt
       # Clone the Khiops Python tutorial repository while building the documentation
       - name: Build Zensical Documentation
         run: |
-          cd doc
-          ./create-doc -t -d -g \
+          doc/util/create-doc -t -d -g \
           ${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
       - name: Upload the docs as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: api-docs
-          path: ./_doc_build/html/
+          path: ./doc/build/html/

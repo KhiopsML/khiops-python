@@ -11,6 +11,7 @@ import glob
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import nbformat
 from jupyter_client import KernelManager
@@ -28,6 +29,10 @@ def main(args):
     # Create the output directory
     os.makedirs(args.output_dir, exist_ok=True)
     abs_output_dir = os.path.abspath(args.output_dir)
+
+    # Store the repository root for the kernel's sys.path (must be computed
+    # before the chdir)
+    repository_root = str(Path(__file__).resolve().parents[2])
 
     # Save and change the current directory to that of the notebooks
     initial_working_dir = os.getcwd()
@@ -56,7 +61,7 @@ def main(args):
                 # Add setup cell (sys.path + disable HTML dataframes)
                 setup_source = (
                     "import sys\n"
-                    'sys.path.append("../..")\n'
+                    f'sys.path.append("{repository_root}")\n'
                     "import pandas as pd\n"
                     'pd.set_option("display.notebook_repr_html", False)\n'
                 )

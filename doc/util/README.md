@@ -11,19 +11,19 @@ Khiops Python library.
 # You'll need the python packages in the requirements.txt file in the doc/ directory
 # Warning: If you create a virtualenv, do not place it within the doc/ directory.
 #          The installed packages may contain .md files and Zensical will process them!
-# pip install -U -r doc/requirements.txt
+# pip install -U -r doc/util/requirements.txt
 
 # Execute this if there were non committed updates to samples.py or samples_sklearn.py:
-# cd doc && ./convert-samples-hook && cd ..
+# doc/util/convert-samples-hook
 
 # To clean the html documentation
-# cd doc && ./clean-doc && cd ..
+# doc/util/clean-doc
 
 # Create the HTML documentation:
 # - Downloads the khiops-python-tutorial resources
 # - Generates the Markdown version of the tutorials
-# - Executes Zensical (output: _doc_build/html)
-cd doc && ./create-doc -d -t || true && cd ..
+# - Executes Zensical (output: doc/build/html)
+doc/util/create-doc -d -t
 
 # To only execute Zensical on updated Markdown resources
 # zensical build
@@ -202,7 +202,7 @@ Raises
 ## Cross-References in Markdown
 
 The documentation pages use Markdown, not reST. Cross-references use the
-zensicaltrings/autorefs syntax:
+mkdocstrings/autorefs syntax:
 
 ```markdown
 # Link showing "train_predictor"

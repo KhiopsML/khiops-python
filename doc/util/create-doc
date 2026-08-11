@@ -3,6 +3,7 @@ set -euo pipefail
 
 # Obtain this script's dir
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+SITE_DIR="${SCRIPT_DIR}/../site"
 
 # Default parameter values
 TRANSFORM_NOTEBOOKS=""
@@ -76,12 +77,12 @@ then
 fi
 
 # Convert tutorials to Markdown
-mkdir -p ./tutorials
-tutorials_dir="$(realpath ./tutorials)"
+mkdir -p "${SITE_DIR}/tutorials"
+tutorials_dir="$(realpath "${SITE_DIR}/tutorials")"
 if [[ $TRANSFORM_NOTEBOOKS ]]
 then
   echo "Creating Markdown tutorial pages"
-  python convert_tutorials.py \
+  python "${SCRIPT_DIR}/convert_tutorials.py" \
       --execute-notebooks "$KHIOPS_TUTORIAL_REPO_DIR" "$tutorials_dir"
 fi
 
@@ -104,16 +105,16 @@ cd "../.."
 
 # Copy source scripts and notebooks to doc/samples/ for download links
 echo "Copying sample scripts and notebooks"
-SAMPLES_DIR="$SCRIPT_DIR/../khiops/samples"
-cp -f "$SAMPLES_DIR/samples.py" "$SCRIPT_DIR/samples/"
-cp -f "$SAMPLES_DIR/samples.ipynb" "$SCRIPT_DIR/samples/"
-cp -f "$SAMPLES_DIR/samples_sklearn.py" "$SCRIPT_DIR/samples/"
-cp -f "$SAMPLES_DIR/samples_sklearn.ipynb" "$SCRIPT_DIR/samples/"
+SAMPLES_DIR="$SCRIPT_DIR/../../khiops/samples"
+cp -f "$SAMPLES_DIR/samples.py" "${SITE_DIR}/samples/"
+cp -f "$SAMPLES_DIR/samples.ipynb" "${SITE_DIR}/samples/"
+cp -f "$SAMPLES_DIR/samples_sklearn.py" "${SITE_DIR}/samples/"
+cp -f "$SAMPLES_DIR/samples_sklearn.ipynb" "${SITE_DIR}/samples/"
 
 # Build the documentation with Zensical (unless prepare-only)
 if [[ ! $PREPARE_ONLY ]]; then
   echo "Executing Zensical"
-  cd "$SCRIPT_DIR/.."
+  cd "$SCRIPT_DIR/../.."
 
   # Inject the khiops version into zensical.toml (replaces the old
   # mkdocs hooks-based mechanism, which Zensical does not support)

@@ -10,7 +10,7 @@ repos:
     hooks:
       - id: pylint
         language_version: python3
-        exclude: doc/convert_samples.py
+        exclude: doc/util/convert_samples.py
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
@@ -47,7 +47,7 @@ repos:
     hooks:
       - id: samples-generation
         name: samples-generation
-        entry: bash doc/convert-samples-hook
+        entry: bash doc/util/convert-samples-hook
         language: system
         files: khiops/samples/samples.py|khiops/samples/samples_sklearn.py
         pass_filenames: false

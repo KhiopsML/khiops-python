@@ -3,8 +3,8 @@ site_name = "Khiops Python"
 site_url = "https://khiopsml.github.io/khiops-python/"
 repo_url = "https://github.com/KhiopsML/khiops-python"
 repo_name = "KhiopsML/khiops-python"
-docs_dir = "doc"
-site_dir = "_doc_build/html"
+docs_dir = "doc/site"
+site_dir = "doc/build/html"
 extra_css = ["_static/css/custom.css"]
 
 nav = [
@@ -93,7 +93,7 @@ def_list = {}
 [project.plugins.autorefs]
 
 [project.plugins.mkdocstrings]
-custom_templates = "doc/_templates"
+custom_templates = "doc/site/_templates"
 
 [project.plugins.mkdocstrings.handlers.python]
 inventories = [

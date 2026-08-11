@@ -11,4 +11,4 @@ _Put your message here_
 - API Docs (only if there are changes in docstrings, markdown files or samples):
   - [ ] Check the docs build **without** warning: see the log of the API Docs workflow
   - [ ] Check that your changes render well in HTML: download the API Docs artifact and open `index.html`
-  - If there are any problems it is faster to iterate by [building locally the API Docs](../blob/main/doc/README.md#build-the-documentation)
+  - If there are any problems it is faster to iterate by [building locally the API Docs](doc/util/README.md#build-the-documentation)

@@ -53,7 +53,7 @@ supervised models (classifiers, regressors, encoders) and unsupervised models
 - **`khiops.extras`** — Optional integrations such as the Docker runner
 - **`khiops.tools`** — Miscellaneous utility tools and CLI entry points
 - **`khiops.samples`** — Sample scripts, also used to generate parts of the
-  documentation via `doc/convert-samples-hook`
+  documentation via `doc/util/convert-samples-hook`
 
 Keep changes inside these layer boundaries.
 

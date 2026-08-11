@@ -12,22 +12,28 @@ guidance.
 
 ```
 doc/
-├── index.md                 # Top-level doc page
-├── multi_table_primer.md    # Multi-table learning guide
-├── notes.md                 # API notes (common params, input types, sampling)
-├── create-doc               # Full build script (tutorials + Zensical)
-├── clean-doc                # Clean script (supports --clean-tutorial)
-├── convert-samples-hook     # Pre-commit hook: regenerates sample Markdown + notebooks
-├── convert_samples.py       # Converts samples.py / samples_sklearn.py to Markdown or .ipynb
-├── convert_tutorials.py     # Converts tutorial Jupyter notebooks to Markdown
-├── requirements.txt         # Python doc-build dependencies
-├── core/index.md            # khiops.core API reference (mkdocstrings)
-├── sklearn/index.md         # khiops.sklearn API reference (mkdocstrings)
-├── internal/index.md        # Internal modules reference
-├── tools/index.md           # khiops.tools reference
-├── samples/                 # Generated Markdown sample pages (via convert-samples-hook)
-├── tutorials/               # Generated Markdown tutorials (via create-doc -t)
-└── _static/                 # CSS and images (branding, logo)
+├── util/                        # Build tooling (outside Zensical's docs_dir)
+│   ├── create-doc               # Full build script (tutorials + Zensical)
+│   ├── clean-doc                # Clean script (supports --clean-tutorial)
+│   ├── convert-samples-hook     # Pre-commit hook: regenerates sample Markdown + notebooks
+│   ├── convert_samples.py       # Converts samples.py / samples_sklearn.py to Markdown or .ipynb
+│   ├── convert_tutorials.py     # Converts tutorial Jupyter notebooks to Markdown
+│   ├── requirements.txt         # Python doc-build dependencies
+│   └── README.md                # Documentation guide
+├── site/                        # docs_dir (Zensical content only)
+│   ├── index.md                 # Top-level doc page
+│   ├── multi_table_primer.md    # Multi-table learning guide
+│   ├── notes.md                 # API notes (common params, input types, sampling)
+│   ├── core/index.md            # khiops.core API reference (mkdocstrings)
+│   ├── sklearn/index.md         # khiops.sklearn API reference (mkdocstrings)
+│   ├── internal/index.md        # Internal modules reference
+│   ├── tools/index.md           # khiops.tools reference
+│   ├── samples/                 # Generated Markdown sample pages (via convert-samples-hook)
+│   ├── tutorials/               # Generated Markdown tutorials (via create-doc -t)
+│   ├── _static/                 # CSS and images (branding, logo)
+│   └── _templates/              # mkdocstrings Jinja templates
+└── build/                       # Zensical output (site_dir)
+    └── html/
 ```
 
 The Zensical configuration file `zensical.toml` is at the repository root.
@@ -36,33 +42,30 @@ The Zensical configuration file `zensical.toml` is at the repository root.
 
 ```bash
 # Install doc dependencies (do NOT create a virtualenv inside doc/ — Zensical will process its .md files)
-pip install -U -r doc/requirements.txt
+pip install -U -r doc/util/requirements.txt
 
 # Also requires:
 # - The 'black' Python package (used by convert_samples.py to format code snippets)
 
 # Regenerate Markdown samples and notebooks from samples.py / samples_sklearn.py.
 # This hook also runs automatically via pre-commit when those files are modified.
-cd doc
-./convert-samples-hook
+doc/util/convert-samples-hook
 
 # Full build: download tutorials, convert notebooks to Markdown, run Zensical
-./create-doc -d -t
+doc/util/create-doc -d -t
 
 # Incremental build (Zensical only, after Markdown files are already generated):
-cd ..  # must be at repo root where zensical.toml lives
 zensical build
 
 # Serve locally for development:
 zensical serve
 
 # Clean generated docs (add --clean-tutorial to also remove tutorials/ and khiops-python-tutorial/)
-cd doc
-./clean-doc
+doc/util/clean-doc
 ```
 
-The `create-doc` script requires `tar`, `python`, `zip`, and `git` (if
-downloading tutorials). Output goes to `_doc_build/html/`.
+The `create-doc` script requires `python`, `zip`, and `git` (if
+downloading tutorials). Output goes to `doc/build/html/`.
 
 The `create-doc` script accepts the following options:
 
@@ -80,7 +83,7 @@ The `create-doc` script accepts the following options:
 The **API Docs** workflow (`.github/workflows/api-docs.yml`) validates
 documentation builds. It triggers on:
 
-- **PRs** touching `doc/**.md`, `doc/create-doc`, `doc/clean-doc`, `doc/*.py`,
+- **PRs** touching `doc/site/**.md`, `doc/util/create-doc`, `doc/util/clean-doc`, `doc/util/*.py`,
   `zensical.toml`, `khiops/**.py`, or the workflow file itself
 - **`workflow_dispatch`** with optional inputs:
   - `khiops-python-tutorial-revision` (default: `11.0.0.0`)
@@ -93,8 +96,8 @@ image:
 
 1. Installs the khiops-python package itself (`pip install .`)
 2. Downloads sample datasets via `kh-download-datasets`
-3. Installs doc Python requirements from `doc/requirements.txt`
-4. Runs `./create-doc -t -d -g <tutorial-revision>`
+3. Installs doc Python requirements from `doc/util/requirements.txt`
+4. Runs `doc/util/create-doc -t -d -g <tutorial-revision>`
 5. Uploads the built HTML as a `api-docs` artifact
 
 Note: the production API docs are built by the
@@ -112,7 +115,7 @@ repository at the version tag and builds the docs natively using mkdocstrings.
   from Python, pandas, scikit-learn, NumPy, SciPy
 - **Cross-references**: Use `[display text][fully.qualified.name]` or
   `[fully.qualified.name][]` syntax for linking to documented objects
-- **Custom CSS**: `_static/css/custom.css` provides Orange branding via CSS
+- **Custom CSS**: `doc/site/_static/css/custom.css` provides Orange branding via CSS
   custom properties (Material theme variables)
 
 ## Docstring Conventions
