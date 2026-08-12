@@ -26,7 +26,7 @@ def train_test_split_dataset(ds_spec, y=None, test_size=0.25, **kwargs):
          A ``dict`` multi-table dataset specification
          (see [Multi-Table Learning Primer](../multi_table_primer.md)).
          Only Pandas, NumPy, SciPy tables are accepted in the spec.
-    y : `array-like` of size (n_samples,) , optional
+    y : array-like of size (n_samples,) , optional
         The target values. ``n_samples`` is the number of rows of the main table in
         ``ds_spec``.
     test_size : float, default 0.25

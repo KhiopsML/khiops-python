@@ -536,8 +536,8 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
@@ -684,8 +684,8 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
         id_column : str
@@ -1086,8 +1086,8 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
@@ -1250,12 +1250,12 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : `array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns
@@ -1877,12 +1877,12 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : `array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns
@@ -1961,8 +1961,8 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
@@ -1996,8 +1996,8 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
@@ -2204,12 +2204,12 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : `array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns
@@ -2264,8 +2264,8 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
@@ -2277,7 +2277,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
             column ids is added in multi-table mode. The key columns are added for
             multi-table tasks. The array is in the form of:
 
-            - `numpy.ndarray` if X is `array-like`, or dataset spec
+            - `numpy.ndarray` if X is [array-like][], or dataset spec
               containing `pandas.DataFrame` table.
             - str (a path for the file containing the array) if X is a dataset spec
               containing file-path tables.
@@ -2613,12 +2613,12 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : `array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns
@@ -2683,8 +2683,8 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
@@ -2735,12 +2735,12 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         Parameters
         ----------
-        X : `array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an `array-like` or a ``dict``
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a `dict`
             specification for multi-table datasets
             (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : `array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns

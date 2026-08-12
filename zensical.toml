@@ -99,7 +99,7 @@ custom_templates = "doc/site/_templates"
 inventories = [
   "https://docs.python.org/3/objects.inv",
   "https://pandas.pydata.org/pandas-docs/dev/objects.inv",
-  "https://scikit-learn.org/stable/objects.inv",
+  { url = "https://scikit-learn.org/stable/objects.inv", domains = ["py", "std"] },
   "https://numpy.org/doc/stable/objects.inv",
   "https://docs.scipy.org/doc/scipy/objects.inv",
 ]

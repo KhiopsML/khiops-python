@@ -1104,7 +1104,7 @@ class NumpyTable(DatasetTable):
         Name for the table.
     array : `numpy.ndarray` of shape (n_samples, n_features_in) or Sequence
         The data frame to be encapsulated.
-    key : :external:term`array-like` of int, optional
+    key : array-like of int, optional
         The names of the columns composing the key.
     """
 
