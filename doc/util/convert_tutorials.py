@@ -78,7 +78,7 @@ def main(args):
 
                 # Execute the notebook once
                 try:
-                    preprocessor.preprocess(notebook, {})
+                    preprocessor.preprocess(notebook, {}, km=kernel_manager)
                 except CellExecutionError:
                     print(f"WARNING: '{notebook_path}' had execution" f" errors")
 
