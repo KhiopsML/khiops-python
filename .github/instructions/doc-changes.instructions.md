@@ -12,14 +12,14 @@ guidance.
 
 ```
 doc/
+├── README.md                    # Documentation guide
 ├── util/                        # Build tooling (outside Zensical's docs_dir)
 │   ├── create-doc               # Full build script (tutorials + Zensical)
 │   ├── clean-doc                # Clean script (supports --clean-tutorial)
 │   ├── convert-samples-hook     # Pre-commit hook: regenerates sample Markdown + notebooks
 │   ├── convert_samples.py       # Converts samples.py / samples_sklearn.py to Markdown or .ipynb
 │   ├── convert_tutorials.py     # Converts tutorial Jupyter notebooks to Markdown
-│   ├── requirements.txt         # Python doc-build dependencies
-│   └── README.md                # Documentation guide
+│   └── requirements.txt         # Python doc-build dependencies
 ├── site/                        # docs_dir (Zensical content only)
 │   ├── index.md                 # Top-level doc page
 │   ├── multi_table_primer.md    # Multi-table learning guide

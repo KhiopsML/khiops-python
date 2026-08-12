@@ -119,7 +119,7 @@ Note that the first paragraph could be fused into the second. These kinds of dec
 subjective and code review may help to resolve them.
 
 ### Writing Documentation
-See the documentation practices and tools [here](./doc/util/README.md).
+See the documentation practices and tools [here](./doc/README.md).
 
 ## Git & GitHub
 ### Main Guiding Principles
