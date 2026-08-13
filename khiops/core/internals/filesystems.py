@@ -79,12 +79,12 @@ def _parent_uri_info(uri_info):
 
     Parameters
     ----------
-    uri_info : `urllib.parse.ParseResult`
-        URI info structure (output of `urllib.parse.urlparse`)
+    uri_info : urllib.parse.ParseResult
+        URI info structure (output of [`urllib.parse.urlparse`][])
 
     Returns
     -------
-    `urllib.parse.ParseResult`
+    urllib.parse.ParseResult
         URI info structure for the parent URI
 
     """
@@ -113,15 +113,15 @@ def _child_uri_info(uri_info, child_name):
 
     Parameters
     ----------
-    uri_info : `urllib.parse.ParseResult`
-        URI info structure (output of `urllib.parse.urlparse`)
+    uri_info : urllib.parse.ParseResult
+        URI info structure (output of [`urllib.parse.urlparse`][])
 
-    child_name : `str`
+    child_name : str
         Name of the new child node
 
     Returns
     -------
-    `urllib.parse.ParseResult`
+    urllib.parse.ParseResult
         URI info structure for the child URI
     """
     return uri_info._replace(path=_child_path(uri_info.path, child_name))
@@ -143,8 +143,8 @@ def is_local_resource(uri_or_path):
 
     Returns
     -------
-    `bool`
-        `True` if a URI refers to a local path
+    bool
+        [`True`][] if a URI refers to a local path
     """
     if (index := uri_or_path.find("://")) > 0:
         scheme = uri_or_path[:index]
@@ -168,7 +168,7 @@ def create_resource(uri_or_path):
 
     Returns
     -------
-    `FilesystemResource`
+    FilesystemResource
         The URI resource object, its class depends on the URI.
     """
     # Case where the URI scheme separator `://` is contained in the uri/path
@@ -234,7 +234,7 @@ def read(uri_or_path, size=None):
 
     Returns
     -------
-    `bytes`
+    bytes
         A buffer containing the read contents.
 
     Raises
@@ -252,7 +252,7 @@ def write(uri_or_path, data):
     ----------
     uri_or_path : str
         The resource's URI or local filesystem path.
-    data : str or `bytes`
+    data : str or bytes
         The data to be written.
 
     Raises
@@ -273,7 +273,7 @@ def exists(uri_or_path):
 
     Returns
     -------
-    `bool`
+    bool
         True if the resource exists.
     """
     return create_resource(uri_or_path).exists()
@@ -440,7 +440,7 @@ class FilesystemResource(ABC):
 
         Returns
         -------
-        `FilesystemResource`
+        FilesystemResource
             The specific resource type is that of the caller
         """
 
@@ -450,7 +450,7 @@ class FilesystemResource(ABC):
 
         Returns
         -------
-        `FilesystemResource`
+        FilesystemResource
             The specific resource type is that of the caller
         """
 
@@ -771,7 +771,8 @@ class AmazonS3Resource(FilesystemResource):
 class AzureStorageResourceMixin:
     """Azure compatible Storage Resource Mixin
 
-    See `AzureStorageFileResource` and `AzureStorageBlobResource` for more details.
+    See [`AzureStorageFileResource`][] and [`AzureStorageBlobResource`][] for more
+    details.
 
     """
 

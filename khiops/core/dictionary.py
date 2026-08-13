@@ -96,7 +96,7 @@ def _check_name(name):
             Name to be validated.
     Raises
     ------
-        `ValueError`
+        ValueError
             If the provided name does not comply with the formatting constraints.
     """
     # Check that the type of name is string or bytes
@@ -146,7 +146,8 @@ def _is_object_type(type_str):
 class DictionaryDomain:
     """Main class containing the information of a Khiops dictionary file
 
-    A DictionaryDomainain is a collection of `Dictionary` objects. These dictionaries
+    A DictionaryDomainain is a collection of [`Dictionary`][] objects. These
+    dictionaries
     usually represent either a database schema or a predictor model.
 
     Parameters
@@ -157,7 +158,8 @@ class DictionaryDomain:
 
         !!! note
 
-            Prefer the `.read_dictionary_file` function from the core API to obtain an
+            Prefer the [`read_dictionary_file`][] function from the core API to obtain
+            an
             instance of this class from a Khiops Dictionary file (``kdic`` or
             ``kdicj``).
 
@@ -167,7 +169,7 @@ class DictionaryDomain:
         Name of the Khiops tool that generated the dictionary file.
     version : str
         Version of the Khiops tool that generated the dictionary file.
-    dictionaries : list of `Dictionary`
+    dictionaries : list of Dictionary
         The domain's dictionaries.
     """
 
@@ -220,7 +222,7 @@ class DictionaryDomain:
 
         Returns
         -------
-        `DictionaryDomain`
+        DictionaryDomain
             A copy of this instance.
         """
         dictionary_domain_copy = DictionaryDomain()
@@ -241,7 +243,7 @@ class DictionaryDomain:
 
         Returns
         -------
-        `Dictionary`
+        Dictionary
             The specified dictionary. ``None`` is returned if the dictionary name
             is not found.
         """
@@ -252,12 +254,12 @@ class DictionaryDomain:
 
         Parameters
         ----------
-        dictionary : `Dictionary`
+        dictionary : Dictionary
             The dictionary to be added.
 
         Raises
         ------
-        `TypeError`
+        TypeError
             If ``dictionary`` is not of type ``Dictionary``.
         """
         if not isinstance(dictionary, Dictionary):
@@ -270,12 +272,12 @@ class DictionaryDomain:
 
         Returns
         -------
-        `Dictionary`
+        Dictionary
             The removed dictionary.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no dictionary with the specified name exists.
         """
         dictionary = self._dictionaries_by_name.pop(dictionary_name)
@@ -310,7 +312,7 @@ class DictionaryDomain:
         ):
             """Builds the path for secondary tables and updates the entity list
 
-            `current_dictionary_alias` contains:
+            [`current_dictionary_alias`][] contains:
             - in the traversal, the name of the dictionary as it was named by
               the variable that referenced it;
             - or, otherwise, the name of an external dictionary (for Entity tables).
@@ -375,16 +377,16 @@ class DictionaryDomain:
         ----------
         data_path : str
             A data path for the specified table. Usually the output of
-            `extract_data_paths`.
+            [`extract_data_paths`][].
 
         Returns
         -------
-        `Dictionary`
+        Dictionary
             The dictionary object pointed by this data path.
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If the path is not found.
         """
         # If data_path includes "`" and starts with an existing dictionary,
@@ -505,7 +507,7 @@ class DictionaryDomain:
 
         Parameters
         ----------
-        stream_or_writer : `io.IOBase` or `.KhiopsOutputWriter`
+        stream_or_writer : io.IOBase or KhiopsOutputWriter
             Output stream or writer.
         """
         if isinstance(stream_or_writer, io.IOBase):
@@ -539,12 +541,12 @@ def read_dictionary_file(dictionary_file_path):
 
     Returns
     -------
-    `.DictionaryDomain`
+    DictionaryDomain
         An dictionary domain representing the information in the dictionary file.
 
     Raises
     ------
-    `ValueError`
+    ValueError
         When the file has an extension other than ``.kdic``, ``.kdicj`` or ``.json``.
 
     Examples
@@ -612,9 +614,9 @@ class Dictionary:
         True if the dictionary is the root of an dictionary hierarchy.
     key : list of str
         Names of the key variables.
-    variables : list of `Variable`
+    variables : list of Variable
         The dictionary variables.
-    variable_blocks : list of `VariableBlock`
+    variable_blocks : list of VariableBlock
         The dictionary variable blocks.
     label : str
         Dictionary label.
@@ -622,7 +624,7 @@ class Dictionary:
         List of dictionary comments.
     internal_comments : list of str
         List of internal dictionary comments.
-    meta_data : `MetaData`
+    meta_data : MetaData
         MetaData object of the dictionary.
     """
 
@@ -691,7 +693,7 @@ class Dictionary:
 
         Returns
         -------
-        `Dictionary`
+        Dictionary
             A copy of this instance.
         """
         # Create an empty dictionary
@@ -740,7 +742,7 @@ class Dictionary:
 
         Returns
         -------
-        `MetaData`
+        MetaData
             Metadata value associated to the specified key. ``None`` is returned
             if the metadata key is not found.
         """
@@ -752,7 +754,7 @@ class Dictionary:
         Parameters
         ----------
         is_used : bool
-            Sets the ``used`` field to ``is_used`` for all the `Variable` objects in
+            Sets the ``used`` field to ``is_used`` for all the [`Variable`][] objects in
             this dictionary.
         """
         for variable in self.variables:
@@ -768,7 +770,7 @@ class Dictionary:
 
         Returns
         -------
-        `Variable`
+        Variable
             The specified variable. ``None`` is returned if the variable name is
             not found.
         """
@@ -784,7 +786,7 @@ class Dictionary:
 
         Returns
         -------
-        `VariableBlock`
+        VariableBlock
             The specified variable block. ``None`` is returned if the variable
             block name is not found.
         """
@@ -795,15 +797,15 @@ class Dictionary:
 
         Parameters
         ----------
-        variable : `Variable`
+        variable : Variable
             The variable to be added.
 
         Raises
         ------
-        `TypeError`
-            If variable is not of type `Variable`
+        TypeError
+            If variable is not of type [`Variable`][]
 
-        `ValueError`
+        ValueError
             If the name is empty or if there is already a variable with that name.
         """
         if not isinstance(variable, Variable):
@@ -838,7 +840,7 @@ class Dictionary:
         name : str
             Variable name.
         type : str
-            Variable type. See `Variable`.
+            Variable type. See [`Variable`][].
         label : str, default ""
             Label of the variable.
         used : bool, default ``True``
@@ -855,7 +857,7 @@ class Dictionary:
 
         Raises
         ------
-        `ValueError`
+        ValueError
             - If the variable name is empty or does not comply
               with the formatting constraints.
             - If there is already a variable with the same name.
@@ -926,12 +928,12 @@ class Dictionary:
 
         Returns
         -------
-        `Variable`
+        Variable
             The removed variable.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no variable with the specified name exists.
         """
         variable = self._variables_by_name.pop(variable_name)
@@ -947,15 +949,15 @@ class Dictionary:
 
         Parameters
         ----------
-        variable_block : `VariableBlock`
+        variable_block : VariableBlock
             The variable block to be added.
 
         Raises
         ------
-        `TypeError`
-            If variable is not of type `VariableBlock`
+        TypeError
+            If variable is not of type [`VariableBlock`][]
 
-        `ValueError`
+        ValueError
             If the name is empty or if there is already a variable block with that name.
 
         """
@@ -1000,12 +1002,12 @@ class Dictionary:
 
         Returns
         -------
-        `VariableBlock`
+        VariableBlock
             The removed variable block.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no variable block with the specified name exists.
         """
         removed_block = self.get_variable_block(variable_block_name)
@@ -1034,7 +1036,7 @@ class Dictionary:
 
         Parameters
         ----------
-        variable : `Variable`
+        variable : Variable
             The variable for the query.
 
         Returns
@@ -1049,7 +1051,7 @@ class Dictionary:
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output dictionary file.
         """
         # Check file object type
@@ -1142,14 +1144,14 @@ class Variable:
             - standard rule: "Sum(Var1, Var2)"
             - reference rule: "[TableName]"
 
-    variable_block : `VariableBlock`
+    variable_block : VariableBlock
         Block to which the variable belongs. Not set if the variable does not belong to
         a block.
     label : str
         Variable label.
     comments : list of str
         List of variable comments.
-    meta_data : `MetaData`
+    meta_data : MetaData
         Variable metadata.
 
     Examples
@@ -1255,7 +1257,7 @@ class Variable:
 
         Returns
         -------
-        `Variable`
+        Variable
             A copy of this instance.
         """
         variable = Variable()
@@ -1275,7 +1277,7 @@ class Variable:
 
         Returns
         -------
-        `MetaData`
+        MetaData
             Metadata value associated to the specified key. ``None`` is returned
             if the metadata key is not found.
         """
@@ -1360,7 +1362,7 @@ class Variable:
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Check file object type
@@ -1493,13 +1495,13 @@ class VariableBlock:
 
         Parameters
         ----------
-        variable : `Variable`
+        variable : Variable
             The variable to be added.
 
         Raises
         ------
-        `TypeError`
-            If the variable is not of type `Variable`.
+        TypeError
+            If the variable is not of type [`Variable`][].
         """
         if not isinstance(variable, Variable):
             raise TypeError(type_error_message("variable", variable, Variable))
@@ -1515,13 +1517,13 @@ class VariableBlock:
 
         Parameters
         ----------
-        variable : `Variable`
+        variable : Variable
             The variable to be removed.
 
         Raises
         ------
-        `TypeError`
-            If the variable is not of type `Variable`.
+        TypeError
+            If the variable is not of type [`Variable`][].
         """
         # Check input
         if not isinstance(variable, Variable):
@@ -1535,7 +1537,7 @@ class VariableBlock:
 
         Returns
         -------
-        `MetaData`
+        MetaData
             Metadata value associated to the specified key. ``None`` is returned
             if the metadata key is not found.
         """
@@ -1546,7 +1548,7 @@ class VariableBlock:
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Check file object type
@@ -1598,11 +1600,11 @@ class Rule:
 
     This object is a convenience feature which eases rule creation and
     serialization, especially in complex cases (rule operands which are
-    variables or rules themselves, sometimes upper-scoped). A `Rule` instance
-    must be converted to `str` before setting it in a `Variable` or
-    `VariableBlock` instance.
+    variables or rules themselves, sometimes upper-scoped). A [`Rule`][] instance
+    must be converted to [`str`][] before setting it in a [`Variable`][] or
+    [`VariableBlock`][] instance.
 
-    `Rule` instances can be created either from full operand specifications, or
+    [`Rule`][] instances can be created either from full operand specifications, or
     from verbatim rules. The latter is useful when the rule is retrieved from an
     existing variable or variable block and is used as an operand in another
     rule.
@@ -1616,10 +1618,10 @@ class Rule:
             - bytes
             - int
             - float
-            - `Variable`
-            - `Rule`
-            - upper-scoped `Variable`
-            - upper-scoped `Rule`
+            - [`Variable`][]
+            - [`Rule`][]
+            - upper-scoped [`Variable`][]
+            - upper-scoped [`Rule`][]
 
         The first element of the ``name_and_operands`` tuple is the name of the
         rule and must be str or bytes and non-empty for a standard rule, i.e. if
@@ -1643,17 +1645,17 @@ class Rule:
             - bytes
             - int
             - float
-            - `Variable`
-            - `Rule`
-            - upper-scoped `Variable`
-            - upper-scoped `Rule`
+            - [`Variable`][]
+            - [`Rule`][]
+            - upper-scoped [`Variable`][]
+            - upper-scoped [`Rule`][]
 
     is_reference : bool
         The reference status of the rule.
 
         !!! note
 
-            This attribute cannot be changed on a `Rule` instance.
+            This attribute cannot be changed on a [`Rule`][] instance.
 
     Examples
     --------
@@ -1816,7 +1818,7 @@ class Rule:
 
         Returns
         -------
-        `Rule`
+        Rule
             A copy of this instance.
         """
         return Rule(self.name, *self.operands)
@@ -1824,7 +1826,7 @@ class Rule:
     def write(self, writer):
         """Writes the rule to a file writer in the ``.kdic`` format
 
-        This method ensures proper `Rule` serialization, automatically handling:
+        This method ensures proper [`Rule`][] serialization, automatically handling:
 
             - back-quote recoding in variable names
             - double-quote recoding in categorical constants
@@ -1833,7 +1835,7 @@ class Rule:
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
 
             !!! note
@@ -1920,14 +1922,15 @@ def upper_scope(operand):
 
     Parameters
     ----------
-    operand : `Variable`, `Rule`, upper-scoped `Variable` or upper-scoped `Rule`
+    operand : Variable, Rule, upper-scoped Variable or upper-scoped Rule
         Operand that is upper-scoped.
 
     Raises
     ------
-    `TypeError`
-        If the type of ``operand`` is not `Variable`, `Rule`, upper-scoped `Variable`
-        or upper-scoped `Rule`.
+    TypeError
+        If the type of ``operand`` is not [`Variable`][], [`Rule`][], upper-scoped
+        [`Variable`][]
+        or upper-scoped [`Rule`][].
 
     Returns
     -------
@@ -1993,7 +1996,7 @@ class MetaData:
 
         Returns
         -------
-        `MetaData`
+        MetaData
             A copy of this instance.
         """
         new_meta_data = MetaData()
@@ -2022,7 +2025,7 @@ class MetaData:
 
         Raises
         ------
-        `TypeError`
+        TypeError
             If ``key`` is not str.
         """
         # Check the argument types
@@ -2049,10 +2052,10 @@ class MetaData:
 
         Raises
         ------
-        `TypeError`
+        TypeError
             - If the key is not a valid string
             - If the value is not a valid string or if is not bool, int, float.
-        `ValueError`
+        ValueError
             If the key is already stored.
         """
         # Check that the type of key is string-like
@@ -2087,9 +2090,9 @@ class MetaData:
 
         Raises
         ------
-        `TypeError`
+        TypeError
             If the key is not str.
-        `KeyError`
+        KeyError
             If the key is not contained in this metadata.
         """
         # Check that the type of key is string-like
@@ -2110,7 +2113,7 @@ class MetaData:
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         if not isinstance(writer, KhiopsOutputWriter):

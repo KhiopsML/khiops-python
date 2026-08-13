@@ -12,7 +12,8 @@ Below we describe with diagrams the relationships of the classes in this modules
 are mostly compositions (has-a relations) and we omit native attributes (str, int,
 float, etc).
 
-The main class of this module is `CoclusteringResults` and it is largely a composition
+The main class of this module is [`CoclusteringResults`][] and it is largely a
+composition
 of sub-reports objects given by the following structure::
 
     CoclusteringResults
@@ -65,7 +66,7 @@ class CoclusteringResults(KhiopsJSONObject):
 
         !!! note
 
-            Prefer either the the `read_coclustering_results_file` function from the
+            Prefer either the the [`read_coclustering_results_file`][] function from the
             core API to obtain an instance of this class from a Khiops Coclustering JSON
             file.
 
@@ -75,7 +76,7 @@ class CoclusteringResults(KhiopsJSONObject):
         Name of the Khiops tool that generated the JSON file.
     version : str
         Version of the Khiops tool that generated the JSON file.
-    coclustering_report : `CoclusteringReport`
+    coclustering_report : CoclusteringReport
         Coclustering modeling report.
     """
 
@@ -234,7 +235,7 @@ class CoclusteringResults(KhiopsJSONObject):
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
@@ -255,11 +256,11 @@ class CoclusteringResults(KhiopsJSONObject):
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        stream_or_writer : `io.IOBase` or `.KhiopsOutputWriter`
+        stream_or_writer : io.IOBase or KhiopsOutputWriter
             Output stream or writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -297,7 +298,7 @@ def read_coclustering_results_file(json_file_path):
 
     Returns
     -------
-    `.CoclusteringResults`
+    CoclusteringResults
         An instance of CoclusteringResults containing the report's information.
     """
     return CoclusteringResults(json_data=flexible_json_load(json_file_path))
@@ -344,7 +345,7 @@ class CoclusteringReport:
     initial_dimension_number : int
         Initial number of dimensions. The number of dimensions (``len(dimensions)``) may
         be less than this quantity after a simplification (see
-        `api.simplify_coclustering`).
+        [`api.simplify_coclustering`][]).
     frequency_variable : str
         Name of the variable to be aggregated in the cells. By default is the number of
         individuals.
@@ -360,9 +361,9 @@ class CoclusteringReport:
         Variable used to select instances for training.
     selection_value : str
         Value of ``selection_variable`` to select instances for training.
-    dimensions : list of `CoclusteringDimension`
+    dimensions : list of CoclusteringDimension
         Coclustering dimensions (variable).
-    cells : list of `CoclusteringCell`
+    cells : list of CoclusteringCell
         Coclustering cells.
     """
 
@@ -483,12 +484,12 @@ class CoclusteringReport:
 
         Returns
         -------
-        `CoclusteringDimension`
+        CoclusteringDimension
             The specified dimension.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no dimension with the specified names exist.
         """
         return self._dimensions_by_name[dimension_name]
@@ -539,11 +540,11 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output stream or writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -564,11 +565,11 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -587,11 +588,11 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -622,11 +623,11 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -655,11 +656,11 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -675,11 +676,11 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -695,11 +696,11 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -724,11 +725,11 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -758,9 +759,9 @@ class CoclusteringDimension:
 
     !!! note
 
-        The instance information is initialized with the `init_summary`,
-        `init_partition` and `init_hierarchy` methods. Its owner object (class
-        `CoclusteringReport`) uses the information found in the fields
+        The instance information is initialized with the [`init_summary`][],
+        [`init_partition`][] and [`init_hierarchy`][] methods. Its owner object (class
+        [`CoclusteringReport`][]) uses the information found in the fields
         ``dimensionSummaries``, ``dimensionPartitions`` and ``dimensionHierarchies`` to
         coherently initialize the all dimensions with these methods.
 
@@ -777,7 +778,7 @@ class CoclusteringDimension:
         Number of parts of the variable associated to this dimension.
     initial_part_number : int
         Number of initial parts. Note that ``part_number`` <= ``initial_part_number``
-        after a coclustering simplification (see `api.simplify_coclustering`).
+        after a coclustering simplification (see [`api.simplify_coclustering`][]).
     value_number : int
         Number of values of the dimension's variable.
     interest : float
@@ -788,19 +789,19 @@ class CoclusteringDimension:
         Minimum value of a numerical dimension/variable.
     max : float
         Maximum value of a numerical dimension/variable.
-    parts : list of `CoclusteringDimensionPart`
+    parts : list of CoclusteringDimensionPart
         Partition of this dimension.
-    inner_variable_dimensions : list of `CoclusteringDimension`
+    inner_variable_dimensions : list of CoclusteringDimension
         Variable part instance-variable coclustering dimensions. ``None`` for
         variable-variable clustering.
         Contains the dimensions of the variables involved in the
         instances x variables coclustering model.
         This model includes two dimensions: one for instances and one for variable
         parts (``isVarPart`` set to ``True`` for this dimension).
-    clusters : list of `CoclusteringCluster`
+    clusters : list of CoclusteringCluster
         Clusters of this dimension's hierarchy. Note that includes intermediary
         clusters.
-    root_cluster : `CoclusteringCluster`
+    root_cluster : CoclusteringCluster
         Root cluster of the hierarchy.
     """
 
@@ -1070,12 +1071,12 @@ class CoclusteringDimension:
 
         Returns
         -------
-        `CoclusteringDimensionPart`
+        CoclusteringDimensionPart
             The part with the specified name.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If there is no part with the specified name.
         """
         return self._parts_by_name[part_name]
@@ -1090,12 +1091,12 @@ class CoclusteringDimension:
 
         Returns
         -------
-        `CoclusteringCluster`
+        CoclusteringCluster
             The specified cluster.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If there is no cluster with the specified name.
         """
         return self._clusters_by_name[cluster_name]
@@ -1170,11 +1171,11 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1198,11 +1199,11 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1224,11 +1225,11 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1250,11 +1251,11 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1292,11 +1293,11 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1336,7 +1337,7 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
@@ -1402,7 +1403,7 @@ class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
 
     Raises
     ------
-    `.KhiopsJSONError`
+    KhiopsJSONError
         If ``json_data`` does not contain a "cluster" key.
 
 
@@ -1505,14 +1506,14 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
 
     Raises
     ------
-    `.KhiopsJSONError`
+    KhiopsJSONError
         If ``json_data`` does not contain a "cluster" key.
 
     Attributes
     ----------
     cluster_name : str
         Name of the cluster containing this group.
-    values : list of `CoclusteringDimensionPartValue`
+    values : list of CoclusteringDimensionPartValue
         The singleton parts composing this group part.
     is_default_part : bool
         True if the instance represents the "unknown values" group.
@@ -1660,13 +1661,13 @@ class CoclusteringCluster:
         Succinct cluster description.
     description : str
         Cluster description.
-    leaf_part : `CoclusteringDimensionPart`
+    leaf_part : CoclusteringDimensionPart
         On a leaf cluster: Its unique associated partition element. Otherwise ``None``.
-    parent_cluster : `CoclusteringCluster`
+    parent_cluster : CoclusteringCluster
         On a non-root cluster: Its unique parent cluster. Otherwise ``None``.
-    child_cluster1 : `CoclusteringCluster`
+    child_cluster1 : CoclusteringCluster
         On a non-leaf cluster : The first child cluster. Otherwise ``None``.
-    child_cluster2 : `CoclusteringCluster`
+    child_cluster2 : CoclusteringCluster
         On a non-leaf cluster : The second child cluster. Otherwise ``None``.
     """
 
@@ -1730,11 +1731,11 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1757,11 +1758,11 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1782,11 +1783,11 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1807,11 +1808,11 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1833,11 +1834,11 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [`to_dict`][] method instead.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer for the report file.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1869,7 +1870,7 @@ class CoclusteringCell:
 
     Attributes
     ----------
-    parts : list of `CoclusteringDimensionPart`
+    parts : list of CoclusteringDimensionPart
         Parts for each coclustering dimension.
     part_indexes : list of int
         Part indexes for each coclustering dimension.
@@ -1893,7 +1894,7 @@ class CoclusteringCell:
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed

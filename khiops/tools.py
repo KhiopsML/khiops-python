@@ -8,7 +8,8 @@
 
 !!! warning
 
-    The entry point functions in this module use `sys.exit`. They are not designed to be
+    The entry point functions in this module use [`sys.exit`][]. They are not designed
+    to be
     called from another program or python shell.
 """
 import argparse

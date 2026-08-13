@@ -170,14 +170,15 @@ def _preprocess_arguments(args):
     -------
     tuple
         A 3-tuple containing:
-            - A `CommandLineOptions` instance
-            - A `SystemSettings` instance
-            - A `bool` that is ``True`` if the value of the `dictionary_file_or_domain`
-             `args` key is a `DictionaryDomain` instance.
+            - A [`CommandLineOptions`][] instance
+            - A [`SystemSettings`][] instance
+            - A [`bool`][] that is ``True`` if the value of the
+            [`dictionary_file_or_domain`][]
+             [`args`][] key is a [`DictionaryDomain`][] instance.
 
     !!! note
 
-        This function *mutates* the input `args` dictionary.
+        This function *mutates* the input [`args`][] dictionary.
     """
     # Execute the preprocessing of common task arguments
     task_is_called_with_domain = _preprocess_task_arguments(args)
@@ -307,7 +308,7 @@ def _preprocess_task_arguments(task_args):
     Returns
     -------
     bool
-        ``True`` if the task was called with an input `.DictionaryDomain`.
+        ``True`` if the task was called with an input [`DictionaryDomain`][].
     """
     # Process the output path
     # if path is dir, then generate full report path according to GUI defaults
@@ -487,7 +488,7 @@ def get_khiops_version():
     Returns
     -------
     str
-        The Khiops version of the current `.KhiopsRunner` backend.
+        The Khiops version of the current [`KhiopsRunner`][] backend.
     """
     return get_runner().khiops_version
 
@@ -525,7 +526,7 @@ def export_dictionary_as_json(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     json_dictionary_file_path : str
         Path (absolute path recommended) to the output dictionary file,
@@ -633,7 +634,7 @@ def check_database(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary of the table to be checked.
@@ -741,7 +742,7 @@ def train_predictor(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be analyzed.
@@ -808,7 +809,7 @@ def train_predictor(
     construction_rules : list of str, optional
         Allowed rules for the automatic variable construction. If not set, Khiops
         uses the multi-table construction rules listed in
-        `DEFAULT_CONSTRUCTION_RULES`.
+        [`DEFAULT_CONSTRUCTION_RULES`][].
     max_text_features : int, default 10000
         Maximum number of text features to construct.
     text_features : str, default "words"
@@ -864,9 +865,9 @@ def train_predictor(
 
     Raises
     ------
-    `ValueError`
+    ValueError
         Invalid values of an argument
-    `TypeError`
+    TypeError
         Invalid type of an argument
 
     Examples
@@ -929,7 +930,7 @@ def interpret_predictor(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     predictor_dictionary_name : str
         Name of the predictor dictionary used while building the interpretation model.
@@ -951,9 +952,9 @@ def interpret_predictor(
 
     Raises
     ------
-    `ValueError`
+    ValueError
         Invalid values of an argument
-    `TypeError`
+    TypeError
         Invalid type of an argument
 
     Examples
@@ -996,7 +997,7 @@ def reinforce_predictor(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     predictor_dictionary_name : str
         Name of the predictor dictionary used while building the reinforced predictor.
@@ -1016,9 +1017,9 @@ def reinforce_predictor(
 
     Raises
     ------
-    `ValueError`
+    ValueError
         Invalid values of an argument
-    `TypeError`
+    TypeError
         Invalid type of an argument
 
     Examples
@@ -1065,7 +1066,7 @@ def evaluate_predictor(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     train_dictionary_name : str
         Name of the main dictionary used while training the models.
@@ -1124,7 +1125,7 @@ def evaluate_predictor(
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type of an argument.
 
     Examples
@@ -1203,7 +1204,7 @@ def train_recoder(
     ``pairs_recoding_method`` options.
 
     The output files of this process contain a dictionary file (``.kdic``) that can be
-    used to recode databases with the `deploy_model` function.
+    used to recode databases with the [`deploy_model`][] function.
 
     !!! note
 
@@ -1212,7 +1213,7 @@ def train_recoder(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be recoded.
@@ -1259,7 +1260,7 @@ def train_recoder(
     construction_rules : list of str, optional
         Allowed rules for the automatic variable construction. If not set, Khiops
         uses the multi-table construction rules listed in
-        `DEFAULT_CONSTRUCTION_RULES`.
+        [`DEFAULT_CONSTRUCTION_RULES`][].
     max_text_features : int, default 10000
         Maximum number of text features to construct.
     text_features : str, default "words"
@@ -1410,7 +1411,7 @@ def deploy_model(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object. This file/object
         defines the model to be deployed. Note that this model is not necessarily a
         predictor, it can be a generic table transformation.
@@ -1468,7 +1469,7 @@ def deploy_model(
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type of an argument.
 
     Examples
@@ -1509,7 +1510,7 @@ def build_deployed_dictionary(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be analyzed.
@@ -1523,7 +1524,7 @@ def build_deployed_dictionary(
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type of an argument
 
     Examples
@@ -1566,7 +1567,7 @@ def sort_data_table(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be analyzed.
@@ -1601,7 +1602,7 @@ def sort_data_table(
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type of a argument.
 
     Examples
@@ -1644,7 +1645,7 @@ def extract_keys_from_data_table(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary of the data table.
@@ -1676,7 +1677,7 @@ def extract_keys_from_data_table(
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type of an argument.
 
     Examples
@@ -1724,7 +1725,7 @@ def train_coclustering(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be analyzed.
@@ -1781,9 +1782,9 @@ def train_coclustering(
 
     Raises
     ------
-    `ValueError`
+    ValueError
         Number of coclustering variables out of the range 2-10.
-    `TypeError`
+    TypeError
         Invalid type of an argument.
 
     Examples
@@ -1843,7 +1844,7 @@ def train_instance_variable_coclustering(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be analyzed.
@@ -1896,9 +1897,9 @@ def train_instance_variable_coclustering(
 
     Raises
     ------
-    `ValueError`
+    ValueError
         Number of coclustering variables out of the range 2-10.
-    `TypeError`
+    TypeError
         Invalid type of an argument.
 
     Examples
@@ -1967,7 +1968,7 @@ def simplify_coclustering(
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type of an argument.
 
     Examples
@@ -2042,7 +2043,7 @@ def prepare_coclustering_deployment(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be analyzed.
@@ -2082,7 +2083,7 @@ def prepare_coclustering_deployment(
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type of an argument
 
     Examples
@@ -2185,7 +2186,7 @@ def detect_data_table_format(
     ----------
     data_table_path : str
         Path of the data table file.
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`, optional
+    dictionary_file_path_or_domain : str or DictionaryDomain, optional
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str, optional
         Name of the dictionary.

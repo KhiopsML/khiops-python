@@ -129,7 +129,7 @@ class StringLikeType(KhiopsTaskArgumentType):
 class AbstractListType(KhiopsTaskArgumentType):
     """Base class for ListType containers
 
-    See the factory method `ListType`.
+    See the factory method [`ListType`][].
     """
 
     registry = {}
@@ -183,13 +183,13 @@ def ListType(value_type):  # pylint: disable=invalid-name
 
     Parameters
     ----------
-    value_type : `KhiopsTaskArgumentType`
+    value_type : KhiopsTaskArgumentType
         The type for the values contained in the list.
 
     Returns
     -------
     type
-        A class which inherits from `AbstractListType`.
+        A class which inherits from [`AbstractListType`][].
     """
 
     # Check the type of the list values
@@ -222,7 +222,7 @@ def ListType(value_type):  # pylint: disable=invalid-name
 class AbstractDictType(KhiopsTaskArgumentType):
     """Base class for DictType containers
 
-    See the factory method `DictType`.
+    See the factory method [`DictType`][].
     """
 
     registry = {}
@@ -292,15 +292,15 @@ def DictType(key_type, value_type):  # pylint: disable=invalid-name
 
     Parameters
     ----------
-    key_type : `KhiopsTaskArgumentType`
+    key_type : KhiopsTaskArgumentType
         Type of the dictionary's keys.
-    value_type : `KhiopsTaskArgumentType`
+    value_type : KhiopsTaskArgumentType
         Type of the dictionary's values.
 
     Returns
     -------
     type
-        A class which inherits from `AbstractDictType`.
+        A class which inherits from [`AbstractDictType`][].
     """
     # Check the type of the dictionary's key and value
     if not issubclass(key_type, KhiopsTaskArgumentType):
@@ -342,7 +342,7 @@ def DictType(key_type, value_type):  # pylint: disable=invalid-name
 class AbstractTupleType(KhiopsTaskArgumentType):
     """Base class for TupleTypes
 
-    See the factory method `TupleType`.
+    See the factory method [`TupleType`][].
     """
 
     registry = {}
@@ -400,14 +400,14 @@ def TupleType(*value_types):  # pylint: disable=invalid-name
 
     Parameters
     ----------
-    value_types : list of `KhiopsTaskArgumentType`
+    value_types : list of KhiopsTaskArgumentType
         Type of the tuples value types. The resulting tuple type will admit only tuples
         of the same size of ``value_types``.
 
     Returns
     -------
     type
-        A class which inherits from `AbstractTupleType`.
+        A class which inherits from [`AbstractTupleType`][].
     """
     # Check the type of the list values
     for value_type in value_types:

@@ -34,17 +34,17 @@ def encode_file_path(file_path):
 
     Returns
     -------
-    `bytes`
+    bytes
         If ``file_path`` is str
             - In Windows : The path decoded to UTF-8 excepting the "ANSI" Unicode
               characters.
             - In Linux/Unix/Mac : The path decoded to UTF-8.
-        If ``file_path`` is `bytes`:
+        If ``file_path`` is [`bytes`][]:
             It just returns the input ``file_path``
 
     Raises
     ------
-    `TypeError`
+    TypeError
         If ``file_path`` is not str or bytes
     """
     # Check input type
@@ -125,7 +125,7 @@ class KhiopsJSONObject:
 
     Raises
     ------
-    `KhiopsJSONError`
+    KhiopsJSONError
         If the JSON data is invalid.
 
     Attributes
@@ -147,7 +147,7 @@ class KhiopsJSONObject:
         family such as PataText or Enneade.
     json_key_sort_spec : dict, optional
         Dictionary that specifies the order of the keys in the Khiops JSON report.
-        Its values are `None`, except when they are dictionaries themselves.
+        Its values are [`None`][], except when they are dictionaries themselves.
 
         !!! note
 
@@ -247,12 +247,12 @@ class KhiopsJSONObject:
 
         Parameters
         ----------
-        stream : `io.IOBase`
+        stream : io.IOBase
             An output stream object.
 
         Returns
         -------
-        `.KhiopsOutputWriter`
+        KhiopsOutputWriter
             An output file object.
         """
         if self.khiops_encoding is None or self.khiops_encoding in ["ascii", "utf8"]:
@@ -361,9 +361,9 @@ class KhiopsOutputWriter:
 
     Parameters
     ----------
-    stream : `io.IOBase`
+    stream : io.IOBase
         A writable output stream. Special text transformations in buffers inheriting
-        from `io.TextIOBase` are ignored.
+        from [`io.TextIOBase`][] are ignored.
     force_ansi : bool, default False
         All output written will be transformed back ANSI characters in that range that
         were recoded to UTF-8.

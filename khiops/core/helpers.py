@@ -31,26 +31,26 @@ def _build_multi_table_dictionary_domain(
     """Builds a multi-table dictionary domain from a dictionary with a key
     Parameters
     ----------
-    dictionary_domain : `.DictionaryDomain`
+    dictionary_domain : DictionaryDomain
         DictionaryDomain object. Its root dictionary must have its key set.
     root_dictionary_name : str
         Name for the new root dictionary
     secondary_table_variable_name : str
         Name, in the root dictionary, for the "table" variable of the secondary table.
-    update_secondary_table_name : bool, default `False`
+    update_secondary_table_name : bool, default False
         If ``True``, then update the secondary table name according to the
         secondary table variable name. If not set, keep original table name.
 
     Returns
     -------
-    `.DictionaryDomain`
+    DictionaryDomain
         The new dictionary domain
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type of an argument
-    `ValueError`
+    ValueError
         Invalid values of an argument:
         - the dictionary domain doesn't contain at least a dictionary
         - the dictionary domain's root dictionary doesn't have a key set
@@ -171,7 +171,7 @@ def deploy_coclustering(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be analyzed.
@@ -228,7 +228,7 @@ def deploy_coclustering(
 
     See Also
     --------
-    - `.KhiopsRunner.run` : Additional options.
+    - [`KhiopsRunner.run`][] : Additional options.
 
     Returns
     -------
@@ -240,11 +240,11 @@ def deploy_coclustering(
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type ``dictionary_file_path_or_domain`` or ``key_variable_names``
-    `ValueError`
+    ValueError
         If the type of the dictionary key variables is not equal to ``Categorical``
-    `NotImplementedError`
+    NotImplementedError
         If the coclustering to be deployed is of the instance-variable type
 
     Examples
@@ -401,7 +401,7 @@ def deploy_predictor_for_metrics(
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the predictor dictionary.
@@ -435,7 +435,7 @@ def deploy_predictor_for_metrics(
 
     See Also
     --------
-    - `.KhiopsRunner.run` : Additional options.
+    - [`KhiopsRunner.run`][] : Additional options.
     -"""
     # Check the dictionary domain
     api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
@@ -505,11 +505,11 @@ def visualize_report(report_path):
 
     Raises
     ------
-    `ValueError`
+    ValueError
         If the report file path does not have extension '.khj' or '.khcj'.
-    `FileNotFoundError`
+    FileNotFoundError
         If the report file does not exist.
-    `RuntimeError`
+    RuntimeError
         If the report file is executable.
     """
     # Check that the report path:

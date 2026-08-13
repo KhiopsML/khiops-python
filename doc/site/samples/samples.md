@@ -352,9 +352,9 @@ Shows how to handle errors when training a predictor
 
     If the latter information is not enough to diagnose the problem, it is possible to
     save the temporary log file by activating the "trace" flag in the call to
-    `api.train_predictor`. The path of the log file will be printed to the standard
+    [`api.train_predictor`][]. The path of the log file will be printed to the standard
     output, as well as that of the dictionary and scenario files (note that the "trace"
-    keyword argument is available in all functions of the `khiops.core.api`
+    keyword argument is available in all functions of the [`khiops.core.api`][]
     submodule).
     
 
@@ -403,7 +403,7 @@ with open(scenario_path) as scenario_file:
 
 Trains a multi-table predictor in the simplest way possible
 
-    It is a call to `api.train_predictor` with additional parameters to handle
+    It is a call to [`api.train_predictor`][] with additional parameters to handle
     multi-table learning
     
 
@@ -439,7 +439,7 @@ kh.train_predictor(
 
 Trains a multi-table predictor with specific construction rules
 
-    It is the same as `.train_predictor_mt` but with the specification of the allowed
+    It is the same as [`train_predictor_mt`][] but with the specification of the allowed
     variable construction rules. The list of available rules is found in the field
     ``kh.ALL_CONSTRUCTION_RULES``
     
@@ -618,14 +618,15 @@ kh.train_predictor(
 
 Trains a predictor with various additional parameters
 
-    Some of these parameters are specific to `api.train_predictor` and others generic
+    Some of these parameters are specific to [`api.train_predictor`][] and others
+    generic
     to any Khiops execution.
 
     In this example, we specify the following parameters in the call:
      - A main target value
      - The path where to store the "Khiops scenario" script
      - The path where to store the log of the process
-     - The flag to show the execution trace (generic to any `khiops.core.api`
+     - The flag to show the execution trace (generic to any [`khiops.core.api`][]
        function)
 
     Additionally the Khiops runner is set such that the learning is executed with only
@@ -833,7 +834,7 @@ print("test  auc: " + str(mean_test_auc) + " +- " + str(sd_test_auc))
 
 Builds interpretation model for existing predictor
 
-    It calls `api.train_predictor` and `api.interpret_predictor` only with
+    It calls [`api.train_predictor`][] and [`api.interpret_predictor`][] only with
     their mandatory parameters.
     
 
@@ -876,7 +877,7 @@ Builds reinforced predictor for existing predictor
       variable, reinforcement part, final score after reinforcement, and class change
       tag.
 
-    It calls `api.train_predictor` and `api.reinforce_predictor` only with
+    It calls [`api.train_predictor`][] and [`api.reinforce_predictor`][] only with
     their mandatory parameters.
     
 
@@ -914,8 +915,8 @@ print(f"The reinforced predictor is '{reinforced_predictor_file_path}'")
 
 Trains a sequence of models with a decreasing number of variables
 
-    This example illustrates the use of the khiops classes `.DictionaryDomain` (for
-    reading dictionary files) and `.AnalysisResults` (for reading training/evaluation
+    This example illustrates the use of the khiops classes [`DictionaryDomain`][] (for
+    reading dictionary files) and [`AnalysisResults`][] (for reading training/evaluation
     results from JSON)
     
 
@@ -1000,7 +1001,7 @@ for i in reversed(range(variable_number)):
 
 Evaluates a predictor in the simplest way possible
 
-    It calls `api.evaluate_predictor` with only its mandatory parameters.
+    It calls [`api.evaluate_predictor`][] with only its mandatory parameters.
     
 
 ```python
@@ -1039,7 +1040,8 @@ print("Evaluation report available at " + evaluation_report_file_path)
 
 Shows the performance metrics of a predictor
 
-    See `evaluate_predictor` or `train_predictor_with_train_percentage` to see examples
+    See [`evaluate_predictor`][] or [`train_predictor_with_train_percentage`][] to see
+    examples
     on how to evaluate a model.
     
 
@@ -1119,7 +1121,7 @@ for metric_name in predictor_performance.get_metric_names():
 
 Train a database recoder in the simplest way possible
 
-    It is a call to `api.train_recoder` with only its mandatory parameters.
+    It is a call to [`api.train_recoder`][] with only its mandatory parameters.
     
 
 ```python
@@ -1215,7 +1217,7 @@ kh.train_recoder(
 
 Deploys a model in the simplest way possible
 
-    It is a call to `api.deploy_model` with its mandatory parameters.
+    It is a call to [`api.deploy_model`][] with its mandatory parameters.
 
     In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
     associated dictionary to the input database. The model predictions are written to
@@ -1253,7 +1255,7 @@ kh.deploy_model(
 ### `deploy_model_text()`
 
 Deploys a model learned on textual data
-    It is a call to `api.deploy_model` with its mandatory parameters, plus
+    It is a call to [`api.deploy_model`][] with its mandatory parameters, plus
     text-specific parameters.
 
     In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
@@ -1302,7 +1304,7 @@ kh.deploy_model(
 
 Deploys a multi-table classifier in the simplest way possible
 
-    It is a call to `api.deploy_model` with additional parameters to handle
+    It is a call to [`api.deploy_model`][] with additional parameters to handle
     multi-table deployment.
 
     In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
@@ -1350,7 +1352,7 @@ kh.deploy_model(
 
 Deploys a multi-table interpretor in the simplest way possible
 
-    It is a call to `api.deploy_model` with additional parameters related to
+    It is a call to [`api.deploy_model`][] with additional parameters related to
     the variable importances.
 
     In this example, a Selective Naive Bayes (SNB) interpretation model is
@@ -1411,7 +1413,7 @@ kh.deploy_model(
 
 Deploys a multi-table reinforced model in the simplest way possible
 
-    It is a call to `api.deploy_model` with additional parameters related to
+    It is a call to [`api.deploy_model`][] with additional parameters related to
     the lever variables.
 
     In this example, a reinforced Selective Naive Bayes (SNB) model is
@@ -1529,7 +1531,7 @@ Deploys a model with a specification of additional variables to be included
     - The probabilities of all modalities of the target variable.
 
     The "expert" part of this example is the use of the khiops dictionary interface
-    and the `.DictionaryDomain` class
+    and the [`DictionaryDomain`][] class
     
 
 ```python
@@ -1712,7 +1714,7 @@ print(f"R2 (explained variance) = {r2_score}")
 
 Sorts a database in the simplest way possible
 
-    It is a call to `api.sort_data_table` with only its mandatory parameters. This
+    It is a call to [`api.sort_data_table`][] with only its mandatory parameters. This
     sorts a data table by its default key variable (specified in the table's
     dictionary).
     
@@ -1741,7 +1743,7 @@ kh.sort_data_table(
 
 Sorts a database by a field other than the default table key
 
-    It is a call to `api.sort_data_table` with additional parameters to specify the
+    It is a call to [`api.sort_data_table`][] with additional parameters to specify the
     sorting fields.
     
 
@@ -1772,7 +1774,7 @@ kh.sort_data_table(
 
 Extracts the keys from a database
 
-    It is a call to `api.extract_keys_from_data_table` with only its mandatory
+    It is a call to [`api.extract_keys_from_data_table`][] with only its mandatory
     parameters.
 
     Pre-requisite: the database must be sorted by its key.
@@ -1805,7 +1807,7 @@ kh.extract_keys_from_data_table(
 
 Trains a coclustering model in the simplest way possible
 
-    It is a call to `api.train_coclustering` with only its mandatory parameters.
+    It is a call to [`api.train_coclustering`][] with only its mandatory parameters.
     
 
 ```python
@@ -1838,7 +1840,8 @@ print(f"Coclustering report file available at {coclustering_report_path}")
 
 Trains an instance-variable coclustering model in the simplest way possible
 
-    It is a call to `api.train_instance_variable_coclustering` with only its mandatory
+    It is a call to [`api.train_instance_variable_coclustering`][] with only its
+    mandatory
     parameters.
     
 
@@ -1982,7 +1985,7 @@ kh.deploy_coclustering(
 
 Deploys a coclustering step-by-step
 
-    The `.api.prepare_coclustering_deployment` method is called twice to prepare the
+    The [`api.prepare_coclustering_deployment`][] method is called twice to prepare the
     deployment at two granularity levels. Then, the model is deployed and the respective
     deployment dictionary is built.
 

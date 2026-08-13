@@ -35,21 +35,21 @@ def train_test_split_dataset(ds_spec, y=None, test_size=0.25, **kwargs):
 
     See Also
     --------
-    - `sklearn.model_selection.train_test_split` : Other optional parameters.
+    - [`sklearn.model_selection.train_test_split`][] : Other optional parameters.
 
     Raises
     ------
-    `TypeError`
+    TypeError
         If ``ds_spec`` is not dict-like.
 
-    `ValueError`
+    ValueError
         If the tables in ``ds_spec`` are file-paths.
 
     Examples
     --------
     See the following functions of the ``samples_sklearn.py`` documentation script:
-        - `samples_sklearn.khiops_classifier_multitable_star`
-        - `samples_sklearn.khiops_classifier_multitable_snowflake`
+        - [`samples_sklearn.khiops_classifier_multitable_star`][]
+        - [`samples_sklearn.khiops_classifier_multitable_snowflake`][]
 
     """
     # Check the types

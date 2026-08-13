@@ -13,7 +13,7 @@ class SystemSettings:
 
     !!! note
 
-        These settings are not available in the `CommandLineOptions`.
+        These settings are not available in the [`CommandLineOptions`][].
     """
 
     def __init__(
@@ -43,9 +43,9 @@ class SystemSettings:
 
         Raises
         ------
-        `TypeError`
+        TypeError
             If any of the system settings does not have the proper type.
-        `ValueError`
+        ValueError
             If ``max_cores`` or ``memory_limit_mb`` are set to negative numbers.
         """
         # Check the field types and ranges where applicable
@@ -150,7 +150,7 @@ class CommandLineOptions:
 
         Raises
         ------
-        `TypeError`
+        TypeError
             If any of the command line options does not have the proper type.
         """
         if self.output_scenario_path and not is_string_like(self.output_scenario_path):
@@ -269,7 +269,8 @@ def is_string_like(test_object):
 def is_list_like(list_like):
     """Returns True if an object is list-like
 
-    An object is ``list-like`` if and only if inherits from `collections.abc.Sequence`
+    An object is ``list-like`` if and only if inherits from
+    [`collections.abc.Sequence`][]
     and it is not `string-like <is_string_like>`
     """
     return isinstance(list_like, Sequence) and not is_string_like(list_like)
@@ -279,7 +280,7 @@ def is_dict_like(test_object):
     """Returns True if an object is dict-like
 
     An object is ``dict-like`` if and only if inherits from the
-    `collections.abc.Mapping`.
+    [`collections.abc.Mapping`][].
     """
     return isinstance(test_object, Mapping)
 

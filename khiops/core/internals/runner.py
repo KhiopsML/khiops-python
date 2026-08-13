@@ -173,7 +173,7 @@ def _infer_base_dir_for_conda_based_or_pip_installations():
             It returns an empty string if it detects a borderline installation
     """
     assert os.path.basename(Path(__file__).parents[2]) == "khiops", (
-        "Please fix the `Path.parents` in this method "
+        "Please fix the [`Path.parents`][] in this method "
         "so it finds environment directory of this module"
     )
 
@@ -245,7 +245,8 @@ def _infer_khiops_installation_method(trace=False):
     - 'conda-based' environment is similar to 'conda' except that
        it was not activated previously nor during the execution
        and thus the CONDA_PREFIX environment variable is undefined
-       and the path to the `bin` directory inside the conda environment is not in PATH
+       and the path to the [`bin`][] directory inside the conda environment is not in
+       PATH
     - 'pip' environment containing binaries, shared libraries and the Python libraries
       can either be:
       - system-wide (strongly discouraged)
@@ -402,7 +403,7 @@ class KhiopsRunner(ABC):
 
         Raises
         ------
-        `.KhiopsEnvironmentError`
+        KhiopsEnvironmentError
             If set to a local path: if it is a file or if it does not have ``+rwx``
             permissions.
         """
@@ -514,7 +515,7 @@ class KhiopsRunner(ABC):
 
     @property
     def khiops_version(self):
-        """`.KhiopsVersion`: The version of the Khiops backend of this runner"""
+        """[`KhiopsVersion`][]: The version of the Khiops backend of this runner"""
         return self._get_khiops_version()
 
     def _get_khiops_version(self):
@@ -546,7 +547,7 @@ class KhiopsRunner(ABC):
         # is still in the 'khiops.core.internals' package
         assert (
             os.path.basename(Path(__file__).parents[2]) == "khiops"
-        ), "Please fix the `Path.parents` in this method "
+        ), "Please fix the [`Path.parents`][] in this method "
         library_root_dir_path = Path(__file__).parents[2]
 
         status_msg = "Khiops Python library settings\n"
@@ -591,7 +592,7 @@ class KhiopsRunner(ABC):
 
     @abstractmethod
     def _initialize_khiops_version(self):
-        """Initialization of `khiops_version` to be implemented in child classes"""
+        """Initialization of [`khiops_version`][] to be implemented in child classes"""
 
     def run(
         self,
@@ -609,18 +610,18 @@ class KhiopsRunner(ABC):
 
         Parameters
         ----------
-        task : `.KhiopsTask`
+        task : KhiopsTask
             Khiops task to be run.
         task_args : dict
             Arguments for the task.
-        command_line_options : `.CommandLineOptions`, optional
+        command_line_options : CommandLineOptions, optional
             Command line options for all tasks. If not set the default values are used.
-            See the `.CommandLineOptions` for more information.
+            See the [`CommandLineOptions`][] for more information.
         trace : bool, default ``False``
             If True prints the command line executed of the process and does not delete
             any temporary files created.
-        system_settings : `.SystemSettings`, optional
-            *Advanced:* System settings for all tasks. See the `.SystemSettings`
+        system_settings : SystemSettings, optional
+            *Advanced:* System settings for all tasks. See the [`SystemSettings`][]
             class for more information.
         stdout_file_path : str, default ""
             *Advanced* Path to a file where the Khiops process writes its stdout stream.
@@ -639,12 +640,12 @@ class KhiopsRunner(ABC):
 
         Raises
         ------
-        `ValueError`
+        ValueError
             - Unknown keyword argument
             - Files or executable not found
             - Errors in the execution of the Khiops tool
 
-        `TypeError`
+        TypeError
             - Invalid type of a keyword argument
             - When the search/replace pairs are not strings
         """
@@ -909,7 +910,7 @@ class KhiopsRunner(ABC):
 
         Raises
         ------
-        `.KhiopsRuntimeError`
+        KhiopsRuntimeError
             If there were any errors in the Khiops execution.
         """
 
@@ -1135,7 +1136,7 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _detect_library_installation_incompatibilities(self, library_root_dir_path):
         """Detects known incompatible installations of this library
-        in the 3 installation modes see `_infer_khiops_installation_method`
+        in the 3 installation modes see [`_infer_khiops_installation_method`][]
         (pip, conda, conda-based)
 
         The error_list or warning_list collections
@@ -1571,7 +1572,7 @@ def get_runner():
 
     Returns
     -------
-    `.KhiopsRunner`
+    KhiopsRunner
         The current Khiops Python runner of the module.
     """
     #  Define and initialize a runner for a local Khiops installation
