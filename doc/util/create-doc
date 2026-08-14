@@ -52,7 +52,7 @@ KHIOPS_TUTORIAL_REPO_REF="${KHIOPS_TUTORIAL_REPO_REF:-$DEFAULT_KHIOPS_TUTORIAL_R
 KHIOPS_TUTORIAL_REPO_DIR="${KHIOPS_TUTORIAL_REPO_DIR:-$DEFAULT_KHIOPS_TUTORIAL_DIR}"
 
 # Check command existence
-command_requirements="python zip"
+command_requirements="zip"
 if [[ $DOWNLOAD_REPO ]]
 then
   command_requirements="$command_requirements git"
@@ -82,7 +82,7 @@ tutorials_dir="$(realpath "${SITE_DIR}/tutorials")"
 if [[ $TRANSFORM_NOTEBOOKS ]]
 then
   echo "Creating Markdown tutorial pages"
-  python "${SCRIPT_DIR}/convert_tutorials.py" \
+  uv run --active --frozen --no-sync "${SCRIPT_DIR}/convert_tutorials.py" \
       --execute-notebooks "$KHIOPS_TUTORIAL_REPO_DIR" "$tutorials_dir"
 fi
 
@@ -95,7 +95,7 @@ touch exercises/.dummy # Create a dummy so the "exercises" directory is created 
 zip "core_tutorials_solutions.zip" Core*.ipynb data/*/* exercises/.dummy
 zip "sklearn_tutorials_solutions.zip" Sklearn*.ipynb data/*/* exercises/.dummy
 cd "$KHIOPS_TUTORIAL_REPO_DIR"
-python create-coursework.py
+uv run --active --frozen --no-sync create-coursework.py
 cd coursework
 mkdir -p exercises
 touch exercises/.dummy # Create a dummy so the "exercises" directory is created on unzip
@@ -118,12 +118,12 @@ if [[ ! $PREPARE_ONLY ]]; then
 
   # Inject the khiops version into zensical.toml (replaces the old
   # mkdocs hooks-based mechanism, which Zensical does not support)
-  VERSION=$(python -c "import khiops; print(khiops.__version__)")
+  VERSION=$(uv run --active --frozen --no-sync python -c "import khiops; print(khiops.__version__)")
   awk -v v="$VERSION" '
     /^site_name = / { print "site_name = \"Khiops Python " v "\""; next }
     { print }
   ' zensical.toml > zensical.toml.tmp && mv zensical.toml.tmp zensical.toml
-  zensical build --strict
+  uv run --active --frozen --no-sync zensical build --clean --strict
 
   # Restore zensical.toml to its previous state
   git checkout -- zensical.toml
