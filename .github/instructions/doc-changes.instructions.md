@@ -41,8 +41,8 @@ The Zensical configuration file `zensical.toml` is at the repository root.
 ## Build and Validation
 
 ```bash
-# Install doc dependencies (do NOT create a virtualenv inside doc/ — Zensical will process its .md files)
-pip install -U -r doc/util/requirements.txt
+# Install doc dependencies (do NOT create a virtualenv inside doc/util — Zensical will process its .md files).
+uv pip install -U -r doc/util/requirements.txt
 
 # Also requires:
 # - The 'black' Python package (used by convert_samples.py to format code snippets)
@@ -64,7 +64,7 @@ zensical serve
 doc/util/clean-doc
 ```
 
-The `create-doc` script requires `python`, `zip`, and `git` (if
+The `create-doc` script requires `python`, `uv` and `git` (if
 downloading tutorials). Output goes to `doc/build/html/`.
 
 The `create-doc` script accepts the following options:
@@ -86,15 +86,14 @@ documentation builds. It triggers on:
 - **PRs** touching `doc/site/**.md`, `doc/util/create-doc`, `doc/util/clean-doc`, `doc/util/*.py`,
   `zensical.toml`, `khiops/**.py`, or the workflow file itself
 - **`workflow_dispatch`** with optional inputs:
+  - `khiops-revision` (default `11.0.1`)
   - `khiops-python-tutorial-revision` (default: `11.0.0.0`)
   - `khiops-samples-revision` (default: `11.0.0`)
-  - `image-tag` (default: `latest`) — the dev Docker image tag
 
-**Build job** — runs inside the
-`ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:<image-tag>` Docker
-image:
+**Build job** 
 
-1. Installs the khiops-python package itself (`pip install .`)
+1. Installs the khiops-core package (`uv pip install khiops-core`) and
+   khiops-python package itself (`uv pip install .`)
 2. Downloads sample datasets via `kh-download-datasets`
 3. Installs doc Python requirements from `doc/util/requirements.txt`
 4. Runs `doc/util/create-doc -t -d -g <tutorial-revision>`

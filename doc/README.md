@@ -8,10 +8,10 @@ Khiops Python library.
 ```bash
 # Working dir = khiops-python (repository root)
 
-# You'll need the python packages in the requirements.txt file in the doc/ directory
-# Warning: If you create a virtualenv, do not place it within the doc/ directory.
-#          The installed packages may contain .md files and Zensical will process them!
-# pip install -U -r doc/util/requirements.txt
+# You'll need the python packages in the doc/util/requirements.txt file
+# Warning: If you create a virtualenv, do not place it within the doc/util
+directory. The installed packages may contain .md files and Zensical will
+process them!
 
 # Execute this if there were non committed updates to samples.py or samples_sklearn.py:
 # doc/util/convert-samples-hook
@@ -231,5 +231,4 @@ Notes and warnings use the `!!!` syntax:
     This is a warning.
 ```
 
-See the [Zensical Material admonitions docs](https://squidfunk.github.io/zensical-material/reference/admonitions/)
-for more details.
+See the [Zensical admonitions docs](https://zensical.org/docs/authoring/admonitions/) for more details.
