@@ -209,7 +209,7 @@ Types of secondary tables include:
 
 Note that besides the root table names the components of a data path are **table variable names**
 and not *table names*. For further details about the multi-table capabilities of Khiops refer to the
-documentation at [the Khiops site](https://khiops.org/setup/KhiopsGuide.pdf).
+documentation at [the Khiops site](https://khiops.org/ui-docs/khiops/).
 
 The class [DictionaryDomain][khiops.core.dictionary.DictionaryDomain] provides the helper method
 [extract_data_paths][khiops.core.dictionary.DictionaryDomain.extract_data_paths] that extracts the
