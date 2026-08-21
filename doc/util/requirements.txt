@@ -1,4 +1,4 @@
-zensical>=0.0.51
+zensical>=0.0.51,<=0.0.55
 mkdocstrings[python]>=0.25.0
 ipykernel>=6.9.1
 nbconvert>=7.0.0
