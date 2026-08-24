@@ -24,7 +24,9 @@ nav = [
           { "exceptions" = "core/exceptions.md" },
           { "helpers" = "core/helpers.md" },
         ] },
-      { "tools" = "tools/index.md" },
+      { "tools" = [
+          "tools/index.md"
+        ] },
       { "internals" = [
           "internal/index.md",
           { "dataset" = "internal/dataset.md" },
