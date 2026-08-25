@@ -61,9 +61,8 @@ kh.build_dictionary_from_data_table(
 
 Creates a dictionary domain from scratch
 
-    This dictionary domain contains a set of dictionaries,
-    with all possible variable types.
-    
+This dictionary domain contains a set of dictionaries,
+with all possible variable types.
 
 ```python
 # Imports
@@ -136,9 +135,8 @@ dictionary_domain.export_khiops_dictionary_file(dictionary_file_path)
 
 Detects the format of a data table with and without a dictionary file
 
-    The user may provide a dictionary file or dictionary domain object specifying the
-    table schema. The detection heuristic is more accurate with this information.
-    
+The user may provide a dictionary file or dictionary domain object specifying the
+table schema. The detection heuristic is more accurate with this information.
 
 ```python
 # Imports
@@ -186,8 +184,7 @@ print("Format detected (with dictionary file) on reformatted table:", format_spe
 
 Runs an integrity check of a database
 
-    The results are stored in the specified log file with at most 50 error messages.
-    
+The results are stored in the specified log file with at most 50 error messages.
 
 ```python
 # Imports
@@ -346,17 +343,17 @@ kh.train_predictor(
 
 Shows how to handle errors when training a predictor
 
-    Trains the predictor and handles the errors by printing a custom message. When the
-    Khiops application fails the Khiops Python library will raise a
-    KhiopsRuntimeError reporting the errors encountered by Khiops.
+Trains the predictor and handles the errors by printing a custom message. When the
+Khiops application fails the Khiops Python library will raise a
+KhiopsRuntimeError reporting the errors encountered by Khiops.
 
-    If the latter information is not enough to diagnose the problem, it is possible to
-    save the temporary log file by activating the "trace" flag in the call to
-    [`api.train_predictor`][]. The path of the log file will be printed to the standard
-    output, as well as that of the dictionary and scenario files (note that the "trace"
-    keyword argument is available in all functions of the [`khiops.core.api`][]
-    submodule).
-    
+If the latter information is not enough to diagnose the problem, it is
+possible to save the temporary log file by activating the "trace" flag in
+the call to [train_predictor][khiops.core.api.train_predictor].
+The path of the log file will be printed to the standard output, as well as
+that of the dictionary and scenario files (note that the "trace" keyword
+argument is available in all functions of the [khiops.core.api][]
+submodule).
 
 ```python
 # Imports
@@ -403,9 +400,8 @@ with open(scenario_path) as scenario_file:
 
 Trains a multi-table predictor in the simplest way possible
 
-    It is a call to [`api.train_predictor`][] with additional parameters to handle
-    multi-table learning
-    
+It is a call to [train_predictor][khiops.core.api.train_predictor] with
+additional parameters to handle multi-table learning.
 
 ```python
 # Imports
@@ -439,10 +435,9 @@ kh.train_predictor(
 
 Trains a multi-table predictor with specific construction rules
 
-    It is the same as [`train_predictor_mt`][] but with the specification of the allowed
-    variable construction rules. The list of available rules is found in the field
-    ``kh.ALL_CONSTRUCTION_RULES``
-    
+It is the same as [train_predictor_mt][] but with the specification of the allowed
+variable construction rules. The list of available rules is found in the field
+`kh.ALL_CONSTRUCTION_RULES`.
 
 ```python
 # Imports
@@ -519,8 +514,7 @@ kh.train_predictor(
 
 Trains a predictor with a 90%-10% train-test split
 
-    Note: The default is a 70%-30% split
-    
+Note: The default is a 70%-30% split
 
 ```python
 # Imports
@@ -618,20 +612,18 @@ kh.train_predictor(
 
 Trains a predictor with various additional parameters
 
-    Some of these parameters are specific to [`api.train_predictor`][] and others
-    generic
-    to any Khiops execution.
+Some of these parameters are specific to [khiops.core.api.train_predictor][]
+and others generic to any Khiops execution.
 
-    In this example, we specify the following parameters in the call:
-     - A main target value
-     - The path where to store the "Khiops scenario" script
-     - The path where to store the log of the process
-     - The flag to show the execution trace (generic to any [`khiops.core.api`][]
-       function)
+In this example, we specify the following parameters in the call:
+ - A main target value
+ - The path where to store the "Khiops scenario" script
+ - The path where to store the log of the process
+ - The flag to show the execution trace (generic to any [khiops.core.api][]
+   function)
 
-    Additionally the Khiops runner is set such that the learning is executed with only
-    1000 MB of memory.
-    
+Additionally the Khiops runner is set such that the learning is executed with only
+1000 MB of memory.
 
 ```python
 # Imports
@@ -834,9 +826,8 @@ print("test  auc: " + str(mean_test_auc) + " +- " + str(sd_test_auc))
 
 Builds interpretation model for existing predictor
 
-    It calls [`api.train_predictor`][] and [`api.interpret_predictor`][] only with
-    their mandatory parameters.
-    
+It calls [khiops.core.api.train_predictor][] and
+[khiops.core.api.interpret_predictor][] only with their mandatory parameters.
 
 ```python
 # Imports
@@ -867,19 +858,18 @@ print(f"The interpretation model is '{interpretor_file_path}'")
 
 Builds reinforced predictor for existing predictor
 
-    The reinforced predictor produces the following reinforcement variables for the
-    specified target value to reinforce (i.e. whose probability of occurrence is
-    tentatively increased):
+The reinforced predictor produces the following reinforcement variables for the
+specified target value to reinforce (i.e. whose probability of occurrence is
+tentatively increased):
 
-    - initial score, containing the conditional probability of the target value before
-      reinforcement
-    - four variables are output in decreasing reinforcement value: name of the lever
-      variable, reinforcement part, final score after reinforcement, and class change
-      tag.
+- initial score, containing the conditional probability of the target value before
+  reinforcement
+- four variables are output in decreasing reinforcement value: name of the lever
+  variable, reinforcement part, final score after reinforcement, and class change
+  tag.
 
-    It calls [`api.train_predictor`][] and [`api.reinforce_predictor`][] only with
-    their mandatory parameters.
-    
+It calls [khiops.core.api.train_predictor][] and
+[khiops.core.api.reinforce_predictor][] only with their mandatory parameters.
 
 ```python
 # Imports
@@ -915,10 +905,11 @@ print(f"The reinforced predictor is '{reinforced_predictor_file_path}'")
 
 Trains a sequence of models with a decreasing number of variables
 
-    This example illustrates the use of the khiops classes [`DictionaryDomain`][] (for
-    reading dictionary files) and [`AnalysisResults`][] (for reading training/evaluation
-    results from JSON)
-    
+This example illustrates the use of the khiops classes
+[DictionaryDomain][khiops.core.dictionary.DictionaryDomain] (for reading
+dictionary files) and
+[AnalysisResults][khiops.core.analysis_results.AnalysisResults] (for reading
+training/evaluation results from JSON).
 
 ```python
 # Imports
@@ -1001,8 +992,7 @@ for i in reversed(range(variable_number)):
 
 Evaluates a predictor in the simplest way possible
 
-    It calls [`api.evaluate_predictor`][] with only its mandatory parameters.
-    
+It calls [khiops.core.api.evaluate_predictor][] with only its mandatory parameters.
 
 ```python
 # Imports
@@ -1040,10 +1030,9 @@ print("Evaluation report available at " + evaluation_report_file_path)
 
 Shows the performance metrics of a predictor
 
-    See [`evaluate_predictor`][] or [`train_predictor_with_train_percentage`][] to see
-    examples
-    on how to evaluate a model.
-    
+See [evaluate_predictor][] or [train_predictor_with_train_percentage][] to see
+examples
+on how to evaluate a model.
 
 ```python
 # Imports
@@ -1121,8 +1110,8 @@ for metric_name in predictor_performance.get_metric_names():
 
 Train a database recoder in the simplest way possible
 
-    It is a call to [`api.train_recoder`][] with only its mandatory parameters.
-    
+It is a call to [khiops.core.api.train_recoder][] with only its mandatory
+parameters.
 
 ```python
 # Imports
@@ -1143,8 +1132,7 @@ kh.train_recoder(
 
 Trains a recoder that transforms variable values to their respective part labels
 
-    It also creates 10 pair features.
-    
+It also creates 10 pair features.
 
 ```python
 # Imports
@@ -1176,8 +1164,7 @@ kh.train_recoder(
 
 Trains a recoder that flattens a multi-table database into a single table
 
-    The constructed variables are all kept and no recoding is performed on their values
-    
+The constructed variables are all kept and no recoding is performed on their values
 
 ```python
 # Imports
@@ -1217,12 +1204,11 @@ kh.train_recoder(
 
 Deploys a model in the simplest way possible
 
-    It is a call to [`api.deploy_model`][] with its mandatory parameters.
+It is a call to [khiops.core.api.deploy_model][] with its mandatory parameters.
 
-    In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
-    associated dictionary to the input database. The model predictions are written to
-    the output database.
-    
+In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
+associated dictionary to the input database. The model predictions are written to
+the output database.
 
 ```python
 # Imports
@@ -1255,13 +1241,12 @@ kh.deploy_model(
 ### `deploy_model_text()`
 
 Deploys a model learned on textual data
-    It is a call to [`api.deploy_model`][] with its mandatory parameters, plus
-    text-specific parameters.
+It is a call to [khiops.core.api.deploy_model][] with its mandatory parameters, plus
+text-specific parameters.
 
-    In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
-    associated dictionary to the input database. The model predictions are written to
-    the output database.
-    
+In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
+associated dictionary to the input database. The model predictions are written to
+the output database.
 
 ```python
 # Imports
@@ -1304,13 +1289,12 @@ kh.deploy_model(
 
 Deploys a multi-table classifier in the simplest way possible
 
-    It is a call to [`api.deploy_model`][] with additional parameters to handle
-    multi-table deployment.
+It is a call to [khiops.core.api.deploy_model][] with additional parameters
+to handle multi-table deployment.
 
-    In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
-    associated dictionary to the input database. The model predictions are written to
-    the output database.
-    
+In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
+associated dictionary to the input database. The model predictions are written to
+the output database.
 
 ```python
 # Imports
@@ -1352,13 +1336,12 @@ kh.deploy_model(
 
 Deploys a multi-table interpretor in the simplest way possible
 
-    It is a call to [`api.deploy_model`][] with additional parameters related to
-    the variable importances.
+It is a call to [khiops.core.api.deploy_model][] with additional parameters
+related to the variable importances.
 
-    In this example, a Selective Naive Bayes (SNB) interpretation model is
-    deployed by applying its associated dictionary to the input database.
-    The model variable importances are written to the output data table.
-    
+In this example, a Selective Naive Bayes (SNB) interpretation model is
+deployed by applying its associated dictionary to the input database.
+The model variable importances are written to the output data table.
 
 ```python
 # Imports
@@ -1413,13 +1396,12 @@ kh.deploy_model(
 
 Deploys a multi-table reinforced model in the simplest way possible
 
-    It is a call to [`api.deploy_model`][] with additional parameters related to
-    the lever variables.
+It is a call to [khiops.core.api.deploy_model][] with additional parameters
+related to the lever variables.
 
-    In this example, a reinforced Selective Naive Bayes (SNB) model is
-    deployed by applying its associated dictionary to the input database.
-    The reinforced model predictions are written to the output data table.
-    
+In this example, a reinforced Selective Naive Bayes (SNB) model is
+deployed by applying its associated dictionary to the input database.
+The reinforced model predictions are written to the output data table.
 
 ```python
 # Imports
@@ -1524,15 +1506,14 @@ kh.deploy_model(
 
 Deploys a model with a specification of additional variables to be included
 
-    In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
-    associated dictionary to the input database. Specifically, the output file contains:
+In this example, a Selective Naive Bayes (SNB) model is deployed by applying its
+associated dictionary to the input database. Specifically, the output file contains:
 
-    - The model predictions
-    - The probabilities of all modalities of the target variable.
+- The model predictions
+- The probabilities of all modalities of the target variable.
 
-    The "expert" part of this example is the use of the khiops dictionary interface
-    and the [`DictionaryDomain`][] class
-    
+The "expert" part of this example is the use of the khiops dictionary interface
+and the [DictionaryDomain][khiops.core.dictionary.DictionaryDomain] class
 
 ```python
 # Imports
@@ -1714,10 +1695,9 @@ print(f"R2 (explained variance) = {r2_score}")
 
 Sorts a database in the simplest way possible
 
-    It is a call to [`api.sort_data_table`][] with only its mandatory parameters. This
-    sorts a data table by its default key variable (specified in the table's
-    dictionary).
-    
+It is a call to [khiops.core.api.sort_data_table][] with only its mandatory
+parameters. This sorts a data table by its default key variable (specified
+in the table's dictionary).
 
 ```python
 # Imports
@@ -1743,9 +1723,8 @@ kh.sort_data_table(
 
 Sorts a database by a field other than the default table key
 
-    It is a call to [`api.sort_data_table`][] with additional parameters to specify the
-    sorting fields.
-    
+It is a call to [khiops.core.api.sort_data_table][] with additional parameters
+to specify the sorting fields.
 
 ```python
 # Imports
@@ -1774,11 +1753,10 @@ kh.sort_data_table(
 
 Extracts the keys from a database
 
-    It is a call to [`api.extract_keys_from_data_table`][] with only its mandatory
-    parameters.
+It is a call to [khiops.core.api.extract_keys_from_data_table][] with only
+its mandatory parameters.
 
-    Pre-requisite: the database must be sorted by its key.
-    
+Pre-requisite: the database must be sorted by its key.
 
 ```python
 # Imports
@@ -1807,8 +1785,8 @@ kh.extract_keys_from_data_table(
 
 Trains a coclustering model in the simplest way possible
 
-    It is a call to [`api.train_coclustering`][] with only its mandatory parameters.
-    
+It is a call to [khiops.core.api.train_coclustering][] with only its mandatory
+parameters.
 
 ```python
 # Imports
@@ -1840,10 +1818,8 @@ print(f"Coclustering report file available at {coclustering_report_path}")
 
 Trains an instance-variable coclustering model in the simplest way possible
 
-    It is a call to [`api.train_instance_variable_coclustering`][] with only its
-    mandatory
-    parameters.
-    
+It is a call to [khiops.core.api.train_instance_variable_coclustering][] with
+only its mandatory parameters.
 
 ```python
 # Imports
@@ -1985,12 +1961,11 @@ kh.deploy_coclustering(
 
 Deploys a coclustering step-by-step
 
-    The [`api.prepare_coclustering_deployment`][] method is called twice to prepare the
-    deployment at two granularity levels. Then, the model is deployed and the respective
-    deployment dictionary is built.
+The [khiops.core.api.prepare_coclustering_deployment][] method is called
+twice to prepare the deployment at two granularity levels. Then, the model
+is deployed and the respective deployment dictionary is built.
 
-    This is one of the most complex workflows of the Khiops suite.
-    
+This is one of the most complex workflows of the Khiops suite.
 
 ```python
 # Imports
@@ -2069,10 +2044,9 @@ kh.build_deployed_dictionary(
 
 Trains a simple model with a prologue written in the Khiops scenario language
 
-    !!! note
+!!! note
 
-        This is an **advanced** feature.
-    
+    This is an **advanced** feature.
 
 ```python
 # Imports

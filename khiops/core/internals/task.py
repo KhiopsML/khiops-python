@@ -31,8 +31,8 @@ def encode_path_valued_arg(arg, arg_name, arg_type):
     arg_name : str
         The name of the argument.
     arg_type : KhiopsTaskArgumentType
-        The type of the argument. Must be either [`StringLikeType`][] or
-        [`DictType`][]  [`StringLikeType`][] , [`StringLikeType`][] .
+        The type of the argument. Must be either [StringLikeType][] or
+        [DictType][][  [StringLikeType][] , [StringLikeType][]] .
 
     See Also
     --------
@@ -66,23 +66,23 @@ class KhiopsTask:
     args_signature : list
         A list of 2-tuples for each mandatory parameter of the task, containing:
             - its name (str)
-            - its type ([`KhiopsTaskArgumentType`][])
+            - its type ([KhiopsTaskArgumentType][])
     kwargs_signature : list
         A list of 3-tuples for each optional parameter of the task, containing:
             - its name (str)
-            - its type ([`KhiopsTaskArgumentType`][])
+            - its type ([KhiopsTaskArgumentType][])
             - its default value
     path_valued_arg_names : list of str
         A list of the parameters that contain paths. They must be contained either in
         args_signature or kwargs_signature. The only accepted types are
-        [`StringLikeType`][] or containers thereof.
+        [StringLikeType][] or containers thereof.
     scenario_template : str
         A Khiops scenario template. The template mini-language is described above.
 
     Attributes
     ----------
     scenario : ConfigurableKhiopsScenario
-        Scenario object built from ``scenario_template``.
+        Scenario object built from `scenario_template`.
     """
 
     def __init__(
@@ -339,10 +339,10 @@ class KhiopsTaskFamily:
 
     @property
     def end_version(self):
-        """[`KhiopsVersion`][] : Khiops version where support for this task ended
+        """[KhiopsVersion][] : Khiops version where support for this task ended
 
-        It is ``None`` if the task is still supported. May be set with either str or
-        [`KhiopsVersion`][] or ``None``.
+        It is `None` if the task is still supported. May be set with either str or
+        [KhiopsVersion][] or `None`.
         """
         return self._end_version
 
@@ -360,7 +360,7 @@ class KhiopsTaskFamily:
 
     @property
     def start_version(self):
-        """[`KhiopsVersion`][] : Khiops version where the support for this task started
+        """[KhiopsVersion][] : Khiops version where the support for this task started
 
         Raises
         ------
@@ -381,8 +381,8 @@ class KhiopsTaskFamily:
         ----------
         task : KhiopsTask
             The task to be registered. Must have the same name of the family.
-        overwrite : bool, default ``False``
-            If ``True`` it does not raise an error if a task with the same version is
+        overwrite : bool, default `False`
+            If `True` it does not raise an error if a task with the same version is
             already registered.
 
         Raises
@@ -442,12 +442,12 @@ class KhiopsTaskFamily:
         Returns
         -------
         KhiopsTask
-            The latest task object compatible with the ``target_version``.
+            The latest task object compatible with the `target_version`.
 
         Raises
         ------
         TypeError
-            If target_version is not str or [`KhiopsVersion`][].
+            If target_version is not str or [KhiopsVersion][].
 
         """
         # Check the argument type
@@ -485,7 +485,7 @@ class KhiopsTaskFamily:
 
     @property
     def all_intro_versions(self):
-        """list of [`KhiopsVersion`][] : A sorted list of the task introduction
+        """list of [KhiopsVersion][] : A sorted list of the task introduction
         versions.
 
         The list is sorted in reverse order.
@@ -494,7 +494,7 @@ class KhiopsTaskFamily:
 
     @property
     def latest_intro_version(self):
-        """[`KhiopsVersion`][] : The latest introduction version of the task.
+        """[KhiopsVersion][] : The latest introduction version of the task.
 
         Raises
         ------
@@ -564,8 +564,8 @@ class KhiopsTaskRegistry:
 
         Returns
         -------
-        list of [`KhiopsTask`][]
-            The list of compatible tasks with ``target_version``.
+        list of KhiopsTask
+            The list of compatible tasks with `target_version`.
         """
         # Check the argument type
         if not isinstance(target_version, (str, KhiopsVersion)):
@@ -598,13 +598,13 @@ class KhiopsTaskRegistry:
 
         Returns
         -------
-        [`KhiopsVersion`][] or ``None``
-            Either the end version for this task or ``None`` if it is still supported.
+        KhiopsVersion or None
+            Either the end version for this task or [None][] if it is still supported.
 
         Raises
         ------
         TypeError
-            If ``task_name`` is not of type str.
+            If `task_name` is not of type str.
         ValueError
             If there are no registered tasks with the specified name.
         """
@@ -627,8 +627,8 @@ class KhiopsTaskRegistry:
         Raises
         ------
         TypeError
-            - If ``task_name`` is not of type str.
-            - If ``end_version`` is not of type str or [`KhiopsVersion`][].
+            - If `task_name` is not of type str.
+            - If `end_version` is not of type str or [KhiopsVersion][].
         ValueError
             If there are no registered tasks with the specified name.
         """
@@ -642,7 +642,7 @@ class KhiopsTaskRegistry:
 
     @property
     def latest_intro_version(self):
-        """[`KhiopsVersion`][] : Latest introduction version overall tasks"""
+        """[KhiopsVersion][] : Latest introduction version overall tasks"""
         latest_intro_version = KhiopsVersion("1.0")
         for task_family in self.task_families:
             latest_intro_version = max(

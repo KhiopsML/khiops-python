@@ -36,8 +36,8 @@ class KhiopsDockerRunner(KhiopsRunner):
         URL for the Docker Khiops server.
     shared_dir : str
         Location of the shared directory. May be an URL/URI.
-    insecure : bool, default ``False``
-        If ``True`` the target server an HTTPS URL connection requires a certificate.
+    insecure : bool, default `False`
+        If `True` the target server an HTTPS URL connection requires a certificate.
     """
 
     def __init__(self, url, shared_dir, insecure=False):

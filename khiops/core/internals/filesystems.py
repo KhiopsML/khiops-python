@@ -63,13 +63,17 @@ def _parent_path(path):
     Notes
     -----
     This function always returns a posix path ("/" as separator). For example for the
-    windows path::
+    windows path:
 
-        C:\Program Files\khiops
+    ```text
+    C:\Program Files\khiops
+    ```
 
-    this method returns::
+    this method returns:
 
-        C:/Program Files
+    ```text
+    C:/Program Files
+    ```
     """
     return Path(path).parent.as_posix()
 
@@ -80,7 +84,7 @@ def _parent_uri_info(uri_info):
     Parameters
     ----------
     uri_info : urllib.parse.ParseResult
-        URI info structure (output of [`urllib.parse.urlparse`][])
+        URI info structure (output of [urllib.parse.urlparse][])
 
     Returns
     -------
@@ -97,13 +101,18 @@ def _child_path(path, child_name):
     Notes
     -----
     This function always returns a posix path ("/" as separator). For example for the
-    windows path and child name::
+    windows path and child name:
 
-        parent: C:\Program Files
-        child:  khiops
+    ```text
+    parent: C:\Program Files
+    child:  khiops
+    ```
 
-    this method returns::
-        C:/Program Files/khiops
+    this method returns:
+
+    ```text
+    C:/Program Files/khiops
+    ```
     """
     return Path(path).joinpath(child_name).as_posix()
 
@@ -114,7 +123,7 @@ def _child_uri_info(uri_info, child_name):
     Parameters
     ----------
     uri_info : urllib.parse.ParseResult
-        URI info structure (output of [`urllib.parse.urlparse`][])
+        URI info structure (output of [urllib.parse.urlparse][])
 
     child_name : str
         Name of the new child node
@@ -139,12 +148,12 @@ def is_local_resource(uri_or_path):
 
 
         An URI with scheme of size 1 will be considered a local path. This is to take
-        into account Windows paths such as ``C:\Some\Windows\Path``.
+        into account Windows paths such as `C:\Some\Windows\Path`.
 
     Returns
     -------
     bool
-        [`True`][] if a URI refers to a local path
+        [True][] if a URI refers to a local path
     """
     if (index := uri_or_path.find("://")) > 0:
         scheme = uri_or_path[:index]
@@ -161,10 +170,10 @@ def create_resource(uri_or_path):
     uri_or_path : str
         The resource's URI . Supported protocols/schemes:
 
-        - ``file`` or empty: Local filesystem resource
-        - ``s3``: Amazon S3 resource
-        - ``gs``: Google Cloud Storage resource
-        - ``https``: Azure Storage resource (files or blobs)
+        - `file` or empty: Local filesystem resource
+        - `s3`: Amazon S3 resource
+        - `gs`: Google Cloud Storage resource
+        - `https`: Azure Storage resource (files or blobs)
 
     Returns
     -------
@@ -611,23 +620,23 @@ class AmazonS3Resource(FilesystemResource):
 
     The default configuration and credentials are read from the paths
 
-    - ``~/.aws/configuration``
-    - ``~/.aws/credentials``
+    - `~/.aws/configuration`
+    - `~/.aws/credentials`
 
     The location of the configuration and credentials files may be overridden using
     the following environment variables:
 
-    - ``AWS_CONFIG_FILE``: location of the configuration file
-    - ``AWS_SHARED_CREDENTIALS_FILE``: location of the credentials file
+    - `AWS_CONFIG_FILE`: location of the configuration file
+    - `AWS_SHARED_CREDENTIALS_FILE`: location of the credentials file
 
     If no configuration/credentials files are usable, Amazon SDK defaults apply.
     Individual settings such as endpoint URL or region can be used to override any of
     the available settings.
 
-    Other relevant environment variables::
+    Other relevant environment variables:
 
-    - AWS_S3_ENDPOINT_URL: sets the service endpoint URL
-    - AWS_DEFAULT_REGION: sets the region to send requests to
+    - `AWS_S3_ENDPOINT_URL`: sets the service endpoint URL
+    - `AWS_DEFAULT_REGION`: sets the region to send requests to
 
     !!! note
 
@@ -771,7 +780,7 @@ class AmazonS3Resource(FilesystemResource):
 class AzureStorageResourceMixin:
     """Azure compatible Storage Resource Mixin
 
-    See [`AzureStorageFileResource`][] and [`AzureStorageBlobResource`][] for more
+    See [AzureStorageFileResource][] and [AzureStorageBlobResource][] for more
     details.
 
     """
@@ -881,9 +890,9 @@ class AzureStorageFileResource(AzureStorageResourceMixin, FilesystemResource):
 
         # Calls to `ShareFileClient` and `ShareDirectoryClient` are required
         # because :
-        # - the check against `file_share_client` is ``False``
+        # - the check against `file_share_client` is `False`
         #   if the target is a directory.
-        # - the check against `directory_share_client` is ``False``
+        # - the check against `directory_share_client` is `False`
         #   if the target is a file.
         return self.file_share_client.exists() or self.directory_share_client.exists()
 

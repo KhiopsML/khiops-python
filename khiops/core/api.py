@@ -8,11 +8,12 @@
 
 The methods in this module allow to execute all Khiops and Khiops Coclustering tasks.
 
-See also:
-    - [Common Parameters](../notes.md#core-api-common-params)
-    - [Input Types](../notes.md#core-api-input-types)
-    - [Database Sampling](../notes.md#core-api-sampling-mode)
-    - [Samples Directory Customization](../notes.md#core-api-env-samples-dir)
+See Also
+--------
+- [Common Parameters](../notes.md#core-api-common-params)
+- [Input Types](../notes.md#core-api-input-types)
+- [Database Sampling](../notes.md#core-api-sampling-mode)
+- [Samples Directory Customization](../notes.md#core-api-env-samples-dir)
 """
 import io
 import os
@@ -72,7 +73,7 @@ These rules include: date, time and timestamp rules.
 !!! note
 
     These rules are not enabled by default. The user needs to explicitly
-    select each of them via the ``construction_rules`` parameter of the
+    select each of them via the `construction_rules` parameter of the
     relevant Core API functions.
 """  # pylint: disable=pointless-string-statement
 
@@ -170,15 +171,15 @@ def _preprocess_arguments(args):
     -------
     tuple
         A 3-tuple containing:
-            - A [`CommandLineOptions`][] instance
-            - A [`SystemSettings`][] instance
-            - A [`bool`][] that is ``True`` if the value of the
-            [`dictionary_file_or_domain`][]
-             [`args`][] key is a [`DictionaryDomain`][] instance.
+            - A [CommandLineOptions][] instance
+            - A [SystemSettings][] instance
+            - A [bool][] that is `True` if the value of the
+            [dictionary_file_or_domain][]
+             `args` key is a [DictionaryDomain][] instance.
 
     !!! note
 
-        This function *mutates* the input [`args`][] dictionary.
+        This function *mutates* the input `args` dictionary.
     """
     # Execute the preprocessing of common task arguments
     task_is_called_with_domain = _preprocess_task_arguments(args)
@@ -308,7 +309,7 @@ def _preprocess_task_arguments(task_args):
     Returns
     -------
     bool
-        ``True`` if the task was called with an input [`DictionaryDomain`][].
+        `True` if the task was called with an input [DictionaryDomain][].
     """
     # Process the output path
     # if path is dir, then generate full report path according to GUI defaults
@@ -408,9 +409,9 @@ def _preprocess_format_spec(detect_format, header_line, field_separator):
     r"""Preprocess the user format spec to be used in a task
 
     More precisely:
-        - Sets ``detect_format`` to ``False`` if either ``header_line`` or
-          ``field_separator`` are set
-        - If either ``header_line`` or ``field_separator`` is ``None``, then they are
+        - Sets `detect_format` to `False` if either `header_line` or
+          `field_separator` are set
+        - If either `header_line` or `field_separator` is `None`, then they are
           set to their default values
         - It transforms the field separator "\\t" to the empty string ""
     """
@@ -488,7 +489,8 @@ def get_khiops_version():
     Returns
     -------
     str
-        The Khiops version of the current [`KhiopsRunner`][] backend.
+        The Khiops version of the current
+        [KhiopsRunner][khiops.core.internals.runner.KhiopsRunner] backend.
     """
     return get_runner().khiops_version
 
@@ -522,7 +524,7 @@ def export_dictionary_as_json(
     temp_dir="",
     scenario_prologue="",
 ):
-    """Exports a Khiops dictionary file to JSON format (``.kdicj``)
+    """Exports a Khiops dictionary file to JSON format (`.kdicj`)
 
     Parameters
     ----------
@@ -539,7 +541,7 @@ def export_dictionary_as_json(
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.export_dictionary_files()`
     """
     # Save the task arguments
@@ -580,18 +582,18 @@ def build_dictionary_from_data_table(
     output_dictionary_file_path : str
         Path (absolute path recommended) of the output dictionary file. Note that
         a relative path will produce a file in the current working directory.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
 
     See Also
     --------
@@ -640,30 +642,30 @@ def check_database(
         Name of the dictionary of the table to be checked.
     data_table_path : str
         Path of the data table file.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     sample_percentage : float, default 100.0
-        See the ``sampling_mode`` option below.
+        See the `sampling_mode` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it checks ``sample_percentage`` percent of
+        If equal to "Include sample" it checks `sample_percentage` percent of
         the data; if equal to "Exclude sample" it checks the complement of the
         data selected with "Include sample". See also
         [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
-        It checks only the records such that the value of ``selection_variable`` is
-        equal to ``selection_value``. Ignored if equal to "".
+        It checks only the records such that the value of `selection_variable` is
+        equal to `selection_value`. Ignored if equal to "".
     selection_value: str or int or float, default ""
-        See ``selection_variable`` option above. Ignored if equal to "".
+        See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see
@@ -677,7 +679,7 @@ def check_database(
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.check_database()`
     """
     # Save the task arguments
@@ -737,8 +739,8 @@ def train_predictor(
     !!! note
 
         For all input dictionaries, this function creates model dictionaries whose
-        names are prefixed with ``SNB_``. For regression models, additional
-        dictionaries are created and their names are prefixed with ``Baseline_``.
+        names are prefixed with `SNB_`. For regression models, additional
+        dictionaries are created and their names are prefixed with `Baseline_`.
 
     Parameters
     ----------
@@ -755,48 +757,48 @@ def train_predictor(
     analysis_report_file_path : str
         Path (absolute path recommended) to the analysis report file,
         in the JSON format. An additional dictionary file with the same name and
-        extension ``.model.kdic`` is built, which contains the trained models.
+        extension `.model.kdic` is built, which contains the trained models.
         Note that a relative path will produce a report file in the current working
         directory.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     sample_percentage : float, default 70.0
-        See the ``sampling_mode`` option below.
+        See the `sampling_mode` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it trains the predictor on ``sample_percentage``
+        If equal to "Include sample" it trains the predictor on `sample_percentage`
         percent of the data and tests the model on the remainder of the data if
-        ``use_complement_as_test`` is set to ``True``.  If equal to "Exclude sample" the
+        `use_complement_as_test` is set to `True`.  If equal to "Exclude sample" the
         train and test datasets above are exchanged. See also
         [Database Sampling](../notes.md#core-api-sampling-mode).
-    use_complement_as_test : bool, default ``True``
+    use_complement_as_test : bool, default `True`
         Uses the complement of the sampled database as test database for
         computing the model's performance metrics.
     selection_variable : str, default ""
-        It trains with only the records such that the value of ``selection_variable`` is
-        equal to ``selection_value``. Ignored if equal to "".
+        It trains with only the records such that the value of `selection_variable` is
+        equal to `selection_value`. Ignored if equal to "".
     selection_value: str or int or float, default ""
-        See ``selection_variable`` option above. Ignored if equal to "".
+        See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see
         [Multi-Table Learning Primer](../multi_table_primer.md).
-    do_data_preparation_only : bool, default ``False``
-        If ``True`` it only does data preparation via MODL preprocessing without
+    do_data_preparation_only : bool, default `False`
+        If `True` it only does data preparation via MODL preprocessing without
         training a Selective Naive Bayes Predictor.
     main_target_value : str, default ""
         If this target value is specified then it guarantees the calculation of lift
         curves for it.
-    keep_selected_variables_only : bool, default ``True``
+    keep_selected_variables_only : bool, default `True`
         Keeps only predictor-selected variables in the supervised analysis report.
     max_evaluated_variables : int, default 0
         Maximum number of variables to be evaluated in the SNB predictor training. If
@@ -809,7 +811,7 @@ def train_predictor(
     construction_rules : list of str, optional
         Allowed rules for the automatic variable construction. If not set, Khiops
         uses the multi-table construction rules listed in
-        [`DEFAULT_CONSTRUCTION_RULES`][].
+        [DEFAULT_CONSTRUCTION_RULES][].
     max_text_features : int, default 10000
         Maximum number of text features to construct.
     text_features : str, default "words"
@@ -826,13 +828,13 @@ def train_predictor(
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit ``max_pairs``). These pairs have top
+        containing it (within the maximum limit `max_pairs`). These pairs have top
         priority: they are constructed first.
-    all_possible_pairs : bool, default ``True``
-        If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
-        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+    all_possible_pairs : bool, default `True`
+        If `True` tries to create all possible pairs within the limit `max_pairs`.
+        Pairs specified with `specific_pairs` have top priority: they are constructed
         first.
-    group_target_value : bool, default ``False``
+    group_target_value : bool, default `False`
         Allows grouping of the target variable values in classification. It can
         substantially increase the training time.
     discretization_method : str, default "MODL"
@@ -848,8 +850,8 @@ def train_predictor(
         to 0 it is automatically calculated.
         Special default values for unsupervised analysis:
 
-            - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
-            - If ``grouping_method`` is "BasicGrouping": 10
+            - If `discretization_method` is "EqualWidth" or "EqualFrequency": 10
+            - If `grouping_method` is "BasicGrouping": 10
 
 
     See Also
@@ -872,7 +874,7 @@ def train_predictor(
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.train_predictor()`
         - `samples.train_predictor_file_paths()`
         - `samples.train_predictor_error_handling()`
@@ -959,7 +961,7 @@ def interpret_predictor(
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.interpret_predictor()`
         - `samples.deploy_model_mt_with_interpretation()`
     """
@@ -1024,7 +1026,7 @@ def reinforce_predictor(
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.reinforce_predictor()`
         - `samples.deploy_reinforced_model_mt()`
     """
@@ -1076,30 +1078,30 @@ def evaluate_predictor(
         Path (absolute path recommended) to the evaluation report file,
         in the JSON format. Note that a relative path will produce a report file in
         the current working directory.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     sample_percentage : float, default 100.0
-        See ``sampling_mode`` option below.
+        See `sampling_mode` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it evaluates the predictor on ``sample_percentage``
+        If equal to "Include sample" it evaluates the predictor on `sample_percentage`
         percent of the data. If equal to "Exclude sample" it evaluates the predictor on
         the complement of the data selected with "Include sample". See also
         [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
-        It trains with only the records such that the value of ``selection_variable`` is
-        equal to ``selection_value``. Ignored if equal "".
+        It trains with only the records such that the value of `selection_variable` is
+        equal to `selection_value`. Ignored if equal "".
     selection_value: str or int or float, default ""
-        See ``selection_variable`` option above. Ignored if equal to "".
+        See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see
@@ -1121,7 +1123,7 @@ def evaluate_predictor(
     Returns
     -------
     str
-        The path of the JSON evaluation report (extension ``.khj``).
+        The path of the JSON evaluation report (extension `.khj`).
 
     Raises
     ------
@@ -1130,7 +1132,7 @@ def evaluate_predictor(
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.evaluate_predictor()`
         - `samples.access_predictor_evaluation_report()`
         - `samples.train_predictor_with_cross_validation()`
@@ -1196,20 +1198,20 @@ def train_recoder(
     A recoding model consists in the discretization of numerical variables and the
     grouping of categorical variables.
 
-    If the ``target_variable`` is specified these partitions are constructed in
+    If the `target_variable` is specified these partitions are constructed in
     supervised mode, meaning that each resulting discretizations/groupings best
     separates the target variable while maintaining a simple interval/group model of the
     data. Different recoding methods can be specified via the
-    ``numerical_recoding_method``, ``categorical_recoding_method`` and
-    ``pairs_recoding_method`` options.
+    `numerical_recoding_method`, `categorical_recoding_method` and
+    `pairs_recoding_method` options.
 
-    The output files of this process contain a dictionary file (``.kdic``) that can be
-    used to recode databases with the [`deploy_model`][] function.
+    The output files of this process contain a dictionary file (`.kdic`) that can be
+    used to recode databases with the [deploy_model][] function.
 
     !!! note
 
         For all input dictionaries, this function creates model dictionaries whose names
-        are prefixed with ``R_``.
+        are prefixed with `R_`.
 
     Parameters
     ----------
@@ -1224,33 +1226,33 @@ def train_recoder(
     analysis_report_file_path : str
         Path (absolute path recommended) to the analysis report file,
         in the JSON format. An additional dictionary file with the same name and
-        extension ``.model.kdic`` is built, which contains the trained recoding model.
+        extension `.model.kdic` is built, which contains the trained recoding model.
         Note that a relative path will produce a report file in the current working
         directory.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     sample_percentage : float, default 100.0
-        See ``sampling_mode`` option below.
+        See `sampling_mode` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it trains the recoder on ``sample_percentage``
+        If equal to "Include sample" it trains the recoder on `sample_percentage`
         percent of the data. If equal to "Exclude sample" it trains the recoder on the
         complement of the data selected with "Include sample". See also
         [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
-        It trains with only the records such that the value of ``selection_variable`` is
-        equal to ``selection_value``. Ignored if equal to "".
+        It trains with only the records such that the value of `selection_variable` is
+        equal to `selection_value`. Ignored if equal to "".
     selection_value: str or int or float, default ""
-        See ``selection_variable`` option above. Ignored if equal to "".
+        See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see
@@ -1260,7 +1262,7 @@ def train_recoder(
     construction_rules : list of str, optional
         Allowed rules for the automatic variable construction. If not set, Khiops
         uses the multi-table construction rules listed in
-        [`DEFAULT_CONSTRUCTION_RULES`][].
+        [DEFAULT_CONSTRUCTION_RULES][].
     max_text_features : int, default 10000
         Maximum number of text features to construct.
     text_features : str, default "words"
@@ -1277,23 +1279,23 @@ def train_recoder(
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit ``max_pairs``). These pairs have top
+        containing it (within the maximum limit `max_pairs`). These pairs have top
         priority: they are constructed first.
-    all_possible_pairs : bool, default ``True``
-        If ``True`` tries to create all possible pairs within the limit ``max_pairs``.
-        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+    all_possible_pairs : bool, default `True`
+        If `True` tries to create all possible pairs within the limit `max_pairs`.
+        Pairs specified with `specific_pairs` have top priority: they are constructed
         first.
-    group_target_value : bool, default ``False``
+    group_target_value : bool, default `False`
         Allows grouping of the target variable values in classification. It can
         substantially increase the training time.
-    informative_variables_only : bool, default ``True``
-        If ``True`` keeps only informative variables.
+    informative_variables_only : bool, default `True`
+        If `True` keeps only informative variables.
     max_variables : int, default 0
         Maximum number of variables to keep. If equal to 0 keeps all variables.
-    keep_initial_categorical_variables : bool, default ``False``
-        If ``True`` keeps the initial categorical variables.
-    keep_initial_numerical_variables : bool, default ``False``
-        If ``True`` keeps initial numerical variables.
+    keep_initial_categorical_variables : bool, default `False`
+        If `True` keeps the initial categorical variables.
+    keep_initial_numerical_variables : bool, default `False`
+        If `True` keeps initial numerical variables.
     categorical_recoding_method : str
         Type of recoding for categorical variables. Types available:
 
@@ -1338,8 +1340,8 @@ def train_recoder(
         to 0 it is automatically calculated.
         Special default values for unsupervised analysis:
 
-            - If ``discretization_method`` is "EqualWidth" or "EqualFrequency": 10
-            - If ``grouping_method`` is "BasicGrouping": 10
+            - If `discretization_method` is "EqualWidth" or "EqualFrequency": 10
+            - If `grouping_method` is "BasicGrouping": 10
 
 
     See Also
@@ -1356,7 +1358,7 @@ def train_recoder(
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.train_recoder()`
         - `samples.train_recoder_with_multiple_parameters()`
         - `samples.train_recoder_mt_flatten()`
@@ -1422,30 +1424,30 @@ def deploy_model(
     output_data_table_path : str
         Path (absolute path recommended) of the output data file. Note that a
         relative path will produce a file in the current working directory.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     sample_percentage : float, default 100.0
-        See ``sampling_mode`` option below.
+        See `sampling_mode` option below.
     sampling_mode : "Include sample" or "Exclude sample"
-        If equal to "Include sample" it deploys the model on ``sample_percentage``
+        If equal to "Include sample" it deploys the model on `sample_percentage`
         percent of the data. If equal to "Exclude sample" it deploys the model on the
         complement of the data selected with "Include sample". See also
         [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
-        It deploys only the records such that the value of ``selection_variable`` is
-        equal to ``selection_value``. Ignored if equal to "".
+        It deploys only the records such that the value of `selection_variable` is
+        equal to `selection_value`. Ignored if equal to "".
     selection_value: str or int or float, default ""
-        See ``selection_variable`` option above. Ignored if equal to "".
+        See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see
@@ -1454,8 +1456,8 @@ def deploy_model(
         !!! note
 
             Use model dictionary data paths for external tables.
-    output_header_line : bool, default ``True``
-        If ``True`` writes a header line with the column names in the output table.
+    output_header_line : bool, default `True`
+        If `True` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
     output_additional_data_tables : dict, optional
@@ -1474,7 +1476,7 @@ def deploy_model(
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.deploy_model()`
         - `samples.deploy_model_mt()`
         - `samples.deploy_model_mt_with_interpretation()`
@@ -1529,7 +1531,7 @@ def build_deployed_dictionary(
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.build_deployed_dictionary()`
     """
     # Save the task arguments
@@ -1578,20 +1580,20 @@ def sort_data_table(
         relative path will produce a file in the current working directory.
     sort_variables : list of str, optional
         The names of the variables to sort. If not set sorts the table by its key.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
-    output_header_line : bool, default ``True``
-        If ``True`` writes a header line with the column names in the output table.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
+    output_header_line : bool, default `True`
+        If `True` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
 
@@ -1607,7 +1609,7 @@ def sort_data_table(
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.sort_data_table()`
         - `samples.sort_data_table_expert()`
     """
@@ -1654,20 +1656,20 @@ def extract_keys_from_data_table(
     output_data_table_path : str
         Path (absolute path recommended) of the output data file. Note that a
         relative path will produce a file in the current working directory.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
-    output_header_line : bool, default ``True``
-        If ``True`` writes a header line with the column names in the output table.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
+    output_header_line : bool, default `True`
+        If `True` writes a header line with the column names in the output table.
     output_field_separator : str, default "\\t"
         The field separator character for the output table ("" counts as "\\t").
 
@@ -1682,7 +1684,7 @@ def extract_keys_from_data_table(
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.extract_keys_from_data_table()`
     """
     # Save the task arguments
@@ -1737,31 +1739,31 @@ def train_coclustering(
         Path (absolute path recommended) to the coclustering report file,
         in the JSON format. Note that a relative path will produce a report file in
         the current working directory.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     sample_percentage : float, default 100.0
-        See ``sampling_mode`` option below.
+        See `sampling_mode` option below.
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the coclustering estimator on
-        ``sample_percentage`` percent of the data. If equal to "Exclude sample" it
+        `sample_percentage` percent of the data. If equal to "Exclude sample" it
         trains the coclustering estimator on the complement of the data selected with
         "Include sample". See also
         [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
-        It trains with only the records such that the value of ``selection_variable`` is
-        equal to ``selection_value``. Ignored if equal to "".
+        It trains with only the records such that the value of `selection_variable` is
+        equal to `selection_value`. Ignored if equal to "".
     selection_value: str or int or float, default ""
-        See ``selection_variable`` option above. Ignored if equal to "".
+        See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see
@@ -1789,7 +1791,7 @@ def train_coclustering(
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.train_coclustering()`
     """
     # Save the task arguments
@@ -1854,31 +1856,31 @@ def train_instance_variable_coclustering(
         Path (absolute path recommended) to the coclustering report file,
         in the JSON format. Note that a relative path will produce a report file in
         the current working directory.
-    detect_format : bool, default ``True``
-        If ``True`` detects automatically whether the data table file has a header and
-        its field separator. It is set to ``False`` if ``header_line`` or
-        ``field_separator`` are set.
-    header_line : bool, optional (default ``True``)
-        If ``True`` it uses the first line of the data as column names. Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+    detect_format : bool, default `True`
+        If `True` detects automatically whether the data table file has a header and
+        its field separator. It is set to `False` if `header_line` or
+        `field_separator` are set.
+    header_line : bool, optional (default `True`)
+        If `True` it uses the first line of the data as column names. Sets
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     field_separator : str, optional (default "\\t")
         A field separator character. "" has the same effect as "\\t". Sets
-        ``detect_format`` to ``False`` if set. Ignored if ``detect_format``
-        is ``True``.
+        `detect_format` to `False` if set. Ignored if `detect_format`
+        is `True`.
     sample_percentage : float, default 100.0
-        See ``sampling_mode`` option below.
+        See `sampling_mode` option below.
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the coclustering estimator on
-        ``sample_percentage`` percent of the data. If equal to "Exclude sample" it
+        `sample_percentage` percent of the data. If equal to "Exclude sample" it
         trains the coclustering estimator on the complement of the data selected with
         "Include sample". See also
         [Database Sampling](../notes.md#core-api-sampling-mode).
     selection_variable : str, default ""
-        It trains with only the records such that the value of ``selection_variable`` is
-        equal to ``selection_value``. Ignored if equal to "".
+        It trains with only the records such that the value of `selection_variable` is
+        equal to `selection_value`. Ignored if equal to "".
     selection_value: str or int or float, default ""
-        See ``selection_variable`` option above. Ignored if equal to "".
+        See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see
@@ -1904,7 +1906,7 @@ def train_instance_variable_coclustering(
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.train_instance_variable_coclustering()`
     """
     # Save the task arguments
@@ -1943,7 +1945,7 @@ def simplify_coclustering(
     Parameters
     ----------
     coclustering_file_path : str
-        Path of the coclustering file (extension ``.khc``, or ``.khcj``).
+        Path of the coclustering file (extension `.khc`, or `.khcj`).
     simplified_coclustering_file_path : str
         Path (absolute path recommended) of the output coclustering file. Note
         that a relative path will produce a report file in the current working
@@ -1973,7 +1975,7 @@ def simplify_coclustering(
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.simplify_coclustering()`
     """
     # Save the task arguments
@@ -2048,7 +2050,7 @@ def prepare_coclustering_deployment(
     dictionary_name : str
         Name of the dictionary to be analyzed.
     coclustering_file_path : str
-        Path of the coclustering model file (extension ``.khc`` or ``.khcj``).
+        Path of the coclustering model file (extension `.khc` or `.khcj`).
     table_variable : str
         Name of the table variable in the dictionary.
     deployed_variable_name : str
@@ -2067,13 +2069,13 @@ def prepare_coclustering_deployment(
     max_part_numbers : dict, optional
         Dictionary associating variable names to their maximum number of parts
         to preserve in the simplified coclustering. For variables not present
-        in ``max_part_numbers`` there is no limit.
-    build_cluster_variable : bool, default ``True``
-        If ``True`` includes a cluster id variable in the deployment.
-    build_distance_variables : bool, default ``False``
-        If ``True`` includes a cluster distance variable in the deployment.
-    build_frequency_variables : bool, default ``False``
-        If ``True`` includes the frequency variables in the deployment.
+        in `max_part_numbers` there is no limit.
+    build_cluster_variable : bool, default `True`
+        If `True` includes a cluster id variable in the deployment.
+    build_distance_variables : bool, default `False`
+        If `True` includes a cluster distance variable in the deployment.
+    build_frequency_variables : bool, default `False`
+        If `True` includes the frequency variables in the deployment.
     variables_prefix : str, default ""
         Prefix for the variables in the deployment dictionary.
 
@@ -2088,7 +2090,7 @@ def prepare_coclustering_deployment(
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.deploy_model_expert()`
     """
     # Save the task arguments
@@ -2124,7 +2126,7 @@ def extract_clusters(
     Parameters
     ----------
     coclustering_file_path : str
-        Path of the coclustering model file (extension ``.khc`` or ``.khcj``).
+        Path of the coclustering model file (extension `.khc` or `.khcj`).
     cluster_variable : str
         Name of the variable for which the clusters are extracted.
     clusters_file_path : str
@@ -2150,7 +2152,7 @@ def extract_clusters(
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.extract_clusters()`
     """
     # Save the task arguments
@@ -2199,14 +2201,14 @@ def detect_data_table_format(
     -------
     tuple
         A 2-tuple containing:
-            - the ``header_line`` boolean
-            - the ``field_separator`` character
+            - the `header_line` boolean
+            - the `field_separator` character
 
         These are exactly the parameters expected in many Khiops Python API functions.
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.detect_data_table_format()`
     """
     # Save the task arguments

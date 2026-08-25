@@ -12,34 +12,36 @@ Below we describe with diagrams the relationships of the classes in this modules
 are mostly compositions (has-a relations) and we omit native attributes (str, int,
 float, etc).
 
-The main class of this module is [`CoclusteringResults`][] and it is largely a
+The main class of this module is [CoclusteringResults][] and it is largely a
 composition
-of sub-reports objects given by the following structure::
+of sub-reports objects given by the following structure:
 
-    CoclusteringResults
-    |- coclustering_report -> CoclusteringReport
+```text
+CoclusteringResults
+|- coclustering_report -> CoclusteringReport
 
-    CoclusteringReport
-    |- dimensions -> list of CoclusteringDimension
-    |- cells      -> list of CoclusteringCell
+CoclusteringReport
+|- dimensions -> list of CoclusteringDimension
+|- cells      -> list of CoclusteringCell
 
-    CoclusteringDimension
-    |- parts                     -> list of CoclusteringDimensionPart
-    |- inner_variable_dimensions -> list of CoclusteringDimension
-    |- clusters                  -> list of CoclusteringCluster
-    |- root_cluster              -> CoclusteringCluster
+CoclusteringDimension
+|- parts                     -> list of CoclusteringDimensionPart
+|- inner_variable_dimensions -> list of CoclusteringDimension
+|- clusters                  -> list of CoclusteringCluster
+|- root_cluster              -> CoclusteringCluster
 
-    CoclusteringDimensionPartValueGroup
-    |- values -> list of CoclusteringDimensionPartValue
+CoclusteringDimensionPartValueGroup
+|- values -> list of CoclusteringDimensionPartValue
 
-    CoclusteringCluster
-    |- leaf_part        -> CoclusteringDimensionPart or None
-    |- parent_cluster  |
-    |- child_cluster1  |-> CoclusteringCluster or None
-    |- child_cluster2  |
+CoclusteringCluster
+|- leaf_part        -> CoclusteringDimensionPart or None
+|- parent_cluster  |
+|- child_cluster1  |-> CoclusteringCluster or None
+|- child_cluster2  |
+```
 
 To have a complete illustration of the access to the information of all classes in this
-module look at their ``to_dict`` methods which write Python dictionaries in the
+module look at their [to_dict][] methods which write Python dictionaries in the
 same format as the Khiops JSON reports.
 """
 import functools
@@ -66,7 +68,7 @@ class CoclusteringResults(KhiopsJSONObject):
 
         !!! note
 
-            Prefer either the the [`read_coclustering_results_file`][] function from the
+            Prefer the [read_coclustering_results_file][] function from the
             core API to obtain an instance of this class from a Khiops Coclustering JSON
             file.
 
@@ -235,7 +237,7 @@ class CoclusteringResults(KhiopsJSONObject):
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -256,7 +258,7 @@ class CoclusteringResults(KhiopsJSONObject):
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -329,7 +331,7 @@ class CoclusteringReport:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of the ``coclusteringReport`` field of a Khiops Coclustering JSON
+        JSON data of the `coclusteringReport` field of a Khiops Coclustering JSON
         report file. If not specified it returns an empty instance.
 
     Attributes
@@ -343,9 +345,9 @@ class CoclusteringReport:
     level : float
         Measure between 0 and 1 measuring the information gain over the null model.
     initial_dimension_number : int
-        Initial number of dimensions. The number of dimensions (``len(dimensions)``) may
+        Initial number of dimensions. The number of dimensions (`len(dimensions)`) may
         be less than this quantity after a simplification (see
-        [`api.simplify_coclustering`][]).
+        [api.simplify_coclustering][]).
     frequency_variable : str
         Name of the variable to be aggregated in the cells. By default is the number of
         individuals.
@@ -360,7 +362,7 @@ class CoclusteringReport:
     selection_variable : str
         Variable used to select instances for training.
     selection_value : str
-        Value of ``selection_variable`` to select instances for training.
+        Value of `selection_variable` to select instances for training.
     dimensions : list of CoclusteringDimension
         Coclustering dimensions (variable).
     cells : list of CoclusteringCell
@@ -540,7 +542,7 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -565,7 +567,7 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -588,7 +590,7 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -623,7 +625,7 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -656,7 +658,7 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -676,7 +678,7 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -696,7 +698,7 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -725,7 +727,7 @@ class CoclusteringReport:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -759,10 +761,10 @@ class CoclusteringDimension:
 
     !!! note
 
-        The instance information is initialized with the [`init_summary`][],
-        [`init_partition`][] and [`init_hierarchy`][] methods. Its owner object (class
-        [`CoclusteringReport`][]) uses the information found in the fields
-        ``dimensionSummaries``, ``dimensionPartitions`` and ``dimensionHierarchies`` to
+        The instance information is initialized with the [init_summary][],
+        [init_partition][] and [init_hierarchy][] methods. Its owner object (class
+        [CoclusteringReport][]) uses the information found in the fields
+        `dimensionSummaries`, `dimensionPartitions` and `dimensionHierarchies` to
         coherently initialize the all dimensions with these methods.
 
     Attributes
@@ -770,15 +772,15 @@ class CoclusteringDimension:
     name : str
         Name of the variable associated to this dimension.
     is_variable_part : bool
-        ``True`` if the dimension is a part of a variable in an instance-variable
+        `True` if the dimension is a part of a variable in an instance-variable
         coclustering.
     type : "Numerical" or "Categorical"
         Dimension type.
     part_number : int
         Number of parts of the variable associated to this dimension.
     initial_part_number : int
-        Number of initial parts. Note that ``part_number`` <= ``initial_part_number``
-        after a coclustering simplification (see [`api.simplify_coclustering`][]).
+        Number of initial parts. Note that `part_number` <= `initial_part_number`
+        after a coclustering simplification (see [api.simplify_coclustering][]).
     value_number : int
         Number of values of the dimension's variable.
     interest : float
@@ -792,12 +794,12 @@ class CoclusteringDimension:
     parts : list of CoclusteringDimensionPart
         Partition of this dimension.
     inner_variable_dimensions : list of CoclusteringDimension
-        Variable part instance-variable coclustering dimensions. ``None`` for
+        Variable part instance-variable coclustering dimensions. `None` for
         variable-variable clustering.
         Contains the dimensions of the variables involved in the
         instances x variables coclustering model.
         This model includes two dimensions: one for instances and one for variable
-        parts (``isVarPart`` set to ``True`` for this dimension).
+        parts (`isVarPart` set to `True` for this dimension).
     clusters : list of CoclusteringCluster
         Clusters of this dimension's hierarchy. Note that includes intermediary
         clusters.
@@ -847,7 +849,7 @@ class CoclusteringDimension:
         ----------
         json_data : dict, optional
             Dictionary representing the data of an element of the list found at the
-            ``dimensionSummaries`` field of a Khiops Coclustering JSON report file. If
+            `dimensionSummaries` field of a Khiops Coclustering JSON report file. If
             not specified it leaves the object as-is.
 
         Returns
@@ -883,7 +885,7 @@ class CoclusteringDimension:
         ----------
         json_data : dict, optional
             Python dictionary representing the data of an element of the list found at
-            the ``dimensionPartitions`` field of a Khiops Coclustering JSON report file.
+            the `dimensionPartitions` field of a Khiops Coclustering JSON report file.
             If not specified it leaves the object as-is.
 
         Returns
@@ -1003,7 +1005,7 @@ class CoclusteringDimension:
         ----------
         json_data : dict, optional
             Python dictionary representing the data of an element of the list found at
-            the ``dimensionHierarchies`` field of a Khiops Coclustering JSON report
+            the `dimensionHierarchies` field of a Khiops Coclustering JSON report
             file. If not specified it leaves the object as-is.
 
         Returns
@@ -1171,7 +1173,7 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1199,7 +1201,7 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1225,7 +1227,7 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1251,7 +1253,7 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1293,7 +1295,7 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1337,7 +1339,7 @@ class CoclusteringDimension:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1398,13 +1400,13 @@ class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
     ----------
     json_data : dict, optional
         Python dictionary representing an element of type "Numerical" of the list at the
-        ``dimensionPartitions`` field of a Khiops Coclustering JSON report file. If not
+        `dimensionPartitions` field of a Khiops Coclustering JSON report file. If not
         specified it returns an empty instance.
 
     Raises
     ------
     KhiopsJSONError
-        If ``json_data`` does not contain a "cluster" key.
+        If `json_data` does not contain a "cluster" key.
 
 
     Attributes
@@ -1417,12 +1419,12 @@ class CoclusteringDimensionPartInterval(CoclusteringDimensionPart):
         Upper bound of the interval.
     is_missing : bool
         True if the instance's represent the missing values. In this case
-        ``lower_bound`` and ``upper_bound`` are set to ``None``.
+        `lower_bound` and `upper_bound` are set to `None`.
     is_left_open : bool
-        True if the interval is unbounded below ``lower_bound`` may contain the minimum
+        True if the interval is unbounded below `lower_bound` may contain the minimum
         value of the training data.
     is_right_open : bool
-        True if the interval is unbounded above ``upper_bound`` may contain the maximum
+        True if the interval is unbounded above `upper_bound` may contain the maximum
         value of training data.
     """
 
@@ -1501,13 +1503,13 @@ class CoclusteringDimensionPartValueGroup(CoclusteringDimensionPart):
     ----------
     json_data : dict, optional
         Python dictionary representing an element of type "Categorical" of the list at
-        the ``dimensionPartitions`` field of a Khiops Coclustering JSON report file. If
+        the `dimensionPartitions` field of a Khiops Coclustering JSON report file. If
         None it returns an empty instance.
 
     Raises
     ------
     KhiopsJSONError
-        If ``json_data`` does not contain a "cluster" key.
+        If `json_data` does not contain a "cluster" key.
 
     Attributes
     ----------
@@ -1632,8 +1634,8 @@ class CoclusteringCluster:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of an element of the list at the ``dimensionHierarchies`` field within
-        the ``coclusteringReport`` field of a Khiops Coclustering JSON report file. If
+        JSON data of an element of the list at the `dimensionHierarchies` field within
+        the `coclusteringReport` field of a Khiops Coclustering JSON report file. If
         not specified it returns an empty instance.
 
     Attributes
@@ -1656,19 +1658,19 @@ class CoclusteringCluster:
         Rank of clusters in the hierarchy, with the smallest ranks being the closest
         from the root of the hierarchy.
     is_leaf : bool
-        ``True`` if the cluster is a leaf of the hierarchy.
+        `True` if the cluster is a leaf of the hierarchy.
     short_description : str
         Succinct cluster description.
     description : str
         Cluster description.
     leaf_part : CoclusteringDimensionPart
-        On a leaf cluster: Its unique associated partition element. Otherwise ``None``.
+        On a leaf cluster: Its unique associated partition element. Otherwise `None`.
     parent_cluster : CoclusteringCluster
-        On a non-root cluster: Its unique parent cluster. Otherwise ``None``.
+        On a non-root cluster: Its unique parent cluster. Otherwise `None`.
     child_cluster1 : CoclusteringCluster
-        On a non-leaf cluster : The first child cluster. Otherwise ``None``.
+        On a non-leaf cluster : The first child cluster. Otherwise `None`.
     child_cluster2 : CoclusteringCluster
-        On a non-leaf cluster : The second child cluster. Otherwise ``None``.
+        On a non-leaf cluster : The second child cluster. Otherwise `None`.
     """
 
     def __init__(self, json_data=None):
@@ -1731,7 +1733,7 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1758,7 +1760,7 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1783,7 +1785,7 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1808,7 +1810,7 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -1834,7 +1836,7 @@ class CoclusteringCluster:
         !!! warning
 
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the [`to_dict`][] method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------

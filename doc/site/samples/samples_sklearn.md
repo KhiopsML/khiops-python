@@ -29,7 +29,8 @@ download_datasets()
 
 ### `khiops_classifier()`
 
-Trains a [`KhiopsClassifier`][] on a monotable dataframe
+Trains a [KhiopsClassifier][khiops.sklearn.estimators.KhiopsClassifier]
+on a monotable dataframe
 
 ```python
 # Imports
@@ -88,7 +89,9 @@ print(f"Test auc      = {test_auc}")
 ```
 ### `khiops_classifier_multiclass()`
 
-Trains a multiclass [`KhiopsClassifier`][] on a monotable dataframe
+Trains a multiclass
+[KhiopsClassifier][khiops.sklearn.estimators.KhiopsClassifier] on a monotable
+dataframe
 
 ```python
 # Imports
@@ -141,7 +144,8 @@ print(f"Test auc      = {test_auc}")
 ```
 ### `khiops_classifier_text()`
 
-Train a [`KhiopsClassifier`][] on a monotable dataframe with textual data
+Train a [KhiopsClassifier][khiops.sklearn.estimators.KhiopsClassifier] on
+a monotable dataframe with textual data
 
 ```python
 # Imports
@@ -202,7 +206,8 @@ print(f"Test accuracy = {test_accuracy}")
 ```
 ### `khiops_classifier_multitable_star()`
 
-Trains a [`KhiopsClassifier`][] on a star multi-table dataset
+Trains a [KhiopsClassifier][khiops.sklearn.estimators.KhiopsClassifier]
+on a star multi-table dataset
 
 ```python
 # Imports
@@ -259,7 +264,8 @@ print(f"Test auc      = {test_auc}")
 ```
 ### `khiops_classifier_multitable_snowflake()`
 
-Trains a [`KhiopsClassifier`][] on a snowflake multi-table dataset
+Trains a [KhiopsClassifier][khiops.sklearn.estimators.KhiopsClassifier]
+on a snowflake multi-table dataset
 
 ```python
 # Imports
@@ -319,7 +325,8 @@ print(f"Test auc      = {test_auc}")
 ```
 ### `khiops_classifier_sparse()`
 
-Trains a [`KhiopsClassifier`][] on a monotable sparse matrix
+Trains a [KhiopsClassifier][khiops.sklearn.estimators.KhiopsClassifier]
+on a monotable sparse matrix
 
 ```python
 # Imports
@@ -375,7 +382,8 @@ print(f"Test auc      = {test_auc}")
 ```
 ### `khiops_classifier_pickle()`
 
-Shows the serialization and deserialization of a [`KhiopsClassifier`][]
+Shows the serialization and deserialization of a
+[KhiopsClassifier][khiops.sklearn.estimators.KhiopsClassifier]
 
 ```python
 # Imports
@@ -420,9 +428,8 @@ print("---")
 ```
 ### `khiops_classifier_with_hyperparameters()`
 
-Trains a [`KhiopsClassifier`][] on a star multi-table dataset
-    (advanced version with more hyperparameters)
-    
+Trains a [KhiopsClassifier][khiops.sklearn.estimators.KhiopsClassifier]
+on a star multi-table dataset (advanced version with more hyperparameters)
 
 ```python
 # Imports
@@ -511,7 +518,8 @@ print(f"Test auc      = {test_auc}")
 ```
 ### `khiops_regressor()`
 
-Trains a [`KhiopsRegressor`][] on a monotable dataframe
+Trains a [KhiopsRegressor][khiops.sklearn.estimators.KhiopsRegressor] on
+a monotable dataframe
 
 ```python
 # Imports
@@ -555,17 +563,17 @@ print(f"Test MAE = {test_mae}")
 ```
 ### `khiops_encoder()`
 
-Trains a [`KhiopsEncoder`][] on a monotable dataframe
+Trains a [KhiopsEncoder][khiops.sklearn.estimators.KhiopsEncoder] on a
+monotable dataframe
 
-    The Khiops encoder is a supervised feature encoder. It discretizes numerical
-    features and groups categorical features in a way that the resulting interval/groups
-    have the highest class-purity.
+The Khiops encoder is a supervised feature encoder. It discretizes numerical
+features and groups categorical features in a way that the resulting interval/groups
+have the highest class-purity.
 
-    !!! note
+!!! note
 
-        For simplicity we train from the whole dataset. To assess the performance one
-        usually splits the dataset into train and test subsets.
-    
+    For simplicity we train from the whole dataset. To assess the performance one
+    usually splits the dataset into train and test subsets.
 
 ```python
 # Imports
@@ -603,7 +611,8 @@ print("---")
 ```
 ### `khiops_encoder_multitable_star()`
 
-Trains a [`KhiopsEncoder`][] on a star multi-table dataset
+Trains a [KhiopsEncoder][khiops.sklearn.estimators.KhiopsEncoder] on a
+star multi-table dataset
 
 ```python
 # Imports
@@ -643,7 +652,8 @@ print(khe.transform(X)[:10])
 ```
 ### `khiops_encoder_multitable_snowflake()`
 
-Trains a [`KhiopsEncoder`][] on a snowflake multi-table dataset
+Trains a [KhiopsEncoder][khiops.sklearn.estimators.KhiopsEncoder] on a
+snowflake multi-table dataset
 
 ```python
 # Imports
@@ -686,9 +696,8 @@ print(khe.transform(X)[:10])
 ```
 ### `khiops_encoder_pipeline_with_hgbc()`
 
-Uses a [`KhiopsEncoder`][] with a
-    [`HistGradientBoostingClassifier`][sklearn.ensemble.HistGradientBoostingClassifier]
-    
+Uses a [KhiopsEncoder][khiops.sklearn.estimators.KhiopsEncoder] with a
+[HistGradientBoostingClassifier][sklearn.ensemble.HistGradientBoostingClassifier]
 
 ```python
 # Imports
@@ -747,9 +756,8 @@ print(f"Test auc      = {test_auc}")
 ```
 ### `khiops_encoder_with_hyperparameters()`
 
-Trains a [`KhiopsEncoder`][] on a star multi-table dataset
-    (advanced version with more hyperparameters)
-    
+Trains a [KhiopsEncoder][khiops.sklearn.estimators.KhiopsEncoder] on a
+star multi-table dataset (advanced version with more hyperparameters)
 
 ```python
 # Imports
@@ -799,7 +807,8 @@ print(khe.transform(X)[:10])
 ```
 ### `khiops_coclustering()`
 
-Trains a [`KhiopsCoclustering`][] on a dataframe
+Trains a [KhiopsCoclustering][khiops.sklearn.estimators.KhiopsCoclustering]
+on a dataframe
 
 ```python
 # Imports
@@ -836,7 +845,8 @@ print("---")
 ```
 ### `khiops_coclustering_simplify()`
 
-Simplifies a [`KhiopsCoclustering`][] already trained on a dataframe
+Simplifies a [KhiopsCoclustering][khiops.sklearn.estimators.KhiopsCoclustering]
+already trained on a dataframe
 
 ```python
 # Imports

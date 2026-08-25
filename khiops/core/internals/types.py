@@ -110,7 +110,7 @@ class FloatType(KhiopsTaskArgumentType):
 class StringLikeType(KhiopsTaskArgumentType):
     """String like argument type
 
-    The string-like type is defined as the union of ``str`` and ``bytes``.
+    The string-like type is defined as the union of `str` and `bytes`.
     """
 
     @classmethod
@@ -129,7 +129,7 @@ class StringLikeType(KhiopsTaskArgumentType):
 class AbstractListType(KhiopsTaskArgumentType):
     """Base class for ListType containers
 
-    See the factory method [`ListType`][].
+    See the factory method [ListType][].
     """
 
     registry = {}
@@ -178,7 +178,7 @@ class AbstractListType(KhiopsTaskArgumentType):
 def ListType(value_type):  # pylint: disable=invalid-name
     """ListType factory method
 
-    Lists are themselves of type ``list`` and they may contain a variable number of
+    Lists are themselves of type `list` and they may contain a variable number of
     elements of a single type.
 
     Parameters
@@ -189,7 +189,7 @@ def ListType(value_type):  # pylint: disable=invalid-name
     Returns
     -------
     type
-        A class which inherits from [`AbstractListType`][].
+        A class which inherits from [AbstractListType][].
     """
 
     # Check the type of the list values
@@ -222,7 +222,7 @@ def ListType(value_type):  # pylint: disable=invalid-name
 class AbstractDictType(KhiopsTaskArgumentType):
     """Base class for DictType containers
 
-    See the factory method [`DictType`][].
+    See the factory method [DictType][].
     """
 
     registry = {}
@@ -287,7 +287,7 @@ class AbstractDictType(KhiopsTaskArgumentType):
 def DictType(key_type, value_type):  # pylint: disable=invalid-name
     """DictType factory method
 
-    Dicts are themselves of type ``dict`` and they contain key-value relations with
+    Dicts are themselves of type `dict` and they contain key-value relations with
     fixed key and value types.
 
     Parameters
@@ -300,7 +300,7 @@ def DictType(key_type, value_type):  # pylint: disable=invalid-name
     Returns
     -------
     type
-        A class which inherits from [`AbstractDictType`][].
+        A class which inherits from [AbstractDictType][].
     """
     # Check the type of the dictionary's key and value
     if not issubclass(key_type, KhiopsTaskArgumentType):
@@ -342,7 +342,7 @@ def DictType(key_type, value_type):  # pylint: disable=invalid-name
 class AbstractTupleType(KhiopsTaskArgumentType):
     """Base class for TupleTypes
 
-    See the factory method [`TupleType`][].
+    See the factory method [TupleType][].
     """
 
     registry = {}
@@ -395,19 +395,19 @@ class AbstractTupleType(KhiopsTaskArgumentType):
 def TupleType(*value_types):  # pylint: disable=invalid-name
     """TupleType factory method
 
-    Tuples are themselves of type ``tuple`` and they may contain a fixed number of
+    Tuples are themselves of type `tuple` and they may contain a fixed number of
     elements each one with a fixed type.
 
     Parameters
     ----------
     value_types : list of KhiopsTaskArgumentType
         Type of the tuples value types. The resulting tuple type will admit only tuples
-        of the same size of ``value_types``.
+        of the same size of `value_types`.
 
     Returns
     -------
     type
-        A class which inherits from [`AbstractTupleType`][].
+        A class which inherits from [AbstractTupleType][].
     """
     # Check the type of the list values
     for value_type in value_types:

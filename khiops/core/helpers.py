@@ -38,7 +38,7 @@ def _build_multi_table_dictionary_domain(
     secondary_table_variable_name : str
         Name, in the root dictionary, for the "table" variable of the secondary table.
     update_secondary_table_name : bool, default False
-        If ``True``, then update the secondary table name according to the
+        If `True`, then update the secondary table name according to the
         secondary table variable name. If not set, keep original table name.
 
     Returns
@@ -164,9 +164,9 @@ def deploy_coclustering(
     r"""Deploys a coclustering on a data table
 
     This procedure generates the following files:
-        - ``coclustering_dictionary_file_path``: A multi-table dictionary file for
+        - `coclustering_dictionary_file_path`: A multi-table dictionary file for
           further deployments of the coclustering with deploy_model
-        - ``output_data_table_path``: A data table file containing the deployed
+        - `output_data_table_path`: A data table file containing the deployed
           coclustering model
 
     Parameters
@@ -178,7 +178,7 @@ def deploy_coclustering(
     data_table_path : str
         Path of the data table file.
     coclustering_file_path : str
-        Path of the coclustering model file (extension ``.khc`` or ``.khcj``).
+        Path of the coclustering model file (extension `.khc` or `.khcj`).
         !!! note
 
             Instance-variable coclustering is not currently supported.
@@ -191,16 +191,16 @@ def deploy_coclustering(
         Path of the coclustering dictionary file to deploy.
     output_data_table_path : str
         Path of the output data file.
-    detect_format : bool, default ``True``
+    detect_format : bool, default `True`
         If True detects automatically whether the data table file has a header and its
-        field separator. It's ignored if ``header_line`` or ``field_separator`` are set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is False)
+        field separator. It's ignored if `header_line` or `field_separator` are set.
+    header_line : bool, optional (default `True` if `detect_format` is False)
         If True it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is False)
-        A field separator character, overrides ``detect_format`` if set ("" counts
+        `detect_format` if set.
+    field_separator : str, optional (default "\\t" if `detect_format` is False)
+        A field separator character, overrides `detect_format` if set ("" counts
         as "\\t").
-    output_header_line : bool, default ``True``
+    output_header_line : bool, default `True`
         If True writes a header line containing the column names in the output table.
     output_field_separator : str, default "\\t"
         A field separator character (empty string counts as tab).
@@ -216,8 +216,8 @@ def deploy_coclustering(
     max_part_numbers : dict, optional
         Dictionary associating variable names to their maximum number of parts
         to preserve in the simplified coclustering. For variables not present
-        in ``max_part_numbers`` there is no limit.
-    build_cluster_variable : bool, default ``True``
+        in `max_part_numbers` there is no limit.
+    build_cluster_variable : bool, default `True`
         If True includes a cluster id variable in the deployment.
     build_distance_variables : bool, default False
         If True includes a cluster distance variable in the deployment.
@@ -228,7 +228,7 @@ def deploy_coclustering(
 
     See Also
     --------
-    - [`KhiopsRunner.run`][] : Additional options.
+    - [KhiopsRunner.run][] : Additional options.
 
     Returns
     -------
@@ -241,15 +241,15 @@ def deploy_coclustering(
     Raises
     ------
     TypeError
-        Invalid type ``dictionary_file_path_or_domain`` or ``key_variable_names``
+        Invalid type `dictionary_file_path_or_domain` or `key_variable_names`
     ValueError
-        If the type of the dictionary key variables is not equal to ``Categorical``
+        If the type of the dictionary key variables is not equal to `Categorical`
     NotImplementedError
         If the coclustering to be deployed is of the instance-variable type
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.deploy_coclustering()`
     """
     # Fail early for instance-variable coclustering, which is not supported
@@ -397,7 +397,7 @@ def deploy_predictor_for_metrics(
     !!! note
 
         To obtain the data of the default Khiops test dataset use ``sample_percentage =
-        70`` and ``sampling_mode = "Exclude sample"``.
+        70` and `sampling_mode = "Exclude sample"``.
 
     Parameters
     ----------
@@ -409,33 +409,33 @@ def deploy_predictor_for_metrics(
         Path of the data table file.
     output_data_table_path : str
         Path of the scores output data file.
-    detect_format : bool, default ``True``
+    detect_format : bool, default `True`
         If True detects automatically whether the data table file has a header and its
-        field separator. It's ignored if ``header_line`` or ``field_separator`` are set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        field separator. It's ignored if `header_line` or `field_separator` are set.
+    header_line : bool, optional (default `True` if `detect_format` is `False`)
         If True it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
+        `detect_format` if set.
+    field_separator : str, optional (default "\\t" if `detect_format` is `False`)
+        A field separator character, overrides `detect_format` if set ("" counts
         as "\\t").
     sample_percentage : int, default 70
-        See ``sampling_mode`` option below.
+        See `sampling_mode` option below.
     sampling_mode : "Include sample" or "Exclude sample", default "Include sample"
-        If equal to "Include sample" deploys the predictor on ``sample_percentage``
+        If equal to "Include sample" deploys the predictor on `sample_percentage`
         percent of data and if equal to "Exclude sample" on the complementary ``100 -
         sample_percentage`` percent of data.
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see
         [Multi-Table Learning Primer](../multi_table_primer.md) documentation.
-    output_header_line : bool, default ``True``
+    output_header_line : bool, default `True`
         If True writes a header line containing the column names in the output table.
     output_field_separator : str, default "\\t"
         A field separator character ("" counts as "\\t").
 
     See Also
     --------
-    - [`KhiopsRunner.run`][] : Additional options.
+    - [KhiopsRunner.run][] : Additional options.
     -"""
     # Check the dictionary domain
     api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)

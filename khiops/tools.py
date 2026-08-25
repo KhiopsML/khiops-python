@@ -8,7 +8,7 @@
 
 !!! warning
 
-    The entry point functions in this module use [`sys.exit`][]. They are not designed
+    The entry point functions in this module use [sys.exit][]. They are not designed
     to be
     called from another program or python shell.
 """
@@ -118,17 +118,17 @@ def download_datasets(
     """Downloads the Khiops sample datasets for a given version
 
     The datasets are downloaded to:
-        - all systems: ``KHIOPS_SAMPLES_DIR/khiops_data/samples`` if
-          ``KHIOPS_SAMPLES_DIR`` is defined and non-empty
+        - all systems: `KHIOPS_SAMPLES_DIR/khiops_data/samples` if
+          `KHIOPS_SAMPLES_DIR` is defined and non-empty
         - Windows:
-            - ``%PUBLIC%\\khiops_data\\samples`` if ``%PUBLIC%`` is defined
-            - ``%USERPROFILE%\\khiops_data\\samples`` otherwise
-        - Linux/macOS: ``$HOME/khiops_data/samples``
+            - `%PUBLIC%\\khiops_data\\samples` if `%PUBLIC%` is defined
+            - `%USERPROFILE%\\khiops_data\\samples` otherwise
+        - Linux/macOS: `$HOME/khiops_data/samples`
 
     Parameters
     ----------
-    force_overwrite : bool, default ``False``
-        If ``True`` it always overwrites the local samples directory even if it exists.
+    force_overwrite : bool, default `False`
+        If `True` it always overwrites the local samples directory even if it exists.
     version : str, default "11.0.0"
         The version of the samples datasets.
     """

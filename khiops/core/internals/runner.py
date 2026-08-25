@@ -54,11 +54,11 @@ def get_default_samples_dir():
     """Returns the default samples directory
 
     The default samples directory is computed according to the following priorities:
-        - all systems: ``KHIOPS_SAMPLES_DIR/khiops_data/samples`` if set
+        - all systems: `KHIOPS_SAMPLES_DIR/khiops_data/samples` if set
         - Windows:
-            - ``%PUBLIC%\\khiops_data\\samples`` if ``%PUBLIC%`` is defined
-            - ``%USERPROFILE%\\khiops_data\\samples`` otherwise
-        - Linux/macOS: ``$HOME/khiops_data/samples``
+            - `%PUBLIC%\\khiops_data\\samples` if `%PUBLIC%` is defined
+            - `%USERPROFILE%\\khiops_data\\samples` otherwise
+        - Linux/macOS: `$HOME/khiops_data/samples`
     """
     if "KHIOPS_SAMPLES_DIR" in os.environ and os.environ["KHIOPS_SAMPLES_DIR"]:
         samples_dir = os.environ["KHIOPS_SAMPLES_DIR"]
@@ -119,7 +119,7 @@ def _check_samples_dir(samples_dir):
 
 
 def _khiops_env_file_exists(env_dir):
-    """Check ``khiops_env`` exists relative to the specified environment dir"""
+    """Check `khiops_env` exists relative to the specified environment dir"""
     khiops_env_path = os.path.join(env_dir, "khiops_env")
     if platform.system() == "Windows":
         khiops_env_path += ".cmd"
@@ -173,7 +173,7 @@ def _infer_base_dir_for_conda_based_or_pip_installations():
             It returns an empty string if it detects a borderline installation
     """
     assert os.path.basename(Path(__file__).parents[2]) == "khiops", (
-        "Please fix the [`Path.parents`][] in this method "
+        "Please fix the [Path.parents][] in this method "
         "so it finds environment directory of this module"
     )
 
@@ -245,7 +245,7 @@ def _infer_khiops_installation_method(trace=False):
     - 'conda-based' environment is similar to 'conda' except that
        it was not activated previously nor during the execution
        and thus the CONDA_PREFIX environment variable is undefined
-       and the path to the [`bin`][] directory inside the conda environment is not in
+       and the path to the `bin/` directory inside the Conda environment is not in
        PATH
     - 'pip' environment containing binaries, shared libraries and the Python libraries
       can either be:
@@ -368,9 +368,9 @@ class KhiopsRunner(ABC):
 
         It tries to set a proper root temporary directory. It tries the following
         strategies in order:
-        - Check that ``$TEMP/khiops/python`` exists and use it
+        - Check that `$TEMP/khiops/python` exists and use it
         - Try to create ``$TEMP/khiops/python` and use it
-        - Create a ``$TEMP/khiops_<HASH>/python`` and use it
+        - Create a `$TEMP/khiops_<HASH>/python` and use it
         """
 
         # Create the directory if it doesn't exists
@@ -389,14 +389,14 @@ class KhiopsRunner(ABC):
 
     @property
     def root_temp_dir(self):
-        r"""str: The runner's temporary directory
+        r"""[str][]: The runner's temporary directory
 
         The temporary scenarios/templates and dictionary files created by
         the Khiops Python library are stored here.
 
         Default value:
-            - Windows: ``%TEMP%\khiops\python``
-            - Linux: ``$TMP/khiops/python``
+            - Windows: `%TEMP%\khiops\python`
+            - Linux: `$TMP/khiops/python`
 
         When set to a local path it tries to create the specified directory if it
         doesn't exist.
@@ -404,7 +404,7 @@ class KhiopsRunner(ABC):
         Raises
         ------
         KhiopsEnvironmentError
-            If set to a local path: if it is a file or if it does not have ``+rwx``
+            If set to a local path: if it is a file or if it does not have `+rwx`
             permissions.
         """
         return self._root_temp_dir
@@ -494,7 +494,10 @@ class KhiopsRunner(ABC):
 
     @property
     def samples_dir(self):
-        r"""str: Location of the Khiops' sample datasets directory. May be an URL/URI"""
+        """[str][]: Location of the Khiops' sample datasets directory
+
+        Can be an URI.
+        """
         return self._get_samples_dir()
 
     def _get_samples_dir(self):
@@ -515,7 +518,7 @@ class KhiopsRunner(ABC):
 
     @property
     def khiops_version(self):
-        """[`KhiopsVersion`][]: The version of the Khiops backend of this runner"""
+        """[KhiopsVersion][]: The version of the Khiops backend of this runner"""
         return self._get_khiops_version()
 
     def _get_khiops_version(self):
@@ -547,7 +550,7 @@ class KhiopsRunner(ABC):
         # is still in the 'khiops.core.internals' package
         assert (
             os.path.basename(Path(__file__).parents[2]) == "khiops"
-        ), "Please fix the [`Path.parents`][] in this method "
+        ), "Please fix the [Path.parents][] in this method "
         library_root_dir_path = Path(__file__).parents[2]
 
         status_msg = "Khiops Python library settings\n"
@@ -592,7 +595,7 @@ class KhiopsRunner(ABC):
 
     @abstractmethod
     def _initialize_khiops_version(self):
-        """Initialization of [`khiops_version`][] to be implemented in child classes"""
+        """Initialization of `khiops_version` to be implemented in child classes"""
 
     def run(
         self,
@@ -616,12 +619,12 @@ class KhiopsRunner(ABC):
             Arguments for the task.
         command_line_options : CommandLineOptions, optional
             Command line options for all tasks. If not set the default values are used.
-            See the [`CommandLineOptions`][] for more information.
-        trace : bool, default ``False``
+            See the [CommandLineOptions][] for more information.
+        trace : bool, default `False`
             If True prints the command line executed of the process and does not delete
             any temporary files created.
         system_settings : SystemSettings, optional
-            *Advanced:* System settings for all tasks. See the [`SystemSettings`][]
+            *Advanced:* System settings for all tasks. See the [SystemSettings][]
             class for more information.
         stdout_file_path : str, default ""
             *Advanced* Path to a file where the Khiops process writes its stdout stream.
@@ -633,7 +636,7 @@ class KhiopsRunner(ABC):
             Normally Khiops should not write to this stream but MPI, filesystems plugins
             or debug versions may do it. The stream is captured with a UTF-8 encoding
             and replacing encoding errors. If equal to "" then it writes no file.
-        force_ansi_scenario : bool, default ``False``
+        force_ansi_scenario : bool, default `False`
             *Advanced:* If True the internal scenario generated by Khiops will force
             characters such as accentuated ones to be decoded with the UTF8->ANSI khiops
             transformation.
@@ -921,25 +924,25 @@ class KhiopsLocalRunner(KhiopsRunner):
     Requires either:
 
     - This library installed through Conda and run from a Conda environment, or
-    - the ``khiops-core`` Linux native library installed on the local machine, or
+    - the `khiops-core` Linux native library installed on the local machine, or
     - the Windows Khiops desktop application installed on the local machine
 
     **Samples directory settings**
 
-    Default values for the ``samples_dir`` attribute:
+    Default values for the `samples_dir` attribute:
 
-    - The value of the ``KHIOPS_SAMPLES_DIR`` environment variable (path to the Khiops
+    - The value of the `KHIOPS_SAMPLES_DIR` environment variable (path to the Khiops
       sample datasets directory).
     - Otherwise:
 
       - Windows:
 
-        - ``%PUBLIC%\khiops_data\samples%`` if ``%PUBLIC%`` is defined
-        - ``%USERPROFILE%\khiops_data\samples%`` otherwise
+        - `%PUBLIC%\khiops_data\samples%` if `%PUBLIC%` is defined
+        - `%USERPROFILE%\khiops_data\samples%` otherwise
 
       - Linux and macOS:
 
-        - ``$HOME/khiops_data/samples``
+        - `$HOME/khiops_data/samples`
 
     """
 
@@ -1136,7 +1139,7 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     def _detect_library_installation_incompatibilities(self, library_root_dir_path):
         """Detects known incompatible installations of this library
-        in the 3 installation modes see [`_infer_khiops_installation_method`][]
+        in the 3 installation modes see [_infer_khiops_installation_method][]
         (pip, conda, conda-based)
 
         The error_list or warning_list collections
@@ -1390,9 +1393,9 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     @property
     def khiops_path(self):
-        """str: Path to the ``MODL*`` Khiops binary
+        """str: Path to the `MODL*` Khiops binary
 
-        Set by the ``khiops_env`` script from the ``khiops-core`` package.
+        Set by the `khiops_env` script from the `khiops-core` package.
 
         """
         return self._khiops_path
@@ -1412,9 +1415,9 @@ class KhiopsLocalRunner(KhiopsRunner):
 
     @property
     def khiops_coclustering_path(self):
-        """str: Path to the ``MODL_Coclustering`` Khiops Coclustering binary
+        """str: Path to the `MODL_Coclustering` Khiops Coclustering binary
 
-        Set by the ``khiops_env`` script from the ``khiops-core`` package.
+        Set by the `khiops_env` script from the `khiops-core` package.
 
         """
         return self._khiops_coclustering_path
@@ -1475,15 +1478,20 @@ class KhiopsLocalRunner(KhiopsRunner):
         use_mpi : bool, optional
             Whether to execute the application with MPI
         trace : bool, default False
-            If ``True`` print the trace of the process.
+            If `True` print the trace of the process.
 
         Examples
         --------
+
+        ```pycon
         >>> raw_run("khiops", ["-b", "-i" , "scenario._kh"])
+        ```
 
-        is equivalent to execute in a shell::
+        is equivalent to execute in a shell:
 
-            > khiops -b -i scenario._kh
+        ```shell
+        > khiops -b -i scenario._kh
+        ```
         """
         # Check command_line_args type
         if command_line_args and not isinstance(command_line_args, list):
@@ -1560,7 +1568,7 @@ _khiops_runner = None
 
 
 def set_runner(runner):
-    """Sets the current KhiopsRunner of the module"""
+    """Sets the current [KhiopsRunner][] of the module"""
     if not isinstance(runner, KhiopsRunner):
         raise TypeError(type_error_message("runner", runner, KhiopsRunner))
     global _khiops_runner

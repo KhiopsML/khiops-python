@@ -118,7 +118,7 @@ def split_docstring(source):
         )
         source_without_docstring = source[docstring_close_quote + 4 :]
         docstring = source[docstring_open_quote + 3 : docstring_close_quote]
-    return source_without_docstring, docstring
+    return source_without_docstring, inspect.cleandoc(docstring)
 
 
 def create_markdown_page_section(sample_function):
@@ -130,7 +130,7 @@ def create_markdown_page_section(sample_function):
     return (
         f"### `{sample_function.__name__}()`\n"
         "\n"
-        f"{docstring}\n"
+        f"{inspect.cleandoc(docstring)}\n"
         "\n"
         "```python\n"
         f"{code}\n"
