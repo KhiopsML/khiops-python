@@ -175,7 +175,7 @@ def _preprocess_arguments(args):
 
     .. note:: This function *mutates* the input `args` dictionary.
     """
-    # Execute the preprocess of common task arguments
+    # Execute the preprocessing of common task arguments
     task_is_called_with_domain = _preprocess_task_arguments(args)
 
     # Create a command line options object
@@ -222,6 +222,9 @@ def _deprecate_legacy_data_path(data_path_task_arg_name, task_args):
     """Detect and replace legacy data path with the current syntax
 
     .. note:: The function mutates task_args.
+    .. note:: A similar logic is repeated in `DictionaryDomain`
+              but cannot be factored out in a simple way
+              because no `DictionaryDomain` object is built here
     """
     if (
         data_path_task_arg_name in task_args
@@ -233,7 +236,9 @@ def _deprecate_legacy_data_path(data_path_task_arg_name, task_args):
         else:
             current_dictionary_name = task_args["train_dictionary_name"]
 
-        for kdic_path in task_args[data_path_task_arg_name].keys():
+        # Iterate through the keys of a clone to avoid any error
+        # while modifying the dict in-place
+        for kdic_path in task_args[data_path_task_arg_name].copy().keys():
             if isinstance(kdic_path, str):
                 deprecated_data_path_separator = "`"
                 data_path_separator = "/"
@@ -255,7 +260,7 @@ def _deprecate_legacy_data_path(data_path_task_arg_name, task_args):
                 source_dictionary_name = kdic_path_parts[0]
                 if source_dictionary_name == current_dictionary_name:
                     # Escape any "/" char in the path parts except for the
-                    # current dictionary, which is is skipped from the new path
+                    # current dictionary, which is skipped from the new path
                     new_kdic_path_parts = []
                     for kdic_path_part in kdic_path_parts[1:]:
                         new_kdic_path_parts.append(
