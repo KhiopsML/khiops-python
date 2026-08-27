@@ -432,6 +432,42 @@ jobs:
           "$PYTHON" scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
           "$PYTHON" -m pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
           rm -f requires-khiops.txt requires-no-khiops.txt
+      - name: Install Uv
+        uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: false
+          version: 0.13.5
+          python-version: '3.14'
+      - name: Test Khiops when run with Uv
+        run: |-
+          # Create virtual environment
+          uv venv        
+
+          # Get khiops-core version specification from pyproject.toml, as
+          # "khiops-core<op>x.y.z[-pre]", where "op" is one of "==", "<",
+          # "<=", ">", ">=".
+          KHIOPS_CORE_SPEC=$(uv run --no-project --with packaging python - <<'EOF'
+          import tomllib
+          from packaging.requirements import Requirement
+          from packaging.utils import canonicalize_name
+          with open("pyproject.toml", "rb") as pyproject_file:
+            dependencies = tomllib.load(pyproject_file)["project"]["dependencies"]
+          for package in dependencies:
+            if canonicalize_name(Requirement(package).name) == "khiops-core":
+              print(package)
+              break
+          EOF
+          )
+
+          # With --no-deps, MPI is not installed at this stage; it will be later,
+          # on "uv pip install ."
+          uv pip install --no-deps --index-url https://test.pypi.org/simple/ "$KHIOPS_CORE_SPEC"
+
+          # Install all remaining khiops (and khiops-core) dependencies from PyPI          
+          uv pip install .
+
+          # Run the status tool (without activating explicitly the virtual environment)
+          uv run kh-status
       - name: Setup and Install Test Requirements
         shell: bash
         run: |-

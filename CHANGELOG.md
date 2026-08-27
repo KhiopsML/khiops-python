@@ -8,12 +8,15 @@
 
 ## Unreleased
 
-### Removed
-- (General) Python 3.10 support.
+### Added
+- (`general`) Uv installation support.
 
 ### Fixed
 - (General) Built packages with up-to-date packaging-tools after the emSign CA
   incident.
+
+### Removed
+- (General) Python 3.10 support.
 
 ## 11.0.1.1 - 2026-10-15
 
