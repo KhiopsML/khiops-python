@@ -29,7 +29,7 @@ from khiops.core.internals.common import (
     is_string_like,
     type_error_message,
 )
-from khiops.core.internals.runner import get_runner
+from khiops.core.internals.runner import KhiopsLocalRunner, get_runner, set_runner
 from khiops.core.internals.task import get_task_registry
 
 # Construction rules
@@ -143,6 +143,17 @@ def _run_task(task_name, task_args):
     # Obtain the api function from the registry
     task = get_task_registry().get_task(task_name, get_khiops_version())
 
+    # Instantiate a new runner with a specific environment if max_cores is defined
+    if system_settings.max_cores is not None:
+        # Ensure KHIOPS_PROC_NUMBER is set only on KhiopsLocalRunner instances
+        if type(get_runner()) is KhiopsLocalRunner:
+            task_environment = os.environ.copy()
+
+            # The max pre-allocated cpu cores must have the same value
+            task_environment["KHIOPS_PROC_NUMBER"] = str(system_settings.max_cores)
+            khiops_runner = KhiopsLocalRunner(task_environment)
+            set_runner(khiops_runner)
+
     # Execute the Khiops task and cleanup when necessary
     try:
         get_runner().run(
@@ -199,6 +210,12 @@ def _preprocess_arguments(args):
         if arg == "max_cores":
             max_cores = args[arg]
             if max_cores is not None:
+                # This `max_cores` system setting will be used in the khiops scenario
+                # to limit the CPU cores to use for the training.
+                # An additional environment variable (local to this specific run)
+                # MUST also be set in the runner to avoid allocating
+                # all the available CPU cores.
+                # Thus, allocated CPU cores = max number of CPU cores used
                 system_settings.max_cores = int(max_cores)
         elif arg == "memory_limit_mb":
             memory_limit_mb = args[arg]

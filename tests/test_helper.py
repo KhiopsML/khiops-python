@@ -262,7 +262,7 @@ class KhiopsTestHelper:
                 test_case.skipTest("Skipping expensive test")
 
     @staticmethod
-    def create_parameter_trace():
+    def create_trace_holder():
         """Create empty, updatable, three-level look-up dictionary"""
         return defaultdict(lambda: defaultdict(list))
 
@@ -280,6 +280,24 @@ class KhiopsTestHelper:
             function_parameters[module][function].append(
                 {"args": args, "kwargs": kwargs}
             )
+
+            return wrapped(*args, **kwargs)
+
+        return wrapper
+
+    @staticmethod
+    def wrap_with_runner_attributes_trace(module, function, runner_attributes_trace):
+        """Wrap function with runner attributes trace"""
+
+        @wrapt.patch_function_wrapper(module, function)
+        def wrapper(wrapped, _instance, args, kwargs):
+            # mutate runner_attributes_trace as previously bound / initialized in the
+            # outer scope of the `wrap_with_parameter_trace` method by its
+            # caller:
+            nonlocal runner_attributes_trace
+
+            # Collect all the updated runner attributes
+            runner_attributes_trace.update(vars(_instance))
 
             return wrapped(*args, **kwargs)
 

@@ -1323,7 +1323,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 stack.enter_context(function_mock)
 
             # Set the parameter trace for wrapped functions
-            parameter_trace = KhiopsTestHelper.create_parameter_trace()
+            parameter_trace = KhiopsTestHelper.create_trace_holder()
             for module, function in self.wrapped_functions[estimator_type_key][
                 estimator_method
             ]:
