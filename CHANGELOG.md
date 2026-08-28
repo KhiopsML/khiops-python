@@ -6,6 +6,11 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
+## Unreleased
+
+### Changed
+- (`sklearn`) The `fit` methods in estimators accept `max_cores` to limit the number of CPU cores allocated to the training  
+
 ## 11.0.1.0 - 2026-07-02
 
 ### Added

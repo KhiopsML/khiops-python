@@ -348,6 +348,18 @@ class KhiopsEstimator(ABC, BaseEstimator):
     def fit(self, X, y=None, **kwargs):
         """Fit the estimator
 
+        Parameters
+        ----------
+        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an :external:term:`array-like` or a ``dict``
+            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+
+        y : :external:term:`array-like` of shape (n_samples,)
+            The target values.
+
+        max_cores : int, optional
+            Maximum number of CPU cores allocated and used for the training.
+
         Returns
         -------
         self : `KhiopsEstimator`
@@ -689,6 +701,8 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             The column that contains the id of the instance.
         columns : list, optional
             The columns to be co-clustered. If not specified it uses all columns.
+        max_cores : int, optional
+            Maximum number of CPU cores allocated and used for the training.
 
         Returns
         -------
@@ -764,6 +778,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             main_table_path,
             variables,
             coclustering_file_path,
+            max_cores=kwargs.get("max_cores"),
             log_file_path=train_log_file_path,
             trace=self.verbose,
         )
@@ -1179,7 +1194,25 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         return self.model_.copy(), None
 
     def fit_predict(self, X, y=None, **kwargs):
-        """Performs clustering on X and returns result (instead of labels)"""
+        """Performs clustering on X and returns result (instead of labels)
+
+        Parameters
+        ----------
+        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an :external:term:`array-like` or a ``dict``
+            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+
+        y : :external:term:`array-like` of shape (n_samples,)
+            The target values.
+
+        max_cores : int, optional
+            Maximum number of CPU cores allocated and used for the training.
+
+        Returns
+        -------
+        results : `numpy.array`
+        """
+
         return self.fit(X, y, **kwargs).predict(X)
 
 
@@ -1253,6 +1286,9 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
 
+        max_cores : int, optional
+            Maximum number of CPU cores allocated and used for the training.
+
         Returns
         -------
         self : `KhiopsSupervisedEstimator`
@@ -1314,7 +1350,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def _fit_train_model(self, ds, computation_dir, **kwargs):
         # Train the model with Khiops
         train_args, train_kwargs = self._fit_prepare_training_function_inputs(
-            ds, computation_dir
+            ds, computation_dir, **kwargs
         )
         report_file_path, model_kdic_file_path = self._fit_core_training_function(
             *train_args, **train_kwargs
@@ -1335,7 +1371,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def _fit_core_training_function(self, *args, **kwargs):
         """A wrapper to the khiops.core training function for the estimator"""
 
-    def _fit_prepare_training_function_inputs(self, ds, computation_dir):
+    def _fit_prepare_training_function_inputs(self, ds, computation_dir, **fit_kwargs):
         # Set output path files
         output_dir = self._get_output_dir(computation_dir)
         report_file_path = fs.get_child_path(
@@ -1374,7 +1410,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             report_file_path,
         ]
 
-        # Build the optional parameters from a copy of the estimator parameters
+        # Build the optional parameters from a copy
+        # of the estimator initializer parameters
         kwargs = self.get_params()
 
         # Remove non core.api params
@@ -1403,6 +1440,10 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         kwargs["log_file_path"] = log_file_path
         kwargs["trace"] = kwargs["verbose"]
         del kwargs["verbose"]
+
+        # Set the technical parameters
+        if "max_cores" in fit_kwargs:
+            kwargs["max_cores"] = fit_kwargs["max_cores"]
 
         return args, kwargs
 
@@ -1584,10 +1625,10 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         assert isinstance(y_pred, (str, pd.DataFrame)), "Expected str or DataFrame"
         return y_pred
 
-    def _fit_prepare_training_function_inputs(self, ds, computation_dir):
+    def _fit_prepare_training_function_inputs(self, ds, computation_dir, **fit_kwargs):
         # Call the parent method
         args, kwargs = super()._fit_prepare_training_function_inputs(
-            ds, computation_dir
+            ds, computation_dir, **fit_kwargs
         )
 
         # Rename parameters to be compatible with khiops.core
@@ -1855,10 +1896,10 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         # Check the pair related parameters
         _check_pair_parameters(self)
 
-    def _fit_prepare_training_function_inputs(self, ds, computation_dir):
+    def _fit_prepare_training_function_inputs(self, ds, computation_dir, **fit_kwargs):
         # Call the parent method
         args, kwargs = super()._fit_prepare_training_function_inputs(
-            ds, computation_dir
+            ds, computation_dir, **fit_kwargs
         )
 
         # Rename parameters to be compatible with khiops.core
@@ -1877,6 +1918,9 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
+
+        max_cores : int, optional
+            Maximum number of CPU cores allocated and used for the training.
 
         Returns
         -------
@@ -2199,6 +2243,9 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
+
+        max_cores : int, optional
+            Maximum number of CPU cores allocated and used for the training.
 
         Returns
         -------
@@ -2606,6 +2653,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
 
+        max_cores : int, optional
+            Maximum number of CPU cores allocated and used for the training.
+
         Returns
         -------
         self : `KhiopsEncoder`
@@ -2616,10 +2666,10 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
     # pylint: enable=useless-super-delegation
 
-    def _fit_prepare_training_function_inputs(self, ds, computation_dir):
+    def _fit_prepare_training_function_inputs(self, ds, computation_dir, **fit_kwargs):
         # Call the parent method
         args, kwargs = super()._fit_prepare_training_function_inputs(
-            ds, computation_dir
+            ds, computation_dir, **fit_kwargs
         )
         # Rename encoder parameters, delete unused ones
         # to be compatible with khiops.core
@@ -2724,6 +2774,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         y : :external:term:`array-like` of shape (n_samples,)
             The target values.
+
+        max_cores : int, optional
+            Maximum number of CPU cores allocated and used for the training.
 
         Returns
         -------
