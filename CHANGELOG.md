@@ -9,7 +9,8 @@
 ## Unreleased
 
 ### Changed
-- (`sklearn`) The `fit` methods in estimators accept `max_cores` to limit the number of CPU cores allocated to the training  
+- (`sklearn`) The `fit` methods in estimators accept `max_cores` to limit the number of CPU cores allocated to the training
+- (General) When `max_cores` is set, use also its value to limit the number of pre-allocated CPU cores (instead of using all the available ones).
 
 ## 11.0.1.0 - 2026-07-02
 

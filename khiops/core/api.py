@@ -193,7 +193,12 @@ def _preprocess_arguments(args):
         if arg == "max_cores":
             max_cores = args[arg]
             if max_cores is not None:
+                # This `max_cores` system setting will be used in the khiops scenario
+                # to limit the CPU cores to use for the training
                 system_settings.max_cores = int(max_cores)
+                # An additional environment variable (local to this specific run)
+                # MUST also be set to avoid allocating all the available CPU cores.
+                # Thus, allocated CPU cores = max number of CPU cores used
         elif arg == "memory_limit_mb":
             memory_limit_mb = args[arg]
             if memory_limit_mb is not None:
