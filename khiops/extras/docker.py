@@ -103,6 +103,7 @@ class KhiopsDockerRunner(KhiopsRunner):
         scenario_path,
         command_line_options,
         trace,
+        system_settings,
     ):
         # Check arguments
         if command_line_options.output_scenario_path:

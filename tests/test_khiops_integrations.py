@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops import tools
+from khiops.core import SystemSettings
 from khiops.core.exceptions import KhiopsEnvironmentError
 from khiops.core.internals.runner import (
     KhiopsLocalRunner,
@@ -302,6 +303,24 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         # Restore initial HOME in the environment
         if initial_home:
             os.environ["HOME"] = initial_home
+
+    def test_runner_environment_max_cores_sets_proc_number_env(self):
+        """Test if KHIOPS_PROC_NUMBER is actually defined when max_cores is set
+
+        Only the utility function can be simply tested
+        """
+
+        system_settings = SystemSettings()
+        system_settings.max_cores = 15
+
+        khiops_env = _build_khiops_process_environment(system_settings)
+
+        # Check `KHIOPS_PROC_NUMBER` is correctly set
+        self.assertIn("KHIOPS_PROC_NUMBER", khiops_env)
+        self.assertEqual(
+            15,
+            khiops_env["KHIOPS_PROC_NUMBER"],
+        )
 
     def test_runner_environment_initialization(self):
         """Test that local runner initializes/ed its environment properly
