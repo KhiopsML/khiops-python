@@ -2577,7 +2577,21 @@ class KhiopsCoreServicesTests(unittest.TestCase):
             "dictionary_name": "SpliceJunction",
             "additional_data_tables": {"SpliceJunction`DNA": "SpliceJunctionDNA.txt"},
         }
-        _deprecate_legacy_data_path(data_path_task_arg_name, task_args)
+        with warnings.catch_warnings(record=True) as warning_list:
+            _deprecate_legacy_data_path(data_path_task_arg_name, task_args)
+        self.assertTrue(len(warning_list) > 0)
+        deprecation_warning_found = False
+        for warning in warning_list:
+            warning_message = warning.message
+            if (
+                issubclass(warning.category, UserWarning)
+                and len(warning_message.args) == 1
+                and "'`'-based dictionary data path" in warning_message.args[0]
+                and "deprecated" in warning_message.args[0]
+            ):
+                deprecation_warning_found = True
+                break
+        self.assertTrue(deprecation_warning_found)
         self.assertNotIn(
             "SpliceJunction`DNA",
             task_args["additional_data_tables"],
