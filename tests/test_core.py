@@ -25,6 +25,7 @@ import khiops
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
 from khiops.core import KhiopsRuntimeError
+from khiops.core.api import _deprecate_legacy_data_path
 from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import KhiopsLocalRunner, KhiopsRunner
 from khiops.core.internals.scenario import ConfigurableKhiopsScenario
@@ -2568,6 +2569,39 @@ class KhiopsCoreServicesTests(unittest.TestCase):
                         dictionary_from_legacy_data_path,
                         domain.get_dictionary_at_data_path(data_path),
                     )
+
+    def test_deprecated_legacy_data_path_in_task_args(self):
+        """Tests the automatic correction of deprecated data paths in task args"""
+        data_path_task_arg_name = "additional_data_tables"
+        task_args = {
+            "dictionary_name": "SpliceJunction",
+            "additional_data_tables": {"SpliceJunction`DNA": "SpliceJunctionDNA.txt"},
+        }
+        with warnings.catch_warnings(record=True) as warning_list:
+            _deprecate_legacy_data_path(data_path_task_arg_name, task_args)
+        self.assertTrue(len(warning_list) > 0)
+        deprecation_warning_found = False
+        for warning in warning_list:
+            warning_message = warning.message
+            if (
+                issubclass(warning.category, UserWarning)
+                and len(warning_message.args) == 1
+                and "'`'-based dictionary data path" in warning_message.args[0]
+                and "deprecated" in warning_message.args[0]
+            ):
+                deprecation_warning_found = True
+                break
+        self.assertTrue(deprecation_warning_found)
+        self.assertNotIn(
+            "SpliceJunction`DNA",
+            task_args["additional_data_tables"],
+            "Deprecated data path should have been removed",
+        )
+        self.assertEqual(
+            {"DNA": "SpliceJunctionDNA.txt"},
+            task_args["additional_data_tables"],
+            "Deprecated data path should have been corrected",
+        )
 
 
 class ScenarioWriterRunner(KhiopsRunner):
