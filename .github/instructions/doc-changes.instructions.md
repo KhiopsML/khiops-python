@@ -110,8 +110,8 @@ repository at the version tag and builds the docs natively using mkdocstrings.
 - **Docstring format**: [NumPy style](https://numpydoc.readthedocs.io/en/latest/format.html)
   parsed by the `mkdocstrings[python]` plugin
 - **Plugins**: `mkdocstrings[python]`, `autorefs`, `search`
-- **Intersphinx-equivalent**: mkdocstrings `import` option loads inventory files
-  from Python, pandas, scikit-learn, NumPy, SciPy
+- **Intersphinx-equivalent**: mkdocstrings `inventories` option loads inventory
+  files from Python, pandas, scikit-learn, NumPy, SciPy
 - **Cross-references**: Use `[display text][fully.qualified.name]` or
   `[fully.qualified.name][]` syntax for linking to documented objects
 - **Custom CSS**: `doc/site/_static/css/custom.css` provides Orange branding via CSS

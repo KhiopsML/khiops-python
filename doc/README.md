@@ -8,13 +8,23 @@ Khiops Python library.
 ```bash
 # Working dir = khiops-python (repository root)
 
-# You'll need the python packages in the doc/util/requirements.txt file
+# Install the doc build dependencies.
 # Warning: If you create a virtualenv, do not place it within the doc/util
-directory. The installed packages may contain .md files and Zensical will
-process them!
+# directory. The installed packages may contain .md files and Zensical will
+# process them!
+uv pip install -U -r doc/util/requirements.txt
+
+# Install the Khiops Python library from the working dir so that the tutorials
+# can run
+uv pip install .
+
+# The 'black' package is also required (used by convert_samples.py to format
+# code snippets in the generated sample pages) but is not listed in
+# doc/util/requirements.txt, because it is needed only for local development.
+# uv pip install black
 
 # Execute this if there were non committed updates to samples.py or samples_sklearn.py:
-# doc/util/convert-samples-hook
+# uv run doc/util/convert-samples-hook
 
 # To clean the html documentation
 # doc/util/clean-doc
@@ -52,7 +62,7 @@ Zensical's MkDocs compatibility layer:
 
 Cross-references to external projects (Python, pandas, scikit-learn, NumPy, SciPy) are
 handled via `objects.inv` inventory files configured in the `mkdocstrings` handler's
-`import` option.
+`inventories` option.
 
 ## Khiops Python Docstring Patterns
 
