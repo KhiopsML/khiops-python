@@ -2639,9 +2639,11 @@ class ScenarioWriterRunner(KhiopsRunner):
         self,
         task,
         task_args,
-        command_line_options,
+        command_line_options=None,
         trace=False,
         system_settings=None,
+        stdout_file_path="",
+        stderr_file_path="",
         force_ansi_scenario=False,
         **kwargs,
     ):
@@ -2677,6 +2679,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         scenario_path,
         command_line_options,
         trace,
+        system_settings,
     ):
         return 0, "", ""
 
