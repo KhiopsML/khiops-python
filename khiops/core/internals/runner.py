@@ -1019,10 +1019,20 @@ class KhiopsLocalRunner(KhiopsRunner):
         ) as khiops_env_process:
             stdout, stderr = khiops_env_process.communicate()
             if khiops_env_process.returncode != 0:
-                raise KhiopsEnvironmentError(
+                error_message = (
                     "Error initializing the environment for Khiops from the "
                     f"{khiops_env_path} script. Contents of stderr:\n{stderr}"
                 )
+                if platform.system() == "Windows":
+                    # Give the user a hint to resolve the issue on Windows
+                    error_message += (
+                        "\nThe issue may be caused by Khiops being installed "
+                        "in a location restricted by your organization's IT "
+                        "security policy. In this case, try re-installing "
+                        "the Khiops Python Library in a recommended directory "
+                        "or run your IDE or terminal as an administrator."
+                    )
+                raise KhiopsEnvironmentError(error_message)
             for line in stdout.split("\n"):
                 tokens = line.rstrip().split(maxsplit=1)
                 if len(tokens) == 2:
