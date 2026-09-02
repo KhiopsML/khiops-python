@@ -8,21 +8,23 @@
 
 Class Overview
 --------------
-The diagram below describes the relationships in this module::
+The diagram below describes the relationships in this module:
 
-    KhiopsEstimator(ABC, BaseEstimator)
-        |
-        +- KhiopsCoclustering(ClusterMixin)
-        |
-        +- KhiopsSupervisedEstimator
-           |
-           +- KhiopsPredictor
-           |  |
-           |  +- KhiopsClassifier(ClassifierMixin)
-           |  |
-           |  +- KhiopsRegressor(RegressorMixin)
-           |
-           +- KhiopsEncoder(TransformerMixin)
+```text
+KhiopsEstimator(ABC, BaseEstimator)
+    |
+    +- KhiopsCoclustering(ClusterMixin)
+    |
+    +- KhiopsSupervisedEstimator
+       |
+       +- KhiopsPredictor
+       |  |
+       |  +- KhiopsClassifier(ClassifierMixin)
+       |  |
+       |  +- KhiopsRegressor(RegressorMixin)
+       |
+       +- KhiopsEncoder(TransformerMixin)
+```
 """
 import io
 import warnings
@@ -223,7 +225,8 @@ def _cleanup_dir(target_dir):
 class KhiopsEstimator(ABC, BaseEstimator):
     """Base class for Khiops Scikit-learn estimators
 
-    .. note::
+    !!! note
+
          The input features collection X needs to have single-line records
          so that Khiops can handle them.
          Hence, multi-line records are preprocessed:
@@ -232,13 +235,13 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     Parameters
     ----------
-    verbose : bool, default ``False``
-        If ``True`` it prints debug information and it does not erase temporary files
+    verbose : bool, default `False`
+        If `True` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
     output_dir : str, optional
         Path of the output directory for the resulting artifacts of Khiops learning
         tasks. See concrete estimator classes for more information about this parameter.
-    auto_sort : bool, default ``True``
+    auto_sort : bool, default `True`
         *Advanced.*: See concrete estimator classes for information about this
         parameter.
     """
@@ -315,7 +318,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         Raises
         ------
-        `ValueError`
+        ValueError
             When the instance is not fitted.
         """
         check_is_fitted(self)
@@ -329,7 +332,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
         self.model_.export_khiops_dictionary_file(dictionary_file_path)
 
     def _import_model(self, kdic_path):
-        """Sets model instance attribute by importing model from ``.kdic``"""
+        """Sets model instance attribute by importing model from `.kdic`"""
         self.model_ = self._read_model_from_dictionary_file(kdic_path)
 
     def _get_output_dir(self, fallback_dir):
@@ -350,7 +353,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         Returns
         -------
-        self : `KhiopsEstimator`
+        self : KhiopsEstimator
             The fitted estimator instance.
         """
         # Check for common sklearn parameters to comply with sklearn's check_estimator
@@ -400,7 +403,7 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
         Parameters
         ----------
-        ds : `Dataset`
+        ds : Dataset
             The learning dataset.
         computation_dir : str
             Path or URI where the Khiops computation results will be stored.
@@ -530,14 +533,16 @@ class KhiopsEstimator(ABC, BaseEstimator):
     ):
         """Deploys a generic Khiops transformation model
 
-        It allows to implement `predict`, `predict_proba` and `transform` methods in the
-        sub-classes `KhiopsEncoder`, `KhiopsClassifier`, `KhiopsRegressor`.
+        It allows to implement [predict][], [predict_proba][] and [transform][]
+        methods in the
+        sub-classes [KhiopsEncoder][], [KhiopsClassifier][], [KhiopsRegressor][].
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         root_name : str
             Name of root table in trained Khiops model .kdic
@@ -613,41 +618,41 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
     Parameters
     ----------
-    build_distance_vars : bool, default ``False``
-        If ``True`` includes a cluster distance variable in the deployment
-    build_frequency_vars : bool, default ``False``
-        If ``True`` includes the frequency variables in the deployment.
-    build_name_var : bool, default ``False``
-        If ``True`` includes a cluster id variable in the deployment.
-    verbose : bool, default ``False``
-        If ``True`` it prints debug information and it does not erase temporary files
+    build_distance_vars : bool, default `False`
+        If `True` includes a cluster distance variable in the deployment
+    build_frequency_vars : bool, default `False`
+        If `True` includes the frequency variables in the deployment.
+    build_name_var : bool, default `False`
+        If `True` includes a cluster id variable in the deployment.
+    verbose : bool, default `False`
+        If `True` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
     output_dir : str, optional
-        Path of the output directory for the ``Coclustering.khcj`` report file and the
-        ``Coclustering.kdic`` modeling dictionary file.
-    auto_sort : bool, default ``True``
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are
+        Path of the output directory for the `Coclustering.khcj` report file and the
+        `Coclustering.kdic` modeling dictionary file.
+    auto_sort : bool, default `True`
+        *Advanced.* Only for multi-table inputs: If `True` input tables are
         automatically sorted by their key before executing Khiops. If the input
-        tables are already sorted by their keys set this parameter to ``False``
-        to speed up the processing. This affects the `predict` method.
+        tables are already sorted by their keys set this parameter to `False`
+        to speed up the processing. This affects the [predict][] method.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
 
     Attributes
     ----------
     is_multitable_model_ : bool
-        ``True`` if the model was fitted on a multi-table dataset.
-    model_ : `.DictionaryDomain`
+        `True` if the model was fitted on a multi-table dataset.
+    model_ : DictionaryDomain
         The Khiops dictionary domain for the trained coclustering. For coclustering it
         is a multi-table dictionary even though the model is single-table.
     model_main_dictionary_name_ : str
-        The name of the main Khiops dictionary within the ``model_`` domain.
-    model_report_ : `.CoclusteringResults`
+        The name of the main Khiops dictionary within the `model_` domain.
+    model_report_ : CoclusteringResults
         The Khiops report object.
 
     Examples
     --------
-    See the following functions of the ``samples_sklearn.py`` documentation script:
+    See the following functions of the `samples_sklearn.py` documentation script:
         - `samples_sklearn.khiops_coclustering()`
     """
 
@@ -682,9 +687,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
         id_column : str
             The column that contains the id of the instance.
         columns : list, optional
@@ -692,7 +698,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Returns
         -------
-        self : `KhiopsCoclustering`
+        self : KhiopsCoclustering
             The calling estimator instance.
         """
         return super().fit(X, y=y, **kwargs)
@@ -704,7 +710,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         ):
             raise ValueError(
                 "One of the parameters 'build_name_var', "
-                "'build_distance_vars' or 'build_frequency_vars' must be ``True``"
+                "'build_distance_vars' or 'build_frequency_vars' must be `True`"
             )
 
         # If 'columns' specified check that:
@@ -844,7 +850,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Parameters
         ----------
-        domain : `.DictionaryDomain`
+        domain : DictionaryDomain
             Input dictionary domain reflecting the structure of the input dataset.
         coclustering_file_path : str
             Path to the coclustering report file.
@@ -915,8 +921,8 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Returns
         -------
-        self : `KhiopsCoclustering`
-            A *new*, simplified `.KhiopsCoclustering` estimator instance.
+        self : KhiopsCoclustering
+            A *new*, simplified [KhiopsCoclustering][] estimator instance.
         """
         # Check parameters: types and authorized value ranges
         assert hasattr(self, "model_report_")
@@ -1065,8 +1071,8 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Returns
         -------
-        self : `KhiopsCoclustering`
-            A *new*, simplified `.KhiopsCoclustering` estimator instance.
+        self : KhiopsCoclustering
+            A *new*, simplified [KhiopsCoclustering][] estimator instance.
         """
         # Check that the estimator is fitted:
         check_is_fitted(self)
@@ -1083,9 +1089,10 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
@@ -1241,21 +1248,22 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
     def fit(self, X, y=None, **kwargs):
         """Fits a supervised estimator according to X,y
 
-        Called by the concrete sub-classes `KhiopsEncoder`, `KhiopsClassifier`,
-        `KhiopsRegressor`.
+        Called by the concrete sub-classes [KhiopsEncoder][], [KhiopsClassifier][],
+        [KhiopsRegressor][].
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns
         -------
-        self : `KhiopsSupervisedEstimator`
+        self : KhiopsSupervisedEstimator
             The calling estimator instance.
         """
         if y is None:
@@ -1651,18 +1659,19 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     r"""Khiops Selective Naive Bayes Classifier
 
     This classifier supports automatic feature engineering on multi-table datasets. See
-    :doc:`/multi_table_primer` for more details.
+    [Multi-Table Learning Primer](../multi_table_primer.md) for more details.
 
-    .. note::
+    !!! note
 
-        Visit `the Khiops site <https://khiops.org/learn/understand>`_ to learn
+        Visit [the Khiops site](https://khiops.org/learn/understand) to learn
         about the automatic feature engineering algorithm.
 
     Parameters
     ----------
     n_features : int, default 1000
         Maximum number of features to construct automatically. See
-        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        [Multi-Table Learning Primer](../multi_table_primer.md)
+        for more details on the multi-table-specific
         features.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features are 2D grid
@@ -1691,11 +1700,11 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit ``n_pairs``). These pairs have top
+        containing it (within the maximum limit `n_pairs`). These pairs have top
         priority: they are constructed first.
-    all_possible_pairs : bool, default ``True``
-        If ``True`` tries to create all possible pairs within the limit ``n_pairs``.
-        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+    all_possible_pairs : bool, default `True`
+        If `True` tries to create all possible pairs within the limit `n_pairs`.
+        Pairs specified with `specific_pairs` have top priority: they are constructed
         first.
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, Khiops
@@ -1704,22 +1713,22 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
     n_feature_parts : int, default 0
         Maximum number of variable parts produced by preprocessing methods. If equal
         to 0 it is automatically calculated.
-    group_target_value : bool, default ``False``
+    group_target_value : bool, default `False`
         Allows grouping of the target values in classification. It can substantially
         increase the training time.
-    keep_selected_variables_only : bool, default ``True``
+    keep_selected_variables_only : bool, default `True`
         Keeps only predictor-selected variables in the supervised analysis report.
-    verbose : bool, default ``False``
-        If ``True`` it prints debug information and it does not erase temporary files
+    verbose : bool, default `False`
+        If `True` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
     output_dir : str, optional
-        Path of the output directory for the ``AllReports.khj`` report file and the
-        ``Modeling.kdic`` modeling dictionary file. By default these files are deleted.
-    auto_sort : bool, default ``True``
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
+        Path of the output directory for the `AllReports.khj` report file and the
+        `Modeling.kdic` modeling dictionary file. By default these files are deleted.
+    auto_sort : bool, default `True`
+        *Advanced.* Only for multi-table inputs: If `True` input tables are pre-sorted
         by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `fit`, `predict` and `predict_proba` methods.
+        their keys set this parameter to `False` to speed up the processing. This
+        affects the [fit][], [predict][] and [predict_proba][] methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
 
@@ -1729,21 +1738,21 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         The number of classes seen in training.
     classes_ : `ndarray <numpy.ndarray>` of shape (n_classes\_,)
         The list of classes seen in training. Depending on the training target, the
-        contents are ``int`` or ``str``.
+        contents are `int` or `str`.
     n_features_in_ : int
         The number of features in the main table of the training dataset.
     is_multitable_model_ : bool
-        ``True`` if the model was fitted on a multi-table dataset.
-    model_ : `.DictionaryDomain`
+        `True` if the model was fitted on a multi-table dataset.
+    model_ : DictionaryDomain
         The Khiops dictionary domain for the trained classifier.
     model_main_dictionary_name_ : str
-        The name of the main Khiops dictionary within the ``model_`` domain.
-    model_report_ : `.AnalysisResults`
+        The name of the main Khiops dictionary within the `model_` domain.
+    model_report_ : AnalysisResults
         The Khiops report object.
 
     Examples
     --------
-    See the following functions of the ``samples_sklearn.py`` documentation script:
+    See the following functions of the `samples_sklearn.py` documentation script:
         - `samples_sklearn.khiops_classifier()`
         - `samples_sklearn.khiops_classifier_multiclass()`
         - `samples_sklearn.khiops_classifier_multitable_star()`
@@ -1871,16 +1880,17 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns
         -------
-        self : `KhiopsClassifier`
+        self : KhiopsClassifier
             The calling estimator instance.
         """
         kwargs["categorical_target"] = True
@@ -1954,18 +1964,19 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
         `ndarray <numpy.ndarray>`
             An array containing the encoded columns. A first column containing key
-            column ids is added in multi-table mode. The `numpy.dtype` of the array
-            matches the type of ``y`` used during training. It will be integer, float,
-            or boolean if the classifier was trained with a ``y`` of the corresponding
-            type. Otherwise it will be ``str``.
+            column ids is added in multi-table mode. The [numpy.dtype][] of the array
+            matches the type of `y` used during training. It will be integer, float,
+            or boolean if the classifier was trained with a `y` of the corresponding
+            type. Otherwise it will be `str`.
 
             The key columns are added for multi-table tasks.
         """
@@ -1988,19 +1999,17 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
-        `numpy.array` or str
+        numpy.ndarray or str
             The probability of the samples for each class in the model.  The columns are
-            named with the pattern ``Prob<class>`` for each ``<class>`` found in the
-            training dataset. The output data container depends on ``X``:
-
-                - Dataframe or dataframe-based ``dict`` dataset specification:
-                  `numpy.array`
+            named with the pattern `Prob<class>` for each `<class>` found in the
+            training dataset. The output data container is of type [numpy.ndarray][].
 
             The key columns are added for multi-table tasks.
         """
@@ -2075,18 +2084,19 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     r"""Khiops Selective Naive Bayes Regressor
 
     This regressor supports automatic feature engineering on multi-table datasets. See
-    :doc:`/multi_table_primer` for more details.
+    [Multi-Table Learning Primer](../multi_table_primer.md) for more details.
 
-    .. note::
+    !!! note
 
-        Visit `the Khiops site <https://khiops.org/learn/understand>`_ to learn
+        Visit [the Khiops site](https://khiops.org/learn/understand) to learn
         about the automatic feature engineering algorithm.
 
     Parameters
     ----------
     n_features : int, default 1000
         Maximum number of features to construct automatically. See
-        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        [Multi-Table Learning Primer](../multi_table_primer.md)
+        for more details on the multi-table-specific
         features.
     n_trees : int, default 10
         Maximum number of decision tree features to construct. The constructed trees
@@ -2113,19 +2123,19 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     n_feature_parts : int, default 0
         Maximum number of variable parts produced by preprocessing methods. If equal
         to 0 it is automatically calculated.
-    keep_selected_variables_only : bool, default ``True``
+    keep_selected_variables_only : bool, default `True`
         Keeps only predictor-selected variables in the supervised analysis report.
-    verbose : bool, default ``False``
-        If ``True`` it prints debug information and it does not erase temporary files
+    verbose : bool, default `False`
+        If `True` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
     output_dir : str, optional
-        Path of the output directory for the ``AllReports.khj`` report file and the
-        ``Modeling.kdic`` modeling dictionary file. By default these files are deleted.
-    auto_sort : bool, default ``True``
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
+        Path of the output directory for the `AllReports.khj` report file and the
+        `Modeling.kdic` modeling dictionary file. By default these files are deleted.
+    auto_sort : bool, default `True`
+        *Advanced.* Only for multi-table inputs: If `True` input tables are pre-sorted
         by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `fit` and `predict` methods.
+        their keys set this parameter to `False` to speed up the processing. This
+        affects the [fit][] and [predict][] methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
 
@@ -2134,17 +2144,17 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     n_features_in_ : int
         The number of features in the main table of the training dataset.
     is_multitable_model_ : bool
-        ``True`` if the model was fitted on a multi-table dataset.
-    model_ : `.DictionaryDomain`
+        `True` if the model was fitted on a multi-table dataset.
+    model_ : DictionaryDomain
         The Khiops dictionary domain for the trained regressor.
     model_main_dictionary_name_ : str
-        The name of the main Khiops dictionary within the ``model_`` domain.
-    model_report_ : `.AnalysisResults`
+        The name of the main Khiops dictionary within the `model_` domain.
+    model_report_ : AnalysisResults
         The Khiops report object.
 
     Examples
     --------
-    See the following functions of the ``samples_sklearn.py`` documentation script:
+    See the following functions of the `samples_sklearn.py` documentation script:
         - `samples_sklearn.khiops_regressor()`
     """
     # pylint: enable=line-too-long
@@ -2187,22 +2197,24 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
     def fit(self, X, y=None, **kwargs):
         """Fits a Selective Naive Bayes regressor according to X, y
 
-        .. warning::
-            Make sure that the type of ``y`` is float. This is easily done with ``y =
+        !!! warning
+
+            Make sure that the type of `y` is float. This is easily done with ``y =
             y.astype(float)``.
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns
         -------
-        self : `KhiopsRegressor`
+        self : KhiopsRegressor
             The calling estimator instance.
         """
         kwargs["categorical_target"] = False
@@ -2252,22 +2264,20 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
-        `numpy.ndarray` or str
+        numpy.ndarray or str
 
             An array containing the encoded columns. A first column containing key
             column ids is added in multi-table mode. The key columns are added for
-            multi-table tasks. The array is in the form of:
-
-            - `numpy.ndarray` if X is :external:term:`array-like`, or dataset spec
-              containing `pandas.DataFrame` table.
-            - str (a path for the file containing the array) if X is a dataset spec
-              containing file-path tables.
+            multi-table tasks. The array is in the form of a [numpy.ndarray][]
+            if X is [array-like][], or dataset spec containing
+            [pandas.DataFrame][] tables.
         """
         assert (
             self._khiops_baseline_model_prefix is not None
@@ -2293,11 +2303,12 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
     Parameters
     ----------
-    categorical_target : bool, default ``True``
-        ``True`` if the target column is categorical.
+    categorical_target : bool, default `True`
+        `True` if the target column is categorical.
     n_features : int, default 1000
         Maximum number of features to construct automatically. See
-        :doc:`/multi_table_primer` for more details on the multi-table-specific
+        [Multi-Table Learning Primer](../multi_table_primer.md)
+        for more details on the multi-table-specific
         features.
     n_pairs : int, default 0
         Maximum number of pair features to construct. These features are 2D grid
@@ -2319,11 +2330,11 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
-        containing it (within the maximum limit ``n_pairs``). These pairs have top
+        containing it (within the maximum limit `n_pairs`). These pairs have top
         priority: they are constructed first.
-    all_possible_pairs : bool, default ``True``
-        If ``True`` tries to create all possible pairs within the limit ``n_pairs``.
-        Pairs specified with ``specific_pairs`` have top priority: they are constructed
+    all_possible_pairs : bool, default `True`
+        If `True` tries to create all possible pairs within the limit `n_pairs`.
+        Pairs specified with `specific_pairs` have top priority: they are constructed
         first.
     construction_rules : list of str, optional
         Allowed rules for the automatic feature construction. If not set, Khiops
@@ -2332,13 +2343,13 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     n_feature_parts : int, default 0
         Maximum number of variable parts produced by preprocessing methods. If equal
         to 0 it is automatically calculated.
-    informative_features_only : bool, default ``True``
-        If ``True`` keeps only informative features.
-    group_target_value : bool, default ``False``
+    informative_features_only : bool, default `True`
+        If `True` keeps only informative features.
+    group_target_value : bool, default `False`
         Allows grouping of the target values in classification. It can substantially
         increase the training time.
-    keep_initial_variables : bool, default ``False``
-        If ``True`` the original columns are kept in the transformed data.
+    keep_initial_variables : bool, default `False`
+        If `True` the original columns are kept in the transformed data.
     transform_type_categorical : str, default "part_id"
         Type of transformation for categorical features. Valid values:
             - "part_id"
@@ -2346,8 +2357,8 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             - "dummies"
             - "conditional_info"
 
-        See the documentation for the ``categorical_recoding_method`` parameter of the
-        `~.api.train_recoder` function for more details.
+        See the documentation for the `categorical_recoding_method` parameter of the
+        [api.train_recoder][khiops.core.api.train_recoder] function for more details.
     transform_type_numerical : str, default "part_id"
         One of the following strings are valid:
             - "part_id"
@@ -2358,42 +2369,42 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             - "0-1_normalization"
             - "rank_normalization"
 
-        See the documentation for the ``numerical_recoding_method`` parameter of the
-        `~.api.train_recoder` function for more details.
+        See the documentation for the `numerical_recoding_method` parameter of the
+        [api.train_recoder][khiops.core.api.train_recoder] function for more details.
     transform_type_pairs : str, default "part_id"
         Type of transformation for bivariate features. Valid values:
             - "part_id"
             - "part_label"
             - "dummies"
             - "conditional_info"
-    verbose : bool, default ``False``
-        If ``True`` it prints debug information and it does not erase temporary files
+    verbose : bool, default `False`
+        If `True` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
     output_dir : str, optional
-        Path of the output directory for the ``AllReports.khj`` report file and the
-        ``Modeling.kdic`` modeling dictionary file. By default these files are deleted.
-    auto_sort : bool, default ``True``
-        *Advanced.* Only for multi-table inputs: If ``True`` input tables are pre-sorted
+        Path of the output directory for the `AllReports.khj` report file and the
+        `Modeling.kdic` modeling dictionary file. By default these files are deleted.
+    auto_sort : bool, default `True`
+        *Advanced.* Only for multi-table inputs: If `True` input tables are pre-sorted
         by their key before executing Khiops. If the input tables are already sorted by
-        their keys set this parameter to ``False`` to speed up the processing. This
-        affects the `fit` and `transform` methods.
+        their keys set this parameter to `False` to speed up the processing. This
+        affects the [fit][] and [transform][] methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
 
     Attributes
     ----------
     is_multitable_model_ : bool
-        ``True`` if the model was fitted on a multi-table dataset.
-    model_ : `.DictionaryDomain`
+        `True` if the model was fitted on a multi-table dataset.
+    model_ : DictionaryDomain
         The Khiops dictionary domain for the trained encoder.
     model_main_dictionary_name_ : str
-        The name of the main Khiops dictionary within the ``model_`` domain.
-    model_report_ : `.AnalysisResults`
+        The name of the main Khiops dictionary within the `model_` domain.
+    model_report_ : AnalysisResults
         The Khiops report object.
 
     Examples
     --------
-    See the following functions of the ``samples_sklearn.py`` documentation script:
+    See the following functions of the `samples_sklearn.py` documentation script:
         - `samples_sklearn.khiops_encoder()`
         - `samples_sklearn.khiops_encoder_multitable_star()`
         - `samples_sklearn.khiops_encoder_multitable_snowflake()`
@@ -2599,16 +2610,17 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns
         -------
-        self : `KhiopsEncoder`
+        self : KhiopsEncoder
             The calling estimator instance.
         """
         kwargs["categorical_target"] = self.categorical_target
@@ -2661,19 +2673,21 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
     def transform(self, X):
         """Transforms X with a fitted Khiops supervised encoder
 
-        .. note::
+        !!! note
+
             Numerical features are encoded to categorical ones. See the
-            ``transform_type_numerical`` parameter for details.
+            `transform_type_numerical` parameter for details.
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
         Returns
         -------
-        `ndarray <numpy.ndarray>`
+        numpy.ndarray
             An array containing the encoded columns. A first column containing key
             column ids is added in multi-table mode.
         """
@@ -2718,16 +2732,17 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
 
         Parameters
         ----------
-        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
-            Training dataset. Either an :external:term:`array-like` or a ``dict``
-            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+        X : array-like of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an [array-like][] or a [dict][]
+            specification for multi-table datasets
+            (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
-        y : :external:term:`array-like` of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target values.
 
         Returns
         -------
-        self : `KhiopsEncoder`
+        self : KhiopsEncoder
             The calling estimator instance.
         """
         return self.fit(X, y, **kwargs).transform(X)

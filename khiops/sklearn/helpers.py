@@ -22,31 +22,38 @@ def train_test_split_dataset(ds_spec, y=None, test_size=0.25, **kwargs):
 
     Parameters
     ----------
-    ds_spec : ``dict``
-         A ``dict`` multi-table dataset specification (see :doc:`/multi_table_primer`).
+    ds_spec : `dict`
+         A `dict` multi-table dataset specification
+         (see [Multi-Table Learning Primer](../multi_table_primer.md)).
          Only Pandas, NumPy, SciPy tables are accepted in the spec.
-    y : :external:term:`array-like` of size (n_samples,) , optional
-        The target values. ``n_samples`` is the number of rows of the main table in
-        ``ds_spec``.
+    y : array-like of size (n_samples,) , optional
+        The target values. `n_samples` is the number of rows of the main table in
+        `ds_spec`.
     test_size : float, default 0.25
         The proportion of the dataset (between 0.0 and 1.0) to be included in the test
         split.
-    ... :
-        Other optional parameters for `sklearn.model_selection.train_test_split`
+
+    See Also
+    --------
+    - [sklearn.model_selection.train_test_split][train_test_split] : Other
+      optional parameters.
 
     Raises
     ------
-    `TypeError`
-        If ``ds_spec`` is not dict-like.
+    TypeError
+        If `ds_spec` is not dict-like.
 
-    `ValueError`
-        If the tables in ``ds_spec`` are file-paths.
+    ValueError
+        If the tables in `ds_spec` are file-paths.
 
     Examples
     --------
-    See the following functions of the ``samples_sklearn.py`` documentation script:
-        - `samples_sklearn.khiops_classifier_multitable_star`
-        - `samples_sklearn.khiops_classifier_multitable_snowflake`
+    See the following functions of the `samples_sklearn.py` documentation script:
+
+    - [khiops_classifier_multitable_star](
+            ../samples/samples_sklearn.md#khiops_classifier_multitable_star)
+    - [khiops_classifier_multitable_snowflake](
+            ../samples/samples_sklearn.md#khiops_classifier_multitable_snowflake)
 
     """
     # Check the types

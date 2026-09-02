@@ -33,8 +33,8 @@ from `.github/copilot-instructions.md` first, then these Python-specific rules.
   `line-too-long`, `unused-variable`, and `unused-import`. The overall pylint
   score must stay at or above `9.9` (`fail-under`). Other pylint warnings are
   lower priority.
-- Pylint is **not run** on `doc/convert_samples.py` and `doc/conf.py` (excluded
-  in `.pre-commit-config.yaml`).
+- Pylint is **not run** on `doc/util/convert_samples.py` (excluded in
+  `.pre-commit-config.yaml`).
 - All code and comments must be in English.
 - `pylint: disable=invalid-name` is used in `khiops/sklearn/estimators.py` to
   permit scikit-learn's `X`, `y` naming convention. Do not add this suppression
@@ -79,7 +79,7 @@ The `.pre-commit-config.yaml` runs the following hooks on Python files:
 | Hook | Scope | Notes |
 |---|---|---|
 | **black** | All `.py` files | Code formatting |
-| **pylint** | All `.py` except `doc/convert_samples.py`, `doc/conf.py` | Linting |
+| **pylint** | All `.py` except `doc/util/convert_samples.py` | Linting |
 | **isort** | All `.py` except samples scripts | Import sorting (Black profile) |
 | **isort-samples** | `khiops/samples/samples.py`, `samples_sklearn.py` | Import sorting with `--no-sections` |
-| **samples-generation** | Triggered by changes to samples scripts | Runs `doc/convert-samples-hook` to regenerate reST pages and notebooks |
+| **samples-generation** | Triggered by changes to samples scripts | Runs `doc/util/convert-samples-hook` to regenerate Markdown pages and notebooks |

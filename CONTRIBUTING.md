@@ -232,8 +232,8 @@ Note that these 2 packages already have a sizable number of dependencies. We sho
 thoroughly the pros and cons of any new external package dependency before adding it.
 
 ### Development/Build dependencies
-For development dependencies (eg. `black`, `isort`, `sphinx`, `wrapt`, `furo`) we can be more
-carefree while still trying not to add too many dependencies.
+For development dependencies (eg. `black`, `isort`, `zensical`, `wrapt`) we can
+be more carefree while still trying not to add too many dependencies.
 
 ### Python Support Policy
 Our Python support policy is the following:

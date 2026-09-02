@@ -63,13 +63,17 @@ def _parent_path(path):
     Notes
     -----
     This function always returns a posix path ("/" as separator). For example for the
-    windows path::
+    windows path:
 
-        C:\Program Files\khiops
+    ```text
+    C:\Program Files\khiops
+    ```
 
-    this method returns::
+    this method returns:
 
-        C:/Program Files
+    ```text
+    C:/Program Files
+    ```
     """
     return Path(path).parent.as_posix()
 
@@ -79,12 +83,12 @@ def _parent_uri_info(uri_info):
 
     Parameters
     ----------
-    uri_info : `urllib.parse.ParseResult`
-        URI info structure (output of `urllib.parse.urlparse`)
+    uri_info : urllib.parse.ParseResult
+        URI info structure (output of [urllib.parse.urlparse][])
 
     Returns
     -------
-    `urllib.parse.ParseResult`
+    urllib.parse.ParseResult
         URI info structure for the parent URI
 
     """
@@ -97,13 +101,18 @@ def _child_path(path, child_name):
     Notes
     -----
     This function always returns a posix path ("/" as separator). For example for the
-    windows path and child name::
+    windows path and child name:
 
-        parent: C:\Program Files
-        child:  khiops
+    ```text
+    parent: C:\Program Files
+    child:  khiops
+    ```
 
-    this method returns::
-        C:/Program Files/khiops
+    this method returns:
+
+    ```text
+    C:/Program Files/khiops
+    ```
     """
     return Path(path).joinpath(child_name).as_posix()
 
@@ -113,15 +122,15 @@ def _child_uri_info(uri_info, child_name):
 
     Parameters
     ----------
-    uri_info : `urllib.parse.ParseResult`
-        URI info structure (output of `urllib.parse.urlparse`)
+    uri_info : urllib.parse.ParseResult
+        URI info structure (output of [urllib.parse.urlparse][])
 
-    child_name : `str`
+    child_name : str
         Name of the new child node
 
     Returns
     -------
-    `urllib.parse.ParseResult`
+    urllib.parse.ParseResult
         URI info structure for the child URI
     """
     return uri_info._replace(path=_child_path(uri_info.path, child_name))
@@ -135,15 +144,16 @@ def _child_uri_info(uri_info, child_name):
 def is_local_resource(uri_or_path):
     r"""Checks if a URI or path is effectively a local path
 
-    .. note::
+    !!! note
+
 
         An URI with scheme of size 1 will be considered a local path. This is to take
-        into account Windows paths such as ``C:\Some\Windows\Path``.
+        into account Windows paths such as `C:\Some\Windows\Path`.
 
     Returns
     -------
-    `bool`
-        `True` if a URI refers to a local path
+    bool
+        [True][] if a URI refers to a local path
     """
     if (index := uri_or_path.find("://")) > 0:
         scheme = uri_or_path[:index]
@@ -160,14 +170,14 @@ def create_resource(uri_or_path):
     uri_or_path : str
         The resource's URI . Supported protocols/schemes:
 
-        - ``file`` or empty: Local filesystem resource
-        - ``s3``: Amazon S3 resource
-        - ``gs``: Google Cloud Storage resource
-        - ``https``: Azure Storage resource (files or blobs)
+        - `file` or empty: Local filesystem resource
+        - `s3`: Amazon S3 resource
+        - `gs`: Google Cloud Storage resource
+        - `https`: Azure Storage resource (files or blobs)
 
     Returns
     -------
-    `FilesystemResource`
+    FilesystemResource
         The URI resource object, its class depends on the URI.
     """
     # Case where the URI scheme separator `://` is contained in the uri/path
@@ -233,7 +243,7 @@ def read(uri_or_path, size=None):
 
     Returns
     -------
-    `bytes`
+    bytes
         A buffer containing the read contents.
 
     Raises
@@ -251,7 +261,7 @@ def write(uri_or_path, data):
     ----------
     uri_or_path : str
         The resource's URI or local filesystem path.
-    data : str or `bytes`
+    data : str or bytes
         The data to be written.
 
     Raises
@@ -272,7 +282,7 @@ def exists(uri_or_path):
 
     Returns
     -------
-    `bool`
+    bool
         True if the resource exists.
     """
     return create_resource(uri_or_path).exists()
@@ -439,7 +449,7 @@ class FilesystemResource(ABC):
 
         Returns
         -------
-        `FilesystemResource`
+        FilesystemResource
             The specific resource type is that of the caller
         """
 
@@ -449,7 +459,7 @@ class FilesystemResource(ABC):
 
         Returns
         -------
-        `FilesystemResource`
+        FilesystemResource
             The specific resource type is that of the caller
         """
 
@@ -610,25 +620,26 @@ class AmazonS3Resource(FilesystemResource):
 
     The default configuration and credentials are read from the paths
 
-    - ``~/.aws/configuration``
-    - ``~/.aws/credentials``
+    - `~/.aws/configuration`
+    - `~/.aws/credentials`
 
     The location of the configuration and credentials files may be overridden using
     the following environment variables:
 
-    - ``AWS_CONFIG_FILE``: location of the configuration file
-    - ``AWS_SHARED_CREDENTIALS_FILE``: location of the credentials file
+    - `AWS_CONFIG_FILE`: location of the configuration file
+    - `AWS_SHARED_CREDENTIALS_FILE`: location of the credentials file
 
     If no configuration/credentials files are usable, Amazon SDK defaults apply.
     Individual settings such as endpoint URL or region can be used to override any of
     the available settings.
 
-    Other relevant environment variables::
+    Other relevant environment variables:
 
-    - AWS_S3_ENDPOINT_URL: sets the service endpoint URL
-    - AWS_DEFAULT_REGION: sets the region to send requests to
+    - `AWS_S3_ENDPOINT_URL`: sets the service endpoint URL
+    - `AWS_DEFAULT_REGION`: sets the region to send requests to
 
-    .. note::
+    !!! note
+
         Operations with the s3 client are only verified by checking that the HTTP
         response code is in the 200 range.
 
@@ -769,7 +780,8 @@ class AmazonS3Resource(FilesystemResource):
 class AzureStorageResourceMixin:
     """Azure compatible Storage Resource Mixin
 
-    See `AzureStorageFileResource` and `AzureStorageBlobResource` for more details.
+    See [AzureStorageFileResource][] and [AzureStorageBlobResource][] for more
+    details.
 
     """
 
@@ -878,9 +890,9 @@ class AzureStorageFileResource(AzureStorageResourceMixin, FilesystemResource):
 
         # Calls to `ShareFileClient` and `ShareDirectoryClient` are required
         # because :
-        # - the check against `file_share_client` is ``False``
+        # - the check against `file_share_client` is `False`
         #   if the target is a directory.
-        # - the check against `directory_share_client` is ``False``
+        # - the check against `directory_share_client` is `False`
         #   if the target is a file.
         return self.file_share_client.exists() or self.directory_share_client.exists()
 
@@ -918,7 +930,8 @@ class AzureStorageFileResource(AzureStorageResourceMixin, FilesystemResource):
     def list_dir(self):
         """List the files (not the directories) of the current directory
 
-        .. note::
+        !!! note
+
             This is not a recursive listing operation.
         """
 

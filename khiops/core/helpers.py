@@ -31,26 +31,26 @@ def _build_multi_table_dictionary_domain(
     """Builds a multi-table dictionary domain from a dictionary with a key
     Parameters
     ----------
-    dictionary_domain : `.DictionaryDomain`
+    dictionary_domain : DictionaryDomain
         DictionaryDomain object. Its root dictionary must have its key set.
     root_dictionary_name : str
         Name for the new root dictionary
     secondary_table_variable_name : str
         Name, in the root dictionary, for the "table" variable of the secondary table.
-    update_secondary_table_name : bool, default `False`
-        If ``True``, then update the secondary table name according to the
+    update_secondary_table_name : bool, default False
+        If `True`, then update the secondary table name according to the
         secondary table variable name. If not set, keep original table name.
 
     Returns
     -------
-    `.DictionaryDomain`
+    DictionaryDomain
         The new dictionary domain
 
     Raises
     ------
-    `TypeError`
+    TypeError
         Invalid type of an argument
-    `ValueError`
+    ValueError
         Invalid values of an argument:
         - the dictionary domain doesn't contain at least a dictionary
         - the dictionary domain's root dictionary doesn't have a key set
@@ -164,22 +164,22 @@ def deploy_coclustering(
     r"""Deploys a coclustering on a data table
 
     This procedure generates the following files:
-        - ``coclustering_dictionary_file_path``: A multi-table dictionary file for
+        - `coclustering_dictionary_file_path`: A multi-table dictionary file for
           further deployments of the coclustering with deploy_model
-        - ``output_data_table_path``: A data table file containing the deployed
+        - `output_data_table_path`: A data table file containing the deployed
           coclustering model
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the dictionary to be analyzed.
     data_table_path : str
         Path of the data table file.
     coclustering_file_path : str
-        Path of the coclustering model file (extension ``.khc`` or ``.khcj``).
-        .. note::
+        Path of the coclustering model file (extension `.khc` or `.khcj`).
+        !!! note
 
             Instance-variable coclustering is not currently supported.
 
@@ -191,16 +191,16 @@ def deploy_coclustering(
         Path of the coclustering dictionary file to deploy.
     output_data_table_path : str
         Path of the output data file.
-    detect_format : bool, default ``True``
+    detect_format : bool, default `True`
         If True detects automatically whether the data table file has a header and its
-        field separator. It's ignored if ``header_line`` or ``field_separator`` are set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is False)
+        field separator. It's ignored if `header_line` or `field_separator` are set.
+    header_line : bool, optional (default `True` if `detect_format` is False)
         If True it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is False)
-        A field separator character, overrides ``detect_format`` if set ("" counts
+        `detect_format` if set.
+    field_separator : str, optional (default "\\t" if `detect_format` is False)
+        A field separator character, overrides `detect_format` if set ("" counts
         as "\\t").
-    output_header_line : bool, default ``True``
+    output_header_line : bool, default `True`
         If True writes a header line containing the column names in the output table.
     output_field_separator : str, default "\\t"
         A field separator character (empty string counts as tab).
@@ -214,10 +214,10 @@ def deploy_coclustering(
         Maximum number of parts totaled over all variables. If equal to 0 there is no
         limit.
     max_part_numbers : dict, optional
-      Dictionary associating variable names to their maximum number of parts to
-      preserve in the simplified coclustering. For variables not present in
-      ``max_part_numbers`` there is no limit.
-    build_cluster_variable : bool, default ``True``
+        Dictionary associating variable names to their maximum number of parts
+        to preserve in the simplified coclustering. For variables not present
+        in `max_part_numbers` there is no limit.
+    build_cluster_variable : bool, default `True`
         If True includes a cluster id variable in the deployment.
     build_distance_variables : bool, default False
         If True includes a cluster distance variable in the deployment.
@@ -225,8 +225,10 @@ def deploy_coclustering(
         If True includes the frequency variables in the deployment.
     variables_prefix : str, default ""
         Prefix for the variables in the deployment dictionary.
-    ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
+
+    See Also
+    --------
+    - [KhiopsRunner.run][] : Additional options.
 
     Returns
     -------
@@ -238,16 +240,16 @@ def deploy_coclustering(
 
     Raises
     ------
-    `TypeError`
-        Invalid type ``dictionary_file_path_or_domain`` or ``key_variable_names``
-    `ValueError`
-        If the type of the dictionary key variables is not equal to ``Categorical``
-    `NotImplementedError`
+    TypeError
+        Invalid type `dictionary_file_path_or_domain` or `key_variable_names`
+    ValueError
+        If the type of the dictionary key variables is not equal to `Categorical`
+    NotImplementedError
         If the coclustering to be deployed is of the instance-variable type
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.deploy_coclustering()`
     """
     # Fail early for instance-variable coclustering, which is not supported
@@ -392,13 +394,14 @@ def deploy_predictor_for_metrics(
     - The predicted value of the target variable
     - The probabilities of each value of the target variable *(classifier only)*
 
-    .. note::
+    !!! note
+
         To obtain the data of the default Khiops test dataset use ``sample_percentage =
-        70`` and ``sampling_mode = "Exclude sample"``.
+        70` and `sampling_mode = "Exclude sample"``.
 
     Parameters
     ----------
-    dictionary_file_path_or_domain : str or `.DictionaryDomain`
+    dictionary_file_path_or_domain : str or DictionaryDomain
         Path of a Khiops dictionary file or a DictionaryDomain object.
     dictionary_name : str
         Name of the predictor dictionary.
@@ -406,31 +409,34 @@ def deploy_predictor_for_metrics(
         Path of the data table file.
     output_data_table_path : str
         Path of the scores output data file.
-    detect_format : bool, default ``True``
+    detect_format : bool, default `True`
         If True detects automatically whether the data table file has a header and its
-        field separator. It's ignored if ``header_line`` or ``field_separator`` are set.
-    header_line : bool, optional (default ``True`` if ``detect_format`` is ``False``)
+        field separator. It's ignored if `header_line` or `field_separator` are set.
+    header_line : bool, optional (default `True` if `detect_format` is `False`)
         If True it uses the first line of the data as column names. Overrides
-        ``detect_format`` if set.
-    field_separator : str, optional (default "\\t" if ``detect_format`` is ``False``)
-        A field separator character, overrides ``detect_format`` if set ("" counts
+        `detect_format` if set.
+    field_separator : str, optional (default "\\t" if `detect_format` is `False`)
+        A field separator character, overrides `detect_format` if set ("" counts
         as "\\t").
     sample_percentage : int, default 70
-        See ``sampling_mode`` option below.
+        See `sampling_mode` option below.
     sampling_mode : "Include sample" or "Exclude sample", default "Include sample"
-        If equal to "Include sample" deploys the predictor on ``sample_percentage``
+        If equal to "Include sample" deploys the predictor on `sample_percentage`
         percent of data and if equal to "Exclude sample" on the complementary ``100 -
         sample_percentage`` percent of data.
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
-        dictionary file. For more details see :doc:`/multi_table_primer` documentation.
-    output_header_line : bool, default ``True``
+        dictionary file. For more details see
+        [Multi-Table Learning Primer](../multi_table_primer.md) documentation.
+    output_header_line : bool, default `True`
         If True writes a header line containing the column names in the output table.
     output_field_separator : str, default "\\t"
         A field separator character ("" counts as "\\t").
-    ... :
-        Options of the `.KhiopsRunner.run` method from the class `.KhiopsRunner`.
-    """
+
+    See Also
+    --------
+    - [KhiopsRunner.run][] : Additional options.
+    -"""
     # Check the dictionary domain
     api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)
 
@@ -489,7 +495,7 @@ def visualize_report(report_path):
 
     Before using this function, make sure you have installed the Khiops Visualization
     app and/or the Khiops Co-Visualization app. More info at
-    `<https://khiops.org/setup/visualization/>`_
+    <https://khiops.org/setup/visualization/>
 
     Parameters
     ----------
@@ -499,11 +505,11 @@ def visualize_report(report_path):
 
     Raises
     ------
-    `ValueError`
+    ValueError
         If the report file path does not have extension '.khj' or '.khcj'.
-    `FileNotFoundError`
+    FileNotFoundError
         If the report file does not exist.
-    `RuntimeError`
+    RuntimeError
         If the report file is executable.
     """
     # Check that the report path:

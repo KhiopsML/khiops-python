@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Set the documentation and samples directories
+DOC_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+SAMPLES_DIR="$(dirname "$(dirname "$DOC_DIR")")/khiops/samples"
+SITE_DIR="$(dirname "$DOC_DIR")/site"
+
+# Generate the Markdown pages
+python "$DOC_DIR/convert_samples.py" -f md "$SAMPLES_DIR" "$SITE_DIR/samples/samples.md"
+python "$DOC_DIR/convert_samples.py" --sklearn -f md "$SAMPLES_DIR" "$SITE_DIR/samples/samples_sklearn.md"
+
+# Generate the notebooks
+python "$DOC_DIR/convert_samples.py" "$SAMPLES_DIR" "$SAMPLES_DIR/samples.ipynb"
+python "$DOC_DIR/convert_samples.py" --sklearn "$SAMPLES_DIR" "$SAMPLES_DIR/samples_sklearn.ipynb"
+
+# Copy source scripts and notebooks to doc/samples/ for download links
+cp "$SAMPLES_DIR/samples.py" "$SITE_DIR/samples/"
+cp "$SAMPLES_DIR/samples.ipynb" "$SITE_DIR/samples/"
+cp "$SAMPLES_DIR/samples_sklearn.py" "$SITE_DIR/samples/"
+cp "$SAMPLES_DIR/samples_sklearn.ipynb" "$SITE_DIR/samples/"

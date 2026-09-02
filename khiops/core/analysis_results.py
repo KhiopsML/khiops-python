@@ -12,75 +12,83 @@ Below we describe with diagrams the relationships of the classes in this modules
 are mostly compositions (has-a relations) and we omit native attributes (str, int,
 float, etc).
 
-The main class of this module is `AnalysisResults` and it is largely a
-composition of sub-reports objects given by the following structure::
+The main class of this module is [AnalysisResults][] and it is largely a
+composition of sub-reports objects given by the following structure:
 
-    AnalysisResults
-    |- preparation_report           |
-    |- text_preparation_report      |->  PreparationReport
-    |- tree_preparation_report      |
-    |- bivariate_preparation_report  ->  BivariatePreparationReport
-    |- modeling_report               ->  ModelingReport
-    |- train_evaluation_report      |
-    |- test_evaluation_report       |->  EvaluationReport
-    |- evaluation_report            |
+```text
+AnalysisResults
+|- preparation_report           |
+|- text_preparation_report      |->  PreparationReport
+|- tree_preparation_report      |
+|- bivariate_preparation_report  ->  BivariatePreparationReport
+|- modeling_report               ->  ModelingReport
+|- train_evaluation_report      |
+|- test_evaluation_report       |->  EvaluationReport
+|- evaluation_report            |
+```
 
 These sub-classes in turn use other tertiary classes to represent specific information
-pieces of each report. The dependencies for the classes `PreparationReport` and
-`BivariatePreparationReport` are::
+pieces of each report. The dependencies for the classes [PreparationReport][] and
+[BivariatePreparationReport][] are:
 
-    PreparationReport
-    |- variables_statistics -> list of VariableStatistics
-    |- trees                -> list of Tree (only for tree_preparation_report)
+```text
+PreparationReport
+|- variables_statistics -> list of VariableStatistics
+|- trees                -> list of Tree (only for tree_preparation_report)
 
-    BivariatePreparationReport
-    |- variable_pair_statistics -> list of VariablePairStatistics
+BivariatePreparationReport
+|- variable_pair_statistics -> list of VariablePairStatistics
 
-    VariableStatistics
-    |- data_grid       -> DataGrid
-    |- modl_histograms -> ModlHistograms
+VariableStatistics
+|- data_grid       -> DataGrid
+|- modl_histograms -> ModlHistograms
 
-    VariablePairStatistics
-    |- data_grid -> DataGrid
+VariablePairStatistics
+|- data_grid -> DataGrid
 
-    Tree
-    |- target_partition -> TargetPartition
-    |- nodes -> list of TreeNode
+Tree
+|- target_partition -> TargetPartition
+|- nodes -> list of TreeNode
 
-    TargetPartition
-    |- partition -> list of PartInterval
+TargetPartition
+|- partition -> list of PartInterval
 
-    DataGrid
-    |- dimensions -> list of DataGridDimension
+DataGrid
+|- dimensions -> list of DataGridDimension
 
-    ModlHistograms
-    |- histograms -> list of Histogram
+ModlHistograms
+|- histograms -> list of Histogram
 
-    DataGridDimension
-    |- partition -> list of PartInterval OR
-    |               list of PartValue OR
-    |               list of PartValueGroup
+DataGridDimension
+|- partition -> list of PartInterval OR
+|               list of PartValue OR
+|               list of PartValueGroup
+```
 
-for class `ModelingReport`::
+for class [ModelingReport][]:
 
-    ModelingReport
-    |- trained_predictors -> list of TrainedPredictors
+```text
+ModelingReport
+|- trained_predictors -> list of TrainedPredictors
 
-    TrainedPredictor
-    |- selected_variables -> list of SelectedVariable
+TrainedPredictor
+|- selected_variables -> list of SelectedVariable
+```
 
-and for class `EvaluationReport`::
+and for class [EvaluationReport][]:
 
-    EvaluationReport
-    |- predictors_performance -> list of PredictorPerformance
-    |- classification_lift_curves -> list of PredictorCurve (classification only)
-    |- regression_rec_curves -> list of PredictorCurve (regression only)
+```text
+EvaluationReport
+|- predictors_performance -> list of PredictorPerformance
+|- classification_lift_curves -> list of PredictorCurve (classification only)
+|- regression_rec_curves -> list of PredictorCurve (regression only)
 
-    PredictorPerformance
-    |- confusion_matrix -> ConfusionMatrix (classification only)
+PredictorPerformance
+|- confusion_matrix -> ConfusionMatrix (classification only)
+```
 
 To have a complete illustration of the access to the information of all classes in this
-module look at their ``to_dict`` methods which write Python dictionaries in the
+module look at their `to_dict` methods which write Python dictionaries in the
 same format as the Khiops JSON reports.
 """
 import io
@@ -98,7 +106,7 @@ from khiops.core.internals.io import (
 class AnalysisResults(KhiopsJSONObject):
     """Main class containing the information of a Khiops JSON file
 
-    Sub-reports not available in the JSON data are optional (set to ``None``).
+    Sub-reports not available in the JSON data are optional (set to `None`).
 
     Parameters
     ----------
@@ -106,8 +114,9 @@ class AnalysisResults(KhiopsJSONObject):
         A dictionary representing the data of a Khiops JSON report file. If not
         specified it returns an empty instance.
 
-        .. note::
-            See also the `.read_analysis_results_file` function to obtain an instance
+        !!! note
+
+            See also the [read_analysis_results_file][] function to obtain an instance
             of this class from a Khiops JSON file.
 
     Attributes
@@ -124,22 +133,23 @@ class AnalysisResults(KhiopsJSONObject):
         2-tuples linking each sub-task name to a list containing the warnings and errors
         found during the execution of that sub-task. Available only if there were errors
         or warnings.
-    preparation_report : `PreparationReport`
+    preparation_report : PreparationReport
         A report about the variables' discretizations and groupings.
-    bivariate_preparation_report : `BivariatePreparationReport`, optional
+    bivariate_preparation_report : BivariatePreparationReport, optional
         A report of the grid models created from pairs of variables. Available only when
         pair of variables were created in the analysis.
-    modeling_report : `ModelingReport`
+    modeling_report : ModelingReport
         A report describing the predictor models. Available only in supervised analysis.
-    train_evaluation_report : `EvaluationReport`
+    train_evaluation_report : EvaluationReport
         An evaluation report of the trained models on the *train* dataset split.
         Available only in supervised analysis.
-    test_evaluation_report : `EvaluationReport`
+    test_evaluation_report : EvaluationReport
         An evaluation report of the trained models on the *test* dataset split.
         Available only in supervised analysis and when the *test* split was not empty.
-    evaluation_report : `EvaluationReport`
-        An `EvaluationReport` instance for evaluations created with an explicit
-        evaluation (either with the `~.api.evaluate_predictor` core API function or the
+    evaluation_report : EvaluationReport
+        An [EvaluationReport][] instance for evaluations created with an explicit
+        evaluation (either with the [api.evaluate_predictor][] core API function or
+        the
         *Evaluate Predictor* feature of the Khiops desktop app). Available only when the
         report was generated with the aforementioned features.
     """
@@ -231,9 +241,10 @@ class AnalysisResults(KhiopsJSONObject):
     def write_report_file(self, report_file_path):  # pragma: no cover
         """Writes a TSV report file with the object's information
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
@@ -280,13 +291,14 @@ class AnalysisResults(KhiopsJSONObject):
     def write_report(self, stream_or_writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
         Parameters
         ----------
-        stream_or_writer : `io.IOBase` or `.KhiopsOutputWriter`
+        stream_or_writer : io.IOBase or KhiopsOutputWriter
             Output stream or writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -335,12 +347,12 @@ def read_analysis_results_file(json_file_path):
 
     Returns
     -------
-    `.AnalysisResults`
+    AnalysisResults
         An instance of AnalysisResults containing the report's information.
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.access_predictor_evaluation_report()`
         - `samples.train_predictor_with_cross_validation()`
         - `samples.multiple_train_predictor()`
@@ -357,7 +369,7 @@ class PreparationReport:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of the ``preparationReport`` field of a
+        JSON data of the `preparationReport` field of a
         Khiops JSON report file. If not specified it returns an empty instance.
 
     Attributes
@@ -369,7 +381,7 @@ class PreparationReport:
     variable_types : list of str
         The different types of variables.
     variable_numbers : list of int
-        Number of variables for each type. Synchronized with ``variable_types``.
+        Number of variables for each type. Synchronized with `variable_types`.
     database : str
         Path of the main training data table file.
     sample_percentage : int
@@ -379,7 +391,7 @@ class PreparationReport:
     selection_variable : str
         Name of the variable used to select training instances.
     selection_value : str
-        Value of ``selection_variable`` to select training instance.
+        Value of `selection_variable` to select training instance.
     constructed_variable_number : int
         Number of constructed variables.
     instance_number : int
@@ -413,7 +425,7 @@ class PreparationReport:
     target_values : list of str
         Values of a categorical target variable.
     target_value_frequencies : list of int
-        Frequencies for each target value. Synchronized with ``target_values``.
+        Frequencies for each target value. Synchronized with `target_values`.
     evaluated_variable_number : int
         Number of variables analyzed.
     informative_variable_number : int
@@ -440,9 +452,9 @@ class PreparationReport:
         Coding length of the null preparation model.
     null_model_data_cost : float
         Coding length of the data given the null model.
-    variables_statistics : list of `VariableStatistics`
+    variables_statistics : list of VariableStatistics
         Variable statistics for each variable analyzed.
-    trees : list of `Tree`
+    trees : list of Tree
         Tree details for each tree built.
     """
 
@@ -574,12 +586,12 @@ class PreparationReport:
 
         Returns
         -------
-        `VariableStatistics`
+        VariableStatistics
             The statistics of the specified variable.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no variable with the specified names exist.
         """
         return self._variables_statistics_by_name[variable_name]
@@ -594,12 +606,12 @@ class PreparationReport:
 
         Returns
         -------
-        `Tree`
+        Tree
             The tree which has the specified name.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no tree with the specified name exists.
         """
         return self._trees_by_name[tree_name]
@@ -756,14 +768,15 @@ class PreparationReport:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -878,7 +891,7 @@ class BivariatePreparationReport:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of the ``bivariatePreparationReport`` field of a Khiops JSON report
+        JSON data of the `bivariatePreparationReport` field of a Khiops JSON report
         file. If not specified it returns an empty instance.
 
     Attributes
@@ -890,7 +903,7 @@ class BivariatePreparationReport:
     variable_types : list of str
         The different types of variables.
     variable_numbers : list of int
-        The number of variables for each type in ``variables_types`` (synchronized
+        The number of variables for each type in `variables_types` (synchronized
         lists).
     database : str
         Path of the main training data table file.
@@ -920,7 +933,7 @@ class BivariatePreparationReport:
     target_values : list of str
         Values of a categorical target variable.
     target_value_frequencies : list of int
-        Frequencies for each value in ``target_values`` (synchronized lists).
+        Frequencies for each value in `target_values` (synchronized lists).
     evaluated_pair_number : int
         Number of variable pairs evaluated.
     selected_pair_number : int
@@ -928,7 +941,7 @@ class BivariatePreparationReport:
     informative_pair_number : int
         Number of informative variable pairs. A pair is considered informative if its
         level is greater than the sum of its components' levels.
-    variable_pair_statistics : list of `VariablePairStatistics`
+    variable_pair_statistics : list of VariablePairStatistics
         Statistics for each analyzed pair of variables.
     """
 
@@ -1031,7 +1044,8 @@ class BivariatePreparationReport:
     def get_variable_pair_statistics(self, variable_name_1, variable_name_2):
         """Returns the statistics of the specified pair of variables
 
-        .. note::
+        !!! note
+
             The variable names can be given in any order.
 
         Parameters
@@ -1043,12 +1057,12 @@ class BivariatePreparationReport:
 
         Returns
         -------
-        `VariablePairStatistics`
+        VariablePairStatistics
             The statistics of the specified pair of variables.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no pair with the specified names exist.
         """
         return self._variables_pairs_statistics_by_name[
@@ -1143,14 +1157,15 @@ class BivariatePreparationReport:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1216,7 +1231,7 @@ class ModelingReport:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of the ``modelingReport`` field of Khiops JSON report file. If not
+        JSON data of the `modelingReport` field of Khiops JSON report file. If not
         specified it returns an empty instance.
 
     Attributes
@@ -1234,14 +1249,14 @@ class ModelingReport:
     selection_variable : str
         Variable used to select instances for training.
     selection_value : str
-        Value of ``selection_variable`` to select instances for training.
+        Value of `selection_variable` to select instances for training.
     learning_task : "Classification analysis" or "Regression analysis"
         Name of the associated learning task.
     target_variable : str
         Name of the target variable.
     main_target_value : str
         Main value of the target variable.
-    trained_predictors : list of `TrainedPredictor`
+    trained_predictors : list of TrainedPredictor
         The predictors trained in the task.
     """
 
@@ -1305,12 +1320,12 @@ class ModelingReport:
 
         Returns
         -------
-        `TrainedPredictor`
+        TrainedPredictor
             The predictor object for the specified name.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If there is no predictor with the specified name.
         """
         return self._trained_predictors_by_name[predictor_name]
@@ -1320,12 +1335,12 @@ class ModelingReport:
 
         Returns
         -------
-        `TrainedPredictor`
+        TrainedPredictor
             The predictor object for "Selective Naive Bayes".
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If there is no predictor named "Selective Naive Bayes".
         """
         return self.get_predictor("Selective Naive Bayes")
@@ -1380,14 +1395,15 @@ class ModelingReport:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1431,15 +1447,16 @@ class EvaluationReport:
     ----------
     json_data : dict, optional
         JSON data of the fields:
-            - ``trainEvaluationReport``: predictor training
-            - ``testEvaluationReport``: predictor training & non-empty test split
-            - ``evaluationReport``: explicit evaluation
+            - `trainEvaluationReport`: predictor training
+            - `testEvaluationReport`: predictor training & non-empty test split
+            - `evaluationReport`: explicit evaluation
 
         The first two fields are set when doing a supervised analysis: either with the
-        "Train Model" feature of the Khiops app or the `~.api.train_predictor` function
+        "Train Model" feature of the Khiops app or the [api.train_predictor][]
+        function
         of the Khiops Python core API. The third field is set when doing an explicit
         evaluation: either with the *Evaluate Predictor* feature of the Khiops app or
-        the `~.api.evaluate_predictor` function of the Khiops Python core API.
+        the [api.evaluate_predictor][] function of the Khiops Python core API.
 
         If not specified it returns an empty instance.
 
@@ -1469,14 +1486,14 @@ class EvaluationReport:
         Name of the target variable.
     main_target_value : str
         Main value of the target variable.
-    predictors_performance : list of `PredictorPerformance`
+    predictors_performance : list of PredictorPerformance
         Performance metrics for each predictor.
-    regression_rec_curves : list of `PredictorCurve`
+    regression_rec_curves : list of PredictorCurve
         REC curves for each regressor.
     classification_target_values : list of str
         Target variable values for which a classifier lift curve was evaluated.
-    classification_lift_curves : list of `PredictorCurve`
-        Lift curves for each target value in ``classification_target_values``. The lift
+    classification_lift_curves : list of PredictorCurve
+        Lift curves for each target value in `classification_target_values`. The lift
         curve for the optimal predictor is prepended to those of the target values.
     """
 
@@ -1587,12 +1604,12 @@ class EvaluationReport:
 
         Returns
         -------
-        `PredictorPerformance`
+        PredictorPerformance
             The performance metrics for the specified predictor.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no predictor with the specified name exists.
         """
         return self._predictors_performance_by_name[predictor_name]
@@ -1602,12 +1619,12 @@ class EvaluationReport:
 
         Returns
         -------
-        `PredictorPerformance`
+        PredictorPerformance
             The performance metrics for the Selective Naive Bayes predictor.
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If the Selective Naive Bayes information is not available in the report.
         """
         if "Selective Naive Bayes" not in self._predictors_performance_by_name:
@@ -1624,14 +1641,14 @@ class EvaluationReport:
 
         Returns
         -------
-        `PredictorCurve`
+        PredictorCurve
             The REC curve for the specified regressor.
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If no regressor curves available. (
-        `KeyError`
+        KeyError
             If no regressor with the specified name exists.
         """
         if self.learning_task != "Regression analysis":
@@ -1646,12 +1663,12 @@ class EvaluationReport:
 
         Returns
         -------
-        `PredictorCurve`
+        PredictorCurve
             The REC curve for the Selective Naive Bayes regressor.
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If the Selective Naive Bayes information is not available in the report.
         """
         if self.learning_task != "Regression analysis":
@@ -1673,12 +1690,12 @@ class EvaluationReport:
 
         Returns
         -------
-        `PredictorCurve`
+        PredictorCurve
             The lift curve for the specified classifier and target value.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no classifier with the specified exists or no target value with the
             specified name exists.
         """
@@ -1714,15 +1731,15 @@ class EvaluationReport:
 
         Returns
         -------
-        `PredictorCurve`
+        PredictorCurve
             The lift curve of the Selective Naive Bayes classifier for the specified
             target value.
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If the Selective Naive Bayes classifier information is not available.
-        `KeyError`
+        KeyError
             If no target value with the specified name exists.
         """
         if self.learning_task != "Classification analysis":
@@ -1813,14 +1830,15 @@ class EvaluationReport:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer object.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -1917,7 +1935,8 @@ class EvaluationReport:
 class VariableStatistics:
     """Variable information and statistics
 
-    .. note::
+    !!! note
+
         The statistics in this class are for both numerical and categorical data.
 
 
@@ -1925,14 +1944,15 @@ class VariableStatistics:
     ----------
     json_data : dict, optional
         JSON data of an element of the list found at the
-        ``variablesStatistics`` field within the ``preparationReport`` field of a Khiops
+        `variablesStatistics` field within the `preparationReport` field of a Khiops
         JSON report file. If not specified it returns an empty instance.
 
 
-        .. note::
-            The ``data_grid`` field is considered a "detail" and is not initialized in
+        !!! note
+
+            The `data_grid` field is considered a "detail" and is not initialized in
             the constructor. Instead, it is initialized explicitly via the
-            ``init_details`` method. This allows to make partial initializations for
+            [init_details][] method. This allows to make partial initializations for
             large reports. If not specified it returns an empty instance.
 
 
@@ -1975,7 +1995,7 @@ class VariableStatistics:
         Different values taken by the variable. If there are too many values only the
         more frequent will be available.
     input_value_frequencies : list of int
-        The frequencies for each input value. Synchronized with ``input_values``.
+        The frequencies for each input value. Synchronized with `input_values`.
     construction_cost : float
         Construction cost of the variable. More complex variables cost more.
     preparation_cost : float
@@ -1985,10 +2005,10 @@ class VariableStatistics:
         construction model.
     derivation_rule : str
         If the variable is not native it is Khiops dictionary function to derive it.
-        Otherwise is set to ``None``.
-    data_grid : `DataGrid`
+        Otherwise is set to `None`.
+    data_grid : DataGrid
         A density estimation of the partitioned variable with respect to the target.
-    modl_histograms : `ModlHistograms`
+    modl_histograms : ModlHistograms
         MODL optimal histograms for for numerical variables. Only for unsupervised
         analysis.
     """
@@ -2054,7 +2074,7 @@ class VariableStatistics:
         ----------
         json_data : dict, optional
             JSON data of an element of the list found at the
-            ``variablesDetailedStatistics`` field within the ``preparationReport`` field
+            `variablesDetailedStatistics` field within the `preparationReport` field
             of a Khiops JSON report file. If not specified it leaves the object as-is.
 
         """
@@ -2174,14 +2194,15 @@ class VariableStatistics:
 
         The header is the same for all variable types.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -2213,14 +2234,15 @@ class VariableStatistics:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -2287,14 +2309,15 @@ class VariableStatistics:
     def write_report_details(self, writer):  # pragma: no cover
         """Writes the details' attributes into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -2329,14 +2352,16 @@ class VariablePairStatistics:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of an element of the list found at the ``variablesPairStatistics``
-        field within the ``bivariatePreparationReport`` field of a Khiops JSON report
+        JSON data of an element of the list found at the `variablesPairStatistics`
+        field within the `bivariatePreparationReport` field of a Khiops JSON report
         file. If not specified it returns an empty instance.
 
-        .. note::
-            The ``data_grid`` field is considered as "detail" and is not initialized in
+        !!! note
+
+            The `data_grid` field is considered as "detail" and is not initialized in
             the constructor. Instead, it is initialized explicitly via the
-            `init_details` method. This allows to make partial initializations for large
+            [init_details][] method. This allows to make partial initializations for
+            large
             reports. If not specified it returns an empty instance.
 
 
@@ -2356,7 +2381,7 @@ class VariablePairStatistics:
         Predictive importance of the second variable.
     delta_level : float
         Difference between the pair's level and the sum of those of its components
-        (``delta_level = level - level1 - level2``).
+        (`delta_level = level - level1 - level2`).
     variable_number : int
         Number of active variables in the pair:
             - 0 means that there is no information in any of the variables
@@ -2376,7 +2401,7 @@ class VariablePairStatistics:
     data_cost : float
         *Advanced:* Negative log-likelihood of the variable given a preparation model
         and a construction model.
-    data_grid : `DataGrid`
+    data_grid : DataGrid
         A density estimation of the partitioned pair of variable with respect to the
         target.
     """
@@ -2419,8 +2444,8 @@ class VariablePairStatistics:
         ----------
         json_data : dict, optional
             JSON data of an element of the list found at
-            the ``variablesPairsDetailedStatistics`` field within the
-            ``bivariatePreparationReport`` field of a Khiops JSON report file. If not
+            the `variablesPairsDetailedStatistics` field within the
+            `bivariatePreparationReport` field of a Khiops JSON report file. If not
             specified it leaves the object as-is.
         """
         # Check the type of json_data
@@ -2483,14 +2508,15 @@ class VariablePairStatistics:
 
         The header is the same for all variable types.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -2527,14 +2553,15 @@ class VariablePairStatistics:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -2569,14 +2596,15 @@ class VariablePairStatistics:
     def write_report_details(self, writer):  # pragma: no cover
         """Writes the details' attributes into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -2597,7 +2625,7 @@ class Tree:
     ----------
     json_data : dict, optional
         JSON data of a value associated to the rank key in the object found at the
-        ``treeDetails`` field within the ``treePreparationReport`` field of a Khiops
+        `treeDetails` field within the `treePreparationReport` field of a Khiops
         JSON report file. If not specified, it returns an empty instance.
 
     Attributes
@@ -2608,9 +2636,9 @@ class Tree:
         Number of variables in the tree.
     depth : int
         Depth of the tree.
-    target_partition : `TargetPartition`
+    target_partition : TargetPartition
         Summary of the target partition. For regression only.
-    nodes: list of `TreeNode`
+    nodes: list of TreeNode
         Nodes of the tree.
     """
 
@@ -2673,8 +2701,8 @@ class TargetPartition:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of the ``targetPartition`` field of the ``treeDetails`` field of the
-        ``treePreparationReport`` field of a Khiops JSON report file. If not specified
+        JSON data of the `targetPartition` field of the `treeDetails` field of the
+        `treePreparationReport` field of a Khiops JSON report file. If not specified
         it returns an empty instance.
 
     Attributes
@@ -2686,8 +2714,8 @@ class TargetPartition:
     partition_type : "Intervals" (only possible value)
         Partition type.
     partition : list
-        The dimension parts. The list objects are of type `PartInterval`, as
-        ``partition_type`` is "Intervals"
+        The dimension parts. The list objects are of type [PartInterval][], as
+        `partition_type` is "Intervals"
     frequencies : list of int
         Frequencies of the intervals in the target partition.
     """
@@ -2762,22 +2790,22 @@ class TreeNode:
     json_data : dict, optional
         JSON data of either:
 
-        - the ``treeNodes`` field of the ``treeDetails`` field of the
-          ``treePreparationReport`` field of a Khiops JSON report file, or
-        - an element of the ``childNodes`` field of the ``treeNodes`` field of the
-          ``treeDetails`` field of the ``treePreparationReport`` field of a Khiops
+        - the `treeNodes` field of the `treeDetails` field of the
+          `treePreparationReport` field of a Khiops JSON report file, or
+        - an element of the `childNodes` field of the `treeNodes` field of the
+          `treeDetails` field of the `treePreparationReport` field of a Khiops
           JSON report file.
 
         If not specified it returns an empty instance
     parent_id : str, optional
-        Identifier of the parent ``TreeNode`` instance. Not set for "root" nodes.
+        Identifier of the parent `TreeNode` instance. Not set for "root" nodes.
 
     Attributes
     ----------
     id : str
-        Identifier of the ``TreeNode`` instance.
+        Identifier of the `TreeNode` instance.
     parent_id : str, optional
-        Value of the ``id`` field of another ``TreeNode`` instance. Not set for "root"
+        Value of the `id` field of another `TreeNode` instance. Not set for "root"
         nodes.
     variable : str
         Name of the tree variable.
@@ -2790,7 +2818,7 @@ class TreeNode:
     target_values : list of str
         Values of a categorical tree target variable.
     target_value_frequencies : list of int
-        Frequencies of each tree target value. Synchronized with ``target_values``.
+        Frequencies of each tree target value. Synchronized with `target_values`.
     """
 
     def __init__(self, json_data=None, parent_id=None):
@@ -2852,8 +2880,8 @@ class ModlHistograms:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data at a ``modlHistograms`` field of an element of the list found at the
-        ``variablesDetailedStatistics`` field within the ``preparationReport`` field
+        JSON data at a `modlHistograms` field of an element of the list found at the
+        `variablesDetailedStatistics` field within the `preparationReport` field
         of a Khiops JSON report file. If not specified, it returns an empty instance.
 
     Attributes
@@ -2862,7 +2890,7 @@ class ModlHistograms:
         Number of available histograms.
     interpretable_histogram_number : int
         Number of interpretable histograms. Can be equal to either
-        ``histogram_number`` or ``histogram_number - 1``.
+        `histogram_number` or `histogram_number - 1`.
     truncation_epsilon : float
         Truncation epsilon used by the truncation heuristic implemented in Khiops.
         Equals 0 if no truncation is detected in the input data.
@@ -2871,27 +2899,27 @@ class ModlHistograms:
         obtain the first interpretable histogram.
     granularities : list of int
         Histogram granularities, sorted in increasing order.
-        Synchronized with ``histograms``.
+        Synchronized with `histograms`.
     interval_numbers : list of int
         Histogram interval numbers, sorted in increasing order.
-        Synchronized with ``histograms``.
+        Synchronized with `histograms`.
     peak_interval_numbers : list of int
         Histogram peak interval numbers, sorted in increasing order.
-        Synchronized with ``histograms``.
+        Synchronized with `histograms`.
     spike_interval_numbers : list of int
         Histogram spike interval numbers, sorted in increasing order.
-        Synchronized with ``histograms``.
+        Synchronized with `histograms`.
     empty_interval_numbers : list of int
         Histogram empty interval numbers, sorted in increasing order.
-        Synchronized with ``histograms``.
+        Synchronized with `histograms`.
     levels : list of float
         List of histogram levels, sorted in increasing order.
-        Synchronized with ``histograms``.
+        Synchronized with `histograms`.
     information_rates : list of float
         Histogram information rates, sorted in increasing order. Between 0 and
         100 for interpretable histograms.
-        Synchronized with ``histograms``.
-    histograms : list of `Histogram`
+        Synchronized with `histograms`.
+    histograms : list of Histogram
         The MODL histograms.
 
     """
@@ -2970,14 +2998,14 @@ class ModlHistograms:
 class Histogram:
     """A histogram
 
-    Represents one of the refinement levels of a `ModlHistograms` object.
+    Represents one of the refinement levels of a [ModlHistograms][] object.
 
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of an element at the ``histograms`` field of a ``modlHistograms``
-        field of an element of the list found at the ``variablesDetailedStatistics``
-        field within the ``preparationReport`` field of a Khiops JSON report file.
+        JSON data of an element at the `histograms` field of a `modlHistograms`
+        field of an element of the list found at the `variablesDetailedStatistics`
+        field within the `preparationReport` field of a Khiops JSON report file.
         If not specified it returns an empty instance.
 
     Attributes
@@ -3035,35 +3063,35 @@ class DataGrid:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data at a ``dataGrid`` field of an element of the list found at the
-        ``variablesDetailedStatistics`` field within the ``preparationReport`` field of
+        JSON data at a `dataGrid` field of an element of the list found at the
+        `variablesDetailedStatistics` field within the `preparationReport` field of
         a Khiops JSON report file. If not specified it returns an empty instance.
 
     Attributes
     ----------
     is_supervised : bool
-        ``True`` if the data grid is supervised (there is a target).
-    dimensions : list of `DataGridDimension`
+        `True` if the data grid is supervised (there is a target).
+    dimensions : list of DataGridDimension
         The dimensions of the data grid.
     frequencies : list of int
         *Unsupervised only:* Frequencies for each part.
     part_interests : list of float
         *Supervised univariate only:* Prediction interests for each part of the input
-        dimension. Synchronized with ``dimensions[0].partition``.
+        dimension. Synchronized with `dimensions[0].partition`.
     part_target_frequencies : list
         *Supervised univariate only:* List of frequencies per target value for each part
-        of the input dimension. Synchronized with ``dimensions[0].partition``.
+        of the input dimension. Synchronized with `dimensions[0].partition`.
     cell_ids : list of str
         *Multivariate only:* Unique identifiers of the grid's cells.
     cell_part_indexes : list
         *Multivariate only:* List of dimension indexes defining each cell. Synchronized
-        with ``cell_ids``.
+        with `cell_ids`.
     cell_frequencies : list of int
         *Unsupervised multivariate only:* Frequencies for each cell. Synchronized with
-        ``cell_ids``.
+        `cell_ids`.
     cell_target_frequencies : list
         *Supervised multivariate only:* List of frequencies per target value for each
-        cell. Synchronized with ``cell_ids``.
+        cell. Synchronized with `cell_ids`.
     """
 
     def __init__(self, json_data=None):
@@ -3149,14 +3177,15 @@ class DataGrid:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3287,9 +3316,9 @@ class DataGridDimension:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of an element at the ``dimensions`` field of a ``dataGrid`` field of
-        an element of the list found at the ``variablesDetailedStatistics`` field within
-        the ``preparationReport`` field of a Khiops JSON report file. If not specified
+        JSON data of an element at the `dimensions` field of a `dataGrid` field of
+        an element of the list found at the `variablesDetailedStatistics` field within
+        the `preparationReport` field of a Khiops JSON report file. If not specified
         it returns an empty instance.
 
     Attributes
@@ -3302,9 +3331,9 @@ class DataGridDimension:
         Partition type.
     partition : list
         The dimension parts. The list objects are of type:
-            - `PartInterval`: If ``partition type`` is "Intervals"
-            - `PartValue`: If ``partition_type`` is "Values"
-            - `PartValueGroup`: If ``partition_type`` is "Value groups"
+            - [PartInterval][]: If `partition type` is "Intervals"
+            - [PartValue][]: If `partition_type` is "Values"
+            - [PartValueGroup][]: If `partition_type` is "Value groups"
     """
 
     def __init__(self, json_data=None):
@@ -3387,14 +3416,15 @@ class DataGridDimension:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3415,9 +3445,9 @@ class PartInterval:
     Parameters
     ----------
     json_data : list, optional
-        JSON data of the ``partition`` field of a ``dataGrid`` field of an element of
-        the list found at the ``variablesDetailedStatistics`` field within the
-        ``preparationReport`` field of a Khiops JSON report file. If not specified it
+        JSON data of the `partition` field of a `dataGrid` field of an element of
+        the list found at the `variablesDetailedStatistics` field within the
+        `preparationReport` field of a Khiops JSON report file. If not specified it
         returns an empty instance.
 
     Attributes
@@ -3427,12 +3457,12 @@ class PartInterval:
     upper_bound : float
         The upper bound of the interval.
     is_missing : bool
-        True if it is the missing values part (bounds are ``None``).
+        True if it is the missing values part (bounds are `None`).
     is_left_open : bool
-        True if the interval has no minimum. ``lower_bound`` still contains the minimum
+        True if the interval has no minimum. `lower_bound` still contains the minimum
         value seen on data.
     is_right_open : bool
-        True if the interval has no maximum. ``upper_bound`` still contains the minimum
+        True if the interval has no maximum. `upper_bound` still contains the minimum
         value seen on data.
     """
 
@@ -3499,14 +3529,15 @@ class PartInterval:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3571,14 +3602,15 @@ class PartValue:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3647,14 +3679,15 @@ class PartValueGroup:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3677,33 +3710,35 @@ class TrainedPredictor:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of an element of the list found at the ``trainedPredictors`` field
-        within the ``modelingReport`` field of a Khiops JSON report file. If not
+        JSON data of an element of the list found at the `trainedPredictors` field
+        within the `modelingReport` field of a Khiops JSON report file. If not
         specified it returns an empty instance.
 
-        .. note::
-            The ``selected_variables`` field is considered a "detail" and is not
+        !!! note
+
+            The `selected_variables` field is considered a "detail" and is not
             initialized in the constructor. Instead, it is initialized explicitly via
-            the `init_details` method. This allows to make partial initializations for
+            the [init_details][] method. This allows to make partial initializations
+            for
             large reports.
 
     Attributes
     ----------
     family : str
-        Predictor family name. Valid values are found in the ``predictor_families``
+        Predictor family name. Valid values are found in the `predictor_families`
         class variable. They are:
 
         - "Baseline": for regression only,
         - "Selective Naive Bayes": in all other cases.
 
     type : "Classifier" or "Regressor"
-        Predictor type. Valid values are found in the ``predictor_types`` class
+        Predictor type. Valid values are found in the `predictor_types` class
         attribute.
     name : str
         Human readable predictor name.
     variable_number : int
         Number of variables used by the predictor.
-    selected_variables : list of `SelectedVariable`
+    selected_variables : list of SelectedVariable
         Variables used by the predictor. Only for type "Selective Naive Bayes".
     """
 
@@ -3736,8 +3771,8 @@ class TrainedPredictor:
         Parameters
         ----------
         json_data : dict, optional
-            JSON data of the dictionary found at the ``trainedPredictorsDetails`` field
-            within the ``modelingReport`` field of a Khiops JSON report file. If not
+            JSON data of the dictionary found at the `trainedPredictorsDetails` field
+            within the `modelingReport` field of a Khiops JSON report file. If not
             specified it leaves the object as-is.
         """
         # Check the type of json_data
@@ -3789,16 +3824,17 @@ class TrainedPredictor:
     def write_report_header_line(self, writer):  # pragma: no cover
         """Writes the header line of a TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         The header is the same for all variable types.
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3816,14 +3852,15 @@ class TrainedPredictor:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3839,14 +3876,15 @@ class TrainedPredictor:
     def write_report_details(self, writer):  # pragma: no cover
         """Writes the details of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3874,8 +3912,8 @@ class SelectedVariable:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data representing an element of the ``selectedVariables`` list in the
-        ``trainedPredictorsDetails`` field within the ``modelingReport`` field of a
+        JSON data representing an element of the `selectedVariables` list in the
+        `trainedPredictorsDetails` field within the `modelingReport` field of a
         Khiops JSON report file. If not specified it returns an empty instance.
 
     Attributes
@@ -3928,14 +3966,15 @@ class SelectedVariable:
 
         The header is the same for all variable types.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3955,14 +3994,15 @@ class SelectedVariable:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -3987,14 +4027,16 @@ class PredictorPerformance:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of an element of the dictionary found at the ``predictorPerformances``
+        JSON data of an element of the dictionary found at the `predictorPerformances`
         field within the one of the evaluation report fields of a Khiops JSON report
         file. If not specified it returns an empty instance.
 
-        .. note::
-            The ``confusion_matrix`` field is considered as "detail" and is not
+        !!! note
+
+            The `confusion_matrix` field is considered as "detail" and is not
             initialized in the constructor. Instead, it is initialized explicitly via
-            the `init_details` method. This allows to make partial initializations for
+            the [init_details][] method. This allows to make partial initializations
+            for
             large reports.
 
 
@@ -4006,7 +4048,7 @@ class PredictorPerformance:
         Type of the predictor.
     name : str
         Human readable name.
-    data_grid : `DataGrid`
+    data_grid : DataGrid
         Data grid representing the distribution of the target values per part of the
         descriptive variable in the evaluated dataset.
     accuracy : float
@@ -4116,7 +4158,9 @@ class PredictorPerformance:
     def get_metric(self, metric_name):
         """Returns the value of the specified metric
 
-        .. note:: The available metrics is available via the method `get_metric_names`.
+        !!! note
+
+            The available metrics is available via the method [get_metric_names][].
 
         Parameters
         ----------
@@ -4182,14 +4226,15 @@ class PredictorPerformance:
 
         The header is the same for all variable types.
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -4217,14 +4262,15 @@ class PredictorPerformance:
     def write_report_line(self, writer):  # pragma: no cover
         """Writes a line of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -4242,14 +4288,15 @@ class PredictorPerformance:
     def write_report_details(self, writer):  # pragma: no cover
         """Writes the details of the TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -4278,8 +4325,8 @@ class ConfusionMatrix:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of the ``confusionMatrix`` field of an element of the dictionary found
-        at the ``predictorsDetailedPerformances`` field within one of the evaluation
+        JSON data of the `confusionMatrix` field of an element of the dictionary found
+        at the `predictorsDetailedPerformances` field within one of the evaluation
         report fields of a Khiops JSON report file. If not specified it returns an empty
         object.
 
@@ -4289,7 +4336,7 @@ class ConfusionMatrix:
         Values of the target variable.
     matrix : list
         Matrix of predicted frequencies vs target frequencies. This list is synchornized
-        with ``values``. Each list element represents a row of the confusion matrix,
+        with `values`. Each list element represents a row of the confusion matrix,
         that is, the target frequencies for a fixed predicted target value.
     """
 
@@ -4315,14 +4362,15 @@ class ConfusionMatrix:
     def write_report(self, writer):  # pragma: no cover
         """Writes the instance's TSV report into a writer object
 
-        .. warning::
+        !!! warning
+
             This method is *deprecated* since Khiops 11.0.0 and will be removed in
-            Khiops 12. Use the `.to_dict` method instead.
+            Khiops 12. Use the [to_dict][] method instead.
 
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Warn the user that this method is deprecated and will be removed
@@ -4351,7 +4399,7 @@ class PredictorCurve:
     Parameters
     ----------
     json_data : dict, optional
-        JSON data of an element of the ``liftCurves`` or ``recCurves`` field of one of
+        JSON data of an element of the `liftCurves` or `recCurves` field of one of
         the evaluation report fields of a Khiops JSON report file. If not specified it
         returns an empty instance.
 

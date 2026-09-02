@@ -106,7 +106,7 @@ containers.
 
 ### `api-docs.yml` (Consumer)
 
-Builds the Sphinx documentation inside the `khiopspydev-ubuntu22.04` container.
+Builds the Zensical documentation inside the `khiopspydev-ubuntu22.04` container.
 
 ## Editing Rules
 

@@ -46,7 +46,8 @@ def check_dataset_spec(ds_spec):
     Parameters
     ----------
     ds_spec : dict
-        A specification of a multi-table dataset (see :doc:`/multi_table_primer`).
+        A specification of a multi-table dataset
+        (see [Multi-Table Learning Primer](../multi_table_primer.md)).
 
     Raises
     ------
@@ -247,20 +248,21 @@ def get_khiops_type(numpy_type, categorical_str_max_size=None):
 
     Parameters
     ----------
-    numpy_type : `numpy.dtype`
+    numpy_type : numpy.dtype
         Numpy type of the column
-    categorical_str_max_size : `int`, optional
-        Maximum length of the entries of the column whose type is ``numpy_type``.
+    categorical_str_max_size : int, optional
+        Maximum length of the entries of the column whose type is `numpy_type`.
 
     Returns
     -------
     str
         Khiops type name. Either "Categorical", "Text", "Numerical" or "Timestamp".
 
-    .. note::
-        The "Text" Khiops type is inferred if the Numpy type is "string"
-        and the maximum length of the entries of that type is greater than 100.
 
+    Note
+    ----
+        The "Text" Khiops type is inferred if the NumPy type is "string"
+        and the maximum length of the entries of that type is greater than 100.
     """
     # Check categorical_str_max_size type
     if categorical_str_max_size is not None and not isinstance(
@@ -314,7 +316,7 @@ def read_internal_data_table(file_path_or_stream, column_dtypes=None):
     - Use tab as separator
     - Read the column names from the first line
     - Use '"' as quote character
-    - Use `csv.QUOTE_MINIMAL`
+    - Use [csv.QUOTE_MINIMAL][]
     - double quoting enabled (quotes within quotes can be escaped with '""')
     - UTF-8 encoding
     - User-specified dtypes (optional)
@@ -325,13 +327,13 @@ def read_internal_data_table(file_path_or_stream, column_dtypes=None):
         The path of the internal data table file to be read or a readable file
         object.
     column_dtypes : dict, optional
-        Dictionary linking column names with dtypes. See ``dtype`` parameter of the
-        `pandas.read_csv` function. If not set, then the column types are detected
+        Dictionary linking column names with dtypes. See `dtype` parameter of the
+        [pandas.read_csv][] function. If not set, then the column types are detected
         automatically by pandas.
 
     Returns
     -------
-    `pandas.DataFrame`
+    pandas.DataFrame
         The dataframe representation of the data table.
     """
     # Change the 'U' types (Unicode strings) to 'O' because pandas does not support them
@@ -365,7 +367,7 @@ def write_internal_data_table(dataframe, file_path_or_stream):
     - Use tab as separator
     - Write the column names on the first line
     - Use '"' as quote character
-    - Use `csv.QUOTE_MINIMAL`
+    - Use [csv.QUOTE_MINIMAL][]
     - double quoting enabled (quotes within quotes can be escaped with '""')
     - UTF-8 encoding
     - The index is not written
@@ -376,7 +378,7 @@ def write_internal_data_table(dataframe, file_path_or_stream):
 
     Parameters
     ----------
-    dataframe : `pandas.DataFrame`
+    dataframe : pandas.DataFrame
         The dataframe to write.
     file_path_or_stream : str or file object
         The path of the internal data table file to be written or a writable file
@@ -401,7 +403,7 @@ def write_internal_data_table(dataframe, file_path_or_stream):
 def _column_or_1d_with_dtype(y, dtype=None):
     """Checks the data is of the provided `dtype`.
     If a problem is detected a warning is printed or an error raised,
-    otherwise the pandas object is transformed into a numpy.array
+    otherwise the pandas object is transformed into a [numpy.ndarray][]
     """
     return column_or_1d(y, warn=True, dtype=dtype)
 
@@ -411,15 +413,17 @@ class Dataset:
 
     Parameters
     ----------
-    X : `pandas.DataFrame` or dict
+    X : pandas.DataFrame or dict
         Either:
+
           - A single dataframe
-          - A ``dict`` dataset specification
-    y : `pandas.Series`, `pandas.DataFrame` or `numpy.ndarray`, optional
+
+          - A `dict` dataset specification
+    y : pandas.Series, pandas.DataFrame or numpy.ndarray, optional
         The target column.
     categorical_target : bool, default True
-        ``True`` if the vector ``y`` should be considered as a categorical variable. If
-        ``False`` it is considered as numeric. Ignored if ``y`` is ``None``.
+        `True` if the vector `y` should be considered as a categorical variable. If
+        `False` it is considered as numeric. Ignored if `y` is `None`.
     """
 
     def __init__(self, X, y=None, categorical_target=True):
@@ -531,7 +535,7 @@ class Dataset:
                     "11.0.1",
                     replacement=(
                         "the new data-path-based format, as documented in "
-                        ":doc:`multi_table_primer`."
+                        "the 'Multi-Table Learning Primer' documentation."
                     ),
                     quote=False,
                 )
@@ -725,15 +729,15 @@ class Dataset:
 
         Possible values:
 
-        - `PandasTable`
-        - `NumpyTable`
-        - `SparseTable`
+        - [PandasTable][]
+        - [NumpyTable][]
+        - [SparseTable][]
         """
         return type(self.main_table)
 
     @property
     def is_multitable(self):
-        """bool : ``True`` if the dataset is multitable"""
+        """bool : `True` if the dataset is multitable"""
         return (
             self.additional_data_tables is not None
             and len(self.additional_data_tables) > 0
@@ -757,8 +761,8 @@ class Dataset:
     def copy(self):
         """Creates a copy of the dataset
 
-        Referenced pandas.DataFrame's, numpy.nparray's and scipy.sparse.spmatrix's in
-        tables are copied as references.
+        Referenced [pandas.DataFrame][], [numpy.ndarray][] and
+        [scipy.sparse.spmatrix][] objects in tables are copied as references.
         """
         return Dataset(self.to_spec())
 
@@ -772,12 +776,12 @@ class Dataset:
 
         Returns
         -------
-        `DatasetTable`
+        DatasetTable
             The table object for the specified name.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If there is no table with the specified name.
         """
         return self._tables_by_name[table_name]
@@ -787,8 +791,9 @@ class Dataset:
 
         Returns
         -------
-        `.DictionaryDomain`
-            The dictionary domain object representing this dataset
+        DictionaryDomain
+            The [DictionaryDomain][khiops.core.dictionary.DictionaryDomain]
+            object representing this dataset
         """
         assert self.main_table is not None, "'main_table' must be initialized"
 
@@ -946,8 +951,9 @@ class DatasetTable(ABC):
 
         Returns
         -------
-        `.Dictionary`:
-            The Khiops Dictionary object describing this table's schema
+        Dictionary:
+            The Khiops [Dictionary][khiops.core.dictionary.Dictionary] object
+            describing this table's schema
 
         """
         assert self.column_ids is not None, "Dataset column list is None"
@@ -982,7 +988,7 @@ class PandasTable(DatasetTable):
     ----------
     name : str
         Name for the table.
-    dataframe : `pandas.DataFrame`
+    dataframe : pandas.DataFrame
         The data frame to be encapsulated. It must be non-empty.
     key : list of str, optional
         The names of the columns composing the key.
@@ -1100,9 +1106,9 @@ class NumpyTable(DatasetTable):
     ----------
     name : str
         Name for the table.
-    array : `numpy.ndarray` of shape (n_samples, n_features_in) or Sequence
+    array : numpy.ndarray of shape (n_samples, n_features_in) or Sequence
         The data frame to be encapsulated.
-    key : :external:term`array-like` of int, optional
+    key : array-like of int, optional
         The names of the columns composing the key.
     """
 
@@ -1183,7 +1189,7 @@ class SparseTable(DatasetTable):
     ----------
     name : str
         Name for the table.
-    matrix : `scipy.sparse.spmatrix`
+    matrix : scipy.sparse.spmatrix
         The sparse matrix to be encapsulated.
     key : list of str, optional
         The names of the columns composing the key.
@@ -1229,8 +1235,9 @@ class SparseTable(DatasetTable):
 
         Returns
         -------
-        `.Dictionary`:
-            The Khiops Dictionary object describing this table's schema
+        Dictionary:
+            The Khiops [Dictionary][khiops.dictionary.Dictionary] object
+            describing this table's schema
 
         """
 

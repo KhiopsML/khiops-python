@@ -53,7 +53,7 @@ supervised models (classifiers, regressors, encoders) and unsupervised models
 - **`khiops.extras`** — Optional integrations such as the Docker runner
 - **`khiops.tools`** — Miscellaneous utility tools and CLI entry points
 - **`khiops.samples`** — Sample scripts, also used to generate parts of the
-  documentation via `doc/convert-samples-hook`
+  documentation via `doc/util/convert-samples-hook`
 
 Keep changes inside these layer boundaries.
 
@@ -64,7 +64,7 @@ Keep changes inside these layer boundaries.
 - Do not add new external dependencies without discussion. Minimize external
   package dependencies to reduce installation problems.
 - Development and documentation generation dependencies (e.g., `black`,
-  `isort`, `sphinx`, `wrapt`, `furo`) can be more permissive, but still avoid
+  `isort`, `zensical`, `wrapt`) can be more permissive, but still avoid
   unnecessary additions.
 - Test dependencies are listed in `test-requirements.txt` (`coverage`, `wrapt`).
   Package dependencies are extracted from `pyproject.toml` at CI time via

@@ -12,8 +12,9 @@ import re
 def _is_simple_number(string):
     """Tests if a string contains only characters [0-9] and no left zeroes
 
-    note::
-        We do not use str.isdigit() because it returns ``True`` for digit-like UTF-8
+    !!! note
+
+        We do not use str.isdigit() because it returns `True` for digit-like UTF-8
         characters (fractions and superscripts for example).
     """
     if string:

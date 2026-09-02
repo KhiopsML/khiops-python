@@ -34,18 +34,18 @@ def encode_file_path(file_path):
 
     Returns
     -------
-    `bytes`
-        If ``file_path`` is str
+    bytes
+        If `file_path` is str
             - In Windows : The path decoded to UTF-8 excepting the "ANSI" Unicode
               characters.
             - In Linux/Unix/Mac : The path decoded to UTF-8.
-        If ``file_path`` is `bytes`:
-            It just returns the input ``file_path``
+        If `file_path` is [bytes][]:
+            It just returns the input `file_path`
 
     Raises
     ------
-    `TypeError`
-        If ``file_path`` is not str or bytes
+    TypeError
+        If `file_path` is not str or bytes
     """
     # Check input type
     if not is_string_like(file_path):
@@ -120,12 +120,12 @@ class KhiopsJSONObject:
     Parameters
     ----------
     json_data : dict, optional
-        Python dictionary representing the data of a Khiops JSON file. If None an empty
-        it returns an empty object.
+        Python dictionary representing the data of a Khiops JSON file.
+        If [None][] or empty it returns an empty object.
 
     Raises
     ------
-    `~.KhiopsJSONError`
+    KhiopsJSONError
         If the JSON data is invalid.
 
     Attributes
@@ -136,7 +136,7 @@ class KhiopsJSONObject:
         Version of the Khiops tool that generated the file.
     khiops_encoding : str, optional
         Custom encoding used by Khiops in the file. Valid values:
-            - ``None`` : for backwards compatibility
+            - `None` : for backwards compatibility
             - "ascii": ASCII encoding
             - "ansi": ANSI encoding
             - "utf8": UTF-8 encoding
@@ -147,12 +147,13 @@ class KhiopsJSONObject:
         family such as PataText or Enneade.
     json_key_sort_spec : dict, optional
         Dictionary that specifies the order of the keys in the Khiops JSON report.
-        Its values are `None`, except when they are dictionaries themselves.
+        Its values are [None][], except when they are dictionaries themselves.
 
-        .. note::
+        !!! note
+
             This is a class attribute that can be set in subclasses, to specify
             a key order when serializing the report in a JSON file, via the
-            ``write_khiops_json_file`` method.
+            [write_khiops_json_file][] method.
 
     json_data : dict
         Python dictionary extracted from the Khiops JSON report file.
@@ -246,12 +247,12 @@ class KhiopsJSONObject:
 
         Parameters
         ----------
-        stream : `io.IOBase`
+        stream : io.IOBase
             An output stream object.
 
         Returns
         -------
-        `.KhiopsOutputWriter`
+        KhiopsOutputWriter
             An output file object.
         """
         if self.khiops_encoding is None or self.khiops_encoding in ["ascii", "utf8"]:
@@ -330,7 +331,7 @@ class KhiopsJSONObject:
         """Write the JSON data of the object to a Khiops JSON file
 
         The JSON keys are sorted according to the
-        ``KhiopsJSONObject.json_key_sort_spec`` class attribute, if set.
+        `KhiopsJSONObject.json_key_sort_spec` class attribute, if set.
         Otherwise, the JSON keys are not sorted.
 
         Parameters
@@ -360,15 +361,15 @@ class KhiopsOutputWriter:
 
     Parameters
     ----------
-    stream : `io.IOBase`
+    stream : io.IOBase
         A writable output stream. Special text transformations in buffers inheriting
-        from `io.TextIOBase` are ignored.
+        from [io.TextIOBase][] are ignored.
     force_ansi : bool, default False
         All output written will be transformed back ANSI characters in that range that
         were recoded to UTF-8.
     ansi_unicode_chars : list of str, optional
         A list of UTF-8 characters with equivalents in the ANSI 128-256 range which will
-        be encoded back to ANSI when writing with ``force_ansi`` is ``True``. By default
+        be encoded back to ANSI when writing with `force_ansi` is `True`. By default
         all UTF-8 equivalents of the ANSI 128-256 will be encoded back.
     """
 

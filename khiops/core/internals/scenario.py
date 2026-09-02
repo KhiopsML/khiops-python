@@ -233,7 +233,7 @@ class ConfigurableKhiopsScenario:
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             The output writer for the scenario file.
         scenario_args : dict
             Values of the scenario template arguments.

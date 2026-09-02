@@ -10,10 +10,9 @@ guidance.
 
 ## Workflow Overview
 
-This repository has six GitHub Actions workflows in `.github/workflows/`. Most
-workflows use concurrency groups to cancel in-progress runs when superseded,
-except `api-docs.yml` (which uses a `pages` concurrency group that does not
-cancel in-progress runs).
+This repository has six GitHub Actions workflows in `.github/workflows/`. All
+workflows except `api-docs.yml` use concurrency groups to cancel in-progress
+runs when superseded.
 
 ### `quick-checks.yml`
 
@@ -22,7 +21,7 @@ hooks (configured in
 `.pre-commit-config.yaml`) are: Black, pylint, isort (with special no-sections
 config for sample files), yamlfix, shellcheck, GitHub workflow/action schema
 validation (`check-github-workflows`, `check-github-actions`), and a local
-`samples-generation` hook that regenerates reST samples when
+`samples-generation` hook that regenerates Markdown samples when
 `khiops/samples/samples.py` or `khiops/samples/samples_sklearn.py` change.
 
 ### `tests.yml`
@@ -71,16 +70,20 @@ corresponding GitHub environment (`testpypi` or `pypi`). Only runs for the
 
 ### `api-docs.yml`
 
-Builds Sphinx documentation inside a dev Docker container. Triggers on:
+Builds Zensical documentation inside a dev Docker container for validation.
+Triggers on:
 
-- Tag pushes — builds docs and uploads a zip archive to GitHub Releases
-- PRs touching `doc/**/*.rst`, `doc/create-doc`, `doc/clean-doc`, `doc/*.py`,
-  `khiops/**/*.py`, or the workflow file
+- PRs touching `doc/site/**/*.md`, `doc/util/create-doc`, `doc/util/clean-doc`, `doc/util/*.py`,
+  `zensical.toml`, `khiops/**/*.py`, or the workflow file
 - `workflow_dispatch` with optional tutorial and samples revision inputs
 
 Uses the `khiopspydev-ubuntu22.04` Docker image and runs
-`./create-doc -t -d -g <revision>`. Uses a `pages` concurrency group that does
-**not** cancel in-progress runs (to avoid interrupting production deployments).
+`doc/util/create-doc -t -d -g <revision>`. The built HTML is uploaded as a
+`api-docs` artifact for review.
+
+Note: the production API docs are built by the
+[khiops-doc](https://github.com/KhiopsML/khiops-doc) CI, which clones this
+repository and builds the docs using mkdocstrings.
 
 ### `dev-docker.yml`
 

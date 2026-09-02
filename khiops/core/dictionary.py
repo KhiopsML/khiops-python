@@ -6,10 +6,11 @@
 ######################################################################################
 """Classes to manipulate Khiops Dictionary files
 
-.. note::
+!!! note
+
     To have a complete illustration of the access to the information of all classes in
-    this module look at their ``write`` methods which write them in Khiops Dictionary
-    file format (``.kdic``).
+    this module look at their `write` methods which write them in Khiops Dictionary
+    file format (`.kdic`).
 
 """
 import io
@@ -36,7 +37,7 @@ from khiops.core.internals.runner import get_runner
 
 
 def _format_name(name):
-    """Formats a name of a dictionary or variable to a valid ``.kdic`` file identifier
+    """Formats a name of a dictionary or variable to a valid `.kdic` file identifier
 
     Returns unchanged the names that contain only "identifier" characters:
       - underscore
@@ -95,7 +96,7 @@ def _check_name(name):
             Name to be validated.
     Raises
     ------
-        `ValueError`
+        ValueError
             If the provided name does not comply with the formatting constraints.
     """
     # Check that the type of name is string or bytes
@@ -145,7 +146,8 @@ def _is_object_type(type_str):
 class DictionaryDomain:
     """Main class containing the information of a Khiops dictionary file
 
-    A DictionaryDomainain is a collection of `Dictionary` objects. These dictionaries
+    A `DictionaryDomain` is a collection of [Dictionary][] objects. These
+    dictionaries
     usually represent either a database schema or a predictor model.
 
     Parameters
@@ -154,10 +156,12 @@ class DictionaryDomain:
         Python dictionary representing the data of a Khiops Dictionary JSON file. If not
         specified it returns an empty instance.
 
-        .. note::
-            Prefer the `.read_dictionary_file` function from the core API to obtain an
-            instance of this class from a Khiops Dictionary file (``kdic`` or
-            ``kdicj``).
+        !!! note
+
+            Prefer the [read_dictionary_file][] function from the core API to obtain
+            an
+            instance of this class from a Khiops Dictionary file (`kdic` or
+            `kdicj`).
 
     Attributes
     ----------
@@ -165,7 +169,7 @@ class DictionaryDomain:
         Name of the Khiops tool that generated the dictionary file.
     version : str
         Version of the Khiops tool that generated the dictionary file.
-    dictionaries : list of `Dictionary`
+    dictionaries : list of Dictionary
         The domain's dictionaries.
     """
 
@@ -218,7 +222,7 @@ class DictionaryDomain:
 
         Returns
         -------
-        `DictionaryDomain`
+        DictionaryDomain
             A copy of this instance.
         """
         dictionary_domain_copy = DictionaryDomain()
@@ -239,8 +243,8 @@ class DictionaryDomain:
 
         Returns
         -------
-        `Dictionary`
-            The specified dictionary. ``None`` is returned if the dictionary name
+        Dictionary
+            The specified dictionary. `None` is returned if the dictionary name
             is not found.
         """
         return self._dictionaries_by_name.get(dictionary_name)
@@ -250,13 +254,13 @@ class DictionaryDomain:
 
         Parameters
         ----------
-        dictionary : `Dictionary`
+        dictionary : Dictionary
             The dictionary to be added.
 
         Raises
         ------
-        `TypeError`
-            If ``dictionary`` is not of type ``Dictionary``.
+        TypeError
+            If `dictionary` is not of type `Dictionary`.
         """
         if not isinstance(dictionary, Dictionary):
             raise TypeError(type_error_message("dictionary", dictionary, Dictionary))
@@ -268,12 +272,12 @@ class DictionaryDomain:
 
         Returns
         -------
-        `Dictionary`
+        Dictionary
             The removed dictionary.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no dictionary with the specified name exists.
         """
         dictionary = self._dictionaries_by_name.pop(dictionary_name)
@@ -283,7 +287,8 @@ class DictionaryDomain:
     def extract_data_paths(self, source_dictionary_name):
         """Extracts the data paths for a dictionary in a multi-table schema
 
-        See :doc:`/multi_table_primer` for more details about data paths.
+        See [Multi-Table Learning Primer](../multi_table_primer.md)
+        for more details about data paths.
 
         Parameters
         ----------
@@ -307,7 +312,7 @@ class DictionaryDomain:
         ):
             """Builds the path for secondary tables and updates the entity list
 
-            `current_dictionary_alias` contains:
+            [current_dictionary_alias][] contains:
             - in the traversal, the name of the dictionary as it was named by
               the variable that referenced it;
             - or, otherwise, the name of an external dictionary (for Entity tables).
@@ -372,16 +377,16 @@ class DictionaryDomain:
         ----------
         data_path : str
             A data path for the specified table. Usually the output of
-            `extract_data_paths`.
+            [extract_data_paths][].
 
         Returns
         -------
-        `Dictionary`
+        Dictionary
             The dictionary object pointed by this data path.
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If the path is not found.
         """
         # If data_path includes "`" and starts with an existing dictionary,
@@ -483,12 +488,12 @@ class DictionaryDomain:
         return dictionary
 
     def export_khiops_dictionary_file(self, kdic_file_path):
-        """Exports the domain in ``.kdic`` format
+        """Exports the domain in `.kdic` format
 
         Parameters
         ----------
         kdic_file_path : str
-            Path of the output dictionary file (``.kdic``).
+            Path of the output dictionary file (`.kdic`).
         """
         with io.BytesIO() as kdic_contents_stream:
             kdic_file_writer = self._json_object.create_output_file_writer(
@@ -498,11 +503,11 @@ class DictionaryDomain:
             fs.write(kdic_file_path, kdic_contents_stream.getvalue())
 
     def write(self, stream_or_writer):
-        """Writes the domain to a file writer in ``.kdic`` format
+        """Writes the domain to a file writer in `.kdic` format
 
         Parameters
         ----------
-        stream_or_writer : `io.IOBase` or `.KhiopsOutputWriter`
+        stream_or_writer : io.IOBase or KhiopsOutputWriter
             Output stream or writer.
         """
         if isinstance(stream_or_writer, io.IOBase):
@@ -529,24 +534,24 @@ def read_dictionary_file(dictionary_file_path):
 
     Parameters
     ----------
-    dictionary_file : str
+    dictionary_file_path : str
         Path of the file to be imported. The file can be either Khiops Dictionary
-        (extension ``kdic``) or Khiops JSON Dictionary (extension ``.json`` or
-        ``.kdicj``).
+        (extension `kdic`) or Khiops JSON Dictionary (extension `.json` or
+        `.kdicj`).
 
     Returns
     -------
-    `.DictionaryDomain`
+    DictionaryDomain
         An dictionary domain representing the information in the dictionary file.
 
     Raises
     ------
-    `ValueError`
-        When the file has an extension other than ``.kdic``, ``.kdicj`` or ``.json``.
+    ValueError
+        When the file has an extension other than `.kdic`, `.kdicj` or `.json`.
 
     Examples
     --------
-    See the following functions of the ``samples.py`` documentation script:
+    See the following functions of the `samples.py` documentation script:
         - `samples.export_dictionary_files()`
         - `samples.train_predictor_with_cross_validation()`
         - `samples.multiple_train_predictor()`
@@ -597,7 +602,7 @@ class Dictionary:
     Parameters
     ----------
     json_data : dict, optional
-        Python dictionary representing an element of the list at the ``dictionaries``
+        Python dictionary representing an element of the list at the `dictionaries`
         field of a Khiops Dictionary JSON file. If not specified returns an empty
         instance.
 
@@ -609,9 +614,9 @@ class Dictionary:
         True if the dictionary is the root of an dictionary hierarchy.
     key : list of str
         Names of the key variables.
-    variables : list of `Variable`
+    variables : list of Variable
         The dictionary variables.
-    variable_blocks : list of `VariableBlock`
+    variable_blocks : list of VariableBlock
         The dictionary variable blocks.
     label : str
         Dictionary label.
@@ -619,7 +624,7 @@ class Dictionary:
         List of dictionary comments.
     internal_comments : list of str
         List of internal dictionary comments.
-    meta_data : `MetaData`
+    meta_data : MetaData
         MetaData object of the dictionary.
     """
 
@@ -688,7 +693,7 @@ class Dictionary:
 
         Returns
         -------
-        `Dictionary`
+        Dictionary
             A copy of this instance.
         """
         # Create an empty dictionary
@@ -737,19 +742,19 @@ class Dictionary:
 
         Returns
         -------
-        `MetaData`
-            Metadata value associated to the specified key. ``None`` is returned
+        MetaData
+            Metadata value associated to the specified key. `None` is returned
             if the metadata key is not found.
         """
         return self.meta_data.get_value(key)
 
     def use_all_variables(self, is_used):
-        """Sets the ``used`` flag of all dictionary variables to the specified value
+        """Sets the `used` flag of all dictionary variables to the specified value
 
         Parameters
         ----------
         is_used : bool
-            Sets the ``used`` field to ``is_used`` for all the `Variable` objects in
+            Sets the `used` field to `is_used` for all the [Variable][] objects in
             this dictionary.
         """
         for variable in self.variables:
@@ -765,8 +770,8 @@ class Dictionary:
 
         Returns
         -------
-        `Variable`
-            The specified variable. ``None`` is returned if the variable name is
+        Variable
+            The specified variable. `None` is returned if the variable name is
             not found.
         """
         return self._variables_by_name.get(variable_name)
@@ -781,8 +786,8 @@ class Dictionary:
 
         Returns
         -------
-        `VariableBlock`
-            The specified variable block. ``None`` is returned if the variable
+        VariableBlock
+            The specified variable block. `None` is returned if the variable
             block name is not found.
         """
         return self._variable_blocks_by_name.get(variable_block_name)
@@ -792,15 +797,15 @@ class Dictionary:
 
         Parameters
         ----------
-        variable : `Variable`
+        variable : Variable
             The variable to be added.
 
         Raises
         ------
-        `TypeError`
-            If variable is not of type `Variable`
+        TypeError
+            If variable is not of type [Variable][]
 
-        `ValueError`
+        ValueError
             If the name is empty or if there is already a variable with that name.
         """
         if not isinstance(variable, Variable):
@@ -835,10 +840,10 @@ class Dictionary:
         name : str
             Variable name.
         type : str
-            Variable type. See `Variable`.
+            Variable type. See [Variable][].
         label : str, default ""
             Label of the variable.
-        used : bool, default ``True``
+        used : bool, default `True`
             Usage status of the variable.
         object_type : str, optional
             Object type. Ignored if variable type not in ["Entity", "Table"].
@@ -852,7 +857,7 @@ class Dictionary:
 
         Raises
         ------
-        `ValueError`
+        ValueError
             - If the variable name is empty or does not comply
               with the formatting constraints.
             - If there is already a variable with the same name.
@@ -923,12 +928,12 @@ class Dictionary:
 
         Returns
         -------
-        `Variable`
+        Variable
             The removed variable.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no variable with the specified name exists.
         """
         variable = self._variables_by_name.pop(variable_name)
@@ -944,15 +949,15 @@ class Dictionary:
 
         Parameters
         ----------
-        variable_block : `VariableBlock`
+        variable_block : VariableBlock
             The variable block to be added.
 
         Raises
         ------
-        `TypeError`
-            If variable is not of type `VariableBlock`
+        TypeError
+            If variable is not of type [VariableBlock][]
 
-        `ValueError`
+        ValueError
             If the name is empty or if there is already a variable block with that name.
 
         """
@@ -979,29 +984,30 @@ class Dictionary:
     ):
         """Removes the specified variable block from this dictionary
 
-        .. note::
+        !!! note
+
             Non-native block variables (those created from block rules) are never kept
             in the dictionary.
 
         Parameters
         ----------
-        variable_name : str
+        variable_block_name : str
             Name of the variable block to be removed.
-        keep_native_block_variables : bool, default ``True``
-            If ``True`` and the block is native then  only the block structure is
+        keep_native_block_variables : bool, default `True`
+            If `True` and the block is native then  only the block structure is
             removed from the dictionary but the variables are kept in it; neither the
             variables point to the block nor the removed block points to the variables.
-            If ``False`` the variables are removed from the dictionary; the block
+            If `False` the variables are removed from the dictionary; the block
             preserves the references to their variables.
 
         Returns
         -------
-        `VariableBlock`
+        VariableBlock
             The removed variable block.
 
         Raises
         ------
-        `KeyError`
+        KeyError
             If no variable block with the specified name exists.
         """
         removed_block = self.get_variable_block(variable_block_name)
@@ -1026,26 +1032,26 @@ class Dictionary:
         return removed_block
 
     def is_key_variable(self, variable):
-        """Returns ``True`` if a variable belongs to this dictionary's key
+        """Returns `True` if a variable belongs to this dictionary's key
 
         Parameters
         ----------
-        variable : `Variable`
+        variable : Variable
             The variable for the query.
 
         Returns
         -------
         bool
-            ``True`` if the variable belong to the key.
+            `True` if the variable belong to the key.
         """
         return variable.name in self.key
 
     def write(self, writer):
-        """Writes the dictionary to a file writer in ``.kdic`` format
+        """Writes the dictionary to a file writer in `.kdic` format
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output dictionary file.
         """
         # Check file object type
@@ -1104,7 +1110,7 @@ class Variable:
     Parameters
     ----------
     json_data : dict, optional
-        Python dictionary representing an element of the list at the ``variables`` field
+        Python dictionary representing an element of the list at the `variables` field
         of dictionaries found in a Khiops Dictionary JSON file. If not specified it
         returns an empty instance.
 
@@ -1116,21 +1122,21 @@ class Variable:
         True if the variable is used.
     type : str
         Variable type.
-        It can be either native (``Categorical``, ``Numerical``, ``Time``,
-        ``Date``, ``Timestamp``, ``TimestampTZ``, ``Text``),
-        internal (``TextList``, ``Structure``)
+        It can be either native (`Categorical`, `Numerical`, `Time`,
+        `Date`, `Timestamp`, `TimestampTZ`, `Text`),
+        internal (`TextList`, `Structure`)
 
             - See https://khiops.org/11.0.0-b.0/api-docs/kdic/text-list-rules/
             - See https://khiops.org/11.0.0-b.0/api-docs/kdic/structures-introduction/
 
-        or relational (``Entity`` - 0-1 relationship, ``Table`` - 0-n relationship)
+        or relational (`Entity` - 0-1 relationship, `Table` - 0-n relationship)
 
             - See https://khiops.org/11.0.0-b.0/tutorials/kdic_multi_table/
 
     object_type : str
-        Type complement for the ``Table`` and ``Entity`` types.
+        Type complement for the `Table` and `Entity` types.
     structure_type : str
-        Type complement for the ``Structure`` type. Set to "" for other types.
+        Type complement for the `Structure` type. Set to "" for other types.
     rule : str
         Derivation rule or external table reference. Set to "" if there is no
         rule associated to this variable. Examples:
@@ -1138,19 +1144,19 @@ class Variable:
             - standard rule: "Sum(Var1, Var2)"
             - reference rule: "[TableName]"
 
-    variable_block : `VariableBlock`
+    variable_block : VariableBlock
         Block to which the variable belongs. Not set if the variable does not belong to
         a block.
     label : str
         Variable label.
     comments : list of str
         List of variable comments.
-    meta_data : `MetaData`
+    meta_data : MetaData
         Variable metadata.
 
     Examples
     --------
-    See the following function of the ``samples.py`` documentation script:
+    See the following function of the `samples.py` documentation script:
         - `samples.create_dictionary_domain()`
     """
 
@@ -1251,7 +1257,7 @@ class Variable:
 
         Returns
         -------
-        `Variable`
+        Variable
             A copy of this instance.
         """
         variable = Variable()
@@ -1271,14 +1277,14 @@ class Variable:
 
         Returns
         -------
-        `MetaData`
-            Metadata value associated to the specified key. ``None`` is returned
+        MetaData
+            Metadata value associated to the specified key. `None` is returned
             if the metadata key is not found.
         """
         return self.meta_data.get_value(key)
 
     def is_native(self):
-        """Returns ``True`` if the variable comes directly from a data column
+        """Returns `True` if the variable comes directly from a data column
 
         Variables are **not native** if they come from a derivation rule, an external
         entity, a sub-table or structures.
@@ -1286,7 +1292,7 @@ class Variable:
         Returns
         -------
         bool
-            ``True`` if a variables comes directly from a data column.
+            `True` if a variables comes directly from a data column.
 
         """
         base_types = [
@@ -1304,7 +1310,7 @@ class Variable:
         return self.variable_block.rule == ""
 
     def is_relational(self):
-        """Returns ``True`` if the variable is of relational type
+        """Returns `True` if the variable is of relational type
 
         Relational variables reference other tables or external entities.
 
@@ -1316,14 +1322,14 @@ class Variable:
         return self.type in ["Entity", "Table"]
 
     def is_reference_rule(self):
-        """Returns ``True`` if the special reference rule is used
+        """Returns `True` if the special reference rule is used
 
         The reference rule is used to make reference to an external entity.
 
         Returns
         -------
         bool
-            ``True`` if the special reference rule is used.
+            `True` if the special reference rule is used.
         """
         if self.rule:
             if isinstance(self.rule, str):
@@ -1352,11 +1358,11 @@ class Variable:
         return full_type
 
     def write(self, writer):
-        """Writes the domain to a file writer in ``.kdic`` format
+        """Writes the domain to a file writer in `.kdic` format
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Check file object type
@@ -1406,9 +1412,9 @@ class VariableBlock:
     Parameters
     ----------
     json_data : dict, optional
-        Python dictionary representing an element of the list at the ``variables`` field
+        Python dictionary representing an element of the list at the `variables` field
         of a dictionary object in a Khiops Dictionary JSON file. The element must have a
-        ``blockName`` field.  If not specified it returns an empty instance.
+        `blockName` field.  If not specified it returns an empty instance.
 
     Attributes
     ----------
@@ -1489,13 +1495,13 @@ class VariableBlock:
 
         Parameters
         ----------
-        variable : `Variable`
+        variable : Variable
             The variable to be added.
 
         Raises
         ------
-        `TypeError`
-            If the variable is not of type `Variable`.
+        TypeError
+            If the variable is not of type [Variable][].
         """
         if not isinstance(variable, Variable):
             raise TypeError(type_error_message("variable", variable, Variable))
@@ -1511,13 +1517,13 @@ class VariableBlock:
 
         Parameters
         ----------
-        variable : `Variable`
+        variable : Variable
             The variable to be removed.
 
         Raises
         ------
-        `TypeError`
-            If the variable is not of type `Variable`.
+        TypeError
+            If the variable is not of type [Variable][].
         """
         # Check input
         if not isinstance(variable, Variable):
@@ -1531,18 +1537,18 @@ class VariableBlock:
 
         Returns
         -------
-        `MetaData`
-            Metadata value associated to the specified key. ``None`` is returned
+        MetaData
+            Metadata value associated to the specified key. `None` is returned
             if the metadata key is not found.
         """
         return self.meta_data.get_value(key)
 
     def write(self, writer):
-        """Writes the variable block to a file writer in ``.kdic`` format
+        """Writes the variable block to a file writer in `.kdic` format
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Output writer.
         """
         # Check file object type
@@ -1594,11 +1600,11 @@ class Rule:
 
     This object is a convenience feature which eases rule creation and
     serialization, especially in complex cases (rule operands which are
-    variables or rules themselves, sometimes upper-scoped). A `Rule` instance
-    must be converted to `str` before setting it in a `Variable` or
-    `VariableBlock` instance.
+    variables or rules themselves, sometimes upper-scoped). A [Rule][] instance
+    must be converted to [str][] before setting it in a [Variable][] or
+    [VariableBlock][] instance.
 
-    `Rule` instances can be created either from full operand specifications, or
+    [Rule][] instances can be created either from full operand specifications, or
     from verbatim rules. The latter is useful when the rule is retrieved from an
     existing variable or variable block and is used as an operand in another
     rule.
@@ -1612,26 +1618,26 @@ class Rule:
             - bytes
             - int
             - float
-            - `Variable`
-            - `Rule`
-            - upper-scoped `Variable`
-            - upper-scoped `Rule`
+            - [Variable][]
+            - [Rule][]
+            - upper-scoped [Variable][]
+            - upper-scoped [Rule][]
 
-        The first element of the ``name_and_operands`` tuple is the name of the
+        The first element of the `name_and_operands` tuple is the name of the
         rule and must be str or bytes and non-empty for a standard rule, i.e. if
-        ``is_reference`` is not set.
+        `is_reference` is not set.
     verbatim : str or bytes, optional
-        Verbatim representation of an entire rule. If set, then ``names_and_operands``
+        Verbatim representation of an entire rule. If set, then `names_and_operands`
         must be empty.
-    is_reference : bool, default ``False``
-        If set to ``True``, then the rule is serialized as a reference rule:
-        ``Rule(Operand1, Operand2, ...)`` is serialized as
-        ``[Operand1, Operand2, ...]``.
+    is_reference : bool, default `False`
+        If set to `True`, then the rule is serialized as a reference rule:
+        `Rule(Operand1, Operand2, ...)` is serialized as
+        `[Operand1, Operand2, ...]`.
 
     Attributes
     ----------
-    name : str or bytes or ``None``
-        Name of the rule. It is ``None`` for reference rules.
+    name : str or bytes or `None`
+        Name of the rule. It is `None` for reference rules.
     operands : tuple of operands
         Each operand has one of the following types:
 
@@ -1639,100 +1645,104 @@ class Rule:
             - bytes
             - int
             - float
-            - `Variable`
-            - `Rule`
-            - upper-scoped `Variable`
-            - upper-scoped `Rule`
+            - [Variable][]
+            - [Rule][]
+            - upper-scoped [Variable][]
+            - upper-scoped [Rule][]
 
     is_reference : bool
         The reference status of the rule.
 
-        .. note::
-            This attribute cannot be changed on a `Rule` instance.
+        !!! note
+
+            This attribute cannot be changed on a [Rule][] instance.
 
     Examples
     --------
-        - basic rule, with variables as operands:
-            - verbatim:
-                .. code-block::
+    - basic rule, with variables as operands:
+        - verbatim:
 
-                    Product(PetalLength, PetalWidth)
+            ```
+            Product(PetalLength, PetalWidth)
+            ```
 
-            - object construction:
-                .. highlight:: python
-                .. code-block:: python
+        - object construction:
 
-                    petal_length_var = kh.Variable()
-                    petal_length_var.name = "PetalLength"
-                    petal_length_var.type = "Numerical"
-                    petal_width_var = kh.Variable()
-                    petal_width_var.name = "PetalWidth"
-                    petal_width_var.type = "Numerical"
-                    rule = kh.Rule("Product", petal_length_var, petal_width_var)
+            ```python
+            petal_length_var = kh.Variable()
+            petal_length_var.name = "PetalLength"
+            petal_length_var.type = "Numerical"
+            petal_width_var = kh.Variable()
+            petal_width_var.name = "PetalWidth"
+            petal_width_var.type = "Numerical"
+            rule = kh.Rule("Product", petal_length_var, petal_width_var)
+            ```
 
-        - multi-table rule:
-            - verbatim:
-                .. code-block::
+    - multi-table rule:
+        - verbatim:
 
-                    TableCount(
-                        TableSelection(
-                            Vehicles,
-                            EQ(PassengerNumber, 1)
-                        )
-                    )
+            ```
+            TableCount(
+                TableSelection(
+                    Vehicles,
+                    EQ(PassengerNumber, 1)
+                )
+            )
+            ```
 
-            - object construction:
-                .. highlight:: python
-                .. code-block:: python
+        - object construction:
 
-                    vehicles_var = accidents_dictionary.get_variable("Vehicles")
-                    passenger_number_var = vehicles_dictionary.get_variable(
-                        "PassengerNumber"
-                    )
-                    rule = kh.Rule(
-                        "TableCount",
+            ```python
+            vehicles_var = accidents_dictionary.get_variable("Vehicles")
+            passenger_number_var = vehicles_dictionary.get_variable(
+                "PassengerNumber"
+            )
+            rule = kh.Rule(
+                "TableCount",
+                kh.Rule(
+                    "TableSelection",
+                    vehicles_var,
+                    kh.Rule("EQ", passenger_number_var, 1)
+                )
+            )
+            ```
+
+    - multi-table rule with upper-scoped operands (advanced usage):
+        - verbatim:
+
+            ```
+            TableSelection(
+                Vehicles,
+                EQ(
+                    PassengerNumber,
+                    .TableMax(Vehicles, PassengerNumber)
+                )
+            )
+            ```
+
+        - object construction:
+
+            ```python
+            vehicles_var = accidents_dictionary.get_variable("Vehicles")
+            passenger_number_var = vehicles_dictionary.get_variable(
+                "PassengerNumber"
+            )
+            rule = kh.Rule(
+                "TableSelection",
+                vehicles_var,
+                kh.Rule(
+                    "EQ",
+                    passenger_number_var,
+                    kh.upper_scope(
                         kh.Rule(
-                            "TableSelection",
-                            vehicles_var,
-                            kh.Rule("EQ", passenger_number_var, 1)
+                            "TableMax",
+                            vehicle_var,
+                            passenger_number_var
                         )
                     )
-
-        - multi-table rule with upper-scoped operands (advanced usage):
-            - verbatim:
-                .. code-block::
-
-                    TableSelection(
-                        Vehicles,
-                        EQ(
-                            PassengerNumber,
-                            .TableMax(Vehicles, PassengerNumber)
-                        )
-                    )
-
-            - object construction:
-                .. highlight:: python
-                .. code-block:: python
-
-                    vehicles_var = accidents_dictionary.get_variable("Vehicles")
-                    passenger_number_var = vehicles_dictionary.get_variable(
-                        "PassengerNumber"
-                    )
-                    rule = kh.Rule(
-                        "TableSelection",
-                        vehicles_var,
-                        kh.Rule(
-                            "EQ",
-                            passenger_number_var,
-                            kh.upper_scope(
-                                kh.Rule(
-                                    "TableMax",
-                                    vehicle_var,
-                                    passenger_number_var
-                                )
-                            )
-                        )
-                    )
+                )
+            )
+            ```
 
     """
 
@@ -1808,28 +1818,29 @@ class Rule:
 
         Returns
         -------
-        `Rule`
+        Rule
             A copy of this instance.
         """
         return Rule(self.name, *self.operands)
 
     def write(self, writer):
-        """Writes the rule to a file writer in the ``.kdic`` format
+        """Writes the rule to a file writer in the `.kdic` format
 
-        This method ensures proper `Rule` serialization, automatically handling:
+        This method ensures proper [Rule][] serialization, automatically handling:
 
             - back-quote recoding in variable names
             - double-quote recoding in categorical constants
-            - missing data (``inf``, ``-inf``, ``NaN``) serialization as ``#Missing``
-            - upper-scope operator serialization as ``.``
+            - missing data (`inf`, `-inf`, `NaN`) serialization as `#Missing`
+            - upper-scope operator serialization as `.`
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : [KhiopsOutputWriter][]
             Output writer.
 
-            .. note::
-                ``self.name`` is not included in the serialization of reference rules.
+            !!! note
+
+                `self.name` is not included in the serialization of reference rules.
         """
         # Check the type of the writer
         if not isinstance(writer, KhiopsOutputWriter):
@@ -1907,24 +1918,25 @@ class _ScopedOperand:
 
 
 def upper_scope(operand):
-    """Applies the upper-scope operator ``.`` to an operand
+    """Applies the upper-scope operator `.` to an operand
 
     Parameters
     ----------
-    operand : `Variable`, `Rule`, upper-scoped `Variable` or upper-scoped `Rule`
+    operand : Variable, Rule, upper-scoped Variable or upper-scoped Rule
         Operand that is upper-scoped.
 
     Raises
     ------
-    `TypeError`
-        If the type of ``operand`` is not `Variable`, `Rule`, upper-scoped `Variable`
-        or upper-scoped `Rule`.
+    TypeError
+        If the type of `operand` is not [Variable][], [Rule][], upper-scoped
+        [Variable][]
+        or upper-scoped [Rule][].
 
     Returns
     -------
     upper-scoped operand
-        The upper-scoped operand, as if the upper-scope operator ``.`` were
-        applied to an operand in a rule in the ``.kdic`` dictionary language.
+        The upper-scoped operand, as if the upper-scope operator `.` were
+        applied to an operand in a rule in the `.kdic` dictionary language.
 
     """
     if not isinstance(operand, (Variable, Rule, _ScopedOperand)):
@@ -1941,12 +1953,12 @@ class MetaData:
 
     The metadata for both dictionaries and variables is a list of key-value pairs. The
     values can be set either to a string, to a number, or to the boolean value True. The
-    latter represents flag metadata: they are either present (``True``) or absent.
+    latter represents flag metadata: they are either present (`True`) or absent.
 
     Parameters
     ----------
     json_data : dict, optional
-        Python dictionary representing the object at a ``metaData`` field of a
+        Python dictionary representing the object at a `metaData` field of a
         dictionary domain, dictionary or variable in a Khiops Dictionary JSON file. If
         None it returns an empty instance.
 
@@ -1955,7 +1967,7 @@ class MetaData:
     keys : list of str
         The metadata keys.
     values : list
-        Metadata values for each key in ``keys`` (synchronized lists). They can be
+        Metadata values for each key in `keys` (synchronized lists). They can be
         either str, int or float.
     """
 
@@ -1984,7 +1996,7 @@ class MetaData:
 
         Returns
         -------
-        `MetaData`
+        MetaData
             A copy of this instance.
         """
         new_meta_data = MetaData()
@@ -1993,12 +2005,12 @@ class MetaData:
         return new_meta_data
 
     def is_empty(self):
-        """Returns ``True`` if the meta-data is empty
+        """Returns `True` if the meta-data is empty
 
         Returns
         -------
         bool
-            Returns ``True`` if the meta-data is empty
+            Returns `True` if the meta-data is empty
         """
         return len(self.keys) == 0
 
@@ -2008,13 +2020,13 @@ class MetaData:
         Returns
         -------
         int, str or float
-            The value at the specified key. ``None`` is returned if the key is
+            The value at the specified key. `None` is returned if the key is
             not found.
 
         Raises
         ------
-        `TypeError`
-            If ``key`` is not str.
+        TypeError
+            If `key` is not str.
         """
         # Check the argument types
         if not is_string_like(key):
@@ -2040,10 +2052,10 @@ class MetaData:
 
         Raises
         ------
-        `TypeError`
+        TypeError
             - If the key is not a valid string
             - If the value is not a valid string or if is not bool, int, float.
-        `ValueError`
+        ValueError
             If the key is already stored.
         """
         # Check that the type of key is string-like
@@ -2078,9 +2090,9 @@ class MetaData:
 
         Raises
         ------
-        `TypeError`
+        TypeError
             If the key is not str.
-        `KeyError`
+        KeyError
             If the key is not contained in this metadata.
         """
         # Check that the type of key is string-like
@@ -2097,11 +2109,11 @@ class MetaData:
         raise KeyError(key)
 
     def write(self, writer):
-        """Writes the metadata to a file writer in ``.kdic`` format
+        """Writes the metadata to a file writer in `.kdic` format
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : [KhiopsOutputWriter][]
             Output writer.
         """
         if not isinstance(writer, KhiopsOutputWriter):

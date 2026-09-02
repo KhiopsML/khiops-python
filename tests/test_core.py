@@ -971,7 +971,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
 
 
 class MockedRunnerContext:
-    """A context to mock the `~.KhiopsLocalRunner.raw_run` function"""
+    """A context to mock the `KhiopsLocalRunner.raw_run` function"""
 
     def __init__(self, mocked_raw_run):
         self.mocked_raw_run = mocked_raw_run

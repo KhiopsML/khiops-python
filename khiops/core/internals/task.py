@@ -30,9 +30,9 @@ def encode_path_valued_arg(arg, arg_name, arg_type):
         The value of a path valued argument.
     arg_name : str
         The name of the argument.
-    arg_type : `.KhiopsTaskArgumentType`
-        The type of the argument. Must be either `.StringLikeType` or
-        `.DictType`  `.StringLikeType` , `.StringLikeType` .
+    arg_type : KhiopsTaskArgumentType
+        The type of the argument. Must be either [StringLikeType][] or
+        [DictType][][  [StringLikeType][] , [StringLikeType][]] .
 
     See Also
     --------
@@ -61,28 +61,28 @@ class KhiopsTask:
         Name of the task.
     tool_name : str
         Name of the tool to execute the task (ex. "khiops", "khiops_coclustering").
-    intro_version : `.KhiopsVersion` or str
+    intro_version : KhiopsVersion or str
         Khiops version where this task object was introduced.
     args_signature : list
         A list of 2-tuples for each mandatory parameter of the task, containing:
             - its name (str)
-            - its type (`.KhiopsTaskArgumentType`)
+            - its type ([KhiopsTaskArgumentType][])
     kwargs_signature : list
         A list of 3-tuples for each optional parameter of the task, containing:
             - its name (str)
-            - its type (`.KhiopsTaskArgumentType`)
+            - its type ([KhiopsTaskArgumentType][])
             - its default value
     path_valued_arg_names : list of str
         A list of the parameters that contain paths. They must be contained either in
         args_signature or kwargs_signature. The only accepted types are
-        `.StringLikeType` or containers thereof.
+        [StringLikeType][] or containers thereof.
     scenario_template : str
         A Khiops scenario template. The template mini-language is described above.
 
     Attributes
     ----------
-    scenario : `.ConfigurableKhiopsScenario`
-        Scenario object built from ``scenario_template``.
+    scenario : ConfigurableKhiopsScenario
+        Scenario object built from `scenario_template`.
     """
 
     def __init__(
@@ -249,7 +249,7 @@ class KhiopsTask:
 
         Parameters
         ----------
-        writer : `.KhiopsOutputWriter`
+        writer : KhiopsOutputWriter
             Writer object for the scenario file.
         args : dict
             Task arguments. Includes mandatory and optional arguments.
@@ -327,7 +327,7 @@ class KhiopsTaskFamily:
     ----------
     task_name : str
         The name of the task defining this family.
-    end_version : str or `.KhiopsVersion`
+    end_version : str or KhiopsVersion
         The Khiops version where the support for this task ended.
     """
 
@@ -339,10 +339,10 @@ class KhiopsTaskFamily:
 
     @property
     def end_version(self):
-        """`.KhiopsVersion` : Khiops version where support for this task ended
+        """[KhiopsVersion][] : Khiops version where support for this task ended
 
-        It is ``None`` if the task is still supported. May be set with either str or
-        `.KhiopsVersion` or ``None``.
+        It is `None` if the task is still supported. May be set with either str or
+        [KhiopsVersion][] or `None`.
         """
         return self._end_version
 
@@ -360,11 +360,11 @@ class KhiopsTaskFamily:
 
     @property
     def start_version(self):
-        """`.KhiopsVersion` : Khiops version where the support for this task started
+        """[KhiopsVersion][] : Khiops version where the support for this task started
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If there are no task registered in this family.
         """
         if not self.tasks:
@@ -379,15 +379,15 @@ class KhiopsTaskFamily:
 
         Parameters
         ----------
-        task : `.KhiopsTask`
+        task : KhiopsTask
             The task to be registered. Must have the same name of the family.
-        overwrite : bool, default ``False``
-            If ``True`` it does not raise an error if a task with the same version is
+        overwrite : bool, default `False`
+            If `True` it does not raise an error if a task with the same version is
             already registered.
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If:
 
             - The task name is not the same as that of this family.
@@ -416,12 +416,12 @@ class KhiopsTaskFamily:
 
         Returns
         -------
-        `KhiopsTask`
+        KhiopsTask
             The removed task object.
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If there is no task with the specified introduction version.
         """
         if intro_version not in self.tasks:
@@ -436,18 +436,18 @@ class KhiopsTaskFamily:
 
         Parameters
         ----------
-        target_version : str or `.KhiopsVersion`
+        target_version : str or KhiopsVersion
             The target Khiops version.
 
         Returns
         -------
-        `.KhiopsTask`
-            The latest task object compatible with the ``target_version``.
+        KhiopsTask
+            The latest task object compatible with the `target_version`.
 
         Raises
         ------
-        `TypeError`
-            If target_version is not str or `.KhiopsVersion`.
+        TypeError
+            If target_version is not str or [KhiopsVersion][].
 
         """
         # Check the argument type
@@ -485,7 +485,8 @@ class KhiopsTaskFamily:
 
     @property
     def all_intro_versions(self):
-        """list of `.KhiopsVersion` : A sorted list of the task introduction versions.
+        """list of [KhiopsVersion][] : A sorted list of the task introduction
+        versions.
 
         The list is sorted in reverse order.
         """
@@ -493,7 +494,7 @@ class KhiopsTaskFamily:
 
     @property
     def latest_intro_version(self):
-        """`.KhiopsVersion` : The latest introduction version of the task.
+        """[KhiopsVersion][] : The latest introduction version of the task.
 
         Raises
         ------
@@ -530,17 +531,17 @@ class KhiopsTaskRegistry:
         ----------
         task_name : str
             The name of the task to be retrieved.
-        target_version : str or `.KhiopsVersion`
+        target_version : str or KhiopsVersion
             The target Khiops version.
 
         Returns
         -------
-        `.KhiopsTask`
+        KhiopsTask
             The latest task object for the specified task and version.
 
         Raises
         ------
-        `ValueError`
+        ValueError
             If there are no tasks registered with the specified name.
         """
         # Check the argument type
@@ -558,13 +559,13 @@ class KhiopsTaskRegistry:
 
         Parameters
         ----------
-        target_version : str or `.KhiopsVersion`
+        target_version : str or KhiopsVersion
             The target Khiops version for the tasks to be retrieved.
 
         Returns
         -------
-        list of `.KhiopsTask`
-            The list of compatible tasks with ``target_version``.
+        list of KhiopsTask
+            The list of compatible tasks with `target_version`.
         """
         # Check the argument type
         if not isinstance(target_version, (str, KhiopsVersion)):
@@ -597,14 +598,14 @@ class KhiopsTaskRegistry:
 
         Returns
         -------
-        `.KhiopsVersion` or ``None``
-            Either the end version for this task or ``None`` if it is still supported.
+        KhiopsVersion or None
+            Either the end version for this task or [None][] if it is still supported.
 
         Raises
         ------
-        `TypeError`
-            If ``task_name`` is not of type str.
-        `ValueError`
+        TypeError
+            If `task_name` is not of type str.
+        ValueError
             If there are no registered tasks with the specified name.
         """
         if not isinstance(task_name, str):
@@ -620,15 +621,15 @@ class KhiopsTaskRegistry:
         ----------
         task_name : str
             Name of the task.
-        end_version : str or `.KhiopsVersion`
+        end_version : str or KhiopsVersion
             Version where the support of the specified task ended.
 
         Raises
         ------
-        `TypeError`
-            - If ``task_name`` is not of type str.
-            - If ``end_version`` is not of type str or `.KhiopsVersion`.
-        `ValueError`
+        TypeError
+            - If `task_name` is not of type str.
+            - If `end_version` is not of type str or [KhiopsVersion][].
+        ValueError
             If there are no registered tasks with the specified name.
         """
         # Check input types
@@ -641,7 +642,7 @@ class KhiopsTaskRegistry:
 
     @property
     def latest_intro_version(self):
-        """`.KhiopsVersion` : Latest introduction version overall tasks"""
+        """[KhiopsVersion][] : Latest introduction version overall tasks"""
         latest_intro_version = KhiopsVersion("1.0")
         for task_family in self.task_families:
             latest_intro_version = max(

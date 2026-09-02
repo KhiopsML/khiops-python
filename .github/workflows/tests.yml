@@ -231,6 +231,14 @@ jobs:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
+      # We move SAMPLES_REVISION to the environment so that we can use
+      # them in both push and workflow_dispatch events
+      - name: Set SAMPLES_REVISION on 'pull_request' events
+        if: github.event_name == 'pull_request'
+        run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
+      - name: Set SAMPLES_REVISION on 'workflow_dispatch' events
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
         uses: actions/checkout@v4
         with:
@@ -363,6 +371,14 @@ jobs:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
+      # We move SAMPLES_REVISION to the environment so that we can use
+      # them in both push and workflow_dispatch events
+      - name: Set SAMPLES_REVISION on 'pull_request' events
+        if: github.event_name == 'pull_request'
+        run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
+      - name: Set SAMPLES_REVISION on 'workflow_dispatch' events
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
         uses: actions/checkout@v4
         with:

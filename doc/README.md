@@ -1,4 +1,4 @@
-# Khiops Python Library Documentation²
+# Khiops Python Library Documentation
 The documentation of the documentation.
 
 Below you'll find the tools and practices related to the documentation of the
@@ -6,54 +6,63 @@ Khiops Python library.
 
 ## Build the documentation
 ```bash
-# Working dir = khiops/doc
+# Working dir = khiops-python (repository root)
 
-# You'll need the python packages in the requirements.txt file in this directory
-# Warning: If you create a virtualenv, do not place it within the khiops/doc directory.
-#          The installed packages contain reST files and Sphinx will process them!
-# pip install -U -r requirements.txt
+# Install the doc build dependencies.
+# Warning: If you create a virtualenv, do not place it within the doc/util
+# directory. The installed packages may contain .md files and Zensical will
+# process them!
+uv pip install -U -r doc/util/requirements.txt
 
-# You'll also need a system-wide installation of pandoc (https://pandoc.org)
+# Install the Khiops Python library from the working dir so that the tutorials
+# can run
+uv pip install .
+
+# The 'black' package is also required (used by convert_samples.py to format
+# code snippets in the generated sample pages) but is not listed in
+# doc/util/requirements.txt, because it is needed only for local development.
+# uv pip install black
 
 # Execute this if there were non committed updates to samples.py or samples_sklearn.py:
-# ./convert-samples-hook
+# uv run doc/util/convert-samples-hook
 
 # To clean the html documentation
-# ./clean-doc
+# doc/util/clean-doc
 
-
-# Create the HTML documentation (
+# Create the HTML documentation:
 # - Downloads the khiops-python-tutorial resources
-# - Generates the reST version of the tutorials
-# - Executes Sphinx (output: ./_build/html)
-./create-doc -d -t
+# - Generates the Markdown version of the tutorials
+# - Executes Zensical (output: doc/build/html)
+doc/util/create-doc -d -t
 
-# To only execute Sphinx on updated reST resources
-# sphinx-build -M html . _build/
+# To only execute Zensical on updated Markdown resources
+# zensical build
+
+# To serve locally for development (with live reload)
+# zensical serve
 ```
 
-## Sphinx
-We use [Sphinx](https://www.sphinx-doc.org/en/master/) to generate the documentation and
-the [Numpy docstring format](https://numpydoc.readthedocs.io/en/latest/format.html).
+## Zensical
+We use [Zensical](https://www.zensical.org/) with the
+[Material](https://squidfunk.github.io/mkdocs-material/) theme to generate the
+documentation and the
+[NumPy docstring format](https://numpydoc.readthedocs.io/en/latest/format.html).
 
-Within Sphinx we use the following extensions:
-- `numpydoc`: Parses the numpydoc docstrings **and** creates compact reST output.
-- `sphinx.ext.autdoc`: Automatically creates the documentation from docstrings.
-- `sphinx.ext.autosummary`: Automatically creates summaries from the module structure. It depends
-  on `autodoc`.
-- `sphinx.ext.intersphinx`: Creates links to other Sphinx-generated sites (eg. Python doc, Pandas
-  doc).
-- `sphinx_copybutton`: Puts a copy button in all code snippets within the documentation.
+The Zensical configuration file `zensical.toml` lives at the repository root.
 
-Any of these extensions can be the culprit of bogus or invalid output. Note that the Sphinx
-documentation for some of these extensions is not complete and even answers in StackOverflow are
-not up to date.
+The following MkDocs plugins and extensions are used in Zensical through
+Zensical's MkDocs compatibility layer:
+- `mkdocstrings[python]`: Automatically creates API documentation from Python docstrings
+  (NumPy format). Replaces Sphinx's `autodoc`, `autosummary`, and `numpydoc`.
+- `autorefs`: Enables cross-references to documented objects across pages.
+- `search`: Built-in search functionality.
+- `pymdownx.superfences`, `pymdownx.highlight`: Fenced code blocks with syntax highlighting
+  and a copy button.
+- `admonition`, `pymdownx.details`: Note/warning/tip admonition blocks.
 
-Warnings emitted by Sphinx **should not be ignored** as there are most likely rendering errors.
-
-[reStructuredText](https://docutils.sourceforge.io/rst.html) or *reST* is the input format of
-Sphinx. One important thing that while very similar **it is not Markdown**, reST is not identical
-to it. See below [reSTructuredText Common Problems](#restructuredtext-common-problems).
+Cross-references to external projects (Python, pandas, scikit-learn, NumPy, SciPy) are
+handled via `objects.inv` inventory files configured in the `mkdocstrings` handler's
+`inventories` option.
 
 ## Khiops Python Docstring Patterns
 
@@ -122,7 +131,7 @@ some_parameter : str, optional
 ```
 
 ### Verbatim
-Use verbatim (double backticks ` `` `) in mid-sentence for:
+Use verbatim (backticks `` ` ``) in mid-sentence for:
 - Common Python constants (`True`, `None`)
 - File names and extensions
 - Parameter names
@@ -133,7 +142,7 @@ Do not use verbatim for
 
 ```
 # No:
-some_string : ``AValue`` or ``AnotherValue``
+some_string : "AValue" or "AnotherValue"
 
 some_boolean : optional, default "True"
 
@@ -141,18 +150,18 @@ dictionary_file : str
     With extension ".kdic"
 
 some_parameter : int
-    When greater than ``0`` affects "other_parameter"
+    When greater than `0` affects "other_parameter"
 
 # Yes:
 some_string : "AValue" or "AnotherValue"
 
-some_boolean : bool, default ``True``
+some_boolean : bool, default `True`
 
 dictionary_file : str
-    A file with extension ``.kdic``
+    A file with extension `.kdic`
 
 some_parameter : int
-    When greater than 0 affects ``other_parameter``
+    When greater than 0 affects `other_parameter`
 ```
 
 ### Container Types
@@ -178,149 +187,58 @@ For container types such as `dict` describe the keys and the values types in the
 Use type referencing only for complex types and Exceptions
 ```python
 # No:
-# int and str point to the Python docs (via intersphinx)
-some_string : `str`
+# int and str do not need cross-references
+some_string : str
     a string
-some_int : `int`
+some_int : int
     an int
 
 # Yes:
 # Khiops internal class
-dictionary : `.Dictionary`
+dictionary : `Dictionary`
   A Khiops dictionary.
 
-# Pandas project class (via intersphinx)
+# Pandas project class (via intersphinx inventory)
 df : `pandas.DataFrame`
   A dataframe.
 
-# Python project class (via intersphinx)
+# Exception
 Raises
 ------
 `ValueError`
    When something wrong happens.
 ```
 
-## reStructuredText Common Problems
+## Cross-References in Markdown
 
-There are three common cases where the differences may pose problems: lists, monospaced blocks and
-links.
+The documentation pages use Markdown, not reST. Cross-references use the
+mkdocstrings/autorefs syntax:
 
-### Lists
-In reST lists *must* have an empty line before and when nesting. So the following Markdown list:
-```
-These are some letters:
-- A
-- B
-- C
-- D
-The end
-```
-must be written in the following way:
-```
-These are some letters:
+```markdown
+# Link showing "train_predictor"
+[train_predictor][khiops.core.api.train_predictor]
 
-- A
-- B
-- C
-- D
-The end
-```
-Now, because Sphinx makes many transformations (docstring -> reST -> HTML) *sometimes* it is
-possible to get away without the extra spaces or by indenting the lists. But this is context
-dependent and one must check if the output is the desired one (no warnings is a good sign).
-
-### Monospaced Blocks
-Consider the following monospaced block in Markdown
-````
-The following is a monospaced text:
-```
-Some
-|- monospaced
-|- text
-```
-Nice figure
-````
-In reST there are at least two ways
-```
-The following is a monospaced text:
-::
-
-    Some
-    |- monospaced
-    |- text
-
-Nice figure
-```
-or the more compact
-```
-The following is a monospaced text::
-
-    Some
-    |- monospaced
-    |- text
-
-Nice figure
-```
-Note that is necessary
-- an empty line after the `::` operator and after the monospaced text
-- an indentation of the monospaced text.
-
-A third way allows to specify programming languages
-```
-Some python code
-.. code-block:: python
-
-    import pprint
-    pprint.print("hola")
-
-That was a nice snippet.
-```
-Note again that indentation and empty lines are necessary.
-### Links and Cross References
-The external URL link in Markdown
-```
-[Python website](https://www.python.org)
-```
-can be expressed in reST as
-```
-`Python website <https://www.python.org>`_
-```
-or
-```
-`Python website`_
-
-.. _`Python website`: https://www.python.org
+# Link showing the full path
+[khiops.core.api.train_predictor][]
 ```
 
-For internal URL links the Sphinx semantics called *domains* help to reference diverse
-elements of the module. For example the `train_predictor` function of the core API
-belongs to the `:func:` domain so we can reference it as:
-```
-:func:`khiops.core.api.train_predictor`
-```
-This will show the long link `khiops.core.api.train_predictor`. Adding a `~` before
-the path makes the link show only the last component `train_predictor`.
-```
-:func:`~khiops.core.api.train_predictor`
-```
-Additionally, we configured Sphinx with
-```python
-# In conf.py file
-default_object = 'obj'
-```
-which allows to not use the *domain* most of the time. So the link can be further shortened to
-```
-`~khiops.core.api.train_predictor`
-```
-and if we were referencing within the `khiops.core.api` module one can simply write
-```
-`train_predictor`
-```
-Outside the module there is a compact way to reference it with a _wildcard_
-```
-`.train_predictor`
-```
-but be careful about name collisions.
+For API documentation blocks, use the `:::` directive:
 
-See the Sphinx documentation for more information about referencing.
+```markdown
+::: khiops.core.api
+    options:
+      heading_level: 3
+```
 
+### Admonitions
+Notes and warnings use the `!!!` syntax:
+
+```markdown
+!!! note
+    This is a note.
+
+!!! warning
+    This is a warning.
+```
+
+See the [Zensical admonitions docs](https://zensical.org/docs/authoring/admonitions/) for more details.

@@ -1,54 +1,38 @@
 ---
 name: API Docs
 env:
+  DEFAULT_KHIOPS_REVISION: 11.0.1
   DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION: 11.0.0.0
   DEFAULT_KHIOPS_SAMPLES_REVISION: 11.0.0
 on:
   workflow_dispatch:
     inputs:
+      khiops-revision:
+        description: Khiops core version
+        default: 11.0.1
       khiops-python-tutorial-revision:
         default: 11.0.0.0
         description: khiops-python-tutorial repo revision
       khiops-samples-revision:
         default: 11.0.0
         description: khiops-samples repo revision
-      image-tag:
-        default: latest
-        description: Development Docker Image Tag
   pull_request:
     paths:
-      - doc/**.rst
-      - doc/create-doc
-      - doc/clean-doc
-      - doc/*.py
+      - doc/site/**.md
+      - doc/util/create-doc
+      - doc/util/clean-doc
+      - doc/util/*.py
+      - zensical.toml
       - khiops/**.py
       - .github/workflows/api-docs.yml
-  push:
-    tags: ['*']
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
-  id-token: write
-  packages: read
-  pages: write
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest
-# queued. However, do NOT cancel in-progress runs as we want to allow these production deployments
-# to complete.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    container:
-      # 'latest' default image tag cannot be set as an environment variable,
-      # because the `env` context is only accessible at the step level;
-      # hence, it is hard-coded
-      image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
-      # Use the 'runner' user (1001) from github so checkout actions work properly
-      # https://github.com/actions/runner/issues/2033#issuecomment-1598547465
-      options: --user 1001
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout khiops-python
         uses: actions/checkout@v4
@@ -56,64 +40,52 @@ jobs:
           fetch-depth: 0
       - name: Add pip scripts directory to path
         run: echo PATH="$PATH:/github/home/.local/bin" >> "$GITHUB_ENV"
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install Khiops core
+        run: |
+          # Create the .venv virtual environment and activate it
+          uv venv
+          . .venv/bin/activate
+
+          # Building the Python API docs always executes khiops-python's own
+          # tutorial notebooks (create-doc -t -d), so a real Khiops core
+          # install is required unconditionally.
+          uv pip install khiops-core==${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}
       - name: Install doc build requirements
         run: |
           # Install package itself to install the samples datasets
-          python -m pip install --upgrade pip
           # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
-          python -m pip install tomli
+          uv pip install tomli
           # First, install all dependencies except khiops-core and khiops-drivers-*
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt          
-          python -m pip install --user `cat requires-no-khiops.txt`
+          uv run scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          uv pip install `cat requires-no-khiops.txt`
           # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
-          python -m pip install --user --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
+          uv run scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          uv pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
           rm -f requires-khiops.txt requires-no-khiops.txt
           # Lastly, install khiops-python
-          python -m pip install --user .
-          kh-download-datasets --force-overwrite --version ${{ inputs.khiops-samples-revision || env.DEFAULT_KHIOPS_SAMPLES_REVISION }}
-          kh-status
+          uv pip install .
+          uv run kh-download-datasets --force-overwrite --version ${{ inputs.khiops-samples-revision || env.DEFAULT_KHIOPS_SAMPLES_REVISION }}
+
+          # Discard error as this is expected (Uv is not yet officially
+          # supported by khiops, but this should pose no issue in practice)
+          # TODO: Revert as soon as issue
+          # https://github.com/KhiopsML/khiops-python/issues/602 is tackled
+          uv run kh-status || true
 
           # Install the doc python requirements
-          cd doc
-          python -m pip install -U -r requirements.txt
+          uv pip install -U -r doc/util/requirements.txt
       # Clone the Khiops Python tutorial repository while building the documentation
-      - name: Build Sphinx Documentation
+      - name: Build Zensical Documentation
         run: |
-          cd doc
-          ./create-doc -t -d -g \
+          doc/util/create-doc -t -d -g \
           ${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
       - name: Upload the docs as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: api-docs
-          path: ./doc/_build/html/
-  # Release on Git tag
-  release:
-    if: github.ref_type == 'tag'
-    needs: build
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-    steps:
-      - name: Download docs artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: api-docs
-          path: ./doc/_build/html/
-      - name: Create docs release zip archive
-        uses: thedoctor0/zip-release@0.7.6
-        with:
-          type: zip
-          path: ./doc/_build/html/
-          filename: khiops-api-docs-${{ github.ref_name }}.zip
-      - name: Release the docs zip archive
-        uses: ncipollo/release-action@v1.15.0
-        with:
-          allowUpdates: true
-          artifacts: ./khiops-api-docs-${{ github.ref_name }}.zip
-          body: '**For testing purposes only**'
-          draft: false
-          makeLatest: false
-          prerelease: true
-          updateOnlyUnreleased: true
+          path: ./doc/build/html/

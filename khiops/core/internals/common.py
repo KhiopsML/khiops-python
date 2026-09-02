@@ -11,8 +11,9 @@ from collections.abc import Iterable, Mapping, Sequence
 class SystemSettings:
     """Khiops system settings
 
-    .. note::
-        These settings are not available in the `CommandLineOptions`.
+    !!! note
+
+        These settings are not available in the [CommandLineOptions][].
     """
 
     def __init__(
@@ -42,10 +43,10 @@ class SystemSettings:
 
         Raises
         ------
-        `TypeError`
+        TypeError
             If any of the system settings does not have the proper type.
-        `ValueError`
-            If ``max_cores`` or ``memory_limit_mb`` are set to negative numbers.
+        ValueError
+            If `max_cores` or `memory_limit_mb` are set to negative numbers.
         """
         # Check the field types and ranges where applicable
         if self.max_cores is not None:
@@ -88,14 +89,14 @@ class CommandLineOptions:
     Attributes
     ----------
     log_file_path : str, default ""
-        Path of the log file for the Khiops process (command line option ``-e`` of the
+        Path of the log file for the Khiops process (command line option `-e` of the
         desktop app). If equal to "" then it writes no log file.
     output_scenario_path : str, default ""
-        Path of the output Khiops scenario file (command line option ``-o`` of the
+        Path of the output Khiops scenario file (command line option `-o` of the
         desktop app). If the empty string is specified no output scenario file is
         generated.
     task_file_path : str, default ""
-        Path of the task file for the Khiops process (command line option ``-p`` of the
+        Path of the task file for the Khiops process (command line option `-p` of the
         desktop app). If equal to "" then it writes no task file.
     """
 
@@ -149,7 +150,7 @@ class CommandLineOptions:
 
         Raises
         ------
-        `TypeError`
+        TypeError
             If any of the command line options does not have the proper type.
         """
         if self.output_scenario_path and not is_string_like(self.output_scenario_path):
@@ -183,7 +184,7 @@ def type_error_message(variable_name, variable, *target_types):
     variable : any
         Actual variable for whom the type error is signaled.
     target_types : list
-        Expected types for ``variable``, either as a type or as a string.
+        Expected types for `variable`, either as a type or as a string.
 
     Returns
     -------
@@ -268,7 +269,8 @@ def is_string_like(test_object):
 def is_list_like(list_like):
     """Returns True if an object is list-like
 
-    An object is ``list-like`` if and only if inherits from `collections.abc.Sequence`
+    An object is `list-like` if and only if inherits from
+    [collections.abc.Sequence][]
     and it is not `string-like <is_string_like>`
     """
     return isinstance(list_like, Sequence) and not is_string_like(list_like)
@@ -277,8 +279,8 @@ def is_list_like(list_like):
 def is_dict_like(test_object):
     """Returns True if an object is dict-like
 
-    An object is ``dict-like`` if and only if inherits from the
-    `collections.abc.Mapping`.
+    An object is `dict-like` if and only if inherits from the
+    [collections.abc.Mapping][].
     """
     return isinstance(test_object, Mapping)
 

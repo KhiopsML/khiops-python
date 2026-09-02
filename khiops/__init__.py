@@ -18,7 +18,7 @@ The available sub-modules inside the package are:
   (extension ".kdicj")
 - core/analysis_results: Classes to inspect Khiops JSON report files
   (extension ".khj")
-- core/coclustering_results: Classes to instpect Khiops Coclustering report files
+- core/coclustering_results: Classes to inspect Khiops Coclustering report files
   (extension ".khcj")
 - sklearn: Scikit-Learn estimator classes to learn and use Khiops models
 """
