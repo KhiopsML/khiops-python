@@ -335,11 +335,18 @@ def _get_current_library_installer():
         return "unknown"
 
 
-def _build_khiops_process_environment():
+def _build_khiops_process_environment(system_settings=None):
     """Build a specific environment used for the execution of khiops in a process
 
     This environment can be modified freely without interfering
     with the global one.
+
+    Parameters
+    ----------
+
+    system_settings: SystemSettings
+            Set of settings that must be taken into account
+            for this specific run
     """
     khiops_env = os.environ.copy()
 
@@ -347,6 +354,11 @@ def _build_khiops_process_environment():
     # (using KHIOPS_MPI_HOME if it exists)
     if "HOME" not in khiops_env:
         khiops_env["HOME"] = khiops_env.get("KHIOPS_MPI_HOME", "")
+    if system_settings is not None and system_settings.max_cores is not None:
+        # An additional environment variable (local to this specific run)
+        # must also be set to avoid allocating all the available CPU cores.
+        # Thus, allocated CPU cores = max number of CPU cores used
+        khiops_env["KHIOPS_PROC_NUMBER"] = system_settings.max_cores
     return khiops_env
 
 
@@ -697,6 +709,7 @@ class KhiopsRunner(ABC):
                 scenario_path,
                 command_line_options,
                 trace,
+                system_settings,
             )
             # pylint: enable=assignment-from-no-return
         # Catch an OS level error if any
@@ -902,6 +915,7 @@ class KhiopsRunner(ABC):
         scenario_path,
         command_line_options,
         trace,
+        system_settings,
     ):
         """Abstract run method to be implemented in child classes
 
@@ -1466,7 +1480,14 @@ class KhiopsLocalRunner(KhiopsRunner):
             self._samples_dir_checked = True
         return self._samples_dir
 
-    def raw_run(self, tool_name, command_line_args=None, use_mpi=True, trace=False):
+    def raw_run(
+        self,
+        tool_name,
+        command_line_args=None,
+        use_mpi=True,
+        trace=False,
+        system_settings=None,
+    ):
         """Execute a Khiops tool with given command line arguments
 
         Parameters
@@ -1479,6 +1500,9 @@ class KhiopsLocalRunner(KhiopsRunner):
             Whether to execute the application with MPI
         trace : bool, default False
             If `True` print the trace of the process.
+        system_settings: SystemSettings
+            Set of settings that must be taken into account
+            for this specific run
 
         Examples
         --------
@@ -1521,9 +1545,9 @@ class KhiopsLocalRunner(KhiopsRunner):
             print(f"Khiops execution call: {khiops_call}")
 
         # Build custom Khiops process environment
-        # which makes sure HOME is defined and set
+        # which makes sure for example HOME is defined and set
         # according to khiops_env's KHIOPS_MPI_HOME
-        khiops_env = _build_khiops_process_environment()
+        khiops_env = _build_khiops_process_environment(system_settings)
 
         # Execute the process
         with subprocess.Popen(
@@ -1546,11 +1570,15 @@ class KhiopsLocalRunner(KhiopsRunner):
         scenario_path,
         command_line_options,
         trace,
+        system_settings,
     ):
         # Execute the tool
         khiops_args = command_line_options.build_command_line_options(scenario_path)
         stdout, stderr, return_code = self.raw_run(
-            tool_name, command_line_args=khiops_args, trace=trace
+            tool_name,
+            command_line_args=khiops_args,
+            trace=trace,
+            system_settings=system_settings,
         )
 
         return return_code, stdout, stderr
