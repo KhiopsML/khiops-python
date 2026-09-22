@@ -6,6 +6,13 @@
 # Mac/OSX
 .DS_Store
 
+# OpenSpec artifacts
+openspec/
+.github/agents/openspec.agent.md
+.github/prompts/opsx-*.prompt.md
+.github/skills/openspec-*/
+.github/workflows/copilot-setup-steps.yml
+
 # Source for the following rules: https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -44,6 +51,7 @@ wheels/
 tests/resources/*/output_reports
 tests/resources/*/output_kdic
 tests/resources/dictionary/copy_output_kdic
+tests/resources/scenario_generation/system_settings/output
 tests/resources/scenario_generation/api/*/output
 tests/resources/scenario_generation/data_path_deprecation/*/output
 tests/resources/scenario_generation/general_options/output
