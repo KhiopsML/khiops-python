@@ -6,13 +6,6 @@
 # Mac/OSX
 .DS_Store
 
-# OpenSpec artifacts
-openspec/
-.github/agents/openspec.agent.md
-.github/prompts/opsx-*.prompt.md
-.github/skills/openspec-*/
-.github/workflows/copilot-setup-steps.yml
-
 # Source for the following rules: https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
