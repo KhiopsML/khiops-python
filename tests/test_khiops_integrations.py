@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
+import khiops.core.internals.runner as runner_module
 from khiops import tools
 from khiops.core.exceptions import KhiopsEnvironmentError
 from khiops.core.internals.runner import (
@@ -345,6 +346,63 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             os.environ["KHIOPS_API_MODE"] = original_khiops_api_mode
 
         self.assertEqual(env_khiops_api_mode, "true")
+
+    def test_isolated_runner_environment_is_not_written_to_process(self):
+        """Test explicit runner environments reach both subprocess boundaries"""
+        initial_process_environment = os.environ.copy()
+        isolated_environment = initial_process_environment.copy()
+        isolated_environment.update(
+            {
+                "KHIOPS_PROC_NUMBER": "7",
+                "KHIOPS_MEMORY_LIMIT": "256",
+                "KHIOPS_TMP_DIR": "/isolated/tmp",
+                "HOME": "/isolated/home",
+            }
+        )
+        tool_path = os.environ.get("SHELL", "/bin/sh")
+
+        mock_popen = MagicMock()
+        mock_popen.return_value.__enter__.return_value.communicate.return_value = (
+            "KHIOPS_MPI_HOME /isolated/mpi\n"
+            f"KHIOPS_PATH {tool_path}\n"
+            f"KHIOPS_COCLUSTERING_PATH {tool_path}\n"
+            "KHIOPS_MPI_COMMAND mpiexec\n"
+            "KHIOPS_API_MODE false\n"
+            "KHIOPS_RETURNED yes\n",
+            "",
+        )
+        mock_popen.return_value.__enter__.return_value.returncode = 0
+
+        with patch.object(
+            runner_module, "_infer_khiops_installation_method", return_value="conda"
+        ):
+            with patch.object(
+                KhiopsLocalRunner,
+                "_infer_khiops_env_from_path",
+                return_value="/bin/echo",
+            ):
+                with patch.object(KhiopsLocalRunner, "_check_tools"):
+                    with patch.object(
+                        KhiopsLocalRunner, "_initialize_default_samples_dir"
+                    ):
+                        with patch.object(
+                            runner_module.subprocess, "Popen", mock_popen
+                        ):
+                            runner = KhiopsLocalRunner(environment=isolated_environment)
+                            runner.raw_run("khiops", [], use_mpi=False)
+
+        self.assertEqual(os.environ, initial_process_environment)
+        self.assertEqual(runner._environment["KHIOPS_RETURNED"], "yes")
+        self.assertEqual(runner._environment["KHIOPS_API_MODE"], "true")
+        self.assertEqual(
+            mock_popen.call_args_list[0].kwargs["env"], isolated_environment
+        )
+        final_environment = mock_popen.call_args_list[1].kwargs["env"]
+        self.assertEqual(final_environment["KHIOPS_PROC_NUMBER"], "7")
+        self.assertEqual(final_environment["KHIOPS_MEMORY_LIMIT"], "256")
+        self.assertEqual(final_environment["KHIOPS_TMP_DIR"], "/isolated/tmp")
+        self.assertEqual(final_environment["KHIOPS_RETURNED"], "yes")
+        self.assertEqual(final_environment["HOME"], "/isolated/home")
 
     def test_khiops_and_khiops_coclustering_are_run_with_mpi(self):
         """Test that MODL and MODL_Coclustering are run with MPI"""

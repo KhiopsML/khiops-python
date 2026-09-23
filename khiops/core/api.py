@@ -17,7 +17,9 @@ See Also
 """
 import io
 import os
+import threading
 import warnings
+from types import MappingProxyType
 
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
@@ -29,8 +31,175 @@ from khiops.core.internals.common import (
     is_string_like,
     type_error_message,
 )
-from khiops.core.internals.runner import get_runner
+from khiops.core.internals.runner import KhiopsLocalRunner, get_runner, set_runner
 from khiops.core.internals.task import get_task_registry
+
+# Capture the process environment before any runner initialization can occur.
+# Avoid race condition on os.environ (via MappingProxyType) and make sure updates
+# to it are not propagated to the current environment (via .copy()).
+_INHERITED_ENVIRONMENT = MappingProxyType(os.environ.copy())
+_CURRENT_ENVIRONMENT = dict(_INHERITED_ENVIRONMENT)
+_DEFAULT_SYSTEM_PARAMETERS_LOCK = threading.RLock()
+
+
+def _validate_default_system_parameter(parameter_name, value, expected_type):
+    """Validate a global system-parameter value."""
+    if value is None:
+        return
+
+    if not isinstance(value, expected_type) or (
+        expected_type is int and isinstance(value, bool)
+    ):
+        raise TypeError(type_error_message(parameter_name, value, expected_type))
+    if not value:
+        raise ValueError(f"{parameter_name} must be non-empty")
+    if isinstance(value, int) and value < 0:
+        raise ValueError(f"{parameter_name} must be positive; it is {value}")
+
+
+def _set_default_system_parameter(
+    parameter_name, environment_variable, value, expected_type
+):
+    """Set one global system parameter and install its runner."""
+    global _CURRENT_ENVIRONMENT
+
+    _validate_default_system_parameter(parameter_name, value, expected_type)
+    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
+        updated_environment = _CURRENT_ENVIRONMENT.copy()
+        if value is None:
+            inherited_value = _INHERITED_ENVIRONMENT.get(environment_variable)
+            if inherited_value is None and environment_variable in updated_environment:
+                del updated_environment[environment_variable]
+            elif inherited_value is not None:
+                updated_environment[environment_variable] = inherited_value
+        else:
+            updated_environment[environment_variable] = str(value)
+
+        runner = KhiopsLocalRunner(environment=updated_environment.copy())
+        _CURRENT_ENVIRONMENT = updated_environment
+        set_runner(runner)
+
+
+def _get_default_system_parameter(environment_variable, expected_type):
+    """Get one global system parameter from the current environment."""
+    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
+        value = _CURRENT_ENVIRONMENT.get(environment_variable)
+    if value is None:
+        return None
+    if expected_type is int:
+        return int(value)
+    return value
+
+
+def set_default_max_cores(max_cores=None):
+    """Set the process-wide default maximum number of Khiops cores.
+
+    Parameters
+    ----------
+    max_cores : int, optional
+        Positive maximum number of cores. If not specified, restore the value
+        captured when the Khiops package initialized.
+
+    Notes
+    -----
+    The value is applied to subsequent local executions through an isolated
+    runner environment and does not modify `os.environ`.
+
+    Raises
+    ------
+    TypeError
+        If `max_cores` is not an `int` or `None`.
+    ValueError
+        If `max_cores` is not positive.
+    """
+    _set_default_system_parameter("max_cores", "KHIOPS_PROC_NUMBER", max_cores, int)
+
+
+def get_default_max_cores():
+    """Return the process-wide default maximum number of Khiops cores.
+
+    Returns
+    -------
+    int or None
+        The effective positive maximum number of cores, or `None` when no
+        default is configured.
+    """
+    return _get_default_system_parameter("KHIOPS_PROC_NUMBER", int)
+
+
+def set_default_memory_limit_mb(memory_limit_mb=None):
+    """Set the process-wide default Khiops memory limit.
+
+    Parameters
+    ----------
+    memory_limit_mb : int, optional
+        Positive memory limit in megabytes. If not specified, restore the value
+        captured when the Khiops package initialized.
+
+    Notes
+    -----
+    The value is applied to subsequent local executions through an isolated
+    runner environment and does not modify `os.environ`.
+
+    Raises
+    ------
+    TypeError
+        If `memory_limit_mb` is not an `int` or `None`.
+    ValueError
+        If `memory_limit_mb` is not positive.
+    """
+    _set_default_system_parameter(
+        "memory_limit_mb", "KHIOPS_MEMORY_LIMIT", memory_limit_mb, int
+    )
+
+
+def get_default_memory_limit_mb():
+    """Return the process-wide default Khiops memory limit.
+
+    Returns
+    -------
+    int or None
+        The effective positive memory limit in megabytes, or `None` when no
+        default is configured.
+    """
+    return _get_default_system_parameter("KHIOPS_MEMORY_LIMIT", int)
+
+
+def set_default_temp_dir(temp_dir=None):
+    """Set the process-wide default temporary directory for Khiops.
+
+    Parameters
+    ----------
+    temp_dir : str, optional
+        Non-empty temporary-directory path. If not specified, restore the value
+        captured when the Khiops package initialized.
+
+    Notes
+    -----
+    The value is applied to subsequent local executions through an isolated
+    runner environment and does not modify `os.environ`.
+
+    Raises
+    ------
+    TypeError
+        If `temp_dir` is not a `str` or `None`.
+    ValueError
+        If `temp_dir` is empty.
+    """
+    _set_default_system_parameter("temp_dir", "KHIOPS_TMP_DIR", temp_dir, str)
+
+
+def get_default_temp_dir():
+    """Return the process-wide default temporary directory for Khiops.
+
+    Returns
+    -------
+    str or None
+        The effective non-empty temporary-directory path, or `None` when no
+        default is configured.
+    """
+    return _get_default_system_parameter("KHIOPS_TMP_DIR", str)
+
 
 # Construction rules
 DEFAULT_CONSTRUCTION_RULES = [
