@@ -17,9 +17,9 @@ See Also
 """
 import io
 import os
-import threading as _threading
+import threading
 import warnings
-from types import MappingProxyType as _MappingProxyType
+from types import MappingProxyType
 
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
@@ -31,14 +31,15 @@ from khiops.core.internals.common import (
     is_string_like,
     type_error_message,
 )
-from khiops.core.internals.runner import KhiopsLocalRunner as _KhiopsLocalRunner
-from khiops.core.internals.runner import get_runner, set_runner
+from khiops.core.internals.runner import KhiopsLocalRunner, get_runner, set_runner
 from khiops.core.internals.task import get_task_registry
 
 # Capture the process environment before any runner initialization can occur.
-_inherited_environment = _MappingProxyType(os.environ.copy())
-_current_environment = dict(_inherited_environment)
-_default_system_parameters_lock = _threading.RLock()
+# Avoid race condition on os.environ (via MappingProxyType) and make sure updates
+# to it are not propagated to the current environment (via .copy()).
+_INHERITED_ENVIRONMENT = MappingProxyType(os.environ.copy())
+_CURRENT_ENVIRONMENT = dict(_INHERITED_ENVIRONMENT)
+_DEFAULT_SYSTEM_PARAMETERS_LOCK = threading.RLock()
 
 
 def _validate_default_system_parameter(parameter_name, value, expected_type):
@@ -46,44 +47,43 @@ def _validate_default_system_parameter(parameter_name, value, expected_type):
     if value is None:
         return
 
-    if expected_type is int:
-        if isinstance(value, bool) or not isinstance(value, int):
-            raise TypeError(type_error_message(parameter_name, value, int))
-        if value <= 0:
-            raise ValueError(f"{parameter_name} must be positive (it is {value})")
-    elif not isinstance(value, str):
-        raise TypeError(type_error_message(parameter_name, value, str))
-    elif not value:
+    if not isinstance(value, expected_type) or (
+        expected_type is int and isinstance(value, bool)
+    ):
+        raise TypeError(type_error_message(parameter_name, value, expected_type))
+    if not value:
         raise ValueError(f"{parameter_name} must be non-empty")
+    if isinstance(value, int) and value < 0:
+        raise ValueError(f"{parameter_name} must be positive; it is {value}")
 
 
 def _set_default_system_parameter(
     parameter_name, environment_variable, value, expected_type
 ):
     """Set one global system parameter and install its runner."""
-    global _current_environment
+    global _CURRENT_ENVIRONMENT
 
     _validate_default_system_parameter(parameter_name, value, expected_type)
-    with _default_system_parameters_lock:
-        updated_environment = _current_environment.copy()
+    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
+        updated_environment = _CURRENT_ENVIRONMENT.copy()
         if value is None:
-            inherited_value = _inherited_environment.get(environment_variable)
-            if inherited_value is None:
-                updated_environment.pop(environment_variable, None)
-            else:
+            inherited_value = _INHERITED_ENVIRONMENT.get(environment_variable)
+            if inherited_value is None and environment_variable in updated_environment:
+                del updated_environment[environment_variable]
+            elif inherited_value is not None:
                 updated_environment[environment_variable] = inherited_value
         else:
             updated_environment[environment_variable] = str(value)
 
-        runner = _KhiopsLocalRunner(env=updated_environment.copy())
-        _current_environment = updated_environment
+        runner = KhiopsLocalRunner(environment=updated_environment.copy())
+        _CURRENT_ENVIRONMENT = updated_environment
         set_runner(runner)
 
 
 def _get_default_system_parameter(environment_variable, expected_type):
     """Get one global system parameter from the current environment."""
-    with _default_system_parameters_lock:
-        value = _current_environment.get(environment_variable)
+    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
+        value = _CURRENT_ENVIRONMENT.get(environment_variable)
     if value is None:
         return None
     if expected_type is int:
@@ -97,8 +97,8 @@ def set_default_max_cores(max_cores=None):
     Parameters
     ----------
     max_cores : int, optional
-        Positive maximum number of cores. If `None`, restore the value of
-        `KHIOPS_PROC_NUMBER` captured when the Khiops package initialized.
+        Positive maximum number of cores. If not specified, restore the value
+        captured when the Khiops package initialized.
 
     Notes
     -----
@@ -121,8 +121,8 @@ def get_default_max_cores():
     Returns
     -------
     int or None
-        The effective positive value of `KHIOPS_PROC_NUMBER`, or `None` when
-        the variable is absent.
+        The effective positive maximum number of cores, or `None` when no
+        default is configured.
     """
     return _get_default_system_parameter("KHIOPS_PROC_NUMBER", int)
 
@@ -133,8 +133,8 @@ def set_default_memory_limit_mb(memory_limit_mb=None):
     Parameters
     ----------
     memory_limit_mb : int, optional
-        Positive memory limit in megabytes. If `None`, restore the value of
-        `KHIOPS_MEMORY_LIMIT` captured when the Khiops package initialized.
+        Positive memory limit in megabytes. If not specified, restore the value
+        captured when the Khiops package initialized.
 
     Notes
     -----
@@ -159,8 +159,8 @@ def get_default_memory_limit_mb():
     Returns
     -------
     int or None
-        The effective positive value of `KHIOPS_MEMORY_LIMIT`, or `None` when
-        the variable is absent.
+        The effective positive memory limit in megabytes, or `None` when no
+        default is configured.
     """
     return _get_default_system_parameter("KHIOPS_MEMORY_LIMIT", int)
 
@@ -171,8 +171,8 @@ def set_default_temp_dir(temp_dir=None):
     Parameters
     ----------
     temp_dir : str, optional
-        Non-empty temporary-directory path. If `None`, restore the value of
-        `KHIOPS_TMP_DIR` captured when the Khiops package initialized.
+        Non-empty temporary-directory path. If not specified, restore the value
+        captured when the Khiops package initialized.
 
     Notes
     -----
@@ -195,8 +195,8 @@ def get_default_temp_dir():
     Returns
     -------
     str or None
-        The effective non-empty value of `KHIOPS_TMP_DIR`, or `None` when the
-        variable is absent.
+        The effective non-empty temporary-directory path, or `None` when no
+        default is configured.
     """
     return _get_default_system_parameter("KHIOPS_TMP_DIR", str)
 
