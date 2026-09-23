@@ -1109,7 +1109,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                     runner_environment["PATH"] = os.pathsep.join(
                         [var_value, runner_environment.get("PATH")]
                     )
-                    runner_environment[var_name] = var_value
+                    runner_environment["KHIOPS_MPI_DLL_PATH"] = var_value
                 # Propagate all the other environment variables to Khiops binaries
                 else:
                     runner_environment[var_name] = var_value
