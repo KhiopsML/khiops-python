@@ -17,7 +17,7 @@ from numpy.testing import assert_equal
 from pandas.testing import assert_frame_equal
 from sklearn import datasets
 
-from khiops.sklearn.dataset import Dataset, _upgrade_mapping_spec
+from khiops.sklearn.dataset import Dataset, PandasTable, _upgrade_mapping_spec
 
 
 class DatasetInputOutputConsistencyTests(unittest.TestCase):
@@ -832,3 +832,27 @@ class DataFramePreprocessingTests(unittest.TestCase):
             out_table.Title[0],
             "Newlines should have been removed from the data",
         )
+
+
+class DatasetTableTests(unittest.TestCase):
+    """Tests for DatasetTable and its subclasses"""
+
+    def test_pandas_table_column_value_must_accept_all_string_variants(self):
+        """Ensure all the string dtypes ("str" and "string")
+        are guessed as a Khiops Text if the string is long enough
+        """
+        # These strings lengths reach the threshold for a Khiops Text type
+        texts = ["x" * 101, "y" * 180]
+        for dtype in ("str", "string"):
+            dataframe = pd.DataFrame(
+                {
+                    "message": pd.Series(texts, dtype=dtype),
+                }
+            )
+            table = PandasTable("Table", dataframe)
+            variable = table.create_khiops_dictionary().get_variable("message")
+            self.assertEqual(
+                "Text",
+                variable.type,
+                msg=f"The string must be regarded as a Khiops Text",
+            )

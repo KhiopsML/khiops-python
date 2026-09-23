@@ -10,6 +10,7 @@
 
 ### Fixed
 - (`core`) Fix a RuntimeException error when automatically correcting deprecated data paths in task args
+- (`sklearn`) Consider all the string dtypes when guessing Khiops types.
 
 ## 11.0.1.0 - 2026-07-02
 
