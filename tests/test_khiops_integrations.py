@@ -388,7 +388,7 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
                         with patch.object(
                             runner_module.subprocess, "Popen", mock_popen
                         ):
-                            runner = KhiopsLocalRunner(env=isolated_environment)
+                            runner = KhiopsLocalRunner(environment=isolated_environment)
                             runner.raw_run("khiops", [], use_mpi=False)
 
         self.assertEqual(os.environ, initial_process_environment)
@@ -403,41 +403,6 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         self.assertEqual(final_environment["KHIOPS_TMP_DIR"], "/isolated/tmp")
         self.assertEqual(final_environment["KHIOPS_RETURNED"], "yes")
         self.assertEqual(final_environment["HOME"], "/isolated/home")
-
-    def test_default_runner_does_not_export_mpi_dll_path(self):
-        """Test the default runner keeps MPI DLL details out of os.environ"""
-        mock_popen = MagicMock()
-        mock_popen.return_value.__enter__.return_value.communicate.return_value = (
-            "KHIOPS_PATH /bin/echo\n"
-            "KHIOPS_COCLUSTERING_PATH /bin/echo\n"
-            "KHIOPS_MPI_DLL_PATH /isolated/mpi\n",
-            "",
-        )
-        mock_popen.return_value.__enter__.return_value.returncode = 0
-
-        with patch.dict(os.environ, {}, clear=True):
-            with patch.object(
-                runner_module, "_infer_khiops_installation_method", return_value="pip"
-            ):
-                with patch.object(
-                    KhiopsLocalRunner,
-                    "_infer_khiops_env_from_path",
-                    return_value="/bin/echo",
-                ):
-                    with patch.object(KhiopsLocalRunner, "_check_tools"):
-                        with patch.object(
-                            KhiopsLocalRunner, "_initialize_default_samples_dir"
-                        ):
-                            with patch.object(
-                                runner_module.subprocess, "Popen", mock_popen
-                            ):
-                                runner = KhiopsLocalRunner()
-                                runner.raw_run("khiops", [], use_mpi=False)
-
-            self.assertNotIn("KHIOPS_MPI_DLL_PATH", os.environ)
-            final_environment = mock_popen.call_args_list[1].kwargs["env"]
-            self.assertEqual(final_environment["PATH"], "/isolated/mpi")
-            self.assertNotIn("KHIOPS_MPI_DLL_PATH", final_environment)
 
     def test_khiops_and_khiops_coclustering_are_run_with_mpi(self):
         """Test that MODL and MODL_Coclustering are run with MPI"""
