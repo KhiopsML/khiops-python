@@ -71,18 +71,18 @@ execution scenario.
 
 - [set_default_max_cores][khiops.core.api.set_default_max_cores] and
     [get_default_max_cores][khiops.core.api.get_default_max_cores] configure and query
-    `KHIOPS_PROC_NUMBER`.
+    the maximum number of CPU cores.
 - [set_default_memory_limit_mb][khiops.core.api.set_default_memory_limit_mb] and
     [get_default_memory_limit_mb][khiops.core.api.get_default_memory_limit_mb]
-    configure and query `KHIOPS_MEMORY_LIMIT`.
+    configure and query the maximum amount of memory in megabytes.
 - [set_default_temp_dir][khiops.core.api.set_default_temp_dir] and
     [get_default_temp_dir][khiops.core.api.get_default_temp_dir] configure and query
-    `KHIOPS_TMP_DIR`.
+    the Khiops temporary directory.
 
-The numeric setters accept `None` or a positive `int`. The temporary-directory
-setter accepts `None` or a non-empty `str`; invalid types and values raise
+The numeric setters accept an optional positive `int`. The temporary-directory
+setter accepts an optional non-empty `str`; invalid types and values raise
 `TypeError` or `ValueError`, and a rejected update leaves the previous value
-unchanged. Calling a setter with `None` disables only that default and restores
+unchanged. Calling a setter with no arguments disables only that default and restores
 the corresponding value from the environment captured when the Khiops package
 initialized, or removes the variable if it was absent. Later changes to
 `os.environ` do not change this reset target. Getters return typed numeric
