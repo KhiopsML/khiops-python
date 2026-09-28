@@ -30,6 +30,7 @@ from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import KhiopsLocalRunner, KhiopsRunner
 from khiops.core.internals.scenario import ConfigurableKhiopsScenario
 from khiops.core.internals.version import KhiopsVersion
+from tests.test_helper import KhiopsTestHelper
 
 # Disable warning about access to protected member: These are tests
 # pylint: disable=protected-access
@@ -2673,9 +2674,11 @@ class ScenarioWriterRunner(KhiopsRunner):
         self,
         task,
         task_args,
-        command_line_options,
+        command_line_options=None,
         trace=False,
         system_settings=None,
+        stdout_file_path="",
+        stderr_file_path="",
         force_ansi_scenario=False,
         **kwargs,
     ):
@@ -3232,6 +3235,58 @@ class KhiopsCoreVariousTests(unittest.TestCase):
         )
         output_msg = str(context.exception)
         self.assertEqual(output_msg, expected_msg)
+
+    def test_max_cores_param_sets_mpi_proc_number(self):
+        # Prepare to collect the runner attributes
+        runner_attributes_trace = KhiopsTestHelper.create_parameter_trace()
+        KhiopsTestHelper.wrap_with_runner_attributes_trace(
+            "khiops.core.internals.runner", "KhiopsRunner.run", runner_attributes_trace
+        )
+        # Set the file paths
+        dictionary_file_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.kdic")
+        data_table_path = os.path.join(kh.get_samples_dir(), "Adult", "Adult.txt")
+        report_file_path = os.path.join(
+            "kh_samples", "train_predictor_file_paths", "AnalysisResults.khj"
+        )
+        # The existing MockedRunnerContext class is not used here
+        # as it creates a new KhiopsLocalRunner instance that does not fit our needs
+        with (
+            mock.patch.object(
+                KhiopsLocalRunner,
+                "raw_run",
+                create_mocked_raw_run(
+                    stdout=False,  # ask for an empty stdout
+                    stderr=False,  # ask for an empty stderr
+                    return_code=0,  # zero error code (success)
+                ),
+            ),
+            mock.patch.object(
+                KhiopsLocalRunner,
+                "_get_khiops_version",
+                return_value=KhiopsVersion("11.0.1-rc1.0"),
+            ),
+        ):
+            # Train the predictor
+            kh.train_predictor(
+                dictionary_file_path_or_domain=dictionary_file_path,
+                dictionary_name="Adult",
+                data_table_path=data_table_path,
+                target_variable="class",
+                analysis_report_file_path=report_file_path,
+                trace=True,
+                max_cores=17,
+            )
+        index_of_core_flag = runner_attributes_trace["_mpi_command_args"].index("-n")
+        self.assertTrue(index_of_core_flag >= 0, msg="The cpu cores flag must be set")
+        self.assertTrue(
+            index_of_core_flag < len(runner_attributes_trace["_mpi_command_args"]),
+            msg="The cpu cores flag must be followed by its value",
+        )
+        self.assertEqual(
+            "17",
+            runner_attributes_trace["_mpi_command_args"][index_of_core_flag + 1],
+            msg="The cpu cores value must match the max_cores input parameter",
+        )
 
 
 class LocalFileSystemTests(unittest.TestCase):

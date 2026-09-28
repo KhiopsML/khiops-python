@@ -286,6 +286,24 @@ class KhiopsTestHelper:
         return wrapper
 
     @staticmethod
+    def wrap_with_runner_attributes_trace(module, function, runner_attributes_trace):
+        """Wrap function with runner attributes trace"""
+
+        @wrapt.patch_function_wrapper(module, function)
+        def wrapper(wrapped, _instance, args, kwargs):
+            # mutate runner_attributes_trace as previously bound / initialized in the
+            # outer scope of the `wrap_with_parameter_trace` method by its
+            # caller:
+            nonlocal runner_attributes_trace
+
+            # Collect all the updated runner attributes
+            runner_attributes_trace.update(vars(_instance))
+
+            return wrapped(*args, **kwargs)
+
+        return wrapper
+
+    @staticmethod
     def get_resources_dir():
         """Helper to get the directory containing the fixtures"""
         return os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")
