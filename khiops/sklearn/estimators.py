@@ -235,6 +235,8 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     Parameters
     ----------
+    n_cores : int, optional
+            Maximum number of CPU cores allocated and used for the training.
     verbose : bool, default `False`
         If `True` it prints debug information and it does not erase temporary files
         when fitting, predicting or transforming.
@@ -248,12 +250,14 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     def __init__(
         self,
+        n_cores=None,
         verbose=False,
         output_dir=None,
         auto_sort=True,
     ):
         # Set the estimator parameters and internal variables
         self._khiops_model_prefix = None
+        self.n_cores = n_cores
         self.output_dir = output_dir
         self.verbose = verbose
         self.auto_sort = auto_sort
@@ -350,6 +354,15 @@ class KhiopsEstimator(ABC, BaseEstimator):
 
     def fit(self, X, y=None, **kwargs):
         """Fit the estimator
+
+        Parameters
+        ----------
+        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an :external:term:`array-like` or a ``dict``
+            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+
+        y : :external:term:`array-like` of shape (n_samples,)
+            The target values.
 
         Returns
         -------
@@ -637,6 +650,8 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         to speed up the processing. This affects the [predict][] method.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
+    n_cores : int, optional
+        Maximum number of CPU cores allocated and used for the training.
 
     Attributes
     ----------
@@ -664,11 +679,13 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         build_name_var=True,
         build_distance_vars=False,
         build_frequency_vars=False,
+        n_cores=None,
     ):
         super().__init__(
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
+            n_cores=n_cores,
         )
         self._khiops_model_prefix = "CC_"
         self.build_name_var = build_name_var
@@ -770,6 +787,7 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
             main_table_path,
             variables,
             coclustering_file_path,
+            max_cores=self.n_cores,
             log_file_path=train_log_file_path,
             trace=self.verbose,
         )
@@ -1186,7 +1204,22 @@ class KhiopsCoclustering(ClusterMixin, KhiopsEstimator):
         return self.model_.copy(), None
 
     def fit_predict(self, X, y=None, **kwargs):
-        """Performs clustering on X and returns result (instead of labels)"""
+        """Performs clustering on X and returns result (instead of labels)
+
+        Parameters
+        ----------
+        X : :external:term:`array-like` of shape (n_samples, n_features_in) or dict
+            Training dataset. Either an :external:term:`array-like` or a ``dict``
+            specification for multi-table datasets (see :doc:`/multi_table_primer`).
+
+        y : :external:term:`array-like` of shape (n_samples,)
+            The target values.
+
+        Returns
+        -------
+        results : `numpy.array`
+        """
+
         return self.fit(X, y, **kwargs).predict(X)
 
 
@@ -1207,11 +1240,13 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
+        n_cores=None,
     ):
         super().__init__(
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
+            n_cores=n_cores,
         )
         self.n_features = n_features
         self.n_trees = n_trees
@@ -1382,7 +1417,8 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
             report_file_path,
         ]
 
-        # Build the optional parameters from a copy of the estimator parameters
+        # Build the optional parameters from a copy
+        # of the estimator initializer parameters
         kwargs = self.get_params()
 
         # Remove non core.api params
@@ -1403,6 +1439,7 @@ class KhiopsSupervisedEstimator(KhiopsEstimator):
         kwargs["max_text_features"] = kwargs.pop("n_text_features")
         kwargs["text_features"] = kwargs.pop("type_text_features")
         kwargs["max_parts"] = kwargs.pop("n_feature_parts")
+        kwargs["max_cores"] = kwargs.pop("n_cores")
 
         # Add the additional_data_tables parameter
         kwargs["additional_data_tables"] = additional_data_tables
@@ -1537,6 +1574,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
+        n_cores=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -1551,6 +1589,7 @@ class KhiopsPredictor(KhiopsSupervisedEstimator):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
+            n_cores=n_cores,
         )
         # Data to be specified by inherited classes
         self._predicted_target_meta_data_tag = None
@@ -1731,6 +1770,8 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         affects the [fit][], [predict][] and [predict_proba][] methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
+    n_cores : int, optional
+        Maximum number of CPU cores allocated and used for the training.
 
     Attributes
     ----------
@@ -1779,6 +1820,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         verbose=False,
         output_dir=None,
         auto_sort=True,
+        n_cores=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -1793,6 +1835,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
+            n_cores=n_cores,
         )
         self.n_pairs = n_pairs
         self.specific_pairs = specific_pairs
@@ -2138,6 +2181,8 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         affects the [fit][] and [predict][] methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
+    n_cores : int, optional
+        Maximum number of CPU cores allocated and used for the training.
 
     Attributes
     ----------
@@ -2173,6 +2218,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         verbose=False,
         output_dir=None,
         auto_sort=True,
+        n_cores=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2187,6 +2233,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
+            n_cores=n_cores,
         )
         self._khiops_model_prefix = "SNB_"
         self._khiops_baseline_model_prefix = "B_"
@@ -2390,6 +2437,8 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         affects the [fit][] and [transform][] methods.
         *Note* The sort by key is performed in a left-to-right, hierarchical,
         lexicographic manner.
+    n_cores : int, optional
+        Maximum number of CPU cores allocated and used for the training.
 
     Attributes
     ----------
@@ -2431,6 +2480,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         verbose=False,
         output_dir=None,
         auto_sort=True,
+        n_cores=None,
     ):
         super().__init__(
             n_features=n_features,
@@ -2442,6 +2492,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
             verbose=verbose,
             output_dir=output_dir,
             auto_sort=auto_sort,
+            n_cores=n_cores,
         )
         self.n_pairs = n_pairs
         self.specific_pairs = specific_pairs

@@ -11,6 +11,9 @@
 ### Fixed
 - (`core`) Fix a RuntimeException error when automatically correcting deprecated data paths in task args
 
+### Changed
+- (`sklearn`) Add `max_cores` to the sklearn estimators to limit the number of CPU cores pre-allocated for the training.  
+
 ## 11.0.1.0 - 2026-07-02
 
 ### Added
