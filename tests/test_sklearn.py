@@ -1423,14 +1423,29 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                             self.expected_kwargs.get(schema_type), source_type
                         )
                     )
+                    # the original object is a generator not a list
+                    expected_kwargs_list = list(expected_kwargs_list)
+                    # add the custom_kwargs parameters to the expected ones
+                    if (
+                        len(expected_kwargs_list)
+                        and custom_kwargs is not None
+                        and len(custom_kwargs)
+                    ):
+                        expected_kwargs_list[0].update(custom_kwargs)
+
                     special_kwarg_checkers = (
                         self.special_kwarg_checkers.get(estimator_type_key)
                         .get(estimator_method)
                         .get((module_name, function_name))
                     )
+                    union_of_initializer_params_and_method_params = kwargs
+                    if custom_kwargs is not None and len(custom_kwargs):
+                        union_of_initializer_params_and_method_params.update(
+                            custom_kwargs
+                        )
                     for expected_kwargs in expected_kwargs_list:
                         self._check_kwargs(
-                            kwargs,
+                            union_of_initializer_params_and_method_params,
                             expected_kwargs=expected_kwargs,
                             special_checkers=special_kwarg_checkers,
                         )
