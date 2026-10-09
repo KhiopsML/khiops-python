@@ -1,0 +1,69 @@
+// Scenario for task train_predictor
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName Adult/Adult.kdic //
+OK
+
+// Train/test database settings
+TrainDatabase.ClassName Adult
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName Adult/Adult.txt //
+TrainDatabase.DatabaseSpec.Data.HeaderLineUsed true
+TrainDatabase.DatabaseSpec.Data.FieldSeparator 
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 70.0
+TrainDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
+TrainDatabase.DatabaseSpec.Selection.SelectionAttribute 
+TrainDatabase.DatabaseSpec.Selection.SelectionValue 
+TrainDatabase.TestDatabaseSpecificationMode none
+
+// Target variable
+AnalysisSpec.TargetAttributeName class
+AnalysisSpec.MainTargetModality 
+
+// Do data preparation only
+AnalysisSpec.PredictorsSpec.AdvancedSpec.DataPreparationOnly false
+
+// Selective Naive Bayes settings
+AnalysisSpec.PredictorsSpec.AdvancedSpec.SelectiveNaiveBayesParameters.TrainParameters.MaxEvaluatedAttributeNumber 0
+AnalysisSpec.PredictorsSpec.AdvancedSpec.SelectiveNaiveBayesParameters.SelectionParameters.MaxSelectedAttributeNumber 0
+
+// Feature engineering
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTextFeatureNumber 10000
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber 10
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxAttributePairNumber 0
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectAttributePairsParameters
+AllAttributePairs true
+Exit
+AnalysisSpec.PredictorsSpec.ConstructionSpec.KeepSelectedAttributesOnly true
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxConstructedAttributeNumber 1000
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectConstructionDomain
+Exit
+
+//  Text feature parameters
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectTextFeaturesParameters 
+TextFeatures words
+Exit
+
+
+// Data preparation (discretization & grouping) settings
+AnalysisSpec.PreprocessingSpec.TargetGrouped false
+AnalysisSpec.PreprocessingSpec.InspectAdvancedParameters
+DiscretizerUnsupervisedMethodName MODL
+GrouperUnsupervisedMethodName MODL
+Exit
+
+// Max parts
+AnalysisSpec.PreprocessingSpec.MaxPartNumber 0
+
+// Output settings
+AnalysisResults.ReportFileName train_predictor_file_paths/AnalysisResults.khj //
+
+// Build model
+ComputeStats
+
+// End of scenario for task train_predictor
+
+// Exit Khiops
+ClassManagement.Quit
+OK
