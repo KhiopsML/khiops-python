@@ -750,6 +750,43 @@ class KhiopsCoreIOTests(unittest.TestCase):
         # Restore the default runner
         kh.set_runner(default_runner)
 
+    def test_correct_args_translation(self):
+        """Tests the translation of specific args is correct
+        so that Khiops takes them into account
+        """
+        # Set the root directory of this test
+        test_resources_dir = os.path.join(resources_dir(), "scenario_generation", "api")
+
+        # Use the test runner that only compares the scenarios
+        default_runner = kh.get_runner()
+        test_runner = ScenarioWriterRunner(self, test_resources_dir)
+        kh.set_runner(test_runner)
+
+        test_runner.test_name = "train_predictor_no_model_testing"
+        test_runner.subtest_name = "Adult"
+        # Clean the directory for this method's tests
+        cleanup_dir(test_runner.output_scenario_dir, "*/output/*._kh", verbose=True)
+
+        kh.train_predictor(
+            dictionary_file_path_or_domain="Adult/Adult.kdic",
+            dictionary_name="Adult",
+            data_table_path="Adult/Adult.txt",
+            target_variable="class",
+            analysis_report_file_path="train_predictor_file_paths/AnalysisResults.khj",
+            use_complement_as_test=False,
+        )
+
+        # Compare the reference with the output
+        assert_files_equal(
+            self,
+            test_runner.ref_scenario_path,
+            test_runner.output_scenario_path,
+            line_comparator=scenario_line_comparator,
+        )
+
+        # Restore the default runner
+        kh.set_runner(default_runner)
+
     def test_data_path_deprecation_in_api_method(self):
         """Tests if the core.api deprecates legacy data paths"""
         # Set the root directory of these tests
