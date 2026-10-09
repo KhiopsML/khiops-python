@@ -15,7 +15,7 @@ TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage 70.0
 TrainDatabase.DatabaseSpec.Sampling.SamplingMode Include sample
 TrainDatabase.DatabaseSpec.Selection.SelectionAttribute
 TrainDatabase.DatabaseSpec.Selection.SelectionValue
-TrainDatabase.TestDatabaseSpecificationMode Complementary
+TrainDatabase.TestDatabaseSpecificationMode none
 
 // Target variable
 AnalysisSpec.TargetAttributeName class
