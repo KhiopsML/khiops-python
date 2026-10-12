@@ -13,6 +13,7 @@ from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
+from pandas.api.extensions import ExtensionDtype
 from scipy import sparse as sp
 from sklearn.utils import check_array
 from sklearn.utils.validation import column_or_1d
@@ -243,6 +244,16 @@ def _upgrade_mapping_spec(ds_spec):
     return new_ds_spec
 
 
+def _is_third_party_extension_dtype(numpy_type):
+    if not isinstance(numpy_type, ExtensionDtype):
+        return False
+
+    # Native Pandas types (including extension types) report
+    # "pandas", or "pandas.<submodule>" as their module
+    module = getattr(type(numpy_type), "__module__", None) or ""
+    return module.partition(".")[0] != "pandas"
+
+
 def get_khiops_type(numpy_type, categorical_str_max_size=None):
     """Translates a numpy dtype to a Khiops dictionary type
 
@@ -259,10 +270,15 @@ def get_khiops_type(numpy_type, categorical_str_max_size=None):
         Khiops type name. Either "Categorical", "Text", "Numerical" or "Timestamp".
 
 
-    Note
-    ----
+    !!! note
+
         The "Text" Khiops type is inferred if the NumPy type is "string"
         and the maximum length of the entries of that type is greater than 100.
+
+    !!! note
+
+        If the NumPy type is a third-party Pandas extension data type, then the
+        user is warned and the "Categorical" Khiops type is inferred.
     """
     # Check categorical_str_max_size type
     if categorical_str_max_size is not None and not isinstance(
@@ -291,8 +307,14 @@ def get_khiops_type(numpy_type, categorical_str_max_size=None):
             khiops_type = "Text"
         else:
             khiops_type = "Categorical"
-    # bool_ and object, character, bytes_, str_, void, record and other types
+    # bool_ and object, character, bytes_, str_, void, record and other types,
+    # including third-party Pandas extension types
     else:
+        if _is_third_party_extension_dtype(numpy_type):
+            warnings.warn(
+                f"Pandas extension type {type(numpy_type)} is not supported. "
+                "Khiops type is set to 'Categorical'."
+            )
         khiops_type = "Categorical"
 
     return khiops_type
