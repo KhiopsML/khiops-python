@@ -384,9 +384,15 @@ def write_internal_data_table(dataframe, file_path_or_stream):
         The path of the internal data table file to be written or a writable file
         object.
     """
-    # Replace carriage returns / line feeds by blanks spaces
-    # in order to always keep mono-lines text fields
-    dataframe = dataframe.replace(["\r", "\n"], " ", regex=True)
+    # Replace carriage returns / line feeds by blank spaces
+    # in string columns, in order to always keep mono-line text fields
+    string_columns = dataframe.select_dtypes(
+        include=["string", "str", "object"]
+    ).columns
+    if len(string_columns) > 0:
+        dataframe[string_columns] = dataframe[string_columns].replace(
+            ["\r", "\n"], " ", regex=True
+        )
 
     dataframe.to_csv(
         file_path_or_stream,
