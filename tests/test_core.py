@@ -476,6 +476,12 @@ class KhiopsCoreIOTests(unittest.TestCase):
             "SpliceJunction": [],
             "Customer": None,
         }
+        # This boolean parameter is translated to a specific string for Khiops
+        use_complement_as_test = {
+            "Adult": False,
+            "SpliceJunction": True,
+            "Customer": True,
+        }
 
         detect_data_table_format_kwargs = {
             "Adult": {
@@ -680,6 +686,7 @@ class KhiopsCoreIOTests(unittest.TestCase):
                         "additional_data_tables": additional_data_tables[dataset],
                         "construction_rules": construction_rules[dataset],
                         "specific_pairs": specific_pairs[dataset],
+                        "use_complement_as_test": use_complement_as_test[dataset],
                     },
                 }
                 for dataset in datasets

@@ -361,7 +361,7 @@ def _preprocess_task_arguments(task_args):
         if task_args["use_complement_as_test"]:
             task_args["test_database_mode"] = "Complementary"
         else:
-            task_args["test_database_mode"] = "None"
+            task_args["test_database_mode"] = "none"
         del task_args["use_complement_as_test"]
 
     # Preprocess the database format parameters
