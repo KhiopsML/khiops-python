@@ -15,6 +15,7 @@
 
 ### Changed
 - (`core`) The `max_cores` parameter now limits the number of CPU cores pre-allocated for each Khiops Core API call.
+- (`sklearn`) Add `n_cores` to the sklearn estimators to limit the number of CPU cores pre-allocated and used by Khiops.
 
 ## 11.0.1.0 - 2026-07-02
 

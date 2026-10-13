@@ -709,7 +709,8 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                             ("khiops.core", "train_coclustering"): {
                                 "log_file_path": os.path.join(
                                     cls.output_dir, "khiops_train_cc.log"
-                                )
+                                ),
+                                "max_cores": 62,
                             },
                             ("khiops.core", "simplify_coclustering"): {
                                 "max_part_numbers": {"SampleId": 2},
@@ -767,6 +768,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "group_target_value": False,
                                 "additional_data_tables": {},
                                 "keep_selected_variables_only": False,
+                                "max_cores": 63,
                             }
                         },
                         "predict": {
@@ -797,6 +799,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "max_parts": 5,
                                 "keep_selected_variables_only": False,
                                 "additional_data_tables": {},
+                                "max_cores": 65,
                             }
                         },
                         "predict": {
@@ -834,6 +837,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                                 "numerical_recoding_method": "part Id",
                                 "pairs_recoding_method": "part Id",
                                 "additional_data_tables": {},
+                                "max_cores": 67,
                             }
                         },
                         "predict": {
@@ -1452,6 +1456,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "n_feature_parts": 3,
                 "group_target_value": False,
                 "keep_selected_variables_only": False,
+                "n_cores": 63,
             },
         )
 
@@ -1478,6 +1483,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "n_feature_parts": 3,
                 "group_target_value": False,
                 "keep_selected_variables_only": False,
+                "n_cores": 63,
             },
         )
 
@@ -1545,6 +1551,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "transform_type_categorical": "part_id",
                 "transform_type_numerical": "part_id",
                 "transform_type_pairs": "part_id",
+                "n_cores": 67,
             },
         )
 
@@ -1573,6 +1580,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "transform_type_categorical": "part_id",
                 "transform_type_numerical": "part_id",
                 "transform_type_pairs": "part_id",
+                "n_cores": 67,
             },
         )
 
@@ -1636,6 +1644,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "construction_rules": ["TableMode", "TableSelection"],
                 "n_feature_parts": 5,
                 "keep_selected_variables_only": False,
+                "n_cores": 65,
             },
         )
 
@@ -1657,6 +1666,7 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
                 "construction_rules": ["TableMode", "TableSelection"],
                 "n_feature_parts": 5,
                 "keep_selected_variables_only": False,
+                "n_cores": 65,
             },
         )
 
@@ -1704,6 +1714,9 @@ class KhiopsSklearnParameterPassingTests(unittest.TestCase):
             estimator_method="fit",
             schema_type="not_applicable",
             source_type="dataframe",
+            extra_estimator_kwargs={
+                "n_cores": 62,
+            },
             custom_kwargs={
                 "fit": {
                     "columns": ("SampleId", "Pos", "Char"),
