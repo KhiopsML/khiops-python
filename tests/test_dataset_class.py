@@ -838,10 +838,11 @@ class DatasetTableTests(unittest.TestCase):
     """Tests for DatasetTable and its subclasses"""
 
     def test_pandas_table_column_value_must_accept_all_string_variants(self):
-        """Ensure all the string dtypes ("str" and "string")
-        are guessed as a Khiops Text if the string is long enough
+        """Test Khiops "Text" type is inferred for all the string dtypes
+
+        Thus, Khiops "Text" is inferred for both "str" and "string".
         """
-        # These strings lengths reach the threshold for a Khiops Text type
+        # These string lengths reach the threshold for a Khiops Text type
         texts = ["x" * 101, "y" * 180]
         for dtype in ("str", "string"):
             dataframe = pd.DataFrame(
@@ -854,5 +855,5 @@ class DatasetTableTests(unittest.TestCase):
             self.assertEqual(
                 "Text",
                 variable.type,
-                msg=f"The string must be regarded as a Khiops Text",
+                msg="The string must be regarded as a Khiops Text",
             )
