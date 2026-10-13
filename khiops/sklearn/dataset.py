@@ -286,7 +286,7 @@ def get_khiops_type(numpy_type, categorical_str_max_size=None):
     # float<x>, int<x>, uint<x> types
     elif "int" in lower_numpy_type or "float" in lower_numpy_type:
         khiops_type = "Numerical"
-    elif lower_numpy_type == "string":
+    elif lower_numpy_type in ("str", "string"):
         if categorical_str_max_size is not None and categorical_str_max_size > 100:
             khiops_type = "Text"
         else:

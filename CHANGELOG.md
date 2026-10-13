@@ -9,7 +9,8 @@
 ## Unreleased
 
 ### Fixed
-- (`core`) Fix a RuntimeException error when automatically correcting deprecated data paths in task args
+- (`core`) Fix a RuntimeException error when automatically correcting deprecated data paths in task args.
+- (`sklearn`) Infer the Text Khiops type for all Pandas string data type variants.
 
 ## 11.0.1.0 - 2026-07-02
 
