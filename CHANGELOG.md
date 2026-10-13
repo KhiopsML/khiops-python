@@ -13,6 +13,9 @@
 - (`core`) Fix a bogus translation of the `use_complement_as_test` parameter that led to a systematic model testing.
 - (`sklearn`) Infer the Text Khiops type for all Pandas string data type variants.
 
+### Changed
+- (`core`) The `max_cores` parameter now limits the number of CPU cores pre-allocated for each Khiops Core API call.
+
 ## 11.0.1.0 - 2026-07-02
 
 ### Added
