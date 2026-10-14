@@ -1720,10 +1720,11 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         pairs that are jointly more informative than their marginals may be taken into
         account in the classifier.
     n_trees : int, default 10
-        Maximum number of decision tree features to construct. The constructed trees
-        combine other features, either native or constructed. These features usually
-        improve the classifier's performance at the cost of interpretability of the
-        model.
+        Maximum number of decision trees to construct. The trees combine native
+        variables and automatically constructed variables, excluding features
+        derived from the text variables or from variable pairs. Decision trees
+        usually improve the classifier's performance at the cost of the
+        interpretability of the model.
     n_text_features : int, default 10000
         Maximum number of text features to construct.
     type_text_features : str, default "words"
@@ -2143,10 +2144,11 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         for more details on the multi-table-specific
         features.
     n_trees : int, default 10
-        Maximum number of decision tree features to construct. The constructed trees
-        combine other features, either native or constructed. These features usually
-        improve the regressor's performance at the cost of interpretability of the
-        model.
+        Maximum number of decision trees to construct. The trees combine native
+        variables and automatically constructed variables, excluding features
+        derived from the text variables or from variable pairs. Decision trees
+        usually improve the regressor's performance at the cost of the
+        interpretability of the model.
     n_text_features : int, default 10000
         Maximum number of text features to construct.
     type_text_features : str, default "words"
@@ -2365,9 +2367,11 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         pairs that are jointly more informative than their marginals may be taken into
         account in the encoder.
     n_trees : int, default 10
-        Maximum number of decision tree features to construct. The constructed trees
-        combine other features, either native or constructed. These features usually
-        improve a predictor's performance at the cost of interpretability of the model.
+        Maximum number of decision trees to construct. The trees combine native
+        variables and automatically constructed variables, excluding features
+        derived from the text variables or from variable pairs. Decision trees
+        usually improve the encoder's performance at the cost of the
+        interpretability of the model.
     n_text_features : int, default 10000
         Maximum number of text features to construct.
     type_text_features : str, default "words"

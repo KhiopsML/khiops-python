@@ -839,7 +839,11 @@ def train_predictor(
             - "tokens": user-defined
 
     max_trees : int, default 10
-        Maximum number of trees to construct.
+        Maximum number of decision trees to construct. The trees combine native
+        variables and automatically constructed variables, excluding features
+        derived from the text variables or from variable pairs. Decision trees
+        usually improve the predictor's performance at the cost of the
+        interpretability of the model.
     max_pairs : int, default 0
         Maximum number of variable pairs to construct.
     specific_pairs : list of tuple, optional
@@ -1290,7 +1294,11 @@ def train_recoder(
             - "tokens": user-defined
 
     max_trees : int, default 10
-        Maximum number of trees to construct.
+        Maximum number of decision trees to construct. The trees combine native
+        variables and automatically constructed variables, excluding features
+        derived from the text variables or from variable pairs. Decision trees
+        usually improve the recoder's performance at the cost of the
+        interpretability of the model.
     max_pairs : int, default 0
         Maximum number of variable pairs to construct.
     specific_pairs : list of tuple, optional
