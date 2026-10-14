@@ -5,6 +5,7 @@
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
 """Test the expected behavior of the Dataset class"""
+
 import os
 import shutil
 import unittest
@@ -14,6 +15,7 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 from numpy.testing import assert_equal
+from pandas.api.extensions import ExtensionArray, ExtensionDtype
 from pandas.testing import assert_frame_equal
 from sklearn import datasets
 
@@ -834,14 +836,50 @@ class DataFramePreprocessingTests(unittest.TestCase):
         )
 
 
+class _ThirdPartyDtype(ExtensionDtype):
+    """Minimal pandas extension dtype, defined outside of the pandas package"""
+
+    # The name must not contain "int", "float" or "string": `get_khiops_type`
+    # would infer "Numerical" or, in some cases, "Text" before reaching the
+    # warning
+    name = "third_party_dtype"
+
+    # Required by the `ExtensionDtype` API: pandas helpers such as
+    # `is_object_dtype` read it
+    type = object
+
+
+class _ThirdPartyArray(ExtensionArray):
+    """Minimal pandas extension array
+
+    It only defines what dataframe creation needs.
+    """
+
+    def __init__(self, items):
+        # The backing data must not be stored in `values` or `_values`: pandas
+        # documents these names as incompatible with its internals
+        self._items = list(items)
+
+    @property
+    def dtype(self):
+        return _ThirdPartyDtype()
+
+    def __len__(self):
+        return len(self._items)
+
+    def copy(self):
+        return type(self)(self._items)
+
+
 class DatasetTableTests(unittest.TestCase):
     """Tests for DatasetTable and its subclasses"""
 
     def test_pandas_table_column_value_must_accept_all_string_variants(self):
-        """Ensure all the string dtypes ("str" and "string")
-        are guessed as a Khiops Text if the string is long enough
+        """Test Khiops "Text" type is inferred for all the string dtypes
+
+        Thus, Khiops "Text" is inferred for both "str" and "string".
         """
-        # These strings lengths reach the threshold for a Khiops Text type
+        # These string lengths reach the threshold for a Khiops Text type
         texts = ["x" * 101, "y" * 180]
         for dtype in ("str", "string"):
             dataframe = pd.DataFrame(
@@ -854,5 +892,60 @@ class DatasetTableTests(unittest.TestCase):
             self.assertEqual(
                 "Text",
                 variable.type,
-                msg=f"The string must be regarded as a Khiops Text",
+                msg="The string must be regarded as a Khiops Text",
             )
+
+    def test_pandas_table_warns_on_third_party_extension_dtype(self):
+        """Test warning is issued on a third-party Pandas extension dtype"""
+        # Create a dataframe with a third-party extension dtype column
+        dataframe = pd.DataFrame({"test_column": _ThirdPartyArray(["a", "b", "c"])})
+
+        # Test that the third-party dtype warning is issued when creating the table
+        with warnings.catch_warnings(record=True) as warning_list:
+            table = PandasTable("main_table", dataframe)
+        self.assertTrue(len(warning_list) > 0)
+        third_party_dtype_warning_found = False
+        for warning in warning_list:
+            warning_message = warning.message
+            if (
+                issubclass(warning.category, UserWarning)
+                and len(warning_message.args) == 1
+                and warning_message.args[0].startswith("Pandas extension type")
+                and "_ThirdPartyDtype" in warning_message.args[0]
+                and "is not supported" in warning_message.args[0]
+                and warning_message.args[0].endswith(
+                    "Khiops type is set to 'Categorical'."
+                )
+            ):
+                third_party_dtype_warning_found = True
+                break
+        self.assertTrue(third_party_dtype_warning_found)
+
+        # Test that the column falls back to the "Categorical" Khiops type
+        self.assertEqual(table.khiops_types["test_column"], "Categorical")
+
+    def test_pandas_table_does_not_warn_on_pandas_extension_dtype(self):
+        """Test no warning is issued on a non-third-party Pandas extension dtype"""
+        # Create a dataframe with a Pandas extension dtype column: "category" reaches
+        # the same `get_khiops_type` branch as a third-party dtype
+        dataframe = pd.DataFrame({"test_column": pd.Categorical(["a", "b", "c"])})
+        self.assertTrue(isinstance(dataframe["test_column"].dtype, ExtensionDtype))
+
+        # Test that no extension dtype warning is issued when creating the table
+        with warnings.catch_warnings(record=True) as warning_list:
+            table = PandasTable("main_table", dataframe)
+        extension_dtype_warning_found = False
+        for warning in warning_list:
+            warning_message = warning.message
+            if (
+                issubclass(warning.category, UserWarning)
+                and len(warning_message.args) == 1
+                and warning_message.args[0].startswith("Pandas extension type")
+                and "is not supported" in warning_message.args[0]
+            ):
+                extension_dtype_warning_found = True
+                break
+        self.assertFalse(extension_dtype_warning_found)
+
+        # Test that the column is typed as "Categorical" by Khiops
+        self.assertEqual(table.khiops_types["test_column"], "Categorical")
