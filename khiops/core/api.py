@@ -845,7 +845,10 @@ def train_predictor(
         usually improve the predictor's performance at the cost of the
         interpretability of the model.
     max_pairs : int, default 0
-        Maximum number of variable pairs to construct.
+        Maximum number of pair features to construct. These features exploit
+        bivariate partitions of native or automatically constructed variables,
+        excluding features derived from the text variables. Pairs of variables
+        are not available in regression analysis.
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs
@@ -1300,7 +1303,9 @@ def train_recoder(
         usually improve the recoder's performance at the cost of the
         interpretability of the model.
     max_pairs : int, default 0
-        Maximum number of variable pairs to construct.
+        Maximum number of pair features to construct. These features exploit
+        bivariate partitions of native or automatically constructed variables,
+        excluding features derived from the text variables.
     specific_pairs : list of tuple, optional
         User-specified pairs as a list of 2-tuples of feature names. If a given tuple
         contains only one non-empty feature name, then it generates all the pairs

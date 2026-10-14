@@ -1714,11 +1714,9 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         for more details on the multi-table-specific
         features.
     n_pairs : int, default 0
-        Maximum number of pair features to construct. These features are 2D grid
-        partitions of univariate feature pairs. The grid is optimized such that in each
-        cell the target distribution is well approximated by a constant histogram. Only
-        pairs that are jointly more informative than their marginals may be taken into
-        account in the classifier.
+        Maximum number of pair features to construct. These features exploit
+        bivariate partitions of native or automatically constructed variables,
+        excluding features derived from the text variables.
     n_trees : int, default 10
         Maximum number of decision trees to construct. The trees combine native
         variables and automatically constructed variables, excluding features
@@ -2361,11 +2359,9 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         for more details on the multi-table-specific
         features.
     n_pairs : int, default 0
-        Maximum number of pair features to construct. These features are 2D grid
-        partitions of univariate feature pairs. The grid is optimized such that in each
-        cell the target distribution is well approximated by a constant histogram. Only
-        pairs that are jointly more informative than their marginals may be taken into
-        account in the encoder.
+        Maximum number of pair features to construct. These features exploit
+        bivariate partitions of native or automatically constructed variables,
+        excluding features derived from the text variables.
     n_trees : int, default 10
         Maximum number of decision trees to construct. The trees combine native
         variables and automatically constructed variables, excluding features
