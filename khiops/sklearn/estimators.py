@@ -1714,16 +1714,15 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         for more details on the multi-table-specific
         features.
     n_pairs : int, default 0
-        Maximum number of pair features to construct. These features are 2D grid
-        partitions of univariate feature pairs. The grid is optimized such that in each
-        cell the target distribution is well approximated by a constant histogram. Only
-        pairs that are jointly more informative than their marginals may be taken into
-        account in the classifier.
+        Maximum number of pair features to construct. These features exploit
+        bivariate partitions of native or automatically constructed variables,
+        excluding features derived from the text variables.
     n_trees : int, default 10
-        Maximum number of decision tree features to construct. The constructed trees
-        combine other features, either native or constructed. These features usually
-        improve the classifier's performance at the cost of interpretability of the
-        model.
+        Maximum number of decision trees to construct. The trees combine native
+        variables and automatically constructed variables, excluding features
+        derived from the text variables or from variable pairs. Decision trees
+        usually improve the classifier's performance at the cost of the
+        interpretability of the model.
     n_text_features : int, default 10000
         Maximum number of text features to construct.
     type_text_features : str, default "words"
@@ -2143,10 +2142,11 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         for more details on the multi-table-specific
         features.
     n_trees : int, default 10
-        Maximum number of decision tree features to construct. The constructed trees
-        combine other features, either native or constructed. These features usually
-        improve the regressor's performance at the cost of interpretability of the
-        model.
+        Maximum number of decision trees to construct. The trees combine native
+        variables and automatically constructed variables, excluding features
+        derived from the text variables or from variable pairs. Decision trees
+        usually improve the regressor's performance at the cost of the
+        interpretability of the model.
     n_text_features : int, default 10000
         Maximum number of text features to construct.
     type_text_features : str, default "words"
@@ -2359,15 +2359,15 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         for more details on the multi-table-specific
         features.
     n_pairs : int, default 0
-        Maximum number of pair features to construct. These features are 2D grid
-        partitions of univariate feature pairs. The grid is optimized such that in each
-        cell the target distribution is well approximated by a constant histogram. Only
-        pairs that are jointly more informative than their marginals may be taken into
-        account in the encoder.
+        Maximum number of pair features to construct. These features exploit
+        bivariate partitions of native or automatically constructed variables,
+        excluding features derived from the text variables.
     n_trees : int, default 10
-        Maximum number of decision tree features to construct. The constructed trees
-        combine other features, either native or constructed. These features usually
-        improve a predictor's performance at the cost of interpretability of the model.
+        Maximum number of decision trees to construct. The trees combine native
+        variables and automatically constructed variables, excluding features
+        derived from the text variables or from variable pairs. Decision trees
+        usually improve the encoder's performance at the cost of the
+        interpretability of the model.
     n_text_features : int, default 10000
         Maximum number of text features to construct.
     type_text_features : str, default "words"
