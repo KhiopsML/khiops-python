@@ -2,6 +2,9 @@
 name: Tests
 env:
   DEFAULT_SAMPLES_REVISION: 11.0.0
+  # Use only the local MPI node on the GitHub runner
+  UCX_TLS: self,sm,tcp
+  UCX_NET_DEVICES: lo
 on:
   workflow_dispatch:
     inputs:
