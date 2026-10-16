@@ -6,18 +6,19 @@
   - Example: 10.2.1.4 is the 5th version that supports khiops 10.2.1.
 - Internals: Changes in *Internals* sections are unlikely to be of interest for data scientists.
 
-## Unreleased
+## 11.0.1.1 - 2026-10-15
+
+### Added
+- (`sklearn`) The `n_cores` parameter to the sklearn estimators to limit the number of CPU cores pre-allocated and used by Khiops.
 
 ### Fixed
-- (`core`) Fix a RuntimeException error when automatically correcting deprecated data paths in task args.
-- (`core`) Fix a bogus translation of the `use_complement_as_test` parameter that led to a systematic model testing.
-- (`sklearn`) Infer the Text Khiops type for all Pandas string data type variants.
+- (`core`) Automatic upgrade of deprecated data paths when additional data tables are specified.
+- (`core`) The `use_complement_as_test` parameter disabling model evaluation upon training when set to `False`.
+- (`sklearn`) Khiops text type inference for all Pandas string data type variants.
 
 ### Changed
 - (`core`) The `max_cores` parameter now limits the number of CPU cores pre-allocated for each Khiops Core API call.
-- (`sklearn`) Add `n_cores` to the sklearn estimators to limit the number of CPU cores pre-allocated and used by Khiops.
-- (`sklearn`) Warn the users when converting third-party Pandas extension data
-  types to the Khiops "Categorical" type.
+- (`sklearn`) Users are now warned when converting third-party Pandas extension data types to the Khiops "Categorical" type.
 
 ## 11.0.1.0 - 2026-07-02
 

@@ -63,6 +63,10 @@ jobs:
           path: ./dist/khiops*.tar.gz
   # Test Pip package on brand new environments
   test:
+    env:
+      # Use only the local MPI node on the GitHub runner
+      UCX_TLS: self,sm,tcp
+      UCX_NET_DEVICES: lo
     needs: build
     strategy:
       fail-fast: false

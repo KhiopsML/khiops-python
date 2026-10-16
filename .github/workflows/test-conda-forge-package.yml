@@ -1,5 +1,9 @@
 ---
 name: Test the released Conda Package
+env:
+  # Use only the local MPI node on the GitHub runner
+  UCX_TLS: self,sm,tcp
+  UCX_NET_DEVICES: lo
 on:
   workflow_dispatch:
     inputs:
