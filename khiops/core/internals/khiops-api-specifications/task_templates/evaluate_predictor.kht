@@ -1,0 +1,33 @@
+// Dictionary file settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Evaluate predictor settings
+LearningTools.EvaluatePredictors
+MainTargetModality __mainTargetValue__
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __dataTablePath__
+LOOP __additionalDataTables__
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key __dataPath__
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __filePath__
+END LOOP
+EvaluationDatabase.DatabaseSpec.Data.HeaderLineUsed __headerLine__
+EvaluationDatabase.DatabaseSpec.Data.FieldSeparator __fieldSeparator__
+IF __detectFormat__
+EvaluationDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+END IF
+EvaluationDatabase.DatabaseSpec.Sampling.SampleNumberPercentage __samplePercentage__
+EvaluationDatabase.DatabaseSpec.Sampling.SamplingMode __samplingMode__
+EvaluatedPredictors.List.Key __trainDictionaryName__
+EvaluationDatabase.DatabaseSpec.Selection.SelectionAttribute __selectionVariable__
+EvaluationDatabase.DatabaseSpec.Selection.SelectionValue __selectionValue__
+ExportAsXls false
+EvaluationFileName __evaluationReportFilePath__
+
+// Evaluate predictor
+EvaluatePredictors
+Exit
+
+Exit // Close
+OK // Close

@@ -1,0 +1,22 @@
+// Simplify coclustering settings
+LearningTools.PostProcessCoclustering
+SelectInputCoclustering
+InputCoclusteringFileName __coclusteringFilePath__
+OK
+PostProcessingSpec.MaxPreservedInformation __maxPreservedInformation__
+PostProcessingSpec.MaxCellNumber __maxCells__
+PostProcessingSpec.MaxTotalPartNumber __maxTotalParts__
+LOOP __maxPartNumbers__
+PostProcessingSpec.PostProcessedAttributes.List.Key __dataPath__
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber
+END LOOP
+
+// Output settings
+PostProcessedCoclusteringFileName __simplifiedCoclusteringFilePath__
+
+// Simplify Coclustering
+PostProcessCoclustering
+Exit
+
+Exit // Close
+OK // Close

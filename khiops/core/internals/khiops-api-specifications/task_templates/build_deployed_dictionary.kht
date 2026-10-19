@@ -1,0 +1,15 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Transfer settings
+LearningTools.TransferDatabase
+ClassName __dictionaryName__
+BuildTransferredClass
+ClassFileName __outputDictionaryFilePath__
+OK
+Exit
+
+Exit // Close
+OK // Close

@@ -1,0 +1,21 @@
+// Dictionary building settings
+ClassManagement.ManageClasses
+BuildClassDefButton
+SourceDataTable.DatabaseSpec.Data.DatabaseName __dataTablePath__
+SourceDataTable.DatabaseSpec.Data.HeaderLineUsed __headerLine__
+SourceDataTable.DatabaseSpec.Data.FieldSeparator __fieldSeparator__
+IF __detectFormat__
+SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+END IF
+BuildClassDef
+ClassName __outputDictionaryName__
+OK
+Exit
+
+// Save dictionary
+ClassFileName __outputDictionaryFilePath__
+OK
+Exit
+
+Exit // Close
+OK // Close

@@ -2900,16 +2900,19 @@ class ScenarioWriterRunner(KhiopsRunner):
     def _create_scenario_file(self, task):
         return self.execution_scenario_path
 
-    def _write_task_scenario_file(
+    def _write_task_scenario_and_parameters_files(
         self, task, task_args, system_settings, force_ansi_scenario=False
     ):
         """Create the scenario and compare it to a reference"""
-        # Create the execution scenario files with the parent method
-        scenario_path = super()._write_task_scenario_file(
+        # Create the execution scenario and parameters files with the parent method
+        (
+            scenario_path,
+            parameters_path,
+        ) = super()._write_task_scenario_and_parameters_files(
             task, task_args, system_settings
         )
 
-        # Create the reference if does not exists
+        # Create the references they do not exist
         if self.create_ref:
             os.makedirs(self.ref_scenario_dir, exist_ok=True)
             shutil.copy(self.output_scenario_path, self.ref_scenario_path)
@@ -2917,7 +2920,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         # Copy the execution scenario (which is erased) to compare afterwards
         shutil.copy(self.execution_scenario_path, self.output_scenario_path)
 
-        return scenario_path
+        return scenario_path, parameters_path
 
     def run(
         self,
@@ -2961,6 +2964,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         self,
         tool_name,
         scenario_path,
+        parameters_path,
         command_line_options,
         trace,
     ):
@@ -3253,25 +3257,6 @@ class KhiopsCoreVariousTests(unittest.TestCase):
             """,
         }
 
-        arguments = {
-            ("raw_lines", "default"): {},
-            ("opt_argument", "true"): {"__opt_argument__": "true"},
-            ("opt_argument", "false"): {"__opt_argument__": "false"},
-            ("single_type_list_argument", "default"): {
-                "__list_argument__": ["Val1", "Val2"]
-            },
-            ("tuple_type_list_argument", "default"): {
-                "__list_argument__": [
-                    ("Val11", "Val12", "Val13"),
-                    ("Val21", "Val22", "Val23"),
-                ]
-            },
-            ("dict_argument", "default"): {
-                "__dict_argument__": {"Key1": "Val1", "Key2": "Val2"}
-            },
-            ("dict_argument", "list_input"): {"__dict_argument__": ["Key1", "Key2"]},
-        }
-
         expected_scenarios = {
             (
                 "raw_lines",
@@ -3349,7 +3334,7 @@ class KhiopsCoreVariousTests(unittest.TestCase):
                 stream = io.BytesIO()
                 writer = KhiopsOutputWriter(stream)
                 scenario = ConfigurableKhiopsScenario(template_code)
-                scenario.write(writer, arguments[template_name, argument_set])
+                scenario.write(writer)
                 output_scenario = stream.getvalue().decode("ascii").replace("\r", "")
 
                 # Compare the output scenario and the expected fixture

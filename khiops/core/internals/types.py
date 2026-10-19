@@ -37,7 +37,7 @@ class KhiopsTaskArgumentType(ABC):
 
     @classmethod
     def check(cls, arg, arg_name):
-        """Raises TypeError if the argument does not belongs to this type"""
+        """Raises TypeError if the argument does not belong to this type"""
         if not cls.is_of_this_type(arg):
             raise TypeError(type_error_message(arg_name, arg, cls.short_name()))
 
@@ -197,10 +197,9 @@ def ListType(value_type):  # pylint: disable=invalid-name
         raise TypeError(
             type_error_message(value_type, "value_type", KhiopsTaskArgumentType)
         )
-    if not is_simple_type(value_type) and not issubclass(value_type, AbstractTupleType):
-        raise TypeError(
-            f"List value type must be simple or tuple. It is '{value_type.__name__}'"
-        )
+    if not issubclass(value_type, AbstractDictType):
+        # Khiops always expects a list of dict
+        raise TypeError(f"List value type must dict. It is '{value_type.__name__}'")
 
     # Return an already registered class or register and return fresh new one
     # pylint: disable=missing-class-docstring
@@ -228,12 +227,12 @@ class AbstractDictType(KhiopsTaskArgumentType):
     registry = {}
 
     @classmethod
-    def is_registered(cls, key_type, value_type):
-        return (key_type, value_type) in cls.registry
+    def is_registered(cls, key_type, value_types):
+        return (key_type, value_types) in cls.registry
 
     @classmethod
     def register_subclass(cls, subclass):
-        cls.registry[subclass.get_key_type(), subclass.get_value_type()] = subclass
+        cls.registry[subclass.get_key_type(), subclass.get_value_types()] = subclass
 
     @classmethod
     def get_subclass(cls, key_type, value_type):
@@ -246,21 +245,20 @@ class AbstractDictType(KhiopsTaskArgumentType):
 
     @classmethod
     @abstractmethod
-    def get_value_type(cls):
-        """Return the type of the dictionary values"""
+    def get_value_types(cls):
+        """Return the types of the dictionary values"""
 
     @classmethod
     def is_of_this_type(cls, arg):
         arg_type_ok = is_dict_like(arg)
         key_type = cls.get_key_type()
-        value_type = cls.get_value_type()
         if arg_type_ok:
             for key, value in arg.items():
-                arg_type_ok = (
-                    arg_type_ok
-                    and key_type.is_of_this_type(key)
-                    and value_type.is_of_this_type(value)
-                )
+                arg_type_ok = arg_type_ok and key_type.is_of_this_type(key)
+                for value_type in cls.get_value_types():
+                    if value_type.is_of_this_type(value):
+                        arg_type_ok = arg_type_ok and True
+                        break
                 if not arg_type_ok:
                     break
         return arg_type_ok
@@ -276,15 +274,17 @@ class AbstractDictType(KhiopsTaskArgumentType):
     def to_scenario_arg(cls, arg):
         scenario_arg = {}
         key_type = cls.get_key_type()
-        value_type = cls.get_value_type()
         for key, value in arg.items():
-            scenario_arg[key_type.to_scenario_arg(key)] = value_type.to_scenario_arg(
-                value
-            )
+            for value_type in cls.get_value_types():
+                if value_type.is_of_this_type(value):
+                    scenario_arg[key_type.to_scenario_arg(key)] = (
+                        value_type.to_scenario_arg(value)
+                    )
+                    break
         return scenario_arg
 
 
-def DictType(key_type, value_type):  # pylint: disable=invalid-name
+def DictType(key_type, *value_types):  # pylint: disable=invalid-name
     """DictType factory method
 
     Dicts are themselves of type `dict` and they contain key-value relations with
@@ -294,34 +294,36 @@ def DictType(key_type, value_type):  # pylint: disable=invalid-name
     ----------
     key_type : KhiopsTaskArgumentType
         Type of the dictionary's keys.
-    value_type : KhiopsTaskArgumentType
-        Type of the dictionary's values.
+    value_types : list of KhiopsTaskArgumentType
+        Types of the dictionary's values.
 
     Returns
     -------
     type
         A class which inherits from [AbstractDictType][].
     """
-    # Check the type of the dictionary's key and value
+    # Check the type of the dictionary's key
     if not issubclass(key_type, KhiopsTaskArgumentType):
         raise TypeError(
             type_error_message(key_type, "key_type", KhiopsTaskArgumentType)
         )
     if not is_simple_type(key_type):
-        raise TypeError(f"Dict key type must be simple. It is '{value_type.__name__}'")
-    if not issubclass(value_type, KhiopsTaskArgumentType):
-        raise TypeError(
-            type_error_message(value_type, "value_type", KhiopsTaskArgumentType)
-        )
-    if not is_simple_type(value_type):
-        raise TypeError(
-            f"Dict value type must be simple. It is '{value_type.__name__}'"
-        )
+        raise TypeError(f"Dict key type must be simple. It is '{key_type.__name__}'")
+    # Check the type of values
+    for value_type in value_types:
+        if not issubclass(value_type, KhiopsTaskArgumentType):
+            raise TypeError(
+                type_error_message(value_type, "value_type", KhiopsTaskArgumentType)
+            )
+        if not is_simple_type(value_type):
+            raise ValueError(
+                f"Tuple value type must be simple. It is '{value_type.__name__}'"
+            )
 
     # Return an already registered class or register and return fresh new one
     # pylint: disable=missing-class-docstring
-    if AbstractDictType.is_registered(key_type, value_type):
-        dict_type = AbstractDictType.get_subclass(key_type, value_type)
+    if AbstractDictType.is_registered(key_type, value_types):
+        dict_type = AbstractDictType.get_subclass(key_type, value_types)
     else:
 
         class ConcreteDictType(AbstractDictType):
@@ -330,8 +332,8 @@ def DictType(key_type, value_type):  # pylint: disable=invalid-name
                 return key_type
 
             @classmethod
-            def get_value_type(cls):
-                return value_type
+            def get_value_types(cls):
+                return value_types
 
         dict_type = ConcreteDictType
         AbstractDictType.register_subclass(dict_type)
@@ -445,3 +447,40 @@ def is_simple_type(arg_type):
     if not issubclass(arg_type, KhiopsTaskArgumentType):
         raise TypeError("arg_type must be a subclass of KhiopsTaskArgumentType")
     return arg_type in [BoolType, IntType, FloatType, StringLikeType]
+
+
+def name_to_type(name):
+    match name:
+        case "str":
+            return StringLikeType
+        case "int":
+            return IntType
+        case "bool":
+            return BoolType
+        case "float":
+            return FloatType
+        case "list":
+            # Khiops templating always expects a list of dict
+            return ListType(
+                DictType(
+                    StringLikeType,
+                    # value can be either string or int
+                    StringLikeType,
+                    IntType,
+                )
+            )
+
+
+def default_from_declaration(type_name, default_value):
+    if default_value == "None":
+        # Special value that must be handled
+        return None
+    match type_name:
+        case "str":
+            return default_value
+        case "int":
+            return int(default_value)
+        case "bool":
+            return eval(default_value)
+        case "float":
+            return float(default_value)

@@ -1,0 +1,43 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Sort table settings
+LearningTools.SortDataTableByKey
+ClassName __dictionaryName__
+SortAttributes.SelectDefaultKeyAttributes
+LOOP __sortVariables__
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.RemoveItem
+SortAttributes.InsertItemAfter
+SortAttributes.Name __name__
+END LOOP
+
+// Source table settings
+SourceDataTable.DatabaseSpec.Data.DatabaseName __dataTablePath__
+SourceDataTable.DatabaseSpec.Data.HeaderLineUsed __headerLine__
+SourceDataTable.DatabaseSpec.Data.FieldSeparator __fieldSeparator__
+IF __detectFormat__
+SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+END IF
+
+// Target table settings
+TargetDataTable.DatabaseSpec.Data.HeaderLineUsed __outputHeaderLine__
+TargetDataTable.DatabaseSpec.Data.DatabaseName __outputDataTablePath__
+TargetDataTable.DatabaseSpec.Data.FieldSeparator __outputFieldSeparator__
+
+// Sort table
+SortDataTableByKey
+Exit
+
+Exit // Close
+OK // Close

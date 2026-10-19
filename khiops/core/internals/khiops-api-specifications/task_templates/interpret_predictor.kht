@@ -1,0 +1,27 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// interpretation settings
+TrainDatabase.ClassName __predictorDictionaryName__
+
+// Interpret model
+LearningTools.InterpretPredictor
+
+// Number of predictor variables exploited in the interpretation model
+ContributionAttributeNumber __maxVariableImportances__
+
+// Ranking of the Shapley value produced by the interpretation model
+ShapleyValueRanking __importanceRanking__
+
+// Build interpretation dictionary
+BuildInterpretationClass
+
+// Output settings
+ClassFileName __interpretorFilePath__
+OK
+Exit
+
+Exit // Close
+OK // Close

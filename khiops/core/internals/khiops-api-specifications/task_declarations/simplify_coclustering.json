@@ -1,0 +1,184 @@
+{
+    "name": "simplify_coclustering",
+    "api": "standard",
+    "tool": "khiops_coclustering",
+    "version": "11.0.2",
+    "arguments": [
+        {
+            "name": "coclustering_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of the coclustering file (extension `.khc`, or `.khcj`)."
+        },
+        {
+            "name": "simplified_coclustering_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path (absolute path recommended) of the output coclustering file. Note\nthat a relative path will produce a report file in the current working\ndirectory."
+        },
+        {
+            "name": "results_dir",
+            "arg_type": "str",
+            "default": "None",
+            "description": ""
+        },
+        {
+            "name": "max_preserved_information",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum information preserve in the simplified coclustering. If equal to 0\nthere is no limit."
+        },
+        {
+            "name": "max_cells",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum number of cells in the simplified coclustering. If equal to 0 there\nis no limit."
+        },
+        {
+            "name": "max_total_parts",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum number of parts totaled over all variables. If equal to 0 there is no\nlimit."
+        },
+        {
+            "name": "max_part_numbers",
+            "arg_type": "list",
+            "default": "None",
+            "description": "List of tuples that associate variable names to their maximum number of\nparts to preserve in the simplified coclustering. If not set there is\nno limit.",
+            "tuple_fields": [
+                {
+                    "name": "name",
+                    "arg_type": "str",
+                    "default": "",
+                    "description": "Name of the input coclustering variable."
+                },
+                {
+                    "name": "max_part_number",
+                    "arg_type": "int",
+                    "default": "0",
+                    "description": "Max number of parts to keep for this variable."
+                }
+            ]
+        },
+        {
+            "name": "log_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the log file for the Khiops process (command line option ``-e`` of the desktop app). If\nequal to \"\" then it writes no log file."
+        },
+        {
+            "name": "output_scenario_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the output Khiops scenario file (command line option ``-o`` of the desktop app).  If\nthe empty string is specified no output scenario file is generated."
+        },
+        {
+            "name": "task_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the task file for the Khiops process (command line option ``-p`` of the desktop app). If\nequal to \"\" then it writes no task file."
+        },
+        {
+            "name": "trace",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "If True prints the command line executed of the process and does not delete any temporary files\ncreated."
+        },
+        {
+            "name": "stdout_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stdout stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "stderr_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stderr stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "max_cores",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum number of cores for Khiops executions. If not set, then Khiops uses all\navailable CPU cores in the system."
+        },
+        {
+            "name": "memory_limit_mb",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum amount of memory (in MB) for Khiops executions. If not set, then Khiops\nuses all available system memory."
+        },
+        {
+            "name": "temp_dir",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Temporary directory for Khiops executions. If set to \"\", then Khiops uses the\nsystem's temporary directory."
+        },
+        {
+            "name": "scenario_prologue",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Prologue to prepend to all Khiops execution scenarios."
+        },
+        {
+            "name": "kwargs",
+            "arg_type": null,
+            "default": null,
+            "description": null
+        }
+    ],
+    "return_type": null,
+    "description_sections": [
+        {
+            "title": "",
+            "lines": [
+                "Simplifies a coclustering model"
+            ]
+        },
+        {
+            "title": "Parameters",
+            "lines": [
+                "coclustering_file_path : str",
+                "    Path of the coclustering file (extension `.khc`, or `.khcj`).",
+                "simplified_coclustering_file_path : str",
+                "    Path (absolute path recommended) of the output coclustering file. Note",
+                "    that a relative path will produce a report file in the current working",
+                "    directory.",
+                "max_preserved_information : int, default 0",
+                "    Maximum information preserve in the simplified coclustering. If equal to 0",
+                "    there is no limit.",
+                "max_cells : int, default 0",
+                "    Maximum number of cells in the simplified coclustering. If equal to 0 there",
+                "    is no limit.",
+                "max_total_parts : int, default 0",
+                "    Maximum number of parts totaled over all variables. If equal to 0 there is no",
+                "    limit.",
+                "max_part_numbers : dict, optional",
+                "    Dictionary that associate variable names to their maximum number of",
+                "    parts to preserve in the simplified coclustering. If not set there is",
+                "    no limit."
+            ]
+        },
+        {
+            "title": "See Also",
+            "lines": [
+                "- [Common Parameters](../notes.md#core-api-common-params)"
+            ]
+        },
+        {
+            "title": "Raises",
+            "lines": [
+                "TypeError",
+                "    Invalid type of an argument."
+            ]
+        },
+        {
+            "title": "Examples",
+            "lines": [
+                "See the following function of the `samples.py` documentation script:",
+                "    - `samples.simplify_coclustering()`"
+            ]
+        }
+    ],
+    "scenario": null
+}

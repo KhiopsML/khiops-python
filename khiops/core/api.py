@@ -21,6 +21,7 @@ import os
 import threading
 import warnings
 from types import MappingProxyType
+from collections.abc import Iterable
 
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
@@ -646,10 +647,9 @@ def _preprocess_task_arguments(task_args):
     # Transform the use_complement_as_test bool parameter to its string counterpart
     if "use_complement_as_test" in task_args:
         if task_args["use_complement_as_test"]:
-            task_args["test_database_mode"] = "Complementary"
+            task_args["use_complement_as_test"] = "Complementary"
         else:
-            task_args["test_database_mode"] = "none"
-        del task_args["use_complement_as_test"]
+            task_args["use_complement_as_test"] = "none"
 
     # Preprocess the database format parameters
     if "detect_format" in task_args:
@@ -683,6 +683,61 @@ def _preprocess_task_arguments(task_args):
         "output_additional_data_tables",
     ):
         _deprecate_legacy_data_path(data_path_task_arg_name, task_args)
+        # Replace the dict data structure by a list of dict expected by Khiops
+        if data_path_task_arg_name in task_args and isinstance(
+            task_args[data_path_task_arg_name], dict
+        ):
+            new_list = []
+            for k in task_args[data_path_task_arg_name].keys():
+                new_list.append(
+                    {"dataPath": k, "filePath": task_args[data_path_task_arg_name][k]}
+                )
+            task_args[data_path_task_arg_name] = new_list
+
+    # Create a new variable 'construction_rules_not_empty'
+    # to control a conditional block in the template
+    if "construction_rules" in task_args and isinstance(
+        task_args["construction_rules"], Iterable
+    ):
+        task_args["construction_rules_not_empty"] = True
+    else:
+        task_args["construction_rules_not_empty"] = False
+    # Normalize all the lists in loop blocks for the Khiops templating
+    if "max_part_numbers" in task_args and isinstance(
+        task_args["max_part_numbers"], dict
+    ):
+        new_list = []
+        for k in task_args["max_part_numbers"].keys():
+            new_list.append(
+                {"dataPath": k, "maxPartNumber": task_args["max_part_numbers"][k]}
+            )
+        task_args["max_part_numbers"] = new_list
+    if "reinforcement_lever_variables" in task_args and isinstance(
+        task_args["reinforcement_lever_variables"], Iterable
+    ):
+        new_list = []
+        for v in task_args["reinforcement_lever_variables"]:
+            new_list.append({"dataPath": v})
+        task_args["reinforcement_lever_variables"] = new_list
+    for name_task_arg_name in (
+        "sort_variables",
+        "coclustering_variables",
+        "construction_rules",
+    ):
+        if name_task_arg_name in task_args and isinstance(
+            task_args[name_task_arg_name], Iterable
+        ):
+            new_list = []
+            for v in task_args[name_task_arg_name]:
+                new_list.append({"name": v})
+            task_args[name_task_arg_name] = new_list
+    if "specific_pairs" in task_args and isinstance(
+        task_args["specific_pairs"], Iterable
+    ):
+        new_list = []
+        for t in task_args["specific_pairs"]:
+            new_list.append({"firstName": t[0], "secondName": t[1]})
+        task_args["specific_pairs"] = new_list
 
     # Flatten kwargs
     if "kwargs" in task_args:

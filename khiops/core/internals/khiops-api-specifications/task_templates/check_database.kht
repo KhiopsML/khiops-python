@@ -1,0 +1,31 @@
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Train database settings
+TrainDatabase.ClassName __dictionaryName__
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __dataTablePath__
+LOOP __additionalDataTables__
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key __dataPath__
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __filePath__
+END LOOP
+TrainDatabase.DatabaseSpec.Data.HeaderLineUsed __headerLine__
+TrainDatabase.DatabaseSpec.Data.FieldSeparator __fieldSeparator__
+IF __detectFormat__
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+END IF
+TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage __samplePercentage__
+TrainDatabase.DatabaseSpec.Sampling.SamplingMode __samplingMode__
+TrainDatabase.DatabaseSpec.Selection.SelectionAttribute __selectionVariable__
+TrainDatabase.DatabaseSpec.Selection.SelectionValue __selectionValue__
+
+// Log messages limit
+AnalysisSpec.SystemParameters.MaxErrorMessageNumberInLog __maxMessages__
+
+// Execute check database
+LearningTools.CheckData
+
+Exit // Close
+OK // Close
