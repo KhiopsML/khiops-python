@@ -1,0 +1,157 @@
+{
+    "name": "interpret_predictor",
+    "api": "standard",
+    "tool": "khiops",
+    "version": "11.0.2",
+    "arguments": [
+        {
+            "name": "dictionary_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of a Khiops dictionary file."
+        },
+        {
+            "name": "predictor_dictionary_name",
+            "arg_type": "str",
+            "default": null,
+            "description": "Name of the predictor dictionary used while building the interpretation model."
+        },
+        {
+            "name": "interpretor_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path to the interpretor dictionary file."
+        },
+        {
+            "name": "max_variable_importances",
+            "arg_type": "int",
+            "default": "100",
+            "description": "Maximum number of variable importances to be selected in the interpretation\nmodel. If the predictor contains fewer variables than this number, then\nall the variables of the predictor are considered."
+        },
+        {
+            "name": "importance_ranking",
+            "arg_type": "str",
+            "default": "Global",
+            "description": "Ranking of the Shapley values produced by the interpretor. Ca be one of:\n- \"Global\": predictor variables are ranked by decreasing global importance.\n- \"Individual\": predictor variables are ranked by decreasing individual\nShapley value."
+        },
+        {
+            "name": "log_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the log file for the Khiops process (command line option ``-e`` of the desktop app). If\nequal to \"\" then it writes no log file."
+        },
+        {
+            "name": "output_scenario_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the output Khiops scenario file (command line option ``-o`` of the desktop app).  If\nthe empty string is specified no output scenario file is generated."
+        },
+        {
+            "name": "task_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the task file for the Khiops process (command line option ``-p`` of the desktop app). If\nequal to \"\" then it writes no task file."
+        },
+        {
+            "name": "trace",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "If True prints the command line executed of the process and does not delete any temporary files\ncreated."
+        },
+        {
+            "name": "stdout_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stdout stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "stderr_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stderr stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "max_cores",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum number of cores for Khiops executions. If not set, then Khiops uses all\navailable CPU cores in the system."
+        },
+        {
+            "name": "memory_limit_mb",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum amount of memory (in MB) for Khiops executions. If not set, then Khiops\nuses all available system memory."
+        },
+        {
+            "name": "temp_dir",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Temporary directory for Khiops executions. If set to \"\", then Khiops uses the\nsystem's temporary directory."
+        },
+        {
+            "name": "scenario_prologue",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Prologue to prepend to all Khiops execution scenarios."
+        },
+        {
+            "name": "kwargs",
+            "arg_type": null,
+            "default": null,
+            "description": null
+        }
+    ],
+    "return_type": null,
+    "description_sections": [
+        {
+            "title": "",
+            "lines": [
+                "Builds an interpretation dictionary from a predictor"
+            ]
+        },
+        {
+            "title": "Parameters",
+            "lines": [
+                "dictionary_file_path_or_domain : str or DictionaryDomain",
+                "    Path of a Khiops dictionary file or a DictionaryDomain object.",
+                "predictor_dictionary_name : str",
+                "    Name of the predictor dictionary used while building the interpretation model.",
+                "interpretor_file_path : str",
+                "    Path to the interpretor dictionary file.",
+                "max_variable_importances : int, default 100",
+                "    Maximum number of variable importances to be selected in the interpretation",
+                "    model. If the predictor contains fewer variables than this number, then",
+                "    all the variables of the predictor are considered.",
+                "importance_ranking : str, default \"Global\"",
+                "    Ranking of the Shapley values produced by the interpretor. Ca be one of:",
+                "        - \"Global\": predictor variables are ranked by decreasing global importance.",
+                "        - \"Individual\": predictor variables are ranked by decreasing individual",
+                "          Shapley value."
+            ]
+        },
+        {
+            "title": "See Also",
+            "lines": [
+                "- [Common Parameters](../notes.md#core-api-common-params)"
+            ]
+        },
+        {
+            "title": "Raises",
+            "lines": [
+                "ValueError",
+                "    Invalid values of an argument",
+                "TypeError",
+                "    Invalid type of an argument"
+            ]
+        },
+        {
+            "title": "Examples",
+            "lines": [
+                "See the following functions of the `samples.py` documentation script:",
+                "    - `samples.interpret_predictor()`",
+                "    - `samples.deploy_model_mt_with_interpretation()`"
+            ]
+        }
+    ],
+    "scenario": null
+}

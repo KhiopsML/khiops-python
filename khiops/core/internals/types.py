@@ -37,7 +37,7 @@ class KhiopsTaskArgumentType(ABC):
 
     @classmethod
     def check(cls, arg, arg_name):
-        """Raises TypeError if the argument does not belongs to this type"""
+        """Raises TypeError if the argument does not belong to this type"""
         if not cls.is_of_this_type(arg):
             raise TypeError(type_error_message(arg_name, arg, cls.short_name()))
 
@@ -197,10 +197,9 @@ def ListType(value_type):  # pylint: disable=invalid-name
         raise TypeError(
             type_error_message(value_type, "value_type", KhiopsTaskArgumentType)
         )
-    if not is_simple_type(value_type) and not issubclass(value_type, AbstractTupleType):
-        raise TypeError(
-            f"List value type must be simple or tuple. It is '{value_type.__name__}'"
-        )
+    if not issubclass(value_type, AbstractDictType):
+        # Khiops always expects a list of dict
+        raise TypeError(f"List value type must dict. It is '{value_type.__name__}'")
 
     # Return an already registered class or register and return fresh new one
     # pylint: disable=missing-class-docstring
@@ -445,3 +444,33 @@ def is_simple_type(arg_type):
     if not issubclass(arg_type, KhiopsTaskArgumentType):
         raise TypeError("arg_type must be a subclass of KhiopsTaskArgumentType")
     return arg_type in [BoolType, IntType, FloatType, StringLikeType]
+
+
+def name_to_type(name):
+    match name:
+        case "str":
+            return StringLikeType
+        case "int":
+            return IntType
+        case "bool":
+            return BoolType
+        case "float":
+            return FloatType
+        case "list":
+            # Khiops always expects a list of dict
+            return ListType(DictType(StringLikeType, StringLikeType))
+
+
+def default_from_declaration(type_name, default_value):
+    if default_value == "None":
+        # Special value that must be handled
+        return None
+    match type_name:
+        case "str":
+            return default_value
+        case "int":
+            return int(default_value)
+        case "bool":
+            return eval(default_value)
+        case "float":
+            return float(default_value)

@@ -1,0 +1,29 @@
+// Resource settings
+
+AnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB
+AnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores
+AnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory
+
+// Extract cluster settings
+LearningTools.ExtractClusters
+SelectInputCoclustering
+InputCoclusteringFileName __coclusteringFilePath__
+OK
+CoclusteringAttribute __clusterVariable__
+PostProcessingSpec.MaxPreservedInformation __maxPreservedInformation__
+PostProcessingSpec.MaxCellNumber __maxCells__
+PostProcessingSpec.MaxTotalPartNumber __maxTotalParts__
+LOOP __maxPartNumbers__
+PostProcessingSpec.PostProcessedAttributes.List.Key __dataPath__
+PostProcessingSpec.PostProcessedAttributes.MaxPartNumber
+END LOOP
+
+// Output settings
+ClusterFileName __clustersFilePath__
+
+// Extract clusters
+ExtractClusters
+Exit
+
+Exit // Close
+OK // Close

@@ -7,7 +7,7 @@
 """Core API functions abstractions"""
 import textwrap
 
-from khiops.core.internals.common import type_error_message
+from khiops.core.internals.common import snake_to_camel, type_error_message
 from khiops.core.internals.io import encode_file_path
 from khiops.core.internals.scenario import ConfigurableKhiopsScenario
 from khiops.core.internals.types import (
@@ -16,6 +16,8 @@ from khiops.core.internals.types import (
     DictType,
     KhiopsTaskArgumentType,
     StringLikeType,
+    default_from_declaration,
+    name_to_type,
 )
 from khiops.core.internals.version import KhiopsVersion
 
@@ -61,8 +63,6 @@ class KhiopsTask:
         Name of the task.
     tool_name : str
         Name of the tool to execute the task (ex. "khiops", "khiops_coclustering").
-    intro_version : KhiopsVersion or str
-        Khiops version where this task object was introduced.
     args_signature : list
         A list of 2-tuples for each mandatory parameter of the task, containing:
             - its name (str)
@@ -89,7 +89,6 @@ class KhiopsTask:
         self,
         name,
         tool_name,
-        intro_version,
         args_signature,
         kwargs_signature,
         path_valued_arg_names,
@@ -101,8 +100,6 @@ class KhiopsTask:
             raise TypeError(type_error_message("name", name, str))
         if not isinstance(tool_name, str):
             raise TypeError(type_error_message("tool_name", tool_name, str))
-        if not isinstance(intro_version, (str, KhiopsVersion)):
-            raise TypeError(type_error_message("version", intro_version, str))
         if not isinstance(args_signature, list):
             raise TypeError(type_error_message("args_signature", args_signature, list))
         if not isinstance(kwargs_signature, list):
@@ -190,10 +187,6 @@ class KhiopsTask:
         # Initialize the public members
         self.name = name
         self.tool_name = tool_name
-        if isinstance(intro_version, str):
-            self.intro_version = KhiopsVersion(intro_version)
-        else:
-            self.intro_version = intro_version
         self.args_signature = args_signature
         self.kwargs_signature = kwargs_signature
         self.scenario = ConfigurableKhiopsScenario(textwrap.dedent(scenario_template))
@@ -220,8 +213,10 @@ class KhiopsTask:
                     "in args nor kwargs"
                 )
 
-        # Check the keyword coherence
-        all_scenario_arg_names = [f"__{arg_name}__" for arg_name in all_arg_names]
+        # Check the keyword coherence between the declaration and the template
+        all_scenario_arg_names = [
+            f"__{snake_to_camel(arg_name)}__" for arg_name in all_arg_names
+        ]
         self.scenario.check_keyword_completeness(all_scenario_arg_names)
 
         # Check the coherence of path_valued_arg_names
@@ -278,7 +273,10 @@ class KhiopsTask:
                 not issubclass(arg_type, (AbstractDictType, AbstractListType))
                 or arg is not None
             ):
-                arg_type.check(arg, arg_name)
+                # HACK: "use_complement_as_test" declared as a bool is mutated to str
+                # Let's skip it for the moment
+                if arg_name != "use_complement_as_test":
+                    arg_type.check(arg, arg_name)
 
         # Save the non-specified optional arguments
         absent_kwarg_names = []
@@ -320,209 +318,22 @@ class KhiopsTask:
         writer.writeln(f"// End of scenario for task {self.name}")
 
 
-class KhiopsTaskFamily:
-    """Stores the versions of a task
-
-    Parameters
-    ----------
-    task_name : str
-        The name of the task defining this family.
-    end_version : str or KhiopsVersion
-        The Khiops version where the support for this task ended.
-    """
-
-    def __init__(self, task_name, end_version=None):
-        """See class docstring"""
-        self.task_name = task_name
-        self.end_version = end_version
-        self.tasks = {}
-
-    @property
-    def end_version(self):
-        """[KhiopsVersion][] : Khiops version where support for this task ended
-
-        It is `None` if the task is still supported. May be set with either str or
-        [KhiopsVersion][] or `None`.
-        """
-        return self._end_version
-
-    @end_version.setter
-    def end_version(self, version):
-        if not isinstance(version, (str, KhiopsVersion, type(None))):
-            raise TypeError(
-                type_error_message("version", version, str, KhiopsVersion, type(None))
-            )
-        if isinstance(version, str):
-            self._end_version = KhiopsVersion(version)
-        else:
-            assert isinstance(version, (KhiopsVersion, type(None)))
-            self._end_version = version
-
-    @property
-    def start_version(self):
-        """[KhiopsVersion][] : Khiops version where the support for this task started
-
-        Raises
-        ------
-        ValueError
-            If there are no task registered in this family.
-        """
-        if not self.tasks:
-            raise ValueError(
-                "There are no registered versions " f"for task '{self.task_name}'"
-            )
-        start_version = self.all_intro_versions[-1]
-        return start_version
-
-    def register_task(self, task, overwrite=False):
-        """Registers a task to this family
-
-        Parameters
-        ----------
-        task : KhiopsTask
-            The task to be registered. Must have the same name of the family.
-        overwrite : bool, default `False`
-            If `True` it does not raise an error if a task with the same version is
-            already registered.
-
-        Raises
-        ------
-        ValueError
-            If:
-
-            - The task name is not the same as that of this family.
-            - The specified version already exists and overwrite is not set.
-        """
-
-        if task.name != self.task_name:
-            raise ValueError(
-                f"task name '{task.name}' different from "
-                f"task family name '{self.task_name}'"
-            )
-        if task.intro_version in self.tasks and not overwrite:
-            raise ValueError(
-                f"Cannot replace task '{task.name}' version {task.intro_version} "
-                "since it already exists (set overwrite to True to override)"
-            )
-        self.tasks[task.intro_version] = task
-
-    def unregister_task(self, intro_version):
-        """Unregister the task from the family with the specified introduction version
-
-        Parameters
-        ----------
-        intro_version : str
-            The introduction version of the task to be unregistered.
-
-        Returns
-        -------
-        KhiopsTask
-            The removed task object.
-
-        Raises
-        ------
-        ValueError
-            If there is no task with the specified introduction version.
-        """
-        if intro_version not in self.tasks:
-            raise ValueError(
-                f"Cannot unregister inexistent version {intro_version} "
-                f"of task {self.task_name}"
-            )
-        return self.tasks.pop(intro_version)
-
-    def get_task(self, target_version):
-        """Returns latest task object compatible with the specified version
-
-        Parameters
-        ----------
-        target_version : str or KhiopsVersion
-            The target Khiops version.
-
-        Returns
-        -------
-        KhiopsTask
-            The latest task object compatible with the `target_version`.
-
-        Raises
-        ------
-        TypeError
-            If target_version is not str or [KhiopsVersion][].
-
-        """
-        # Check the argument type
-        if not isinstance(target_version, (str, KhiopsVersion)):
-            raise TypeError(type_error_message(target_version, str, KhiopsVersion))
-
-        # Transform target_version to KhiopsVersion if necessary
-        if isinstance(target_version, str):
-            target_version = KhiopsVersion(target_version)
-
-        # Fail if the target version is ahead the end_version
-        if self.end_version is not None and target_version > self.end_version:
-            raise ValueError(
-                f"No compatible version for '{self.task_name}' "
-                f"version {target_version}: "
-                f"This task was available only up to version {self.end_version}"
-            )
-
-        # Search the newest compatible version of the function
-        newest_compatible_version = None
-        for intro_version in self.all_intro_versions:
-            if target_version >= intro_version:
-                newest_compatible_version = intro_version
-                break
-
-        # Fail if there is no compatible version
-        if newest_compatible_version is None:
-            raise ValueError(
-                f"No compatible version for '{self.task_name}' "
-                f"version {target_version}: "
-                f"Earliest introduction version {self.all_intro_versions[-1]}"
-            )
-
-        return self.tasks[newest_compatible_version]
-
-    @property
-    def all_intro_versions(self):
-        """list of [KhiopsVersion][] : A sorted list of the task introduction
-        versions.
-
-        The list is sorted in reverse order.
-        """
-        return sorted(list(self.tasks.keys()), reverse=True)
-
-    @property
-    def latest_intro_version(self):
-        """[KhiopsVersion][] : The latest introduction version of the task.
-
-        Raises
-        ------
-        ValueError
-            If there are no task objects registered in this family.
-        """
-        if not self.tasks:
-            raise ValueError(
-                "There are no registered versions " f"for task '{self.task_name}'"
-            )
-        return self.all_intro_versions[0]
-
-
 class KhiopsTaskRegistry:
     """Registry of Khiops tasks
 
-    Tasks are indexed by name and version.
+    The registry structure is the following :
+        'name' -> 'declaration'
+              --> 'template'
     """
 
     def __init__(self):
-        self.task_families = {}
+        self.registry = {}
 
-    def register_task(self, task):
-        if not isinstance(task, KhiopsTask):
-            raise TypeError(type_error_message("task", task, KhiopsTask))
-        if task.name not in self.task_families:
-            self.task_families[task.name] = KhiopsTaskFamily(task.name)
-        self.task_families[task.name].register_task(task)
+    def register_task(self, task_name, declaration_data, template_data):
+        self.registry[task_name] = {
+            "declaration": declaration_data,
+            "template": template_data,
+        }
 
     def get_task(self, task_name, target_version):
         """Retrieves the latest task object for the specified task and version
@@ -548,11 +359,39 @@ class KhiopsTaskRegistry:
         if not isinstance(target_version, (str, KhiopsVersion)):
             raise TypeError(type_error_message(target_version, str, KhiopsVersion))
 
-        # Check that the task family exists
-        if task_name not in self.task_families:
-            raise ValueError(f"There are no tasks named '{task_name}' registered")
+        # Check that the task exists
+        if task_name not in self.registry:
+            raise ValueError(f"There are no task named '{task_name}' registered")
 
-        return self.task_families[task_name].get_task(target_version)
+        mandatory_parameters = []
+        optional_parameters = []
+        for param in self.registry[task_name]["declaration"]["arguments"]:
+            if param["name"] == "kwargs":
+                # this special argument must be skipped
+                continue
+            if param["default"] is None:
+                # mandatory
+                mandatory_parameters.append(
+                    (param["name"], name_to_type(param["arg_type"]))
+                )
+            else:
+                # optional
+                optional_parameters.append(
+                    (
+                        param["name"],
+                        name_to_type(param["arg_type"]),
+                        default_from_declaration(param["arg_type"], param["default"]),
+                    )
+                )
+
+        return KhiopsTask(
+            task_name,
+            self.registry[task_name]["declaration"]["tool"],
+            mandatory_parameters,
+            optional_parameters,
+            [],
+            self.registry[task_name]["template"],
+        )
 
     def get_tasks(self, target_version):
         """Retrieves the latest Khiops tasks compatible with the specified version
@@ -588,71 +427,9 @@ class KhiopsTaskRegistry:
 
         return compatible_tasks
 
-    def get_task_end_version(self, task_name):
-        """Returns the version where the support of the specified task ended
-
-        Parameters
-        ----------
-        task_name : str
-            Name of the task.
-
-        Returns
-        -------
-        KhiopsVersion or None
-            Either the end version for this task or [None][] if it is still supported.
-
-        Raises
-        ------
-        TypeError
-            If `task_name` is not of type str.
-        ValueError
-            If there are no registered tasks with the specified name.
-        """
-        if not isinstance(task_name, str):
-            raise TypeError(type_error_message("task_name", task_name, str))
-        if task_name not in self.task_families:
-            raise ValueError(f"Task family for '{task_name}' not registered")
-        return self.task_families[task_name].end_version
-
-    def set_task_end_version(self, task_name, end_version):
-        """Sets the version where the support of the specified task ended
-
-        Parameters
-        ----------
-        task_name : str
-            Name of the task.
-        end_version : str or KhiopsVersion
-            Version where the support of the specified task ended.
-
-        Raises
-        ------
-        TypeError
-            - If `task_name` is not of type str.
-            - If `end_version` is not of type str or [KhiopsVersion][].
-        ValueError
-            If there are no registered tasks with the specified name.
-        """
-        # Check input types
-        # Note: `end_version` type check is deferred to `TaskFamily`
-        if not isinstance(task_name, str):
-            raise TypeError(type_error_message("task_name", task_name, str))
-        if task_name not in self.task_families:
-            raise ValueError(f"Task family for '{task_name}' not registered")
-        self.task_families[task_name].end_version = end_version
-
-    @property
-    def latest_intro_version(self):
-        """[KhiopsVersion][] : Latest introduction version overall tasks"""
-        latest_intro_version = KhiopsVersion("1.0")
-        for task_family in self.task_families:
-            latest_intro_version = max(
-                task_family.latest_intro_version, latest_intro_version
-            )
-        return latest_intro_version
-
     @property
     def task_names(self):
-        """list of str: Names of all task families"""
+        """list of str: Names of all tasks"""
         return list(self.task_families.keys())
 
 

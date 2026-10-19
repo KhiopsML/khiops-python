@@ -2658,16 +2658,19 @@ class ScenarioWriterRunner(KhiopsRunner):
     def _create_scenario_file(self, task):
         return self.execution_scenario_path
 
-    def _write_task_scenario_file(
+    def _write_task_scenario_and_parameters_files(
         self, task, task_args, system_settings, force_ansi_scenario=False
     ):
         """Create the scenario and compare it to a reference"""
-        # Create the execution scenario files with the parent method
-        scenario_path = super()._write_task_scenario_file(
+        # Create the execution scenario and parameters files with the parent method
+        (
+            scenario_path,
+            parameters_path,
+        ) = super()._write_task_scenario_and_parameters_files(
             task, task_args, system_settings
         )
 
-        # Create the reference if does not exists
+        # Create the references they do not exist
         if self.create_ref:
             os.makedirs(self.ref_scenario_dir, exist_ok=True)
             shutil.copy(self.output_scenario_path, self.ref_scenario_path)
@@ -2675,7 +2678,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         # Copy the execution scenario (which is erased) to compare afterwards
         shutil.copy(self.execution_scenario_path, self.output_scenario_path)
 
-        return scenario_path
+        return scenario_path, parameters_path
 
     def run(
         self,
@@ -2719,6 +2722,7 @@ class ScenarioWriterRunner(KhiopsRunner):
         self,
         tool_name,
         scenario_path,
+        parameters_path,
         command_line_options,
         trace,
     ):

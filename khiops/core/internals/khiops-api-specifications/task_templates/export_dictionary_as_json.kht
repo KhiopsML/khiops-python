@@ -1,0 +1,18 @@
+// Resource settings
+
+AnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB
+AnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores
+AnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory
+
+// Dictionary file settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Export dictionary as JSON file
+ClassManagement.ExportAsJSON
+JSONFileName __jsonDictionaryFilePath__
+OK
+
+Exit // Close
+OK // Close

@@ -1,0 +1,87 @@
+// Resource settings
+
+AnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB
+AnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores
+AnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory
+
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Train/test database settings
+TrainDatabase.ClassName __dictionaryName__
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __dataTablePath__
+LOOP __additionalDataTables__
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key __dataPath__
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __filePath__
+END LOOP
+TrainDatabase.DatabaseSpec.Data.HeaderLineUsed __headerLine__
+TrainDatabase.DatabaseSpec.Data.FieldSeparator __fieldSeparator__
+IF __detectFormat__
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+END IF
+TrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage __samplePercentage__
+TrainDatabase.DatabaseSpec.Sampling.SamplingMode __samplingMode__
+TrainDatabase.DatabaseSpec.Selection.SelectionAttribute __selectionVariable__
+TrainDatabase.DatabaseSpec.Selection.SelectionValue __selectionValue__
+TrainDatabase.TestDatabaseSpecificationMode __useComplementAsTest__
+
+// Target variable
+AnalysisSpec.TargetAttributeName __targetVariable__
+AnalysisSpec.MainTargetModality __mainTargetValue__
+
+// Do data preparation only
+AnalysisSpec.PredictorsSpec.AdvancedSpec.DataPreparationOnly __doDataPreparationOnly__
+
+// Selective Naive Bayes settings
+AnalysisSpec.PredictorsSpec.AdvancedSpec.SelectiveNaiveBayesParameters.TrainParameters.MaxEvaluatedAttributeNumber __maxEvaluatedVariables__
+AnalysisSpec.PredictorsSpec.AdvancedSpec.SelectiveNaiveBayesParameters.SelectionParameters.MaxSelectedAttributeNumber __maxSelectedVariables__
+
+// Feature engineering
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTextFeatureNumber __maxTextFeatures__
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber __maxTrees__
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxAttributePairNumber __maxPairs__
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectAttributePairsParameters
+AllAttributePairs __allPossiblePairs__
+LOOP __specificPairs__
+SpecificAttributePairs.InsertItemAfter
+SpecificAttributePairs.FirstName __firstName__
+SpecificAttributePairs.SecondName __secondName__
+END LOOP
+Exit
+AnalysisSpec.PredictorsSpec.ConstructionSpec.KeepSelectedAttributesOnly __keepSelectedVariablesOnly__
+AnalysisSpec.PredictorsSpec.ConstructionSpec.MaxConstructedAttributeNumber __maxConstructedVariables__
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectConstructionDomain
+LOOP __constructionRules__
+UnselectAll
+ConstructionRules.List.Key __name__
+ConstructionRules.Used
+END LOOP
+Exit
+
+//  Text feature parameters
+AnalysisSpec.PredictorsSpec.AdvancedSpec.InspectTextFeaturesParameters
+TextFeatures __textFeatures__
+Exit
+
+
+// Data preparation (discretization & grouping) settings
+AnalysisSpec.PreprocessingSpec.TargetGrouped __groupTargetValue__
+AnalysisSpec.PreprocessingSpec.InspectAdvancedParameters
+DiscretizerUnsupervisedMethodName __discretizationMethod__
+GrouperUnsupervisedMethodName __groupingMethod__
+Exit
+
+// Max parts
+AnalysisSpec.PreprocessingSpec.MaxPartNumber __maxParts__
+
+// Output settings
+AnalysisResults.ReportFileName __analysisReportFilePath__
+
+// Build model
+ComputeStats
+
+Exit // Close
+OK // Close

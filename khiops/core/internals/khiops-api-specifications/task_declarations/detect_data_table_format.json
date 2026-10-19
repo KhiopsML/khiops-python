@@ -1,0 +1,140 @@
+{
+    "name": "detect_data_table_format",
+    "api": "standard",
+    "tool": "khiops",
+    "version": "11.0.2",
+    "arguments": [
+        {
+            "name": "data_table_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of the data table file."
+        },
+        {
+            "name": "dictionary_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of a Khiops dictionary file."
+        },
+        {
+            "name": "dictionary_name",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Name of the dictionary."
+        },
+        {
+            "name": "log_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the log file for the Khiops process (command line option ``-e`` of the desktop app). If\nequal to \"\" then it writes no log file."
+        },
+        {
+            "name": "output_scenario_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the output Khiops scenario file (command line option ``-o`` of the desktop app).  If\nthe empty string is specified no output scenario file is generated."
+        },
+        {
+            "name": "task_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the task file for the Khiops process (command line option ``-p`` of the desktop app). If\nequal to \"\" then it writes no task file."
+        },
+        {
+            "name": "trace",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "If True prints the command line executed of the process and does not delete any temporary files\ncreated."
+        },
+        {
+            "name": "stdout_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stdout stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "stderr_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stderr stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "max_cores",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum number of cores for Khiops executions. If not set, then Khiops uses all\navailable CPU cores in the system."
+        },
+        {
+            "name": "memory_limit_mb",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum amount of memory (in MB) for Khiops executions. If not set, then Khiops\nuses all available system memory."
+        },
+        {
+            "name": "temp_dir",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Temporary directory for Khiops executions. If set to \"\", then Khiops uses the\nsystem's temporary directory."
+        },
+        {
+            "name": "scenario_prologue",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Prologue to prepend to all Khiops execution scenarios."
+        },
+        {
+            "name": "kwargs",
+            "arg_type": null,
+            "default": null,
+            "description": null
+        }
+    ],
+    "return_type": null,
+    "description_sections": [
+        {
+            "title": "",
+            "lines": [
+                "Detects the format of a data table",
+                "",
+                "Runs an heuristic to detect the format of a data table. The detection heuristic is",
+                "more accurate if a dictionary with the table schema is provided."
+            ]
+        },
+        {
+            "title": "Parameters",
+            "lines": [
+                "data_table_path : str",
+                "    Path of the data table file.",
+                "dictionary_file_path_or_domain : str or DictionaryDomain, optional",
+                "    Path of a Khiops dictionary file or a DictionaryDomain object.",
+                "dictionary_name : str, optional",
+                "    Name of the dictionary."
+            ]
+        },
+        {
+            "title": "See Also",
+            "lines": [
+                "- [Common Parameters](../notes.md#core-api-common-params)"
+            ]
+        },
+        {
+            "title": "Returns",
+            "lines": [
+                "tuple",
+                "    A 2-tuple containing:",
+                "        - the `header_line` boolean",
+                "        - the `field_separator` character",
+                "",
+                "    These are exactly the parameters expected in many Khiops Python API functions."
+            ]
+        },
+        {
+            "title": "Examples",
+            "lines": [
+                "See the following function of the `samples.py` documentation script:",
+                "    - `samples.detect_data_table_format()`"
+            ]
+        }
+    ],
+    "scenario": null
+}

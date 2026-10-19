@@ -132,10 +132,11 @@ class CommandLineOptions:
         print(command_line_options)
         return "Khiops command line options: " + " ".join(command_line_options)
 
-    def build_command_line_options(self, scenario_path):
+    def build_command_line_options(self, scenario_path, parameters_path):
         # Enable batch execution
         command_line_options = ["-b"]
         command_line_options += ["-i", scenario_path]
+        command_line_options += ["-j", parameters_path]
         if self.output_scenario_path:
             command_line_options += ["-o", self.output_scenario_path]
         if self.log_file_path:
@@ -290,3 +291,32 @@ def is_iterable(test_object):
     return isinstance(test_object, (Sequence, Iterable)) and not is_string_like(
         test_object
     )
+
+
+def snake_to_camel(snake_str):
+    """
+    Convert a snake_case string to camelCase.
+
+    Args:
+        snake_str (str): The snake_case string.
+
+    Returns:
+        str: The camelCase version of the input string.
+    """
+    components = snake_str.split("_")
+    return components[0] + "".join(x.title() for x in components[1:])
+
+
+def snake_to_camel_locals(locals_dict):
+    """
+    Converts all keys in the provided dictionary from snake_case to camelCase.
+    """
+    locals_keys = list(locals_dict.keys())
+    for name in locals_keys:
+        value = locals_dict[name]
+        locals_dict[snake_to_camel(name)] = locals_dict.pop(name)
+        if value is not None and isinstance(value, list):
+            for item in value:
+                item_keys = list(item.keys())
+                for field_name in item_keys:
+                    item[snake_to_camel(field_name)] = item.pop(field_name)

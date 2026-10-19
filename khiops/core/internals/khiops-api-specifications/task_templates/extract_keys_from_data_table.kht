@@ -1,0 +1,28 @@
+// Resource settings
+
+AnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB
+AnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores
+AnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory
+
+// Dictionary file
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Extract keys settings
+LearningTools.ExtractKeysFromDataTable
+ClassName __dictionaryName__
+SourceDataTable.DatabaseSpec.Data.DatabaseName __dataTablePath__
+SourceDataTable.DatabaseSpec.Data.HeaderLineUsed __headerLine__
+SourceDataTable.DatabaseSpec.Data.FieldSeparator __fieldSeparator__
+IF __detectFormat__
+SourceDataTable.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+END IF
+TargetDataTable.DatabaseSpec.Data.DatabaseName __outputDataTablePath__
+TargetDataTable.DatabaseSpec.Data.HeaderLineUsed __outputHeaderLine__
+TargetDataTable.DatabaseSpec.Data.FieldSeparator __outputFieldSeparator__
+ExtractKeysFromDataTable
+Exit
+
+Exit // Close
+OK // Close

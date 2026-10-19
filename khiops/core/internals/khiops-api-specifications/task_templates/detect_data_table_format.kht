@@ -1,0 +1,13 @@
+// Resource settings
+
+AnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB
+AnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores
+AnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory
+
+// Detect format on the "Build Dictionary" window
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __dataTablePath__
+TrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+
+Exit // Close
+OK // Close

@@ -1,0 +1,43 @@
+// Resource settings
+
+AnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB
+AnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores
+AnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory
+
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Train database settings
+Database.ClassName __dictionaryName__
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName __dataTablePath__
+LOOP __additionalDataTables__
+Database.DatabaseSpec.Data.DatabaseFiles.List.Key __dataPath__
+Database.DatabaseSpec.Data.DatabaseFiles.DataTableName __filePath__
+END LOOP
+Database.DatabaseSpec.Data.HeaderLineUsed __headerLine__
+Database.DatabaseSpec.Data.FieldSeparator __fieldSeparator__
+IF __detectFormat__
+Database.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+END IF
+Database.DatabaseSpec.Sampling.SampleNumberPercentage __samplePercentage__
+Database.DatabaseSpec.Sampling.SamplingMode __samplingMode__
+Database.DatabaseSpec.Selection.SelectionAttribute __selectionVariable__
+Database.DatabaseSpec.Selection.SelectionValue __selectionValue__
+
+// Enforce instance x variable coclustering
+AnalysisSpec.CoclusteringType Instances x Variables coclustering
+
+// Minimum optimization time
+AnalysisSpec.SystemParameters.OptimizationTime __minOptimizationTime__
+
+// Output settings
+AnalysisResults.CoclusteringFileName __coclusteringReportFilePath__
+
+// Train
+BuildCoclustering
+
+Exit // Close
+OK // Close

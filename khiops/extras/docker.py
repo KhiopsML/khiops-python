@@ -101,6 +101,7 @@ class KhiopsDockerRunner(KhiopsRunner):
         self,
         tool_name,
         scenario_path,
+        parameters_path,
         command_line_options,
         trace,
     ):

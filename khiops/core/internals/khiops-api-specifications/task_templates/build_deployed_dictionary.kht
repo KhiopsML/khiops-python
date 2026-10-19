@@ -1,0 +1,21 @@
+// Resource settings
+
+AnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB
+AnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores
+AnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory
+
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Transfer settings
+LearningTools.TransferDatabase
+ClassName __dictionaryName__
+BuildTransferredClass
+ClassFileName __outputDictionaryFilePath__
+OK
+Exit
+
+Exit // Close
+OK // Close

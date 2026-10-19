@@ -1,0 +1,474 @@
+{
+    "name": "train_predictor",
+    "api": "standard",
+    "tool": "khiops",
+    "version": "11.0.2",
+    "arguments": [
+        {
+            "name": "dictionary_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of a Khiops dictionary file."
+        },
+        {
+            "name": "dictionary_name",
+            "arg_type": "str",
+            "default": null,
+            "description": "Name of the dictionary to be analyzed."
+        },
+        {
+            "name": "data_table_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of the data table file."
+        },
+        {
+            "name": "target_variable",
+            "arg_type": "str",
+            "default": null,
+            "description": "Name of the target variable. If the specified variable is categorical it\nconstructs a classifier and if it is numerical a regressor. If equal to \"\" it\nperforms an unsupervised analysis."
+        },
+        {
+            "name": "analysis_report_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path (absolute path recommended) to the analysis report file,\nin the JSON format. An additional dictionary file with the same name and\nextension `.model.kdic` is built, which contains the trained models.\nNote that a relative path will produce a report file in the current working\ndirectory."
+        },
+        {
+            "name": "detect_format",
+            "arg_type": "bool",
+            "default": "True",
+            "description": "If `True` detects automatically whether the data table file has a header and\nits field separator. It is set to `False` if `header_line` or\n`field_separator` are set."
+        },
+        {
+            "name": "header_line",
+            "arg_type": "bool",
+            "default": "None",
+            "description": "If `True` it uses the first line of the data as column names. Sets\n`detect_format` to `False` if set. Ignored if `detect_format`\nis `True`."
+        },
+        {
+            "name": "field_separator",
+            "arg_type": "str",
+            "default": "None",
+            "description": "A field separator character. \"\" has the same effect as \"\\\\t\". Sets\n`detect_format` to `False` if set. Ignored if `detect_format`\nis `True`."
+        },
+        {
+            "name": "sample_percentage",
+            "arg_type": "float",
+            "default": "70.0",
+            "description": "See the `sampling_mode` option below."
+        },
+        {
+            "name": "sampling_mode",
+            "arg_type": "str",
+            "default": "Include sample",
+            "description": "If equal to \"Include sample\" it trains the predictor on `sample_percentage`\npercent of the data and tests the model on the remainder of the data if\n`use_complement_as_test` is set to `True`.  If equal to \"Exclude sample\" the\ntrain and test datasets above are exchanged. See also\n[Database Sampling](../notes.md#core-api-sampling-mode)."
+        },
+        {
+            "name": "use_complement_as_test",
+            "arg_type": "bool",
+            "default": "True",
+            "description": "Uses the complement of the sampled database as test database for\ncomputing the model's performance metrics."
+        },
+        {
+            "name": "selection_variable",
+            "arg_type": "str",
+            "default": "",
+            "description": "It trains with only the records such that the value of `selection_variable` is\nequal to `selection_value`. Ignored if equal to \"\"."
+        },
+        {
+            "name": "selection_value",
+            "arg_type": "str",
+            "default": "",
+            "description": "See `selection_variable` option above. Ignored if equal to \"\"."
+        },
+        {
+            "name": "additional_data_tables",
+            "arg_type": "list",
+            "default": "None",
+            "description": "A list of tuples containing the data paths and file paths for a multi-table\ndictionary file. For more details see\n[Multi-Table Learning Primer](../multi_table_primer.md).",
+            "tuple_fields": [
+                {
+                    "name": "data_path",
+                    "arg_type": "str",
+                    "default": "",
+                    "description": "Data path of the data table."
+                },
+                {
+                    "name": "file_path",
+                    "arg_type": "str",
+                    "default": "",
+                    "description": "Path of the data table file."
+                }
+            ]
+        },
+        {
+            "name": "do_data_preparation_only",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "If `True` it only does data preparation via MODL preprocessing without\ntraining a Selective Naive Bayes Predictor."
+        },
+        {
+            "name": "main_target_value",
+            "arg_type": "str",
+            "default": "",
+            "description": "If this target value is specified then it guarantees the calculation of lift\ncurves for it."
+        },
+        {
+            "name": "keep_selected_variables_only",
+            "arg_type": "bool",
+            "default": "True",
+            "description": "Keeps only predictor-selected variables in the supervised analysis report."
+        },
+        {
+            "name": "max_evaluated_variables",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum number of variables to be evaluated in the SNB predictor training. If\nequal to 0 it evaluates all informative variables."
+        },
+        {
+            "name": "max_selected_variables",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum number of variables to be selected in the SNB predictor. If equal to\n0 it selects all the variables kept in the training."
+        },
+        {
+            "name": "max_constructed_variables",
+            "arg_type": "int",
+            "default": "1000",
+            "description": "Maximum number of variables to construct."
+        },
+        {
+            "name": "construction_rules",
+            "arg_type": "list",
+            "default": "None",
+            "description": "Allowed rules for the automatic variable construction. If not set, Khiops\nuses the multi-table construction rules listed in\n[DEFAULT_CONSTRUCTION_RULES][].",
+            "tuple_fields": [
+                {
+                    "name": "name",
+                    "arg_type": "str",
+                    "default": "",
+                    "description": "Name of the construction rule."
+                }
+            ]
+        },
+        {
+            "name": "max_text_features",
+            "arg_type": "int",
+            "default": "10000",
+            "description": "Maximum number of text features to construct."
+        },
+        {
+            "name": "text_features",
+            "arg_type": "str",
+            "default": "words",
+            "description": "Type of the text features. Can be either one of:\n- \"words\": sequences of non-space characters\n- \"ngrams\": sequences of bytes\n- \"tokens\": user-defined."
+        },
+        {
+            "name": "max_trees",
+            "arg_type": "int",
+            "default": "10",
+            "description": "Maximum number of decision trees to construct. The trees combine native\nvariables and automatically constructed variables, excluding features\nderived from the text variables or from variable pairs. Decision trees\nusually improve the predictor's performance at the cost of the\ninterpretability of the model."
+        },
+        {
+            "name": "max_pairs",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum number of pair features to construct. These features exploit\nbivariate partitions of native or automatically constructed variables,\nexcluding features derived from the text variables. Pairs of variables\nare not available in regression analysis."
+        },
+        {
+            "name": "all_possible_pairs",
+            "arg_type": "bool",
+            "default": "True",
+            "description": "If `True` tries to create all possible pairs within the limit `max_pairs`.\nPairs specified with `specific_pairs` have top priority: they are constructed\nfirst."
+        },
+        {
+            "name": "specific_pairs",
+            "arg_type": "list",
+            "default": "None",
+            "description": "User-specified pairs as a list of 2-tuples of feature names. If a given tuple\ncontains only one non-empty feature name, then it generates all the pairs\ncontaining it (within the maximum limit `max_pairs`). These pairs have top\npriority: they are constructed first.",
+            "tuple_fields": [
+                {
+                    "name": "first_name",
+                    "arg_type": "str",
+                    "default": "",
+                    "description": "Name of the first variable in the pair"
+                },
+                {
+                    "name": "second_name",
+                    "arg_type": "str",
+                    "default": "",
+                    "description": "Name of the second variable in the pair"
+                }
+            ]
+        },
+        {
+            "name": "group_target_value",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "Allows grouping of the target variable values in classification. It can\nsubstantially increase the training time."
+        },
+        {
+            "name": "discretization_method",
+            "arg_type": "str",
+            "default": "MODL",
+            "description": "Name of the discretization method in case of unsupervised analysis.\nIts valid values are: \"MODL\", \"EqualWidth\", \"EqualFrequency\" or \"none\".\nIgnored for supervised analysis."
+        },
+        {
+            "name": "grouping_method",
+            "arg_type": "str",
+            "default": "MODL",
+            "description": "Name of the grouping method in case of unsupervised analysis.\nIts valid values are: \"MODL\", \"BasicGrouping\" or \"none\".\nIgnored for supervised analysis."
+        },
+        {
+            "name": "max_parts",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum number of variable parts produced by preprocessing methods. If equal\nto 0 it is automatically calculated.\nSpecial default values for unsupervised analysis:\n- If `discretization_method` is \"EqualWidth\" or \"EqualFrequency\": 10\n- If `grouping_method` is \"BasicGrouping\": 10."
+        },
+        {
+            "name": "log_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the log file for the Khiops process (command line option ``-e`` of the desktop app). If\nequal to \"\" then it writes no log file."
+        },
+        {
+            "name": "output_scenario_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the output Khiops scenario file (command line option ``-o`` of the desktop app).  If\nthe empty string is specified no output scenario file is generated."
+        },
+        {
+            "name": "task_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the task file for the Khiops process (command line option ``-p`` of the desktop app). If\nequal to \"\" then it writes no task file."
+        },
+        {
+            "name": "trace",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "If True prints the command line executed of the process and does not delete any temporary files\ncreated."
+        },
+        {
+            "name": "stdout_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stdout stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "stderr_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stderr stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "max_cores",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum number of cores for Khiops executions. If not set, then Khiops uses all\navailable CPU cores in the system."
+        },
+        {
+            "name": "memory_limit_mb",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum amount of memory (in MB) for Khiops executions. If not set, then Khiops\nuses all available system memory."
+        },
+        {
+            "name": "temp_dir",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Temporary directory for Khiops executions. If set to \"\", then Khiops uses the\nsystem's temporary directory."
+        },
+        {
+            "name": "scenario_prologue",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Prologue to prepend to all Khiops execution scenarios."
+        },
+        {
+            "name": "kwargs",
+            "arg_type": null,
+            "default": null,
+            "description": null
+        }
+    ],
+    "return_type": null,
+    "description_sections": [
+        {
+            "title": "",
+            "lines": [
+                "Trains a model from a data table",
+                "",
+                "!!! note",
+                "",
+                "    For all input dictionaries, this function creates model dictionaries whose",
+                "    names are prefixed with `SNB_`. For regression models, additional",
+                "    dictionaries are created and their names are prefixed with `Baseline_`."
+            ]
+        },
+        {
+            "title": "Parameters",
+            "lines": [
+                "dictionary_file_path_or_domain : str or DictionaryDomain",
+                "    Path of a Khiops dictionary file or a DictionaryDomain object.",
+                "dictionary_name : str",
+                "    Name of the dictionary to be analyzed.",
+                "data_table_path : str",
+                "    Path of the data table file.",
+                "target_variable : str",
+                "    Name of the target variable. If the specified variable is categorical it",
+                "    constructs a classifier and if it is numerical a regressor. If equal to \"\" it",
+                "    performs an unsupervised analysis.",
+                "analysis_report_file_path : str",
+                "    Path (absolute path recommended) to the analysis report file,",
+                "    in the JSON format. An additional dictionary file with the same name and",
+                "    extension `.model.kdic` is built, which contains the trained models.",
+                "    Note that a relative path will produce a report file in the current working",
+                "    directory.",
+                "detect_format : bool, default `True`",
+                "    If `True` detects automatically whether the data table file has a header and",
+                "    its field separator. It is set to `False` if `header_line` or",
+                "    `field_separator` are set.",
+                "header_line : bool, optional (default `True`)",
+                "    If `True` it uses the first line of the data as column names. Sets",
+                "    `detect_format` to `False` if set. Ignored if `detect_format`",
+                "    is `True`.",
+                "field_separator : str, optional (default \"\\\\t\")",
+                "    A field separator character. \"\" has the same effect as \"\\\\t\". Sets",
+                "    `detect_format` to `False` if set. Ignored if `detect_format`",
+                "    is `True`.",
+                "sample_percentage : float, default 70.0",
+                "    See the `sampling_mode` option below.",
+                "sampling_mode : \"Include sample\" or \"Exclude sample\"",
+                "    If equal to \"Include sample\" it trains the predictor on `sample_percentage`",
+                "    percent of the data and tests the model on the remainder of the data if",
+                "    `use_complement_as_test` is set to `True`.  If equal to \"Exclude sample\" the",
+                "    train and test datasets above are exchanged. See also",
+                "    [Database Sampling](../notes.md#core-api-sampling-mode).",
+                "use_complement_as_test : bool, default `True`",
+                "    Uses the complement of the sampled database as test database for",
+                "    computing the model's performance metrics.",
+                "selection_variable : str, default \"\"",
+                "    It trains with only the records such that the value of `selection_variable` is",
+                "    equal to `selection_value`. Ignored if equal to \"\".",
+                "selection_value: str or int or float, default \"\"",
+                "    See `selection_variable` option above. Ignored if equal to \"\".",
+                "additional_data_tables : dict, optional",
+                "    A dictionary containing the data paths and file paths for a multi-table",
+                "    dictionary file. For more details see",
+                "    [Multi-Table Learning Primer](../multi_table_primer.md).",
+                "do_data_preparation_only : bool, default `False`",
+                "    If `True` it only does data preparation via MODL preprocessing without",
+                "    training a Selective Naive Bayes Predictor.",
+                "main_target_value : str, default \"\"",
+                "    If this target value is specified then it guarantees the calculation of lift",
+                "    curves for it.",
+                "keep_selected_variables_only : bool, default `True`",
+                "    Keeps only predictor-selected variables in the supervised analysis report.",
+                "max_evaluated_variables : int, default 0",
+                "    Maximum number of variables to be evaluated in the SNB predictor training. If",
+                "    equal to 0 it evaluates all informative variables.",
+                "max_selected_variables : int, default 0",
+                "    Maximum number of variables to be selected in the SNB predictor. If equal to",
+                "    0 it selects all the variables kept in the training.",
+                "max_constructed_variables : int, default 1000",
+                "    Maximum number of variables to construct.",
+                "construction_rules : list of str, optional",
+                "    Allowed rules for the automatic variable construction. If not set, Khiops",
+                "    uses the multi-table construction rules listed in",
+                "    [DEFAULT_CONSTRUCTION_RULES][].",
+                "max_text_features : int, default 10000",
+                "    Maximum number of text features to construct.",
+                "text_features : str, default \"words\"",
+                "    Type of the text features. Can be either one of:",
+                "",
+                "        - \"words\": sequences of non-space characters",
+                "        - \"ngrams\": sequences of bytes",
+                "        - \"tokens\": user-defined",
+                "",
+                "max_trees : int, default 10",
+                "    Maximum number of decision trees to construct. The trees combine native",
+                "    variables and automatically constructed variables, excluding features",
+                "    derived from the text variables or from variable pairs. Decision trees",
+                "    usually improve the predictor's performance at the cost of the",
+                "    interpretability of the model.",
+                "max_pairs : int, default 0",
+                "    Maximum number of pair features to construct. These features exploit",
+                "    bivariate partitions of native or automatically constructed variables,",
+                "    excluding features derived from the text variables. Pairs of variables",
+                "    are not available in regression analysis.",
+                "specific_pairs : list of tuple, optional",
+                "    User-specified pairs as a list of 2-tuples of feature names. If a given tuple",
+                "    contains only one non-empty feature name, then it generates all the pairs",
+                "    containing it (within the maximum limit `max_pairs`). These pairs have top",
+                "    priority: they are constructed first.",
+                "all_possible_pairs : bool, default `True`",
+                "    If `True` tries to create all possible pairs within the limit `max_pairs`.",
+                "    Pairs specified with `specific_pairs` have top priority: they are constructed",
+                "    first.",
+                "group_target_value : bool, default `False`",
+                "    Allows grouping of the target variable values in classification. It can",
+                "    substantially increase the training time.",
+                "discretization_method : str, default \"MODL\"",
+                "    Name of the discretization method in case of unsupervised analysis.",
+                "    Its valid values are: \"MODL\", \"EqualWidth\", \"EqualFrequency\" or \"none\".",
+                "    Ignored for supervised analysis.",
+                "grouping_method : str, default \"MODL\"",
+                "    Name of the grouping method in case of unsupervised analysis.",
+                "    Its valid values are: \"MODL\", \"BasicGrouping\" or \"none\".",
+                "    Ignored for supervised analysis.",
+                "max_parts : int, default 0",
+                "    Maximum number of variable parts produced by preprocessing methods. If equal",
+                "    to 0 it is automatically calculated.",
+                "    Special default values for unsupervised analysis:",
+                "",
+                "        - If `discretization_method` is \"EqualWidth\" or \"EqualFrequency\": 10",
+                "        - If `grouping_method` is \"BasicGrouping\": 10"
+            ]
+        },
+        {
+            "title": "See Also",
+            "lines": [
+                "- [Common Parameters](../notes.md#core-api-common-params)"
+            ]
+        },
+        {
+            "title": "Returns",
+            "lines": [
+                "tuple",
+                "    A 2-tuple containing:",
+                "        - The reports file path",
+                "        - The modeling dictionary file path in the supervised case."
+            ]
+        },
+        {
+            "title": "Raises",
+            "lines": [
+                "ValueError",
+                "    Invalid values of an argument",
+                "TypeError",
+                "    Invalid type of an argument"
+            ]
+        },
+        {
+            "title": "Examples",
+            "lines": [
+                "See the following functions of the `samples.py` documentation script:",
+                "    - `samples.train_predictor()`",
+                "    - `samples.train_predictor_file_paths()`",
+                "    - `samples.train_predictor_error_handling()`",
+                "    - `samples.train_predictor_mt()`",
+                "    - `samples.train_predictor_mt_with_specific_rules()`",
+                "    - `samples.train_predictor_with_train_percentage()`",
+                "    - `samples.train_predictor_with_trees()`",
+                "    - `samples.train_predictor_with_pairs()`",
+                "    - `samples.train_predictor_with_multiple_parameters()`",
+                "    - `samples.train_predictor_detect_format()`",
+                "    - `samples.train_predictor_with_cross_validation()`",
+                "    - `samples.multiple_train_predictor()`"
+            ]
+        }
+    ],
+    "scenario": "\n// Resource settings\nAnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB\nAnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores\nAnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory\n\n// Dictionary file and class settings\nClassManagement.OpenFile // Open...\nClassFileName __dictionaryFilePath__ // Dictionary file\nOK\n// <- Open\n\n// Train/test database settings\nTrainDatabase.ClassName __dictionaryName__\nTrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key       // List item selection\nTrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __dataTablePath__\n\nLOOP __additionalDataTables__\nTrainDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key __dataPath__\nTrainDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __filePath__\nEND LOOP\n\nTrainDatabase.DatabaseSpec.Sampling.SampleNumberPercentage  __samplePercentage__  // Sample percentage\nTrainDatabase.DatabaseSpec.Sampling.SamplingMode __samplingMode__\nTrainDatabase.DatabaseSpec.Selection.SelectionAttribute __selectionVariable__\nTrainDatabase.DatabaseSpec.Selection.SelectionValue __selectionValue__\nTrainDatabase.TestDatabaseSpecificationMode __useComplementAsTest__\n\nTrainDatabase.DatabaseSpec.Data.HeaderLineUsed __headerLine__\nTrainDatabase.DatabaseSpec.Data.FieldSeparator __fieldSeparator__\n\nIF __detectFormat__\nTrainDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat\nEND IF\n\n// Target variable\nAnalysisSpec.TargetAttributeName __targetVariable__ // May be empty string\nAnalysisSpec.MainTargetModality __mainTargetValue__\n\n// Do data preparation only\nAnalysisSpec.PredictorsSpec.AdvancedSpec.DataPreparationOnly __doDataPreparationOnly__\n\n// Selective Naive Bayes settings\nAnalysisSpec.PredictorsSpec.AdvancedSpec.SelectiveNaiveBayesParameters.TrainParameters.MaxEvaluatedAttributeNumber __maxEvaluatedVariables__\nAnalysisSpec.PredictorsSpec.AdvancedSpec.SelectiveNaiveBayesParameters.SelectionParameters.MaxSelectedAttributeNumber __maxSelectedVariables__\n\n// Feature engineering\nAnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTextFeatureNumber __maxTextFeatures__\nAnalysisSpec.PredictorsSpec.ConstructionSpec.MaxTreeNumber __maxTrees__\nAnalysisSpec.PredictorsSpec.ConstructionSpec.MaxAttributePairNumber __maxPairs__\nAnalysisSpec.PredictorsSpec.AdvancedSpec.InspectAttributePairsParameters\nAllAttributePairs __allPossiblePairs__\nLOOP __specificPairs__\nSpecificAttributePairs.InsertItemAfter\nSpecificAttributePairs.FirstName __firstName__\nSpecificAttributePairs.SecondName __secondName__\nEND LOOP\nExit\n\n//  Text feature parameters\nAnalysisSpec.PredictorsSpec.AdvancedSpec.InspectTextFeaturesParameters \nTextFeatures __textFeatures__\nExit\n\nAnalysisSpec.PredictorsSpec.ConstructionSpec.KeepSelectedAttributesOnly __keepSelectedVariablesOnly__\nAnalysisSpec.PredictorsSpec.ConstructionSpec.MaxConstructedAttributeNumber __maxConstructedVariables__\n\nAnalysisSpec.PredictorsSpec.AdvancedSpec.InspectConstructionDomain\nLOOP __constructionRules__\nUnselectAll\nConstructionRules.List.Key __name__\nConstructionRules.Used\nEND LOOP\nExit\n\n// Data preparation (discretization & grouping) settings\nAnalysisSpec.PreprocessingSpec.TargetGrouped __groupTargetValue__\nAnalysisSpec.PreprocessingSpec.InspectAdvancedParameters\nDiscretizerUnsupervisedMethodName __discretizationMethod__\nGrouperUnsupervisedMethodName __groupingMethod__\nExit\n\n// Max parts\nAnalysisSpec.PreprocessingSpec.MaxPartNumber __maxParts__\n\n// Output settings\nAnalysisResults.ReportFileName __analysisReportFilePath__\n\n\nComputeStats // Analyse database\n\nExit // Close\nOK // Close\n"
+}

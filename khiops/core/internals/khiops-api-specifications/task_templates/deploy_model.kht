@@ -1,0 +1,48 @@
+// Resource settings
+
+AnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB
+AnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores
+AnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory
+
+// Dictionary file settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Deploy settings
+LearningTools.TransferDatabase
+ClassName __dictionaryName__
+
+// Input database settings
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __dataTablePath__
+LOOP __additionalDataTables__
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key __dataPath__
+SourceDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __filePath__
+END LOOP
+SourceDatabase.DatabaseSpec.Data.HeaderLineUsed __headerLine__
+SourceDatabase.DatabaseSpec.Data.FieldSeparator __fieldSeparator__
+IF __detectFormat__
+SourceDatabase.DatabaseSpec.Data.DatabaseFormatDetector.DetectFileFormat
+END IF
+SourceDatabase.DatabaseSpec.Sampling.SampleNumberPercentage __samplePercentage__
+SourceDatabase.DatabaseSpec.Sampling.SamplingMode  __samplingMode__
+SourceDatabase.DatabaseSpec.Selection.SelectionAttribute __selectionVariable__
+SourceDatabase.DatabaseSpec.Selection.SelectionValue __selectionValue__
+
+// Output database settings
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __outputDataTablePath__
+LOOP __outputAdditionalDataTables__
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.List.Key __dataPath__
+TargetDatabase.DatabaseSpec.Data.DatabaseFiles.DataTableName __filePath__
+END LOOP
+TargetDatabase.DatabaseSpec.Data.HeaderLineUsed __outputHeaderLine__
+TargetDatabase.DatabaseSpec.Data.FieldSeparator __outputFieldSeparator__
+
+// Transfer
+TransferDatabase
+Exit
+
+Exit // Close
+OK // Close

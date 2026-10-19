@@ -1,0 +1,34 @@
+// Resource settings
+
+AnalysisSpec.SystemParameters.MemoryLimit __memoryLimitMb__    // Memory limit in MB
+AnalysisSpec.SystemParameters.MaxCoreNumber __maxCores__      // Max number of processor cores
+AnalysisSpec.SystemParameters.TemporaryDirectoryName __tempDir__    // Temp file directory
+
+// Dictionary file and class settings
+ClassManagement.OpenFile
+ClassFileName __dictionaryFilePath__
+OK
+
+// Reinforcement settings
+TrainDatabase.ClassName __predictorDictionaryName__
+
+// Reinforce model
+LearningTools.ReinforcePredictor
+ReinforcedTargetValue __reinforcementTargetValue__
+
+LeverAttributes.UnselectAll
+LOOP __reinforcementLeverVariables__
+LeverAttributes.List.Key __dataPath__
+LeverAttributes.Used
+END LOOP
+
+// Build reinforced predictor
+BuildReinforcementClass
+
+// Output settings
+ClassFileName __reinforcedPredictorFilePath__
+OK
+Exit
+
+Exit // Close
+OK // Close

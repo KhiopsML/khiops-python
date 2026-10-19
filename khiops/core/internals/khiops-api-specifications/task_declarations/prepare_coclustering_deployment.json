@@ -1,0 +1,240 @@
+{
+    "name": "prepare_coclustering_deployment",
+    "api": "standard",
+    "tool": "khiops_coclustering",
+    "version": "11.0.2",
+    "arguments": [
+        {
+            "name": "dictionary_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of a Khiops dictionary file."
+        },
+        {
+            "name": "dictionary_name",
+            "arg_type": "str",
+            "default": null,
+            "description": "Name of the dictionary to be analyzed."
+        },
+        {
+            "name": "coclustering_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of the coclustering model file (extension `.khc` or `.khcj`)."
+        },
+        {
+            "name": "table_variable",
+            "arg_type": "str",
+            "default": null,
+            "description": "Name of the table variable in the dictionary."
+        },
+        {
+            "name": "deployed_variable_name",
+            "arg_type": "str",
+            "default": null,
+            "description": "Name of the coclustering variable to deploy."
+        },
+        {
+            "name": "coclustering_dictionary_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of the coclustering dictionary file for deployment."
+        },
+        {
+            "name": "max_preserved_information",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum information preserve in the simplified coclustering. If equal to 0\nthere is no limit."
+        },
+        {
+            "name": "max_cells",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum number of cells in the simplified coclustering. If equal to 0 there\nis no limit."
+        },
+        {
+            "name": "max_total_parts",
+            "arg_type": "int",
+            "default": "0",
+            "description": "Maximum number of parts totaled over all variables. If equal to 0 there is no\nlimit."
+        },
+        {
+            "name": "max_part_numbers",
+            "arg_type": "list",
+            "default": "None",
+            "description": "List of tuples associating variable names to their maximum number of parts\nto preserve in the simplified coclustering. For variables not present\nin `max_part_numbers` there is no limit.",
+            "tuple_fields": [
+                {
+                    "name": "name",
+                    "arg_type": "str",
+                    "default": "",
+                    "description": "Name of the input coclustering variable."
+                },
+                {
+                    "name": "max_part_number",
+                    "arg_type": "int",
+                    "default": "0",
+                    "description": "Max number of parts to keep for this variable."
+                }
+            ]
+        },
+        {
+            "name": "build_cluster_variable",
+            "arg_type": "bool",
+            "default": "True",
+            "description": "If `True` includes a cluster id variable in the deployment."
+        },
+        {
+            "name": "build_distance_variables",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "If `True` includes a cluster distance variable in the deployment."
+        },
+        {
+            "name": "build_frequency_variables",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "If `True` includes the frequency variables in the deployment."
+        },
+        {
+            "name": "variables_prefix",
+            "arg_type": "str",
+            "default": "",
+            "description": "Prefix for the variables in the deployment dictionary."
+        },
+        {
+            "name": "log_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the log file for the Khiops process (command line option ``-e`` of the desktop app). If\nequal to \"\" then it writes no log file."
+        },
+        {
+            "name": "output_scenario_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the output Khiops scenario file (command line option ``-o`` of the desktop app).  If\nthe empty string is specified no output scenario file is generated."
+        },
+        {
+            "name": "task_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the task file for the Khiops process (command line option ``-p`` of the desktop app). If\nequal to \"\" then it writes no task file."
+        },
+        {
+            "name": "trace",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "If True prints the command line executed of the process and does not delete any temporary files\ncreated."
+        },
+        {
+            "name": "stdout_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stdout stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "stderr_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stderr stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "max_cores",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum number of cores for Khiops executions. If not set, then Khiops uses all\navailable CPU cores in the system."
+        },
+        {
+            "name": "memory_limit_mb",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum amount of memory (in MB) for Khiops executions. If not set, then Khiops\nuses all available system memory."
+        },
+        {
+            "name": "temp_dir",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Temporary directory for Khiops executions. If set to \"\", then Khiops uses the\nsystem's temporary directory."
+        },
+        {
+            "name": "scenario_prologue",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Prologue to prepend to all Khiops execution scenarios."
+        },
+        {
+            "name": "kwargs",
+            "arg_type": null,
+            "default": null,
+            "description": null
+        }
+    ],
+    "return_type": null,
+    "description_sections": [
+        {
+            "title": "",
+            "lines": [
+                "Prepares a *individual-variable* coclustering deployment"
+            ]
+        },
+        {
+            "title": "Parameters",
+            "lines": [
+                "dictionary_file_path_or_domain : str or DictionaryDomain",
+                "    Path of a Khiops dictionary file or a DictionaryDomain object.",
+                "dictionary_name : str",
+                "    Name of the dictionary to be analyzed.",
+                "coclustering_file_path : str",
+                "    Path of the coclustering model file (extension `.khc` or `.khcj`).",
+                "table_variable : str",
+                "    Name of the table variable in the dictionary.",
+                "deployed_variable_name : str",
+                "    Name of the coclustering variable to deploy.",
+                "coclustering_dictionary_file_path : str",
+                "    Path of the coclustering dictionary file for deployment.",
+                "max_preserved_information : int, default 0",
+                "    Maximum information preserve in the simplified coclustering. If equal to 0",
+                "    there is no limit.",
+                "max_cells : int, default 0",
+                "    Maximum number of cells in the simplified coclustering. If equal to 0 there",
+                "    is no limit.",
+                "max_total_parts : int, default 0",
+                "    Maximum number of parts totaled over all variables. If equal to 0 there is no",
+                "    limit.",
+                "max_part_numbers : dict, optional",
+                "    Dictionary associating variable names to their maximum number of parts",
+                "    to preserve in the simplified coclustering. For variables not present",
+                "    in `max_part_numbers` there is no limit.",
+                "build_cluster_variable : bool, default `True`",
+                "    If `True` includes a cluster id variable in the deployment.",
+                "build_distance_variables : bool, default `False`",
+                "    If `True` includes a cluster distance variable in the deployment.",
+                "build_frequency_variables : bool, default `False`",
+                "    If `True` includes the frequency variables in the deployment.",
+                "variables_prefix : str, default \"\"",
+                "    Prefix for the variables in the deployment dictionary."
+            ]
+        },
+        {
+            "title": "See Also",
+            "lines": [
+                "- [Common Parameters](../notes.md#core-api-common-params)"
+            ]
+        },
+        {
+            "title": "Raises",
+            "lines": [
+                "TypeError",
+                "    Invalid type of an argument"
+            ]
+        },
+        {
+            "title": "Examples",
+            "lines": [
+                "See the following function of the `samples.py` documentation script:",
+                "    - `samples.deploy_model_expert()`"
+            ]
+        }
+    ],
+    "scenario": null
+}

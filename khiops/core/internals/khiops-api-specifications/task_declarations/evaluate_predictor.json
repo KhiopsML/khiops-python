@@ -1,0 +1,257 @@
+{
+    "name": "evaluate_predictor",
+    "api": "standard",
+    "tool": "khiops",
+    "version": "11.0.2",
+    "arguments": [
+        {
+            "name": "dictionary_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of a Khiops dictionary file."
+        },
+        {
+            "name": "train_dictionary_name",
+            "arg_type": "str",
+            "default": null,
+            "description": "Name of the main dictionary used while training the models."
+        },
+        {
+            "name": "data_table_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path of the evaluation data table file."
+        },
+        {
+            "name": "evaluation_report_file_path",
+            "arg_type": "str",
+            "default": null,
+            "description": "Path (absolute path recommended) to the evaluation report file,\nin the JSON format. Note that a relative path will produce a report file in\nthe current working directory."
+        },
+        {
+            "name": "detect_format",
+            "arg_type": "bool",
+            "default": "True",
+            "description": "If `True` detects automatically whether the data table file has a header and\nits field separator. It is set to `False` if `header_line` or\n`field_separator` are set."
+        },
+        {
+            "name": "header_line",
+            "arg_type": "bool",
+            "default": "None",
+            "description": "If `True` it uses the first line of the data as column names. Sets\n`detect_format` to `False` if set. Ignored if `detect_format`\nis `True`."
+        },
+        {
+            "name": "field_separator",
+            "arg_type": "str",
+            "default": "None",
+            "description": "A field separator character. \"\" has the same effect as \"\\\\t\". Sets\n`detect_format` to `False` if set. Ignored if `detect_format`\nis `True`."
+        },
+        {
+            "name": "sample_percentage",
+            "arg_type": "float",
+            "default": "100.0",
+            "description": "See `sampling_mode` option below."
+        },
+        {
+            "name": "sampling_mode",
+            "arg_type": "str",
+            "default": "Include sample",
+            "description": "If equal to \"Include sample\" it evaluates the predictor on `sample_percentage`\npercent of the data. If equal to \"Exclude sample\" it evaluates the predictor on\nthe complement of the data selected with \"Include sample\". See also\n[Database Sampling](../notes.md#core-api-sampling-mode)."
+        },
+        {
+            "name": "selection_variable",
+            "arg_type": "str",
+            "default": "",
+            "description": "It trains with only the records such that the value of `selection_variable` is\nequal to `selection_value`. Ignored if equal \"\"."
+        },
+        {
+            "name": "selection_value",
+            "arg_type": "str",
+            "default": "",
+            "description": "See `selection_variable` option above. Ignored if equal to \"\"."
+        },
+        {
+            "name": "additional_data_tables",
+            "arg_type": "list",
+            "default": "None",
+            "description": "A list of tuples containing the data paths and file paths for a multi-table\ndictionary file. For more details see\n[Multi-Table Learning Primer](../multi_table_primer.md).\n!!! note\nFor external tables, use the initial dictionary name in the data paths,\nwhich is the same as the one used for training the predictor.",
+            "tuple_fields": [
+                {
+                    "name": "data_path",
+                    "arg_type": "str",
+                    "default": "",
+                    "description": "Data path of the data table."
+                },
+                {
+                    "name": "file_path",
+                    "arg_type": "str",
+                    "default": "",
+                    "description": "Path of the data table file."
+                }
+            ]
+        },
+        {
+            "name": "main_target_value",
+            "arg_type": "str",
+            "default": "",
+            "description": "If this target value is specified then it guarantees the calculation of lift\ncurves for it."
+        },
+        {
+            "name": "log_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the log file for the Khiops process (command line option ``-e`` of the desktop app). If\nequal to \"\" then it writes no log file."
+        },
+        {
+            "name": "output_scenario_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the output Khiops scenario file (command line option ``-o`` of the desktop app).  If\nthe empty string is specified no output scenario file is generated."
+        },
+        {
+            "name": "task_file_path",
+            "arg_type": "str",
+            "default": "None",
+            "description": "Path of the task file for the Khiops process (command line option ``-p`` of the desktop app). If\nequal to \"\" then it writes no task file."
+        },
+        {
+            "name": "trace",
+            "arg_type": "bool",
+            "default": "False",
+            "description": "If True prints the command line executed of the process and does not delete any temporary files\ncreated."
+        },
+        {
+            "name": "stdout_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stdout stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "stderr_file_path",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Path to a file where the Khiops process writes its stderr stream. Normally Khiops\nshould not write to this stream but MPI, filesystems plugins or debug versions may do it. The\nstream is captured with a UTF-8 encoding and replacing encoding errors. If equal to \"\" then it\nwrites no file."
+        },
+        {
+            "name": "max_cores",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum number of cores for Khiops executions. If not set, then Khiops uses all\navailable CPU cores in the system."
+        },
+        {
+            "name": "memory_limit_mb",
+            "arg_type": "int",
+            "default": "None",
+            "description": "*Advanced* Maximum amount of memory (in MB) for Khiops executions. If not set, then Khiops\nuses all available system memory."
+        },
+        {
+            "name": "temp_dir",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Temporary directory for Khiops executions. If set to \"\", then Khiops uses the\nsystem's temporary directory."
+        },
+        {
+            "name": "scenario_prologue",
+            "arg_type": "str",
+            "default": "",
+            "description": "*Advanced* Prologue to prepend to all Khiops execution scenarios."
+        },
+        {
+            "name": "kwargs",
+            "arg_type": null,
+            "default": null,
+            "description": null
+        }
+    ],
+    "return_type": null,
+    "description_sections": [
+        {
+            "title": "",
+            "lines": [
+                "Evaluates the predictors in a dictionary file on a database"
+            ]
+        },
+        {
+            "title": "Parameters",
+            "lines": [
+                "dictionary_file_path_or_domain : str or DictionaryDomain",
+                "    Path of a Khiops dictionary file or a DictionaryDomain object.",
+                "train_dictionary_name : str",
+                "    Name of the main dictionary used while training the models.",
+                "data_table_path : str",
+                "    Path of the evaluation data table file.",
+                "evaluation_report_file_path : str",
+                "    Path (absolute path recommended) to the evaluation report file,",
+                "    in the JSON format. Note that a relative path will produce a report file in",
+                "    the current working directory.",
+                "detect_format : bool, default `True`",
+                "    If `True` detects automatically whether the data table file has a header and",
+                "    its field separator. It is set to `False` if `header_line` or",
+                "    `field_separator` are set.",
+                "header_line : bool, optional (default `True`)",
+                "    If `True` it uses the first line of the data as column names. Sets",
+                "    `detect_format` to `False` if set. Ignored if `detect_format`",
+                "    is `True`.",
+                "field_separator : str, optional (default \"\\\\t\")",
+                "    A field separator character. \"\" has the same effect as \"\\\\t\". Sets",
+                "    `detect_format` to `False` if set. Ignored if `detect_format`",
+                "    is `True`.",
+                "sample_percentage : float, default 100.0",
+                "    See `sampling_mode` option below.",
+                "sampling_mode : \"Include sample\" or \"Exclude sample\"",
+                "    If equal to \"Include sample\" it evaluates the predictor on `sample_percentage`",
+                "    percent of the data. If equal to \"Exclude sample\" it evaluates the predictor on",
+                "    the complement of the data selected with \"Include sample\". See also",
+                "    [Database Sampling](../notes.md#core-api-sampling-mode).",
+                "selection_variable : str, default \"\"",
+                "    It trains with only the records such that the value of `selection_variable` is",
+                "    equal to `selection_value`. Ignored if equal \"\".",
+                "selection_value: str or int or float, default \"\"",
+                "    See `selection_variable` option above. Ignored if equal to \"\".",
+                "additional_data_tables : dict, optional",
+                "    A dictionary containing the data paths and file paths for a multi-table",
+                "    dictionary file. For more details see",
+                "    [Multi-Table Learning Primer](../multi_table_primer.md).",
+                "",
+                "    !!! note",
+                "",
+                "        For external tables, use the initial dictionary name in the data paths,",
+                "        which is the same as the one used for training the predictor.",
+                "",
+                "main_target_value : str, default \"\"",
+                "    If this target value is specified then it guarantees the calculation of lift",
+                "    curves for it."
+            ]
+        },
+        {
+            "title": "See Also",
+            "lines": [
+                "- [Common Parameters](../notes.md#core-api-common-params)"
+            ]
+        },
+        {
+            "title": "Returns",
+            "lines": [
+                "str",
+                "    The path of the JSON evaluation report (extension `.khj`)."
+            ]
+        },
+        {
+            "title": "Raises",
+            "lines": [
+                "TypeError",
+                "    Invalid type of an argument."
+            ]
+        },
+        {
+            "title": "Examples",
+            "lines": [
+                "See the following functions of the `samples.py` documentation script:",
+                "    - `samples.evaluate_predictor()`",
+                "    - `samples.access_predictor_evaluation_report()`",
+                "    - `samples.train_predictor_with_cross_validation()`"
+            ]
+        }
+    ],
+    "scenario": null
+}

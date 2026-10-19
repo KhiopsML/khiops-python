@@ -6,56 +6,35 @@
 ######################################################################################
 """Tasks module
 
-This is a "read-only" module that registers all the task definition at __init__ time.
+This is a "read-only" module that registers all the task specs at __init__ time.
 """
-from khiops.core.internals.task import KhiopsTask, get_task_registry
-from khiops.core.internals.tasks import (
-    build_deployed_dictionary,
-    build_dictionary_from_data_table,
-    check_database,
-    deploy_model,
-    detect_data_table_format,
-    detect_data_table_format_with_dictionary,
-    evaluate_predictor,
-    export_dictionary_as_json,
-    extract_clusters,
-    extract_keys_from_data_table,
-    interpret_predictor,
-    prepare_coclustering_deployment,
-    reinforce_predictor,
-    simplify_coclustering,
-    sort_data_table,
-    train_coclustering,
-    train_instance_variable_coclustering,
-    train_predictor,
-    train_recoder,
+import json
+import os
+import pathlib
+from pathlib import Path
+
+from khiops.core.internals.task import get_task_registry
+
+base_folder = os.path.join(
+    Path(__file__).parent.parent,
+    "khiops-api-specifications",
 )
 
-# Register the tasks in each module
-task_modules = [
-    build_deployed_dictionary,
-    build_dictionary_from_data_table,
-    check_database,
-    deploy_model,
-    detect_data_table_format,
-    detect_data_table_format_with_dictionary,
-    evaluate_predictor,
-    export_dictionary_as_json,
-    extract_clusters,
-    extract_keys_from_data_table,
-    interpret_predictor,
-    reinforce_predictor,
-    prepare_coclustering_deployment,
-    simplify_coclustering,
-    sort_data_table,
-    train_coclustering,
-    train_instance_variable_coclustering,
-    train_predictor,
-    train_recoder,
-]
-for task_module in task_modules:
-    assert isinstance(task_module.TASKS, list)
-    for task in task_module.TASKS:
-        assert isinstance(task, KhiopsTask)
-        task_registry = get_task_registry()
-        task_registry.register_task(task)
+task_registry = get_task_registry()
+
+# process all the declarations and templates
+declarations_folder = os.path.join(base_folder, "task_declarations")
+templates_folder = os.path.join(base_folder, "task_templates")
+for declaration_name in os.listdir(declarations_folder):
+    function_name = pathlib.Path(declaration_name).stem
+    print(f"Loading declaration and template for {function_name}")
+    with (
+        open(
+            os.path.join(declarations_folder, declaration_name), "r"
+        ) as declaration_file,
+        open(
+            os.path.join(templates_folder, f"{function_name}.kht"), "r"
+        ) as template_file,
+    ):
+        json_data = json.load(declaration_file)
+        task_registry.register_task(json_data["name"], json_data, template_file.read())
