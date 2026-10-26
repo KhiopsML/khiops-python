@@ -415,6 +415,11 @@ jobs:
           if [[ "${{ matrix.container }}" == "debian13" ]]; then            
             deactivate                      
           fi
+      - name: Setup uv (for uv support)
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
       - name: Setup and Install Test Requirements
         shell: bash
         run: |-
@@ -473,3 +478,17 @@ jobs:
           if [[ "${{ matrix.container }}" == "debian13" ]]; then            
             deactivate                      
           fi
+
+          # Installation via 'uv' ('pip' alternative that becomes more and more popular)
+
+          # Create virtual environment
+          uv venv
+
+          # Activate virtual environment
+          source .venv/bin/activate
+
+          # Install from the local sources
+          uv pip install .
+
+          # Run status tool without any error
+          kh-status

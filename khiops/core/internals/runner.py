@@ -323,7 +323,7 @@ def _get_current_library_installer():
     Returns
     -------
     str
-        installer name among : 'pip', 'conda' or 'unknown'
+        installer name among : 'pip', 'uv', 'conda' or 'unknown'
     """
 
     try:
@@ -345,12 +345,12 @@ def _get_current_library_installer():
         warnings.warn(
             "The python library metadata exists ('khiops-*.dist-info') "
             "but seems corrupted as no INSTALLER file can be found. "
-            "Please re-install using the same tool ('conda' or 'pip').",
+            "Please re-install using the same tool ('conda', 'pip' or 'uv').",
             stacklevel=3,
         )
         return "unknown"
     except PackageNotFoundError:
-        # The python library is not installed via standard tools like conda, pip...
+        # The python library is not installed via standard tools like conda, pip, uv
         return "unknown"
 
 
@@ -1027,12 +1027,12 @@ class KhiopsLocalRunner(KhiopsRunner):
                         "Re-install the Khiops Python library to automatically install "
                         "Khiops. Go to https://khiops.org for more information.\n"
                     ) from exc
-                # On Windows, determine the Scripts directory where pip placed
+                # On Windows, determine the Scripts directory where pip or uv placed
                 # khiops_env.cmd.
                 # If this library is installed under the user site-packages
                 # directory, khiops-core (and its khiops_env.cmd) was also installed
                 # there with `pip install --user`, so use the user Scripts directory.
-                # Otherwise use the standard Scripts directory (venv or system-wide
+                # Otherwise, use the standard Scripts directory (venv or system-wide
                 # install). This avoids an ambiguous search and mirrors how pip
                 # resolves scripts.
                 if platform.system() == "Windows":
@@ -1049,7 +1049,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                             "Make sure you have installed Khiops properly. "
                             "Go to https://khiops.org for more information."
                         )
-                # On UNIX, pip places khiops_env in the bin directory,
+                # On UNIX, pip or uv places khiops_env in the bin directory,
                 # which is in PATH.
                 else:
                     khiops_env_path = self._infer_khiops_env_from_path(
@@ -1274,10 +1274,10 @@ class KhiopsLocalRunner(KhiopsRunner):
             if caught_warnings is not None:
                 # caught_warnings contains a list of WarningMessage
                 warning_list.extend([w.message for w in caught_warnings])
-            if current_library_installer not in ("conda", "pip"):
+            if current_library_installer not in ("conda", "pip", "uv"):
                 warning = (
                     "Khiops Python library "
-                    "was not installed with 'conda' or 'pip' "
+                    "was not installed with 'conda', 'pip' or 'uv' "
                     f"but with '{current_library_installer}' installer. "
                     "This will probably lead to unexpected errors. "
                     "Go to https://khiops.org for instructions to re-install it.\n"
@@ -1286,7 +1286,7 @@ class KhiopsLocalRunner(KhiopsRunner):
 
             # we consider only the 'pip' and 'conda-based' installations here
             # - 'conda-based' installation (similar to a non-activated virtual env)
-            # - 'pip' installation under a virtual env
+            # - 'pip' or 'uv' installation under a virtual env
             # - User site 'pip' installation (without virtual env)
             # - system-wide 'pip' installation (without virtual env)...
             # (an empty string means a borderline installation was found,
@@ -1323,7 +1323,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                         # Under Linux or MacOS a bin/ folder exists
                         or sys_executable_grand_parent != base_dir_path
                     ):
-                        error = (
+                        warning = (
                             "Khiops Python library installation path "
                             f"'{library_root_dir_path}' "
                             "does not match the current python environment "
@@ -1332,7 +1332,7 @@ class KhiopsLocalRunner(KhiopsRunner):
                             "to re-install it "
                             "(preferably in a virtual environment).\n"
                         )
-                        error_list.append(error)
+                        warning_list.append(warning)
                 else:
                     sys_executable_path = Path(sys.executable)
                     # the installation is not within a virtual env
