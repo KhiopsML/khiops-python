@@ -34,11 +34,11 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-push:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        khiopsdev-os: [ubuntu22.04, rocky8, rocky9, debian13]
+        khiopsdev-os: [ubuntu24.04, rocky8, rocky9, debian13]
     permissions:
       packages: write  # to write in the Github package registry
     steps:
