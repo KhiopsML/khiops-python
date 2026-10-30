@@ -49,8 +49,11 @@ jobs:
           printf 'pip>=%s\ncertifi>=%s\n' \
             "$MINIMAL_PIP_VERSION" "$MINIMAL_CERTIFI_VERSION" > "$RUNNER_TEMP/constraints.txt"
           echo "PIP_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
-      - name: Upgrade Pip
-        run: python -m pip install --upgrade "pip>=$MINIMAL_PIP_VERSION"
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+          check-latest: true
       - name: Check minimal Pip and Certifi version
         uses: ./.github/actions/check-minimal-pip-and-certifi-versions
         with:
