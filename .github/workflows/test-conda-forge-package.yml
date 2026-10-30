@@ -30,10 +30,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Miniforge
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         with:
-          miniforge-version: 24.11.0-0
+          miniforge-version: latest
           python-version: ${{ matrix.python-version }}
+          channels: conda-forge
           conda-remove-defaults: true
       - name: Install the Khiops Conda package
         run: |
@@ -121,14 +122,18 @@ jobs:
       # Note: The `sparse-checkout` option of this action is bugged so we checkout all the sources
       #       See https://github.com/actions/checkout/issues/1628
       - name: Checkout Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       # This is needed so python does not retrieve the khiops module from PWD
       - name: Remove the khiops Module from the Sources
         run: rm -rf khiops
       - name: Install the Test Requirements
-        run: conda install -y --file test-requirements.txt
+        # 'packaging' allows the check to run when Pip is absent
+        run: conda install -y --file test-requirements.txt packaging
+      # The activated Conda Python is recorded here, in the login shell
+      - name: Record the Conda Python
+        run: echo "PYTHON=$(type -P python)" >> "$GITHUB_ENV"
       - name: Run the Runner Initialization Integration Test
         run: |
           python -m unittest -v \

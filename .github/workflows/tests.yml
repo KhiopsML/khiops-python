@@ -52,7 +52,7 @@ jobs:
       packages: read
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -66,7 +66,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
@@ -96,8 +96,10 @@ jobs:
           # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
           $CONDA install -y -n "$CONDA_ENV" tomli
           # Conda environments are only used to support multiple Python versions, hence install Pip packages inside
-          # Install Pip inside the Conda env to use it instead of the system-wide Pip
+          # Install Pip inside the Conda env to use it instead of the system-wide Pip; this does nothing if Pip is already installed
           $CONDA install -y -n "$CONDA_ENV" pip
+          # Make sure Pip is upgraded
+          $CONDA update -y -n "$CONDA_ENV" pip
           # First, install all dependencies except khiops-core and khiops-drivers-*
           $CONDA run --no-capture-output -n "$CONDA_ENV" python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
           $CONDA run -n "$CONDA_ENV" pip install `cat requires-no-khiops.txt`
@@ -163,7 +165,7 @@ jobs:
         # For integration tests on GCS we use a real Google account
         # Retrieve the Google credentials through "Workload Identity Federation"
         # see https://github.com/google-github-actions/auth?tab=readme-ov-file#workload-identity-federation-through-a-service-account
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           service_account: khiops-gcs-driver-test-sa@ino-olr-dak-ideal-sbx.iam.gserviceaccount.com
           workload_identity_provider: projects/322269704080/locations/global/workloadIdentityPools/github/providers/my-repo
@@ -201,7 +203,7 @@ jobs:
           $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
       - name: Display Test Reports
         if: success() || failure()
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3.0.0
         with:
           name: Run Tests ${{ matrix.python-version }}
           path: reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml
@@ -210,7 +212,7 @@ jobs:
           fail-on-error: 'false'
       - name: Upload Test Reports as Artifacts
         if: success() || failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: test-reports-${{ matrix.python-version }}
           path: |-
@@ -229,7 +231,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -243,7 +245,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
@@ -251,9 +253,13 @@ jobs:
           path: khiops-samples
       - name: Setup Python
         id: setup-python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
-          python-version: '3.12'
+          python-version: '3.14'
+          check-latest: true
+      - name: Upgrade Pip
+        shell: pwsh
+        run: python -m pip install --upgrade pip
       - name: Install khiops-python dev dependencies
         shell: pwsh
         run: |
@@ -276,6 +282,9 @@ jobs:
           # Create and activate a python venv
           python -m venv khiops-windows-venv
           khiops-windows-venv\Scripts\Activate.ps1
+
+          # Upgrade Pip
+          python -m pip install --upgrade pip
 
           # Install the Python requirements inside a venv
           # The venv python executable is used here
@@ -369,7 +378,7 @@ jobs:
       packages: read
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -383,12 +392,23 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
+      - name: Prepare Python and upgrade Pip
+        shell: bash
+        run: |
+          # A virtual env is mandatory under debian
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+            python -m venv khiops-debian-venv
+            source khiops-debian-venv/bin/activate
+          fi
+          python -m pip install --upgrade pip
+          # Interpreter whose Pip is checked (the venv one, when activated)
+          echo "PYTHON=$(command -v python)" >> "$GITHUB_ENV"
       - name: Install khiops-python dev dependencies
         shell: bash
         run: |
@@ -399,7 +419,6 @@ jobs:
 
           # A virtual env is mandatory under debian
           if [[ "${{ matrix.container }}" == "debian13" ]]; then
-            python -m venv khiops-debian-venv
             source khiops-debian-venv/bin/activate                      
           fi
 

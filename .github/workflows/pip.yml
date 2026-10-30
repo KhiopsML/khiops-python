@@ -32,11 +32,16 @@ jobs:
       package-version: ${{ steps.build.outputs.PACKAGE_VERSION }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+          check-latest: true
       - name: Build Pip package
         id: build
         run: |
@@ -44,11 +49,8 @@ jobs:
           # retrieved
           git config --global --add safe.directory $(realpath .)
 
-          # Upgrade Pip
-          pip install --upgrade pip
-
           # Install required Python build dependency
-          pip install build
+          python -m pip install build
 
           # Build the source package (sdist) only          
           python -m build --sdist
@@ -57,7 +59,7 @@ jobs:
           PACKAGE_VERSION=$(python -m build --metadata | grep -w "version" | cut -d':' -f 2 | sed 's/[ ",]//g')
           echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
       - name: Upload the package as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pip-package
           path: ./dist/khiops*.tar.gz
@@ -101,6 +103,12 @@ jobs:
               dnf install -y findutils
             fi
           fi
+      - name: Checkout sources
+        uses: actions/checkout@v7
+        with:
+          # Get Git tags
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
       - name: Set parameters as env
         shell: bash
         run: |
@@ -108,34 +116,37 @@ jobs:
           echo "SAMPLES_REVISION=$SAMPLES_REVISION" >> "$GITHUB_ENV"
           if [[ $RUNNER_OS == 'Windows' ]]; then
             VENV_ACTIVATE_SCRIPT="khiops-venv/Scripts/activate"
+            VENV_PYTHON="$GITHUB_WORKSPACE/khiops-venv/Scripts/python"
           else
             VENV_ACTIVATE_SCRIPT="khiops-venv/bin/activate"
+            VENV_PYTHON="$GITHUB_WORKSPACE/khiops-venv/bin/python"
           fi
           echo "VENV_ACTIVATE_SCRIPT=$VENV_ACTIVATE_SCRIPT" >> "$GITHUB_ENV"
+          echo "VENV_PYTHON=$VENV_PYTHON" >> "$GITHUB_ENV"
 
           # Setup Python (be portable wrt. python vs python3 in runners and
           # containers; either python3 or python is present as per the Python
           # installation step in the Docker container contexts)
           PYTHON=$(basename $(command -v python3 || command -v python))
           echo "PYTHON=$PYTHON" >> "$GITHUB_ENV"
-        # Checkout the sources to be able to extract the dependencies list
-      - name: Checkout sources
-        uses: actions/checkout@v4
-        with:
-          # Get Git tags
-          # See issue https://github.com/actions/checkout/issues/701
-          fetch-depth: 0
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
       - name: Download package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pip-package
+      - name: Create the virtual environment
+        if: matrix.env.use-virtualenv
+        shell: bash
+        run: |
+          $PYTHON -m venv khiops-venv
+          # Upgrade Pip in the virtual environment
+          "$VENV_PYTHON" -m pip install --upgrade pip
       - name: Install the package
         shell: bash
         run: |
@@ -145,12 +156,11 @@ jobs:
             chown -R $(whoami) /github/home/.cache/pip
           fi
 
-          # Use a virtualenv if required
+          # Use the virtualenv if required (created, upgraded and checked in
+          # above steps)
           if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
-            $PYTHON -m venv khiops-venv
             source "$VENV_ACTIVATE_SCRIPT"
           fi
-          $PYTHON -m pip install --upgrade pip
 
           # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
           $PYTHON -c "import tomllib" 2>/dev/null || $PYTHON -m pip install tomli
@@ -259,11 +269,11 @@ jobs:
       contents: write
     steps:
       - name: Download package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pip-package
       - name: Upload Pip source package to the github release
-        uses: ncipollo/release-action@v1.15.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           allowUpdates: true
           artifacts: khiops*.tar.gz
@@ -285,7 +295,7 @@ jobs:
       name: testpypi
     steps:
       - name: Download package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pip-package
           path: dist/
@@ -307,7 +317,7 @@ jobs:
       name: pypi
     steps:
       - name: Download package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pip-package
           path: dist/
