@@ -46,7 +46,7 @@ All Dockerfiles accept these `ARG` values, supplied by `dev-docker.yml`:
 |---|---|---|
 | `KHIOPSDEV_OS` | OS tag for the base image (`ubuntu22.04`, `rocky8`, `rocky9`, `debian13`) | `ubuntu22.04` |
 | `SERVER_REVISION` | Git ref for the `khiops-server` image (copied into the final stage) | `main` |
-| `PYTHON_VERSIONS` | Space-separated Python versions for Conda environments | `3.10 3.11 3.12 3.13 3.14` |
+| `PYTHON_VERSIONS` | Space-separated Python versions for Conda environments | `3.11 3.12 3.13 3.14` |
 
 ## Multi-Stage Build Structure
 
@@ -95,7 +95,7 @@ For each Python version in `PYTHON_VERSIONS`, a Conda environment is created:
 ### `tests.yml` (Consumer)
 
 Runs the main test matrix inside `khiopspydev-ubuntu22.04` containers across
-Python 3.10–3.14. Integration tests also run on `rocky8`, `rocky9`, and
+Python 3.11-3.14. Integration tests also run on `rocky8`, `rocky9`, and
 `debian13` containers.
 
 ### `pip.yml` (Consumer)

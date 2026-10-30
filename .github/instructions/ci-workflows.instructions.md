@@ -32,7 +32,7 @@ the workflow file itself. Also supports `workflow_dispatch`.
 
 Three job groups:
 
-- **`run`** (Linux matrix): Runs across Python 3.10–3.14 in custom Docker
+- **`run`** (Linux matrix): Runs across Python 3.11-3.14 in custom Docker
   containers (`ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04`). Each
   Python version uses a dedicated Conda environment with native Khiops.
   Coverage is collected with `coverage` and reported as XML. Test results use
@@ -41,7 +41,7 @@ Three job groups:
   Linux containers (ubuntu22.04, rocky8, rocky9, debian13). Validates Khiops
   status, runs samples and the integration tests suite.
 - **`check-khiops-integration-on-windows`**: Installs Khiops Desktop via NSIS
-  installer on Windows 2022 with Python 3.12. Runs integration tests and
+  installer on Windows 2022 with Python 3.14. Runs integration tests and
   samples outside a Python virtual environment, then installs khiops-python
   inside a venv and validates the installation status.
 
@@ -89,7 +89,7 @@ repository and builds the docs using mkdocstrings.
 
 Builds development Docker images for multiple OS targets (ubuntu22.04, rocky8,
 rocky9, debian13) with configurable Khiops revision, server revision, Python
-versions (3.10–3.14), and remote file driver versions (GCS, S3, Azure).
+versions (3.11-3.14), and remote file driver versions (GCS, S3, Azure).
 Triggers on PRs touching `packaging/docker/khiopspydev/Dockerfile.*` or the
 workflow file, and on `workflow_dispatch`. Images are pushed to
 `ghcr.io/khiopsml/khiops-python/khiopspydev-*` only when manually requested via
@@ -99,7 +99,7 @@ branches.
 ### `test-conda-forge-package.yml`
 
 Manual-only workflow that tests the released `khiops` Conda package on the
-`conda-forge` channel across a broad matrix: Python 3.10–3.14 × multiple OS
+`conda-forge` channel across a broad matrix: Python 3.11-3.14 * multiple OS
 environments (Ubuntu 20.04/22.04/24.04, Rocky 8/9, Windows 2022/2025, macOS
 14/15/15-Intel). Tests both normal Conda environments and "Conda-based
 environments" (where `CONDA_PREFIX` is unset to simulate non-Conda invocation).

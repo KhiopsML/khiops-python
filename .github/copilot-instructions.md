@@ -72,7 +72,7 @@ Keep changes inside these layer boundaries.
 
 ### Python Support Policy
 
-- CI tests run against Python 3.10–3.14.
+- CI tests run against Python 3.11-3.14.
 
 ### Versioning
 

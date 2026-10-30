@@ -37,7 +37,7 @@ pip install -U khiops
 Other installation methods are documented at the [Khiops website][khiops-install].
 
 ### Requirements
-- [Python][python] (>=3.10)
+- [Python][python] (>=3.11)
 - [Pandas][pandas] (>=2.3.3)
 - [Scikit-Learn][sklearn] (>=1.7.2)
 
