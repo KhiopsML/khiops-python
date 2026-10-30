@@ -152,9 +152,11 @@ jobs:
           printf 'pip>=%s\ncertifi>=%s\n' \
             "$MINIMAL_PIP_VERSION" "$MINIMAL_CERTIFI_VERSION" > "$RUNNER_TEMP/constraints.txt"
           echo "PIP_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
-      - name: Upgrade Pip
+      - name: Upgrade Pip and Certifi
         shell: bash
-        run: $PYTHON -m pip install --upgrade "pip>=$MINIMAL_PIP_VERSION"
+        run: |
+          $PYTHON -m pip install --upgrade "pip>=$MINIMAL_PIP_VERSION"
+          $PYTHON -m pip install --upgrade "certifi>=$MINIMAL_CERTIFI_VERSION"
       - name: Check minimal Pip and Certifi version
         uses: ./.github/actions/check-minimal-pip-and-certifi-versions
         with:
