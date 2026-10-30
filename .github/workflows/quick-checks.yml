@@ -20,8 +20,6 @@ jobs:
       - name: Install khiops-python dev dependencies
         run: |
           # Extract and install package dependency requirements from metadata
-          # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
-          pip install tomli
           # First, install all dependencies except khiops-core and khiops-drivers-*
           python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
           pip install `cat requires-no-khiops.txt`

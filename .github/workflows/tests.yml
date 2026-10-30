@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.11', '3.12', '3.13', '3.14']
     container:
       # 'latest' default image tag cannot be set as an environment variable,
       # because the `env` context is only accessible at the step level;
@@ -104,8 +104,6 @@ jobs:
           # Since Python 3.13, setuptools is not installed automatically anymore
           $CONDA install -y -n "$CONDA_ENV" setuptools
 
-          # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
-          $CONDA install -y -n "$CONDA_ENV" tomli
           # Conda environments are only used to support multiple Python versions, hence install Pip packages inside
           # Install Pip inside the Conda env to use it instead of the system-wide Pip
           $CONDA install -y -n "$CONDA_ENV" pip
@@ -464,8 +462,6 @@ jobs:
             source khiops-debian-venv/bin/activate                      
           fi
 
-          # Install tomli for Python < 3.11
-          pip install tomli
           # First, install all dependencies except khiops-core and khiops-drivers-*
           python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
           pip install `cat requires-no-khiops.txt`

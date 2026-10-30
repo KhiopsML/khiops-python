@@ -65,8 +65,6 @@ jobs:
           KHIOPS_SAMPLES_REVISION: ${{ inputs.khiops-samples-revision || env.DEFAULT_KHIOPS_SAMPLES_REVISION }}
         run: |
           # Install package itself to install the samples datasets
-          # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
-          uv pip install tomli
           # First, install all dependencies except khiops-core and khiops-drivers-*
           python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
           uv pip install `cat requires-no-khiops.txt`
