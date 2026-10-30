@@ -121,8 +121,8 @@ jobs:
           minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
           python: /root/miniforge3/envs/py${{ matrix.python-version }}/bin/python
       - name: Configure Expensive Tests Setting
-        # Skip expensive tests by default, unless on the `main-v10` or `main` branches
-        if: github.ref != 'main-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
+        # Skip expensive tests by default, unless on `main-v10` or `main`
+        if: github.ref_name != 'main-v10' && github.ref_name != 'main' && ! inputs.run-expensive-tests
         run: echo "SKIP_EXPENSIVE_TESTS=true" >> "$GITHUB_ENV"
       - name: Prepare Integration Tests on remote files
         if: env.SKIP_EXPENSIVE_TESTS != 'true'
@@ -252,9 +252,11 @@ jobs:
       # We move SAMPLES_REVISION to the environment so that we can use
       # them in both push and workflow_dispatch events
       - name: Set SAMPLES_REVISION on 'pull_request' events
+        shell: bash
         if: github.event_name == 'pull_request'
         run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
       - name: Set SAMPLES_REVISION on 'workflow_dispatch' events
+        shell: bash
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples

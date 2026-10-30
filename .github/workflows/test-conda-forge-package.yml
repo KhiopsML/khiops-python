@@ -54,7 +54,7 @@ jobs:
           else
             RC_LABEL=""
           fi
-          conda install "${RC_LABEL}"khiops==${{ inputs.khiops-python-version }}
+          conda install -y "${RC_LABEL}"khiops==${{ inputs.khiops-python-version }}
       - name: Test Khiops Installation Status
         run: kh-status
       - name: Test Khiops Installation Status (Conda-Based Environments)
