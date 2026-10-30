@@ -2,6 +2,8 @@
 name: Tests
 env:
   DEFAULT_SAMPLES_REVISION: 11.0.0
+  MINIMAL_PIP_VERSION: 26.2.2
+  MINIMAL_CERTIFI_VERSION: 2026.10.19
   # Use only the local MPI node on the GitHub runner
   UCX_TLS: self,sm,tcp
   UCX_NET_DEVICES: lo
@@ -52,7 +54,7 @@ jobs:
       packages: read
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -66,12 +68,21 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
+      - name: Pin minimal Pip and Certifi versions
+        run: |
+          CONDA_ENV=py${{ matrix.python-version }}
+          PINNED="/root/miniforge3/envs/$CONDA_ENV/conda-meta/pinned"
+          printf 'pip>=%s\ncertifi>=%s\n' \
+            "$MINIMAL_PIP_VERSION" "$MINIMAL_CERTIFI_VERSION" \
+            > "$RUNNER_TEMP/constraints.txt"
+          cat "$RUNNER_TEMP/constraints.txt" >> "$PINNED"
+          echo "PIP_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
       - name: Setup and Install Test Requirements
         if: success() || failure()
         run: |
@@ -105,6 +116,12 @@ jobs:
           $CONDA run --no-capture-output -n "$CONDA_ENV" python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
           $CONDA run -n "$CONDA_ENV" pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
           rm -f requires-khiops.txt requires-no-khiops.txt
+      - name: Check minimal Pip and Certifi versions
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
+        with:
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
+          python: /root/miniforge3/envs/py${{ matrix.python-version }}/bin/python
       - name: Configure Expensive Tests Setting
         # Skip expensive tests by default, unless on the `main-v10` or `main` branches
         if: github.ref != 'main-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
@@ -163,7 +180,7 @@ jobs:
         # For integration tests on GCS we use a real Google account
         # Retrieve the Google credentials through "Workload Identity Federation"
         # see https://github.com/google-github-actions/auth?tab=readme-ov-file#workload-identity-federation-through-a-service-account
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           service_account: khiops-gcs-driver-test-sa@ino-olr-dak-ideal-sbx.iam.gserviceaccount.com
           workload_identity_provider: projects/322269704080/locations/global/workloadIdentityPools/github/providers/my-repo
@@ -201,7 +218,7 @@ jobs:
           $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
       - name: Display Test Reports
         if: success() || failure()
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3.0.0
         with:
           name: Run Tests ${{ matrix.python-version }}
           path: reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml
@@ -210,7 +227,7 @@ jobs:
           fail-on-error: 'false'
       - name: Upload Test Reports as Artifacts
         if: success() || failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: test-reports-${{ matrix.python-version }}
           path: |-
@@ -229,7 +246,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -243,7 +260,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
@@ -251,9 +268,22 @@ jobs:
           path: khiops-samples
       - name: Setup Python
         id: setup-python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
-          python-version: '3.12'
+          python-version: '3.14'
+          check-latest: true
+      - name: Generate version constraints
+        shell: pwsh
+        run: |
+          $Constraints = Join-Path $env:RUNNER_TEMP 'constraints.txt'
+          @(
+            "pip>=$env:MINIMAL_PIP_VERSION"
+            "certifi>=$env:MINIMAL_CERTIFI_VERSION"
+          ) | Set-Content -Path $Constraints -Encoding utf8NoBOM
+          "PIP_CONSTRAINT=$Constraints" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Upgrade Pip
+        shell: pwsh
+        run: python -m pip install --upgrade "pip>=$env:MINIMAL_PIP_VERSION"
       - name: Install khiops-python dev dependencies
         shell: pwsh
         run: |
@@ -277,6 +307,9 @@ jobs:
           python -m venv khiops-windows-venv
           khiops-windows-venv\Scripts\Activate.ps1
 
+          # Upgrade Pip
+          python -m pip install --upgrade "pip>=$env:MINIMAL_PIP_VERSION"
+
           # Install the Python requirements inside a venv
           # The venv python executable is used here
           Get-Content .\requires-no-khiops.txt `
@@ -290,6 +323,18 @@ jobs:
           Remove-Item -force requires-khiops.txt
       - name: Setup and Install Test Requirements
         run: python -m pip install -r test-requirements.txt
+      - name: Check minimal Pip and Certifi versions
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
+        with:
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
+          python: ${{ steps.setup-python.outputs.python-path }}
+      - name: Check minimal Pip and Certifi versions in the virtual environment
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
+        with:
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
+          python: ${{ github.workspace }}/khiops-windows-venv/Scripts/python.exe
       - name: Test Khiops Integration
         env:
           # Force > 2 CPU cores to launch MPI
@@ -369,7 +414,7 @@ jobs:
       packages: read
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -383,12 +428,29 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
+      - name: Generate Pip and Certifi version constraints
+        shell: bash
+        run: |
+          printf 'pip>=%s\ncertifi>=%s\n' \
+            "$MINIMAL_PIP_VERSION" "$MINIMAL_CERTIFI_VERSION" > "$RUNNER_TEMP/constraints.txt"
+          echo "PIP_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
+      - name: Prepare Python and upgrade Pip
+        shell: bash
+        run: |
+          # A virtual env is mandatory under debian
+          if [[ "${{ matrix.container }}" == "debian13" ]]; then
+            python -m venv khiops-debian-venv
+            source khiops-debian-venv/bin/activate
+          fi
+          python -m pip install --upgrade "pip>=$MINIMAL_PIP_VERSION"
+          # Interpreter whose Pip is checked (the venv one, when activated)
+          echo "PYTHON=$(command -v python)" >> "$GITHUB_ENV"
       - name: Install khiops-python dev dependencies
         shell: bash
         run: |
@@ -399,7 +461,6 @@ jobs:
 
           # A virtual env is mandatory under debian
           if [[ "${{ matrix.container }}" == "debian13" ]]; then
-            python -m venv khiops-debian-venv
             source khiops-debian-venv/bin/activate                      
           fi
 
@@ -426,6 +487,12 @@ jobs:
           if [[ "${{ matrix.container }}" == "debian13" ]]; then            
             deactivate                      
           fi
+      - name: Check minimal Pip and Certifi versions
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
+        with:
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
+          python: ${{ env.PYTHON }}
       - name: Test Khiops Integration
         env:
           # Force > 2 CPU cores to launch mpiexec

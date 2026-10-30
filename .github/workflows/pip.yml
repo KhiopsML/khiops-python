@@ -5,6 +5,8 @@
 name: Pip Package
 env:
   DEFAULT_SAMPLES_REVISION: 11.0.0
+  MINIMAL_PIP_VERSION: 26.2.2
+  MINIMAL_CERTIFI_VERSION: 2026.10.19
 on:
   workflow_dispatch:
     inputs:
@@ -17,7 +19,11 @@ on:
         options: [None, testpypi, pypi]
         description: Publish to Test PyPI or PyPI
   pull_request:
-    paths: [pyproject.toml, LICENSE.md, .github/workflows/pip.yml]
+    paths:
+      - pyproject.toml
+      - LICENSE.md
+      - .github/workflows/pip.yml
+      - .github/actions/check-minimal-pip-and-certifi-versions/**
   push:
     tags: ['*']
 concurrency:
@@ -32,11 +38,24 @@ jobs:
       package-version: ${{ steps.build.outputs.PACKAGE_VERSION }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
+      - name: Generate version constraints
+        shell: bash
+        run: |
+          printf 'pip>=%s\ncertifi>=%s\n' \
+            "$MINIMAL_PIP_VERSION" "$MINIMAL_CERTIFI_VERSION" > "$RUNNER_TEMP/constraints.txt"
+          echo "PIP_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
+      - name: Upgrade Pip
+        run: python -m pip install --upgrade "pip>=$MINIMAL_PIP_VERSION"
+      - name: Check minimal Pip and Certifi version
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
+        with:
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
       - name: Build Pip package
         id: build
         run: |
@@ -44,11 +63,8 @@ jobs:
           # retrieved
           git config --global --add safe.directory $(realpath .)
 
-          # Upgrade Pip
-          pip install --upgrade pip
-
           # Install required Python build dependency
-          pip install build
+          python -m pip install build
 
           # Build the source package (sdist) only          
           python -m build --sdist
@@ -57,7 +73,7 @@ jobs:
           PACKAGE_VERSION=$(python -m build --metadata | grep -w "version" | cut -d':' -f 2 | sed 's/[ ",]//g')
           echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
       - name: Upload the package as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pip-package
           path: ./dist/khiops*.tar.gz
@@ -101,6 +117,12 @@ jobs:
               dnf install -y findutils
             fi
           fi
+      - name: Checkout sources
+        uses: actions/checkout@v7
+        with:
+          # Get Git tags
+          # See issue https://github.com/actions/checkout/issues/701
+          fetch-depth: 0
       - name: Set parameters as env
         shell: bash
         run: |
@@ -108,34 +130,59 @@ jobs:
           echo "SAMPLES_REVISION=$SAMPLES_REVISION" >> "$GITHUB_ENV"
           if [[ $RUNNER_OS == 'Windows' ]]; then
             VENV_ACTIVATE_SCRIPT="khiops-venv/Scripts/activate"
+            VENV_PYTHON="$GITHUB_WORKSPACE/khiops-venv/Scripts/python"
           else
             VENV_ACTIVATE_SCRIPT="khiops-venv/bin/activate"
+            VENV_PYTHON="$GITHUB_WORKSPACE/khiops-venv/bin/python"
           fi
           echo "VENV_ACTIVATE_SCRIPT=$VENV_ACTIVATE_SCRIPT" >> "$GITHUB_ENV"
+          echo "VENV_PYTHON=$VENV_PYTHON" >> "$GITHUB_ENV"
 
           # Setup Python (be portable wrt. python vs python3 in runners and
           # containers; either python3 or python is present as per the Python
           # installation step in the Docker container contexts)
           PYTHON=$(basename $(command -v python3 || command -v python))
           echo "PYTHON=$PYTHON" >> "$GITHUB_ENV"
-        # Checkout the sources to be able to extract the dependencies list
-      - name: Checkout sources
-        uses: actions/checkout@v4
+      - name: Generate version constraints
+        shell: bash
+        run: |
+          printf 'pip>=%s\ncertifi>=%s\n' \
+            "$MINIMAL_PIP_VERSION" "$MINIMAL_CERTIFI_VERSION" > "$RUNNER_TEMP/constraints.txt"
+          echo "PIP_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
+      - name: Upgrade Pip
+        shell: bash
+        run: $PYTHON -m pip install --upgrade "pip>=$MINIMAL_PIP_VERSION"
+      - name: Check minimal Pip and Certifi version
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
         with:
-          # Get Git tags
-          # See issue https://github.com/actions/checkout/issues/701
-          fetch-depth: 0
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
+          python: ${{ env.PYTHON }}
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
       - name: Download package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pip-package
+      - name: Create the virtual environment
+        if: matrix.env.use-virtualenv
+        shell: bash
+        run: |
+          $PYTHON -m venv khiops-venv
+          # The venv Pip comes from ensurepip, not from the upgraded base Pip
+          "$VENV_PYTHON" -m pip install --upgrade "pip>=$MINIMAL_PIP_VERSION"
+      - name: Check minimal Pip and Certifi versions in the virtual environment
+        if: matrix.env.use-virtualenv
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
+        with:
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
+          python: ${{ env.VENV_PYTHON }}
       - name: Install the package
         shell: bash
         run: |
@@ -145,12 +192,11 @@ jobs:
             chown -R $(whoami) /github/home/.cache/pip
           fi
 
-          # Use a virtualenv if required
+          # Use the virtualenv if required (created, upgraded and checked in
+          # above steps)
           if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
-            $PYTHON -m venv khiops-venv
             source "$VENV_ACTIVATE_SCRIPT"
           fi
-          $PYTHON -m pip install --upgrade pip
 
           # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
           $PYTHON -c "import tomllib" 2>/dev/null || $PYTHON -m pip install tomli
@@ -178,6 +224,12 @@ jobs:
           if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
             deactivate
           fi
+      - name: Check minimal Pip and Certifi versions after the install
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
+        with:
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
+          python: ${{ matrix.env.use-virtualenv && env.VENV_PYTHON || env.PYTHON }}
       - name: Run tests
         env:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
@@ -259,11 +311,11 @@ jobs:
       contents: write
     steps:
       - name: Download package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pip-package
       - name: Upload Pip source package to the github release
-        uses: ncipollo/release-action@v1.15.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           allowUpdates: true
           artifacts: khiops*.tar.gz
@@ -285,12 +337,12 @@ jobs:
       name: testpypi
     steps:
       - name: Download package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pip-package
           path: dist/
       - name: Publish Python distribution to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@v1.14.3
         with:
           verbose: true
           repository-url: https://test.pypi.org/legacy/
@@ -307,11 +359,11 @@ jobs:
       name: pypi
     steps:
       - name: Download package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pip-package
           path: dist/
       - name: Publish Python distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@v1.14.3
         with:
           verbose: true

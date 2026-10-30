@@ -1,6 +1,8 @@
 ---
 name: Test the released Conda Package
 env:
+  MINIMAL_PIP_VERSION: 26.2.2
+  MINIMAL_CERTIFI_VERSION: 2026.10.19
   # Use only the local MPI node on the GitHub runner
   UCX_TLS: self,sm,tcp
   UCX_NET_DEVICES: lo
@@ -30,11 +32,20 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Miniforge
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         with:
-          miniforge-version: 24.11.0-0
+          miniforge-version: latest
           python-version: ${{ matrix.python-version }}
+          channels: conda-forge
           conda-remove-defaults: true
+      # Conda pins restrict Pip and Certifi only if conda installs or updates
+      # them
+      - name: Pin minimal Pip and Certifi versions
+        run: |
+          mkdir -p "$CONDA_PREFIX/conda-meta"
+          printf 'pip >=%s\ncertifi >=%s\n' \
+            "$MINIMAL_PIP_VERSION" "$MINIMAL_CERTIFI_VERSION" \
+            >> "$CONDA_PREFIX/conda-meta/pinned"
       - name: Install the Khiops Conda package
         run: |
           # Add the Conda `rc` label for alpha or RC pre-releases
@@ -121,14 +132,24 @@ jobs:
       # Note: The `sparse-checkout` option of this action is bugged so we checkout all the sources
       #       See https://github.com/actions/checkout/issues/1628
       - name: Checkout Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       # This is needed so python does not retrieve the khiops module from PWD
       - name: Remove the khiops Module from the Sources
         run: rm -rf khiops
       - name: Install the Test Requirements
-        run: conda install -y --file test-requirements.txt
+        # 'packaging' allows the check to run when Pip is absent
+        run: conda install -y --file test-requirements.txt packaging
+      # The activated Conda Python is recorded here, in the login shell
+      - name: Record the Conda Python
+        run: echo "PYTHON=$(type -P python)" >> "$GITHUB_ENV"
+      - name: Check minimal Pip and Certifi versions
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
+        with:
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
+          python: ${{ env.PYTHON }}
       - name: Run the Runner Initialization Integration Test
         run: |
           python -m unittest -v \

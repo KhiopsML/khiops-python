@@ -1,15 +1,15 @@
 ---
 name: API Docs
 env:
-  DEFAULT_KHIOPS_REVISION: 11.0.1
   DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION: 11.0.0.0
   DEFAULT_KHIOPS_SAMPLES_REVISION: 11.0.0
+  MINIMAL_PIP_VERSION: 26.2.2
+  MINIMAL_CERTIFI_VERSION: 2026.10.19
+  # Never use system-level Python
+  UV_PYTHON_PREFERENCE: only-managed
 on:
   workflow_dispatch:
     inputs:
-      khiops-revision:
-        description: Khiops core version
-        default: 11.0.1
       khiops-python-tutorial-revision:
         default: 11.0.0.0
         description: khiops-python-tutorial repo revision
@@ -25,6 +25,10 @@ on:
       - zensical.toml
       - khiops/**.py
       - .github/workflows/api-docs.yml
+      - .github/actions/check-minimal-pip-and-certifi-versions/**
+      - pyproject.toml
+      - doc/util/requirements.txt
+      - scripts/extract_dependencies_from_pyproject_toml.py
 permissions:
   contents: read
 concurrency:
@@ -35,57 +39,68 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout khiops-python
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Add pip scripts directory to path
-        run: echo PATH="$PATH:/github/home/.local/bin" >> "$GITHUB_ENV"
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-      - name: Install Khiops core
+      - name: Generate version constraints
         run: |
-          # Create the .venv virtual environment and activate it
+          printf 'pip>=%s\ncertifi>=%s\n' \
+            "$MINIMAL_PIP_VERSION" "$MINIMAL_CERTIFI_VERSION" > "$RUNNER_TEMP/constraints.txt"
+          echo "UV_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
+          echo "UV_BUILD_CONSTRAINT=$RUNNER_TEMP/constraints.txt" >> "$GITHUB_ENV"
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: false
+          version: 0.13.5
+          python-version: '3.14'
+      - name: Create the virtual environment
+        run: |
           uv venv
-          . .venv/bin/activate
-
-          # Building the Python API docs always executes khiops-python's own
-          # tutorial notebooks (create-doc -t -d), so a real Khiops core
-          # install is required unconditionally.
-          uv pip install khiops-core==${{ inputs.khiops-revision || env.DEFAULT_KHIOPS_REVISION }}
+          # Persist the activation for all later steps
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - name: Install doc build requirements
+        env:
+          KHIOPS_SAMPLES_REVISION: ${{ inputs.khiops-samples-revision || env.DEFAULT_KHIOPS_SAMPLES_REVISION }}
         run: |
           # Install package itself to install the samples datasets
           # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
           uv pip install tomli
           # First, install all dependencies except khiops-core and khiops-drivers-*
-          uv run scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
           uv pip install `cat requires-no-khiops.txt`
           # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
-          uv run scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
           uv pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
           rm -f requires-khiops.txt requires-no-khiops.txt
           # Lastly, install khiops-python
           uv pip install .
-          uv run kh-download-datasets --force-overwrite --version ${{ inputs.khiops-samples-revision || env.DEFAULT_KHIOPS_SAMPLES_REVISION }}
+          kh-download-datasets --force-overwrite --version "${KHIOPS_SAMPLES_REVISION}"
 
           # Discard error as this is expected (Uv is not yet officially
           # supported by khiops, but this should pose no issue in practice)
           # TODO: Revert as soon as issue
           # https://github.com/KhiopsML/khiops-python/issues/602 is tackled
-          uv run kh-status || true
+          kh-status || true
 
           # Install the doc python requirements
           uv pip install -U -r doc/util/requirements.txt
+      # After all installs, on the interpreter of the .venv that builds the
+      # docs. Pip and Certifi are checked if installed.
+      - name: Check minimal Pip and Certifi versions
+        uses: ./.github/actions/check-minimal-pip-and-certifi-versions
+        with:
+          minimal-pip-version: ${{ env.MINIMAL_PIP_VERSION }}
+          minimal-certifi-version: ${{ env.MINIMAL_CERTIFI_VERSION }}
+          python: ${{ github.workspace }}/.venv/bin/python
       # Clone the Khiops Python tutorial repository while building the documentation
       - name: Build Zensical Documentation
-        run: |
-          doc/util/create-doc -t -d -g \
-          ${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
+        env:
+          KHIOPS_PYTHON_TUTORIAL_REVISION: ${{ inputs.khiops-python-tutorial-revision || env.DEFAULT_KHIOPS_PYTHON_TUTORIAL_REVISION }}
+        run: doc/util/create-doc -t -d -g "${KHIOPS_PYTHON_TUTORIAL_REVISION}"
       - name: Upload the docs as an artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: api-docs
           path: ./doc/build/html/
