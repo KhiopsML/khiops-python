@@ -1,0 +1,26 @@
+---
+name: Check minimal Pip and Certifi package versions
+description: Check that Pip package and Certifi package versions are at least as specified
+inputs:
+  minimal-pip-version:
+    description: Minimal version required for Pip
+    required: true
+  minimal-certifi-version:
+    description: Minimal version required for Certifi
+    required: true
+  python:
+    description: Python executable (name on PATH or full path)
+    required: false
+    default: python
+runs:
+  using: composite
+  steps:
+    - name: Check that the Pip and Certifi package versions are as specified
+      shell: bash
+      env:
+        PYTHON: ${{ inputs.python }}
+        MINIMAL_PIP_VERSION: ${{ inputs.minimal-pip-version }}
+        MINIMAL_CERTIFI_VERSION: ${{ inputs.minimal-certifi-version }}
+      run: |-
+        "$PYTHON" "$GITHUB_ACTION_PATH/check_minimal_pip_and_certifi_versions.py" \
+          "$MINIMAL_PIP_VERSION" "$MINIMAL_CERTIFI_VERSION"
