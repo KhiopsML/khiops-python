@@ -79,9 +79,9 @@ jobs:
           # required)
           - {os: ubuntu-24.04, json-image: '{"image": null}', use-virtualenv: true}
           - {os: ubuntu-24.04, json-image: '{"image": null}', use-virtualenv: false}
-          - {os: ubuntu-22.04, json-image: '{"image": "debian:trixie"}', use-virtualenv: true}
-          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux/rockylinux:10"}', use-virtualenv: true}
-          - {os: ubuntu-22.04, json-image: '{"image": "rockylinux/rockylinux:10"}', use-virtualenv: false}
+          - {os: ubuntu-24.04, json-image: '{"image": "debian:trixie"}', use-virtualenv: true}
+          - {os: ubuntu-24.04, json-image: '{"image": "rockylinux/rockylinux:latest"}', use-virtualenv: true}
+          - {os: ubuntu-24.04, json-image: '{"image": "rockylinux/rockylinux:latest"}', use-virtualenv: false}
           - {os: windows-2025, json-image: '{"image": null}', use-virtualenv: true}
           - {os: windows-2025, json-image: '{"image": null}', use-virtualenv: false}
           - {os: macos-15, json-image: '{"image": null}', use-virtualenv: true}
