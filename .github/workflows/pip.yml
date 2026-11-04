@@ -52,7 +52,7 @@ jobs:
           # Install required Python build dependency
           python -m pip install build
 
-          # Build the source package (sdist) only          
+          # Build the source package (sdist) only
           python -m build --sdist
 
           # Get built package version and make it accessible to subsequent jobs
@@ -74,17 +74,11 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          # Test without virtualenv only on platforms that support it out of the
-          # box (i.e. where passing `--break-system-packages` to Pip is not
-          # required)
-          - {os: ubuntu-24.04, json-image: '{"image": null}', use-virtualenv: true}
-          - {os: ubuntu-24.04, json-image: '{"image": null}', use-virtualenv: false}
-          - {os: ubuntu-24.04, json-image: '{"image": "debian:trixie"}', use-virtualenv: true}
-          - {os: ubuntu-24.04, json-image: '{"image": "rockylinux/rockylinux:latest"}', use-virtualenv: true}
-          - {os: ubuntu-24.04, json-image: '{"image": "rockylinux/rockylinux:latest"}', use-virtualenv: false}
-          - {os: windows-2025, json-image: '{"image": null}', use-virtualenv: true}
-          - {os: windows-2025, json-image: '{"image": null}', use-virtualenv: false}
-          - {os: macos-15, json-image: '{"image": null}', use-virtualenv: true}
+          - {os: ubuntu-24.04, json-image: '{"image": null}'}
+          - {os: ubuntu-24.04, json-image: '{"image": "debian:trixie"}'}
+          - {os: ubuntu-24.04, json-image: '{"image": "rockylinux/rockylinux:10"}'}
+          - {os: windows-2025, json-image: '{"image": null}'}
+          - {os: macos-15, json-image: '{"image": null}'}
     runs-on: ${{ matrix.env.os }}
     container: ${{ fromJSON(matrix.env.json-image) }}
     steps:
@@ -115,19 +109,29 @@ jobs:
           SAMPLES_REVISION=${{ inputs.samples-revision || env.DEFAULT_SAMPLES_REVISION }}
           echo "SAMPLES_REVISION=$SAMPLES_REVISION" >> "$GITHUB_ENV"
           if [[ $RUNNER_OS == 'Windows' ]]; then
-            VENV_ACTIVATE_SCRIPT="khiops-venv/Scripts/activate"
-            VENV_PYTHON="$GITHUB_WORKSPACE/khiops-venv/Scripts/python"
+            VENV_BIN_DIR="$GITHUB_WORKSPACE/khiops-venv/Scripts"
+            VENV_PYTHON="$VENV_BIN_DIR/python.exe"
           else
-            VENV_ACTIVATE_SCRIPT="khiops-venv/bin/activate"
-            VENV_PYTHON="$GITHUB_WORKSPACE/khiops-venv/bin/python"
+            VENV_BIN_DIR="$GITHUB_WORKSPACE/khiops-venv/bin"
+            VENV_PYTHON="$VENV_BIN_DIR/python"
           fi
-          echo "VENV_ACTIVATE_SCRIPT=$VENV_ACTIVATE_SCRIPT" >> "$GITHUB_ENV"
           echo "VENV_PYTHON=$VENV_PYTHON" >> "$GITHUB_ENV"
+
+          # The virtual environment is never activated: its Python interpreter
+          # is invoked directly, and only its executables directory is added to
+          # the PATH. This is required on Linux and macOS, where the Khiops
+          # runner looks for `khiops_env` in the PATH, and it also makes the
+          # `kh-*` scripts directly available.
+          if [[ $RUNNER_OS == 'Windows' ]]; then
+            cygpath -w "$VENV_BIN_DIR" >> "$GITHUB_PATH"
+          else
+            echo "$VENV_BIN_DIR" >> "$GITHUB_PATH"
+          fi
 
           # Setup Python (be portable wrt. python vs python3 in runners and
           # containers; either python3 or python is present as per the Python
           # installation step in the Docker container contexts)
-          PYTHON=$(basename $(command -v python3 || command -v python))
+          PYTHON=$(basename "$(command -v python3 || command -v python)")
           echo "PYTHON=$PYTHON" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
         uses: actions/checkout@v7
@@ -140,11 +144,13 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: pip-package
+      # Always use a virtual environment: system-wide package installation is
+      # not recommended, because it is forbidden by default by some OSes (Debian
+      # 13, macOS) which detect it based on PIP 668 provisions.
       - name: Create the virtual environment
-        if: matrix.env.use-virtualenv
         shell: bash
         run: |
-          $PYTHON -m venv khiops-venv
+          "$PYTHON" -m venv khiops-venv
           # Upgrade Pip in the virtual environment
           "$VENV_PYTHON" -m pip install --upgrade pip
       - name: Install the package
@@ -156,38 +162,27 @@ jobs:
             chown -R $(whoami) /github/home/.cache/pip
           fi
 
-          # Use the virtualenv if required (created, upgraded and checked in
-          # above steps)
-          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
-            source "$VENV_ACTIVATE_SCRIPT"
-          fi
-
           # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
-          $PYTHON -c "import tomllib" 2>/dev/null || $PYTHON -m pip install tomli
+          "$VENV_PYTHON" -c "import tomllib" 2>/dev/null || "$VENV_PYTHON" -m pip install tomli
 
           # Install all dependencies except khiops-*
-          $PYTHON scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
-          [ ! -s requires-no-khiops.txt ] || xargs $PYTHON -m pip install < requires-no-khiops.txt
+          "$VENV_PYTHON" scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          [ ! -s requires-no-khiops.txt ] || xargs "$VENV_PYTHON" -m pip install < requires-no-khiops.txt
 
           # On Windows, the `impi-rt` MPI dependency must be installed
           # separately, from PyPI, because it is not present on TestPyPI
           if [[ $RUNNER_OS == 'Windows' ]]; then
-            $PYTHON -m pip install impi-rt
+            "$VENV_PYTHON" -m pip install impi-rt
           fi
 
           # khiops-core and khiops-drivers-* must always be installed from
           # TestPyPI in order to avoid distorting usage statistics
-          $PYTHON scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
-          [ ! -s requires-khiops.txt ] || xargs $PYTHON -m pip install --index-url https://test.pypi.org/simple < requires-khiops.txt
+          "$VENV_PYTHON" scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          [ ! -s requires-khiops.txt ] || xargs "$VENV_PYTHON" -m pip install --index-url https://test.pypi.org/simple < requires-khiops.txt
           rm -f requires-khiops.txt requires-no-khiops.txt
 
           # Install the khiops package
-          $PYTHON -m pip install khiops*.tar.gz
-
-          # Deactivate virtualenv if used
-          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
-            deactivate
-          fi
+          "$VENV_PYTHON" -m pip install khiops*.tar.gz
       - name: Run tests
         env:
           KHIOPS_SAMPLES_DIR: ${{ github.workspace }}/khiops-samples
@@ -204,11 +199,6 @@ jobs:
           # Note: As the Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway
           if [ -n "$MODULESHOME" ]; then module unload mpi; fi
-
-          # Use a virtualenv if required
-          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
-            source "$VENV_ACTIVATE_SCRIPT"
-          fi
           if [[ -n "${{ fromJSON(matrix.env.json-image).image }}" ]]; then
             # Set rights to OpenMPI-specific folder (only applies to Docker
             # containers)
@@ -229,11 +219,6 @@ jobs:
           # The MPI command is not always named mpiexec, but can be orterun etc
           # (as given by khiops_env)
           kh-status | grep "MPI command" | grep -vwq "<empty>"
-
-          # Deactivate virtualenv if used
-          if [[ "${{ matrix.env.use-virtualenv }}" == "true" ]]; then
-            deactivate
-          fi
   check-package-version:
     if: github.ref_type == 'tag'
     needs: build
