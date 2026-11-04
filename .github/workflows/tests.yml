@@ -398,14 +398,26 @@ jobs:
       - name: Prepare Python and upgrade Pip
         shell: bash
         run: |
-          # A virtual env is mandatory under debian
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then
-            python -m venv khiops-debian-venv
-            source khiops-debian-venv/bin/activate
+          # Test the system-wide installation where possible. A virtual env is
+          # only used on Debian and Ubuntu, where the system-wide Python is
+          # externally managed (PEP 668) and Pip refuses to install packages in
+          # it
+          if [[ "${{ matrix.container }}" == "debian13" || "${{ matrix.container }}" == "ubuntu24.04" ]]; then
+            python -m venv khiops-venv
+            PYTHON="$PWD/khiops-venv/bin/python"
+
+            # The virtual env is never activated: only its executables
+            # directory is added to the PATH, because the Khiops runner looks
+            # for `khiops_env` there
+            echo "$PWD/khiops-venv/bin" >> "$GITHUB_PATH"
+          else
+            PYTHON=$(command -v python)
           fi
-          python -m pip install --upgrade pip
-          # Interpreter whose Pip is checked (the venv one, when activated)
-          echo "PYTHON=$(command -v python)" >> "$GITHUB_ENV"
+          echo "Using Python interpreter: $PYTHON"
+          "$PYTHON" -m pip install --upgrade pip
+
+          # Interpreter used by all the subsequent steps
+          echo "PYTHON=$PYTHON" >> "$GITHUB_ENV"
       - name: Install khiops-python dev dependencies
         shell: bash
         run: |
@@ -414,32 +426,18 @@ jobs:
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(realpath .)
 
-          # A virtual env is mandatory under debian
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then
-            source khiops-debian-venv/bin/activate                      
-          fi
-
           # First, install all dependencies except khiops-core and khiops-drivers-*
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
-          pip install `cat requires-no-khiops.txt`
+          "$PYTHON" scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          "$PYTHON" -m pip install `cat requires-no-khiops.txt`
           # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
-          pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
+          "$PYTHON" scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          "$PYTHON" -m pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
           rm -f requires-khiops.txt requires-no-khiops.txt
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            deactivate                      
-          fi
       - name: Setup and Install Test Requirements
         shell: bash
         run: |-
-          # A virtual env is mandatory under debian
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            source khiops-debian-venv/bin/activate                      
-          fi
-          pip install -r test-requirements.txt
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            deactivate                      
-          fi
+          # Install the test requirements with the interpreter set up above
+          "$PYTHON" -m pip install -r test-requirements.txt
       - name: Test Khiops Integration
         env:
           # Force > 2 CPU cores to launch mpiexec
@@ -461,18 +459,13 @@ jobs:
           # modules are currently not initializing the shell anyway
           if [ -n "$MODULESHOME" ]; then module unload mpi; fi
 
-          # A virtual env is mandatory under debian
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            source khiops-debian-venv/bin/activate                      
-          fi
-
           # Set rights to OpenMPI-specific folder
           mkdir -p /github/home/.pmix/components
           chown -R $(whoami) /github/home/.pmix/components
 
           # Print status
-          PATTERN=$(python -c \
-            "import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)" 2> >(grep -Ei 'with.*?unknown.*?installer') )                    
+          PATTERN=$("$PYTHON" -c \
+            "import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)" 2> >(grep -Ei 'with.*?unknown.*?installer') )
           # The installation status check will fail
           # because the library was not installed properly (the source code was only cloned)
           if [ -n "$PATTERN" ]; then
@@ -480,10 +473,7 @@ jobs:
           fi
 
           # Run the remaining integration tests
-          python -m unittest -v tests.test_khiops_integrations
+          "$PYTHON" -m unittest -v tests.test_khiops_integrations
 
           # Execute Khiops sample (train and deploy model), which uses MPI
-          python -m khiops.samples.samples -i deploy_model -e
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            deactivate                      
-          fi
+          "$PYTHON" -m khiops.samples.samples -i deploy_model -e
