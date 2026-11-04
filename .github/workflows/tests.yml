@@ -279,22 +279,19 @@ jobs:
           Get-Content .\requires-khiops.txt `
             | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple $_.toString()}
 
-          # Create and activate a python venv
+          # Create a python venv (not activated: its python executable is used directly)
           python -m venv khiops-windows-venv
-          khiops-windows-venv\Scripts\Activate.ps1
+          $VenvPython = "khiops-windows-venv\Scripts\python.exe"
 
           # Upgrade Pip
-          python -m pip install --upgrade pip
+          & $VenvPython -m pip install --upgrade pip
 
-          # Install the Python requirements inside a venv
+          # Install the Python requirements inside the venv
           # The venv python executable is used here
           Get-Content .\requires-no-khiops.txt `
-            | ForEach-Object {python -m pip install $_.toString()}          
+            | ForEach-Object {& $VenvPython -m pip install $_.toString()}
           Get-Content .\requires-khiops.txt `
-            | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple $_.toString()}
-
-          # Deactivate the python venv
-          deactivate
+            | ForEach-Object {& $VenvPython -m pip install --index-url https://test.pypi.org/simple $_.toString()}
           Remove-Item -force requires-no-khiops.txt 
           Remove-Item -force requires-khiops.txt
       - name: Setup and Install Test Requirements
@@ -341,8 +338,8 @@ jobs:
           # Execute Khiops Coclustering sample (train and deploy model)
           Invoke-Expression -Command "$Python -m khiops.samples.samples -i deploy_coclustering -e"
 
-          # Install khiops-python in the python venv using the sources          
-          # The venv python executable is used here 
+          # Install khiops-python in the python venv using the sources
+          # The venv python executable is used here
           Invoke-Expression -Command "khiops-windows-venv\Scripts\python -m pip install ."
           # Change directory to avoid using the cloned khiops-python
           Invoke-Expression -Command "cd khiops-windows-venv\"
@@ -351,7 +348,7 @@ jobs:
           # The venv python executable is used here
           Invoke-Expression -Command "Scripts\python -c 'import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)'"
 
-          # The installation status MUST not fail                    
+          # The installation status MUST not fail
           if ($LASTEXITCODE -ne 0) {
             Write-Host "::error::Status error: khiops-python installation status check MUST NOT fail"
             exit 1
