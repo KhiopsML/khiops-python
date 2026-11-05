@@ -11,8 +11,7 @@ packaging-specific guidance.
 ## Scope
 
 The Dockerfiles in `packaging/docker/khiopspydev/` build **development images**
-used by the CI workflows `tests.yml`, `pip.yml`, and `api-docs.yml` to run
-tests, build packages, and generate documentation. They are built and published
+used by the CI workflow `tests.yml` to run tests. They are built and published
 by the `dev-docker.yml` workflow.
 
 ## Image Variants
@@ -21,15 +20,23 @@ There are two Dockerfiles:
 
 | Dockerfile                 | OS targets       | Package manager | Remote file drivers |
 |----------------------------|------------------|---|---|
-| `Dockerfile.ubuntu-debian` | Ubuntu 22.04 or Debian 13 | apt | System-wide `.deb` (GCS, S3, Azure) + fakeS3 |
+| `Dockerfile.ubuntu-debian` | Ubuntu 24.04 or Debian 13 | apt | fakeS3 |
 | `Dockerfile.rocky`         | Rocky 8, Rocky 9 | dnf | None |
 
 All images are published to `ghcr.io/khiopsml/khiops-python/khiopspydev-<os>`.
 
 ### Debian and Ubuntu
 
-`Dockerfile.ubuntu-debian` is a unique Dockerfile to build either a Ubuntu or a Debian target image 
-because there is no difference except for the base image used.
+`Dockerfile.ubuntu-debian` is a unique Dockerfile to build either a Ubuntu or
+a Debian target image because there is no difference except for the base image
+used.
+
+A dedicated `RUN` creates the `ubuntu` user (`-rm -d /home/ubuntu -s /bin/bash
+-g root -u 1000`) only if it does not exist yet, as on `ubuntu24.04`, where
+it already exists; otherwise `usermod` enforces the home directory, shell,
+group and UID and ensures the home directory exists. Debian 13 has no such
+user, hence it is created. The Rocky Dockerfile still creates the `rocky` user
+unconditionally.
 
 ### Rocky
 
@@ -37,6 +44,7 @@ because there is no difference except for the base image used.
 explicitly on Rocky 8/9 (which ship with Python ≤ 3.9). It does **not** install
 system-wide remote file drivers or fakeS3 (no Ruby/gem support). It also does
 not copy `run_fake_remote_file_servers.sh` (only `run_service.sh`).
+Dockerfile.rocky  also creates the `rocky`  user (UID 1000, group `root`) and sets `python`  and `pip`  to 3.11 through  alternatives  on Rocky 8/9.
 
 ## Build Arguments
 
@@ -44,7 +52,7 @@ All Dockerfiles accept these `ARG` values, supplied by `dev-docker.yml`:
 
 | ARG | Description | Example |
 |---|---|---|
-| `KHIOPSDEV_OS` | OS tag for the base image (`ubuntu22.04`, `rocky8`, `rocky9`, `debian13`) | `ubuntu22.04` |
+| `KHIOPSDEV_OS` | OS tag for the base image (`ubuntu24.04`, `rocky8`, `rocky9`, `debian13`) | `ubuntu24.04` |
 | `SERVER_REVISION` | Git ref for the `khiops-server` image (copied into the final stage) | `main` |
 | `PYTHON_VERSIONS` | Space-separated Python versions for Conda environments | `3.11 3.12 3.13 3.14` |
 
@@ -53,7 +61,7 @@ All Dockerfiles accept these `ARG` values, supplied by `dev-docker.yml`:
 Each Dockerfile uses a multi-stage build:
 
 1. **`khiopsdev`** — Based on `ghcr.io/khiopsml/khiops/khiopsdev-<os>:latest`.
-   Installs dev tools (git, pip, pandoc, wget, zip, unzip) and Miniforge for Conda. 
+   Installs dev tools (git, pip, pandoc, wget, zip, unzip, plus python3-venv on Debian/Ubuntu, needed by `ensurepip`) and Miniforge for Conda. 
    On Debian/Ubuntu, also installs `ruby-dev` (needed for fakeS3).
 2. **`server`** — Pulls the `khiops-server` binary from
    `ghcr.io/khiopsml/khiops-server:<SERVER_REVISION>`.
@@ -64,7 +72,7 @@ Each Dockerfile uses a multi-stage build:
 
 For each Python version in `PYTHON_VERSIONS`, a Conda environment is created:
 
-- **`py<version>`** — Bare Python (for pip-based test installs).
+- **`py<version>`** - Bare Python (Conda and Pip packages are installed in them with `conda run`, without activation).
 
 ## Helper Scripts
 
@@ -79,12 +87,13 @@ For each Python version in `PYTHON_VERSIONS`, a Conda environment is created:
 
 - **Triggers**: PRs touching `Dockerfile.*` or the workflow file;
   `workflow_dispatch` for manual builds.
-- **Matrix**: `ubuntu22.04`, `rocky8`, `rocky9`, `debian13`.
+- **Matrix**: `ubuntu24.04`, `rocky8`, `rocky9`, `debian13`.
 - **Concurrency**: Per-workflow + per-PR/ref, with `cancel-in-progress: true`.
 - **Push**: Only on manual dispatch with `push: true`. The `set-latest` tag is
   restricted to the `main` or `main-v10` branches.
-- **Image tags**: `<CURRENT_IMAGE_TAG>` (e.g., `pip-packages`),
-  optionally also `latest`.
+- **Image tags**: `<CURRENT_IMAGE_TAG>` (default `latest`), optionally also
+  `latest`. `python-versions` and `server-revision` are workflow dispatch
+  inputs.
 - **Build context**: `./packaging/docker/khiopspydev/`.
 - **Build args**: Passes `KHIOPSDEV_OS`, `SERVER_REVISION`,
   `PYTHON_VERSIONS`.
@@ -93,27 +102,24 @@ For each Python version in `PYTHON_VERSIONS`, a Conda environment is created:
   be added inside the Dockerfile.
 
 ### `tests.yml` (Consumer)
+Runs the main test matrix inside `khiopspydev-ubuntu24.04` containers across
+Python 3.11-3.14, with `latest` as default image tag. Integration tests also run
+on `ubuntu24.04`, `rocky8`, `rocky9` and `debian13` containers.
 
-Runs the main test matrix inside `khiopspydev-ubuntu22.04` containers across
-Python 3.11-3.14. Integration tests also run on `rocky8`, `rocky9`, and
-`debian13` containers.
+### `pip.yml`
+The workflow tests the sdist on bare runners and public base images (`debian:trixie`, `rockylinux/rockylinux:10`).
 
-### `pip.yml` (Consumer)
+### `api-docs.yml`
 
-Builds and tests the source distribution package inside
-`khiopspydev-ubuntu22.04`, `khiopspydev-rocky9`, and `khiopspydev-debian13`
-containers.
-
-### `api-docs.yml` (Consumer)
-
-Builds the Zensical documentation inside the `khiopspydev-ubuntu22.04` container.
+Builds the Zensical documentation  on a bare `ubuntu-24.04` runner with `uv`.
 
 ## Editing Rules
 
-- **Apply shared changes to all relevant Dockerfiles.** Ubuntu and Debian
-  Dockerfiles are near-duplicates; always update both.
+- **Apply shared changes to all relevant Dockerfiles.** Ubuntu and Debian share
+   Dockerfile.ubuntu-debian ; apply shared changes to it and to
+  `Dockerfile.rocky`.
 - **Bump Miniforge version** by updating the download URL, filename, and SHA-256
-  checksum in all three Dockerfiles.
+  checksum in both Dockerfiles.
 - **Adding Python versions**: Update `DEFAULT_PYTHON_VERSIONS` in
   `dev-docker.yml` and add the new version to the `matrix.python-version` lists
   in consumer workflows (`tests.yml`, etc.).
