@@ -48,13 +48,16 @@ jobs:
       - name: Create the virtual environment
         run: |
           uv venv
-          # Persist the activation for all later steps
+          # The virtual environment is never activated: `uv` and `uv run
+          # --active` use VIRTUAL_ENV, and its `bin` directory is added to the
+          # PATH of the steps that need it
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
-          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - name: Install doc build requirements
         env:
           KHIOPS_SAMPLES_REVISION: ${{ inputs.khiops-samples-revision || env.DEFAULT_KHIOPS_SAMPLES_REVISION }}
         run: |
+          # Make the virtual environment executables available in this step
+          export PATH="$VIRTUAL_ENV/bin:$PATH"
           # Install package itself to install the samples datasets
           # First, install all dependencies except khiops-core and khiops-drivers-*
           python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt

@@ -126,17 +126,7 @@ jobs:
             VENV_PYTHON="$VENV_BIN_DIR/python"
           fi
           echo "VENV_PYTHON=$VENV_PYTHON" >> "$GITHUB_ENV"
-
-          # The virtual environment is never activated: its Python interpreter
-          # is invoked directly, and only its executables directory is added to
-          # the PATH. This is required on Linux and macOS, where the Khiops
-          # runner looks for `khiops_env` in the PATH, and it also makes the
-          # `kh-*` scripts directly available.
-          if [[ $RUNNER_OS == 'Windows' ]]; then
-            cygpath -w "$VENV_BIN_DIR" >> "$GITHUB_PATH"
-          else
-            echo "$VENV_BIN_DIR" >> "$GITHUB_PATH"
-          fi
+          echo "VENV_BIN_DIR=$VENV_BIN_DIR" >> "$GITHUB_ENV"
 
           # Setup Python (be portable wrt. python vs python3 in runners and
           # containers; either python3 or python is present as per the Python
@@ -205,6 +195,16 @@ jobs:
           PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         shell: bash
         run: |-
+          # The virtual environment is never activated: its Python interpreter
+          # is invoked directly, and only its executables directory is added to
+          # the PATH of this step. This is required on Linux and macOS, where
+          # the Khiops runner looks for `khiops_env` in the PATH, and it also
+          # makes the `kh-*` scripts directly available.
+          if [[ $RUNNER_OS == 'Windows' ]]; then
+            export PATH="$(cygpath -u "$VENV_BIN_DIR"):$PATH"
+          else
+            export PATH="$VENV_BIN_DIR:$PATH"
+          fi
           # Make sure MPI support is not loaded through env modules
           # Note: As the Docker container's shell is non-interactive, environment
           # modules are currently not initializing the shell anyway
