@@ -406,10 +406,9 @@ jobs:
             python -m venv khiops-venv
             PYTHON="$PWD/khiops-venv/bin/python"
 
-            # The virtual env is never activated: only its executables
-            # directory is added to the PATH, because the Khiops runner looks
-            # for `khiops_env` there
-            echo "$PWD/khiops-venv/bin" >> "$GITHUB_PATH"
+            # The virtual env is never activated: its executables directory is
+            # added to the PATH of the steps that need it (see below)
+            echo "VENV_BIN_DIR=$PWD/khiops-venv/bin" >> "$GITHUB_ENV"
           else
             PYTHON=$(command -v python)
           fi
@@ -450,6 +449,12 @@ jobs:
           PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         shell: bash
         run: |-
+          # The Khiops runner looks for `khiops_env` in the PATH, hence the
+          # executables directory of the virtual env (never activated) is
+          # added to the PATH of this step.
+          if [ -n "$VENV_BIN_DIR" ]; then
+            export PATH="$VENV_BIN_DIR:$PATH"
+          fi
           # Reset the default 'exit-on-error' mode of the bash shell in Github actions
           # so that the return code can be evaluated if needed
           set +e
