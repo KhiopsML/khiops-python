@@ -83,21 +83,27 @@ The `create-doc` script accepts the following options:
 The **API Docs** workflow (`.github/workflows/api-docs.yml`) validates
 documentation builds. It triggers on:
 
-- **PRs** touching `doc/site/**.md`, `doc/util/create-doc`, `doc/util/clean-doc`, `doc/util/*.py`,
-  `zensical.toml`, `khiops/**.py`, or the workflow file itself
+- **PRs** touching `doc/site/**.md`, `doc/util/create-doc`, `doc/util/clean-doc`,
+  `doc/util/*.py`, `zensical.toml`, `khiops/**.py`, `pyproject.toml`,
+  `doc/util/requirements.txt`, `scripts/extract_dependencies_from_pyproject_toml.py`
+  or the workflow file itself
 - **`workflow_dispatch`** with optional inputs:
-  - `khiops-revision` (default `11.0.1`)
-  - `khiops-python-tutorial-revision` (default: `11.0.0.0`)
-  - `khiops-samples-revision` (default: `11.0.0`)
+  - `khiops-python-tutorial-revision` (default: `11.0.0.0`, but can change)
+  - `khiops-samples-revision` (default: `11.0.0`, but can change)
 
-**Build job** 
+**Build job** (on a bare `ubuntu-24.04` GitHub runner)
 
-1. Installs the khiops-core package (`uv pip install khiops-core`) and
-   khiops-python package itself (`uv pip install .`)
-2. Downloads sample datasets via `kh-download-datasets`
-3. Installs doc Python requirements from `doc/util/requirements.txt`
-4. Runs `doc/util/create-doc -t -d -g <tutorial-revision>`
-5. Uploads the built HTML as a `api-docs` artifact
+
+1. Sets up `uv` and Python 3.14 (never the system-level Python,
+   `UV_PYTHON_PREFERENCE: only-managed`), creates a virtual environment with
+   `uv venv`, and exports `VIRTUAL_ENV` to the subsequent steps
+2. Installs the dependencies extracted from `pyproject.toml` (khiops-core and
+   khiops-drivers-* from TestPyPI) and khiops-python itself with `uv pip`
+3. Downloads sample datasets via `kh-download-datasets`; `kh-status` failure is
+   tolerated (uv is not officially supported by Khiops yet, see issue #602)
+4. Installs doc Python requirements from `doc/util/requirements.txt`
+5. Runs `doc/util/create-doc -t -d -g <tutorial-revision>`
+6. Uploads the built HTML as an `api-docs` artifact
 
 Note: the production API docs are built by the
 [khiops-doc](https://github.com/KhiopsML/khiops-doc) CI, which clones this
