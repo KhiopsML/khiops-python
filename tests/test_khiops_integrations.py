@@ -367,8 +367,7 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             f"KHIOPS_PATH {tool_path}\n"
             f"KHIOPS_COCLUSTERING_PATH {tool_path}\n"
             "KHIOPS_MPI_COMMAND mpiexec\n"
-            "KHIOPS_API_MODE false\n"
-            "KHIOPS_RETURNED yes\n",
+            "KHIOPS_API_MODE true\n",
             "",
         )
         mock_popen.return_value.__enter__.return_value.returncode = 0
@@ -392,7 +391,7 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
                             runner.raw_run("khiops", [], use_mpi=False)
 
         self.assertEqual(os.environ, initial_process_environment)
-        self.assertEqual(runner._environment["KHIOPS_RETURNED"], "yes")
+        self.assertEqual(runner._environment["KHIOPS_MPI_COMMAND"], "mpiexec")
         self.assertEqual(runner._environment["KHIOPS_API_MODE"], "true")
         self.assertEqual(
             mock_popen.call_args_list[0].kwargs["env"], isolated_environment
@@ -401,7 +400,6 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
         self.assertEqual(final_environment["KHIOPS_PROC_NUMBER"], "7")
         self.assertEqual(final_environment["KHIOPS_MEMORY_LIMIT"], "256")
         self.assertEqual(final_environment["KHIOPS_TMP_DIR"], "/isolated/tmp")
-        self.assertEqual(final_environment["KHIOPS_RETURNED"], "yes")
         self.assertEqual(final_environment["HOME"], "/isolated/home")
 
     def test_khiops_and_khiops_coclustering_are_run_with_mpi(self):
