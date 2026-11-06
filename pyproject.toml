@@ -102,7 +102,7 @@ classifiers = [
     "Programming Language :: Python",
     "Topic :: Scientific/Engineering",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "khiops-core==11.0.1", # package containing khiops-core binaries
     # do not use the latest versions, to avoid undesired breaking changes
@@ -146,5 +146,5 @@ kh-samples = "khiops.tools:kh_samples_entry_point"
 kh-download-datasets = "khiops.tools:kh_download_datasets_entry_point"
 
 [build-system]
-requires = ["setuptools", "tomli; python_version<'3.11'"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
