@@ -367,8 +367,7 @@ class KhiopsRunnerEnvironmentTests(unittest.TestCase):
             f"KHIOPS_PATH {tool_path}\n"
             f"KHIOPS_COCLUSTERING_PATH {tool_path}\n"
             "KHIOPS_MPI_COMMAND mpiexec\n"
-            "KHIOPS_API_MODE false\n"
-            "KHIOPS_RETURNED yes\n",
+            "KHIOPS_API_MODE true\n"
             "",
         )
         mock_popen.return_value.__enter__.return_value.returncode = 0
