@@ -12,7 +12,7 @@ on:
         default: 11.0.0
         description: Git Tag/Branch/Commit for the khiops-samples Repo
       image-tag:
-        default: latest
+        default: dev
         description: Development Docker Image Tag
       run-expensive-tests:
         type: boolean
@@ -31,17 +31,17 @@ concurrency:
   cancel-in-progress: true
 jobs:
   run:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.11', '3.12', '3.13', '3.14']
     container:
-      # 'latest' default image tag cannot be set as an environment variable,
+      # 'dev' default image tag cannot be set as an environment variable,
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu22.04:${{ inputs.image-tag || 'latest' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-ubuntu24.04:${{ inputs.image-tag || 'dev' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -52,7 +52,7 @@ jobs:
       packages: read
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -66,7 +66,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
@@ -93,11 +93,11 @@ jobs:
           # Since Python 3.13, setuptools is not installed automatically anymore
           $CONDA install -y -n "$CONDA_ENV" setuptools
 
-          # Add homogeneous TOML support (Python >= 3.12 has standard tomllib)
-          $CONDA install -y -n "$CONDA_ENV" tomli
           # Conda environments are only used to support multiple Python versions, hence install Pip packages inside
-          # Install Pip inside the Conda env to use it instead of the system-wide Pip
+          # Install Pip inside the Conda env to use it instead of the system-wide Pip; this does nothing if Pip is already installed
           $CONDA install -y -n "$CONDA_ENV" pip
+          # Make sure Pip is upgraded
+          $CONDA update -y -n "$CONDA_ENV" pip
           # First, install all dependencies except khiops-core and khiops-drivers-*
           $CONDA run --no-capture-output -n "$CONDA_ENV" python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
           $CONDA run -n "$CONDA_ENV" pip install `cat requires-no-khiops.txt`
@@ -106,8 +106,8 @@ jobs:
           $CONDA run -n "$CONDA_ENV" pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
           rm -f requires-khiops.txt requires-no-khiops.txt
       - name: Configure Expensive Tests Setting
-        # Skip expensive tests by default, unless on the `main-v10` or `main` branches
-        if: github.ref != 'main-v10' && github.ref != 'main' && ! inputs.run-expensive-tests
+        # Skip expensive tests by default, unless on `main-v10` or `main`
+        if: github.ref_name != 'main-v10' && github.ref_name != 'main' && ! inputs.run-expensive-tests
         run: echo "SKIP_EXPENSIVE_TESTS=true" >> "$GITHUB_ENV"
       - name: Prepare Integration Tests on remote files
         if: env.SKIP_EXPENSIVE_TESTS != 'true'
@@ -163,7 +163,7 @@ jobs:
         # For integration tests on GCS we use a real Google account
         # Retrieve the Google credentials through "Workload Identity Federation"
         # see https://github.com/google-github-actions/auth?tab=readme-ov-file#workload-identity-federation-through-a-service-account
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           service_account: khiops-gcs-driver-test-sa@ino-olr-dak-ideal-sbx.iam.gserviceaccount.com
           workload_identity_provider: projects/322269704080/locations/global/workloadIdentityPools/github/providers/my-repo
@@ -201,7 +201,7 @@ jobs:
           $CONDA run --no-capture-output -n "$CONDA_ENV" coverage xml -o "reports/$CONDA_ENV/py-coverage.xml"
       - name: Display Test Reports
         if: success() || failure()
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3.0.0
         with:
           name: Run Tests ${{ matrix.python-version }}
           path: reports/py${{ matrix.python-version }}/TEST-tests.*.*.xml
@@ -210,7 +210,7 @@ jobs:
           fail-on-error: 'false'
       - name: Upload Test Reports as Artifacts
         if: success() || failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: test-reports-${{ matrix.python-version }}
           path: |-
@@ -229,7 +229,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -237,13 +237,15 @@ jobs:
       # We move SAMPLES_REVISION to the environment so that we can use
       # them in both push and workflow_dispatch events
       - name: Set SAMPLES_REVISION on 'pull_request' events
+        shell: bash
         if: github.event_name == 'pull_request'
         run: echo "SAMPLES_REVISION=${DEFAULT_SAMPLES_REVISION}" >> "$GITHUB_ENV"
       - name: Set SAMPLES_REVISION on 'workflow_dispatch' events
+        shell: bash
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
@@ -251,9 +253,13 @@ jobs:
           path: khiops-samples
       - name: Setup Python
         id: setup-python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
-          python-version: '3.12'
+          python-version: '3.14'
+          check-latest: true
+      - name: Upgrade Pip
+        shell: pwsh
+        run: python -m pip install --upgrade pip
       - name: Install khiops-python dev dependencies
         shell: pwsh
         run: |
@@ -273,19 +279,19 @@ jobs:
           Get-Content .\requires-khiops.txt `
             | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple $_.toString()}
 
-          # Create and activate a python venv
+          # Create a python venv (not activated: its python executable is used directly)
           python -m venv khiops-windows-venv
-          khiops-windows-venv\Scripts\Activate.ps1
+          $VenvPython = "khiops-windows-venv\Scripts\python.exe"
 
-          # Install the Python requirements inside a venv
+          # Upgrade Pip
+          & $VenvPython -m pip install --upgrade pip
+
+          # Install the Python requirements inside the venv
           # The venv python executable is used here
           Get-Content .\requires-no-khiops.txt `
-            | ForEach-Object {python -m pip install $_.toString()}          
+            | ForEach-Object {& $VenvPython -m pip install $_.toString()}
           Get-Content .\requires-khiops.txt `
-            | ForEach-Object {python -m pip install --index-url https://test.pypi.org/simple $_.toString()}
-
-          # Deactivate the python venv
-          deactivate
+            | ForEach-Object {& $VenvPython -m pip install --index-url https://test.pypi.org/simple $_.toString()}
           Remove-Item -force requires-no-khiops.txt 
           Remove-Item -force requires-khiops.txt
       - name: Setup and Install Test Requirements
@@ -332,8 +338,8 @@ jobs:
           # Execute Khiops Coclustering sample (train and deploy model)
           Invoke-Expression -Command "$Python -m khiops.samples.samples -i deploy_coclustering -e"
 
-          # Install khiops-python in the python venv using the sources          
-          # The venv python executable is used here 
+          # Install khiops-python in the python venv using the sources
+          # The venv python executable is used here
           Invoke-Expression -Command "khiops-windows-venv\Scripts\python -m pip install ."
           # Change directory to avoid using the cloned khiops-python
           Invoke-Expression -Command "cd khiops-windows-venv\"
@@ -342,7 +348,7 @@ jobs:
           # The venv python executable is used here
           Invoke-Expression -Command "Scripts\python -c 'import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)'"
 
-          # The installation status MUST not fail                    
+          # The installation status MUST not fail
           if ($LASTEXITCODE -ne 0) {
             Write-Host "::error::Status error: khiops-python installation status check MUST NOT fail"
             exit 1
@@ -351,14 +357,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: [ubuntu22.04, rocky8, rocky9, debian13]
-    runs-on: ubuntu-latest
+        container: [ubuntu24.04, rocky8, rocky9, debian13]
+    runs-on: ubuntu-24.04
     container:
-      # 'latest' default image tag cannot be set as an environment variable,
+      # 'dev' default image tag cannot be set as an environment variable,
       # because the `env` context is only accessible at the step level;
       # hence, it is hard-coded
       image: |-
-        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'latest' }}
+        ghcr.io/khiopsml/khiops-python/khiopspydev-${{ matrix.container }}:${{ inputs.image-tag || 'dev' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -369,7 +375,7 @@ jobs:
       packages: read
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Get Git tags so that versioneer can function correctly
           # See issue https://github.com/actions/checkout/issues/701
@@ -383,12 +389,34 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: echo "SAMPLES_REVISION=${{ inputs.samples-revision }}" >> "$GITHUB_ENV"
       - name: Checkout Khiops samples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: khiopsml/khiops-samples
           ref: ${{ env.SAMPLES_REVISION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           path: khiops-samples
+      - name: Prepare Python and upgrade Pip
+        shell: bash
+        run: |
+          # Test the system-wide installation where possible. A virtual env is
+          # only used on Debian and Ubuntu, where the system-wide Python is
+          # externally managed (PEP 668) and Pip refuses to install packages in
+          # it
+          if [[ "${{ matrix.container }}" == "debian13" || "${{ matrix.container }}" == "ubuntu24.04" ]]; then
+            python -m venv khiops-venv
+            PYTHON="$PWD/khiops-venv/bin/python"
+
+            # The virtual env is never activated: its executables directory is
+            # added to the PATH of the steps that need it (see below)
+            echo "VENV_BIN_DIR=$PWD/khiops-venv/bin" >> "$GITHUB_ENV"
+          else
+            PYTHON=$(command -v python)
+          fi
+          echo "Using Python interpreter: $PYTHON"
+          "$PYTHON" -m pip install --upgrade pip
+
+          # Interpreter used by all the subsequent steps
+          echo "PYTHON=$PYTHON" >> "$GITHUB_ENV"
       - name: Install khiops-python dev dependencies
         shell: bash
         run: |
@@ -397,35 +425,18 @@ jobs:
           # Python versioneer fails to compute the current version correctly otherwise
           git config --global --add safe.directory $(realpath .)
 
-          # A virtual env is mandatory under debian
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then
-            python -m venv khiops-debian-venv
-            source khiops-debian-venv/bin/activate                      
-          fi
-
-          # Install tomli for Python < 3.11
-          pip install tomli
           # First, install all dependencies except khiops-core and khiops-drivers-*
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
-          pip install `cat requires-no-khiops.txt`
+          "$PYTHON" scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --exclude-khiops-family > requires-no-khiops.txt
+          "$PYTHON" -m pip install `cat requires-no-khiops.txt`
           # khiops-core and khiops-drivers-* must always be installed from TestPyPI in order to avoid distorting usage statistics
-          python scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
-          pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
+          "$PYTHON" scripts/extract_dependencies_from_pyproject_toml.py -f "pyproject.toml" --khiops-family-only > requires-khiops.txt
+          "$PYTHON" -m pip install --index-url https://test.pypi.org/simple `cat requires-khiops.txt`
           rm -f requires-khiops.txt requires-no-khiops.txt
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            deactivate                      
-          fi
       - name: Setup and Install Test Requirements
         shell: bash
         run: |-
-          # A virtual env is mandatory under debian
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            source khiops-debian-venv/bin/activate                      
-          fi
-          pip install -r test-requirements.txt
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            deactivate                      
-          fi
+          # Install the test requirements with the interpreter set up above
+          "$PYTHON" -m pip install -r test-requirements.txt
       - name: Test Khiops Integration
         env:
           # Force > 2 CPU cores to launch mpiexec
@@ -438,6 +449,12 @@ jobs:
           PRTE_MCA_rmaps_default_mapping_policy: :oversubscribe
         shell: bash
         run: |-
+          # The Khiops runner looks for `khiops_env` in the PATH, hence the
+          # executables directory of the virtual env (never activated) is
+          # added to the PATH of this step.
+          if [ -n "$VENV_BIN_DIR" ]; then
+            export PATH="$VENV_BIN_DIR:$PATH"
+          fi
           # Reset the default 'exit-on-error' mode of the bash shell in Github actions
           # so that the return code can be evaluated if needed
           set +e
@@ -447,18 +464,13 @@ jobs:
           # modules are currently not initializing the shell anyway
           if [ -n "$MODULESHOME" ]; then module unload mpi; fi
 
-          # A virtual env is mandatory under debian
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            source khiops-debian-venv/bin/activate                      
-          fi
-
           # Set rights to OpenMPI-specific folder
           mkdir -p /github/home/.pmix/components
           chown -R $(whoami) /github/home/.pmix/components
 
           # Print status
-          PATTERN=$(python -c \
-            "import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)" 2> >(grep -Ei 'with.*?unknown.*?installer') )                    
+          PATTERN=$("$PYTHON" -c \
+            "import sys; import khiops.core as kh; return_code = kh.get_runner().print_status(); sys.exit(return_code)" 2> >(grep -Ei 'with.*?unknown.*?installer') )
           # The installation status check will fail
           # because the library was not installed properly (the source code was only cloned)
           if [ -n "$PATTERN" ]; then
@@ -466,10 +478,7 @@ jobs:
           fi
 
           # Run the remaining integration tests
-          python -m unittest -v tests.test_khiops_integrations
+          "$PYTHON" -m unittest -v tests.test_khiops_integrations
 
           # Execute Khiops sample (train and deploy model), which uses MPI
-          python -m khiops.samples.samples -i deploy_model -e
-          if [[ "${{ matrix.container }}" == "debian13" ]]; then            
-            deactivate                      
-          fi
+          "$PYTHON" -m khiops.samples.samples -i deploy_model -e

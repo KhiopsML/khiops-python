@@ -238,11 +238,10 @@ be more carefree while still trying not to add too many dependencies.
 ### Python Support Policy
 Our Python support policy is the following:
 - We start supporting a new Python version **within 3 months** of its official release.
-- We support an old Python version **up to 6 months** from its official end of
-  support by the Python developers.
+- We support an old Python version **until** its official end of support by the
+  Python developers.
 
-By _supporting a Python version_ we mean that we pass all our test suites in the specified
-version.
+By _supporting a Python version_ we mean that we pass all our test suites in the specified version.
 
 ## Versioning
 We follow a non-standard `MAJOR.MINOR.PATCH.INCREMENT[-PRE_RELEASE]` versioning convention. The

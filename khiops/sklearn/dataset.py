@@ -9,7 +9,7 @@ import csv
 import io
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -32,13 +32,6 @@ from khiops.core.internals.common import (
 # To capture invalid-names other than X,y run:
 #   pylint --disable=all --enable=invalid-names dataset.py
 # pylint: disable=invalid-name
-
-# Set a special pandas option to force the new string data type (`StringDtype`)
-# even for version 2.0 which is still required for python 3.10.
-# This new string data type no longer maps to a NumPy data type.
-# Hence, code assuming NumPy type compatibility will break unless
-# this string data type is handled separately.
-pd.options.future.infer_string = True
 
 
 def check_dataset_spec(ds_spec):
@@ -1286,14 +1279,6 @@ class SparseTable(DatasetTable):
 
         return dictionary
 
-    def _flatten(self, iterable):
-        if isinstance(iterable, Iterable):
-            for iterand in iterable:
-                if isinstance(iterand, Iterable):
-                    yield from self._flatten(iterand)
-                else:
-                    yield iterand
-
     def _write_sparse_block(self, row_index, stream, target_value=None):
 
         # Access the sparse row
@@ -1302,17 +1287,7 @@ class SparseTable(DatasetTable):
         # Khiops needs variable indices to be sorted
         sorted_indices = np.sort(row.nonzero()[1], axis=-1, kind="mergesort")
 
-        # Flatten row for Python < 3.9 scipy.sparse.lil_matrix whose API
-        # is not homogeneous with other sparse matrices: it stores
-        # opaque Python lists as elements
-        # Thus:
-        # - if isinstance(self.data_source, sp.lil_matrix) and Python 3.8, then
-        # row.data is np.array([list([...])])
-        # - else, row.data is np.array([...])
-        # TODO: remove this flattening once Python 3.8 support is dropped
-        sorted_data = np.fromiter(self._flatten(row.data), row.data.dtype)[
-            sorted_indices.argsort()
-        ]
+        sorted_data = np.fromiter(row.data, row.data.dtype)[sorted_indices.argsort()]
         for variable_index, variable_value in zip(sorted_indices, sorted_data):
             stream.write(f"{variable_index + 1}:{variable_value} ")
 
