@@ -136,7 +136,10 @@ class EstimatorAttributesTests(unittest.TestCase):
         """
         X, _ = self._create_multitable_input(750)
         y = X["main_table"][0]["Commune"]
-        X["main_table"][0].drop("Commune", axis=1, inplace=True)
+        X["main_table"] = (
+            X["main_table"][0].drop("Commune", axis=1),
+            X["main_table"][1],
+        )
         khr_accidents = KhiopsRegressor(n_trees=0, n_text_features=0)
         with warnings.catch_warnings():
             warnings.filterwarnings(

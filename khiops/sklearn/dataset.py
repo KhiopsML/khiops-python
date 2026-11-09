@@ -1095,7 +1095,7 @@ class PandasTable(DatasetTable):
             column_id: get_khiops_variable_name(column_id)
             for column_id in self.column_ids
         }
-        output_dataframe.rename(columns=output_names, inplace=True)
+        output_dataframe = output_dataframe.rename(columns=output_names)
         if target_column is not None:
             output_dataframe[get_khiops_variable_name(target_column_id)] = (
                 target_column.copy()
@@ -1103,10 +1103,9 @@ class PandasTable(DatasetTable):
 
         # Sort by key if requested (as string)
         if sort:
-            output_dataframe.sort_values(
+            output_dataframe = output_dataframe.sort_values(
                 by=self.key,
                 key=lambda array: array.astype("str"),
-                inplace=True,
                 kind="mergesort",
             )
 

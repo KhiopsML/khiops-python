@@ -589,7 +589,7 @@ class DatasetSpecErrorsTests(unittest.TestCase):
         """Test that in-memory dataset all columns ids must be int or str"""
         spec, _ = self.create_fixture_dataset_spec(multitable=False, schema=None)
         features_table = spec["main_table"][0]
-        features_table.rename(columns={"User_ID": 1}, inplace=True)
+        features_table = features_table.rename(columns={"User_ID": 1})
         with self.assertRaises(TypeError) as context:
             PandasTable(name="reviews", dataframe=features_table)
         output_error_msg = str(context.exception)
