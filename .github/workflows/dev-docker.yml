@@ -3,7 +3,7 @@ name: Dev Docker
 env:
   DEFAULT_CURRENT_IMAGE_TAG: dev
   DEFAULT_SERVER_REVISION: main
-  DEFAULT_PYTHON_VERSIONS: 3.11 3.12 3.13 3.14
+  DEFAULT_PYTHON_VERSIONS: 3.11 3.12 3.13 3.14 3.15
 on:
   pull_request:
     paths: [packaging/docker/khiopspydev/Dockerfile.*, .github/workflows/dev-docker.yml]
@@ -23,7 +23,7 @@ on:
         description: Set as 'latest' (if the current branch is 'main')
       python-versions:
         type: string
-        default: 3.11 3.12 3.13 3.14
+        default: 3.11 3.12 3.13 3.14 3.15
         description: Python versions to support
       server-revision:
         type: string
