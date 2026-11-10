@@ -103,17 +103,6 @@ jobs:
           # Get Git tags
           # See issue https://github.com/actions/checkout/issues/701
           fetch-depth: 0
-      - name: Setup Python on macOS 15
-        # FIXME: Remove when Python 3.15 support is added
-        # The macOS-15 runner's default Python is 3.15, and scikit-learn is
-        # pinned to < 1.9.0, but the earliest version on Python 3.15 is >= 1.9.0
-        # Hence, pin Python to 3.14 on MacOS until
-        # https://github.com/KhiopsML/khiops-python/issues/630 is resolved.
-        if: matrix.env.os == 'macos-15'
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.14'
-          check-latest: true
       - name: Set parameters as env
         shell: bash
         run: |
