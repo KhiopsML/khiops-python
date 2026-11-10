@@ -523,7 +523,9 @@ class KhiopsEstimator(ABC, BaseEstimator):
                 raw_output_table_df, on=deployment_ds.main_table.key
             )
             if drop_key:
-                output_table_df.drop(deployment_ds.main_table.key, axis=1, inplace=True)
+                output_table_df = output_table_df.drop(
+                    deployment_ds.main_table.key, axis=1
+                )
         # On mono-table: Return the read dataframe as-is
         else:
             output_table_df = raw_output_table_df
