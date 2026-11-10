@@ -4,11 +4,10 @@
 # which is available at https://spdx.org/licenses/BSD-3-Clause-Clear.html or         #
 # see the "LICENSE.md" file for more details.                                        #
 ######################################################################################
-"""Helper test class, for running fit and predict on Khiops estimators"""
+"""Helper test class, for mocking Khiops core API functions and preparing data"""
 
 import importlib
 import os
-import pickle
 import shutil
 from collections import defaultdict
 
@@ -17,8 +16,7 @@ import wrapt
 from sklearn.model_selection import train_test_split
 
 import khiops.core as kh
-from khiops.core.internals.common import is_iterable, type_error_message
-from khiops.sklearn.estimators import KhiopsEncoder, KhiopsEstimator
+from khiops.core.internals.common import type_error_message
 
 
 class CoreApiFunctionMock:
@@ -133,12 +131,6 @@ class CoreApiFunctionMock:
                     f"Return value specification at index {index} "
                     f"must be tuple not {type(return_value_tuple).__name__}."
                 )
-
-    @property
-    def output_path_is_dir(self):
-        return self.api_function_specs[(self.module_name, self.function_name)][
-            "output_path_is_dir"
-        ]
 
     @property
     def output_path_arg_index(self):
@@ -358,87 +350,6 @@ class KhiopsTestHelper:
         else:
             raise TypeError("primary_table must be None or a data frame")
         return ((x_train, y_train), (x_test, y_test))
-
-    @staticmethod
-    def _create_and_fit_estimator_to_data(
-        estimator_class, observations, labels, fit_kwargs=None, **estimator_kwargs
-    ):
-        estimator = estimator_class.__call__(**estimator_kwargs)
-        fit_kwargs = fit_kwargs if fit_kwargs is not None else {}
-        if labels is not None:
-            fitted_estimator = estimator.fit(X=observations, y=labels, **fit_kwargs)
-        else:
-            fitted_estimator = estimator.fit(X=observations, **fit_kwargs)
-        return fitted_estimator
-
-    @staticmethod
-    def fit_helper(
-        estimator_class, data, pickled=True, fit_kwargs=None, **estimator_kwargs
-    ):
-        """Creates a fitted estimator from a class and a dataset"""
-        assert isinstance(
-            estimator_class, KhiopsEstimator.__class__
-        ), "'estimator_class' should be a class derived from KhiopsEstimator"
-
-        # Unpickle training data if necessary
-        training_data = pickle.loads(data) if pickled else data
-        assert (
-            is_iterable(training_data) and len(training_data) == 2
-        ), "'training_data' should be an iterable with 2 elements"
-
-        # Build a fitted estimator
-        fitted_estimator = KhiopsTestHelper._create_and_fit_estimator_to_data(
-            estimator_class,
-            training_data[0],  # observations
-            training_data[1],  # labels
-            fit_kwargs,
-            **estimator_kwargs,
-        )
-        return fitted_estimator
-
-    @staticmethod
-    def _transform_data_with_encoder(encoder, observations):
-        return encoder.transform(X=observations)
-
-    @staticmethod
-    def _predict_data_with_estimator(estimator, observations):
-        return estimator.predict(X=observations)
-
-    @staticmethod
-    def _predict_proba_with_estimator(estimator, observations):
-        return estimator.predict_proba(X=observations)
-
-    @staticmethod
-    def predict_helper(data, pickled=True, kind="simple"):  # 'proba' accepted
-        """Prediction driver helper for tests"""
-        estimator_and_data = pickle.loads(data) if pickled else data
-        estimator, data = estimator_and_data
-        if (
-            isinstance(estimator, KhiopsEstimator)
-            and is_iterable(data)
-            and len(data) == 2
-        ):
-            if isinstance(estimator, KhiopsEncoder):
-                predictions = KhiopsTestHelper._transform_data_with_encoder(
-                    estimator, data[0]
-                )
-            else:
-                if kind == "simple":
-                    predictions = KhiopsTestHelper._predict_data_with_estimator(
-                        estimator, data[0]
-                    )
-                elif kind == "proba":
-                    predictions = KhiopsTestHelper._predict_proba_with_estimator(
-                        estimator, data[0]
-                    )
-                else:
-                    raise ValueError(f"Kind of prediction unknown: '{kind}'")
-        else:
-            raise TypeError(
-                "estimator should be a subclass of KhiopsEstimator "
-                "and data should be an iterable of two elements"
-            )
-        return predictions
 
     @staticmethod
     def model_path_of_report_path(report_path):
