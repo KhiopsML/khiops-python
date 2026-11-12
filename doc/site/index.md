@@ -4,21 +4,36 @@ Welcome to the Khiops Python API documentation page.
 
 ## Installation
 
-Khiops can be installed in a Python virtual environment using `pip`,
+Khiops can be installed in a Python virtual environment using `pip` or `uv`,
 under Linux and macOS (in a `bash` shell):
 
+Using `pip`:
 ```bash
 python -m venv khiops-venv
 source khiops-venv/bin/activate
 pip install -U khiops
 ```
 
+Using `uv`:
+```bash
+uv venv
+uv pip install -U khiops
+```
+
+
 under Windows (in a `powershell` shell):
 
+Using `pip`:
 ```powershell
 python -m venv khiops-venv
 khiops-venv\Scripts\activate
 pip install -U khiops
+```
+
+Using `uv`:
+```powershell
+uv venv
+uv pip install -U khiops
 ```
 
 Alternatively, you can install Khiops with the [Conda package manager](https://docs.conda.io/en/latest/):

@@ -20,18 +20,34 @@ conda activate khiops-env
 conda install -c conda-forge khiops
 ```
 
-Using `pip` under Linux (in a `bash` shell)
+Under Linux (in a `bash` shell)
+
+Using `pip`: 
 ```bash
 python -m venv khiops-venv
 source khiops-venv/bin/activate
 pip install -U khiops
 ```
 
-Using `pip` under Windows (in a `powershell` shell)
+Using `uv`:
+```bash
+uv venv
+uv pip install -U khiops
+```
+
+Under Windows (in a `powershell` shell)
+
+Using `pip`:
 ```shell
 python -m venv khiops-venv
 khiops-venv\Scripts\activate
 pip install -U khiops
+```
+
+Using `uv`:
+```shell
+uv venv
+uv pip install -U khiops
 ```
 
 Other installation methods are documented at the [Khiops website][khiops-install].
