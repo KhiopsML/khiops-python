@@ -104,7 +104,7 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "khiops-core==11.0.1", # package containing khiops-core binaries
+    "khiops-core==11.0.2", # package containing khiops-core binaries
     # do not use the latest versions, to avoid undesired breaking changes
     "pandas>=2.3.3,<4.0.0",
     "scikit-learn>=1.7.2,<2.0.0",
