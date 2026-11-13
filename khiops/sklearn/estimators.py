@@ -1724,7 +1724,7 @@ class KhiopsClassifier(ClassifierMixin, KhiopsPredictor):
         variables and automatically constructed variables, excluding features
         derived from the text variables or from variable pairs. Decision trees
         usually improve the classifier's performance at the cost of the
-        interpretability of the model.
+        interpretability of the model. For initial analysis, users can start with `max_trees` set to 0.
     n_text_features : int, default 10000
         Maximum number of text features to construct.
     type_text_features : str, default "words"
@@ -2148,7 +2148,7 @@ class KhiopsRegressor(RegressorMixin, KhiopsPredictor):
         variables and automatically constructed variables, excluding features
         derived from the text variables or from variable pairs. Decision trees
         usually improve the regressor's performance at the cost of the
-        interpretability of the model.
+        interpretability of the model. For initial analysis, users can start with `max_trees` set to 0.
     n_text_features : int, default 10000
         Maximum number of text features to construct.
     type_text_features : str, default "words"
@@ -2369,7 +2369,7 @@ class KhiopsEncoder(TransformerMixin, KhiopsSupervisedEstimator):
         variables and automatically constructed variables, excluding features
         derived from the text variables or from variable pairs. Decision trees
         usually improve the encoder's performance at the cost of the
-        interpretability of the model.
+        interpretability of the model. For initial analysis, users can start with `max_trees` set to 0.
     n_text_features : int, default 10000
         Maximum number of text features to construct.
     type_text_features : str, default "words"
