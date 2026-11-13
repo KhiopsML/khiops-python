@@ -672,7 +672,15 @@ def check_database(
         `detect_format` to `False` if set. Ignored if `detect_format`
         is `True`.
     sample_percentage : float, default 100.0
-        See the `sampling_mode` option below.
+        Percentage of samples retained. See also the `sampling_mode` option
+        below.
+
+        !!! note
+
+            A selection variable can also be applied to select samples, via the
+            `selection_variable` parameter (see below). The effects are
+            orthogonal and additive.
+
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it checks `sample_percentage` percent of
         the data; if equal to "Exclude sample" it checks the complement of the
@@ -681,6 +689,12 @@ def check_database(
     selection_variable : str, default ""
         It checks only the records such that the value of `selection_variable` is
         equal to `selection_value`. Ignored if equal to "".
+
+        !!! note
+
+            The sample percentage, set via the `sample_percentage` parameter, is
+            applied additively.
+
     selection_value: str or int or float, default ""
         See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
@@ -790,7 +804,15 @@ def train_predictor(
         `detect_format` to `False` if set. Ignored if `detect_format`
         is `True`.
     sample_percentage : float, default 70.0
-        See the `sampling_mode` option below.
+        Percentage of samples retained during exploratory analysis and model
+        training. See also the `sampling_mode` option below.
+
+        !!! note
+
+            A selection variable can also be applied to select samples, via the
+            `selection_variable` parameter (see below). The effects are
+            orthogonal and additive.
+
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the predictor on `sample_percentage`
         percent of the data and tests the model on the remainder of the data if
@@ -803,8 +825,20 @@ def train_predictor(
     selection_variable : str, default ""
         It trains with only the records such that the value of `selection_variable` is
         equal to `selection_value`. Ignored if equal to "".
+
+        !!! note
+
+            The sample percentage, set via the `sample_percentage` parameter, is
+            applied additively.
+
     selection_value: str or int or float, default ""
         See `selection_variable` option above. Ignored if equal to "".
+
+        !!! note
+
+            The sample percentage, set via the `sample_percentage` parameter, is
+            applied additively.
+
     additional_data_tables : dict, optional
         A dictionary containing the data paths and file paths for a multi-table
         dictionary file. For more details see
@@ -1116,7 +1150,15 @@ def evaluate_predictor(
         `detect_format` to `False` if set. Ignored if `detect_format`
         is `True`.
     sample_percentage : float, default 100.0
-        See `sampling_mode` option below.
+        Percentage of samples retained during model evaluation. See also the
+        `sampling_mode` option below.
+
+        !!! note
+
+            A selection variable can also be applied to select samples, via the
+            `selection_variable` parameter (see below). The effects are
+            orthogonal and additive.
+
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it evaluates the predictor on `sample_percentage`
         percent of the data. If equal to "Exclude sample" it evaluates the predictor on
@@ -1125,6 +1167,12 @@ def evaluate_predictor(
     selection_variable : str, default ""
         It trains with only the records such that the value of `selection_variable` is
         equal to `selection_value`. Ignored if equal "".
+
+        !!! note
+
+            The sample percentage, set via the `sample_percentage` parameter, is
+            applied additively.
+
     selection_value: str or int or float, default ""
         See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
@@ -1267,7 +1315,15 @@ def train_recoder(
         `detect_format` to `False` if set. Ignored if `detect_format`
         is `True`.
     sample_percentage : float, default 100.0
-        See `sampling_mode` option below.
+        Percentage of samples retained during model training. See also the
+        `sampling_mode` option below.
+
+        !!! note
+
+            A selection variable can also be applied to select samples, via the
+            `selection_variable` parameter (see below). The effects are
+            orthogonal and additive.
+
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the recoder on `sample_percentage`
         percent of the data. If equal to "Exclude sample" it trains the recoder on the
@@ -1276,6 +1332,12 @@ def train_recoder(
     selection_variable : str, default ""
         It trains with only the records such that the value of `selection_variable` is
         equal to `selection_value`. Ignored if equal to "".
+
+        !!! note
+
+            The sample percentage, set via the `sample_percentage` parameter, is
+            applied additively.
+
     selection_value: str or int or float, default ""
         See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
@@ -1469,7 +1531,15 @@ def deploy_model(
         `detect_format` to `False` if set. Ignored if `detect_format`
         is `True`.
     sample_percentage : float, default 100.0
-        See `sampling_mode` option below.
+        Percentage of samples the model is deployed on. See also the
+        `sampling_mode` option below.
+
+        !!! note
+
+            A selection variable can also be applied to select samples, via the
+            `selection_variable` parameter (see below). The effects are
+            orthogonal and additive.
+
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it deploys the model on `sample_percentage`
         percent of the data. If equal to "Exclude sample" it deploys the model on the
@@ -1478,6 +1548,12 @@ def deploy_model(
     selection_variable : str, default ""
         It deploys only the records such that the value of `selection_variable` is
         equal to `selection_value`. Ignored if equal to "".
+
+        !!! note
+
+            The sample percentage, set via the `sample_percentage` parameter, is
+            applied additively.
+
     selection_value: str or int or float, default ""
         See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
@@ -1784,7 +1860,15 @@ def train_coclustering(
         `detect_format` to `False` if set. Ignored if `detect_format`
         is `True`.
     sample_percentage : float, default 100.0
-        See `sampling_mode` option below.
+        Percentage of samples retained during coclustering analysis. See also
+        the `sampling_mode` option below.
+
+        !!! note
+
+            A selection variable can also be applied to select samples, via the
+            `selection_variable` parameter (see below). The effects are
+            orthogonal and additive.
+
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the coclustering estimator on
         `sample_percentage` percent of the data. If equal to "Exclude sample" it
@@ -1794,6 +1878,12 @@ def train_coclustering(
     selection_variable : str, default ""
         It trains with only the records such that the value of `selection_variable` is
         equal to `selection_value`. Ignored if equal to "".
+
+        !!! note
+
+            The sample percentage, set via the `sample_percentage` parameter, is
+            applied additively.
+
     selection_value: str or int or float, default ""
         See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
@@ -1901,7 +1991,15 @@ def train_instance_variable_coclustering(
         `detect_format` to `False` if set. Ignored if `detect_format`
         is `True`.
     sample_percentage : float, default 100.0
-        See `sampling_mode` option below.
+        Percentage of samples retained during instance-variable coclustering
+        analysis. See also the `sampling_mode` option below.
+
+        !!! note
+
+            A selection variable can also be applied to select samples, via the
+            `selection_variable` parameter (see below). The effects are
+            orthogonal and additive.
+
     sampling_mode : "Include sample" or "Exclude sample"
         If equal to "Include sample" it trains the coclustering estimator on
         `sample_percentage` percent of the data. If equal to "Exclude sample" it
@@ -1911,6 +2009,12 @@ def train_instance_variable_coclustering(
     selection_variable : str, default ""
         It trains with only the records such that the value of `selection_variable` is
         equal to `selection_value`. Ignored if equal to "".
+
+        !!! note
+
+            The sample percentage, set via the `sample_percentage` parameter, is
+            applied additively.
+
     selection_value: str or int or float, default ""
         See `selection_variable` option above. Ignored if equal to "".
     additional_data_tables : dict, optional
