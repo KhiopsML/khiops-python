@@ -843,7 +843,8 @@ def train_predictor(
         variables and automatically constructed variables, excluding features
         derived from the text variables or from variable pairs. Decision trees
         usually improve the predictor's performance at the cost of the
-        interpretability of the model.
+        interpretability of the model. For initial exploratory analysis, users
+        can start with `max_trees` set to 0.
     max_pairs : int, default 0
         Maximum number of pair features to construct. These features exploit
         bivariate partitions of native or automatically constructed variables,
@@ -1301,7 +1302,8 @@ def train_recoder(
         variables and automatically constructed variables, excluding features
         derived from the text variables or from variable pairs. Decision trees
         usually improve the recoder's performance at the cost of the
-        interpretability of the model.
+        interpretability of the model. For initial analysis, users can start
+        with `max_trees` set to 0.
     max_pairs : int, default 0
         Maximum number of pair features to construct. These features exploit
         bivariate partitions of native or automatically constructed variables,
