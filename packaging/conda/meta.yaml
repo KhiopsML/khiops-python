@@ -2,7 +2,7 @@
 # See https://github.com/conda-forge/khiops-feedstock/tree/main/recipe
 
 {% set name = "khiops" %}
-{% set version = "11.0.1.1" %}
+{% set version = "11.0.2.0" %}
 # The minimal Python version as supported by the conda-forge CI
 {% set python_min = "3.11" %}
 
@@ -29,7 +29,7 @@ requirements:
     - setuptools
   run:
     - python >={{ python_min }}
-    - khiops-core =11.0.1
+    - khiops-core =11.0.2
     - pandas >=2.3.3,<4.0.0
     - scikit-learn >=1.7.2,<2.0.0
   run_constrained:
