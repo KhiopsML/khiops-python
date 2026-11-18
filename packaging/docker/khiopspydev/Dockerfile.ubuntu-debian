@@ -14,7 +14,7 @@ RUN true \
   # It is still possible to create venvs using the --without-pip flag but any subsequent
   # module installation with pip would be impossible
   python3-venv \
-  zip pandoc wget ruby-dev \
+  zip pandoc wget \
   # Set python to python3 \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 1 \
   # Install miniforge to have multiple Python versions via Conda \
@@ -45,8 +45,8 @@ RUN true \
   && true
 
 RUN mkdir -p /scripts
-COPY ./run_service.sh ./run_fake_remote_file_servers.sh /scripts/
-RUN chmod +x /scripts/run_service.sh /scripts/run_fake_remote_file_servers.sh
+COPY ./run_service.sh /scripts/
+RUN chmod +x /scripts/run_service.sh
 
 # Create the ubuntu user, or enforce its settings if it already exists, as on
 # ubuntu24.04
@@ -63,16 +63,4 @@ FROM ghcr.io/khiopsml/khiops-server:${SERVER_REVISION} AS server
 FROM khiopsdev AS base
 COPY --from=server /service /usr/bin/service
 
-# S3 fake file server (only in the ubuntu container)
-# Do not use the latest fakes3 version because starting from 1.3 a licence is required
-# if fakes3 is no longer compatible think about switching to an alternative and fully compatible server
-# (https://github.com/jamhall/s3rver:v3.7.1 is not yet for example)
-RUN gem install fakes3:1.2.1 sorted_set
-# Avoid resolving a fake s3-bucket.localhost hostname
-# Alternate builders (buildx via moby buildkit) mount /etc/hosts read-only, the following command will fail
-# echo "127.0.0.1 s3-bucket.localhost" >> /etc/hosts
-# You will have to add the `add-hosts` input instead (https://github.com/docker/build-push-action/#inputs)
-
-# Port on which fakes3 is listening
-EXPOSE 4569
 
