@@ -112,26 +112,23 @@ jobs:
       - name: Prepare Integration Tests on remote files
         if: env.SKIP_EXPENSIVE_TESTS != 'true'
         env:
-          AWS_ENDPOINT_URL: http://localhost:4569
+          AWS_ENDPOINT_URL: ${{ vars.AWS_ENDPOINT_URL }}
         shell: bash
         run: |
           # Prepare AWS-S3 credentials and configuration          
           mkdir -p ${GITHUB_WORKSPACE}/.aws/
           cat << EOF > ${GITHUB_WORKSPACE}/.aws/credentials
           [default]
-          aws_access_key_id=KEY
-          aws_secret_access_key=SECRET           
+          aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}           
           EOF
           cat << EOF > ${GITHUB_WORKSPACE}/.aws/configuration
           [default]
           endpoint_url=${AWS_ENDPOINT_URL}
           region=eu-north-1          
           EOF
-          echo "Generated AWS credentials..."
-          cat  ${GITHUB_WORKSPACE}/.aws/credentials
           echo "Generated AWS configuration..."
           cat  ${GITHUB_WORKSPACE}/.aws/configuration
-          /scripts/run_fake_remote_file_servers.sh .  # launch the servers in the background
 
           # Set environment variables for the tests with GCS
           GCS_BUCKET_NAME=${{ vars.GCS_BUCKET_NAME }}
@@ -139,7 +136,7 @@ jobs:
 
           # Set environment variables for the tests with S3
           S3_DRIVER_LOGLEVEL=info  # set to debug for diagnosis
-          S3_BUCKET_NAME=s3-bucket
+          S3_BUCKET_NAME=${{ vars.S3_BUCKET_NAME }}
           AWS_SHARED_CREDENTIALS_FILE=${{ github.workspace }}/.aws/credentials
           AWS_CONFIG_FILE=${{ github.workspace }}/.aws/configuration
 
