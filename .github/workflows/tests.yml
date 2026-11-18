@@ -134,7 +134,7 @@ jobs:
           /scripts/run_fake_remote_file_servers.sh .  # launch the servers in the background
 
           # Set environment variables for the tests with GCS
-          GCS_BUCKET_NAME=data-test-khiops-driver-gcs/khiops_data
+          GCS_BUCKET_NAME=khiops-python-cicd
           GCS_DRIVER_LOGLEVEL=info  # set to debug for diagnosis
 
           # Set environment variables for the tests with S3
@@ -165,8 +165,8 @@ jobs:
         # see https://github.com/google-github-actions/auth?tab=readme-ov-file#workload-identity-federation-through-a-service-account
         uses: google-github-actions/auth@v3
         with:
-          service_account: khiops-gcs-driver-test-sa@ino-olr-dak-ideal-sbx.iam.gserviceaccount.com
-          workload_identity_provider: projects/322269704080/locations/global/workloadIdentityPools/github/providers/my-repo
+          service_account: khiops-cicd-storage-sa@ino-ols-khiops-aas-prd.iam.gserviceaccount.com
+          workload_identity_provider: projects/345517370475/locations/global/workloadIdentityPools/github/providers/github
           # 'create_credentials_file' is true by default but let's make it explicit
           # After authentication, the required GOOGLE_APPLICATION_CREDENTIALS environment variable is exported
           # https://github.com/google-github-actions/auth?tab=readme-ov-file#inputs-miscellaneous
