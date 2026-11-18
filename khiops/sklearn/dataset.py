@@ -1256,7 +1256,7 @@ class SparseTable(DatasetTable):
         Returns
         -------
         Dictionary:
-            The Khiops [Dictionary][khiops.dictionary.Dictionary] object
+            The Khiops [Dictionary][khiops.core.dictionary.Dictionary] object
             describing this table's schema
 
         """

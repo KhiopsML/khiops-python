@@ -228,7 +228,8 @@ def deploy_coclustering(
 
     See Also
     --------
-    - [KhiopsRunner.run][] : Additional options.
+    - [KhiopsRunner.run][khiops.core.internals.runner.KhiopsRunner.run] :
+      Additional options.
 
     Returns
     -------
@@ -435,7 +436,8 @@ def deploy_predictor_for_metrics(
 
     See Also
     --------
-    - [KhiopsRunner.run][] : Additional options.
+    - [KhiopsRunner.run][khiops.core.internals.runner.KhiopsRunner.run] :
+      Additional options.
     -"""
     # Check the dictionary domain
     api._check_dictionary_file_path_or_domain(dictionary_file_path_or_domain)

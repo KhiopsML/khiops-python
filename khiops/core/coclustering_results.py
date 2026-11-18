@@ -41,7 +41,7 @@ CoclusteringCluster
 ```
 
 To have a complete illustration of the access to the information of all classes in this
-module look at their [to_dict][] methods which write Python dictionaries in the
+module look at their `to_dict` methods which write Python dictionaries in the
 same format as the Khiops JSON reports.
 """
 import functools
