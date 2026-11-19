@@ -11,7 +11,8 @@
 #  Path(__file__).
 
 """Classes implementing Khiops Python' backend runners"""
-import importlib
+
+import importlib.util
 import io
 import os
 import platform
@@ -199,12 +200,17 @@ def _infer_base_dir_for_conda_based_or_pip_installations():
 
     # Windows: Match either
     # %CONDA_PREFIX%\Lib\site-packages\khiops\core\internals\runner.py
+    # or %CONDA_PREFIX%\lib\python\site-packages\khiops\core\internals\runner.py
     # or {python lib root}\Lib\dist-packages\khiops\core\internals\runner.py
     # or {virtual env root}\Lib\site-packages\khiops\core\internals\runner.py
     if platform.system() == "Windows":
         # safeguard to prevent an IndexError on borderline installations
         if len(current_file_path.parents) < 6:
             base_dir = ""
+        elif len(current_file_path.parents) >= 7 and tuple(
+            part.lower() for part in current_file_path.parts[-7:-4]
+        ) == ("lib", "python", "site-packages"):
+            base_dir = str(current_file_path.parents[6])
         else:
             base_dir = str(current_file_path.parents[5])
     # Linux/macOS: Match either
