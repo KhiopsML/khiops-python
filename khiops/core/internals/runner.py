@@ -11,7 +11,8 @@
 #  Path(__file__).
 
 """Classes implementing Khiops Python' backend runners"""
-import importlib
+
+import importlib.util
 import io
 import os
 import platform
@@ -199,26 +200,34 @@ def _infer_base_dir_for_conda_based_or_pip_installations():
 
     # Windows: Match either
     # %CONDA_PREFIX%\Lib\site-packages\khiops\core\internals\runner.py
+    # or %CONDA_PREFIX%\lib\python\site-packages\khiops\core\internals\runner.py
     # or {python lib root}\Lib\dist-packages\khiops\core\internals\runner.py
     # or {virtual env root}\Lib\site-packages\khiops\core\internals\runner.py
-    if platform.system() == "Windows":
-        # safeguard to prevent an IndexError on borderline installations
-        if len(current_file_path.parents) < 6:
-            base_dir = ""
-        else:
-            base_dir = str(current_file_path.parents[5])
     # Linux/macOS: Match either
     # $CONDA_PREFIX/[Ll]ib/python3.X/site-packages/khiops/core/internals/runner.py
     # or {python lib root}/
     #       [Ll]ib/python3.X/dist-packages/khiops/core/internals/runner.py
     # or {virtual env root}/
     #       [Ll]ib/python3.X/site-packages/khiops/core/internals/runner.py
-    else:
-        # safeguard to prevent an IndexError on borderline installations
-        if len(current_file_path.parents) < 7:
-            base_dir = ""
-        else:
-            base_dir = str(current_file_path.parents[6])
+    site_names = ["site-packages", "dist-packages"]
+    parents = list(current_file_path.parents)
+
+    # Identify the place in the path where 'site-packages' or 'dist-packages'
+    # is found (expressed as the parent which ends in either one of these
+    site_index = None
+    for parent_index, parent in enumerate(parents):
+        if parent.name.lower() in site_names:
+            site_index = parent_index
+            break
+
+    # If such site found on the path, identify the parent which ends in [Ll]ib:
+    # its parent holds the environment path
+    base_dir = ""
+    if site_index is not None:
+        for parent in parents[site_index + 1 :]:
+            if parent.name.lower() == "lib":
+                base_dir = str(parent.parent)
+                break
 
     return base_dir
 
