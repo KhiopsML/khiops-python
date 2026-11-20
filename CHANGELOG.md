@@ -9,9 +9,8 @@
 ## Unreleased
 
 ### Fixed
-- (`core`) Detection of non-activated Windows Conda installations using the
+- (General) Detection of non-activated Windows Conda installations using the
   conda-forge Python 3.15 package layout.
-- (`core`) Explicit import of `importlib.util` for system-wide Pip detection.
 
 ## 11.0.2.0 - 2026-11-13
 
