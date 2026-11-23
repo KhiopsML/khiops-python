@@ -420,7 +420,8 @@ def deploy_predictor_for_metrics(
         A field separator character, overrides `detect_format` if set ("" counts
         as "\\t").
     sample_percentage : int, default 70
-        See `sampling_mode` option below.
+        Percentage of samples retained. See also the `sampling_mode` option
+        below.
     sampling_mode : "Include sample" or "Exclude sample", default "Include sample"
         If equal to "Include sample" deploys the predictor on `sample_percentage`
         percent of data and if equal to "Exclude sample" on the complementary ``100 -
