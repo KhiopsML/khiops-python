@@ -164,9 +164,12 @@ def _set_default_system_parameter(
 
 def _get_default_system_parameter(environment_variable, expected_type):
     """Get one global system parameter from the current environment."""
-    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
-        value = _CURRENT_ENVIRONMENT.get(environment_variable)
-    if value is None:
+
+    # No lock needed: the dictionary is replaced atomically, never mutated in place
+    value = _CURRENT_ENVIRONMENT.get(environment_variable)
+
+    # An unset or empty variable means that no default is configured
+    if not value:
         return None
     if expected_type is int:
         return int(value)
