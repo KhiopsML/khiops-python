@@ -1258,6 +1258,17 @@ class KhiopsGlobalSystemParameterTests(unittest.TestCase):
         system_settings = task_runner.run.call_args.kwargs["system_settings"]
         self.assertEqual(system_settings.max_cores, 4)
 
+    def test_empty_inherited_values_are_reported_as_unset(self):
+        """Test an empty environment variable is not reported as a default"""
+        api._CURRENT_ENVIRONMENT = {
+            **api._CURRENT_ENVIRONMENT,
+            "KHIOPS_PROC_NUMBER": "",
+            "KHIOPS_TMP_DIR": "",
+        }
+
+        self.assertIsNone(kh.get_default_max_cores())
+        self.assertIsNone(kh.get_default_temp_dir())
+
 
 class KhiopsCoreServicesTests(unittest.TestCase):
     """Test the services of the core module classes
