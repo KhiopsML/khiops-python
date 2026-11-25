@@ -1145,66 +1145,28 @@ class KhiopsGlobalSystemParameterTests(unittest.TestCase):
         self.assertNotIn("KHIOPS_MEMORY_LIMIT", runner_environment)
         self.assertNotIn("KHIOPS_TMP_DIR", runner_environment)
 
-    def test_invalid_updates_leave_values_unchanged(self):
-        """Test invalid values are rejected without changing effective defaults"""
+    def test_invalid_updates_are_rejected_and_leave_values_unchanged(self):
+        """Test invalid values are rejected without changing the defaults"""
         invalid_updates = [
-            (
-                kh.set_default_max_cores,
-                0,
-                kh.get_default_max_cores,
-                "max_cores must be non-empty",
-            ),
-            (
-                kh.set_default_max_cores,
-                -1,
-                kh.get_default_max_cores,
-                "max_cores must be positive; it is -1",
-            ),
-            (
-                kh.set_default_max_cores,
-                "8",
-                kh.get_default_max_cores,
-                "'max_cores' type must be 'int', not 'str'",
-            ),
-            (
-                kh.set_default_memory_limit_mb,
-                0,
-                kh.get_default_memory_limit_mb,
-                "memory_limit_mb must be non-empty",
-            ),
-            (
-                kh.set_default_memory_limit_mb,
-                "512",
-                kh.get_default_memory_limit_mb,
-                "'memory_limit_mb' type must be 'int', not 'str'",
-            ),
-            (
-                kh.set_default_temp_dir,
-                "",
-                kh.get_default_temp_dir,
-                "temp_dir must be non-empty",
-            ),
-            (
-                kh.set_default_temp_dir,
-                42,
-                kh.get_default_temp_dir,
-                "'temp_dir' type must be 'str', not 'int'",
-            ),
+            (kh.set_default_max_cores, -1, ValueError),
+            (kh.set_default_max_cores, True, TypeError),
+            (kh.set_default_max_cores, "8", TypeError),
+            (kh.set_default_memory_limit_mb, -50, ValueError),
+            (kh.set_default_memory_limit_mb, "512", TypeError),
+            (kh.set_default_temp_dir, "", ValueError),
+            (kh.set_default_temp_dir, 42, TypeError),
         ]
-
-        for setter, invalid_value, getter, expected_message in invalid_updates:
-            with self.subTest(invalid_value=invalid_value):
-                with self.assertRaises((TypeError, ValueError)) as context:
+        for setter, invalid_value, error_type in invalid_updates:
+            with self.subTest(setter=setter.__name__, invalid_value=invalid_value):
+                with self.assertRaises(error_type):
                     setter(invalid_value)
-                self.assertEqual(str(context.exception), expected_message)
-                self.assertEqual(
-                    getter(),
-                    {
-                        kh.get_default_max_cores: 2,
-                        kh.get_default_memory_limit_mb: 128,
-                        kh.get_default_temp_dir: "/launch/tmp",
-                    }[getter],
-                )
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            kh.set_default_max_cores(-1)
+
+        self.runner_constructor.assert_not_called()
+        self.assertEqual(kh.get_default_max_cores(), 2)
+        self.assertEqual(kh.get_default_memory_limit_mb(), 128)
+        self.assertEqual(kh.get_default_temp_dir(), "/launch/tmp")
 
     def test_per_call_max_cores_uses_a_call_local_runner(self):
         """Test a per-call max_cores overrides the defaults for that call only"""

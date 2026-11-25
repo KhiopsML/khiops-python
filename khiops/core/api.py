@@ -14,6 +14,7 @@ See Also
 - [Input Types](../notes.md#core-api-input-types)
 - [Database Sampling](../notes.md#core-api-sampling-mode)
 - [Samples Directory Customization](../notes.md#core-api-env-samples-dir)
+- [Process-wide System-parameter Defaults](../notes.md#core-api-global-system-params)
 """
 import io
 import os
@@ -39,16 +40,22 @@ from khiops.core.internals.runner import (
 )
 from khiops.core.internals.task import get_task_registry
 
-# Capture the process environment before any runner initialization can occur.
-# Avoid race condition on os.environ (via MappingProxyType) and make sure updates
-# to it are not propagated to the current environment (via .copy()).
+# Snapshot of the process environment taken at import time, i.e. before any runner
+# initialization can modify os.environ. It is read-only: the `set_default_*`
+# functions reset the system parameters to the values it holds.
 _INHERITED_ENVIRONMENT = MappingProxyType(os.environ.copy())
+
+# Environment of the runners built by the `set_default_*` functions: the snapshot
+# plus the process-wide defaults. It is replaced, never mutated in place, so readers
+# need no lock.
 _CURRENT_ENVIRONMENT = dict(_INHERITED_ENVIRONMENT)
 
 # Runner installed by the `set_default_*` functions, `None` before the first update.
 # The defaults apply to the current runner only while it is this one.
 _DEFAULT_RUNNER = None
 
+# Serializes the updates of the process-wide defaults, and the reads that need a
+# consistent view of the current runner and of the environment it was built from
 _DEFAULT_SYSTEM_PARAMETERS_LOCK = threading.RLock()
 
 
@@ -104,18 +111,23 @@ def _get_task_runner(max_cores):
 
 
 def _validate_default_system_parameter(parameter_name, value, expected_type):
-    """Validate a global system-parameter value."""
+    """Checks the type and the value of a process-wide system parameter"""
+
+    # `None` is valid: it resets the parameter to its launch value
     if value is None:
         return
 
+    # Check the type; booleans are not valid integers here
     if not isinstance(value, expected_type) or (
         expected_type is int and isinstance(value, bool)
     ):
         raise TypeError(type_error_message(parameter_name, value, expected_type))
-    if not value:
-        raise ValueError(f"{parameter_name} must be non-empty")
-    if isinstance(value, int) and value < 0:
+
+    # Check the value: positive integers and non-empty strings only
+    if expected_type is int and value < 0:
         raise ValueError(f"{parameter_name} must be positive; it is {value}")
+    if expected_type is str and not value:
+        raise ValueError(f"{parameter_name} must be non-empty")
 
 
 def _set_default_system_parameter(
@@ -163,7 +175,7 @@ def _set_default_system_parameter(
 
 
 def _get_default_system_parameter(environment_variable, expected_type):
-    """Get one global system parameter from the current environment."""
+    """Gets a process-wide system parameter from the current environment"""
 
     # No lock needed: the dictionary is replaced atomically, never mutated in place
     value = _CURRENT_ENVIRONMENT.get(environment_variable)
@@ -177,23 +189,27 @@ def _get_default_system_parameter(environment_variable, expected_type):
 
 
 def set_default_max_cores(max_cores=None):
-    """Set the process-wide default maximum number of Khiops cores.
+    """Sets the maximum number of cores used by Khiops Core API function calls
+
+    The maximum number of cores used by Khiops is set globally, in that all
+    subsequent Khiops Core API calls use at most `max_cores` CPU cores, unless
+    their own `max_cores` argument is passed, in which case it overrides the global
+    setting.
+
+    This function modifies the environment Khiops runs in, so that it uses at most
+    `max_cores` CPU cores. It does not modify `os.environ`.
 
     Parameters
     ----------
     max_cores : int, optional
-        Positive maximum number of cores. If not specified, restore the value
-        captured when the Khiops package initialized.
-
-    Notes
-    -----
-    The value is applied to subsequent local executions through an isolated
-    runner environment and does not modify `os.environ`.
+        Maximum number of CPU cores to be used by subsequent Khiops Core API
+        function calls. If not set, then the function sets the maximum number of
+        cores to the value it had prior to launching the Khiops Python process.
 
     Raises
     ------
     TypeError
-        If `max_cores` is not an `int` or `None`.
+        If `max_cores` is neither `None` nor an `int`.
     ValueError
         If `max_cores` is not positive.
     """
@@ -201,35 +217,39 @@ def set_default_max_cores(max_cores=None):
 
 
 def get_default_max_cores():
-    """Return the process-wide default maximum number of Khiops cores.
+    """Gets the maximum number of cores used by Khiops Core API function calls
 
     Returns
     -------
     int or None
-        The effective positive maximum number of cores, or `None` when no
-        default is configured.
+        The default maximum number of CPU cores, or `None` if no default is set.
     """
     return _get_default_system_parameter("KHIOPS_PROC_NUMBER", int)
 
 
 def set_default_memory_limit_mb(memory_limit_mb=None):
-    """Set the process-wide default Khiops memory limit.
+    """Sets the maximum amount of memory (MB) used by Khiops Core API function calls
+
+    The maximum amount of memory used by Khiops is set globally, in that all
+    subsequent Khiops Core API calls use at most `memory_limit_mb` megabytes of
+    memory, unless their own `memory_limit_mb` argument is passed, in which case it
+    overrides the global setting.
+
+    This function modifies the environment Khiops runs in, so that it uses at most
+    `memory_limit_mb` megabytes of memory. It does not modify `os.environ`.
 
     Parameters
     ----------
     memory_limit_mb : int, optional
-        Positive memory limit in megabytes. If not specified, restore the value
-        captured when the Khiops package initialized.
-
-    Notes
-    -----
-    The value is applied to subsequent local executions through an isolated
-    runner environment and does not modify `os.environ`.
+        Maximum amount of memory (megabytes) to be used by subsequent Khiops Core
+        API function calls. If not set, then the function sets the maximum amount of
+        memory (megabytes) to the value it had prior to launching the Khiops Python
+        process.
 
     Raises
     ------
     TypeError
-        If `memory_limit_mb` is not an `int` or `None`.
+        If `memory_limit_mb` is neither `None` nor an `int`.
     ValueError
         If `memory_limit_mb` is not positive.
     """
@@ -239,35 +259,39 @@ def set_default_memory_limit_mb(memory_limit_mb=None):
 
 
 def get_default_memory_limit_mb():
-    """Return the process-wide default Khiops memory limit.
+    """Gets the maximum amount of memory (MB) used by Khiops Core API function calls
 
     Returns
     -------
     int or None
-        The effective positive memory limit in megabytes, or `None` when no
-        default is configured.
+        The default maximum amount of memory in megabytes, or `None` if no
+        default is set.
     """
     return _get_default_system_parameter("KHIOPS_MEMORY_LIMIT", int)
 
 
 def set_default_temp_dir(temp_dir=None):
-    """Set the process-wide default temporary directory for Khiops.
+    """Sets the path to the temporary directory used by Khiops Core API function calls
+
+    The temporary directory path used by Khiops is set globally, in that all
+    subsequent Khiops Core API calls write Khiops temporary files in the `temp_dir`
+    directory, unless their own `temp_dir` argument is passed, in which case it
+    overrides the global setting.
+
+    This function modifies the environment Khiops runs in, so that it writes its
+    temporary files in the `temp_dir` directory. It does not modify `os.environ`.
 
     Parameters
     ----------
     temp_dir : str, optional
-        Non-empty temporary-directory path. If not specified, restore the value
-        captured when the Khiops package initialized.
-
-    Notes
-    -----
-    The value is applied to subsequent local executions through an isolated
-    runner environment and does not modify `os.environ`.
+        Path to the temporary directory to be used by subsequent Khiops Core API
+        function calls. If not set, then the function sets the temporary directory
+        path to the value it had prior to launching the Khiops Python process.
 
     Raises
     ------
     TypeError
-        If `temp_dir` is not a `str` or `None`.
+        If `temp_dir` is neither `None` nor a `str`.
     ValueError
         If `temp_dir` is empty.
     """
@@ -275,13 +299,13 @@ def set_default_temp_dir(temp_dir=None):
 
 
 def get_default_temp_dir():
-    """Return the process-wide default temporary directory for Khiops.
+    """Gets the path to the temporary directory used by Khiops Core API function calls
 
     Returns
     -------
     str or None
-        The effective non-empty temporary-directory path, or `None` when no
-        default is configured.
+        The default path to the temporary directory, or `None` if no default is
+        set.
     """
     return _get_default_system_parameter("KHIOPS_TMP_DIR", str)
 

@@ -43,16 +43,20 @@ The functions in the [khiops.core.api][] have the following common parameters.
     no file.
 
 `max_cores` : int, optional
-:   Maximum number of cores for Khiops executions. If not set, then Khiops uses all available CPU
-    cores in the system.
+:   Maximum number of cores for Khiops executions. If not set, then the value set via
+    [set_default_max_cores][khiops.core.api.set_default_max_cores] applies;
+    otherwise, Khiops uses all available CPU cores in the system.
 
 `memory_limit_mb` : int, optional
-:   Maximum amount of memory (in MB) for Khiops executions. If not set, then Khiops uses all
-    available system memory.
+:   Maximum amount of memory (in MB) for Khiops executions. If not set, then the
+    value set via
+    [set_default_memory_limit_mb][khiops.core.api.set_default_memory_limit_mb]
+    applies; otherwise, Khiops uses all available system memory.
 
 `temp_dir` : str, default `""`
-:   Temporary directory for Khiops executions. If set to `""`, then Khiops uses the system's
-    temporary directory.
+:   Temporary directory for Khiops executions. If set to `""`, then the value set via
+    [set_default_temp_dir][khiops.core.api.set_default_temp_dir] applies;
+    otherwise, Khiops uses the system's temporary directory.
 
 `scenario_prologue` : str, default `""`
 :   Prologue to prepend to all Khiops execution scenarios.
@@ -63,11 +67,8 @@ The functions in the [khiops.core.api][] have the following common parameters.
 
 #### Process-wide System-parameter Defaults { #core-api-global-system-params }
 
-The Core API provides process-wide defaults for subsequent local Khiops
-executions. Each setter rebuilds the local runner with an isolated copy of the
-current environment; it never changes the caller's complete `os.environ`
-mapping. Existing per-call system parameters continue to apply to the generated
-execution scenario.
+The maximum number of CPU cores, the memory limit and the temporary directory of Khiops
+executions can be set once for the remainder of the Python process, instead of in each call:
 
 - [set_default_max_cores][khiops.core.api.set_default_max_cores] and
     [get_default_max_cores][khiops.core.api.get_default_max_cores] configure and query
@@ -79,14 +80,39 @@ execution scenario.
     [get_default_temp_dir][khiops.core.api.get_default_temp_dir] configure and query
     the Khiops temporary directory.
 
-The numeric setters accept an optional positive `int`. The temporary-directory
-setter accepts an optional non-empty `str`; invalid types and values raise
-`TypeError` or `ValueError`, and a rejected update leaves the previous value
-unchanged. Calling a setter with no arguments disables only that default and restores
-the corresponding value from the environment captured when the Khiops package
-initialized, or removes the variable if it was absent. Later changes to
-`os.environ` do not change this reset target. Getters return typed numeric
-values, a non-empty path, or `None` when the effective variable is absent.
+The effective value of each parameter is, by decreasing priority:
+
+1. The argument of the Core API call (`max_cores`, `memory_limit_mb`,
+   `temp_dir`), or the `n_cores` argument of the `khiops.sklearn` estimators. It
+   applies to that call only: the defaults are neither modified nor lost.
+2. The default set with the `set_default_*` function.
+3. Khiops' own defaults: all available CPU cores and memory on the host system,
+   and the system's temporary directory. Once a default has been set, it applies
+   again only after the relevant `set_default_*` function is called without
+   argument (or with `None`).
+
+The numeric setters accept an optional positive `int`, the temporary-directory
+setter an optional non-empty `str`; otherwise `TypeError` or `ValueError` is
+raised and nothing changes. A call without argument (or with `None`) disables
+only that default: the parameter gets back the value it had before the Python
+process was launched, that is, Khiops' own default. The getters return an `int`
+or a `str`, or `None` if no default is set.
+
+!!! note
+    - These functions do not modify `os.environ`. They install a new local
+      runner that runs in a copy of the process environment taken when
+      `khiops.core` was imported: later changes to `os.environ` are not seen by
+      that runner. The runner keeps the `samples_dir` and `root_temp_dir` of the
+      runner it replaces.
+    - If the current runner is not local (e.g. Docker), the value is only stored
+      (it applies to the next local runner built by a setter) and a warning is
+      emitted. Install such a runner with `set_runner` before calling these
+      functions.
+    - Installing a runner with `set_runner` discards the defaults applied so far
+      (the getters keep reporting them). The next call of any setter applies all
+      of them again.
+    - The temporary-directory default applies to the temporary files of Khiops,
+      not to those that the library itself creates (see `root_temp_dir`).
 
 ### Input Types { #core-api-input-types }
 
