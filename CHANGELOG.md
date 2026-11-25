@@ -8,6 +8,12 @@
 
 ## Unreleased
 
+### Added
+- (`core`) The `set_default_max_cores`, `set_default_memory_limit_mb` and
+  `set_default_temp_dir` functions, and their `get_default_*` counterparts, to
+  set process-wide defaults for the maximum number of CPU cores, the memory
+  limit and the temporary directory of Khiops Core API calls.
+
 ### Fixed
 - (`core`) The `max_cores` parameter (and `n_cores` in the `sklearn` estimators)
   now applies to the call it is passed to only: it no longer replaces the
