@@ -1168,6 +1168,45 @@ class KhiopsGlobalSystemParameterTests(unittest.TestCase):
         self.assertEqual(kh.get_default_memory_limit_mb(), 128)
         self.assertEqual(kh.get_default_temp_dir(), "/launch/tmp")
 
+    def test_defaults_install_a_local_runner_that_inherits_settings(self):
+        """Test the new runner is installed and keeps the previous runner settings"""
+        self.peek_runner.return_value = mock.Mock(
+            root_temp_dir="/custom/tmp", samples_dir="/custom/samples"
+        )
+
+        with mock.patch.object(api, "_is_local_runner", return_value=True):
+            kh.set_default_max_cores(8)
+
+        new_runner = self.runner_constructor.return_value
+        self.set_runner.assert_called_once_with(new_runner)
+        self.assertIs(api._DEFAULT_RUNNER, new_runner)
+        self.assertEqual(new_runner.root_temp_dir, "/custom/tmp")
+        self.assertEqual(new_runner.samples_dir, "/custom/samples")
+
+    def test_defaults_are_only_stored_for_non_local_runners(self):
+        """Test a non-local runner is kept and a warning is emitted"""
+        self.peek_runner.return_value = mock.Mock()
+
+        with mock.patch.object(api, "_is_local_runner", return_value=False):
+            with self.assertWarns(UserWarning):
+                kh.set_default_max_cores(8)
+
+        self.assertEqual(kh.get_default_max_cores(), 8)
+        self.assertIsNone(api._DEFAULT_RUNNER)
+        self.runner_constructor.assert_not_called()
+        self.set_runner.assert_not_called()
+
+    def test_failed_runner_creation_leaves_defaults_unchanged(self):
+        """Test the defaults are committed only if the new runner is built"""
+        self.runner_constructor.side_effect = OSError("khiops_env failed")
+
+        with self.assertRaises(OSError):
+            kh.set_default_max_cores(8)
+
+        self.assertEqual(kh.get_default_max_cores(), 2)
+        self.assertIsNone(api._DEFAULT_RUNNER)
+        self.set_runner.assert_not_called()
+
     def test_per_call_max_cores_uses_a_call_local_runner(self):
         """Test a per-call max_cores overrides the defaults for that call only"""
         default_runner, task_runner = mock.Mock(), mock.Mock()
@@ -1187,6 +1226,20 @@ class KhiopsGlobalSystemParameterTests(unittest.TestCase):
         self.assertIs(api._DEFAULT_RUNNER, default_runner)
         self.assertIs(task_runner.root_temp_dir, default_runner.root_temp_dir)
         self.set_runner.assert_called_once_with(default_runner)
+
+    def test_per_call_max_cores_starts_from_os_environ_without_defaults(self):
+        """Test a per-call max_cores starts from os.environ if no default applies"""
+        current_runner = mock.Mock()
+
+        with mock.patch.dict(os.environ, {"KHIOPS_MEMORY_LIMIT": "999"}):
+            with mock.patch.object(api, "get_runner", return_value=current_runner):
+                with mock.patch.object(api, "_is_local_runner", return_value=True):
+                    api._get_task_runner(4)
+
+        task_environment = self.runner_constructor.call_args.kwargs["environment"]
+        self.assertEqual(task_environment["KHIOPS_PROC_NUMBER"], "4")
+        self.assertEqual(task_environment["KHIOPS_MEMORY_LIMIT"], "999")
+        self.set_runner.assert_not_called()
 
     def test_run_task_executes_with_the_task_runner(self):
         """Test the Core API executes its task with the runner chosen for the call"""
