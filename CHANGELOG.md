@@ -9,6 +9,9 @@
 ## Unreleased
 
 ### Fixed
+- (`core`) The `max_cores` parameter (and `n_cores` in the `sklearn` estimators)
+  now applies to the call it is passed to only: it no longer replaces the
+  current runner for the rest of the process.
 - (General) Detection of non-activated Windows Conda installations using the
   conda-forge Python 3.15 package layout.
 

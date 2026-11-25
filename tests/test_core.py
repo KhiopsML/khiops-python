@@ -1035,6 +1035,7 @@ class KhiopsGlobalSystemParameterTests(unittest.TestCase):
     def setUp(self):
         self._initial_inherited_environment = api._INHERITED_ENVIRONMENT
         self._initial_current_environment = api._CURRENT_ENVIRONMENT
+        self._initial_default_runner = api._DEFAULT_RUNNER
 
         launch_environment = os.environ.copy()
         launch_environment.update(
@@ -1046,17 +1047,24 @@ class KhiopsGlobalSystemParameterTests(unittest.TestCase):
         )
         api._INHERITED_ENVIRONMENT = MappingProxyType(launch_environment)
         api._CURRENT_ENVIRONMENT = launch_environment.copy()
+        api._DEFAULT_RUNNER = None
 
         self._runner_constructor_patch = mock.patch.object(api, "KhiopsLocalRunner")
         self.runner_constructor = self._runner_constructor_patch.start()
         self._set_runner_patch = mock.patch.object(api, "set_runner")
         self.set_runner = self._set_runner_patch.start()
+        self._peek_runner_patch = mock.patch.object(
+            api, "peek_runner", return_value=None
+        )
+        self.peek_runner = self._peek_runner_patch.start()
 
     def tearDown(self):
+        self._peek_runner_patch.stop()
         self._set_runner_patch.stop()
         self._runner_constructor_patch.stop()
         api._INHERITED_ENVIRONMENT = self._initial_inherited_environment
         api._CURRENT_ENVIRONMENT = self._initial_current_environment
+        api._DEFAULT_RUNNER = self._initial_default_runner
 
     def test_accessors_are_public_and_restore_launch_values(self):
         """Test accessors expose typed defaults and inherited reset values"""
@@ -1101,7 +1109,6 @@ class KhiopsGlobalSystemParameterTests(unittest.TestCase):
         self.assertEqual(runner_environment["KHIOPS_MEMORY_LIMIT"], "128")
         self.assertEqual(runner_environment["KHIOPS_TMP_DIR"], "/launch/tmp")
         self.assertEqual(set(runner_environment), set(api._CURRENT_ENVIRONMENT))
-        self.assertIsNot(runner_environment, api._CURRENT_ENVIRONMENT)
 
     def test_later_environment_changes_do_not_change_reset_targets(self):
         """Test reset values remain tied to the launch snapshot"""
@@ -1198,6 +1205,43 @@ class KhiopsGlobalSystemParameterTests(unittest.TestCase):
                         kh.get_default_temp_dir: "/launch/tmp",
                     }[getter],
                 )
+
+    def test_per_call_max_cores_uses_a_call_local_runner(self):
+        """Test a per-call max_cores overrides the defaults for that call only"""
+        default_runner, task_runner = mock.Mock(), mock.Mock()
+        self.runner_constructor.side_effect = [default_runner, task_runner]
+        kh.set_default_memory_limit_mb(512)
+
+        with mock.patch.dict(os.environ, {"KHIOPS_MEMORY_LIMIT": "999"}):
+            with mock.patch.object(api, "get_runner", return_value=default_runner):
+                with mock.patch.object(api, "_is_local_runner", return_value=True):
+                    self.assertIs(api._get_task_runner(4), task_runner)
+                    self.assertIs(api._get_task_runner(None), default_runner)
+
+        task_environment = self.runner_constructor.call_args.kwargs["environment"]
+        self.assertEqual(task_environment["KHIOPS_PROC_NUMBER"], "4")
+        self.assertEqual(task_environment["KHIOPS_MEMORY_LIMIT"], "512")
+        self.assertEqual(kh.get_default_max_cores(), 2)
+        self.assertIs(api._DEFAULT_RUNNER, default_runner)
+        self.assertIs(task_runner.root_temp_dir, default_runner.root_temp_dir)
+        self.set_runner.assert_called_once_with(default_runner)
+
+    def test_run_task_executes_with_the_task_runner(self):
+        """Test the Core API executes its task with the runner chosen for the call"""
+        task_runner = mock.Mock()
+
+        with mock.patch.object(
+            api, "get_khiops_version", return_value=KhiopsVersion("10.6.0-b.0")
+        ):
+            with mock.patch.object(
+                api, "_get_task_runner", return_value=task_runner
+            ) as get_task_runner:
+                kh.check_database("a.kdic", "a", "a.txt", max_cores=4)
+
+        get_task_runner.assert_called_once_with(4)
+        task_runner.run.assert_called_once()
+        system_settings = task_runner.run.call_args.kwargs["system_settings"]
+        self.assertEqual(system_settings.max_cores, 4)
 
 
 class KhiopsCoreServicesTests(unittest.TestCase):

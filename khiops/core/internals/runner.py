@@ -1639,6 +1639,18 @@ def set_runner(runner):
     _khiops_runner = runner
 
 
+def peek_runner():
+    """Returns the current KhiopsRunner of the module without initializing it
+
+    Returns
+    -------
+    KhiopsRunner or None
+        The current Khiops Python runner of the module, or `None` if no runner has
+        been set or initialized yet.
+    """
+    return _khiops_runner
+
+
 def get_runner():
     """Returns the current KhiopsRunner of the module
 

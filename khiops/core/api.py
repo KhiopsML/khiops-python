@@ -31,7 +31,12 @@ from khiops.core.internals.common import (
     is_string_like,
     type_error_message,
 )
-from khiops.core.internals.runner import KhiopsLocalRunner, get_runner, set_runner
+from khiops.core.internals.runner import (
+    KhiopsLocalRunner,
+    get_runner,
+    peek_runner,
+    set_runner,
+)
 from khiops.core.internals.task import get_task_registry
 
 # Capture the process environment before any runner initialization can occur.
@@ -39,7 +44,63 @@ from khiops.core.internals.task import get_task_registry
 # to it are not propagated to the current environment (via .copy()).
 _INHERITED_ENVIRONMENT = MappingProxyType(os.environ.copy())
 _CURRENT_ENVIRONMENT = dict(_INHERITED_ENVIRONMENT)
+
+# Runner installed by the `set_default_*` functions, `None` before the first update.
+# The defaults apply to the current runner only while it is this one.
+_DEFAULT_RUNNER = None
+
 _DEFAULT_SYSTEM_PARAMETERS_LOCK = threading.RLock()
+
+
+def _is_local_runner(runner):
+    """Returns True if the runner is a plain KhiopsLocalRunner"""
+    return type(runner) is KhiopsLocalRunner
+
+
+def _new_local_runner(environment, template_runner=None):
+    """Builds a local runner in the given environment
+
+    The temporary directory of the optional template runner is carried over to
+    the new runner, so that both create their temporary files in the same place.
+    """
+
+    # Initialize the runner in the given environment
+    runner = KhiopsLocalRunner(environment=environment)
+
+    # Carry over the temporary directory of the template runner
+    if template_runner is not None:
+        runner.root_temp_dir = template_runner.root_temp_dir
+
+    return runner
+
+
+def _get_task_runner(max_cores):
+    """Returns the runner that executes a task
+
+    If `max_cores` is set and the current runner is local, a call-local runner is
+    returned. It differs from the current runner only by `KHIOPS_PROC_NUMBER`, so
+    that `max_cores` affects this call only.
+    """
+    # If `max_cores` is not set per-call, just get the current runner
+    # Thus, the lock need not be acquired
+    if max_cores is None:
+        return get_runner()
+
+    # Read the current runner and the environment it was built from,
+    # consistently
+    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
+        runner = get_runner()
+        if not _is_local_runner(runner):
+            return runner
+        if runner is _DEFAULT_RUNNER:
+            task_environment = _CURRENT_ENVIRONMENT.copy()
+        else:
+            task_environment = os.environ.copy()
+
+    # Override the number of cores, which khiops_env turns into the MPI command
+    task_environment["KHIOPS_PROC_NUMBER"] = str(max_cores)
+
+    return _new_local_runner(task_environment, runner)
 
 
 def _validate_default_system_parameter(parameter_name, value, expected_type):
@@ -60,24 +121,45 @@ def _validate_default_system_parameter(parameter_name, value, expected_type):
 def _set_default_system_parameter(
     parameter_name, environment_variable, value, expected_type
 ):
-    """Set one global system parameter and install its runner."""
-    global _CURRENT_ENVIRONMENT
+    """Sets a process-wide system parameter and installs a runner that applies it"""
+    global _CURRENT_ENVIRONMENT, _DEFAULT_RUNNER
 
+    # Reject invalid values before touching any state
     _validate_default_system_parameter(parameter_name, value, expected_type)
-    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
-        updated_environment = _CURRENT_ENVIRONMENT.copy()
-        if value is None:
-            inherited_value = _INHERITED_ENVIRONMENT.get(environment_variable)
-            if inherited_value is None and environment_variable in updated_environment:
-                del updated_environment[environment_variable]
-            elif inherited_value is not None:
-                updated_environment[environment_variable] = inherited_value
-        else:
-            updated_environment[environment_variable] = str(value)
 
-        runner = KhiopsLocalRunner(environment=updated_environment.copy())
+    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
+        # Set the variable, or restore the value it had when the process was
+        # launched
+        updated_environment = _CURRENT_ENVIRONMENT.copy()
+        launch_value = _INHERITED_ENVIRONMENT.get(environment_variable)
+        if value is not None:
+            updated_environment[environment_variable] = str(value)
+        elif launch_value is not None:
+            updated_environment[environment_variable] = launch_value
+        else:
+            updated_environment.pop(environment_variable, None)
+
+        # Build the new local runner first, so that a failure leaves the
+        # defaults unchanged. A non-local runner (e.g. Docker) is kept: the new
+        # value is only stored
+        previous_runner = peek_runner()
+        runner = None
+        if previous_runner is None or _is_local_runner(previous_runner):
+            runner = _new_local_runner(updated_environment, previous_runner)
+            if previous_runner is not None:
+                runner.samples_dir = previous_runner.samples_dir
+        else:
+            warnings.warn(
+                f"The current runner is a {type(previous_runner).__name__}: "
+                f"{parameter_name} is stored but not applied to it",
+                stacklevel=3,
+            )
+
+        # Commit the new environment and install the new runner, if any
         _CURRENT_ENVIRONMENT = updated_environment
-        set_runner(runner)
+        if runner is not None:
+            _DEFAULT_RUNNER = runner
+            set_runner(runner)
 
 
 def _get_default_system_parameter(environment_variable, expected_type):
@@ -312,20 +394,12 @@ def _run_task(task_name, task_args):
     # Obtain the api function from the registry
     task = get_task_registry().get_task(task_name, get_khiops_version())
 
-    # Instantiate a new runner with a specific environment if max_cores is defined
-    if system_settings.max_cores is not None:
-        # Ensure KHIOPS_PROC_NUMBER is set only on KhiopsLocalRunner instances
-        if type(get_runner()) is KhiopsLocalRunner:
-            task_environment = os.environ.copy()
-
-            # The max pre-allocated cpu cores must have the same value
-            task_environment["KHIOPS_PROC_NUMBER"] = str(system_settings.max_cores)
-            khiops_runner = KhiopsLocalRunner(task_environment)
-            set_runner(khiops_runner)
+    # Use a call-local runner if max_cores overrides the current settings
+    khiops_runner = _get_task_runner(system_settings.max_cores)
 
     # Execute the Khiops task and cleanup when necessary
     try:
-        get_runner().run(
+        khiops_runner.run(
             task,
             task_args,
             command_line_options=command_line_options,
