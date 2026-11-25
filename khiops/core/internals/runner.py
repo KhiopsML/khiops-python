@@ -1141,8 +1141,8 @@ class KhiopsLocalRunner(KhiopsRunner):
                 else:
                     runner_environment[var_name] = var_value
 
-                # Set KHIOPS_API_MODE to `true`
-                runner_environment["KHIOPS_API_MODE"] = "true"
+            # Set KHIOPS_API_MODE to `true`
+            runner_environment["KHIOPS_API_MODE"] = "true"
 
         # Check the tools exist and are executable
         self._check_tools()
@@ -1637,6 +1637,18 @@ def set_runner(runner):
         raise TypeError(type_error_message("runner", runner, KhiopsRunner))
     global _khiops_runner
     _khiops_runner = runner
+
+
+def peek_runner():
+    """Returns the current KhiopsRunner of the module without initializing it
+
+    Returns
+    -------
+    KhiopsRunner or None
+        The current Khiops Python runner of the module, or `None` if no runner has
+        been set or initialized yet.
+    """
+    return _khiops_runner
 
 
 def get_runner():

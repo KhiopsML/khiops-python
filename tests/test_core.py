@@ -19,12 +19,13 @@ import warnings
 from copy import copy
 from difflib import unified_diff
 from pathlib import Path
+from types import MappingProxyType
 from unittest import mock
 
 import khiops
 import khiops.core as kh
 import khiops.core.internals.filesystems as fs
-from khiops.core import KhiopsRuntimeError
+from khiops.core import KhiopsRuntimeError, api
 from khiops.core.api import _deprecate_legacy_data_path
 from khiops.core.internals.io import KhiopsOutputWriter
 from khiops.core.internals.runner import KhiopsLocalRunner, KhiopsRunner
@@ -1026,6 +1027,247 @@ def create_mocked_raw_run(stdout, stderr, return_code):
         )
 
     return mocked_raw_run
+
+
+class KhiopsGlobalSystemParameterTests(unittest.TestCase):
+    """Test process-wide Core API system-parameter defaults"""
+
+    def setUp(self):
+        self._initial_inherited_environment = api._INHERITED_ENVIRONMENT
+        self._initial_current_environment = api._CURRENT_ENVIRONMENT
+        self._initial_default_runner = api._DEFAULT_RUNNER
+
+        launch_environment = os.environ.copy()
+        launch_environment.update(
+            {
+                "KHIOPS_PROC_NUMBER": "2",
+                "KHIOPS_MEMORY_LIMIT": "128",
+                "KHIOPS_TMP_DIR": "/launch/tmp",
+            }
+        )
+        api._INHERITED_ENVIRONMENT = MappingProxyType(launch_environment)
+        api._CURRENT_ENVIRONMENT = launch_environment.copy()
+        api._DEFAULT_RUNNER = None
+
+        self._runner_constructor_patch = mock.patch.object(api, "KhiopsLocalRunner")
+        self.runner_constructor = self._runner_constructor_patch.start()
+        self._set_runner_patch = mock.patch.object(api, "set_runner")
+        self.set_runner = self._set_runner_patch.start()
+        self._peek_runner_patch = mock.patch.object(
+            api, "peek_runner", return_value=None
+        )
+        self.peek_runner = self._peek_runner_patch.start()
+
+    def tearDown(self):
+        self._peek_runner_patch.stop()
+        self._set_runner_patch.stop()
+        self._runner_constructor_patch.stop()
+        api._INHERITED_ENVIRONMENT = self._initial_inherited_environment
+        api._CURRENT_ENVIRONMENT = self._initial_current_environment
+        api._DEFAULT_RUNNER = self._initial_default_runner
+
+    def test_accessors_are_public_and_restore_launch_values(self):
+        """Test accessors expose typed defaults and inherited reset values"""
+        accessor_names = [
+            "set_default_max_cores",
+            "get_default_max_cores",
+            "set_default_memory_limit_mb",
+            "get_default_memory_limit_mb",
+            "set_default_temp_dir",
+            "get_default_temp_dir",
+        ]
+        for accessor_name in accessor_names:
+            with self.subTest(accessor_name=accessor_name):
+                self.assertTrue(hasattr(kh, accessor_name))
+
+        self.assertEqual(kh.get_default_max_cores(), 2)
+        self.assertEqual(kh.get_default_memory_limit_mb(), 128)
+        self.assertEqual(kh.get_default_temp_dir(), "/launch/tmp")
+
+        kh.set_default_max_cores(8)
+        kh.set_default_memory_limit_mb(512)
+        kh.set_default_temp_dir("/configured/tmp")
+        self.assertEqual(kh.get_default_max_cores(), 8)
+        self.assertEqual(kh.get_default_memory_limit_mb(), 512)
+        self.assertEqual(kh.get_default_temp_dir(), "/configured/tmp")
+
+        kh.set_default_max_cores()
+        self.assertEqual(kh.get_default_max_cores(), 2)
+        self.assertEqual(kh.get_default_memory_limit_mb(), 512)
+        self.assertEqual(kh.get_default_temp_dir(), "/configured/tmp")
+
+    def test_defaults_use_isolated_complete_runner_environment(self):
+        """Test accepted updates preserve the process environment"""
+        initial_process_environment = os.environ.copy()
+
+        kh.set_default_max_cores(8)
+
+        self.assertEqual(os.environ, initial_process_environment)
+        self.assertEqual(self.runner_constructor.call_count, 1)
+        runner_environment = self.runner_constructor.call_args.kwargs["environment"]
+        self.assertEqual(runner_environment["KHIOPS_PROC_NUMBER"], "8")
+        self.assertEqual(runner_environment["KHIOPS_MEMORY_LIMIT"], "128")
+        self.assertEqual(runner_environment["KHIOPS_TMP_DIR"], "/launch/tmp")
+        self.assertEqual(set(runner_environment), set(api._CURRENT_ENVIRONMENT))
+
+    def test_later_environment_changes_do_not_change_reset_targets(self):
+        """Test reset values remain tied to the launch snapshot"""
+        with mock.patch.dict(os.environ, {"KHIOPS_PROC_NUMBER": "99"}):
+            kh.set_default_max_cores(8)
+            kh.set_default_max_cores(None)
+
+        self.assertEqual(kh.get_default_max_cores(), 2)
+
+    def test_absent_inherited_values_are_removed_on_reset(self):
+        """Test resetting an absent inherited value removes the variable"""
+        launch_environment = dict(api._INHERITED_ENVIRONMENT)
+        for environment_variable in (
+            "KHIOPS_PROC_NUMBER",
+            "KHIOPS_MEMORY_LIMIT",
+            "KHIOPS_TMP_DIR",
+        ):
+            launch_environment.pop(environment_variable)
+        api._INHERITED_ENVIRONMENT = MappingProxyType(launch_environment)
+        api._CURRENT_ENVIRONMENT = launch_environment.copy()
+
+        kh.set_default_max_cores(8)
+        kh.set_default_memory_limit_mb(512)
+        kh.set_default_temp_dir("/configured/tmp")
+        kh.set_default_max_cores()
+        kh.set_default_memory_limit_mb()
+        kh.set_default_temp_dir()
+
+        self.assertIsNone(kh.get_default_max_cores())
+        self.assertIsNone(kh.get_default_memory_limit_mb())
+        self.assertIsNone(kh.get_default_temp_dir())
+        runner_environment = self.runner_constructor.call_args.kwargs["environment"]
+        self.assertNotIn("KHIOPS_PROC_NUMBER", runner_environment)
+        self.assertNotIn("KHIOPS_MEMORY_LIMIT", runner_environment)
+        self.assertNotIn("KHIOPS_TMP_DIR", runner_environment)
+
+    def test_invalid_updates_are_rejected_and_leave_values_unchanged(self):
+        """Test invalid values are rejected without changing the defaults"""
+        invalid_updates = [
+            (kh.set_default_max_cores, -1, ValueError),
+            (kh.set_default_max_cores, True, TypeError),
+            (kh.set_default_max_cores, "8", TypeError),
+            (kh.set_default_memory_limit_mb, -50, ValueError),
+            (kh.set_default_memory_limit_mb, "512", TypeError),
+            (kh.set_default_temp_dir, "", ValueError),
+            (kh.set_default_temp_dir, 42, TypeError),
+        ]
+        for setter, invalid_value, error_type in invalid_updates:
+            with self.subTest(setter=setter.__name__, invalid_value=invalid_value):
+                with self.assertRaises(error_type):
+                    setter(invalid_value)
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            kh.set_default_max_cores(-1)
+
+        self.runner_constructor.assert_not_called()
+        self.assertEqual(kh.get_default_max_cores(), 2)
+        self.assertEqual(kh.get_default_memory_limit_mb(), 128)
+        self.assertEqual(kh.get_default_temp_dir(), "/launch/tmp")
+
+    def test_defaults_install_a_local_runner_that_inherits_settings(self):
+        """Test the new runner is installed and keeps the previous runner settings"""
+        self.peek_runner.return_value = mock.Mock(
+            root_temp_dir="/custom/tmp", samples_dir="/custom/samples"
+        )
+
+        with mock.patch.object(api, "_is_local_runner", return_value=True):
+            kh.set_default_max_cores(8)
+
+        new_runner = self.runner_constructor.return_value
+        self.set_runner.assert_called_once_with(new_runner)
+        self.assertIs(api._DEFAULT_RUNNER, new_runner)
+        self.assertEqual(new_runner.root_temp_dir, "/custom/tmp")
+        self.assertEqual(new_runner.samples_dir, "/custom/samples")
+
+    def test_defaults_are_only_stored_for_non_local_runners(self):
+        """Test a non-local runner is kept and a warning is emitted"""
+        self.peek_runner.return_value = mock.Mock()
+
+        with mock.patch.object(api, "_is_local_runner", return_value=False):
+            with self.assertWarns(UserWarning):
+                kh.set_default_max_cores(8)
+
+        self.assertEqual(kh.get_default_max_cores(), 8)
+        self.assertIsNone(api._DEFAULT_RUNNER)
+        self.runner_constructor.assert_not_called()
+        self.set_runner.assert_not_called()
+
+    def test_failed_runner_creation_leaves_defaults_unchanged(self):
+        """Test the defaults are committed only if the new runner is built"""
+        self.runner_constructor.side_effect = OSError("khiops_env failed")
+
+        with self.assertRaises(OSError):
+            kh.set_default_max_cores(8)
+
+        self.assertEqual(kh.get_default_max_cores(), 2)
+        self.assertIsNone(api._DEFAULT_RUNNER)
+        self.set_runner.assert_not_called()
+
+    def test_per_call_max_cores_uses_a_call_local_runner(self):
+        """Test a per-call max_cores overrides the defaults for that call only"""
+        default_runner, task_runner = mock.Mock(), mock.Mock()
+        self.runner_constructor.side_effect = [default_runner, task_runner]
+        kh.set_default_memory_limit_mb(512)
+
+        with mock.patch.dict(os.environ, {"KHIOPS_MEMORY_LIMIT": "999"}):
+            with mock.patch.object(api, "get_runner", return_value=default_runner):
+                with mock.patch.object(api, "_is_local_runner", return_value=True):
+                    self.assertIs(api._get_task_runner(4), task_runner)
+                    self.assertIs(api._get_task_runner(None), default_runner)
+
+        task_environment = self.runner_constructor.call_args.kwargs["environment"]
+        self.assertEqual(task_environment["KHIOPS_PROC_NUMBER"], "4")
+        self.assertEqual(task_environment["KHIOPS_MEMORY_LIMIT"], "512")
+        self.assertEqual(kh.get_default_max_cores(), 2)
+        self.assertIs(api._DEFAULT_RUNNER, default_runner)
+        self.assertIs(task_runner.root_temp_dir, default_runner.root_temp_dir)
+        self.set_runner.assert_called_once_with(default_runner)
+
+    def test_per_call_max_cores_starts_from_os_environ_without_defaults(self):
+        """Test a per-call max_cores starts from os.environ if no default applies"""
+        current_runner = mock.Mock()
+
+        with mock.patch.dict(os.environ, {"KHIOPS_MEMORY_LIMIT": "999"}):
+            with mock.patch.object(api, "get_runner", return_value=current_runner):
+                with mock.patch.object(api, "_is_local_runner", return_value=True):
+                    api._get_task_runner(4)
+
+        task_environment = self.runner_constructor.call_args.kwargs["environment"]
+        self.assertEqual(task_environment["KHIOPS_PROC_NUMBER"], "4")
+        self.assertEqual(task_environment["KHIOPS_MEMORY_LIMIT"], "999")
+        self.set_runner.assert_not_called()
+
+    def test_run_task_executes_with_the_task_runner(self):
+        """Test the Core API executes its task with the runner chosen for the call"""
+        task_runner = mock.Mock()
+
+        with mock.patch.object(
+            api, "get_khiops_version", return_value=KhiopsVersion("10.6.0-b.0")
+        ):
+            with mock.patch.object(
+                api, "_get_task_runner", return_value=task_runner
+            ) as get_task_runner:
+                kh.check_database("a.kdic", "a", "a.txt", max_cores=4)
+
+        get_task_runner.assert_called_once_with(4)
+        task_runner.run.assert_called_once()
+        system_settings = task_runner.run.call_args.kwargs["system_settings"]
+        self.assertEqual(system_settings.max_cores, 4)
+
+    def test_empty_inherited_values_are_reported_as_unset(self):
+        """Test an empty environment variable is not reported as a default"""
+        api._CURRENT_ENVIRONMENT = {
+            **api._CURRENT_ENVIRONMENT,
+            "KHIOPS_PROC_NUMBER": "",
+            "KHIOPS_TMP_DIR": "",
+        }
+
+        self.assertIsNone(kh.get_default_max_cores())
+        self.assertIsNone(kh.get_default_temp_dir())
 
 
 class KhiopsCoreServicesTests(unittest.TestCase):

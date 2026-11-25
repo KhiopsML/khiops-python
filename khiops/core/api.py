@@ -14,10 +14,13 @@ See Also
 - [Input Types](../notes.md#core-api-input-types)
 - [Database Sampling](../notes.md#core-api-sampling-mode)
 - [Samples Directory Customization](../notes.md#core-api-env-samples-dir)
+- [Process-wide System-parameter Defaults](../notes.md#core-api-global-system-params)
 """
 import io
 import os
+import threading
 import warnings
+from types import MappingProxyType
 
 import khiops.core.internals.filesystems as fs
 from khiops.core.dictionary import DictionaryDomain
@@ -29,8 +32,283 @@ from khiops.core.internals.common import (
     is_string_like,
     type_error_message,
 )
-from khiops.core.internals.runner import KhiopsLocalRunner, get_runner, set_runner
+from khiops.core.internals.runner import (
+    KhiopsLocalRunner,
+    get_runner,
+    peek_runner,
+    set_runner,
+)
 from khiops.core.internals.task import get_task_registry
+
+# Snapshot of the process environment taken at import time, i.e. before any runner
+# initialization can modify os.environ. It is read-only: the `set_default_*`
+# functions reset the system parameters to the values it holds.
+_INHERITED_ENVIRONMENT = MappingProxyType(os.environ.copy())
+
+# Environment of the runners built by the `set_default_*` functions: the snapshot
+# plus the process-wide defaults. It is replaced, never mutated in place, so readers
+# need no lock.
+_CURRENT_ENVIRONMENT = dict(_INHERITED_ENVIRONMENT)
+
+# Runner installed by the `set_default_*` functions, `None` before the first update.
+# The defaults apply to the current runner only while it is this one.
+_DEFAULT_RUNNER = None
+
+# Serializes the updates of the process-wide defaults, and the reads that need a
+# consistent view of the current runner and of the environment it was built from
+_DEFAULT_SYSTEM_PARAMETERS_LOCK = threading.RLock()
+
+
+def _is_local_runner(runner):
+    """Returns True if the runner is a plain KhiopsLocalRunner"""
+    return type(runner) is KhiopsLocalRunner
+
+
+def _new_local_runner(environment, template_runner=None):
+    """Builds a local runner in the given environment
+
+    The temporary directory of the optional template runner is carried over to
+    the new runner, so that both create their temporary files in the same place.
+    """
+
+    # Initialize the runner in the given environment
+    runner = KhiopsLocalRunner(environment=environment)
+
+    # Carry over the temporary directory of the template runner
+    if template_runner is not None:
+        runner.root_temp_dir = template_runner.root_temp_dir
+
+    return runner
+
+
+def _get_task_runner(max_cores):
+    """Returns the runner that executes a task
+
+    If `max_cores` is set and the current runner is local, a call-local runner is
+    returned. It differs from the current runner only by `KHIOPS_PROC_NUMBER`, so
+    that `max_cores` affects this call only.
+    """
+    # If `max_cores` is not set per-call, just get the current runner
+    # Thus, the lock need not be acquired
+    if max_cores is None:
+        return get_runner()
+
+    # Read the current runner and the environment it was built from,
+    # consistently
+    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
+        runner = get_runner()
+        if not _is_local_runner(runner):
+            return runner
+        if runner is _DEFAULT_RUNNER:
+            task_environment = _CURRENT_ENVIRONMENT.copy()
+        else:
+            task_environment = os.environ.copy()
+
+    # Override the number of cores, which khiops_env turns into the MPI command
+    task_environment["KHIOPS_PROC_NUMBER"] = str(max_cores)
+
+    return _new_local_runner(task_environment, runner)
+
+
+def _validate_default_system_parameter(parameter_name, value, expected_type):
+    """Checks the type and the value of a process-wide system parameter"""
+
+    # `None` is valid: it resets the parameter to its launch value
+    if value is None:
+        return
+
+    # Check the type; booleans are not valid integers here
+    if not isinstance(value, expected_type) or (
+        expected_type is int and isinstance(value, bool)
+    ):
+        raise TypeError(type_error_message(parameter_name, value, expected_type))
+
+    # Check the value: positive integers and non-empty strings only
+    if expected_type is int and value < 0:
+        raise ValueError(f"{parameter_name} must be positive; it is {value}")
+    if expected_type is str and not value:
+        raise ValueError(f"{parameter_name} must be non-empty")
+
+
+def _set_default_system_parameter(
+    parameter_name, environment_variable, value, expected_type
+):
+    """Sets a process-wide system parameter and installs a runner that applies it"""
+    global _CURRENT_ENVIRONMENT, _DEFAULT_RUNNER
+
+    # Reject invalid values before touching any state
+    _validate_default_system_parameter(parameter_name, value, expected_type)
+
+    with _DEFAULT_SYSTEM_PARAMETERS_LOCK:
+        # Set the variable, or restore the value it had when the process was
+        # launched
+        updated_environment = _CURRENT_ENVIRONMENT.copy()
+        launch_value = _INHERITED_ENVIRONMENT.get(environment_variable)
+        if value is not None:
+            updated_environment[environment_variable] = str(value)
+        elif launch_value is not None:
+            updated_environment[environment_variable] = launch_value
+        else:
+            updated_environment.pop(environment_variable, None)
+
+        # Build the new local runner first, so that a failure leaves the
+        # defaults unchanged. A non-local runner (e.g. Docker) is kept: the new
+        # value is only stored
+        previous_runner = peek_runner()
+        runner = None
+        if previous_runner is None or _is_local_runner(previous_runner):
+            runner = _new_local_runner(updated_environment, previous_runner)
+            if previous_runner is not None:
+                runner.samples_dir = previous_runner.samples_dir
+        else:
+            warnings.warn(
+                f"The current runner is a {type(previous_runner).__name__}: "
+                f"{parameter_name} is stored but not applied to it",
+                stacklevel=3,
+            )
+
+        # Commit the new environment and install the new runner, if any
+        _CURRENT_ENVIRONMENT = updated_environment
+        if runner is not None:
+            _DEFAULT_RUNNER = runner
+            set_runner(runner)
+
+
+def _get_default_system_parameter(environment_variable, expected_type):
+    """Gets a process-wide system parameter from the current environment"""
+
+    # No lock needed: the dictionary is replaced atomically, never mutated in place
+    value = _CURRENT_ENVIRONMENT.get(environment_variable)
+
+    # An unset or empty variable means that no default is configured
+    if not value:
+        return None
+    if expected_type is int:
+        return int(value)
+    return value
+
+
+def set_default_max_cores(max_cores=None):
+    """Sets the maximum number of cores used by Khiops Core API function calls
+
+    The maximum number of cores used by Khiops is set globally, in that all
+    subsequent Khiops Core API calls use at most `max_cores` CPU cores, unless
+    their own `max_cores` argument is passed, in which case it overrides the global
+    setting.
+
+    This function modifies the environment Khiops runs in, so that it uses at most
+    `max_cores` CPU cores. It does not modify `os.environ`.
+
+    Parameters
+    ----------
+    max_cores : int, optional
+        Maximum number of CPU cores to be used by subsequent Khiops Core API
+        function calls. If not set, then the function sets the maximum number of
+        cores to the value it had prior to launching the Khiops Python process.
+
+    Raises
+    ------
+    TypeError
+        If `max_cores` is neither `None` nor an `int`.
+    ValueError
+        If `max_cores` is not positive.
+    """
+    _set_default_system_parameter("max_cores", "KHIOPS_PROC_NUMBER", max_cores, int)
+
+
+def get_default_max_cores():
+    """Gets the maximum number of cores used by Khiops Core API function calls
+
+    Returns
+    -------
+    int or None
+        The default maximum number of CPU cores, or `None` if no default is set.
+    """
+    return _get_default_system_parameter("KHIOPS_PROC_NUMBER", int)
+
+
+def set_default_memory_limit_mb(memory_limit_mb=None):
+    """Sets the maximum amount of memory (MB) used by Khiops Core API function calls
+
+    The maximum amount of memory used by Khiops is set globally, in that all
+    subsequent Khiops Core API calls use at most `memory_limit_mb` megabytes of
+    memory, unless their own `memory_limit_mb` argument is passed, in which case it
+    overrides the global setting.
+
+    This function modifies the environment Khiops runs in, so that it uses at most
+    `memory_limit_mb` megabytes of memory. It does not modify `os.environ`.
+
+    Parameters
+    ----------
+    memory_limit_mb : int, optional
+        Maximum amount of memory (megabytes) to be used by subsequent Khiops Core
+        API function calls. If not set, then the function sets the maximum amount of
+        memory (megabytes) to the value it had prior to launching the Khiops Python
+        process.
+
+    Raises
+    ------
+    TypeError
+        If `memory_limit_mb` is neither `None` nor an `int`.
+    ValueError
+        If `memory_limit_mb` is not positive.
+    """
+    _set_default_system_parameter(
+        "memory_limit_mb", "KHIOPS_MEMORY_LIMIT", memory_limit_mb, int
+    )
+
+
+def get_default_memory_limit_mb():
+    """Gets the maximum amount of memory (MB) used by Khiops Core API function calls
+
+    Returns
+    -------
+    int or None
+        The default maximum amount of memory in megabytes, or `None` if no
+        default is set.
+    """
+    return _get_default_system_parameter("KHIOPS_MEMORY_LIMIT", int)
+
+
+def set_default_temp_dir(temp_dir=None):
+    """Sets the path to the temporary directory used by Khiops Core API function calls
+
+    The temporary directory path used by Khiops is set globally, in that all
+    subsequent Khiops Core API calls write Khiops temporary files in the `temp_dir`
+    directory, unless their own `temp_dir` argument is passed, in which case it
+    overrides the global setting.
+
+    This function modifies the environment Khiops runs in, so that it writes its
+    temporary files in the `temp_dir` directory. It does not modify `os.environ`.
+
+    Parameters
+    ----------
+    temp_dir : str, optional
+        Path to the temporary directory to be used by subsequent Khiops Core API
+        function calls. If not set, then the function sets the temporary directory
+        path to the value it had prior to launching the Khiops Python process.
+
+    Raises
+    ------
+    TypeError
+        If `temp_dir` is neither `None` nor a `str`.
+    ValueError
+        If `temp_dir` is empty.
+    """
+    _set_default_system_parameter("temp_dir", "KHIOPS_TMP_DIR", temp_dir, str)
+
+
+def get_default_temp_dir():
+    """Gets the path to the temporary directory used by Khiops Core API function calls
+
+    Returns
+    -------
+    str or None
+        The default path to the temporary directory, or `None` if no default is
+        set.
+    """
+    return _get_default_system_parameter("KHIOPS_TMP_DIR", str)
+
 
 # Construction rules
 DEFAULT_CONSTRUCTION_RULES = [
@@ -143,20 +421,12 @@ def _run_task(task_name, task_args):
     # Obtain the api function from the registry
     task = get_task_registry().get_task(task_name, get_khiops_version())
 
-    # Instantiate a new runner with a specific environment if max_cores is defined
-    if system_settings.max_cores is not None:
-        # Ensure KHIOPS_PROC_NUMBER is set only on KhiopsLocalRunner instances
-        if type(get_runner()) is KhiopsLocalRunner:
-            task_environment = os.environ.copy()
-
-            # The max pre-allocated cpu cores must have the same value
-            task_environment["KHIOPS_PROC_NUMBER"] = str(system_settings.max_cores)
-            khiops_runner = KhiopsLocalRunner(task_environment)
-            set_runner(khiops_runner)
+    # Use a call-local runner if max_cores overrides the current settings
+    khiops_runner = _get_task_runner(system_settings.max_cores)
 
     # Execute the Khiops task and cleanup when necessary
     try:
-        get_runner().run(
+        khiops_runner.run(
             task,
             task_args,
             command_line_options=command_line_options,
